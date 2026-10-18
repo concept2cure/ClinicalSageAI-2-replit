@@ -1,0 +1,163 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral 9ms
+   → expected { …(6) } to match object { …(3) }
+(12 matching properties omitted from actual)
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes 2ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice 1ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt 1ms
+   → expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral
+AssertionError: expected { …(6) } to match object { …(3) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "result": "{\"ok\":true,\"documentId\":\"10000000-0000-4000-8000-000000000001\",\"contentHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"extractedTextSha256\":\"fa1731bc643125f1949588e7424a0228ad5a3558ff62b1d00e581ce00c467003\",\"totalChars\":12,\"window\":{\"start\":0,\"end\":12,\"text\":\"Arm A 12/30.\"}}",
++   "result": "{\"ok\":false}",
+    "sourceSnapshot": {
+      "span": {
+-       "end": 12,
++       "end": 1,
+      },
+-     "userId": 7,
++     "userId": 999,
+    },
+    "span": {
+-     "end": 12,
++     "end": 1,
+    },
+  }
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:73:27
+     71|     r.span.end = 1; r.sourceSnapshot.span.end = 1; r.sourceSnapshot.us…
+     72|     r.result = '{"ok":false}';
+     73|     expect(map.get('r1')).toMatchObject({ result: candidate().result, …
+       |                           ^
+     74|       sourceSnapshot: { userId: 7, span: { end: TEXT.length } } });
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:80:90
+     78|     h.current.extractedText = 'Arm B 21/30.';
+     79|     expect(h.current.extractedText.length).toBe(TEXT.length);
+     80|     expect(await receipts.settleReadReceipts([entry(r.result)], [entry…
+       |                                                                                          ^
+     81|     expect(h.inserted).toEqual([]); expect(map.size).toBe(0);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:85:90
+     83|   it('does not write when current private-project access was revoked',…
+     84|     const r = candidate(); const map = deferred(r); h.admitted = false;
+     85|     expect(await receipts.settleReadReceipts([entry(r.result)], [entry…
+       |                                                                                          ^
+     86|     expect(h.inserted).toEqual([]);
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:94:90
+     92|     if (change === 'withdrawal') h.current.disposition = 'remove_data';
+     93|     if (change === 'successor') h.current = null;
+     94|     expect(await receipts.settleReadReceipts([entry(r.result)], [entry…
+       |                                                                                          ^
+     95|     expect(h.inserted).toEqual([]);
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:100:90
+     98|     const r = candidate(); r.result = r.result.replace(TEXT, 'Arm B 21…
+     99|     const map = deferred(r);
+    100|     expect(await receipts.settleReadReceipts([entry(r.result)], [entry…
+       |                                                                                          ^
+    101|     expect(h.inserted).toEqual([]);
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:106:90
+    104|     const r = candidate(); r.span.end = TEXT.length + 1; r.sourceSnaps…
+    105|     const map = deferred(r);
+    106|     expect(await receipts.settleReadReceipts([entry(r.result)], [entry…
+       |                                                                                          ^
+    107|     expect(h.inserted).toEqual([]);
+    108|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  19:32:23
+   Duration  745ms (transform 423ms, setup 65ms, import 451ms, tests 19ms, environment 0ms)
+

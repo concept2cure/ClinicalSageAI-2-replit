@@ -266,8 +266,37 @@ describe('runSecurityHealthChecks — overall rollup', () => {
 
     // JWT and ClamAV-skipped pass. Audit checks warn. No critical fail.
     expect(report.overall).not.toBe('failing');
-    // Audit checks should be in the warn state.
+    // Inactive development audit checks are skipped rather than probed.
     const chain = report.checks.find(c => c.name === 'audit_chain_integrity');
-    expect(chain?.status === 'warn' || chain?.status === 'pass').toBe(true);
+    expect(chain?.status === 'warn' || chain?.status === 'pass' || chain?.status === 'skipped').toBe(true);
+  });
+});
+
+describe('inactive development audit trail', () => {
+  it('skips audit-only checks without querying an inactive trail', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    delete process.env.ENABLE_AUDIT_CHAIN_CHECK;
+    const pool = { query: vi.fn() } as any;
+    const { __testing } = await import('../securityHealth');
+
+    await expect(__testing.checkAuditChainIntegrity(pool)).resolves.toMatchObject({
+      status: 'skipped',
+      critical: false,
+    });
+    await expect(__testing.checkAuditEventCoverage(pool)).resolves.toMatchObject({
+      status: 'skipped',
+      critical: false,
+    });
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  it('keeps audit integrity checking active in production', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    delete process.env.ENABLE_AUDIT_CHAIN_CHECK;
+    const { __testing } = await import('../securityHealth');
+
+    expect(__testing.isAuditIntegrityCheckEnabled()).toBe(true);
   });
 });

@@ -41,7 +41,12 @@ import {
   computeReadinessScore,
   generateNextActions,
   getProjectIntelligence,
+  type ReadinessScore,
 } from '../services/intelligence/index.js';
+import {
+  describeReadiness,
+  readinessFigure,
+} from '../services/intelligence/readiness-scoring-engine.js';
 
 const logger = createScopedLogger('project-home-routes');
 
@@ -83,6 +88,27 @@ function relTime(value: unknown): string | null {
 
 function slug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'module';
+}
+
+/**
+ * The one-line readiness status. "Ready"/"At risk — … (score N)" only where a
+ * readiness score exists; otherwise what was measured and what was not
+ * (2026-10-15: document completeness alone read "Ready — readiness score 75").
+ */
+function readinessStatusLine(
+  readiness: ReadinessScore | null,
+  score: number | null,
+  isReady: boolean | null,
+  criticalCount: number,
+): string | null {
+  if (!readiness) return null;
+  const criticalLabel = `${criticalCount} critical gap${criticalCount === 1 ? '' : 's'}`;
+  if (score != null) {
+    return isReady ? `Ready — readiness score ${score}` : `At risk — ${criticalLabel} (score ${score})`;
+  }
+  return criticalCount > 0
+    ? `At risk — ${criticalLabel} (${describeReadiness(readiness)})`
+    : describeReadiness(readiness);
 }
 
 /**
@@ -321,15 +347,19 @@ export default function createProjectHomeRoutes(): Router {
       const gaps = readiness?.gaps ?? [];
       const criticalCount = gaps.filter(g => g.severity === 'critical').length;
       const blockerGaps = gaps.filter(g => g.severity === 'critical' || g.severity === 'high');
-      const overallScore = readiness?.overallScore ?? null;
+      // 2026-10-15: overallScore was used as the readiness score here. With no
+      // assessment on record it is document completeness alone, and this
+      // answered "Ready — readiness score 75" over three unassessed dimensions.
+      const overallScore = readiness ? readinessFigure(readiness) : null;
       const isReady = overallScore != null ? (criticalCount === 0 && overallScore >= 75) : null;
 
       const readinessOut = readiness
         ? {
-            score: readiness.overallScore,
+            score: overallScore,
             isReady,
             blockerCount: criticalCount,
             dimensions: readiness.dimensions,
+            scoreBasis: readiness.scoreBasis,
             trend: readiness.trend,
             predictions: readiness.predictions,
             findings: gaps.map(g => ({
@@ -342,12 +372,7 @@ export default function createProjectHomeRoutes(): Router {
           }
         : null;
 
-      let readinessStatus: string | null = null;
-      if (overallScore != null) {
-        readinessStatus = isReady
-          ? `Ready — readiness score ${overallScore}`
-          : `At risk — ${criticalCount} critical gap${criticalCount === 1 ? '' : 's'} (score ${overallScore})`;
-      }
+      const readinessStatus = readinessStatusLine(readiness, overallScore, isReady, criticalCount);
 
       const intelligence = {
         readinessStatus,
@@ -480,6 +505,9 @@ export default function createProjectHomeRoutes(): Router {
             nextActions: nextActions != null,
             profile: intel != null,
           },
+          // Generators whose read failed: their actions are missing from
+          // intelligence.nextRecommendedActions (2026-10-15).
+          failedRecommendationGenerators: nextActions ? nextActions.failedGenerators : [],
           pendingStores: [...pending],
           // Display fields deliberately omitted or nulled (no real source):
           unsourced: [

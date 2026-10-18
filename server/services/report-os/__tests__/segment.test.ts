@@ -3,6 +3,8 @@ import {
   productTypesToSegments,
   filterTypesForSegment,
   serviceSegmentFor,
+  institutionalSegmentFor,
+  segmentsForScope,
   type SegmentFilterableType,
 } from '../segment';
 import { REPORT_TYPE_SEED } from '../taxonomy';
@@ -28,11 +30,11 @@ describe('productTypesToSegments', () => {
 });
 
 describe('serviceSegmentFor', () => {
-  it('maps CRO/CDMO client types to the cro service segment', () => {
+  it('keeps CRO and CDMO service identities distinct', () => {
     expect(serviceSegmentFor('cro')).toBe('cro');
-    expect(serviceSegmentFor('cdmo')).toBe('cro');
+    expect(serviceSegmentFor('cdmo')).toBe('cdmo');
     expect(serviceSegmentFor(' CRO ')).toBe('cro');
-    expect(serviceSegmentFor(null, 'cdmo')).toBe('cro');
+    expect(serviceSegmentFor(null, 'cdmo')).toBe('cdmo');
   });
 
   it('does NOT treat product-owning client types (incl. the pharma default) as service', () => {
@@ -43,6 +45,38 @@ describe('serviceSegmentFor', () => {
     expect(serviceSegmentFor('medtech')).toBeNull();
     expect(serviceSegmentFor(null, null)).toBeNull();
     expect(serviceSegmentFor(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('institutional applicability and filing scope', () => {
+  it('derives supported institutional identities without inventing product segments', () => {
+    expect(institutionalSegmentFor('academic')).toBe('academic');
+    expect(institutionalSegmentFor(null, 'government')).toBe('government');
+    expect(institutionalSegmentFor('pharma')).toBeNull();
+  });
+
+  it('preserves institutional reports while excluding a sibling product catalog', () => {
+    const scoped = segmentsForScope(['ivd'], ['pharma', 'ivd', 'academic']);
+    expect(scoped).toEqual(['ivd', 'academic']);
+    const visible = filterTypesForSegment(REPORT_TYPE_SEED, scoped);
+    expect(visible.some(t => t.typeId === 'iacuc.protocol_register')).toBe(true);
+    expect(visible.some(t => t.typeId === 'ema.maa_readiness_assessment')).toBe(false);
+  });
+
+  it('offers common reporting to IVD, service and institutional clients', () => {
+    for (const segments of [[], ['ivd'], ['cro'], ['cdmo'], ['academic'], ['government']] as const) {
+      const ids = filterTypesForSegment(REPORT_TYPE_SEED, [...segments]).map(t => t.typeId);
+      expect(ids).toEqual(expect.arrayContaining(['readiness.executive_digest', 'provenance.evidence_trace_report', 'compliance.audit_assurance_pack', 'inspection.readiness_pack']));
+    }
+  });
+
+  it('offers government research registers without showing drug market packs', () => {
+    const ids = filterTypesForSegment(REPORT_TYPE_SEED, ['government']).map(t => t.typeId);
+    expect(ids).toContain('research_compliance.training_status');
+    expect(ids).toContain('grants.portfolio_register');
+    expect(ids).not.toContain('ema.maa_readiness_assessment');
+    expect(REPORT_TYPE_SEED.find(t => t.typeId === 'research_compliance.training_status')?.allowedScopes).toContain('account');
+    expect(REPORT_TYPE_SEED.find(t => t.typeId === 'inspection.readiness_pack')?.allowedScopes).toContain('account');
   });
 });
 
@@ -90,7 +124,7 @@ describe('filterTypesForSegment', () => {
 
   it('anchors the real taxonomy: a pharma org excludes the device-only 510(k) matrix', () => {
     const k510 = REPORT_TYPE_SEED.find((t) => t.typeId === 'usa_fda.estar_510k_equivalence_matrix');
-    expect(k510?.allowedClientSegments).toEqual(['device']);
+    expect(k510?.allowedClientSegments).toEqual(['device', 'ivd']);
     const pharmaVisible = filterTypesForSegment(REPORT_TYPE_SEED, ['pharma']);
     expect(pharmaVisible.some((t) => t.typeId === 'usa_fda.estar_510k_equivalence_matrix')).toBe(false);
     const deviceVisible = filterTypesForSegment(REPORT_TYPE_SEED, ['device']);

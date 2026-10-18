@@ -96,17 +96,18 @@ describe('document-wide source re-read', () => {
       refreshed: 5,
       changed: 1,
       skipped: [
-        { cite_id: 'c9', reason: 'source no longer exists' },
-        { cite_id: 'c10', reason: 'source is frozen' },
+        { cite_id: 'c9', reason: 'unresolved_source' },
+        { cite_id: 'c10', reason: 'frozen' },
       ],
     });
     await openSourcesAndRefresh();
 
     const panel = await screen.findByTestId('refresh-skipped');
     expect(panel.textContent).toMatch(/2 citations could not be re-read/i);
-    // The reason is the finding — not a count.
-    expect(panel.textContent).toMatch(/source no longer exists/);
-    expect(panel.textContent).toMatch(/source is frozen/);
+    // The service returns reason codes; each must retain its actionable meaning.
+    expect(panel.textContent).toMatch(/cited source no longer resolves in this organization/);
+    expect(panel.textContent).toMatch(/citation is frozen and cannot be re-resolved/);
+    expect(panel.textContent).not.toMatch(/recorded source could not be verified/);
   });
 
   it('shows nothing alarming when every citation re-read cleanly', async () => {

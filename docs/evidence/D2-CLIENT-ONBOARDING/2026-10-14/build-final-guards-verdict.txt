@@ -1,0 +1,5 @@
+Command: npm run build
+Node: 22.23.3
+Exit code: 0
+✓ built in 22.86s
+✅ Server build complete → dist/index.js

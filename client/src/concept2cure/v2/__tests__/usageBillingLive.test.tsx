@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * UsageBilling ↔ /api/billing wiring (usage/limits + invoices + credits).
+ * UsageBilling ↔ /api/billing wiring (usage/limits + invoices).
  *
  * Locks the FIXTURE-FREE contract of surfaces/UsageBilling.tsx — every panel
  * renders real persisted data, an honest empty state, or an honest error
@@ -10,9 +10,10 @@
  *    countdown; a malformed/partial snapshot shows an honest empty state
  *  - GET /invoices → date/amount(→total)/status mapped to the display shape,
  *    hostedUrl drives a real View link; an empty list shows an honest empty
- *  - GET /credits → balanceCents→balance + auto-reload settings, truthfully
- *  - the per-category "Usage credits" pools have no backend (the credit ledger
- *    is one flat balance) → that card shows an honest empty, never a fixture
+ *  - the credit ledger is never spent (credit-ledger.ts debitCredits has no
+ *    caller), so no credit balance, auto-reload or per-category credit card is
+ *    shown as if metered, and GET /credits is not read (settings/integrity
+ *    audit 2026-10-17, finding 4)
  *  - a failed fetch → each panel shows its honest error state (fail-closed)
  */
 import React from 'react';
@@ -80,7 +81,7 @@ const INVOICES_RES = {
 
 const CREDITS_RES = {
   balanceCents: 1234,
-  ledger: [],
+  ledger: [{ id: 1, entryType: 'grant', amountCents: 1234, description: 'Pilot allocation', createdAt: '2026-07-01T10:00:00.000Z' }],
   autoReload: {
     organizationId: 7, enabled: true, thresholdCents: 1000, topupCents: 2500,
     updatedBy: null, reason: null, updatedAt: null,
@@ -155,16 +156,12 @@ describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
   });
 });
 
-describe('UsageBilling — live billing (/api/billing/invoices + /credits)', () => {
-  it('adopts balance, auto-reload and mapped invoice rows', async () => {
+describe('UsageBilling — live billing (/api/billing/invoices)', () => {
+  it('adopts mapped invoice rows', async () => {
     mockLive();
     mount('billing');
-    // balanceCents → dollars
-    expect(await screen.findByText('$12.34')).toBeTruthy();
-    // autoReload thresholdCents/topupCents → the real amounts
-    expect(screen.getByText(/Top off to \$25 when your balance is \$10/)).toBeTruthy();
     // invoices: date → "Jul 1, 2026", amount → total, status capitalized
-    expect(screen.getByText('Jul 1, 2026')).toBeTruthy();
+    expect(await screen.findByText('Jul 1, 2026')).toBeTruthy();
     expect(screen.getByText('$42.50')).toBeTruthy();
     expect(screen.getByText('Paid')).toBeTruthy();
     expect(screen.getByText('Open')).toBeTruthy();
@@ -172,32 +169,40 @@ describe('UsageBilling — live billing (/api/billing/invoices + /credits)', () 
     const views = screen.getAllByText('View');
     expect(views).toHaveLength(1);
     expect(views[0].getAttribute('href')).toBe('https://stripe.example/inv_1');
-    // Fixture-free: the real balance / auto-reload / invoice values render
+    // Fixture-free: the real invoice values render
     // directly — no legacy "Live"/"Sample data" provenance pills.
     expect(screen.queryByText('Live')).toBeNull();
     expect(screen.queryByText('Sample data')).toBeNull();
   });
 
-  it('renders a disabled auto-reload truthfully as Off', async () => {
-    mockLive({
-      '/api/billing/credits': {
-        ...CREDITS_RES,
-        autoReload: { ...CREDITS_RES.autoReload, enabled: false },
-      },
-    });
+  /* Settings/integrity audit 2026-10-17, finding 4. Nothing debits the credit
+     ledger, so a balance shown here never moves with use: a "$12.34 current
+     balance" with auto-reload "when your balance is $10" presented an
+     unmetered number as metering. */
+  it('shows no credit balance, auto-reload or credit pools — the ledger is never spent', async () => {
+    mockLive();
     mount('billing');
-    expect(
-      await screen.findByText(/Off — when enabled, tops off to \$25 when your balance is \$10/),
-    ).toBeTruthy();
+    expect(await screen.findByText('Jul 1, 2026')).toBeTruthy();
+    expect(screen.queryByText('$12.34')).toBeNull();
+    expect(screen.queryByText(/Auto-reload/)).toBeNull();
+    expect(screen.queryByText('Current balance')).toBeNull();
+    expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
+    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits');
+  });
+
+  it('the usage tab shows no per-category credit card', async () => {
+    mockLive();
+    const { container } = mount('usage');
+    expect(await screen.findByText('Enterprise plan')).toBeTruthy();
+    expect(container.textContent).not.toMatch(/usage credits/i);
   });
 
   it('renders an honest empty state on an empty invoice list (never a fixture)', async () => {
     mockLive({ '/api/billing/invoices': { invoices: [], hasMore: false, total: 0 } });
     mount('billing');
-    // Empty invoices → the invoices panel shows its honest empty state; the
-    // live balance still renders on its own promise. No fixture row, no pills.
+    // Empty invoices → the invoices panel shows its honest empty state.
+    // No fixture row, no pills.
     expect(await screen.findByText('No invoices yet')).toBeTruthy();
-    expect(await screen.findByText('$12.34')).toBeTruthy(); // live balance
     expect(screen.queryByText('$16.70')).toBeNull(); // no fixture row
     expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText('Live')).toBeNull();
@@ -209,9 +214,7 @@ describe('UsageBilling — service unreachable', () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount('billing');
     // Every panel fails to an honest error state — never a fabricated fixture.
-    expect(await screen.findByText("Couldn't load your balance")).toBeTruthy();
-    expect(screen.getByText("Couldn't load auto-reload")).toBeTruthy();
-    expect(screen.getByText("Couldn't load invoices")).toBeTruthy();
+    expect(await screen.findByText("Couldn't load invoices")).toBeTruthy();
     expect(screen.queryByText('$20.64')).toBeNull(); // no fixture balance
     expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText('Live')).toBeNull();

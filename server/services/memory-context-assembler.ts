@@ -404,13 +404,13 @@ export async function buildMemoryContextForChat(
         layerAtoms
           .map(a => {
             const categoryTag = a.category || layer;
-            const confidenceText =
-              a.metadata?.confidence != null
-                ? ` | confidence: ${Math.round((a.metadata.confidence as number) * 100)}%`
-                : '';
+            // 2026-10-15: this printed " | confidence: NN%" from confidence_score.
+            // No memory writer measures one (rule constants, a model's
+            // self-report, the column's 0.8 default), so it is not shown as a
+            // probability.
             const documentName = a.metadata?.source?.documentName || undefined;
             const sourceText = documentName ? ` | doc: ${documentName}` : '';
-            const line = `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(
+            const line = `- [${categoryTag} | "${a.title}"${sourceText}] ${trimContent(
               a.content,
               400
             )}`;

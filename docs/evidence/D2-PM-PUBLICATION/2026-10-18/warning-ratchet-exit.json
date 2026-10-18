@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "ci:pushed-lint-warnings"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 16.41,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings.json"
+}

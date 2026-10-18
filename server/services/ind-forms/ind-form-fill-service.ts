@@ -111,8 +111,10 @@ export interface IndFormPdfResult {
   pdfBytes: Uint8Array;
   /** True when the official fillable AcroForm template was used. */
   usedOfficialTemplate: boolean;
-  /** Fraction (0..1) of built fields that were rendered/filled. */
-  fieldCoverage: number;
+  /** Fraction (0..1) of built fields that were rendered/filled; null when the
+   *  form has no built fields — 0 of 0 is not a coverage (2026-10-15: the draft
+   *  said 1 and the official fills 0 for an empty form). */
+  fieldCoverage: number | null;
   /** Required fields that were missing (from the builder). */
   missingRequired: string[];
   /** Built fields with no reviewed mapping, or whose widget is absent here. */
@@ -355,13 +357,12 @@ async function fillOfficialTemplate(
   }
 
   const pdfBytes = await doc.save({ useObjectStreams: false });
-  const total = entries.length || 1;
 
   return {
     formId,
     pdfBytes,
     usedOfficialTemplate: true,
-    fieldCoverage: filled / total,
+    fieldCoverage: entries.length > 0 ? filled / entries.length : null,
     missingRequired: built.missingRequired,
     unmappedFields: unmapped.length > 0 ? unmapped : undefined,
     unfilledFields: unfilled.length > 0 ? unfilled : undefined,
@@ -476,7 +477,7 @@ async function fillOfficialXfaTemplate(
     formId,
     pdfBytes: result.bytes,
     usedOfficialTemplate: true,
-    fieldCoverage: result.filled.length / (entries.length || 1),
+    fieldCoverage: entries.length > 0 ? result.filled.length / entries.length : null,
     missingRequired: built.missingRequired,
     unmappedFields: unmapped.length > 0 ? unmapped : undefined,
     /* The fail-open decision documented above is now STATED IN THE RESULT, not
@@ -591,8 +592,9 @@ async function renderFallback(formId: string, built: BuiltForm): Promise<IndForm
     formId,
     pdfBytes,
     usedOfficialTemplate: false,
-    // The fallback renders every built field, so coverage is complete.
-    fieldCoverage: entries.length === 0 ? 1 : 1,
+    // The fallback draws every built field, so coverage is complete — when
+    // there is a field to draw.
+    fieldCoverage: entries.length > 0 ? 1 : null,
     missingRequired: built.missingRequired,
     /* The draft draws every built field, so nothing is unplaceable — but a
        required field with no value is still an empty line on the page, and the

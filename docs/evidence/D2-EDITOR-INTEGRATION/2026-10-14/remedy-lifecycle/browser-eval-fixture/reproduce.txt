@@ -1,0 +1,56 @@
+Remedy lifecycle existing-editor browser qualification
+
+W1 / D2 evaluation under docs/design/EDITOR_REMEDY_LIFECYCLE_2026-10-14.md.
+The directly runnable tracked bundle uses six-level relative imports to the actual
+DocumentCanvas, DocumentWorkbench, RichSectionEditor and AuthoringRemedies. It
+imports the existing design-system tokens and component styles without production
+CSS or UI changes. The source is a clearly labelled synthetic scoped M3 document:
+18 months is proposed for replacement with 24 months. The recorded turn's qualified
+model fields are deliberate evaluation fixtures, not serving-model qualification.
+
+From /workspace/ClinicalSageAI:
+1. Use the installed Node 22 toolchain:
+   export PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH
+2. Start the exact tracked Vite host on strict, isolated port 5176:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/server.mjs
+3. After the lead freezes production and confirms the integration checks, run:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs
+   To capture the full correction paragraph after native touch scrolling, also run:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs --touch-passage
+4. Stop only the known PID printed by step 2 after final capture.
+
+The server derives the repository root from its own file URL. Both the probe and
+runner use this bundle's api-contract.json. Playwright core is installed at
+/opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs, Chromium is
+/usr/bin/chromium, and axe-core is at
+/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js. These are
+existing evaluation tools outside the production dependency graph.
+
+All /api/** calls are intercepted. Unknown endpoints fail the qualification. Mock
+accept/reject audit endpoints capture the actual Workbench request bodies; no live
+AnA, model, backend, project, database, authorization or audit-persistence service
+is called. Any PATCH is recorded and fails the lifecycle proof. Every scenario
+starts in a fresh browser context; the two local-cache visits intentionally keep
+that context to test the actual existing Restore/Discard choice.
+
+Planned contexts: 1440x1000 desktop and 390x844 touch, light/dark. The browser clock
+starts at a fixed evaluation minute to check distinct same-minute audit decision
+IDs. The native review controls are used to apply, reject one part, reject all,
+reapply, and accept all. A separate fresh-context scenario switches Section →
+Document through the real leave-without-saving dialog, returns to Section, waits
+for Restore/Discard, restores pending application marks, then repeats and explicitly
+discards before retrying. Scope, stale saved version, frozen document and unqualified
+turn safeguards are qualified in separate pages. No artificial receipt state is
+injected: observed receipts and states come from the real guarded editor bridge.
+
+Axe tags: wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa. Native-editor count, visible
+editing viewport, page overflow, console/page errors, exact receipt scope, canonical
+mark application identities and distinct audit requests are captured alongside
+screenshots. An automated axe pass is not a complete WCAG audit; incomplete rules
+remain recorded for manual review.
+
+The browser does not qualify live model approval, backend authorization, RLS,
+database audit persistence, concurrent writers or deployment. It uses a two-part
+replacement; deletion-only, adjacent same-turn applications and serialization
+variants are covered by the separate low-level and integration suites owned by
+other sessions. Final browser results must be added only after production freeze.

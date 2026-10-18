@@ -32,6 +32,16 @@ describe('isAllowedUpload', () => {
     expect(isAllowedUpload('noext', 'application/pdf')).toBe(false);
   });
 
+  // Security review 2026-10-15: the default admitted ANY extension whose declared type began
+  // image/, so a .zip (or .svg) sent as image/png with PNG magic in front was stored.
+  it('admits an extension only by the list, never by a declared image/ type', () => {
+    expect(isAllowedUpload('archive.zip', 'image/png')).toBe(false);
+    expect(isAllowedUpload('drawing.svg', 'image/svg+xml')).toBe(false);
+    expect(isAllowedUpload('photo.heic', 'image/heic')).toBe(false);
+    expect(isAllowedUpload('figure.PNG', 'image/png')).toBe(true);
+    expect(isAllowedUpload('scan.tiff', 'image/tiff')).toBe(true);
+  });
+
   it('honours a custom allowlist', () => {
     expect(isAllowedUpload('a.pdf', 'application/pdf', { extensions: ['docx'] })).toBe(false);
     expect(isAllowedUpload('a.docx', 'application/octet-stream', { extensions: ['docx'] })).toBe(true);

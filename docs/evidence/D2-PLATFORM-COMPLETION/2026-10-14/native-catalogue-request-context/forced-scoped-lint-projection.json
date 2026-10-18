@@ -1,0 +1,139 @@
+{
+  "qualification": "Counts and ESLint diagnostics only. Embedded source fields omitted; full raw originals separately pinned in /tmp.",
+  "phases": {
+    "baseline": {
+      "files": 5,
+      "errors": 0,
+      "warnings": 0,
+      "records": [
+        {
+          "path": "tests/db/document-catalog.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-recall.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-role.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-governed.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    "first": {
+      "files": 6,
+      "errors": 0,
+      "warnings": 1,
+      "records": [
+        {
+          "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/catalog-native-fixture.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-governed.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-recall.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "@typescript-eslint/no-unused-vars",
+              "severity": 1,
+              "message": "'workspaceId' is assigned a value but never used.",
+              "line": 62,
+              "column": 5,
+              "messageId": "unusedVar",
+              "endLine": 62,
+              "endColumn": 16
+            }
+          ]
+        },
+        {
+          "path": "tests/db/document-catalog-role.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    "final": {
+      "files": 6,
+      "errors": 0,
+      "warnings": 0,
+      "records": [
+        {
+          "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/catalog-native-fixture.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-governed.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-recall.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog-role.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/document-catalog.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    }
+  }
+}

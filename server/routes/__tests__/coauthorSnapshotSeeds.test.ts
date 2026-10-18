@@ -94,6 +94,7 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'db/migrations/20260730_authoring_comments_router_columns.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+  'db/migrations/20260725_authoring_audit_trail.sql',
   'migrations/20260728_authoring_comments_threading.sql',
   'migrations/20260814d_document_alias_map.sql',
 ];

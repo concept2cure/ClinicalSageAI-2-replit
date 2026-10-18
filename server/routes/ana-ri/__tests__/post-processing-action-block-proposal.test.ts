@@ -151,3 +151,17 @@ describe('the stream’s answer never claims a run that did not happen', () => {
     expect(done.cleanedResponse).toBe('Nothing was changed.');
   });
 });
+
+describe('a read-only turn cannot propose actions during post-processing', () => {
+  it('removes action and command blocks without executing or offering approval', async () => {
+    const fence = String.fromCharCode(96).repeat(3);
+    const cmd = fence + 'command\n' + JSON.stringify({ command: 'create_task', params: { title: 'Do not create' } }) + '\n' + fence;
+    const done = await run('Read-only summary.\n' + BLOCK + '\n' + cmd, { readOnly: true });
+    expect(done.executedCommands ?? []).toEqual([]);
+    expect(done.cleanedResponse).toContain('Read-only summary.');
+    expect(done.cleanedResponse).not.toContain('create_task');
+    expect(done.cleanedResponse).not.toContain('ana-action');
+    expect(writes.governed).not.toHaveBeenCalled();
+    expect(writes.transaction).not.toHaveBeenCalled();
+  });
+});

@@ -120,7 +120,7 @@ export interface CombinationClassificationInput {
   region: CombinationRegion;
   /** FDA: the Primary Mode of Action. Omitted/unclear → OCP (RFD). */
   primaryModeOfAction?: PrimaryModeOfAction;
-  /** EU: whether the device is integral to the medicinal product. Defaults to true. */
+  /** EU: whether the device is integral to the medicinal product. Required for EU: it decides the route. */
   integral?: boolean;
 }
 
@@ -189,10 +189,17 @@ function classifyFda(input: CombinationClassificationInput): FdaCombinationClass
 }
 
 function classifyEu(input: CombinationClassificationInput): EuCombinationClassification {
-  const integral = input.integral ?? true;
+  // 2026-10-15: this was `input.integral ?? true`, so an unstated fact picked the
+  // EU route (Notified Body Opinion vs a separately CE-marked device) and nothing
+  // in the result said it was assumed. It is now refused until stated.
+  if (typeof input.integral !== 'boolean') {
+    throw new Error(
+      'EU combination classification needs integral (true/false): whether the device and the medicinal product form a single integral product (e.g. prefilled syringe, pen injector) or the device is co-packaged / supplied separately. It decides the EU route, so it is not assumed.',
+    );
+  }
   const citation = 'MDR (EU) 2017/745 Art 117; Directive 2001/83/EC Annex I';
 
-  if (integral) {
+  if (input.integral) {
     return {
       region: 'EU',
       regulatoryRoute: 'Medicinal product (integral, MDR Art 117 NBOp)',

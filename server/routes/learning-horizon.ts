@@ -8,8 +8,9 @@
  *   GET /api/learning/horizon/ich-currency   corpus-maintenance worklist from the loop
  *
  * Read-only by design: promotion decisions are made by the policy engine during
- * the scan, and human sign-off of `pending` cards is a governed action handled
- * elsewhere. This surface lets the product owner (and AnA) see the live state.
+ * the scan. No endpoint records sign-off of `pending` cards yet, so they stay
+ * pending, and nothing feeds promoted cards into AnA's answers. This surface
+ * lets the product owner see the live state.
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -27,9 +28,14 @@ const router = Router();
 
 const VALID_STATUSES: CardStatus[] = ['pending', 'promoted', 'quarantined', 'superseded'];
 
+// 2026-10-15: this said AnA "self-studies" the sources and that rule-bearing
+// changes "always require human sign-off". The scan is opt-in, revisions could
+// auto-promote, no endpoint records a sign-off, and nothing reads promoted cards.
 const NOTE =
-  'AnA self-studies these sources on a schedule. Auto-promotion is policy-gated; ' +
-  'rule-bearing changes (new guidelines, withdrawals) always require human sign-off.';
+  'When ENABLE_REGULATORY_HORIZON_SCAN=true, a scheduled job reads these sources and distils knowledge cards. ' +
+  'Promotion is policy-gated; under the default policy rule-bearing changes (new guidelines, revisions, ' +
+  'withdrawals) are never auto-promoted. Cards are listed here only: nothing feeds promoted cards into ' +
+  "AnA's answers, and no endpoint records sign-off of pending cards yet.";
 
 function qstr(v: unknown): string {
   return typeof v === 'string' ? v.trim() : Array.isArray(v) && typeof v[0] === 'string' ? v[0].trim() : '';
@@ -40,7 +46,13 @@ router.get('/summary', (_req: Request, res: Response) => {
   res.json({
     sources: horizonSourcesSummary(),
     lastScan: last
-      ? { generatedAt: last.digest.generatedAt, totals: last.digest.totals, ichActions: last.ichCurrency.actions.length }
+      ? {
+          generatedAt: last.digest.generatedAt,
+          totals: last.digest.totals,
+          complete: last.digest.complete,
+          // null when the ICH corpus was not assessed (no ICH card): 0 reads as "corpus current".
+          ichActions: last.ichCurrency.status === 'assessed' ? last.ichCurrency.actions.length : null,
+        }
       : null,
     note: NOTE,
   });
@@ -69,7 +81,14 @@ router.get('/digest', (_req: Request, res: Response) => {
 router.get('/ich-currency', (_req: Request, res: Response) => {
   const store = getHorizonStore();
   const report = assessIchCurrency(store.all());
-  res.json({ report, note: 'Worklist of updates to apply to the citable ICH corpus.' });
+  // 2026-10-15: an empty store (e.g. no scan has run in this process) answered an
+  // empty "worklist of updates", which reads as "the corpus is current".
+  const note =
+    report.status === 'assessed'
+      ? 'Worklist of updates to apply to the citable ICH corpus.'
+      : `Not assessed. ${report.notAssessedReason}` +
+        (getLastHorizonResult() ? '' : ' No horizon scan has run in this process.');
+  res.json({ report, note });
 });
 
 export default router;

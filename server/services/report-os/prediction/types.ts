@@ -32,15 +32,21 @@ export interface PredictionDisclosure {
 /**
  * Normalized projection of the risk model (RTF / CRL / first-cycle approval),
  * a logistic regression with a cross-tenant network prior for cold-start.
+ *
+ * ── 2026-10-15: a probability is null when nothing estimated it ─────────────
+ * With no trained model and no network prior the model used to answer 0.5 for
+ * every target, and the report printed it. And `modelConfidence` is gone: it
+ * was blendedReadiness / 100, the rule-based completeness score relabelled as
+ * the model's confidence. No confidence is computed for these probabilities.
  */
 export interface DeficiencyRiskInput {
   kind: 'deficiency_risk';
-  rtfProbability: number;
-  crlProbability: number;
-  firstCycleApprovalProbability: number;
+  rtfProbability: number | null;
+  crlProbability: number | null;
+  firstCycleApprovalProbability: number | null;
   sampleSize: number;
+  /** True only when a network prior contributed to at least one probability. */
   usingNetworkPrior: boolean;
-  modelConfidence?: number;
 }
 
 /**

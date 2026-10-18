@@ -1,0 +1,50 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useCerLiterature.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/cer/LiteratureTab.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/SafetyNarrative.tsx
+   83:8   warning  Function 'SafetyNarrative' has too many lines (457). Maximum allowed is 100  max-lines-per-function
+   83:8   warning  Function 'SafetyNarrative' has a complexity of 67. Maximum allowed is 15     complexity
+  332:32  warning  Async arrow function has a complexity of 38. Maximum allowed is 15           complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/cerv2-document-routes.ts
+  110:1   warning  Async function 'requireScreeningScope' has too many parameters (6). Maximum allowed is 5  max-params
+  339:68  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                        complexity
+  571:77  warning  Async arrow function has too many lines (123). Maximum allowed is 100                     max-lines-per-function
+  571:77  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                        complexity
+  657:1   warning  File has too many lines (545). Maximum allowed is 500                                     max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/decision-lineage.ts
+  155:60  warning  Async arrow function has a complexity of 19. Maximum allowed is 15     complexity
+  319:70  warning  Async arrow function has too many lines (113). Maximum allowed is 100  max-lines-per-function
+  319:70  warning  Async arrow function has a complexity of 20. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/program-journey.routes.ts
+  67:54  warning  Async arrow function has a complexity of 22. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/safety-narrative.ts
+  190:64  warning  Async arrow function has too many lines (129). Maximum allowed is 100  max-lines-per-function
+  190:64  warning  Async arrow function has a complexity of 34. Maximum allowed is 15     complexity
+  401:57  warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/literature-screening.service.ts
+  281:8  warning  Async function 'recordScreeningDecision' has too many lines (128). Maximum allowed is 100  max-lines-per-function
+  281:8  warning  Async function 'recordScreeningDecision' has a complexity of 29. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/pv/sae-cases-view-assembler.ts
+  82:27  warning  Arrow function has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/tests/routes/cerv2-literature-screening.test.ts
+  143:50  warning  Arrow function has too many lines (163). Maximum allowed is 100  max-lines-per-function
+
+✖ 23 problems (0 errors, 23 warnings)
+

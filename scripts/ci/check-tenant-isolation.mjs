@@ -247,6 +247,11 @@ const ALLOWLIST_FILES = new Set([
   // because every statement in it is fixture setup or read-back; if it ever
   // grows a production code path, that path belongs in the service, not here.
   'server/services/submission-service/__tests__/_freeze-gate-fixture.ts',
+  // 2026-10-14: canonical QMS test schema/membership seeds and read-back only.
+  // It imports PGlite and is imported exclusively by test files. This exact
+  // helper serves no request and reaches no deployed database; its production
+  // counterpart and other nested helpers remain subject to this scanner.
+  'server/services/qms/__tests__/qms-authoring-harness.ts',
   'server/db/setupLumenCortex.ts',
   'server/db/setupLiterature.ts',
   // Auth lookup by email — pre-tenant-resolution. The user record IS the

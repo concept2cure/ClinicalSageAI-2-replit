@@ -51,7 +51,9 @@ const h = vi.hoisted(() => ({
   loadCmcSourcesForProject: vi.fn(),
   logAction: vi.fn(async (_row: Record<string, unknown>) => undefined),
   isDevelopment: false,
+  scope: vi.fn(),
 }));
+vi.mock('../../services/csr/project-scope', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/csr/project-scope')>()), resolveCsrScope: h.scope }));
 
 vi.mock('../../services/submission-package-orchestrator.js', () => ({
   runOrchestrator: h.runOrchestrator,
@@ -97,6 +99,7 @@ vi.mock('../../services/auditService.js', () => ({
 }));
 
 import orchestratorRouter from '../submission-orchestrator';
+import { CsrScopeError } from '../../services/csr/project-scope';
 
 const ORG = 42;
 const PROGRAM = '11111111-2222-3333-4444-555555555555';
@@ -105,7 +108,7 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 5 };
+    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: 5, role: 'member' };
     next();
   });
   a.use('/api/submission-orchestrator', orchestratorRouter);
@@ -167,6 +170,7 @@ beforeEach(() => {
   h.loadCmcSourcesForProject.mockReset();
   h.logAction.mockClear();
   h.isDevelopment = false;
+  h.scope.mockReset().mockResolvedValue({ projectId: 7 });
   h.runOrchestrator.mockResolvedValue(orchestratorResult());
   h.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
   h.loadCmcSourcesForProject.mockResolvedValue([A_SOURCE]);
@@ -174,6 +178,14 @@ beforeEach(() => {
 });
 
 describe('CMC data cannot be supplied in the request', () => {
+  it('refuses an inaccessible project before loading any private input arrays or starting a run', async () => {
+    h.scope.mockRejectedValueOnce(new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'Current project access is required.'));
+    const res = await request(app()).post('/api/submission-orchestrator/runs').send(modeABody());
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('CSR_PROJECT_ACCESS_DENIED');
+    expect(h.loadCmcSourcesForProject).not.toHaveBeenCalled();
+    expect(h.runOrchestrator).not.toHaveBeenCalled();
+  });
   it('refuses inline cmcSources on POST /runs, before anything is read or written', async () => {
     const res = await request(app())
       .post('/api/submission-orchestrator/runs')

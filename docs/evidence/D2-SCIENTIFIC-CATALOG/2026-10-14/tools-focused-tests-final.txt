@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+···································································stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path
+{
+  "timestamp": "2026-10-14T06:56:51.966Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion
+{
+  "timestamp": "2026-10-14T06:56:51.969Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+·····stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-10-14T06:56:52.255Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "doc-a",
+    "error": "database unavailable"
+  }
+}
+
+·········································
+
+ Test Files  11 passed (11)
+      Tests  113 passed (113)
+   Start at  06:56:46
+   Duration  7.88s (transform 2.04s, setup 313ms, import 5.83s, tests 250ms, environment 1ms)
+

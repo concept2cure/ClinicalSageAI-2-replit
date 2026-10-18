@@ -1,0 +1,38 @@
+{
+  "recordedAt": "2026-10-14T09:23:06.246199+00:00",
+  "rootHeavyAllocation": "#1 explicitly allocated by root",
+  "baseCommit": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "branch": "concept2cure-v2",
+  "sourceInputsCount": 6920,
+  "sourceInputsStable": true,
+  "sourceInputsBeforeSha256": "8c59d9b6079365b39b6f3536573fbf86e4f3423d273bdd2cc734e4147b08f222",
+  "sourceInputsAfterSha256": "8c59d9b6079365b39b6f3536573fbf86e4f3423d273bdd2cc734e4147b08f222",
+  "checks": [
+    {
+      "name": "gate",
+      "argv": [
+        "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node",
+        "scripts/ci/check-image-runtime-assets.mjs"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 8.756,
+      "log": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/gate.txt",
+      "logBytes": 1027,
+      "logSha256": "20f8d21b01a187aa53b926e030d247bc1fab7f6b251894fde909eb44dcfa9158"
+    },
+    {
+      "name": "selftest",
+      "argv": [
+        "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node",
+        "scripts/ci/check-image-runtime-assets.selftest.mjs"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.121,
+      "log": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/selftest.txt",
+      "logBytes": 1182,
+      "logSha256": "b4f2170b643a956d3e3d46aa1a77c50c15bd18dcbb48dd9f340f4a588627369e"
+    }
+  ],
+  "peakChildRssKiB": 941676,
+  "dockerBuildPullInstallJarOrNativeExecution": false
+}

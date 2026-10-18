@@ -5,14 +5,15 @@
  * Grants.gov, hydrate the top candidates' full detail, and score every
  * opportunity against the org's funding profile with the pure, explainable
  * matcher. Optionally records the strongest matches into the pre-award pipeline.
- * Network failures degrade gracefully (discovery still scores on search fields).
+ * Network failures degrade gracefully (discovery still scores on search fields
+ * and reports how many detail fetches failed).
  *
  * @module server/services/grants/grant-finder-service
  */
 
 import { pool } from '../../db';
 import { GrantsGovConnector } from '../connectors/grants-gov';
-import { rankOpportunities, type FundingProfile, type MatchableOpportunity, type OpportunityMatch, type FundingAgencyCode, type FundingMechanismCode } from './opportunity-matching';
+import { rankOpportunities, isStrongMatch, type FundingProfile, type MatchableOpportunity, type OpportunityMatch, type FundingAgencyCode, type FundingMechanismCode } from './opportunity-matching';
 import { createOpportunityTx } from './grants-service';
 
 interface Queryable {
@@ -70,6 +71,14 @@ export interface DiscoverOptions { query?: string; limit?: number; hydrateTop?: 
 export interface DiscoverResult {
   profileUsed: FundingProfile;
   scored: number;
+  /** Matches with fit >= 70 whose eligibility was checked and met (isStrongMatch). */
+  strongMatches: number;
+  /** Matches whose eligibility was not checked (`eligible: null`). */
+  eligibilityNotChecked: number;
+  /** Detail fetches attempted (the first `hydrateTop` search results). */
+  hydrationAttempted: number;
+  /** Detail fetches that failed; those results are scored on search-level fields only. */
+  hydrationFailures: number;
   matches: OpportunityMatch[];
 }
 
@@ -110,8 +119,11 @@ export async function discoverOpportunities(orgId: number, opts: DiscoverOptions
     throw new GrantFinderError('BAD_INPUT', `Grants.gov search failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // Hydrate the top N candidates for richer scoring (synopsis/eligibility/award); degrade softly.
+  // Hydrate the top N candidates for richer scoring (synopsis/eligibility/award).
+  // A failed fetch keeps the search-level fields and is counted. 2026-10-15: it
+  // was swallowed uncounted, and the matcher then read the result as eligible.
   const hydrateTop = Math.min(Math.max(opts.hydrateTop ?? 8, 0), candidates.length);
+  let hydrationFailures = 0;
   for (let i = 0; i < hydrateTop; i++) {
     try {
       const detail = await connector.fetchOpportunityDetail(candidates[i].externalId);
@@ -121,15 +133,24 @@ export async function discoverOpportunities(orgId: number, opts: DiscoverOptions
         agency: detail.agency ?? candidates[i].agency,
         closeDate: detail.closeDate ?? candidates[i].closeDate,
         awardCeiling: detail.awardCeiling ?? candidates[i].awardCeiling,
-        eligibilities: detail.eligibilities.length ? detail.eligibilities : candidates[i].eligibilities,
+        // Retrieved, even when empty ([]); null stays "never retrieved".
+        eligibilities: detail.eligibilities,
       };
     } catch {
-      /* leave the search-level fields; scoring degrades gracefully */
+      hydrationFailures++;
     }
   }
 
   const matches = rankOpportunities(profile, candidates, today());
-  return { profileUsed: profile, scored: matches.length, matches };
+  return {
+    profileUsed: profile,
+    scored: matches.length,
+    strongMatches: matches.filter(isStrongMatch).length,
+    eligibilityNotChecked: matches.filter((m) => m.eligible === null).length,
+    hydrationAttempted: hydrateTop,
+    hydrationFailures,
+    matches,
+  };
 }
 
 /** Record a scored opportunity into the pre-award pipeline (reuses createOpportunityTx). Governed via caller's transaction. */

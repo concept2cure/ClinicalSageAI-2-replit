@@ -9,16 +9,12 @@
  * `/api/approval-workflows/pending`) and adapts each response to the kit's
  * `AuditEvent` / `Correspondence` / `Approval` shapes.
  *
- * Data honesty: live data wins when present. Correspondence may fall back to
- * the kit fixture under the explicit sample-mode boundary (../lib/sampleMode,
- * force-disabled in production builds), always under the standing banner.
- *
- * Audit and approvals have NO fallback. They used to share one — a synthesized
- * Part 11 hash-chain and a set of fabricated signed approvals — and it is
- * deleted, along with the type fields that carried it. Those two buckets are
- * live rows or nothing. `states.*` carries the honest DataState (loading /
- * error / idle / empty) for the pane's DataGate; `live.*` reports which buckets
- * are real.
+ * Data honesty: every bucket is live rows or nothing. Audit and approvals
+ * used to fall back to a synthesized Part 11 hash-chain and a set of fabricated
+ * signed approvals, and correspondence to invented agency letters, under sample
+ * mode; all three and the mode itself are deleted. `states.*` carries the
+ * honest DataState (loading / error / idle / empty) for the pane's DataGate;
+ * `live.*` reports which buckets resolved from the backend.
  *
  * Scope note: the Files tree + DossierDrawer document content are still served by
  * the in-memory `dossierStore`. Backing those with real document content is an
@@ -190,13 +186,13 @@ function errorMessage(e: unknown): string | null {
 }
 
 export interface PathwayTabsLive extends PathwayTabsBundle {
-  /** Live audit events. Never sample content — see the note above. */
+  /** Live audit events. */
   audit: AuditEvent[];
-  /** Live agency / notified-body correspondence. Never sample content. */
+  /** Live agency / notified-body correspondence. */
   correspondence: Correspondence[];
-  /** Live pending/decided approvals. Never sample content. */
+  /** Live pending/decided approvals. */
   approvals: Approval[];
-  /** Which buckets resolved from the backend (true) vs sample/empty (false). */
+  /** Which buckets resolved from the backend with rows (true) vs empty (false). */
   live: { audit: boolean; correspondence: boolean; approvals: boolean };
   /** Honest per-bucket state for DataGate — loading / error / idle / empty / ready. */
   states: {
@@ -211,10 +207,10 @@ export interface PathwayTabsLive extends PathwayTabsBundle {
 /**
  * Live Audit / Correspondence / Approvals for a pathway program. `programId` is
  * the canonical project id (anchors audit + scopes correspondence); approvals
- * are user/org-scoped server-side. Fixtures appear only in explicit sample mode.
+ * are user/org-scoped server-side.
  */
 export function usePathwayTabsData(pathway: PathwayKey, programId?: string | null): PathwayTabsLive {
-  const fixtures = PATHWAY_TABS_DATA[pathway];
+  const { corrLabel } = PATHWAY_TABS_DATA[pathway];
 
   const auditQ = useAuditTrail({ program: programId ?? undefined });
   const corrQ = useCorrespondence(programId ?? null);
@@ -235,20 +231,11 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
     [apprQ.data],
   );
 
-  /* Correspondence may fall back to sample content under the explicit
-     sample-mode boundary, always under the standing banner.
-
-     AUDIT AND APPROVALS MAY NOT, and no longer can: there is no fixture left to
-     pass. Both used to run through `useSampleRows` against a synthesized Part 11
-     hash-chain and a set of invented signed approvals. Sample mode gated them
-     and is force-disabled in production, which made the exposure small — but the
-     rule is not about exposure. An audit trail's only evidentiary value is that
-     nothing in it was authored for display, so a demonstrable one is not a
-     lesser version of the record, it is the opposite of one. Empty is the
-     honest answer, and it is the only one these two buckets can now give. */
+  /* Live or empty. An audit trail's only evidentiary value is that nothing in
+     it was authored for display, so a demonstrable one is not a lesser version
+     of the record, it is the opposite of one; the same holds for approvals and
+     for agency correspondence. */
   const audit = liveAudit ?? EMPTY_AUDIT;
-  /* Correspondence is live or empty, like the other two: the example letters
-     it used to fall back to under sample mode were invented agency letters. */
   const correspondence = liveCorr ?? EMPTY_CORRESPONDENCE;
   const approvals = liveAppr ?? EMPTY_APPROVALS;
 
@@ -256,7 +243,7 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
     audit,
     correspondence,
     approvals,
-    corrLabel: fixtures.corrLabel,
+    corrLabel,
     live: { audit: !!liveAudit, correspondence: !!liveCorr, approvals: !!liveAppr },
     states: {
       /* `query.data ? live ?? [] : null` keeps toDataState's precedence exact:

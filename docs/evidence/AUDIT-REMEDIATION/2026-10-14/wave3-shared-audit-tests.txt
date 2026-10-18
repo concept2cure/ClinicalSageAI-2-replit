@@ -1,0 +1,140 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says audit persistence was not confirmed
+{
+  "timestamp": "2026-10-14T21:10:02.544Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.qms.change.create",
+    "resourceType": "qms_change_control",
+    "resourceId": 8,
+    "reason": "relation \"audit_logs\" is unavailable"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says audit persistence was not confirmed
+{
+  "timestamp": "2026-10-14T21:10:02.549Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.qms.change.transition",
+    "resourceType": "qms_change_control",
+    "resourceId": 9,
+    "reason": "relation \"audit_logs\" is unavailable"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says audit persistence was not confirmed
+{
+  "timestamp": "2026-10-14T21:10:02.552Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.qms.change.link",
+    "resourceType": "qms_change_control",
+    "resourceId": 10,
+    "reason": "relation \"audit_logs\" is unavailable"
+  }
+}
+
+stdout | server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval)
+{
+  "timestamp": "2026-10-14T21:10:02.835Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dfc540c7-9943-41b0-9976-2e2112544063 by unknown",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 44ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > does not offer AnA an approval, and says where a change is approved 1ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says audit persistence was not confirmed 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says audit persistence was not confirmed 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says audit persistence was not confirmed 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 289ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > a revision reason under 8 characters is refused and nothing is written 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > without a reason: refuses, nothing is written and no placeholder reaches the ledger 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > with a reason: still refuses — retirement is signed from the Quality register 4ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a notice that says the request completed and its audit entry is unconfirmed 28ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows one notice for a repeated request, and removes it on dismiss 118ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows the actual GET export transport warning while the caller receives the CSV 8ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a failed preview audit after a large clinical table payload without consuming the result 18ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a tamper-only audit warning while preserving the successful response 5ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > finds the outcome at the top level, under meta, under details, and nested in data 2ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > reads the header pair a 204 or a proxied body carries 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > warns when only the tamper-proof store persisted, without misclassifying unrelated objects 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > stays silent for a persisted row, a true header, and an unrelated `persisted: false` 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > terminates on a cyclic body 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > checks canonical audit metadata before large table payloads exhaust the bounded scan 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 5ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 204 DELETE carrying the header raises it 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a completed audited GET export raises the header warning without consuming its bytes 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an export with a persisted audit row and a failed GET raise no completed-request audit notice 2ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an upload whose row was lost raises it 52ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a persisted row, and a GET, raise nothing 22ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > exposes every audit-outcome header 2ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > every audit-outcome header actually set by a route is in the list above 21ms
+stderr | server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > rolls back a rejected write before COMMIT, with a bounded receipt
+{
+  "timestamp": "2026-10-14T21:10:04.707Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "SYNTHETIC_AUDIT",
+    "resourceType": "document",
+    "resourceId": 12,
+    "code": null
+  }
+}
+
+stderr | server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > discards uncertain COMMIT without claiming rollback or absence
+{
+  "timestamp": "2026-10-14T21:10:04.710Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "SYNTHETIC_AUDIT",
+    "resourceType": "document",
+    "resourceId": 12,
+    "code": null
+  }
+}
+
+stderr | server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > discards failed rollback instead of returning uncertain transaction state to the pool
+{
+  "timestamp": "2026-10-14T21:10:04.711Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "SYNTHETIC_AUDIT",
+    "resourceType": "document",
+    "resourceId": 12,
+    "code": null
+  }
+}
+
+ ✓ server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > returns a confirmed receipt only after COMMIT succeeds 2ms
+ ✓ server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > rolls back a rejected write before COMMIT, with a bounded receipt 2ms
+ ✓ server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > discards uncertain COMMIT without claiming rollback or absence 2ms
+ ✓ server/services/audit/__tests__/audit-request-commit-outcome.test.ts > request-owned ancillary audit transaction completion > discards failed rollback instead of returning uncertain transaction state to the pool 1ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a lost row: persisted false and the stable code, never the store text 2ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a written row: persisted true and no code 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > no outcome (no audited write happened): no headers 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > preserves an earlier lost middleware audit after a healthy handler audit 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > preserves a tamper-only receipt and allows a later failure to take precedence 1ms
+
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+   Start at  21:09:53
+   Duration  11.85s (transform 5.14s, setup 217ms, import 7.43s, tests 2.73s, environment 719ms)
+

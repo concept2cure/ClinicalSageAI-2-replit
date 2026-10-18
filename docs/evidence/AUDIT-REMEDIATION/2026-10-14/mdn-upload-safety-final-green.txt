@@ -1,0 +1,308 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:22:22.322Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 115ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 49ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 43ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 45ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 70ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 43ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 76ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 47ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 54ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 34ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 54ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 72ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > encrypts for the agency and signs the exact binary MIME entity, verified by independent OpenSSL roundtrip 57ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > requests required signed synchronous receipts without an invalid async receipt URL 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > accepts only a pinned agency-signed receipt naming the original message and exact MIC 30ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for rogue signatures without freeing a resend 25ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for wrong-pin signatures without freeing a resend 29ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > rejects an altered signed MDN 39ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another message 37ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another MIC 22ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > keeps an unsigned success receipt unconfirmed 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > allows only the authenticated tied failure receipt to establish agency refusal 70ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > refuses mismatched signing key and MIME header injection before sending 1ms
+stderr | server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > runs the canonical malware gate before cryptographic verification
+{
+  "timestamp": "2026-10-14T05:22:29.538Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "agency.mdn",
+    "declaredMime": "text/plain"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects malformed binary CMS without passing it to receipt verification
+{
+  "timestamp": "2026-10-14T05:22:29.546Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "agency.p7m",
+    "declaredMime": "application/pkcs7-mime",
+    "reason": "not a complete DER CMS SignedData receipt"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes exact bytes with authenticated actor/org, restores the original tenant scope after multipart, and returns verified proof 23ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains the real editor permission gate before accepting a receipt 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes a typed cryptographic or tenant refusal back without a success claim 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects an invalid transmittal identifier and a missing receipt before verification 6ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > enforces the eight-megabyte multipart bound before verification 41ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > refuses executable filenames before receipt verification 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > runs the canonical malware gate before cryptographic verification 6ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects malformed binary CMS without passing it to receipt verification 7ms
+stderr | server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains fail-closed production scanner availability before recording receipt state
+{
+  "timestamp": "2026-10-14T05:22:29.558Z",
+  "level": "error",
+  "message": "[upload-safety] Upload rejected: virus scanner unavailable in production",
+  "context": {
+    "filename": "agency.mdn",
+    "declaredMime": "text/plain"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes a bounded binary SignedData entity through the actual byte and scan gates 8ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains fail-closed production scanner availability before recording receipt state 7ms
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects bytes that do not match the declared MIME (400)
+{
+  "timestamp": "2026-10-14T05:22:29.717Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "x.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > rejects on a virus FOUND without leaking the signature name (400)
+{
+  "timestamp": "2026-10-14T05:22:29.728Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "x.pdf",
+    "declaredMime": "application/pdf",
+    "signature": "Eicar-Test-Signature"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — a file the scanner could not read whole > refuses it (422 FILE_SCAN_INCOMPLETE) with the cause, in every environment
+{
+  "timestamp": "2026-10-14T05:22:29.733Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: the scanner could not read the whole file",
+  "context": {
+    "filename": "x.pdf",
+    "declaredMime": "application/pdf",
+    "limit": "Heuristics.Limits.Exceeded.MaxFileSize"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — a file the scanner could not read whole > refuses it (422 FILE_SCAN_INCOMPLETE) with the cause, in every environment
+{
+  "timestamp": "2026-10-14T05:22:29.735Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: the scanner could not read the whole file",
+  "context": {
+    "filename": "x.pdf",
+    "declaredMime": "application/pdf",
+    "limit": "Heuristics.Limits.Exceeded.MaxFileSize"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > rejects (503) when scanner is not configured and NODE_ENV=production
+{
+  "timestamp": "2026-10-14T05:22:29.735Z",
+  "level": "error",
+  "message": "[upload-safety] Upload rejected: virus scanner unavailable in production",
+  "context": {
+    "filename": "x.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) when scanner is not configured and NODE_ENV=test
+{
+  "timestamp": "2026-10-14T05:22:29.736Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) in development
+{
+  "timestamp": "2026-10-14T05:22:29.736Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — path input > reads bytes from a filesystem path
+{
+  "timestamp": "2026-10-14T05:22:29.739Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "x.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > does not reject in production when no scanner is configured
+{
+  "timestamp": "2026-10-14T05:22:29.740Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "K-1_eSTAR.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > still rejects bytes that do not match the declared type (400)
+{
+  "timestamp": "2026-10-14T05:22:29.740Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "K-1_eSTAR.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > leaves an upload with no stated origin fail-closed in production
+{
+  "timestamp": "2026-10-14T05:22:29.741Z",
+  "level": "error",
+  "message": "[upload-safety] Upload rejected: virus scanner unavailable in production",
+  "context": {
+    "filename": "user.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH)
+{
+  "timestamp": "2026-10-14T05:22:29.742Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin
+{
+  "timestamp": "2026-10-14T05:22:29.742Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "export.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > admits a real PDF under a .pdf name, as before
+{
+  "timestamp": "2026-10-14T05:22:29.743Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "report.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects bytes that do not match the declared MIME (400) 4ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects an empty buffer (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > rejects on a virus FOUND without leaking the signature name (400) 9ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > resolves on a clean scan 2ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — a file the scanner could not read whole > refuses it (422 FILE_SCAN_INCOMPLETE) with the cause, in every environment 3ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > rejects (503) when scanner is not configured and NODE_ENV=production 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) when scanner is not configured and NODE_ENV=test 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) in development 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — path input > reads bytes from a filesystem path 3ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > does not reject in production when no scanner is configured 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > still rejects bytes that do not match the declared type (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > leaves an upload with no stated origin fail-closed in production 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > admits a real PDF under a .pdf name, as before 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > CMS SignedData ingress recognition > recognizes only complete DER SignedData for application/pkcs7-mime 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > CMS SignedData ingress recognition > recognizes only complete DER SignedData for application/x-pkcs7-mime 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > CMS SignedData ingress recognition > rejects indefinite, noncanonical and oversized DER length encodings 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .json name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .xml name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .tsv name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / application/json 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / application/xml 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / text/xml 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.tsv / text/tab-separated-values 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist 0ms
+
+ Test Files  5 passed (5)
+      Tests  88 passed (88)
+   Start at  05:22:20
+   Duration  8.94s (transform 2.61s, setup 103ms, import 5.18s, tests 3.04s, environment 0ms)
+

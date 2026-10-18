@@ -1,0 +1,42 @@
+{
+  "recordedAt": "2026-10-18T00:35:05.945628+00:00",
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/review-query.mjs > raw-run.json 2> raw-stderr.txt",
+  "exitCode": 0,
+  "scenarios": 16,
+  "node": "v22.23.3",
+  "scope": "Exact candidate-ordering SQL only; not HTTP, link integrity, source ACL or concurrent-scheduling qualification.",
+  "sourceBefore": {
+    "server/services/authoring/authoring-saved-assembly-sources.ts": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5"
+  },
+  "sourceAfter": {
+    "server/services/authoring/authoring-saved-assembly-sources.ts": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5"
+  },
+  "sourceUnchanged": true,
+  "extractedQuerySha256": "5efcc67d3df36045a9988d7de46749785cedddae4e170576f559d7cca10ea19e",
+  "savedQuerySha256": "d630a4a674be78578b1e3a3765b38e460cc1b5315995e0052817b13670bb7bc0",
+  "initialIndependentQuerySha256": "5efcc67d3df36045a9988d7de46749785cedddae4e170576f559d7cca10ea19e",
+  "queryUnchangedSinceInitial16ScenarioReview": true,
+  "artifacts": {
+    "README.md": "783941fe50bbbddd9ff06cf761332cef6fd5f8a90553bfa2b05c8eda9b7b4b00",
+    "candidate-query.sql": "d630a4a674be78578b1e3a3765b38e460cc1b5315995e0052817b13670bb7bc0",
+    "lint.json": "191b14b95cc0eb668c26648fcd530eace837244e22e57ac02240e61220fd214b",
+    "raw-run.json": "0e6d7459ac506a80595841627b6b7aed3e8906567c86d3940fa0e094f62e7862",
+    "raw-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review-query.mjs": "c171132a5709b77acc49b0d98d39aaef0e90b40d25fab759b1b0f307484127e3"
+  },
+  "lint": {
+    "command": "./node_modules/.bin/eslint --no-ignore --max-warnings=0 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/review-query.mjs -f json",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "nodeParse": {
+    "command": "node --check docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/review-query.mjs",
+    "exitCode": 0
+  },
+  "limits": [
+    "Exact candidate-ordering query only; no HTTP, whole-reader, chain-link integrity, ACL or concurrent-scheduling qualification.",
+    "Minimal PGlite tables omit indexes and immutability triggers to permit intentionally malformed duplicates.",
+    "No production, product test fixture, provider or Git mutations by the independent reviewer."
+  ]
+}

@@ -1,0 +1,52 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels q_sub preparation and applicant completion before and after export 182ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels ide preparation and applicant completion before and after export 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels 513g preparation and applicant completion before and after export 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 3ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 10ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 49ms
+
+ Test Files  1 passed (1)
+      Tests  43 passed (43)
+   Start at  05:47:45
+   Duration  2.30s (transform 406ms, setup 117ms, import 562ms, tests 1.09s, environment 398ms)
+

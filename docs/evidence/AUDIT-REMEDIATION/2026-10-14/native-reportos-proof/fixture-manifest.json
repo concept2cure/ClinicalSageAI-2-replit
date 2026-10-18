@@ -1,0 +1,67 @@
+{
+  "proof": "native-reportos-fixtures",
+  "tag": "audit-reportos-native-mv7rgn44",
+  "own": {
+    "org": 25,
+    "actor": 44,
+    "project": 16,
+    "program": "954e4619-6976-48f9-a7de-b852ee70e46b",
+    "workspace": 18,
+    "run": 5,
+    "subscription": 5,
+    "bundle": "bf4222ed-8120-4155-b677-6106acf79abe",
+    "token": "[redacted]"
+  },
+  "other": {
+    "org": 26,
+    "actor": 45,
+    "project": 17,
+    "program": "df554996-00eb-4756-9cf5-67b821290894",
+    "workspace": 19,
+    "run": 6,
+    "subscription": 6,
+    "bundle": "bb7e5d40-185b-4e43-90ac-0ebdc61968b6",
+    "token": "[redacted]"
+  },
+  "runtime": {
+    "actor": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "tls": {
+    "ssl": true,
+    "version": "TLSv1.3"
+  },
+  "policies": [
+    {
+      "relname": "project_memory_entries",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_run_dependencies",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_runs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_snapshots",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_subscriptions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ]
+}

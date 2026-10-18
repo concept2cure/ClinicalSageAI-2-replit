@@ -24,6 +24,7 @@ import {
   StorageGetResult,
   StorageSignedUrlResult,
   computeSha256,
+  assertStoredContentIntegrity,
   generateVersionId,
   sanitizeProjectId,
   buildVaultFileId,
@@ -142,6 +143,7 @@ export class LocalStorageProvider implements IStorageProvider {
     if (!fs.existsSync(filePath)) return null;
 
     const bytes = fs.readFileSync(filePath);
+    assertStoredContentIntegrity(bytes, meta);
     return {
       bytes,
       sizeBytes: bytes.length,

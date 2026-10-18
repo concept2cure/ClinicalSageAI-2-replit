@@ -13,10 +13,56 @@ import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { serverError } from '../lib/api-response';
+import companyDocumentsRouter from './company-documents';
+import { loadCompanyDocumentProfile } from '../services/company-documents/profile';
+import type { CompanyDocumentProfile } from '../../shared/company-documents';
 
 const logger = createScopedLogger('client-branding');
 const router = Router();
 const store = createFeatureStore('client_branding');
+router.use('/company-documents', companyDocumentsRouter);
+
+function legacyBrandingSettings(profile: CompanyDocumentProfile, organizationId: number) {
+  const logo = profile.letterhead.brand.logo;
+  return { organizationId, companyName: profile.companyName,
+    logoUrl: logo ? `/api/client-branding/logo/${organizationId}` : null,
+    logoBase64: logo ? `data:${logo.mimeType};base64,${logo.dataBase64}` : null,
+    letterheadUrl: null, letterhead: profile.letterhead, revision: profile.revision,
+    primaryColor: `#${profile.letterhead.colors.accent}`, fontFamily: profile.letterhead.typography.bodyFont,
+    headerHtml: null, footerHtml: null, watermarkText: profile.letterhead.brand.confidentialityNotice ?? null };
+}
+
+// Once the organization adopts the governed profile, the old settings/logo
+// doors must neither display stale project memory nor silently change it.
+// Legacy integrations without a bound SQL client keep their prior feature-store
+// contract; the new profile API always requires request-scoped SQL.
+router.use(async (req, res, next) => {
+  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
+  if (!client || typeof client.query !== 'function' ||
+      !['/settings', '/upload-logo', '/upload-letterhead'].includes(req.path) && !req.path.startsWith('/logo/')) return next();
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  if (req.path.startsWith('/logo/') && Number(req.path.slice('/logo/'.length)) !== guard.orgId) {
+    return res.status(404).json({ error: 'No logo uploaded' });
+  }
+  try {
+    const profile = await loadCompanyDocumentProfile(guard.orgId, client as Parameters<typeof loadCompanyDocumentProfile>[1]);
+    if (!profile.revision) return next();
+    if (req.method !== 'GET') return res.status(409).json({ error: 'COMPANY_DOCUMENTS_MANAGED',
+      message: 'Use Company documents to update this organization’s identity and letterhead with its saved revision and a reason.' });
+    const logo = profile.letterhead.brand.logo;
+    if (req.path.startsWith('/logo/')) {
+      if (!logo) return res.status(404).json({ error: 'No logo uploaded' });
+      res.setHeader('Content-Type', logo.mimeType);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      return res.send(Buffer.from(logo.dataBase64, 'base64'));
+    }
+    if (req.path === '/settings') return res.json(legacyBrandingSettings(profile, guard.orgId));
+    next();
+  } catch (error) {
+    return serverError(res, logger, 'loading company branding', error);
+  }
+});
 
 // SECURITY: every handler in this router reads/writes per-org branding
 // assets. Pre-fix, each one took `req.query.organizationId` or
@@ -252,7 +298,7 @@ router.get('/logo/:orgId', async (req: Request, res: Response) => {
       const [, mimeType, data] = match;
       const buffer = Buffer.from(data, 'base64');
       res.setHeader('Content-Type', mimeType);
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Cache-Control', 'private, max-age=3600');
       res.send(buffer);
     } else {
       res.status(400).json({ error: 'Invalid logo format' });

@@ -334,4 +334,3 @@ stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a rol
       Tests  56 passed (56)
    Start at  17:25:17
    Duration  11.54s (transform 3.79s, setup 145ms, import 334ms, tests 10.37s, environment 0ms)
-

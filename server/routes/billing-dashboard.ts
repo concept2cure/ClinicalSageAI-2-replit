@@ -38,6 +38,8 @@ import { checkSeatAvailability, setSeatsPurchased, isSeatEnforcementOn } from '.
 import { getUsageLimitsSnapshot, getWeeklyUsageByModel } from '../services/usage-windows.js';
 import {
   getCreditBalance,
+  getCreditCapabilities,
+  CreditCapabilityUnavailableError,
   getCreditLedger,
   getAutoReload,
   setAutoReload,
@@ -755,8 +757,8 @@ router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (re
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ error: 'A reason-for-change is required to change purchased seats' });
     }
-    const decision = await setSeatsPurchased(orgId, Number(seats), { userId }, reason);
-    res.json({ seats: decision });
+    const { decision, auditTrail } = await setSeatsPurchased(orgId, Number(seats), { userId }, reason);
+    res.json({ seats: decision, meta: { auditTrail } });
   } catch (error) {
     const validation = (error as any)?.validation;
     if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
@@ -797,7 +799,7 @@ router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'ow
       return res.status(400).json({ error: 'A reason-for-change is required to set a weekly usage limit' });
     }
 
-    const saved = await setWeeklyLimit(
+    const { limit, auditTrail } = await setWeeklyLimit(
       orgId,
       {
         metric,
@@ -811,7 +813,7 @@ router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'ow
       { userId },
       reason,
     );
-    res.json({ limit: saved });
+    res.json({ limit, meta: { auditTrail } });
   } catch (error) {
     const validation = (error as any)?.validation;
     if (Array.isArray(validation)) {
@@ -852,7 +854,7 @@ router.get('/usage/by-model', authenticateToken, async (req: Request, res: Respo
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Credit balance + auto-reload (Anthropic-style billing page)
+// Administrative allocation balance and explicit unsupported payment capabilities
 // ─────────────────────────────────────────────────────────────────────────────
 
 // GET /credits — current balance, recent ledger, auto-reload settings.
@@ -865,7 +867,7 @@ router.get('/credits', authenticateToken, async (req: Request, res: Response) =>
       getCreditLedger(orgId, 50),
       getAutoReload(orgId),
     ]);
-    res.json({ balanceCents, ledger, autoReload });
+    res.json({ balanceCents, ledger, autoReload, capabilities: getCreditCapabilities() });
   } catch (error) {
     logger.error('Get credits error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to load credit balance' });
@@ -874,6 +876,16 @@ router.get('/credits', authenticateToken, async (req: Request, res: Response) =>
 
 // PUT /credits/auto-reload — set the "top off to $X when balance is $Y" rule.
 // GOVERNED: org admins only, reason-for-change required, audited (Part 11).
+function mergeAutoReloadSettings(current: Awaited<ReturnType<typeof getAutoReload>>, input: {
+  enabled?: boolean | null; thresholdCents?: unknown; topupCents?: unknown;
+}) {
+  return {
+    enabled: input.enabled == null ? current.enabled : input.enabled,
+    thresholdCents: input.thresholdCents == null ? current.thresholdCents : Number(input.thresholdCents),
+    topupCents: input.topupCents == null ? current.topupCents : Number(input.topupCents),
+  };
+}
+
 router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -885,16 +897,15 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ error: 'A reason-for-change is required to change auto-reload settings' });
     }
+    if (enabled != null && typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled must be a boolean' });
+    }
     // Partial update: omitted fields keep their current values, so a plain
     // { enabled: false, reason } toggle works without re-supplying amounts.
     const current = await getAutoReload(orgId);
     const { settings: saved, auditTrail } = await setAutoReload(
       orgId,
-      {
-        enabled: enabled == null ? current.enabled : Boolean(enabled),
-        thresholdCents: thresholdCents == null ? current.thresholdCents : Number(thresholdCents),
-        topupCents: topupCents == null ? current.topupCents : Number(topupCents),
-      },
+      mergeAutoReloadSettings(current, { enabled, thresholdCents, topupCents }),
       { userId },
       reason,
     );
@@ -902,6 +913,9 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
     // client transport shows "The request completed, but the audit trail did not record it".
     res.json({ autoReload: saved, auditTrail });
   } catch (error) {
+    if (error instanceof CreditCapabilityUnavailableError) {
+      return res.status(409).json({ error: error.message, code: error.code, capability: error.capability, capabilities: getCreditCapabilities() });
+    }
     const validation = (error as any)?.validation;
     if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
     logger.error('Set auto-reload error', { err: error instanceof Error ? error.message : String(error) });
@@ -911,11 +925,12 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
 
 // POST /credits/adjust — grant / adjust an org's credit balance. PLATFORM
 // ADMIN ONLY: ledger credits move money-equivalent value, so tenants cannot
-// self-issue them; payment-backed purchases wire through Stripe checkout
-// separately. Audited via the ledger row (created_by) + description.
+// self-issue them. Payment-backed credit purchases are unavailable.
+// The ledger movement and its chained actor/reason audit commit together.
 router.post('/credits/adjust', authenticateToken, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
     // Platform-admin credit grant: organizationId is the TARGET org receiving
     // the adjustment, not the caller's tenant identity. Route is
     // authenticateToken + requirePlatformAdmin; audited via the ledger row.
@@ -936,7 +951,7 @@ router.post('/credits/adjust', authenticateToken, requirePlatformAdmin, async (r
       { entryType, amountCents: Number(amountCents), description, reference, allowNegative: entryType === 'adjustment' },
       { userId },
     );
-    res.json({ entry });
+    res.json({ entry, balanceMode: 'administrative_allocation', auditTrail: { persisted: true, chained: true } });
   } catch (error) {
     const validation = (error as any)?.validation;
     if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });

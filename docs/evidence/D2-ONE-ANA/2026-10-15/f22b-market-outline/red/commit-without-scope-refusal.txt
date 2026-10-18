@@ -1,0 +1,7 @@
+ × server/services/c2c/__tests__/commitSectionMarketScope.test.ts > a market's document takes only its own sections > refuses common section M3 by name, and writes nothing 12ms
+ × server/services/c2c/__tests__/commitSectionMarketScope.test.ts > a market's document takes only its own sections > refuses common section 2.5 by name, and writes nothing 2ms
+ ✓ server/services/c2c/__tests__/commitSectionMarketScope.test.ts > a market's document takes only its own sections > commits the market's own section 1ms
+ ✓ server/services/c2c/__tests__/commitSectionMarketScope.test.ts > a market's document takes only its own sections > the home filing (scope home) takes a common section as before 1ms
+ ✓ server/services/c2c/__tests__/commitSectionMarketScope.test.ts > a market's document takes only its own sections > the home filing (scope null) takes a common section as before 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 passed (5)

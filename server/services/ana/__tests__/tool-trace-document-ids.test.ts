@@ -14,6 +14,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { buildTraceEntry, summarizeToolResult } from '../tool-trace';
+import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../../authoring/authoring-create-outcome';
 
 const DOC = 'a6257943-a4f8-4dc0-a957-5dd4ca69e2a6';
 const PROGRAM = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -48,5 +49,28 @@ describe('the saved step summary of a step that built a document', () => {
   it('leaves every other result as it was', () => {
     expect(summarizeToolResult(JSON.stringify({ results: [1, 2, 3] }))).toBe('3 results');
     expect(summarizeToolResult(JSON.stringify({ error: 'no project open' }))).toBe('error: no project open');
+  });
+});
+
+describe('unconfirmed creation and unavailable handoffs retain recovery without a canvas receipt', () => {
+  it.each(['unconfirmed', 'committed'] as const)('retains exact %s recovery identity and retry refusal across a turn', outcome => {
+    const payload = authoringCreationRecoveryPayload(new AuthoringCreateOutcomeError(outcome,
+      { organizationId: 42, documentId: DOC, programId: PROGRAM }));
+    const summary = buildTraceEntry('draft_authoring_document', 'Creating document', 'error', JSON.stringify({ ...payload,
+      title: 'Private title', content: 'Private clinical content', recovery: { ...payload.recovery, privateText: 'Withheld' } })).resultSummary;
+    expect(JSON.parse(summary)).toMatchObject({ code: payload.code, creationOutcome: outcome, retryAllowed: false,
+      recovery: { organizationId: 42, documentId: DOC, programId: PROGRAM } });
+    expect(summary).not.toContain('Private'); expect(summary).not.toContain('Withheld');
+    expect(DOC_ID_RE.exec(summary)).toBeNull();
+  });
+
+  it.each(['missing-document', 'wrong-program', 'wrong-code', 'retry-allowed'])('does not promote malformed recovery: %s', kind => {
+    const payload: any = authoringCreationRecoveryPayload(new AuthoringCreateOutcomeError('unconfirmed',
+      { organizationId: 42, documentId: DOC, programId: PROGRAM }));
+    if (kind === 'missing-document') payload.recovery = { ...payload.recovery, documentId: undefined };
+    if (kind === 'wrong-program') payload.recovery = { ...payload.recovery, programId: 'not-an-id' };
+    if (kind === 'wrong-code') payload.code = 'UNRELATED_ERROR';
+    if (kind === 'retry-allowed') payload.retryAllowed = true;
+    expect(summarizeToolResult(JSON.stringify(payload))).toMatch(/^error:/);
   });
 });

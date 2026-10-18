@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T20:12:59.770Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:12:59.772Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T20:12:59.773Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T20:13:03.424Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4399b388-b3e5-4d47-b9ec-2b4a5d40c199 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T20:13:03.441Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4399b388-b3e5-4d47-b9ec-2b4a5d40c199 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T20:13:03.455Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4399b388-b3e5-4d47-b9ec-2b4a5d40c199 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T20:13:03.578Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "4399b388-b3e5-4d47-b9ec-2b4a5d40c199",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T20:13:03.579Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "4399b388-b3e5-4d47-b9ec-2b4a5d40c199",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T20:13:03.580Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "review",
+    "docId": "4399b388-b3e5-4d47-b9ec-2b4a5d40c199",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T20:13:03.581Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "4399b388-b3e5-4d47-b9ec-2b4a5d40c199",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 26ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 20ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 34ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 16ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-14T20:13:03.604Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/4399b388-b3e5-4d47-b9ec-2b4a5d40c199/request-review",
+    "action": "edit",
+    "docId": "4399b388-b3e5-4d47-b9ec-2b4a5d40c199",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-14T20:13:03.675Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 4399b388-b3e5-4d47-b9ec-2b4a5d40c199 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 17ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 21ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 21ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 67ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 417ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 156ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 147ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 44ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 59ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 43ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 95ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 154ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 17ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 41ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 53ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  20:12:52
+   Duration  14.48s (transform 4.80s, setup 278ms, import 1.85s, tests 10.71s, environment 775ms)

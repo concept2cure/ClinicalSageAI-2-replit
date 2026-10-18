@@ -1,11 +1,12 @@
 /**
  * Launch scope — the one list of what ships in the launch catalog.
  *
- * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: eight apps for a new
+ * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: seven apps for a new
  * organisation (six until 2026-09-30, when the founder made Reporting &
  * analytics a launch app; seven until 2026-10-12, when CMC / Module 3 joined
- * under decision P-28), every other surface behind a flag that is off in
- * production. This file IS that flag's data.
+ * under decision P-28; eight until 2026-10-17, when Submission Readiness was
+ * folded into Submission Center), every other surface behind a flag that is
+ * off in production. This file IS that flag's data.
  *
  * "On by default" is the modules list, not the app list: a launch app's
  * SURFACES are inside the boundary, and its MODULES are what a new
@@ -46,7 +47,7 @@ export interface LaunchApp {
   modules: readonly string[];
 }
 
-/** The eight launch apps, in the order the definition of done lists them. */
+/** The seven launch apps, in the order the definition of done lists them. */
 export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
@@ -56,7 +57,9 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // catalog left the app. The journey is empty for every program a client
     // creates (only the demo seed fills it); the catalog's Start drops the
     // choice, and the New project wizard already persists the filing type.
-    surfaces: ['projects', 'project-home', 'tasks'],
+    // Founder request 2026-10-16: communication is a core client destination.
+    // Existing module licensing still applies; no new organisation grant.
+    surfaces: ['projects', 'project-home', 'tasks', 'communication-center'],
     modules: ['projects', 'tasks'],
   },
   {
@@ -104,22 +107,42 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // created in the product never write, so it is always empty; Project home's
     // dossier readiness is computed from the program's own sections. The
     // publishing center is a reference page that publishes nothing.
-    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
-    modules: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
-  },
-  {
-    id: 'submission-readiness',
-    label: 'Submission Readiness',
-    // The deterministic dispatch gate, which is keyed to the program's sequence.
-    // The Orchestration and Inconsistency boards are not in this release: both
-    // read the integer project spine, which a program reaches only through the
-    // anchor intake writes when the organisation has exactly one client
-    // workspace, and signup creates none. In every organisation signup creates,
-    // the Orchestration board found no program and the Inconsistency board
-    // refused the program's id (VSR-001 §14.3, decided §16). Their code stays;
-    // they return when the review and the scan read the program spine.
-    surfaces: ['dispatch-readiness'],
-    modules: ['dispatch-readiness'],
+    //
+    // Decision P-32, 2026-10-15 (founder's delegation): the IND lifecycle and
+    // forms screen is a feature of this app. An amendment on a US commercial
+    // IND needs its 1571, its cover letter and often a Letter of
+    // Authorization, and the engines that build them sat behind a locked
+    // surface. The surface id is listed and the module list is NOT changed,
+    // as in P-28: listing a surface lifts the launch-scope lock, listing a
+    // module would write a grant for every new organisation and outrank the
+    // standard tier the product owner set
+    // (db/migrations/20260823_module_catalog_commercial_packaging.sql). The
+    // API claim is an allow-list of the paths that screen calls, in the
+    // surface registry. IND safety reporting (21 CFR 312.32) and ICSR
+    // transmission stay shut: their routes are claimed by the out-of-scope
+    // pharmacovigilance surface, and the IND screen hides the safety-report
+    // card (docs/LAUNCH_DEFINITION_OF_DONE.md, P-32).
+    //
+    // The agency-questions screen is NOT listed (coordinator decision on P-32,
+    // 2026-10-15). Its approve records a plain status change, with no Part 11
+    // signature, reason or role check, and the response package sent to FDA
+    // is assembled from those approvals; answers to FDA letters are also third
+    // in the beta's job order (docs/design/WORKFLOW_DECISION_2026-10-08.md §1).
+    // Agency questions open once approval is a signed act.
+    //
+    // Founder decision, 2026-10-17: Submission Readiness is no longer an app of
+    // its own. Its screen reads the same per-sequence verdict as this app's
+    // Validation and Dispatch tabs (programSequence.ts, /sequences/:id/
+    // dispatch-readiness), which is where a sequence is dispatched (P-33), so a
+    // second app gave one verdict two homes. Its surface and its module move
+    // here unchanged: LAUNCH_MODULE_IDS, and so what a new organisation is
+    // granted, is the same set as before. The Orchestration and Inconsistency
+    // boards stay out of this release: both read the integer project spine,
+    // which a program reaches only through the anchor intake writes when the
+    // organisation has exactly one client workspace, and signup creates none
+    // (VSR-001 §14.3, decided §16). They return when they read the program spine.
+    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'ind-checklist', 'dispatch-readiness'],
+    modules: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness'],
   },
   {
     id: 'qms',

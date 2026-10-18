@@ -1,0 +1,94 @@
+{
+  "retrievedOn": "2026-10-14",
+  "sourceUrls": {
+    "search": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm",
+    "unfilteredResults": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/results.cfm",
+    "browserExportPOST": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/standards_Excel.cfm",
+    "sis": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/detail.cfm?standard__identification_no=<official id>",
+    "frDocuments": "https://www.fda.gov/medical-devices/division-standards-and-conformity-assessment/federal-register-documents",
+    "list66": "https://www.govinfo.gov/content/pkg/FR-2026-08-24/html/2026-17229.htm"
+  },
+  "httpStatus": {
+    "unfilteredResults": 200,
+    "browserExportPOST": 200,
+    "sis": {
+      "successful": 1738,
+      "failed": 0
+    },
+    "frDocuments": 200,
+    "list66": 200
+  },
+  "counts": {
+    "uniqueRecordIds": 1738,
+    "uniqueRecognitionNumbers": 1738,
+    "nonblankCsvRows": 1895,
+    "recordsWithIdenticalAdoptionExportRows": 157,
+    "normalizedRecords": 1738,
+    "normalizationErrors": 0,
+    "productCodes": 1621,
+    "publishedCodeRecognitionPairs": 7582,
+    "recordsWithPublishedCodes": 1057,
+    "completeSisWithNoProductCodeSection": 402,
+    "sectionsWithoutCodeTable": 208,
+    "tablesWithNoCodeValues": 71,
+    "recordsWithoutPublishedProductCode": 681,
+    "independentClassificationAnchorAgreement": 1737,
+    "plainTextPublishedProductCodeRecords": 1,
+    "unmappedRecordsWithPublishedAssociationSectionText": 279
+  },
+  "publicationBasis": {
+    "databaseLatestDateOfEntry": "2026-09-07",
+    "databaseRecognitionListRange": "003–067",
+    "recordInList067": "2-298",
+    "frDocumentsHighestList": "066",
+    "list066FederalRegisterPublicationDate": "2026-08-24",
+    "note": "Database snapshot is cumulative. Its latest official Date of Entry is not represented as a Federal Register publication date; all record-level list IDs and entry dates are preserved."
+  },
+  "files": {
+    "results.html": {
+      "bytes": 202152,
+      "sha256": "341b5e1ccca36a8daf76df279c8cea07b95010924b7a5c95d8eba1bdc7df68bc"
+    },
+    "export.xls": {
+      "bytes": 343308,
+      "sha256": "82bea4740b2cccbce374304eb11eff91d36ca05edc1834ac8f49974aa67525f9"
+    },
+    "recognition-lists.html": {
+      "bytes": 52922,
+      "sha256": "edf07ca2a17167a7aea9ecb03c36b637b61b194554000d30e7c23b6f784e1768"
+    },
+    "list-66.html": {
+      "bytes": 45414,
+      "sha256": "98dc54fa038cba4e541f49105c0bd1b2b2e948d82d6db1a97ae0dd15e436d5ae"
+    },
+    "details-acquisition.json": {
+      "bytes": 888236,
+      "sha256": "ce5762269c4141a7868e16a91a67d955c244e75fd3f2af026930d3d061dea932"
+    },
+    "record-manifest.json": {
+      "bytes": 833189,
+      "sha256": "03682379ac7a1dc4999a4b16d94f3f782466d36e07187dee7ef78065804814bc"
+    },
+    "official-sis-records.tar.gz": {
+      "bytes": 19297764,
+      "sha256": "b53d9e9908af6578d1b32d2f55807dd8e4793aee67a86685283d1e3bffb862d0"
+    },
+    "fda-recognized-consensus-standards.json": {
+      "bytes": 1966879,
+      "sha256": "8795ab4429987c05e2912434e87b25c2754dc36ee736521c72dcc76f6411ee7a"
+    }
+  },
+  "fullRawSisArchive": {
+    "workspacePath": "/workspace/audit/recognized-standards-investigation/official-sis-records.tar.gz",
+    "includedInRepository": false,
+    "reason": "All 1738 exact downloaded HTML records remain in the hashed 19MB local archive; repository evidence preserves all per-record source URLs, response statuses, byte counts/hashes plus representative exact HTML. Runtime uses only the fully normalized dataset."
+  },
+  "normalizationPolicy": [
+    "Require complete HTTP200 acquisition for all IDs in the unfiltered official browser export, exact byte/hash match, and all recognition identities matched exactly once.",
+    "Primary designation/title comes from the identity-matched SIS primary Standard block. CSV removes commas and some title quote marks; preserve SIS punctuation and keep all official CSV designation aliases.",
+    "Only parse literal FDA Product Code cells; evaluate actual column spans so explicit codes in shorter rows remain captured. No inference from regulation, device title or subject matter.",
+    "Preserve uncoded CFR citation/blank rows and per-record publishedAssociationStatus. Empty productCodes means the complete source publishes no explicit code association.",
+    "Reject the whole candidate for any HTTP, identity, date, HTML structure, column or required-field failure. Never install a partial dataset.",
+    "Preserve the source association-section text for all 279 unmapped records with such a section; broad FDA scope declarations do not become guessed literal product-code associations."
+  ]
+}

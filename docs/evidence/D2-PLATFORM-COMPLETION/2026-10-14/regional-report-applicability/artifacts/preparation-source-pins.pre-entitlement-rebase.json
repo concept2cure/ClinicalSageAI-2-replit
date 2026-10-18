@@ -1,0 +1,32 @@
+[
+  {
+    "path": "server/services/report-os/regional/filing-applicability.ts",
+    "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparedSha256": "3923d7c82fd6e22532d138f8a835c37f5c59c94ceb96a5966d817d0edd47f818"
+  },
+  {
+    "path": "server/services/report-os/regional/filing-readiness.ts",
+    "originalSha256": "6ed3945f47a097821ffc5cb51cc720c3bd8af0a4c412cf76436420f46124c660",
+    "preparedSha256": "6bc47b14fb8a1a317429a024dd6a20c15e3336e256510a299b3540c91ff90a63"
+  },
+  {
+    "path": "server/routes/insights-canvas-routes.ts",
+    "originalSha256": "dfc1ea9a2fb1b184da915d1ea610cd74fa91fb1928fe9ce942dae6b979fc07ed",
+    "preparedSha256": "0143e47ec6034cbe6c0ed99cf45aa167cdd286dba0b8a3562f1d343ca02c1b8a"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+    "originalSha256": "6dfff90e38b57f70eb12ee10cc1024a8990c42dec95fff94af2e48affd1ebbf9",
+    "preparedSha256": "25f47290b901117f77e0806296772db0108fa4e45b6b060a5c5d353cbf8a672e"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx",
+    "originalSha256": "37420709a2b93f076e07356d788cdfe1e86585096364b4674bd86e02da97bbd1",
+    "preparedSha256": "a6960bea7e9bac82388e405d14666797ce010a167c6c22252658f9d08f50f350"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx",
+    "originalSha256": "db0d0feec4344dab3ffc904835903a4d657cbfb8cfe19e59955406e0c2c8d475",
+    "preparedSha256": "3c42ac23ca3609e4d1e5f66ac47c4fa73bb3263d45bb097da47658d20ed97fcf"
+  }
+]

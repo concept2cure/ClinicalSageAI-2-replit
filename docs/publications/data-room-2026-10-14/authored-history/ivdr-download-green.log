@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded pdf artifact with its actual digest 20ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded docx artifact with its actual digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded zip artifact with its actual digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded manifest artifact with its actual digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement pdf from the wrong pack identity 4ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement docx from the wrong pack identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement zip from the wrong pack identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement manifest from the wrong pack identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf whose recorded pack byte length was changed 4ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx whose recorded pack byte length was changed 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip whose recorded pack byte length was changed 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest whose recorded pack byte length was changed 1ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf with no recorded artifact digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx with no recorded artifact digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip with no recorded artifact digest 1ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest with no recorded artifact digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > requests authoritative artifact hashes and sizes from the scoped pack row 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > reports a provider integrity refusal and records no successful download 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > keeps missing/foreign pack identity absent without reaching storage 1ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not record a successful download when the stored version is missing 1ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not emit a provider-supplied digest unrelated to the verified bytes 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses to substitute a snapshot when the recorded original manifest is missing 2ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  03:03:10
+   Duration  546ms (transform 130ms, setup 74ms, import 178ms, tests 67ms, environment 0ms)
+

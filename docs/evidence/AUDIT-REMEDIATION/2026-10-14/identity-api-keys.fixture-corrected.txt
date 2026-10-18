@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > requires a name, scopes and a reason before issuing a key 319ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > calls the existing tenant-scoped endpoint, shows the secret once and refreshes the estate 194ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps entered values and offers retry when issuance is refused 147ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  02:12:56
+   Duration  2.14s (transform 523ms, setup 117ms, import 884ms, tests 662ms, environment 362ms)
+

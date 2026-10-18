@@ -1,0 +1,1710 @@
+{
+  "label": "diagnostic-touch-light",
+  "width": 390,
+  "theme": "light",
+  "cases": [
+    {
+      "key": "US-NDA",
+      "entryId": "registry:US_NDA",
+      "module": null,
+      "filingContext": {
+        "registryId": "US_NDA",
+        "region": "US",
+        "agency": "FDA"
+      },
+      "syntheticCreateOnly": true,
+      "status": "pass",
+      "sourceHeader": "Created from a regulatory template · preparation worksheet",
+      "guidanceText": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.\nRetain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.\nDrafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.\nThe required flags describe the existing platform scaffold; they do not establish mandatory agency content.\nThis is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.\nRegistry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.\nRecorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50.\n\nPopulate Administrative Forms from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification. Existing scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.\n\nReference basis: Concept2Cure existing project blueprint us_nda_full_sections (platform convention — not a regulatory requirement)",
+      "asks": [
+        {
+          "action": "Review section",
+          "prefill": "Review the section open in the editor for completeness, scientific writing, citations, unsupported claims and contradictions. Run critique_draft on the text you actually read and identify remedies by severity and location.\n\nWhen an authoring document is open, first call critique_document with its exact saved document_id from screen context and offset=0. Follow every nextOffset with the returned snapshotSha256 as expected_snapshot and unchanged review options, including template-source and template-reference items. Honor the recorded template identity, filingContext, aiDraftable, authoringMode, limitations and exact section guidance even if the working document was renamed. Recorded filingContext identifies the registry filing, region and agency; GLOBAL component guidance does not establish a receiving jurisdiction. Confirm the actual product, filing operation and receiving market before regional preparation; do not infer them from a title, module or company type. Guidance is reference context, not authored evidence or checklist completion. If needed, use get_document_template with that exact template_id and follow its pages for current reference; current guidance does not replace recorded limits. For a preparation worksheet, propose only source-supported preparation text and checks; retain the original official form, dataset, certificate or signed record and never synthesize or claim to replace it. If source metadata or guidance is missing, malformed or unavailable, report the gap rather than infer drafting eligibility from a name or module. Saved-review writing scores do not verify original records, regulatory completeness, approval or filing readiness.\n\nWork on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.\n\nFor each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.",
+          "origin": {
+            "surfaceId": "document-authoring",
+            "label": "Authoring",
+            "moduleContext": {
+              "surface": "document-authoring",
+              "documentId": "dddddddd-0000-4000-8000-000000000001",
+              "documentTitle": "Synthetic US marketing preparation",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "savedRecordOnly": true,
+              "templateId": "015b44f2-b717-5f95-99fb-aa94073909a0",
+              "templateSourceState": "recorded",
+              "templateSource": {
+                "id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+                "entryId": "registry:US_NDA",
+                "version": 1,
+                "sha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505",
+                "kind": "preparation",
+                "aiDraftable": false,
+                "authoringMode": "manual",
+                "originalFormat": "eCTD",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+                  "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+                  "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+                  "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+                  "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+                  "Registry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.",
+                  "Recorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50."
+                ],
+                "filingContext": {
+                  "registryId": "US_NDA",
+                  "region": "US",
+                  "agency": "FDA"
+                }
+              },
+              "evidenceSourceIds": [],
+              "evidenceSourcesRead": "ready",
+              "screen_actions": [
+                {
+                  "id": "authoring.open-document",
+                  "label": "Open a document for authoring",
+                  "params": [
+                    {
+                      "name": "title",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.open-section",
+                  "label": "Open a section of the open document",
+                  "params": [
+                    {
+                      "name": "sectionCode",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.find",
+                  "label": "Find text in the open section",
+                  "params": [
+                    {
+                      "name": "query",
+                      "required": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "authoringContext": {
+              "projectId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "workflowStage": "section-workspace",
+              "artifactId": "dddddddd-0000-4000-8000-000000000001",
+              "artifactStatus": "DRAFT",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "linkedSectionCodes": [
+                "1.14",
+                "1.2",
+                "1.4",
+                "2.1",
+                "2.2",
+                "2.3",
+                "2.4",
+                "2.5",
+                "2.6",
+                "2.6.1",
+                "2.6.2",
+                "2.6.3",
+                "2.6.4",
+                "2.6.5",
+                "2.6.6",
+                "2.6.7",
+                "2.7",
+                "2.7.1",
+                "2.7.2",
+                "2.7.3",
+                "2.7.4",
+                "2.7.5",
+                "2.7.6",
+                "3.2.A",
+                "3.2.P",
+                "3.2.P.1",
+                "3.2.P.2",
+                "3.2.P.3",
+                "3.2.P.4",
+                "3.2.P.5",
+                "3.2.P.6",
+                "3.2.P.7",
+                "3.2.P.8",
+                "3.2.R",
+                "3.2.S",
+                "3.2.S.1",
+                "3.2.S.2",
+                "3.2.S.3",
+                "3.2.S.4",
+                "3.2.S.5",
+                "3.2.S.6",
+                "3.2.S.7",
+                "3.3",
+                "4.2.1",
+                "4.2.1.1",
+                "4.2.1.2",
+                "4.2.1.3",
+                "4.2.1.4",
+                "4.2.2",
+                "4.2.2.1",
+                "4.2.2.2",
+                "4.2.2.3",
+                "4.2.2.4",
+                "4.2.2.5",
+                "4.2.2.6",
+                "4.2.2.7",
+                "4.2.3",
+                "4.2.3.1",
+                "4.2.3.2",
+                "4.2.3.3",
+                "4.2.3.4",
+                "4.2.3.5",
+                "4.2.3.6",
+                "4.2.3.7",
+                "4.3",
+                "5.2",
+                "5.3",
+                "5.3.1",
+                "5.3.2",
+                "5.3.3",
+                "5.3.4",
+                "5.3.5",
+                "5.3.5.1",
+                "5.3.5.2",
+                "5.3.5.3",
+                "5.3.5.4",
+                "5.3.6",
+                "5.3.7",
+                "5.4"
+              ]
+            },
+            "authoringDocument": {
+              "docId": "dddddddd-0000-4000-8000-000000000001",
+              "programId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000"
+            }
+          },
+          "sendOnArrival": false
+        },
+        {
+          "action": "Review document",
+          "prefill": "Review every section of the document open in the editor. Run critique_document with its exact saved document_id from screen context and offset=0; follow every nextOffset using the returned snapshotSha256 as expected_snapshot and unchanged review options. Use the saved-record review instead of assembling a copied subset. Check cross-section consistency and requirements, and identify remedies by severity and section. Report any refused or unfinished review and do not claim complete coverage until all findings and section coverage pages are read.\n\nWhen an authoring document is open, first call critique_document with its exact saved document_id from screen context and offset=0. Follow every nextOffset with the returned snapshotSha256 as expected_snapshot and unchanged review options, including template-source and template-reference items. Honor the recorded template identity, filingContext, aiDraftable, authoringMode, limitations and exact section guidance even if the working document was renamed. Recorded filingContext identifies the registry filing, region and agency; GLOBAL component guidance does not establish a receiving jurisdiction. Confirm the actual product, filing operation and receiving market before regional preparation; do not infer them from a title, module or company type. Guidance is reference context, not authored evidence or checklist completion. If needed, use get_document_template with that exact template_id and follow its pages for current reference; current guidance does not replace recorded limits. For a preparation worksheet, propose only source-supported preparation text and checks; retain the original official form, dataset, certificate or signed record and never synthesize or claim to replace it. If source metadata or guidance is missing, malformed or unavailable, report the gap rather than infer drafting eligibility from a name or module. Saved-review writing scores do not verify original records, regulatory completeness, approval or filing readiness.\n\nWork on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.\n\nFor each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.",
+          "origin": {
+            "surfaceId": "document-authoring",
+            "label": "Authoring",
+            "moduleContext": {
+              "surface": "document-authoring",
+              "documentId": "dddddddd-0000-4000-8000-000000000001",
+              "documentTitle": "Synthetic US marketing preparation",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "savedRecordOnly": true,
+              "templateId": "015b44f2-b717-5f95-99fb-aa94073909a0",
+              "templateSourceState": "recorded",
+              "templateSource": {
+                "id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+                "entryId": "registry:US_NDA",
+                "version": 1,
+                "sha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505",
+                "kind": "preparation",
+                "aiDraftable": false,
+                "authoringMode": "manual",
+                "originalFormat": "eCTD",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+                  "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+                  "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+                  "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+                  "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+                  "Registry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.",
+                  "Recorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50."
+                ],
+                "filingContext": {
+                  "registryId": "US_NDA",
+                  "region": "US",
+                  "agency": "FDA"
+                }
+              },
+              "evidenceSourceIds": [],
+              "evidenceSourcesRead": "ready",
+              "screen_actions": [
+                {
+                  "id": "authoring.open-document",
+                  "label": "Open a document for authoring",
+                  "params": [
+                    {
+                      "name": "title",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.open-section",
+                  "label": "Open a section of the open document",
+                  "params": [
+                    {
+                      "name": "sectionCode",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.find",
+                  "label": "Find text in the open section",
+                  "params": [
+                    {
+                      "name": "query",
+                      "required": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "authoringContext": {
+              "projectId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "workflowStage": "section-workspace",
+              "artifactId": "dddddddd-0000-4000-8000-000000000001",
+              "artifactStatus": "DRAFT",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "linkedSectionCodes": [
+                "1.14",
+                "1.2",
+                "1.4",
+                "2.1",
+                "2.2",
+                "2.3",
+                "2.4",
+                "2.5",
+                "2.6",
+                "2.6.1",
+                "2.6.2",
+                "2.6.3",
+                "2.6.4",
+                "2.6.5",
+                "2.6.6",
+                "2.6.7",
+                "2.7",
+                "2.7.1",
+                "2.7.2",
+                "2.7.3",
+                "2.7.4",
+                "2.7.5",
+                "2.7.6",
+                "3.2.A",
+                "3.2.P",
+                "3.2.P.1",
+                "3.2.P.2",
+                "3.2.P.3",
+                "3.2.P.4",
+                "3.2.P.5",
+                "3.2.P.6",
+                "3.2.P.7",
+                "3.2.P.8",
+                "3.2.R",
+                "3.2.S",
+                "3.2.S.1",
+                "3.2.S.2",
+                "3.2.S.3",
+                "3.2.S.4",
+                "3.2.S.5",
+                "3.2.S.6",
+                "3.2.S.7",
+                "3.3",
+                "4.2.1",
+                "4.2.1.1",
+                "4.2.1.2",
+                "4.2.1.3",
+                "4.2.1.4",
+                "4.2.2",
+                "4.2.2.1",
+                "4.2.2.2",
+                "4.2.2.3",
+                "4.2.2.4",
+                "4.2.2.5",
+                "4.2.2.6",
+                "4.2.2.7",
+                "4.2.3",
+                "4.2.3.1",
+                "4.2.3.2",
+                "4.2.3.3",
+                "4.2.3.4",
+                "4.2.3.5",
+                "4.2.3.6",
+                "4.2.3.7",
+                "4.3",
+                "5.2",
+                "5.3",
+                "5.3.1",
+                "5.3.2",
+                "5.3.3",
+                "5.3.4",
+                "5.3.5",
+                "5.3.5.1",
+                "5.3.5.2",
+                "5.3.5.3",
+                "5.3.5.4",
+                "5.3.6",
+                "5.3.7",
+                "5.4"
+              ]
+            },
+            "authoringDocument": {
+              "docId": "dddddddd-0000-4000-8000-000000000001",
+              "programId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000"
+            }
+          },
+          "sendOnArrival": false
+        },
+        {
+          "action": "Reconcile project evidence",
+          "prefill": "Reconcile this project's saved documents against its data catalogue, data room and Vault for the confirmed filing type and jurisdiction. Use the recorded filingContext and exact template references for regional documents; do not substitute US IND requirements for Canada, EU or Japan. For a US IND, also read the full IND pyramid, including every phase and its deliverables: call get_document_section_requirements with document=\"ind_pyramid\", starting offset=0, and follow every nextOffset until null. Respect each entry's aiDraftable and authoringMode limits for official forms, datasets and signed records. Report document/evidence gaps, conflicting values, provenance and filing gaps with their actual recorded placement. Separate required deliverables from the documents actually present; do not claim readiness or compliance from inventory alone.\n\nWhen an authoring document is open, first call critique_document with its exact saved document_id from screen context and offset=0. Follow every nextOffset with the returned snapshotSha256 as expected_snapshot and unchanged review options, including template-source and template-reference items. Honor the recorded template identity, filingContext, aiDraftable, authoringMode, limitations and exact section guidance even if the working document was renamed. Recorded filingContext identifies the registry filing, region and agency; GLOBAL component guidance does not establish a receiving jurisdiction. Confirm the actual product, filing operation and receiving market before regional preparation; do not infer them from a title, module or company type. Guidance is reference context, not authored evidence or checklist completion. If needed, use get_document_template with that exact template_id and follow its pages for current reference; current guidance does not replace recorded limits. For a preparation worksheet, propose only source-supported preparation text and checks; retain the original official form, dataset, certificate or signed record and never synthesize or claim to replace it. If source metadata or guidance is missing, malformed or unavailable, report the gap rather than infer drafting eligibility from a name or module. Saved-review writing scores do not verify original records, regulatory completeness, approval or filing readiness.\n\nWork on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.\n\nFor each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.",
+          "origin": {
+            "surfaceId": "document-authoring",
+            "label": "Authoring",
+            "moduleContext": {
+              "surface": "document-authoring",
+              "documentId": "dddddddd-0000-4000-8000-000000000001",
+              "documentTitle": "Synthetic US marketing preparation",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "savedRecordOnly": true,
+              "templateId": "015b44f2-b717-5f95-99fb-aa94073909a0",
+              "templateSourceState": "recorded",
+              "templateSource": {
+                "id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+                "entryId": "registry:US_NDA",
+                "version": 1,
+                "sha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505",
+                "kind": "preparation",
+                "aiDraftable": false,
+                "authoringMode": "manual",
+                "originalFormat": "eCTD",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+                  "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+                  "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+                  "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+                  "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+                  "Registry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.",
+                  "Recorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50."
+                ],
+                "filingContext": {
+                  "registryId": "US_NDA",
+                  "region": "US",
+                  "agency": "FDA"
+                }
+              },
+              "evidenceSourceIds": [],
+              "evidenceSourcesRead": "ready",
+              "screen_actions": [
+                {
+                  "id": "authoring.open-document",
+                  "label": "Open a document for authoring",
+                  "params": [
+                    {
+                      "name": "title",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.open-section",
+                  "label": "Open a section of the open document",
+                  "params": [
+                    {
+                      "name": "sectionCode",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.find",
+                  "label": "Find text in the open section",
+                  "params": [
+                    {
+                      "name": "query",
+                      "required": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "authoringContext": {
+              "projectId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "workflowStage": "section-workspace",
+              "artifactId": "dddddddd-0000-4000-8000-000000000001",
+              "artifactStatus": "DRAFT",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "linkedSectionCodes": [
+                "1.14",
+                "1.2",
+                "1.4",
+                "2.1",
+                "2.2",
+                "2.3",
+                "2.4",
+                "2.5",
+                "2.6",
+                "2.6.1",
+                "2.6.2",
+                "2.6.3",
+                "2.6.4",
+                "2.6.5",
+                "2.6.6",
+                "2.6.7",
+                "2.7",
+                "2.7.1",
+                "2.7.2",
+                "2.7.3",
+                "2.7.4",
+                "2.7.5",
+                "2.7.6",
+                "3.2.A",
+                "3.2.P",
+                "3.2.P.1",
+                "3.2.P.2",
+                "3.2.P.3",
+                "3.2.P.4",
+                "3.2.P.5",
+                "3.2.P.6",
+                "3.2.P.7",
+                "3.2.P.8",
+                "3.2.R",
+                "3.2.S",
+                "3.2.S.1",
+                "3.2.S.2",
+                "3.2.S.3",
+                "3.2.S.4",
+                "3.2.S.5",
+                "3.2.S.6",
+                "3.2.S.7",
+                "3.3",
+                "4.2.1",
+                "4.2.1.1",
+                "4.2.1.2",
+                "4.2.1.3",
+                "4.2.1.4",
+                "4.2.2",
+                "4.2.2.1",
+                "4.2.2.2",
+                "4.2.2.3",
+                "4.2.2.4",
+                "4.2.2.5",
+                "4.2.2.6",
+                "4.2.2.7",
+                "4.2.3",
+                "4.2.3.1",
+                "4.2.3.2",
+                "4.2.3.3",
+                "4.2.3.4",
+                "4.2.3.5",
+                "4.2.3.6",
+                "4.2.3.7",
+                "4.3",
+                "5.2",
+                "5.3",
+                "5.3.1",
+                "5.3.2",
+                "5.3.3",
+                "5.3.4",
+                "5.3.5",
+                "5.3.5.1",
+                "5.3.5.2",
+                "5.3.5.3",
+                "5.3.5.4",
+                "5.3.6",
+                "5.3.7",
+                "5.4"
+              ]
+            },
+            "authoringDocument": {
+              "docId": "dddddddd-0000-4000-8000-000000000001",
+              "programId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000"
+            }
+          },
+          "sendOnArrival": false
+        },
+        {
+          "action": "Prepare targeted fixes",
+          "prefill": "Prepare targeted fixes for the section open in the editor using the saved document and linked project evidence. Run critique_draft and the applicable deterministic consistency checks before proposing changes, and explain what each fix remedies.\n\nWhen an authoring document is open, first call critique_document with its exact saved document_id from screen context and offset=0. Follow every nextOffset with the returned snapshotSha256 as expected_snapshot and unchanged review options, including template-source and template-reference items. Honor the recorded template identity, filingContext, aiDraftable, authoringMode, limitations and exact section guidance even if the working document was renamed. Recorded filingContext identifies the registry filing, region and agency; GLOBAL component guidance does not establish a receiving jurisdiction. Confirm the actual product, filing operation and receiving market before regional preparation; do not infer them from a title, module or company type. Guidance is reference context, not authored evidence or checklist completion. If needed, use get_document_template with that exact template_id and follow its pages for current reference; current guidance does not replace recorded limits. For a preparation worksheet, propose only source-supported preparation text and checks; retain the original official form, dataset, certificate or signed record and never synthesize or claim to replace it. If source metadata or guidance is missing, malformed or unavailable, report the gap rather than infer drafting eligibility from a name or module. Saved-review writing scores do not verify original records, regulatory completeness, approval or filing readiness.\n\nWork on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.\n\nFor each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.",
+          "origin": {
+            "surfaceId": "document-authoring",
+            "label": "Authoring",
+            "moduleContext": {
+              "surface": "document-authoring",
+              "documentId": "dddddddd-0000-4000-8000-000000000001",
+              "documentTitle": "Synthetic US marketing preparation",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "savedRecordOnly": true,
+              "templateId": "015b44f2-b717-5f95-99fb-aa94073909a0",
+              "templateSourceState": "recorded",
+              "templateSource": {
+                "id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+                "entryId": "registry:US_NDA",
+                "version": 1,
+                "sha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505",
+                "kind": "preparation",
+                "aiDraftable": false,
+                "authoringMode": "manual",
+                "originalFormat": "eCTD",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+                  "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+                  "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+                  "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+                  "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+                  "Registry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.",
+                  "Recorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50."
+                ],
+                "filingContext": {
+                  "registryId": "US_NDA",
+                  "region": "US",
+                  "agency": "FDA"
+                }
+              },
+              "evidenceSourceIds": [],
+              "evidenceSourcesRead": "ready",
+              "screen_actions": [
+                {
+                  "id": "authoring.open-document",
+                  "label": "Open a document for authoring",
+                  "params": [
+                    {
+                      "name": "title",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.open-section",
+                  "label": "Open a section of the open document",
+                  "params": [
+                    {
+                      "name": "sectionCode",
+                      "required": true
+                    }
+                  ]
+                },
+                {
+                  "id": "authoring.find",
+                  "label": "Find text in the open section",
+                  "params": [
+                    {
+                      "name": "query",
+                      "required": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "authoringContext": {
+              "projectId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "workflowStage": "section-workspace",
+              "artifactId": "dddddddd-0000-4000-8000-000000000001",
+              "artifactStatus": "DRAFT",
+              "sectionCode": "1.1",
+              "sectionTitle": "Administrative Forms",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000",
+              "sectionUpdatedAt": "2026-10-14T10:00:00.000Z",
+              "linkedSectionCodes": [
+                "1.14",
+                "1.2",
+                "1.4",
+                "2.1",
+                "2.2",
+                "2.3",
+                "2.4",
+                "2.5",
+                "2.6",
+                "2.6.1",
+                "2.6.2",
+                "2.6.3",
+                "2.6.4",
+                "2.6.5",
+                "2.6.6",
+                "2.6.7",
+                "2.7",
+                "2.7.1",
+                "2.7.2",
+                "2.7.3",
+                "2.7.4",
+                "2.7.5",
+                "2.7.6",
+                "3.2.A",
+                "3.2.P",
+                "3.2.P.1",
+                "3.2.P.2",
+                "3.2.P.3",
+                "3.2.P.4",
+                "3.2.P.5",
+                "3.2.P.6",
+                "3.2.P.7",
+                "3.2.P.8",
+                "3.2.R",
+                "3.2.S",
+                "3.2.S.1",
+                "3.2.S.2",
+                "3.2.S.3",
+                "3.2.S.4",
+                "3.2.S.5",
+                "3.2.S.6",
+                "3.2.S.7",
+                "3.3",
+                "4.2.1",
+                "4.2.1.1",
+                "4.2.1.2",
+                "4.2.1.3",
+                "4.2.1.4",
+                "4.2.2",
+                "4.2.2.1",
+                "4.2.2.2",
+                "4.2.2.3",
+                "4.2.2.4",
+                "4.2.2.5",
+                "4.2.2.6",
+                "4.2.2.7",
+                "4.2.3",
+                "4.2.3.1",
+                "4.2.3.2",
+                "4.2.3.3",
+                "4.2.3.4",
+                "4.2.3.5",
+                "4.2.3.6",
+                "4.2.3.7",
+                "4.3",
+                "5.2",
+                "5.3",
+                "5.3.1",
+                "5.3.2",
+                "5.3.3",
+                "5.3.4",
+                "5.3.5",
+                "5.3.5.1",
+                "5.3.5.2",
+                "5.3.5.3",
+                "5.3.5.4",
+                "5.3.6",
+                "5.3.7",
+                "5.4"
+              ]
+            },
+            "authoringDocument": {
+              "docId": "dddddddd-0000-4000-8000-000000000001",
+              "programId": "bbbbbbbb-0000-4000-8000-000000000092",
+              "sectionId": "aaaaaaaa-0000-4000-8000-000000001000"
+            }
+          },
+          "sendOnArrival": false
+        }
+      ],
+      "stages": [
+        {
+          "stage": "picker",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "passage": null,
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    ".de-h-s"
+                  ],
+                  [
+                    "#_r_0_-template"
+                  ]
+                ]
+              }
+            ],
+            "passes": 18
+          },
+          "pickerReference": {
+            "text": "Creates an empty working copy. Confirm product and jurisdiction; retain original forms, data and signed records. Read the full applicability limits and any missing-outline notices in “Template guidance and source requirements” in the editor.",
+            "controls": {
+              "module": {
+                "x": 44.40625,
+                "y": 409.90625,
+                "width": 156.796875,
+                "height": 38
+              },
+              "startFrom": {
+                "x": 201.203125,
+                "y": 409.90625,
+                "width": 156.796875,
+                "height": 38
+              },
+              "summary": {
+                "x": 201.203125,
+                "y": 250,
+                "width": 156.796875,
+                "height": 153.90625
+              }
+            },
+            "body": {
+              "x": 24.40625,
+              "y": 133,
+              "width": 365.59375,
+              "height": 636
+            },
+            "scrollTop": 0
+          }
+        },
+        {
+          "stage": "created-empty",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 46,
+              "y": 597,
+              "width": 298,
+              "height": 246
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 842,
+              "scrollHeight": 842
+            },
+            "editor": {
+              "x": 46,
+              "y": 578.796875,
+              "width": 298,
+              "height": 320,
+              "clientWidth": 298,
+              "scrollWidth": 298,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 1,
+              "y": 597,
+              "width": 388,
+              "height": 246,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 246,
+              "scrollHeight": 1107
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 45,
+              "y": -5,
+              "width": 300,
+              "height": 223.796875,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 223,
+              "scrollHeight": 223
+            },
+            "editorCount": 1
+          },
+          "passage": {
+            "text": "",
+            "x": 66,
+            "y": 596.796875,
+            "width": 258,
+            "height": 21.125
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-mast-num"
+                  ],
+                  [
+                    "h1"
+                  ],
+                  [
+                    ".nda-open:nth-child(3)"
+                  ],
+                  [
+                    ".nda-open:nth-child(5)"
+                  ],
+                  [
+                    "div[data-source=\"template\"]"
+                  ],
+                  [
+                    ".ed-source-notice > summary"
+                  ],
+                  [
+                    ".ed-mast-meta"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 22
+          }
+        },
+        {
+          "stage": "editor",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 46,
+              "y": 597,
+              "width": 298,
+              "height": 246
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 842,
+              "scrollHeight": 842
+            },
+            "editor": {
+              "x": 46,
+              "y": 578.796875,
+              "width": 298,
+              "height": 320,
+              "clientWidth": 298,
+              "scrollWidth": 298,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 1,
+              "y": 597,
+              "width": 388,
+              "height": 246,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 246,
+              "scrollHeight": 1178
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 45,
+              "y": 49,
+              "width": 300,
+              "height": 223.796875,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 223,
+              "scrollHeight": 223
+            },
+            "editorCount": 1
+          },
+          "passage": {
+            "text": "Synthetic preparation notes await verified project evidence and source originals.",
+            "x": 66,
+            "y": 596.796875,
+            "width": 258,
+            "height": 42.25
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-mast-num"
+                  ],
+                  [
+                    "h1"
+                  ],
+                  [
+                    ".nda-open:nth-child(3)"
+                  ],
+                  [
+                    ".nda-open:nth-child(5)"
+                  ],
+                  [
+                    "div[data-source=\"template\"]"
+                  ],
+                  [
+                    ".ed-source-notice > summary"
+                  ],
+                  [
+                    ".ed-mast-meta"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 24
+          }
+        },
+        {
+          "stage": "guidance",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 46,
+              "y": 1776.296875,
+              "width": 298,
+              "height": 0
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 842,
+              "scrollHeight": 842
+            },
+            "editor": {
+              "x": 46,
+              "y": 1776.296875,
+              "width": 298,
+              "height": 320,
+              "clientWidth": 298,
+              "scrollWidth": 298,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 1,
+              "y": 597,
+              "width": 388,
+              "height": 246,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 246,
+              "scrollHeight": 1860
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 45,
+              "y": 564,
+              "width": 300,
+              "height": 906.296875,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 905,
+              "scrollHeight": 905
+            },
+            "editorCount": 1
+          },
+          "passage": null,
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-lbl"
+                  ],
+                  [
+                    "div > ul > li:nth-child(1)"
+                  ]
+                ]
+              }
+            ],
+            "passes": 23
+          }
+        },
+        {
+          "stage": "prefill",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 46,
+              "y": 732.796875,
+              "width": 298,
+              "height": 110.203125
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 842,
+              "scrollHeight": 842
+            },
+            "editor": {
+              "x": 46,
+              "y": 732.796875,
+              "width": 298,
+              "height": 320,
+              "clientWidth": 298,
+              "scrollWidth": 298,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 1,
+              "y": 701,
+              "width": 388,
+              "height": 142,
+              "clientWidth": 388,
+              "scrollWidth": 388,
+              "clientHeight": 142,
+              "scrollHeight": 1178
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 45,
+              "y": 203,
+              "width": 300,
+              "height": 223.796875,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 223,
+              "scrollHeight": 223
+            },
+            "editorCount": 1
+          },
+          "passage": {
+            "text": "Synthetic preparation notes await verified project evidence and source originals.",
+            "x": 66,
+            "y": 750.796875,
+            "width": 258,
+            "height": 42.25
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(4) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(5) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(6) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(7) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(8) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(9) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(10) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(11) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-mast-num"
+                  ],
+                  [
+                    "h1"
+                  ],
+                  [
+                    ".nda-open:nth-child(3)"
+                  ],
+                  [
+                    ".nda-open:nth-child(5)"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 24
+          }
+        }
+      ],
+      "violations": [],
+      "requestQualification": {
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": "",
+            "phase": "picker"
+          },
+          {
+            "method": "POST",
+            "path": "/api/authoring/docs",
+            "query": "",
+            "phase": "picker"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000092",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092/sources",
+            "query": "?limit=200&offset=0",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/citations",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/guidance/aaaaaaaa-0000-4000-8000-000000001000",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000001000",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000001000/sources",
+            "query": "",
+            "phase": "created-empty"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000092",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000092/sources",
+            "query": "?limit=200&offset=0",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/citations",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/guidance/aaaaaaaa-0000-4000-8000-000000001000",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000001000",
+            "phase": "synthetic-saved-reading-example"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000001000/sources",
+            "query": "",
+            "phase": "synthetic-saved-reading-example"
+          }
+        ],
+        "mutations": [
+          {
+            "method": "POST",
+            "path": "/api/authoring/docs",
+            "body": "{\"title\":\"Synthetic US marketing preparation\",\"module\":null,\"template_id\":\"015b44f2-b717-5f95-99fb-aa94073909a0\",\"client_program_id\":\"bbbbbbbb-0000-4000-8000-000000000092\"}"
+          }
+        ],
+        "unexpected": [],
+        "consoleErrors": [],
+        "pageErrors": []
+      }
+    }
+  ],
+  "status": "pass"
+}

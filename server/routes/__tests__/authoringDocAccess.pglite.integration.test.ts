@@ -20,7 +20,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import express from 'express';
-import { PREREQ, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { runWithTenantScope } from '../../db/tenantStore';
 import { verifyJwtWithRotation } from '../../utils/jwtVerify';
 import { authoringObjectAuthorization } from '../../middleware/authoringObjectAuthorization';
@@ -44,35 +44,27 @@ const T = 180_000;
  * the same role (2026-09-28, GE-P-3). The router's own jose middleware still
  * verifies the token.
  */
-function makeAccessApp(router: express.Router, role: string): express.Express {
+function makeAccessApp(router: express.Router, gateObjects = false): express.Express {
   const a = express();
   a.use(express.json());
-  a.use((req, _res, next) => {
-    (req as express.Request & { userRole?: string }).userRole = role;
-    runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
-  });
-  a.use('/api/authoring', router);
-  return a;
-}
-/**
- * The same app with the object gate in front of the router, as production
- * mounts it (register-inline-routes.ts: app.use('/api',
- * authoringObjectAuthorization) ahead of /api/authoring). The global /api gate
- * attaches the verified principal before the object gate runs; this models it
- * with the same verification the router uses.
- */
-function makeGatedApp(router: express.Router, role: string): express.Express {
-  const a = express();
-  a.use(express.json());
-  a.use((req, _res, next) => {
+  a.use((req, res, next) => {
     const claims = verifyJwtWithRotation(String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')) as Record<string, unknown>;
-    (req as unknown as { user: unknown }).user = {
-      id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, roles: [],
-    };
-    (req as express.Request & { userRole?: string }).userRole = role;
-    runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
+    // The deployed /api auth gate reads this role uncached on every request.
+    // A direct SQL role change must therefore update the fixture's identity too.
+    void jdb.pool.query('SELECT role FROM organization_users WHERE user_id=$1 AND organization_id=$2', [claims.userId, claims.organizationId]).then(result => {
+      if (result.rows.length !== 1) { res.status(403).json({ error: 'CURRENT_MEMBERSHIP_REQUIRED' }); return; }
+      const role = String((result.rows[0] as { role: string }).role);
+      (req as unknown as { dbClient: typeof jdb.pool }).dbClient = jdb.pool;
+      req.userRole = role;
+      (req as unknown as { identity: { legacyUserId: number; organizationId: number; role: string } }).identity = {
+        legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role,
+      };
+      req.user = { id: String(claims.userId), userId: String(claims.userId), email: String(claims.email),
+        organizationId: Number(claims.organizationId), role, roles: [role] };
+      runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
+    }).catch(next);
   });
-  a.use('/api', authoringObjectAuthorization);
+  if (gateObjects) a.use('/api', authoringObjectAuthorization);
   a.use('/api/authoring', router);
   return a;
 }
@@ -83,7 +75,6 @@ const COLLEAGUE = { id: '7', organizationId: ORG, email: 'colleague@canvas.examp
 
 let jdb: JourneyDb;
 let app: express.Express;
-let viewerScopedApp: express.Express;
 let gatedApp: express.Express;
 let author: (r: request.Test) => request.Test;
 let reviewer: (r: request.Test) => request.Test;
@@ -92,7 +83,8 @@ let docId: string;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
+      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';`,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -114,6 +106,9 @@ beforeAll(async () => {
       'migrations/20260814d_document_alias_map.sql',
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
+      // Access reports must consult the deployed QMS governance stores, even for an unbound authored document.
+      'migrations/20260511_qms_and_labeling.sql',
+      'db/migrations/20261014_qms_controlled_authoring_content.sql',
     ],
   });
   h.db = jdb.db;
@@ -126,9 +121,8 @@ beforeAll(async () => {
   reviewer = asToken(await mint(REVIEWER));
   colleague = asToken(await mint(COLLEAGUE));
   const { default: router } = await import('../authoring.router');
-  app = makeAccessApp(router, 'member');
-  viewerScopedApp = makeAccessApp(router, 'viewer');
-  gatedApp = makeGatedApp(router, 'member');
+  app = makeAccessApp(router);
+  gatedApp = makeAccessApp(router, true);
 
   const created = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM,
@@ -156,6 +150,7 @@ describe('GET /docs/:docId — the caller’s access', () => {
     const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const { access } = res.body;
+    expect(access.edit).toEqual({ allowed: true, reason: null });
     /* DP-35 (2026-10-01): a freeze is a signature, so it meets the same
        §11.10(g) org-role step as E-sign — the freeze route answers
        ESIGNATURE_NO_AUTHORITY for a member, and the bar is told so first. */
@@ -176,16 +171,15 @@ describe('GET /docs/:docId — the caller’s access', () => {
   });
 
   it('a member with only a Reviewer grant and a viewer org role is told, per act, why not', async () => {
-    const res = await reviewer(request(viewerScopedApp).get(`/api/authoring/docs/${docId}`));
+    const res = await reviewer(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const { access } = res.body;
     expect(access.freeze.allowed).toBe(false);
-    expect(access.freeze.reason).toMatch(/Owner or Approver grant/);
-    expect(access.freeze.reason).toMatch(/Your grants on it: Reviewer/);
+    expect(access.freeze.reason).toMatch(/current organization access is read-only/);
     expect(access.esign.allowed).toBe(false);
-    expect(access.esign.reason).toMatch(/Owner or Approver grant/);
+    expect(access.esign.reason).toMatch(/current organization access is read-only/);
     expect(access.fileToVault.allowed).toBe(false);
-    expect(access.fileToVault.reason).toMatch(/Owner, Author or Approver grant/);
+    expect(access.fileToVault.reason).toMatch(/current organization access is read-only/);
     expect(access.assignReview.allowed).toBe(false);
     expect(access.assignReview.reason).toMatch(/Your role: viewer/);
     // The control it describes is "Send for review" (wave 2C): the sentence
@@ -214,9 +208,9 @@ describe('GET /docs/:docId — the caller’s access', () => {
       await jdb.pool.query(`UPDATE organization_users SET role = 'viewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
     }
     // Without a signing role the review signature is refused, and says why.
-    const res = await reviewer(request(viewerScopedApp).get(`/api/authoring/docs/${docId}`));
+    const res = await reviewer(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.body.access.esignReview.allowed).toBe(false);
-    expect(res.body.access.esignReview.reason).toMatch(/signing role/i);
+    expect(res.body.access.esignReview.reason).toMatch(/current organization access is read-only/);
   });
 
   it('a FROZEN document can still be filed to the vault — the sealed record is what filing is for', async () => {
@@ -248,6 +242,7 @@ describe('GET /docs/:docId — the caller’s access', () => {
       /* Send for review's role step allows a member, but its grant step (the
          request's 'edit' decision, wave 2D) could not be read: unknown. */
       expect(access.assignReview).toBeNull();
+      expect(access.edit).toBeNull();
     } finally {
       await jdb.pool.query('ALTER TABLE doc_permissions_unavailable RENAME TO doc_permissions');
     }
@@ -309,5 +304,60 @@ describe('Send for review: the report is the decision the request meets', () => 
     const sent = await send(author);
     expect(sent.status, JSON.stringify(sent.body)).toBe(200);
     expect(sent.body.reviews).toEqual([expect.objectContaining({ reviewer_id: REVIEWER.id, review_status: 'pending' })]);
+  });
+});
+
+
+describe('current membership composes with editor access', () => {
+  it('a current viewer with retained OWNER and AUTHOR grants reads the document with editing refused', async () => {
+    await jdb.pool.query("UPDATE organization_users SET role='viewer' WHERE organization_id=$1 AND user_id=$2", [ORG,AUTHOR.id]);
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.access.edit).toEqual({ allowed: false,
+        reason: 'Editing needs an editing role in this organization. Your current organization access is read-only.' });
+      const grants = await jdb.pool.query('SELECT role FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 AND principal_id=$3 AND revoked_at IS NULL', [docId,ORG,AUTHOR.id]);
+      expect(grants.rows).toEqual(expect.arrayContaining([{ role: 'OWNER' }, { role: 'AUTHOR' }]));
+    } finally {
+      await jdb.pool.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=$2", [ORG,AUTHOR.id]);
+    }
+  });
+});
+
+describe('current QMS standing composes with document permissions', () => {
+  it('routes a linked draft signature through Quality and refuses content and assignment once under review', async () => {
+    const linked = await jdb.pglite.query<{ id: number }>(`INSERT INTO qms_documents (organization_id,doc_number,title,doc_type,status,authoring_document_id)
+      VALUES ($1,'SOP-ACCESS','Controlled access procedure','sop','draft',$2) RETURNING id`, [ORG,docId]);
+    try {
+      const draft = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(draft.status).toBe(200);
+      expect(draft.body.access.edit).toEqual({ allowed: true, reason: null });
+      expect(draft.body.access.assignReview).toEqual({ allowed: true, reason: null });
+      for (const act of ['freeze','esign','esignReview']) {
+        expect(draft.body.access[act].allowed).toBe(false);
+        expect(draft.body.access[act].reason).toContain('Quality register');
+      }
+      await jdb.pool.query("UPDATE qms_documents SET status='in_review' WHERE id=$1", [linked.rows[0].id]);
+      const review = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      for (const act of ['edit','assignReview']) {
+        expect(review.body.access[act].allowed).toBe(false);
+        expect(review.body.access[act].reason).toContain('controlled revision');
+      }
+    } finally {
+      await jdb.pool.query('DELETE FROM qms_documents WHERE id=$1', [linked.rows[0].id]);
+    }
+  });
+
+  it('keeps a QMS store read failure visible and refuses the affected acts', async () => {
+    await jdb.pool.query('ALTER TABLE qms_documents RENAME TO qms_documents_unavailable');
+    try {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status).toBe(200);
+      for (const act of ['edit','freeze','esign','esignReview','assignReview']) {
+        expect(res.body.access[act]).toEqual({ allowed: false, reason: 'Controlled-document governance could not be verified. Nothing was changed.' });
+      }
+    } finally {
+      await jdb.pool.query('ALTER TABLE qms_documents_unavailable RENAME TO qms_documents');
+    }
   });
 });

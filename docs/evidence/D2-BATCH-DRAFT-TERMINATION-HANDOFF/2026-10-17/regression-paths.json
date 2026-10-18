@@ -1,0 +1,15 @@
+[
+  "client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx",
+  "client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx",
+  "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts",
+  "server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts",
+  "server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts",
+  "server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts",
+  "server/routes/__tests__/batch-draft-termination-boundary.test.ts",
+  "server/services/ai-gateway/__tests__/finish-reason.test.ts",
+  "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts",
+  "server/services/ana/__tests__/batch-draft-termination-tool.test.ts",
+  "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+  "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+  "server/services/ana/__tests__/tool-trace-stopped-turn.test.ts"
+]

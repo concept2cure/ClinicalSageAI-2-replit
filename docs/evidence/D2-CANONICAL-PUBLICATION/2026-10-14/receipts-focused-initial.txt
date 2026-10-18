@@ -1,0 +1,458 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/step-document-titles.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:13:34.220Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:13:34.221Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/step-document-titles.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:13:34.222Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/step-document-titles.pglite.test.ts
+[database] Database connection successful
+
+·········stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-14T21:13:40.405Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:13:40.406Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-14T21:13:40.406Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Loaded 0 academic documents
+
+········stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target)
+{
+  "timestamp": "2026-10-14T21:13:45.230Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for function is_vault_program_owner"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity)
+{
+  "timestamp": "2026-10-14T21:13:45.232Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "unexpected integrity failure"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero)
+{
+  "timestamp": "2026-10-14T21:13:45.233Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor)
+{
+  "timestamp": "2026-10-14T21:13:45.234Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response
+{
+  "timestamp": "2026-10-14T21:13:45.236Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "commit acknowledgement lost"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws
+{
+  "timestamp": "2026-10-14T21:13:45.237Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt settlement notification failed",
+  "context": {
+    "toolUseId": "server-tool"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback
+{
+  "timestamp": "2026-10-14T21:13:45.237Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence
+{
+  "timestamp": "2026-10-14T21:13:45.238Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count
+{
+  "timestamp": "2026-10-14T21:13:45.239Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+·····················stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+{
+  "timestamp": "2026-10-14T21:13:45.999Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+{
+  "timestamp": "2026-10-14T21:13:46.002Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+{
+  "timestamp": "2026-10-14T21:13:46.002Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+{
+  "timestamp": "2026-10-14T21:13:46.003Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+{
+  "timestamp": "2026-10-14T21:13:46.004Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+{
+  "timestamp": "2026-10-14T21:13:46.005Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+{
+  "timestamp": "2026-10-14T21:13:46.005Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero)
+{
+  "timestamp": "2026-10-14T21:13:46.009Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor)
+{
+  "timestamp": "2026-10-14T21:13:46.011Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error)
+{
+  "timestamp": "2026-10-14T21:13:46.012Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "internal insert failed"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT
+{
+  "timestamp": "2026-10-14T21:13:46.013Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > notifies the host when insertion observes a typed source refusal after the first handoff check
+{
+  "timestamp": "2026-10-14T21:13:46.015Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > normalizes canonical actor/source verification refusal so the host withdraws it
+{
+  "timestamp": "2026-10-14T21:13:46.016Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > retains authorized read content for an ordinary SQL42501 receipt insertion failure
+{
+  "timestamp": "2026-10-14T21:13:46.016Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT permission denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > stops a three-read round after typed source refusal and preserves the first committed count
+{
+  "timestamp": "2026-10-14T21:13:46.017Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts
+{
+  "timestamp": "2026-10-14T21:13:46.017Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > settlement source refusal and ordinary write failures > an ordinary failed conditional persistence result does not become a source-access refusal
+{
+  "timestamp": "2026-10-14T21:13:46.019Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+·······························stdout | server/services/ana/__tests__/step-presentation.test.ts
+{
+  "timestamp": "2026-10-14T21:13:46.781Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:13:46.782Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/step-presentation.test.ts
+{
+  "timestamp": "2026-10-14T21:13:46.783Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/step-presentation.test.ts
+[database] Database connection successful
+
+························stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-10-14T21:13:47.681Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "30000000-0000-4000-8000-000000000005",
+    "error": "database unavailable"
+  }
+}
+
+··········xxx·····
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/source-context-admission.pglite.test.ts [ server/services/ana/__tests__/source-context-admission.pglite.test.ts ]
+Error: Transform failed with 1 error:
+/workspace/Concept2Cure/server/services/document-data-disposition/service.ts:70:0: ERROR: Unexpected "<<"
+  Plugin: vite:esbuild
+  File: /workspace/Concept2Cure/server/services/document-data-disposition/service.ts:70:0
+  
+  Unexpected "<<"
+  68 |    async function scoped(q: DispositionQueryable, input: DispositionPreviewInput, write: boolean, holdProgram = false) {
+  69 |      await setTenantContextTx(q, input.organizationId, input.orgRole);
+  70 |  <<<<<<< HEAD
+     |  ^
+  71 |      if (!holdProgram && !await programInOrganization(q, input.programId, input.organizationId)) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
+  72 |      if (write) {
+  
+ ❯ failureErrorWithLog node_modules/vite/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/vite/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/vite/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/vite/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/vite/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/read-receipts.test.ts:158:18
+    156|     addDocument(DOC, prose(3000));
+    157|     const r = await readIt({ document_id: DOC }, ORG);
+    158|     expect(r.ok).toBe(true);
+       |                  ^
+    159|     expect(r.window).toMatchObject({ start: 0, end: 3000 });
+    160|     expect(r.coverage).toMatchObject({ coveredChars: 0, complete: fals…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves
+TypeError: Cannot read properties of undefined (reading 'end')
+ ❯ server/services/ana/__tests__/read-receipts.test.ts:172:101
+    170|     const r = JSON.parse(raw);
+    171|     expect(raw.length).toBeLessThanOrEqual(RESULT_BUDGET);
+    172|     expect(deferred.get('tu_1')).toMatchObject({ documentId: DOC, span…
+       |                                                                                                     ^
+    173|     expect(r.coverage.coveredChars, 'prospective legacy aggregate cove…
+    174|     expect(r.message).toMatch(new RegExp(`Continue with offset=0`));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/read-receipts.test.ts:182:37
+    180|     const r = await readIt({ document_id: DOC }, ORG);
+    181|     expect(r.comprehension).toBeUndefined();
+    182|     expect(r.comprehensionWithheld).toMatch(/too long to send beside/);
+       |                                     ^
+    183|     expect(r.window.end - r.window.start).toBeGreaterThan(1000);
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 6 passed (8)
+      Tests  3 failed | 108 passed (111)
+   Start at  21:13:31
+   Duration  16.39s (transform 6.26s, setup 216ms, import 12.39s, tests 2.41s, environment 1ms)
+

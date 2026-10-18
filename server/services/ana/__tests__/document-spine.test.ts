@@ -62,7 +62,7 @@ function makeDeps(overrides: Partial<SpineDeps> = {}): {
     },
     async recomputeReadiness(_org, _proj) {
       calls.push('recomputeReadiness');
-      return 71;
+      return { score: 71, notAssessed: ['consistency'] };
     },
     emitRefresh(_event) {
       calls.push('emitRefresh');
@@ -116,7 +116,7 @@ describe('commitCanonicalRevision — the atomic spine', () => {
     expect(r).toMatchObject({
       artifactId: 'artifact_1', artifactPk: 42, version: 3, created: true,
       status: 'review', ctdSection: '2.5', actionId: 'act_1', auditId: 'audit_1',
-      provenanceLinks: 2, readiness: 71,
+      provenanceLinks: 2, readiness: { score: 71, notAssessed: ['consistency'] },
     });
   });
 

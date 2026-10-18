@@ -226,7 +226,7 @@ describe('Rail licence gating', () => {
 
   /* CONTRACT 5 — AN UNKNOWN ID IS NOT LICENSABLE.
      The payload carries one verdict per catalog module. Destinations with no
-     catalog row — Home here, which "New conversation" opens, and deliberately
+     catalog row — Home here, and deliberately
      the Part 11 surfaces,
      which under 21 CFR §11.10(e) may not be something an org can be sold or an
      admin can switch off — are absent from it. Absent must mean unconditionally
@@ -237,11 +237,11 @@ describe('Rail licence gating', () => {
 
     // Same payload as contract 2, so the lock machinery is demonstrably live.
     expect(lockedButtons()).toHaveLength(1);
-    /* It was AnA Command, which left the rail with the "Explore" section
-       (shellNav.test.tsx). "New conversation" opens Home, and its verdict is
-       looked up by that destination; Home has no catalog row. What matters is
-       that its name does NOT carry the locked suffix. */
-    const btn = screen.getByRole('button', { name: 'New conversation' });
+    /* AnA Command, then "New conversation" (which opened Home); the founder put
+       Home itself on the rail on 2026-10-16 (327bc9fb6, RAIL_CORE). Home has no
+       catalog row: its name must NOT carry the locked suffix, and it navigates.
+       Scoped to the list of places — the rail logo is also named "Home". */
+    const btn = within(document.querySelector<HTMLElement>('.rail-nav')!).getByRole('button', { name: 'Home' });
     expect(btn.getAttribute('aria-label')).toBeNull();
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);

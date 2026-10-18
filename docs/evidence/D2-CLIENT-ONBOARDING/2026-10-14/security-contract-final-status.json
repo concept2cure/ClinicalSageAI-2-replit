@@ -1,0 +1,8 @@
+{
+  "command": "CI=true npm run test:security",
+  "exit_code": 0,
+  "tests_passed": 495,
+  "production_source_changed": false,
+  "scope": "Invitation membership role SQL fixture correction; exact hosted security job commands.",
+  "test_files_passed": 51
+}

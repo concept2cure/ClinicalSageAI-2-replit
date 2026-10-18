@@ -26,4 +26,3 @@ AssertionError: expected 22 to be greater than or equal to 24
       Tests  1 failed | 1 passed (2)
    Start at  04:52:55
    Duration  351ms (transform 125ms, setup 135ms, import 12ms, tests 13ms, environment 0ms)
-

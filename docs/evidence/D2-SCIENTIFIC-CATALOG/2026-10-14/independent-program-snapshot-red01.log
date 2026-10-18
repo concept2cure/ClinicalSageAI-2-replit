@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > a source admitted in A then moved to accessible B before service load cannot write B 1163ms
+   → expected true not to be true // Object.is equality
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > body programme and expected-programme fields cannot replace the server A handoff 2ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > a move after initial source load retains A in the final writer snapshot 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > a source admitted in A then moved to accessible B before service load cannot write B
+AssertionError: expected true not to be true // Object.is equality
+ ❯ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts:40:27
+     38|     h.moveBeforeService = true;
+     39|     const result = await call();
+     40|     expect(result.ok).not.toBe(true); expect(h.embed).not.toHaveBeenCa…
+       |                           ^
+     41|   });
+     42|   it('body programme and expected-programme fields cannot replace the …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  06:46:50
+   Duration  2.08s (transform 1.16s, setup 0ms, import 695ms, tests 1.17s, environment 0ms)
+

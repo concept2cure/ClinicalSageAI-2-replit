@@ -1,0 +1,197 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts
+{
+  "timestamp": "2026-10-13T21:18:24.944Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts
+{
+  "timestamp": "2026-10-13T21:18:25.284Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:18:25.285Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts
+{
+  "timestamp": "2026-10-13T21:18:25.285Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 111ms
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 144ms
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses private project metadata for an unassigned same-organization member 46ms
+   → {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 404 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses private Vault content search before any count, snippet, or document identity 59ms
+   → {"success":true,"data":{"query":"stability","total":1,"limit":25,"offset":0,"includeSuperseded":false,"results":[{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","title":"Stability private evidence","fileName":"private.pdf","documentType":"REPORT","size":"—","folderId":null,"ctdSection":null,"placementStatus":null,"version":null,"current":true,"originalFileAvailable":true,"disposition":null,"snippet":"Confidential <b>stability</b> results"}]}}: expected 200 to be 404 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > applies sharing before the portfolio page so private newest rows cannot consume public slots 67ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > bounds library search count and page by accessible programs before ranking/pagination 70ms
+   → {"success":true,"data":{"query":"stability","total":2,"limit":1,"offset":0,"includeSuperseded":false,"results":[{"originalFileAvailable":true,"disposition":null,"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","title":"Stability private evidence","fileName":"private.pdf","documentType":"REPORT","sizeBytes":null,"folderId":null,"ctdSection":null,"placementStatus":null,"version":null,"current":true,"snippet":"Confidential <b>stability</b> results","program":{"id":"11111111-1111-4111-8111-111111111111","name":"Private study metadata"},"size":"—"}]}}: expected 2 to be 1 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses project detail after organization membership is revoked even with a stale request role 42ms
+   → {"id":"22222222-2222-4222-8222-222222222222","code":null,"name":"Public study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-12T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 403 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > requires explicit program-to-project reconciliation for a missing anchor 15ms
+   → {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 409 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > requires explicit reconciliation for two live anchors rather than reading the lowest project 18ms
+   → {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 409 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses private project metadata for an unassigned same-organization member
+AssertionError: {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:109:60
+    107|   it('refuses private project metadata for an unassigned same-organiza…
+    108|     const response = await request(app()).get(`/api/c2c/projects/${PRI…
+    109|     expect(response.status, JSON.stringify(response.body)).toBe(404);
+       |                                                            ^
+    110|   });
+    111|   it('refuses private Vault content search before any count, snippet, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses private Vault content search before any count, snippet, or document identity
+AssertionError: {"success":true,"data":{"query":"stability","total":1,"limit":25,"offset":0,"includeSuperseded":false,"results":[{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","title":"Stability private evidence","fileName":"private.pdf","documentType":"REPORT","size":"—","folderId":null,"ctdSection":null,"placementStatus":null,"version":null,"current":true,"originalFileAvailable":true,"disposition":null,"snippet":"Confidential <b>stability</b> results"}]}}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:113:60
+    111|   it('refuses private Vault content search before any count, snippet, …
+    112|     const response = await request(app()).get(`/api/c2c/project-vault/…
+    113|     expect(response.status, JSON.stringify(response.body)).toBe(404);
+       |                                                            ^
+    114|   });
+    115|   it('applies sharing before the portfolio page so private newest rows…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > applies sharing before the portfolio page so private newest rows cannot consume public slots
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "22222222-2222-4222-8222-222222222222",
++   "11111111-1111-4111-8111-111111111111",
+  ]
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:118:69
+    116|     const response = await request(app()).get('/api/c2c/projects?limit…
+    117|     expect(response.status).toBe(200);
+    118|     expect(response.body.data.map((row: { id: string }) => row.id)).to…
+       |                                                                     ^
+    119|     expect(response.body.meta.hasMore).toBe(false);
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > bounds library search count and page by accessible programs before ranking/pagination
+AssertionError: {"success":true,"data":{"query":"stability","total":2,"limit":1,"offset":0,"includeSuperseded":false,"results":[{"originalFileAvailable":true,"disposition":null,"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","title":"Stability private evidence","fileName":"private.pdf","documentType":"REPORT","sizeBytes":null,"folderId":null,"ctdSection":null,"placementStatus":null,"version":null,"current":true,"snippet":"Confidential <b>stability</b> results","program":{"id":"11111111-1111-4111-8111-111111111111","name":"Private study metadata"},"size":"—"}]}}: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:124:69
+    122|     const response = await request(app()).get('/api/c2c/project-vault/…
+    123|     expect(response.status).toBe(200);
+    124|     expect(response.body.data.total, JSON.stringify(response.body)).to…
+       |                                                                     ^
+    125|     expect(response.body.data.results.map((row: { id: string }) => row…
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > refuses project detail after organization membership is revoked even with a stale request role
+AssertionError: {"id":"22222222-2222-4222-8222-222222222222","code":null,"name":"Public study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-12T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:130:60
+    128|     await h.pg.exec('DELETE FROM organization_users WHERE user_id=20');
+    129|     const response = await request(app()).get(`/api/c2c/projects/${PUB…
+    130|     expect(response.status, JSON.stringify(response.body)).toBe(403);
+       |                                                            ^
+    131|   });
+    132|   it('requires explicit program-to-project reconciliation for a missin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > requires explicit program-to-project reconciliation for a missing anchor
+AssertionError: {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:135:60
+    133|     await h.pg.exec('UPDATE projects SET regulatory_program_id=NULL WH…
+    134|     const response = await request(app(5)).get(`/api/c2c/projects/${PR…
+    135|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    136|   });
+    137|   it('requires explicit reconciliation for two live anchors rather tha…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts > expected privacy behavior: intentionally red on the frozen baseline > requires explicit reconciliation for two live anchors rather than reading the lowest project
+AssertionError: {"id":"11111111-1111-4111-8111-111111111111","code":null,"name":"Private study metadata","program_type":"ind","status":"active","phase":null,"priority":null,"description":null,"product_name":null,"indication":null,"intended_use":null,"primary_agency":null,"target_agencies":null,"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":5,"team_members":null,"created_at":"2026-10-13T21:18:33.549Z","updated_at":"2026-10-13T21:18:33.549Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"Fixture sponsor","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/parent-access.probe.ts:140:60
+    138|     await h.pg.exec(`INSERT INTO projects VALUES (13,7,'${PRIVATE}',5,…
+    139|     const response = await request(app(5)).get(`/api/c2c/projects/${PR…
+    140|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    141|   });
+    142| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  21:18:20
+   Duration  13.37s (transform 4.58s, setup 197ms, import 7.33s, tests 5.04s, environment 0ms)

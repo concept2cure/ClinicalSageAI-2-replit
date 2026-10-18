@@ -267,4 +267,3 @@ AssertionError: tenant B must be able to capture into its own project: expected 
       Tests  10 failed | 27 passed (37)
    Start at  16:55:35
    Duration  9.22s (transform 1.88s, setup 79ms, import 2.99s, tests 5.84s, environment 0ms)
-

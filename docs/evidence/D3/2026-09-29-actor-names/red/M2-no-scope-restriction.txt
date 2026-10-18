@@ -45,4 +45,3 @@ AssertionError: A's scope resolved another tenant's user: expected [ { name: 'WO
       Tests  1 failed | 3 passed (4)
    Start at  01:11:44
    Duration  2.32s (transform 890ms, setup 74ms, import 1.66s, tests 309ms, environment 0ms)
-

@@ -92,6 +92,8 @@ vi.mock('../../services/part11/reverify-signer-deps', () => ({
 // A signer is a numeric account; its membership re-check has its own suite.
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+  GOVERNED_WRITE_ROLES: new Set(['owner','admin','approver','reviewer']),
   invalidateOrgMembershipCache: () => undefined,
 }));
 
@@ -148,6 +150,8 @@ beforeEach(async () => {
     const s = String(sql);
     if (failOn && failOn.test(s)) throw new Error('injected mid-transaction failure');
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
+    if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rowCount:0,rows:[] };
+    if (/SELECT doc_id::text FROM authoring_sections/.test(s)) return { rowCount:1,rows:[{doc_id:'D1'}] };
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'new text' }] };
     }

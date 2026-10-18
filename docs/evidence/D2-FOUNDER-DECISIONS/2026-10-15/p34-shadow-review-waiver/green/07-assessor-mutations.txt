@@ -1,0 +1,14 @@
+# Mutations of the assessor wiring, each restored — 7dbb2c44d
+
+## W1: the presence gate ignores the resolved waiver (state 'none')
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## W2: the gate view drops the waiver's not-assessed note
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+restored: assess-dispatch-readiness.ts byte-identical to the committed file

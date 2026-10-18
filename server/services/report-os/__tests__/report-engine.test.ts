@@ -9,6 +9,7 @@ vi.mock('../../../db', () => ({ db: {}, pool: {}, getPool: () => ({}), getDb: ()
 import {
   DOMAIN_REPORT_TYPE_IDS,
   reportEngineFor,
+  reportAvailability,
   reportTypeApplies,
   reportTypeNotApplicableMessage,
 } from '../report-engine';
@@ -16,6 +17,12 @@ import { REGIONAL_REPORT_TYPE_IDS } from '../regional/filing-types';
 import { DOMAIN_REPORT_TYPE_IDS as PROVIDER_IDS } from '../research-compliance-report-providers';
 
 describe('reportEngineFor', () => {
+  it('intersects declared scopes with engine scope and discloses organization counts', () => {
+    expect(reportAvailability('readiness.executive_digest', 'account', ['account'])).toMatchObject({ engine: 'readiness', runnable: false, computedScope: 'project' });
+    expect(reportAvailability('irb.submission_register', 'account', ['account'])).toMatchObject({ runnable: true, computedScope: 'organization' });
+    expect(reportAvailability('grants.portfolio_register', 'project', ['project', 'account'])).toMatchObject({ runnable: true, computedScope: 'project' });
+    expect(reportAvailability('irb.submission_register', 'project', ['account'])).toMatchObject({ runnable: false });
+  });
   it('routes the Executive Readiness Digest to the readiness engine', () => {
     expect(reportEngineFor('readiness.executive_digest', 'project')).toBe('readiness');
   });

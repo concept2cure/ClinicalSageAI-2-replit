@@ -209,4 +209,3 @@ What I covered: `programSummary.ts` in full, `DocumentCanvas.tsx` consumer lines
 7. **Not already recorded.** It is not in docs/evidence/reviews/2026-09-2{4,6,8}/. The 2026-09-28 microcopy lens explicitly lists DocumentCanvas.tsx as not covered. The a11y lens mentions DocumentCanvas only at line 355, for a different finding.
 
 **Coverage:** I read all of programSummary.ts, DocumentCanvas.tsx lines 130-140, 237, 250-300 and 378, the call site in DocumentWorkbench.tsx, the commit history for line 281, and the three review folders. I did not run the UI or the database, and did not execute any test. The conclusion rests on deterministic control flow: no state is ever set on the failure path.
-

@@ -32,10 +32,11 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * INTEGRATION NOTES:
  *   - This module is PURE. It performs NO persistence and NO audit writes.
- *   - Expectedness: AdverseEvent carries an optional `expectedness` free-text
- *     field (vs the IB / RSI). This service maps it via `isUnexpected()`. If your
- *     intake does not populate `expectedness`, treat the event as expected=unknown
- *     and have a human/medical reviewer confirm before the clock is relied upon.
+ *   - Expectedness: AdverseEvent carries an optional `expectedness` field (vs the
+ *     IB / RSI), read through `expectednessDetermination()` as a closed
+ *     vocabulary: "expected" or "unexpected". Anything else — blank, "unknown",
+ *     "pending", free text — is not a determination (NOT_DETERMINED for a
+ *     serious, suspected event).
  *   - "Suspected" is derived from `causality` (WHO-UMC). definite|probable|possible
  *     => reasonable possibility (suspected); unlikely|unrelated => not suspected.
  *     Confirm this maps to your sponsor SOP for causality-to-suspectedness.
@@ -133,9 +134,13 @@ export interface IndSafetyClassification {
  * makes an event serious. The intake model always carries one criterion; a
  * non-serious AE is conveyed via eventType === 'AE' (it has no serious flag),
  * so we treat eventType 'AE' as non-serious and SAE/SUSAR/AESI as serious.
+ * Null — undetermined, neither — when the event type is missing or not one of
+ * those (2026-10-15: anything but 'AE' read as serious, so an event with no
+ * recorded type was listed and counted as a serious case).
  */
-export function isSerious(event: Pick<AdverseEvent, 'eventType'>): boolean {
-  return event.eventType !== 'AE';
+export function isSerious(event: Pick<AdverseEvent, 'eventType'>): boolean | null {
+  if (event.eventType === 'AE') return false;
+  return (EVENT_TYPE_VALUES as readonly string[]).includes(event.eventType) ? true : null;
 }
 
 /**
@@ -146,23 +151,29 @@ export function isSuspected(causality: Causality): boolean {
   return causality === 'definite' || causality === 'probable' || causality === 'possible';
 }
 
+/** Expectedness vs the IB / RSI as recorded: a determination, or none. */
+export type ExpectednessDetermination = 'expected' | 'unexpected' | 'not_assessed';
+
 /**
- * "Unexpected" per 312.32(a): not listed in the IB / not consistent with the RSI.
- * Derived from the optional free-text `expectedness` field. When the field is
- * absent or ambiguous we conservatively return false (treat as expected) so the
- * clock is never STARTED on an unconfirmed determination — the medical reviewer
- * must affirmatively mark "unexpected" for expedited reporting. See INTEGRATION
- * NOTES.
+ * "Unexpected" per 312.32(a): not listed in the IB / not consistent with the
+ * RSI. A closed vocabulary (case and surrounding space ignored): "expected" and
+ * "unexpected" are the only determinations; anything else is 'not_assessed'.
+ *
+ * 2026-10-15: this was isUnexpected(), true for text containing "unexpected" /
+ * "not listed" / "unlisted" and false for everything else — so "unknown" (a
+ * value the PV intake stores), "pending", "TBD" or "N/A" read as EXPECTED and
+ * closed a serious, suspected case NOT_REPORTABLE; free text like "Not listed
+ * in IB" started a 15-day clock.
  */
-export function isUnexpected(expectedness: string | null | undefined): boolean {
-  if (!expectedness) return false;
-  const v = expectedness.trim().toLowerCase();
-  // Affirmative "unexpected" / "not listed" wording starts the clock.
-  if (v.includes('unexpected') || v.includes('not listed') || v.includes('unlisted')) {
-    return true;
-  }
-  // Explicit "expected" / "listed" wording => expected.
-  return false;
+export function expectednessDetermination(expectedness: string | null | undefined): ExpectednessDetermination {
+  const v = typeof expectedness === 'string' ? expectedness.trim().toLowerCase() : '';
+  return v === 'expected' || v === 'unexpected' ? v : 'not_assessed';
+}
+
+/** The recorded text when it is not a determination (blank → null), for the rationale. */
+function undeterminedExpectednessText(event: Pick<AdverseEvent, 'expectedness'>): string | null {
+  const raw = typeof event.expectedness === 'string' ? event.expectedness.trim() : '';
+  return raw && expectednessDetermination(raw) === 'not_assessed' ? raw : null;
 }
 
 /** Fatal or life-threatening per the seriousness criterion (312.32(c)(2)). */
@@ -298,9 +309,13 @@ export function classifyIndSafetyReport(
 ): IndSafetyClassification {
   assertStated(event);
   const serious = isSerious(event);
+  // assertStated refused a missing or unknown event type; undetermined
+  // seriousness is never classified either way.
+  if (serious === null) throw new IndSafetyReportIncompleteError(['event type']);
   const suspected = isSuspected(event.causality);
-  const expectednessRecorded = typeof event.expectedness === 'string' && event.expectedness.trim().length > 0;
-  const unexpected = expectednessRecorded ? isUnexpected(event.expectedness) : null;
+  const expectedness = expectednessDetermination(event.expectedness);
+  const expectednessRecorded = expectedness !== 'not_assessed';
+  const unexpected = expectednessRecorded ? expectedness === 'unexpected' : null;
   const fatalOrLT = isFatalOrLifeThreatening(event.seriousnessCriteria);
 
   const determinations = {
@@ -322,6 +337,7 @@ export function classifyIndSafetyReport(
   // reportable" has no reason to look again before the 15-day clock that may
   // already be running.
   if (!expectednessRecorded) {
+    const text = undeterminedExpectednessText(event);
     return {
       obligation: 'NOT_DETERMINED',
       reportingWindowDays: null,
@@ -330,7 +346,8 @@ export function classifyIndSafetyReport(
       regulatoryBasis: '21 CFR 312.32(a)',
       rationale:
         'Not determined: expectedness not assessed. No determination against the IB / Reference Safety Information has been recorded, ' +
-        'so whether this is an expedited IND safety report cannot be decided. Record expectedness to obtain a verdict.',
+        'so whether this is an expedited IND safety report cannot be decided. Record expectedness to obtain a verdict.' +
+        (text ? ` The recorded value "${text}" is not a determination; expectedness is "expected" or "unexpected".` : ''),
     };
   }
 
@@ -424,7 +441,11 @@ function seriousnessLine(event: AdverseEvent): string {
    so rather than asserting "expected" on the reviewer's behalf. */
 function expectednessLine(event: IndSafetyEvent, classification: IndSafetyClassification): string {
   if (!classification.determinations.expectednessRecorded) {
-    return 'Expectedness: not recorded — no determination against the Reference Safety Information has been made.';
+    const text = undeterminedExpectednessText(event);
+    return (
+      'Expectedness: not recorded — no determination against the Reference Safety Information has been made' +
+      (text ? ` ("${text}" is not a determination).` : '.')
+    );
   }
   const verdict = classification.determinations.unexpected ? 'unexpected' : 'expected';
   return `Expectedness: ${verdict} vs the Reference Safety Information${event.rsiReference ? ` (${event.rsiReference})` : ''}.`;

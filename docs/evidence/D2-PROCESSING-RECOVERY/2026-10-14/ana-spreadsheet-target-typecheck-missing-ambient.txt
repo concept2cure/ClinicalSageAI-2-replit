@@ -1,0 +1,13 @@
+Scope: 2 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana/AnaToolExecutor.ts: 2 target diagnostics
+server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4627
+[96mserver/services/ana/AnaToolExecutor.ts[0m:[93m49[0m:[93m28[0m - [91merror[0m[90m TS7016: [0mCould not find a declaration file for module '../../fda_maude_client.js'. '/workspace/Concept2Cure/server/fda_maude_client.js' implicitly has an 'any' type.
+
+[7m49[0m import fdaMaudeClient from '../../fda_maude_client.js';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mserver/services/ana/AnaToolExecutor.ts[0m:[93m169[0m:[93m28[0m - [91merror[0m[90m TS7016: [0mCould not find a declaration file for module '../../fda_faers_client.js'. '/workspace/Concept2Cure/server/fda_faers_client.js' implicitly has an 'any' type.
+
+[7m169[0m import fdaFaersClient from '../../fda_faers_client.js';
+[7m   [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+Total selected-scope diagnostics: 2

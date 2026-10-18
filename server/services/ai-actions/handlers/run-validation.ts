@@ -20,6 +20,7 @@ import type {
   ValidationReport,
 } from '../../../../shared/types/ai-actions';
 import { AIActionHandlerError } from '../../../../shared/types/ai-actions';
+import type { ValidationResult, ValidationRunRecord } from '../../realTimeValidationService';
 
 const handler: AIActionHandler = {
   actionType: 'run_validation',
@@ -68,18 +69,17 @@ const handler: AIActionHandler = {
 
     // 2. Run validation using the real-time validation service
     let validationResult;
+    let recordRun: ((run: ValidationRunRecord) => Promise<void>) | null = null;
     try {
       // Dynamically import to avoid circular deps and handle service availability
-      const { realTimeValidationService } = await import('../../realTimeValidationService');
+      const { realTimeValidationService, recordValidationRun } = await import('../../realTimeValidationService');
       validationResult = await realTimeValidationService.validateContent(
         ctx.actionId,       // sessionId
         content,
         documentType || 'regulatory_submission',
         true,               // immediateMode — skip debounce
-        ctx.user.organizationId,
-        typeof request.targetId === 'number' ? request.targetId : undefined,
-        (payload.agency as string) || undefined
       );
+      recordRun = recordValidationRun;
     } catch (err) {
       // If the validation service is unavailable, run the basic structural
       // checks so the author still gets their findings — but a regex for
@@ -102,6 +102,11 @@ const handler: AIActionHandler = {
       documentType: documentType || 'regulatory_submission',
       validatedAt: new Date().toISOString(),
     };
+
+    // The degraded fallback is not a validation and is not recorded as one; a
+    // run that could not be recorded is not applied.
+    const run = { content, title: title ?? null, documentType: report.documentType, result: validationResult, findings };
+    if (recordRun) await recordOrRefuse(recordRun, runRecord(request, ctx, run));
 
     // 4. Determine suggested next actions based on findings
     const criticalCount = findings.filter((f) => f.severity === 'critical').length;
@@ -177,7 +182,9 @@ function mapToFindings(validationResult: any): ValidationFinding[] {
         affectedSection: issue.section || undefined,
         position: issue.position || undefined,
         recommendation: issue.fix || issue.suggestion || `Review and address: ${issue.message}`,
-        confidence: issue.confidence || 0.8,
+        // Neither the checks nor the analysis compute a confidence; 0.8 and
+        // 0.7 stood in for one (2026-10-15).
+        confidence: typeof issue.confidence === 'number' ? issue.confidence : null,
       });
     }
   }
@@ -190,7 +197,7 @@ function mapToFindings(validationResult: any): ValidationFinding[] {
         issueType: mapIssueType(suggestion.type),
         message: suggestion.text,
         recommendation: suggestion.replacement || suggestion.reasoning || suggestion.text,
-        confidence: suggestion.confidence || 0.7,
+        confidence: typeof suggestion.confidence === 'number' ? suggestion.confidence : null,
       });
     }
   }
@@ -277,10 +284,50 @@ function runBasicValidation(content: string, documentType: string): any {
 
   return {
     isValid: issues.filter((i) => i.severity === 'critical').length === 0,
-    complianceScore: Math.max(0, 100 - issues.length * 15),
+    // Not a validation, so no score: this was 100 less 15 per regex hit.
+    complianceScore: null,
     issues,
     suggestions: [],
   };
+}
+
+/**
+ * Who ran this validation, on what, against which agency. The agency is the
+ * one the caller named: nothing in these checks is agency-specific, and 'FDA'
+ * was assumed when none was (2026-10-15).
+ */
+function runRecord(
+  request: AIActionRequest,
+  ctx: AIActionExecutionContext,
+  run: Pick<ValidationRunRecord, 'content' | 'title' | 'documentType' | 'findings'> & { result: ValidationResult },
+): ValidationRunRecord {
+  const agency = request.payload?.agency;
+  return {
+    organizationId: ctx.user.organizationId,
+    projectId: Number.isInteger(request.projectId) ? request.projectId : null,
+    target: request.targetId != null && request.targetId !== '' ? { type: request.targetType, id: request.targetId } : null,
+    agency: typeof agency === 'string' && agency.trim() ? agency.trim() : null,
+    performedByUserId: ctx.user.userId,
+    performedBy: ctx.user.userName,
+    ...run,
+  };
+}
+
+/** Record the run, or refuse to apply a validation nothing records. */
+async function recordOrRefuse(
+  recordRun: (run: ValidationRunRecord) => Promise<void>,
+  run: ValidationRunRecord,
+): Promise<void> {
+  try {
+    await recordRun(run);
+  } catch (err) {
+    console.error('[AI Actions] run_validation could not be recorded:', err);
+    throw new AIActionHandlerError(
+      'VALIDATION_NOT_RECORDED',
+      'The validation ran, but its record could not be written, so it has not been applied.',
+      500,
+    );
+  }
 }
 
 /**

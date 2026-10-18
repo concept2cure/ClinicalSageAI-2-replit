@@ -394,9 +394,10 @@ export interface AuthorPostMarketResult {
 
 /**
  * Author and persist a DRAFT post-market document of the given type. Reporting
- * periods are required for report-style documents; when omitted, a DRAFT
- * default trailing-12-month period is set and flagged so the gate still forces
- * the sponsor to confirm it. Versions are computed per (org, program, code).
+ * periods are required for report-style documents; a date the caller did not
+ * declare is stored null, and the type's reporting-period finding keeps the
+ * gate closed until the sponsor declares it. Versions are computed per (org,
+ * program, code).
  */
 export async function authorPostMarketDocument(
   args: AuthorPostMarketArgs
@@ -466,17 +467,16 @@ export async function authorPostMarketDocument(
     psurExposure: args.psurExposure,
   });
 
-  // Reporting period for report-style documents.
-  let reportingPeriodStart: Date | null = args.reportingPeriodStart ?? null;
-  let reportingPeriodEnd: Date | null = args.reportingPeriodEnd ?? null;
-  let periodNote = '';
-  if (spec.needsReportingPeriod && (!reportingPeriodStart || !reportingPeriodEnd)) {
-    reportingPeriodEnd = reportingPeriodEnd ?? new Date();
-    reportingPeriodStart =
-      reportingPeriodStart ??
-      new Date(reportingPeriodEnd.getTime() - 365 * 24 * 60 * 60 * 1000);
-    periodNote = ' Reporting period defaulted to a trailing 12 months — confirm the actual period.';
-  }
+  // Reporting period: what the caller declared, or null. 2026-10-15: a missing
+  // date used to become a trailing 12 months ending today, disclosed only in
+  // `summary`; the period findings (PMSR-001, PMCFE-001, PSUR-001, PMPFE-001)
+  // check presence, so the invented window passed them.
+  const reportingPeriodStart: Date | null = args.reportingPeriodStart ?? null;
+  const reportingPeriodEnd: Date | null = args.reportingPeriodEnd ?? null;
+  const periodNote =
+    spec.needsReportingPeriod && (!reportingPeriodStart || !reportingPeriodEnd)
+      ? ' Reporting period not declared: set its start and end before approval.'
+      : '';
 
   const existing = await listProgramDocuments(args.organizationId, args.programId, args.documentType);
   const nextVersion =

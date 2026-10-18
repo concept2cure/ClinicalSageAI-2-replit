@@ -173,4 +173,3 @@ stdout | server/services/ana/__tests__/document-intake-tools.test.ts
       Tests  49 passed (49)
    Start at  17:08:40
    Duration  5.29s (transform 4.56s, setup 245ms, import 6.37s, tests 591ms, environment 0ms)
-

@@ -23,6 +23,8 @@
  *   • a failed document create does not navigate and does not POST a section;
  *   • a failed section create does not navigate either — leaving for an editor
  *     that would show an empty document is the same silent loss in a new hat;
+ *   • uncertain or refused handoffs retain a persistent recovery notice,
+ *     distinct from the transient toast;
  *   • a thrown request does not navigate;
  *   • a double click creates ONE document, not two;
  *   • the retired localStorage note is never written again;
@@ -42,6 +44,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { ReportEngine } from '../surfaces/ReportEngine';
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
+
 import { CmcModule } from '../surfaces/CmcModule';
 
 function res(payload: unknown, status = 200) {
@@ -50,6 +54,7 @@ function res(payload: unknown, status = 200) {
 
 const DOC_URL = '/api/authoring/docs';
 const SEC_URL = '/api/authoring/sections';
+const HANDOFF_NOTICE = { selector: '.scaf-note[role="alert"]' };
 
 /* ── The statistical engine (Biostatistics only) ──────────────────────────────
    Biostatistics computes nothing in the browser: it posts the design to
@@ -162,13 +167,17 @@ const writtenKeys = (): string[] => (setItem.mock.calls as unknown as unknown[][
 
 /** Default: both creates succeed with a real server-shaped row. */
 function wireStore(over: (m: string, u: string, b?: any) => Response | null = () => null) {
-  apiRequest.mockImplementation(async (m: string, u: string, b?: any) => {
+  apiRequest.mockImplementation(async (m: string, u: string, b: any = {}) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b?.title } }, 201);
-    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b?.code } }, 201);
+    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: {
+      fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none',
+      rationale: ['Comparable process requires documented assessment.'], validationRequirements: ['Document comparability evidence.'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
+    } });
+    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
+    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
     if (m === 'POST' && u === COMPUTE_URL) return res(ENGINE_COMPUTE);
-    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b?.documentType ?? '')));
+    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b.documentType ?? '')));
     return res({});
   });
 }
@@ -302,8 +311,8 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
-    expect(screen.getByText(/Nothing was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(screen.queryByText(/Nothing was saved/)).toBeNull();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The work is still on screen — the rendered document did not go anywhere.
@@ -316,7 +325,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/isn’t authenticated/)).toBeTruthy();
+    expect(await screen.findByText(/isn’t authenticated/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
   });
@@ -329,7 +338,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -346,7 +355,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/network down/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -402,7 +411,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The analysis is still rendered where the user left it.
@@ -414,7 +423,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -426,10 +435,13 @@ async function simulated(onNav: () => void) {
   /* The tab is "Change control": the simulator now sits above the register it
      models against, rather than being the whole tab. */
   fireEvent.click(screen.getByRole('button', { name: /Change control/ }));
-  const ta = await screen.findByPlaceholderText(/switch the drug-substance supplier/);
-  fireEvent.change(ta, { target: { value: 'Move DS manufacture from Site A to Site B; equivalent process.' } });
-  fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
-  return await screen.findByRole('button', { name: /Open in editor/ });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Move DS manufacture from Site A to Site B; equivalent process.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return await screen.findByRole('button', { name: 'Open draft assessment in editor' });
 }
 
 describe('CmcModule change simulator — Open in editor', () => {
@@ -462,10 +474,10 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
-    expect(document.querySelector('.cm-doc-render')?.textContent).toMatch(/Comparability Requirement/);
+    expect(screen.getByText('Comparable process requires documented assessment.')).toBeTruthy();
   });
 
   it('does NOT navigate when the section create fails', async () => {
@@ -475,7 +487,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -490,7 +502,7 @@ describe('CmcModule change simulator — Open in editor', () => {
  * work where the user can still see it.
  */
 async function expectRefusedWithoutProject(onNav: () => void, workSelector: string, work: RegExp) {
-  expect(await screen.findByText(/open a project first/i)).toBeTruthy();
+  expect(await screen.findByText(/open a project first/i, HANDOFF_NOTICE)).toBeTruthy();
   expect(posts()).toHaveLength(0);
   expect(docCalls()).toHaveLength(0);
   expect(secCalls()).toHaveLength(0);
@@ -531,6 +543,6 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     const onNav = vi.fn();
     const btn = await simulated(onNav);
     fireEvent.click(btn);
-    await expectRefusedWithoutProject(onNav, '.cm-doc-render', /Comparability Requirement/);
+    await expectRefusedWithoutProject(onNav, '.pj-card-b', /Comparable process requires documented assessment/);
   });
 });

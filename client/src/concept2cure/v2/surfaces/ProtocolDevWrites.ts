@@ -412,11 +412,15 @@ export async function updateProtocolHeader(
 /* ── Start a protocol ──────────────────────────────────────────────────── */
 
 export async function startProtocolDocument(
-  v: { title: string; protocolKind: string; protocolNumber?: string; phase?: string; sponsor?: string; principalInvestigator?: string; reason: string },
+  v: { title: string; protocolKind: string; programId?: string; protocolNumber?: string; phase?: string; sponsor?: string; principalInvestigator?: string; reason: string },
 ): Promise<{ id: number | null; sectionsSeeded: number | null }> {
   const reason = requireReason(v.reason);
+  if (!v.programId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.programId)) {
+    throw new Error('Open a program before starting a protocol. Nothing was written.');
+  }
   const json = await send('POST', '/api/protocol-development/documents', compact({
     title: v.title,
+    programId: v.programId,
     protocolKind: v.protocolKind,
     protocolNumber: v.protocolNumber,
     phase: v.phase,
@@ -424,8 +428,11 @@ export async function startProtocolDocument(
     principalInvestigator: v.principalInvestigator,
     reason,
   }), 'start the protocol');
+  if (typeof json.id !== 'number' || !Number.isSafeInteger(json.id) || json.id <= 0) {
+    throw new Error('The server did not confirm a protocol id. Refresh the protocol picker before starting another document.');
+  }
   return {
-    id: typeof json.id === 'number' ? json.id : null,
+    id: json.id,
     sectionsSeeded: typeof json.sectionsSeeded === 'number' ? json.sectionsSeeded : null,
   };
 }

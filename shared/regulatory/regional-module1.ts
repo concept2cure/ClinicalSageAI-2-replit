@@ -142,7 +142,9 @@ export interface RegionalModule1 {
 
 const CHECKED = '2026-10-05';
 const CV_VENDORED = 'server/services/ectd/controlled-vocab/cv-v4-data.ts';
-const SEARCH_NOTE = 'search extract of the regulator-hosted document; verbatim re-read owed';
+// 2026-10-15: the EU and JP bases carrying this note were `regulator-text`; a search
+// extract is recall. Only the vendored FDA controlled vocabulary was read.
+const SEARCH_NOTE = 'search extract of the regulator-hosted document on 2026-10-05; the document itself was not read. Verbatim re-read owed';
 
 /** A heading FDA publishes in its Module 1 controlled vocabulary (vendored, read). */
 function fdaCv(code: string): RegulatoryBasis {
@@ -169,9 +171,8 @@ const US_PARENT = usRecall('the number is implied by the controlled-vocabulary c
 
 const EU_M1_V31: RegulatoryBasis = {
   ref: 'EU Module 1 eCTD Specification v3.1 (June 2024)',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://esubmission.ema.europa.eu/eumodule1/EU%20M1%20eCTD%20Spec%20v3.1%20-%20June%202024%20-%20final%20version.pdf',
-  checked: CHECKED,
   note: `${SEARCH_NOTE}. v3.1.1 is the version EMA accepts from 1 December 2025 (secondary source, recall); headings cited from v3.1`,
 };
 const EU_RECALL: RegulatoryBasis = {
@@ -180,31 +181,27 @@ const EU_RECALL: RegulatoryBasis = {
 };
 const EU_ECTD_GUIDANCE_NO_TOC: RegulatoryBasis = {
   ref: 'EMA eCTD Guidance v4.0 (22 April 2016): no table of contents in eCTD; the XML backbone acts as one',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://esubmission.ema.europa.eu/tiges/docs/eCTD%20Guidance%20v4%200-20160422-final.pdf',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 
 const JP_SAKUSEI_YORYO: RegulatoryBasis = {
   ref: 'MHLW 薬生薬審発0705第4号 (2017-07-05) amending 「新医薬品の製造販売の承認申請に際し承認申請書に添付すべき資料の作成要領について」',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.mhlw.go.jp/web/t_doc?dataId=00tc2799&dataType=1&pageNo=1',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 const JP_RMP_GUIDANCE: RegulatoryBasis = {
   ref: '薬食審査発0426第2号 / 薬食安発0426第1号 (2012-04-26; amended 2013-03-04): 医薬品リスク管理計画の策定について',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.pmda.go.jp/files/000143712.pdf',
-  checked: CHECKED,
   note: `${SEARCH_NOTE}; the draft RMP (医薬品リスク管理計画書（案）) is filed at CTD M1.11`,
 };
 const JP_RMP_EXAMPLE: RegulatoryBasis = {
   ref: 'PMDA 医薬品リスク管理計画書記載事例 (draft RMP filed with the application as CTD M1.11)',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.pmda.go.jp/files/000221872.pdf',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 const JP_RECALL: RegulatoryBasis = {

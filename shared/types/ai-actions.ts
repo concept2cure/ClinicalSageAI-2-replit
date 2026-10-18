@@ -239,15 +239,15 @@ export interface ValidationFinding {
   position?: { start: number; end: number };
   /** Actionable recommendation. */
   recommendation: string;
-  /** Confidence 0-1 in this finding. */
-  confidence: number;
+  /** Confidence 0-1 in this finding, when something computed one; null otherwise. */
+  confidence: number | null;
 }
 
 export interface ValidationReport {
   /** Overall validity. */
   isValid: boolean;
-  /** Compliance score 0-100. */
-  complianceScore: number;
+  /** Compliance score 0-100; null when the analysis did not cover the whole content. */
+  complianceScore: number | null;
   /** Structured findings. */
   findings: ValidationFinding[];
   /** Document type validated against. */

@@ -95,7 +95,7 @@ describe('rankByAuthority', () => {
 });
 
 describe('toLineageSource', () => {
-  it('projects onto data_lineage_records SOURCE columns with a confidence score', () => {
+  it('projects onto data_lineage_records SOURCE columns, recording no unmeasured confidence figure', () => {
     const rec = buildProvenance({
       sourceId: 'pubmed',
       citation: { title: 'A study', identifier: 'PMID:123', url: 'https://pubmed.ncbi.nlm.nih.gov/123/' },
@@ -106,8 +106,10 @@ describe('toLineageSource', () => {
     expect(lineage.sourceObjectType).toBe('external_evidence');
     expect(lineage.sourceObjectId).toBe('PMID:123');
     expect(lineage.sourceTitle).toBe('A study');
-    expect(lineage.confidenceBasis).toBe('validation_based');
-    expect(lineage.confidenceScore).toBe(60);
+    // 2026-10-15: pinned 'validation_based' and 60 — a lookup of 'moderate',
+    // with a basis no validation stands behind. The level is a tool's fixed rule.
+    expect(lineage.confidenceBasis).toBe('rules_based');
+    expect(lineage.confidenceScore).toBeNull();
   });
 
   it('falls back to url then sourceId when no identifier', () => {

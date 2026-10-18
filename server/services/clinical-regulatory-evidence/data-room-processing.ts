@@ -29,6 +29,13 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { determineSourceVersion, type SourceVersionDetermination } from './source-version.js';
 import { findTextFacts, matchStudy, readProgramFacts, type ProgramFacts, type TextFacts } from './catalog-facts.js';
 import { profileDataset, type DatasetProfile } from './dataset-profile.js';
+import { computeSha256 } from '../storage/storage-provider.js';
+import { CAPTURE_EXTRACTION_REVISION, ProcessingRefusal, object, readableText, positiveId, persistedTextAvailableSql,
+  type ProcessingDatabase, type ProcessingClaim, type SourceProcessingStatus } from './data-room-processing-state.js';
+import { claimSource, finishClaim, isProcessingAuthorization, type ProcessingAuthorization } from './data-room-processing-store.js';
+import { runProcessingSweep, validateSweepOptions, type PendingSweepReport, type PendingSweepOptions } from './data-room-processing-sweep.js';
+
+export type { SourceProcessingStatus, ProcessingDatabase, PendingSweepReport, PendingSweepOptions };
 
 const logger = createScopedLogger('data-room-processing');
 
@@ -43,7 +50,22 @@ export interface ExtractedCapture {
   words: number;
   /** Why there is no text, when there is none. */
   error?: string;
+  sourceSha256?: string;
+  extractionRevision?: typeof CAPTURE_EXTRACTION_REVISION;
 }
+
+export interface SourceProcessingResult {
+  ok: boolean;
+  processed: boolean;
+  status: SourceProcessingStatus;
+  reasonCode?: string;
+  extracted?: ExtractedCapture;
+}
+export interface SourceProcessingInput {
+  bytes: Buffer; fileName: string; mimeType: string; programId: string | null; processedBy: string;
+  preExtracted?: ExtractedCapture; expectedWorkspaceId?: number | null;
+}
+export interface SourceProcessingOptions { db?: ProcessingDatabase; retryFailed?: boolean; }
 
 /** The deterministic description of a capture: where it likely belongs, and what version it declares. */
 export interface CaptureDescription {
@@ -97,19 +119,22 @@ function factsMetadata(f: CatalogFacts | undefined): Record<string, unknown> {
 
 /** Read the bytes with the platform's extractor. Never throws. */
 export async function extractCapture(bytes: Buffer, mimeType: string, fileName: string): Promise<ExtractedCapture> {
+  const privateBytes = Buffer.from(bytes);
+  const binding = { sourceSha256: computeSha256(privateBytes), extractionRevision: CAPTURE_EXTRACTION_REVISION };
   try {
     const { extractDocumentText } = await import('../ocr/index.js');
-    const extracted = await extractDocumentText(bytes, mimeType, fileName);
+    const extracted = await extractDocumentText(privateBytes, mimeType, fileName);
     const text = extracted.text?.trim() ? extracted.text : null;
-    if (!text) return { text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.' };
+    if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.' };
     return {
+      ...binding,
       text,
       method: extracted.method,
       pageCount: extracted.pageSpans?.length ?? null,
       words: text.trim().split(/\s+/).length,
     };
   } catch (err) {
-    return { text: null, method: null, pageCount: null, words: 0, error: err instanceof Error ? err.message : String(err) };
+    return { ...binding, text: null, method: null, pageCount: null, words: 0, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -176,18 +201,20 @@ export async function recordSourceProcessing(
   exec: Exec,
   orgId: number,
   sourceId: number,
-  p: { extracted: ExtractedCapture; description?: CaptureDescription; facts?: CatalogFacts; processedBy: string },
+  p: { extracted: ExtractedCapture; description?: CaptureDescription; facts?: CatalogFacts; processedBy: string; authorization?: ProcessingAuthorization },
 ): Promise<boolean> {
+  if (!isProcessingAuthorization(p.authorization,exec,orgId,sourceId)) return false;
+  const auth=p.authorization;
   const { extracted, description, facts } = p;
   const { rowCount } = await exec.query(
     `UPDATE cre_evidence_sources SET
-        extraction_status = $3,
-        extracted_text = $4,
-        char_count = $5,
-        page_count = $6,
-        text_extracted_at = NOW(),
+        extraction_status = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN extraction_status ELSE $3 END,
+        extracted_text = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN extracted_text ELSE $4 END,
+        char_count = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN char_count ELSE $5 END,
+        page_count = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN page_count ELSE $6 END,
+        text_extracted_at = clock_timestamp(),
         version = COALESCE(version, $7),
-        provenance = COALESCE(provenance, '{}'::jsonb) || $8::jsonb,
+        provenance = (COALESCE(provenance, '{}'::jsonb) - 'extractionError') || $8::jsonb,
         metadata = COALESCE(metadata, '{}'::jsonb) || $9::jsonb,
         -- What it IS (S3): filled only where empty, never overwritten by a re-read.
         product = COALESCE(product, $10), indication = COALESCE(indication, $11), phase = COALESCE(phase, $12),
@@ -195,11 +222,17 @@ export async function recordSourceProcessing(
         agency = COALESCE(agency, $15), trial_registry_identifier = COALESCE(trial_registry_identifier, $16),
         document_date = COALESCE(document_date, $17::date), study_ref = COALESCE(study_ref, $18),
         updated_at = NOW()
-      WHERE id = $1 AND organization_id = $2 AND source_type = 'client_document' AND deleted_at IS NULL`,
+      WHERE id = $1 AND organization_id = $2 AND source_type = 'client_document' AND deleted_at IS NULL AND is_current IS NOT FALSE
+        AND metadata->'dataRoomProcessing'->>'attemptId'=$19
+        AND metadata->'dataRoomProcessing'->>'leaseExpiresAt'=$25 AND $25::timestamptz>clock_timestamp()
+        AND checksum=$20 AND client_program_id IS NOT DISTINCT FROM $21::uuid
+        AND client_workspace_id IS NOT DISTINCT FROM $22::int AND stored_artifact_ref IS NOT DISTINCT FROM $23
+        AND provenance->>'fileUploadId'=$24`,
     [sourceId, orgId, ...textValues(extracted), description?.versionDetermination.version ?? null,
       JSON.stringify(processingProvenance(extracted, description, p.processedBy)),
-      JSON.stringify({ ...(description?.dossier ? { dossier: description.dossier } : {}), ...factsMetadata(facts) }),
-      ...factValues(facts)],
+      JSON.stringify({ ...(description?.dossier ? { dossier: description.dossier } : {}), ...factsMetadata(facts), dataRoomProcessing:auth.stage }),
+      ...factValues(facts),auth.claim.stage.attemptId,auth.claim.identity.sha256,auth.claim.identity.programId,
+      auth.claim.identity.workspaceId,auth.claim.identity.storageRef,auth.claim.identity.fileUploadId,auth.row.metadata.dataRoomProcessing.leaseExpiresAt],
   );
   return (rowCount ?? 0) === 1;
 }
@@ -213,28 +246,83 @@ export async function recordSourceProcessing(
 export async function processCapturedSource(
   orgId: number,
   sourceId: number,
-  input: { bytes: Buffer; fileName: string; mimeType: string; programId: string | null; processedBy: string },
-): Promise<{ ok: boolean; extracted?: ExtractedCapture }> {
-  try {
-    const extracted = await extractCapture(input.bytes, input.mimeType, input.fileName);
-    const description = await describeCapture(orgId, input.programId, { fileName: input.fileName, mimeType: input.mimeType, text: extracted.text });
-    const facts = await buildCatalogFacts(pool, orgId, input.programId, { text: extracted.text, bytes: input.bytes, fileName: input.fileName, mimeType: input.mimeType });
-    const ok = await recordSourceProcessing(pool, orgId, sourceId, { extracted, description, facts, processedBy: input.processedBy });
-    return { ok, extracted };
-  } catch (err) {
-    logger.warn('Data Room capture not processed; left pending for the sweep', {
-      sourceId, err: err instanceof Error ? err.message : String(err),
-    });
-    return { ok: false };
-  }
+  input: SourceProcessingInput,
+  opts: SourceProcessingOptions = {},
+): Promise<SourceProcessingResult> {
+  // The caller cannot mutate bytes after hashing while asynchronous admission runs.
+  if (!Buffer.isBuffer(input.bytes)) return processingResult('blocked','ORIGINAL_IDENTITY_INVALID');
+  return processSource(orgId,sourceId,{...input,bytes:Buffer.from(input.bytes),...(input.preExtracted?{preExtracted:{...input.preExtracted}}:{})},opts);
 }
 
-export interface PendingSweepReport {
-  examined: number;
-  processed: number;
-  /** Captures whose bytes could not be read, each with its reason. */
-  unreadable: Array<{ sourceId: number; reason: string }>;
-  dryRun: boolean;
+const processingResult=(status:SourceProcessingStatus,reasonCode?:string,extracted?:ExtractedCapture):SourceProcessingResult=>({
+  ok:status==='completed'||status==='already_complete',processed:status==='completed'||status==='already_complete',status,
+  ...(reasonCode?{reasonCode}:{}),...(extracted?{extracted}:{}),
+});
+function boundExtraction(v:unknown,sha:string):v is ExtractedCapture {
+  return object(v) && v.sourceSha256===sha && v.extractionRevision===CAPTURE_EXTRACTION_REVISION
+    && (v.text===null||readableText(v.text)) && (v.method===null||typeof v.method==='string')
+    && (v.pageCount===null||(Number.isSafeInteger(v.pageCount)&&v.pageCount>=0))
+    && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string');
+}
+type ProcessingWorkInput=Omit<SourceProcessingInput,'bytes'>&{bytes:Buffer|null};
+function validWork(org:number,id:number,input:ProcessingWorkInput,opts:SourceProcessingOptions,db:ProcessingDatabase):boolean {
+  return [positiveId(org),positiveId(id),typeof db.connect==='function',typeof input.fileName==='string',typeof input.mimeType==='string',
+    typeof input.processedBy==='string',input.programId===null||typeof input.programId==='string',
+    input.expectedWorkspaceId===undefined||input.expectedWorkspaceId===null||positiveId(input.expectedWorkspaceId),
+    opts.retryFailed===undefined||typeof opts.retryFailed==='boolean'].every(Boolean);
+}
+async function verifiedOriginal(claim:ProcessingClaim):Promise<Buffer> {
+  const {loadUploadedFile}=await import('../ana/uploaded-file-access.js');
+  const original=await loadUploadedFile(claim.identity.fileUploadId,claim.identity.organizationId);
+  const bytes=Buffer.from(original.buffer);
+  const valid=[original.fileId===claim.identity.fileUploadId,original.storagePath===claim.identity.uploadStoragePath,
+    original.integrity==='verified',computeSha256(bytes)===claim.identity.sha256,bytes.length===claim.identity.sizeBytes].every(Boolean);
+  if(!valid) throw new ProcessingRefusal('blocked','ORIGINAL_INTEGRITY_FAILED');
+  return bytes;
+}
+async function deriveAndCommit(db:ProcessingDatabase,claim:ProcessingClaim,input:ProcessingWorkInput):Promise<SourceProcessingResult> {
+  const bytes=await verifiedOriginal(claim);
+  const {fileName,mimeType,programId,organizationId:orgId,sourceId}=claim.identity;
+  const reuse=input.fileName===fileName&&input.mimeType===mimeType&&boundExtraction(input.preExtracted,claim.identity.sha256);
+  const extracted=reuse?{...input.preExtracted!}:await extractCapture(bytes,mimeType,fileName);
+  const description=await describeCapture(orgId,programId,{fileName,mimeType,text:extracted.text});
+  const facts=await buildCatalogFacts(db,orgId,programId,{text:extracted.text,bytes,fileName,mimeType});
+  await finishClaim(db,claim,{state:extracted.text?'completed':'failed',reasonCode:extracted.text?null:'EXTRACTION_FAILED',retryable:false},
+    auth=>recordSourceProcessing(auth.client,orgId,sourceId,{extracted,description,facts,processedBy:input.processedBy,authorization:auth}));
+  return processingResult(extracted.text?'completed':'extraction_failed',extracted.text?undefined:'EXTRACTION_FAILED',extracted);
+}
+async function journalFailure(db:ProcessingDatabase,claim:ProcessingClaim,refusal:ProcessingRefusal|null):Promise<ProcessingRefusal|null> {
+  if(refusal?.status==='stale_source') return refusal;
+  try {await finishClaim(db,claim,{state:refusal?'blocked':'failed',reasonCode:refusal?.reasonCode??'PERSISTENCE_FAILED',retryable:!refusal});}
+  catch(err) {if(err instanceof ProcessingRefusal) return err;}
+  return refusal;
+}
+async function processingFailure(db:ProcessingDatabase,claim:ProcessingClaim|undefined,err:unknown,sourceId:number):Promise<SourceProcessingResult> {
+  const initial=err instanceof ProcessingRefusal?err:uploadRefusal(err);
+  const refusal=claim?await journalFailure(db,claim,initial):initial;
+  logger.warn('Data Room processing did not complete; pending capture or expired lease remains recoverable',{sourceId,reasonCode:refusal?.reasonCode??'PROCESSING_UNAVAILABLE'});
+  return processingResult(refusal?.status??'retryable_failure',refusal?.reasonCode??'PROCESSING_UNAVAILABLE');
+}
+async function processSource(orgId:number,sourceId:number,input:ProcessingWorkInput,opts:SourceProcessingOptions):Promise<SourceProcessingResult> {
+  const db=opts.db ?? pool as unknown as ProcessingDatabase;
+  if(!validWork(orgId,sourceId,input,opts,db)) return processingResult('blocked','ORIGINAL_IDENTITY_INVALID');
+  let claim:ProcessingClaim|undefined;
+  try {
+    const admitted=await claimSource(db,orgId,sourceId,{programId:input.programId,expectedWorkspaceId:input.expectedWorkspaceId,
+      ...(input.bytes?{suppliedSha256:computeSha256(input.bytes)}:{})},opts.retryFailed);
+    if (!('claim' in admitted)) return processingResult(admitted.status,admitted.reasonCode);
+    claim=admitted.claim;
+    return await deriveAndCommit(db,claim,input);
+  } catch (err) {
+    return processingFailure(db,claim,err,sourceId);
+  }
+}
+function uploadRefusal(err:unknown):ProcessingRefusal|null {
+  const code=object(err)?err.code:undefined;
+  if(code==='UPLOAD_BYTES_MISSING') return new ProcessingRefusal('blocked','ORIGINAL_BYTES_MISSING');
+  if(code==='UPLOAD_INTEGRITY_FAILED') return new ProcessingRefusal('blocked','ORIGINAL_INTEGRITY_FAILED');
+  if(code==='UPLOAD_NOT_FOUND') return new ProcessingRefusal('blocked','ORIGINAL_UPLOAD_UNAVAILABLE');
+  return null;
 }
 
 /**
@@ -245,40 +333,25 @@ export interface PendingSweepReport {
  */
 export async function processPendingSources(
   orgId: number,
-  opts: { apply?: boolean; limit?: number; exec?: Exec } = {},
+  opts: PendingSweepOptions = {},
 ): Promise<PendingSweepReport> {
-  const exec = opts.exec ?? (pool as unknown as Exec);
-  const limit = Math.max(1, Math.min(opts.limit ?? 50, 500));
-  const { rows } = await exec.query(
-    `SELECT id, title, client_program_id, provenance->>'fileUploadId' AS file_upload_id,
-            metadata->>'mimeType' AS mime_type
-       FROM cre_evidence_sources
-      WHERE organization_id = $1 AND source_type = 'client_document'
-        AND extraction_status = 'pending' AND deleted_at IS NULL
-      ORDER BY created_at ASC, id ASC
-      LIMIT $2`,
-    [orgId, limit],
-  );
-  const report: PendingSweepReport = { examined: rows.length, processed: 0, unreadable: [], dryRun: opts.apply !== true };
-  if (opts.apply !== true) return report;
-  const { loadUploadedFile } = await import('../ana/uploaded-file-access.js');
-  for (const r of rows) {
-    const sourceId = Number(r.id);
-    if (!r.file_upload_id) {
-      report.unreadable.push({ sourceId, reason: 'The capture names no stored file to read.' });
-      continue;
-    }
-    try {
-      const file = await loadUploadedFile(String(r.file_upload_id), orgId);
-      const done = await processCapturedSource(orgId, sourceId, {
-        bytes: file.buffer, fileName: r.title ?? file.fileName, mimeType: r.mime_type ?? file.mimeType,
-        programId: r.client_program_id ?? null, processedBy: 'data-room pending sweep',
-      });
-      if (done.ok) report.processed += 1;
-      else report.unreadable.push({ sourceId, reason: 'Processing did not complete; see the log.' });
-    } catch (err) {
-      report.unreadable.push({ sourceId, reason: err instanceof Error ? err.message : String(err) });
-    }
-  }
-  return report;
+  return runProcessingSweep(orgId,opts,pool as unknown as ProcessingDatabase,r=>processSource(orgId,Number(r.id),{
+    bytes:null,fileName:r.title??'',mimeType:r.metadata?.mimeType??'application/octet-stream',
+    programId:r.client_program_id??null,expectedWorkspaceId:r.client_workspace_id??null,processedBy:'data-room pending sweep',
+  },{db:opts.db??pool as unknown as ProcessingDatabase,retryFailed:opts.retryFailed}));
+}
+
+/** Operator-only wrapper: resolve one tenant, then preserve its normal RLS/lifecycle posture. */
+export async function processPendingSourcesForTenant(orgId:number,opts:Omit<PendingSweepOptions,'exec'|'db'>={}):Promise<PendingSweepReport> {
+  validateSweepOptions(orgId,opts);
+  const {runWithSystemTenantScope,runWithTenantScope}=await import('../../db/tenantStore.js');
+  const found=await runWithSystemTenantScope('scripts/process-data-room-captures.mjs:org-uuid',()=>pool.query('SELECT uuid FROM organizations WHERE id=$1',[orgId]));
+  const orgUuid=found.rows[0]?.uuid;
+  if(!orgUuid) throw new Error('TENANT_UNAVAILABLE');
+  return runWithTenantScope({tenantId:String(orgId),orgUuid:String(orgUuid),role:null,source:'cli',caller:'scripts/process-data-room-captures.mjs'},async()=>{
+    const {getTenantAccessPosture,backgroundWorkPermitted}=await import('../tenant/tenant-lifecycle.js');
+    const posture=await getTenantAccessPosture(orgId);
+    if(!posture||!['allow','read_only'].includes(posture.decision)||(opts.apply===true&&!backgroundWorkPermitted(posture))) throw new Error('TENANT_ACCESS_REFUSED');
+    return processPendingSources(orgId,opts);
+  });
 }

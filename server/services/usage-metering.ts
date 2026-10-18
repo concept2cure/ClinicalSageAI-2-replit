@@ -3,7 +3,8 @@
  * @module server/services/usage-metering
  *
  * Tracks credit-based usage for premium features (deep research, CSR builder,
- * CTD builder). Enforces per-tier quotas and integrates with Stripe metered billing.
+ * CTD builder). Records feature-quota units and enforces per-tier allowances.
+ * These units are not cents, prepaid funds or Stripe invoice items.
  */
 
 import { pool } from '../db.js';

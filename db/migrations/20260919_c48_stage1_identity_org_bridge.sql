@@ -16,7 +16,8 @@
 --     rejected by another's FK makes single-session tenant scoping impossible
 --
 -- Determinism Contract:
---   - Additive only. No structural change to any table; no DROP.
+--   - Additive, except one relaxation (2026-10-15): identity.organizations.
+--     business_model loses 051's NOT NULL (see below). No DROP of any object.
 --   - Any change impacting canonical schemas requires spec version bump.
 --
 -- Notes:
@@ -53,17 +54,23 @@
 --     only widens the FK parent set. The seed uuids are left intact (no DROP), so
 --     seed-keyed child rows keep their valid parent — the FK repoint is Stage 4.
 --
--- business_model is NOT NULL on identity.organizations with no default and has no
--- source column on public.organizations. The FK-anchor mirror does not depend on
--- its value (can_access_org and the tenant FKs never read it), so it defaults to
--- BIO_PHARMA_SPONSOR (the primary "data owner" tenant type). When the identity
--- model is later reduced to a mirror/VIEW of public (Stage 4), this field either
--- follows an onboarding-supplied value or is dropped from the mirror.
+-- business_model has no source column on public.organizations, and the FK-anchor
+-- mirror does not depend on its value (can_access_org and the tenant FKs never
+-- read it). AMENDED IN PLACE 2026-10-15 (D2, no invented facts): 051 made it NOT
+-- NULL with no default, so this file wrote 'BIO_PHARMA_SPONSOR' for every tenant,
+-- CROs and device makers included. The mirror now records it as not known
+-- (NULL): the DO block relaxes 051's NOT NULL where an install created it
+-- (conditional on the live column, so a replay changes nothing), and withdraws
+-- the guess from mirrors this file wrote earlier that nobody has edited since
+-- (created_by 'c48-stage1-backfill' / 'c48-stage1-sync', updated_at still equal
+-- to created_at). When the identity model is reduced to a mirror/VIEW of public
+-- (Stage 4), the field follows an onboarding-supplied value or leaves the mirror.
 
 DO $$
 DECLARE
   backfilled INT := 0;
   orphaned   INT := 0;
+  withdrawn  INT := 0;
 BEGIN
   -- Skip cleanly on a database that never provisioned one side of the bridge:
   -- this file runs on the deploy path where not every subsystem tree is applied.
@@ -79,19 +86,39 @@ BEGIN
     RETURN;
   END IF;
 
+  -- business_model is not known for a mirrored org (2026-10-15, see header).
+  IF EXISTS (
+    SELECT 1 FROM pg_attribute
+     WHERE attrelid = 'identity.organizations'::regclass
+       AND attname = 'business_model' AND attnotnull AND NOT attisdropped
+  ) THEN
+    ALTER TABLE identity.organizations ALTER COLUMN business_model DROP NOT NULL;
+  END IF;
+
   -- Backfill: every public org uuid becomes an identity.organizations parent.
   -- Idempotent (ON CONFLICT (id) DO NOTHING); legal_name := the org name (NOT NULL
-  -- on both sides); business_model defaulted (see header).
+  -- on both sides); business_model not recorded (see header).
   INSERT INTO identity.organizations (id, legal_name, display_name, business_model, is_active, created_by)
   SELECT po.uuid,
          COALESCE(NULLIF(po.name, ''), 'Organization ' || po.id::text),
          po.name,
-         'BIO_PHARMA_SPONSOR'::identity.org_business_model,
+         NULL,
          COALESCE(po.status <> 'inactive', TRUE),
          'c48-stage1-backfill'
   FROM public.organizations po
   ON CONFLICT (id) DO NOTHING;
   GET DIAGNOSTICS backfilled = ROW_COUNT;
+
+  -- The guess this file wrote before 2026-10-15, on mirrors nobody has edited.
+  UPDATE identity.organizations
+     SET business_model = NULL, updated_at = NOW()
+   WHERE created_by IN ('c48-stage1-backfill', 'c48-stage1-sync')
+     AND business_model = 'BIO_PHARMA_SPONSOR'
+     AND updated_at = created_at;
+  GET DIAGNOSTICS withdrawn = ROW_COUNT;
+  IF withdrawn > 0 THEN
+    RAISE NOTICE '[c48-stage1] % mirror(s) no longer claim a business model nobody recorded', withdrawn;
+  END IF;
 
   -- Fail-closed invariant (RULE 1: a truncated seed fails at apply time). After the
   -- backfill every public org MUST have an identity mirror; a gap means the sync is
@@ -122,7 +149,7 @@ BEGIN
       NEW.uuid,
       COALESCE(NULLIF(NEW.name, ''), 'Organization ' || NEW.id::text),
       NEW.name,
-      'BIO_PHARMA_SPONSOR'::identity.org_business_model,
+      NULL, -- business_model: not recorded (2026-10-15, see header)
       COALESCE(NEW.status <> 'inactive', TRUE),
       'c48-stage1-sync'
     )

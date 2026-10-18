@@ -1,0 +1,89 @@
+{
+  "variant": "dark",
+  "signed": false,
+  "credentialsEntered": false,
+  "meaningSelectionVerified": true,
+  "meaningControls": [
+    {
+      "label": "Authorship",
+      "height": 30,
+      "padding": "5px 11px",
+      "border": "1px",
+      "color": "rgb(176, 174, 165)",
+      "background": "rgb(38, 38, 36)",
+      "checked": "false"
+    },
+    {
+      "label": "Review",
+      "height": 30,
+      "padding": "5px 11px",
+      "border": "1px",
+      "color": "rgb(20, 20, 19)",
+      "background": "rgb(232, 145, 111)",
+      "checked": "true"
+    },
+    {
+      "label": "Approval",
+      "height": 30,
+      "padding": "5px 11px",
+      "border": "1px",
+      "color": "rgb(176, 174, 165)",
+      "background": "rgb(38, 38, 36)",
+      "checked": "false"
+    }
+  ],
+  "meaningKeyboardFocus": {
+    "focused": true,
+    "outline": "2px",
+    "radius": "4px"
+  },
+  "metrics": {
+    "width": 16,
+    "height": 16,
+    "padding": "0px",
+    "outline": "2px",
+    "labelWidth": 418,
+    "labelHeight": 44,
+    "labelColor": "rgb(232, 230, 220)",
+    "hintColor": "rgb(176, 174, 165)",
+    "background": "rgb(38, 38, 36)",
+    "labelFontSize": "12px",
+    "hintFontSize": "11px",
+    "labelContrast": 12.116767964724728,
+    "hintContrast": 6.817942542636305
+  },
+  "adoptionText": "I have reviewed and consciously adopt the current saved working copy for this review.\n\nRequires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.",
+  "bodyWidth": 1440,
+  "passed": true,
+  "consentUncheckedOnReopen": true,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "mutations": [],
+  "backgroundCollaborationRequests": [
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/users/me",
+      "method": "DELETE"
+    },
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/users/me",
+      "method": "DELETE"
+    },
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/awareness",
+      "method": "PUT"
+    }
+  ]
+}

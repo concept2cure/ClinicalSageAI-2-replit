@@ -1,0 +1,69 @@
+{
+  "files": [
+    {
+      "file": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/authoring-assembly-plan.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/authoring-assembly-sources.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/authoring-assembly.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "errors": 0,
+      "warnings": 5,
+      "messages": [
+        {
+          "line": 157,
+          "ruleId": "complexity",
+          "message": "Async function 'insertSource' has a complexity of 28. Maximum allowed is 15."
+        },
+        {
+          "line": 531,
+          "ruleId": "complexity",
+          "message": "Async function 'upsertStudy' has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "line": 581,
+          "ruleId": "complexity",
+          "message": "Async function 'createFinding' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "line": 723,
+          "ruleId": "max-lines",
+          "message": "File has too many lines (652). Maximum allowed is 500."
+        },
+        {
+          "line": 741,
+          "ruleId": "complexity",
+          "message": "Async function 'proposeDesignLesson' has a complexity of 19. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "shared/authoring/assembly.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "errors": 0,
+  "warnings": 5,
+  "qualification": "Five unchanged existing evidence-spine warnings; all other owned production/test files have zero warnings. No suppression or baseline edits."
+}

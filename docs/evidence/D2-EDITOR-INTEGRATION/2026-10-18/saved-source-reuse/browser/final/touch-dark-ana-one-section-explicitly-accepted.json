@@ -1,0 +1,171 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": 390,
+  "bodyWidth": 390,
+  "assembly": {
+    "x": 44,
+    "y": 489,
+    "width": 302,
+    "height": 2269.6875,
+    "right": 346,
+    "bottom": 2758.6875,
+    "scrollWidth": 302,
+    "clientWidth": 302
+  },
+  "ai": null,
+  "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Synthetic analytical source A.txt · Data Room source 41Version: 2 · disposition: keep_data · original file: unavailable; retained text is separateOriginal SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Extraction SHA-256: 3333333333333333333333333333333333333333333333333333333333333333Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 5555555555555555555555555555555555555555555555555555555555555555Synthetic analytical source B.txt · Data Room source 42Version: 1 · disposition: not recorded · original file: availableOriginal SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Extraction SHA-256: 4444444444444444444444444444444444444444444444444444444444444444Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 6666666666666666666666666666666666666666666666666666666666666666Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Clear selected sourcesLast recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnADraft requirements (optional) Reason for build Preview buildBuild documentThe exact saved section was checked. Its retained candidate is ready for review; acceptance separately checks its saved base and your edit authority.Section candidatesCompleted candidates stay here while you review another section. Each acceptance uses the existing draft review and source-lineage controls.3.2.P.8.2 Post-approval stability protocol · accepted3.2.P.8.3 Stability data · readyReview 3.2.P.8.3",
+  "editorCount": 1,
+  "noticeOutsideToolbar": true,
+  "controls": [
+    {
+      "label": "Clear selected sources",
+      "rect": {
+        "x": 56,
+        "y": 1717.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 1761.125,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Check saved sources",
+      "rect": {
+        "x": 56,
+        "y": 1903.625,
+        "width": 151.171875,
+        "height": 44,
+        "right": 207.171875,
+        "bottom": 1947.625,
+        "scrollWidth": 149,
+        "clientWidth": 149
+      },
+      "disabled": false
+    },
+    {
+      "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+      "rect": {
+        "x": 56,
+        "y": 1989.625,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2033.625,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Entire document",
+      "rect": {
+        "x": 56,
+        "y": 2067.625,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2111.625,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": true
+    },
+    {
+      "label": "checkbox",
+      "rect": {
+        "x": 60,
+        "y": 2122.625,
+        "width": 13,
+        "height": 13,
+        "right": 73,
+        "bottom": 2135.625,
+        "scrollWidth": 13,
+        "clientWidth": 13
+      },
+      "disabled": false
+    },
+    {
+      "label": "text",
+      "rect": {
+        "x": 56,
+        "y": 2173.625,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2217.625,
+        "scrollWidth": 329,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Why sections are being assembled",
+      "rect": {
+        "x": 56,
+        "y": 2251.625,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2295.625,
+        "scrollWidth": 309,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Preview build",
+      "rect": {
+        "x": 56,
+        "y": 2311.625,
+        "width": 108.28125,
+        "height": 44,
+        "right": 164.28125,
+        "bottom": 2355.625,
+        "scrollWidth": 106,
+        "clientWidth": 106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Build document",
+      "rect": {
+        "x": 172.28125,
+        "y": 2311.625,
+        "width": 121.203125,
+        "height": 44,
+        "right": 293.484375,
+        "bottom": 2355.625,
+        "scrollWidth": 121,
+        "clientWidth": 121
+      },
+      "disabled": true
+    },
+    {
+      "label": "Review 3.2.P.8.3",
+      "rect": {
+        "x": 96,
+        "y": 2689.6875,
+        "width": 121.984375,
+        "height": 44,
+        "right": 217.984375,
+        "bottom": 2733.6875,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    }
+  ],
+  "editorBody": "Edited first retained candidate for explicit human acceptance.",
+  "navigation": [],
+  "bridge": {
+    "docId": "dddddddd-0000-4000-8000-000000000181",
+    "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+    "editable": true
+  }
+}

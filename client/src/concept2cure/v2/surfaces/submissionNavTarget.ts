@@ -80,14 +80,15 @@ interface Miss {
 
 /** What a step decided: wait for a read, or stop here (with the line to show
  *  and the tab to open, if any). */
-type Outcome = 'wait' | { notice: Notice | null; ws?: string };
+type Outcome = 'wait' | { notice: Notice | null; ws?: string; retry?: 'submission' | 'sequence' };
+type NavigationPhase = 'submission' | 'sequence' | 'retry-submission' | 'retry-sequence' | 'done';
 type Stale = { rows: unknown; error: unknown } | null | undefined;
 
 /** The submission step: the named submission, or the list with a line. */
 function submissionStep(target: SubmissionNavTarget, subs: OpenOnTargetInputs['subs']): Outcome | { select: number | null } {
   if (subs.loading) return 'wait';
   if (subs.error) {
-    return { notice: { tone: 'err', text: 'The submission list could not be read, so the submission this link named was not opened.' } };
+    return { notice: { tone: 'err', text: 'The submission list could not be read, so the submission this link named was not opened. Retry the list to reopen this exact link.' }, retry: 'submission' };
   }
   if (!target.submissionId) return { select: null };
   const match = subs.rows.find((s) => String(s.id) === target.submissionId);
@@ -117,6 +118,7 @@ function sequenceStep(
       ? { tone: 'err', text: `The sequences of ${title} could not be read, so the sequence this link named was not opened.` }
       : { tone: 'warn', text: `The sequence this link named was not found in ${title}. Its sequence list is shown.` },
     ws: 'sequences',
+    retry: seqs.error ? 'sequence' : undefined,
   };
 }
 
@@ -131,7 +133,8 @@ function sequenceStep(
  * in the same commit.
  */
 export function useOpenOnNavTarget(target: SubmissionNavTarget | null, i: OpenOnTargetInputs): Notice | null {
-  const [phase, setPhase] = React.useState<'submission' | 'sequence' | 'done'>(target ? 'submission' : 'done');
+  const [phase, setPhase] = React.useState<NavigationPhase>(target ? 'submission' : 'done');
+  const targetRef = React.useRef(target);
   const [miss, setMiss] = React.useState<Miss | null>(null);
   /* The sequence read as it stood in the first render on the target
      submission. Its read starts in the effect after that render commits, so
@@ -144,11 +147,53 @@ export function useOpenOnNavTarget(target: SubmissionNavTarget | null, i: OpenOn
 
   const { subs, sub, seqs, ws, selSeq, selectSubmission, selectSequence, openWorkspace } = i;
   React.useEffect(() => {
+    if (targetRef.current !== target) {
+      targetRef.current = target;
+      staleSeqs.current = undefined;
+      setMiss(null);
+      setPhase(target ? 'submission' : 'done');
+      return;
+    }
     if (!target || phase === 'done') return;
-    const finish = (o: { notice: Notice | null; ws?: string }) => {
+    if (phase === 'retry-submission' || phase === 'retry-sequence') {
+      const retry = navTargetRetryState(phase, miss, { subs, sub, seqs, ws, selSeq });
+      if (retry === 'moved') { setPhase('done'); return; }
+      if (retry === 'waiting') return;
+      staleSeqs.current = null;
+      setMiss(null);
+      setPhase(phase === 'retry-submission' ? 'submission' : 'sequence');
+      return;
+    }
+    advanceNavTarget({ target, phase, subs, sub, seqs, ws, selSeq, selectSubmission, selectSequence, openWorkspace, staleSeqs, setMiss, setPhase });
+  }, [target, phase, miss, subs, sub, seqs, ws, selSeq, selectSubmission, selectSequence, openWorkspace]);
+
+  /* The person moved on: the line no longer describes what is on screen. */
+  const moved = !!miss && (miss.subId !== (sub?.id ?? null) || miss.ws !== ws || miss.selSeq !== selSeq);
+  React.useEffect(() => {
+    if (moved) setMiss(null);
+  }, [moved]);
+
+  return miss && !moved ? miss.notice : null;
+}
+
+function navTargetRetryState(phase: NavigationPhase, miss: Miss | null, i: Pick<OpenOnTargetInputs, 'subs' | 'sub' | 'seqs' | 'ws' | 'selSeq'>): 'moved' | 'waiting' | 'ready' {
+  // Current-scope reads mask prior rows while refreshing. That temporary
+  // absence is still the same retained link, not a user navigation.
+  if (i.subs.loading || (phase === 'retry-sequence' && i.seqs.loading)) return 'waiting';
+  const changedSubmission = miss?.subId !== null && miss?.subId !== (i.sub?.id ?? null);
+  if (miss && (changedSubmission || miss.ws !== i.ws || miss.selSeq !== i.selSeq)) return 'moved';
+  const read = phase === 'retry-submission' ? i.subs : i.seqs;
+  return read.loading || read.error ? 'waiting' : 'ready';
+}
+function advanceNavTarget({ target, phase, subs, sub, seqs, ws, selSeq, selectSubmission, selectSequence, openWorkspace, staleSeqs, setMiss, setPhase }: OpenOnTargetInputs & {
+  target: SubmissionNavTarget; phase: NavigationPhase; staleSeqs: React.MutableRefObject<Stale>;
+  setMiss: React.Dispatch<React.SetStateAction<Miss | null>>;
+  setPhase: React.Dispatch<React.SetStateAction<NavigationPhase>>;
+}) {
+    const finish = (o: { notice: Notice | null; ws?: string; retry?: 'submission' | 'sequence' }) => {
       if (o.ws) openWorkspace(o.ws);
       setMiss(o.notice ? { notice: o.notice, subId: sub?.id ?? null, ws: o.ws ?? ws, selSeq } : null);
-      setPhase('done');
+      setPhase(o.retry ? `retry-${o.retry}` : 'done');
     };
     if (phase === 'submission') {
       const step = submissionStep(target, subs);
@@ -170,13 +215,4 @@ export function useOpenOnNavTarget(target: SubmissionNavTarget | null, i: OpenOn
       return finish({ notice: null, ws: target.ws ?? 'sequences' });
     }
     finish(step);
-  }, [target, phase, subs, sub, seqs, ws, selSeq, selectSubmission, selectSequence, openWorkspace]);
-
-  /* The person moved on: the line no longer describes what is on screen. */
-  const moved = !!miss && (miss.subId !== (sub?.id ?? null) || miss.ws !== ws || miss.selSeq !== selSeq);
-  React.useEffect(() => {
-    if (moved) setMiss(null);
-  }, [moved]);
-
-  return miss && !moved ? miss.notice : null;
 }

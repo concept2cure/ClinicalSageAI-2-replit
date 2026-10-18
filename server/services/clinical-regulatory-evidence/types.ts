@@ -483,6 +483,9 @@ export type HumanReviewStatus = (typeof HUMAN_REVIEW_STATUSES)[number];
 // ─── Entity row shapes (camelCase; adapters map from snake_case) ───────────────
 
 export interface EvidenceSource {
+  /** Actual persisted nonblank text; null when this read did not load/confirm it. */
+  textAvailable?: boolean | null;
+  processing?: import('../../../shared/data-room-processing-status').DataRoomProcessingSummary | null;
   /** Disposition is projected; the immutable capture is never rewritten. */
   dataEligible?: boolean;
   originalFileAvailable?: boolean;

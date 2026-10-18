@@ -1,0 +1,122 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 58ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 26ms
+ × server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 45ms
+   → promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+ × server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 25ms
+   → expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+ × server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 41ms
+   → expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+ × server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 24ms
+   → expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue
+AssertionError: promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "jobId": 1,
++   "status": "queued",
+  }
+
+ ❯ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:108:28
+    106|
+    107|   it('refuses a private project to an unrelated organization member be…
+    108|     await expect(enqueue(8)).rejects.toMatchObject({ status: 403 });
+       |                            ^
+    109|     expect((await database.query('SELECT count(*)::integer AS n FROM c…
+    110|     expect(state.draft).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue
+AssertionError: expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "progress": 0,
+-   "status": "failed",
++   "progress": 100,
++   "status": "complete",
+  }
+
+ ❯ assertBlockedWorker server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:40:32
+     38|   state.queries.length = 0;
+     39|   await runCSRBuildJob(jobId);
+     40|   expect(await readJob(jobId)).toMatchObject({ status: 'failed', progr…
+       |                                ^
+     41|   expect((await readJob(jobId)).error).toBeTruthy();
+     42|   expect(state.draft).not.toHaveBeenCalled();
+ ❯ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:118:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue
+AssertionError: expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "progress": 0,
+-   "status": "failed",
++   "progress": 100,
++   "status": "complete",
+  }
+
+ ❯ assertBlockedWorker server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:40:32
+     38|   state.queries.length = 0;
+     39|   await runCSRBuildJob(jobId);
+     40|   expect(await readJob(jobId)).toMatchObject({ status: 'failed', progr…
+       |                                ^
+     41|   expect((await readJob(jobId)).error).toBeTruthy();
+     42|   expect(state.draft).not.toHaveBeenCalled();
+ ❯ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:124:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read
+AssertionError: expected { status: 'complete', …(2) } to match object { status: 'failed', progress: +0 }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "progress": 0,
+-   "status": "failed",
++   "progress": 100,
++   "status": "complete",
+  }
+
+ ❯ assertBlockedWorker server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:40:32
+     38|   state.queries.length = 0;
+     39|   await runCSRBuildJob(jobId);
+     40|   expect(await readJob(jobId)).toMatchObject({ status: 'failed', progr…
+       |                                ^
+     41|   expect((await readJob(jobId)).error).toBeTruthy();
+     42|   expect(state.draft).not.toHaveBeenCalled();
+ ❯ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts:131:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  19:14:35
+   Duration  10.89s (transform 4.16s, setup 277ms, import 5.71s, tests 4.01s, environment 0ms)

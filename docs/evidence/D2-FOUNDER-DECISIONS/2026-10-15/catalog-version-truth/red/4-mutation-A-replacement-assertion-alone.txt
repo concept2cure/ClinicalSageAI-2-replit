@@ -1,0 +1,13 @@
+# MUTATION A (reverted), with the new version:'other' loader assertion also removed so only the replacement assertion guards. npx vitest run server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts -t 'source-version truth'
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+AssertionError: expected 'stale endpoint 9 of 10' to be null
+- Expected:
+null
++ Received:
+"stale endpoint 9 of 10"
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:267:43
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 20 skipped (22)

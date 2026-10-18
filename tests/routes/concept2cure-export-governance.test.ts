@@ -27,7 +27,16 @@ vi.mock('../../server/db', () => ({
       set: vi.fn(() => ({ where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })) })),
     })),
   },
-  pool: { query: vi.fn() },
+  pool: { query: vi.fn(async (sql: string, params?: unknown[]) => {
+    // These file-prefix tests have active members in the two fixture tenants.
+    // Current membership refusal and real SQL admission are qualified by the
+    // persisted mounted-router suite, not by this filesystem fixture.
+    if (/SELECT ou.role FROM organization_users/.test(sql) &&
+        [990001,990002].includes(Number(params?.[0])) && Number(params?.[1]) === 1) {
+      return {rows:[{role:'member'}],rowCount:1};
+    }
+    return {rows:[],rowCount:0};
+  }) },
 }));
 
 // D5 (a05ba7eb0): an export is recorded before it is delivered, as an
@@ -160,7 +169,8 @@ describe('Concept2Cure export governance gates', () => {
     expect(mergedContent).toContain('DRAFT — NOT AGENCY-VALIDATED');
 
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
+    // 2026-10-15: was Human-Review-Approved — a caller assertion stamped as an approval.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Export-Authorization', 'none');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
     expectRecordedThenDelivered(res, Buffer.from('docx-bytes'));
   });
@@ -232,9 +242,10 @@ describe('Concept2Cure export governance gates', () => {
     await handler(req, res);
 
     expect(mockGeneratePptxBuffer).toHaveBeenCalledTimes(1);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Reviewer', 'Dr.%20Jane%20Doe');
+    // 2026-10-15: were Reviewer / Review-Timestamp — request text named as the reviewer of record.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Reviewer', 'Dr.%20Jane%20Doe');
     expect(res.setHeader).toHaveBeenCalledWith(
-      'X-Concept2Cure-Review-Timestamp',
+      'X-Concept2Cure-Asserted-Review-Timestamp',
       '2026-03-24T12:00:00.000Z'
     );
     expectRecordedThenDelivered(res, Buffer.from('pptx-bytes'));
@@ -311,7 +322,7 @@ describe('GET /documents/download/:filename serves only the caller’s own tenan
       .buffer(true)
       .parse(binary);
 
-    expect(res.status).toBe(200);
+    expect(res.status,JSON.stringify(res.body)).toBe(200);
     expect(res.headers['content-disposition']).toBe(`attachment; filename="${NAME}"`);
     expect((res.body as Buffer).toString('utf8')).toBe(A_BYTES);
   });

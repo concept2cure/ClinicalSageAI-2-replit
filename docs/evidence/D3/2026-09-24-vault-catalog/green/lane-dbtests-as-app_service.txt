@@ -687,4 +687,3 @@ stdout | tests/db/document-catalog-toggles.dbtest.ts > the toggle rows the deplo
       Tests  64 passed (64)
    Start at  00:48:58
    Duration  32.46s (transform 3.63s, setup 248ms, import 696ms, tests 30.30s, environment 1ms)
-

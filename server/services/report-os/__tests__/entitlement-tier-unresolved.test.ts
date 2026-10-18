@@ -3,21 +3,20 @@ import { vi } from 'vitest';
 /**
  * A plan the server could not read is not the Standard plan.
  *
- * HS-1008-4, honest-state review 2026-10-08. `requireReportEntitlement` wraps
- * `resolveCapabilities` in `catch { tier = 'standard' }`. Degrading to
- * `standard` is right for the GATE — it can never silently unlock a paid
- * feature. It was wrong for the SENTENCE: the error was discarded and the
- * assumption passed on unflagged, so an enterprise customer whose capability
- * lookup threw was shown "Plan: Standard" and a screen of locked tiles, with
- * nothing to say their plan had not been read.
+ * A compatibility fallback of `standard` is not a recorded subscription:
+ * neither an outer exception nor a resolver's internally caught tier fault
+ * may unlock a report or claim a known plan.
  *
  * These cases pin both halves: the gate still fails closed, and the decision
  * now carries whether the tier was read or assumed.
  */
 const caps = vi.hoisted(() => ({
   resolveCapabilities: vi.fn(
-    async (_orgId: number): Promise<{ tier: 'free' | 'standard' | 'professional' | 'enterprise' }> => ({
+    async (_orgId: number): Promise<{
+      tier: 'free' | 'standard' | 'professional' | 'enterprise'; tierResolved: boolean;
+    }> => ({
       tier: 'enterprise',
+      tierResolved: true,
     }),
   ),
 }));
@@ -28,7 +27,7 @@ import { decideReportEntitlement, requireReportEntitlement } from '../entitlemen
 
 beforeEach(() => {
   caps.resolveCapabilities.mockReset();
-  caps.resolveCapabilities.mockResolvedValue({ tier: 'enterprise' });
+  caps.resolveCapabilities.mockResolvedValue({ tier: 'enterprise', tierResolved: true });
 });
 
 describe('requireReportEntitlement when the capability lookup throws', () => {
@@ -55,10 +54,22 @@ describe('requireReportEntitlement when the capability lookup throws', () => {
   });
 
   it('a read that returns standard is resolved — a real plan, not an assumption', async () => {
-    caps.resolveCapabilities.mockResolvedValueOnce({ tier: 'standard' });
+    caps.resolveCapabilities.mockResolvedValueOnce({ tier: 'standard', tierResolved: true });
     const d = await requireReportEntitlement(1, 'portfolio.board_pack', 'portfolio');
     expect(d.tierResolved, 'a plan that WAS read was reported as unread').toBe(true);
     expect(d.entitled).toBe(false);
+  });
+
+  it('refuses the base reporting family when the resolver returned an unread compatibility tier', async () => {
+    caps.resolveCapabilities.mockResolvedValueOnce({ tier: 'standard', tierResolved: false });
+    expect(await requireReportEntitlement(1, 'readiness.executive_digest', 'readiness'))
+      .toMatchObject({ tier: 'standard', tierResolved: false, entitled: false });
+  });
+
+  it('also refuses a base report when resolution itself throws', async () => {
+    caps.resolveCapabilities.mockRejectedValueOnce(new Error('capability store unreachable'));
+    expect(await requireReportEntitlement(1, 'readiness.executive_digest', 'readiness'))
+      .toMatchObject({ tier: 'standard', tierResolved: false, entitled: false });
   });
 });
 
@@ -73,8 +84,13 @@ describe('decideReportEntitlement carries the flag through a whole catalog', () 
     for (const typeId of ['readiness.executive_digest', 'portfolio.board_pack', 'prediction.regulatory_forecast']) {
       const d = decideReportEntitlement(typeId, undefined, 'standard', false);
       expect(d.tierResolved, `${typeId} claimed a plan the gate could not read`).toBe(false);
-      // The gate is unchanged by the flag: it still decides on the tier it has.
+      expect(d.entitled, `${typeId} was unlocked by a compatibility fallback`).toBe(false);
       expect(d.tier).toBe('standard');
     }
+  });
+
+  it('does not let even an unresolved enterprise fallback unlock a report', () => {
+    expect(decideReportEntitlement('portfolio.board_pack', 'portfolio', 'enterprise', false))
+      .toMatchObject({ tier: 'enterprise', tierResolved: false, entitled: false });
   });
 });

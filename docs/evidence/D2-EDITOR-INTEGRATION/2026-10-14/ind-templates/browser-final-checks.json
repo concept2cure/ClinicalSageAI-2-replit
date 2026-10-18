@@ -1,0 +1,130 @@
+{
+  "status": "pass",
+  "testedHead": "013e54ba82d59f3eb74c854a324d27404b719af5",
+  "testedSourceSha256": {
+    "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "5dac26bbe5c2a53029b315f6603ab8c0bcfdfcf65462f45b4a941e82753bce96",
+    "client/src/concept2cure/v2/styles/rich-section-editor.css": "5653d4aa6e86f91a60b66c3faf4d6474129b5aad5e8f8f04f65c5c2cd0367c71"
+  },
+  "completedAt": "2026-10-14T05:06:19.804Z",
+  "apiContractSha256": "ee58e2b7a35a7f075111acd4cd6f09878dd31e22957ecf7593c14a1bb048009f",
+  "contexts": 4,
+  "representativeNativeCreates": 20,
+  "moduleOutlineRefsInspected": 20,
+  "moduleOutlineSinglePrefixChecks": 20,
+  "mergedAccessActionPresentChecks": 20,
+  "libraryAnaExactUuidAndSourcePagesHandoffs": 20,
+  "liveAnaCalls": 0,
+  "expandedGuidanceChecks": 20,
+  "emptyEditorChecks": 20,
+  "heldCallbackChecks": 4,
+  "actualUnsavedSectionCancelChecks": 4,
+  "reopenNoDuplicateChecks": 20,
+  "additionalGlpOriginalRecordLimitChecks": 4,
+  "attributionMockWarnings": 0,
+  "axeViolations": 0,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unknownApiRequests": 0,
+  "visibleEditableViewports": [
+    {
+      "context": "desktop-light",
+      "viewport": {
+        "x": 278,
+        "y": 502.296875,
+        "width": 1104,
+        "height": 320
+      },
+      "pageScrollWidth": 1440,
+      "editorCount": 1
+    },
+    {
+      "context": "desktop-dark",
+      "viewport": {
+        "x": 278,
+        "y": 502.296875,
+        "width": 1104,
+        "height": 320
+      },
+      "pageScrollWidth": 1440,
+      "editorCount": 1
+    },
+    {
+      "context": "touch-light",
+      "viewport": {
+        "x": 46,
+        "y": 597,
+        "width": 298,
+        "height": 242
+      },
+      "pageScrollWidth": 390,
+      "editorCount": 1
+    },
+    {
+      "context": "touch-dark",
+      "viewport": {
+        "x": 46,
+        "y": 597,
+        "width": 298,
+        "height": 242
+      },
+      "pageScrollWidth": 390,
+      "editorCount": 1
+    }
+  ],
+  "screenshots": 44,
+  "stoppedFixturePids": [
+    56382,
+    60646,
+    62695,
+    64028,
+    65827
+  ],
+  "fixturePort": 5175,
+  "fixturePortListening": false,
+  "combinedCanonicalVerificationComplete": true,
+  "productionEdits": false,
+  "testEdits": false,
+  "commits": false,
+  "pushes": false,
+  "allApisSynthetic": true,
+  "reproductionFixtureSha256": {
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "395a9cef3d0680895d961fe5b1b3ec5bb84611a625c47a1dafade5e1c92f76ea",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "8c5bd3414ef35cd770546e730af1c53ac8822b65364b78c668d266dec7606d1a",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "23bb7481676a3d63dcb305aa85ef7c11d0f5d5c178f628e2e636db3d3340bf57",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "6e2f774587db006875b29e9a6ef181c882a578bd6681af25c2391f42c08d8890"
+  },
+  "reproductionStrictLint": {
+    "status": "pass",
+    "tool": "ESLint CLI",
+    "maxWarnings": 0,
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "files": [
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs"
+    ],
+    "fixtureSha256": {
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "395a9cef3d0680895d961fe5b1b3ec5bb84611a625c47a1dafade5e1c92f76ea",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "8c5bd3414ef35cd770546e730af1c53ac8822b65364b78c668d266dec7606d1a",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "23bb7481676a3d63dcb305aa85ef7c11d0f5d5c178f628e2e636db3d3340bf57",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "6e2f774587db006875b29e9a6ef181c882a578bd6681af25c2391f42c08d8890"
+    },
+    "suppressionsAdded": false,
+    "baselineChanged": false,
+    "ignoredLaunchersUseTrackedBundle": true,
+    "directTrackedBundleExecuted": true
+  },
+  "reproductionImports": {
+    "status": "pass",
+    "trackedRelativeImportsResolve": true,
+    "sourceFilesChecked": 34,
+    "ignoresAdded": false,
+    "tsconfigChanged": false
+  },
+  "reproductionDirectTrackedBundle": true,
+  "reproductionUsesBundleLocalApiContract": true
+}

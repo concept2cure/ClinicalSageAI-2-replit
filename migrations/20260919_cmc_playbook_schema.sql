@@ -1,3 +1,30 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: The five CMC playbook tables and the twelve shared workflow templates.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 (CMC workflow scaffolds)
+--   - Integrity Risk Addressed: template figures nobody sourced (2026-10-15)
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Idempotent (IF NOT EXISTS, ON CONFLICT DO NOTHING, conditional UPDATEs).
+-- =============================================================================
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented figures): nine of the twelve
+-- seeded templates carried a total_tasks that contradicted their own
+-- template_data.steps (NDA/BLA Module 3: 24 tasks, 4 steps), and all twelve an
+-- estimated_time ('12-16 weeks', ...) with no source. total_tasks is now the
+-- step count and estimated_time is not seeded. Because the seed is ON CONFLICT
+-- DO NOTHING, two conditional UPDATEs below correct the rows it wrote on earlier
+-- deploys: the count wherever it differs from the steps, the duration only where
+-- it is still the seeded text. A replay matches nothing.
+--
 -- CMC Playbook schema — the five tables /api/cmc/blueprint/playbook/* queries.
 --
 -- ── WHY THIS FILE EXISTS (2026-09-19) ───────────────────────────────────────
@@ -73,7 +100,7 @@ CREATE TABLE IF NOT EXISTS cmc_workflows (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100),
-    estimated_time VARCHAR(100),        -- free text ('4-6 weeks'), not an interval
+    estimated_time VARCHAR(100),        -- free text, not an interval; NULL = not recorded
     total_tasks INTEGER DEFAULT 0,
     priority VARCHAR(50) DEFAULT 'medium',
     template_data JSONB DEFAULT '{}',
@@ -170,20 +197,54 @@ CREATE INDEX IF NOT EXISTS idx_cmc_ai_executions_org_id ON cmc_ai_tool_execution
 -- tenant alongside its own. Before this seed existed the route answered from a
 -- hardcoded array in the handler when the query came back empty; that array is
 -- deleted in the same commit, so these rows are now the only source.
-INSERT INTO cmc_workflows (id, organization_id, name, description, category, estimated_time, total_tasks, priority, template_data) VALUES
-('ind-cmc-template', 0, 'IND CMC Package', 'Complete Chemistry, Manufacturing, and Controls package for IND submission', 'submission', '4-6 weeks', 6, 'high', '{"steps": ["Drug Substance Characterization", "Manufacturing Process", "Container Closure", "Stability Protocol", "Analytical Methods", "Quality Specifications"]}'),
-('nda-cmc-template', 0, 'NDA/BLA CMC Module 3', 'Comprehensive Module 3 Quality section for NDA/BLA submission', 'submission', '12-16 weeks', 24, 'critical', '{"steps": ["3.2.S Drug Substance", "3.2.P Drug Product", "3.2.A Appendices", "Regional Requirements"]}'),
-('annual-product-review-template', 0, 'Annual Product Review (APR)', 'EU Annual Product Review for marketing authorization maintenance', 'post-market', '6-8 weeks', 15, 'high', '{"steps": ["Quality Review", "Non-clinical Review", "Clinical Review", "Risk Assessment", "Benefit-Risk Analysis"]}'),
-('method-validation-template', 0, 'Analytical Method Validation', 'ICH Q2(R1) compliant analytical method validation protocol', 'analytical', '3-4 weeks', 8, 'high', '{"steps": ["Specificity", "Linearity", "Accuracy", "Precision", "Detection Limit", "Quantitation Limit", "Robustness", "System Suitability"]}'),
-('qbd-development-template', 0, 'Quality by Design Development', 'ICH Q8/Q9/Q10 QbD approach for pharmaceutical development', 'development', '6-8 weeks', 12, 'high', '{"steps": ["QTPP Definition", "CQA Identification", "Risk Assessment", "DOE Studies", "Control Strategy", "Lifecycle Management"]}'),
-('change-control-template', 0, 'Post-Approval Change Control', 'ICH Q12 compliant change control and variation management', 'change-control', '4-8 weeks', 10, 'high', '{"steps": ["Change Classification", "Risk Assessment", "Impact Analysis", "Validation Studies", "Regulatory Filing", "Implementation"]}'),
-('tech-transfer-template', 0, 'Technology Transfer', 'Manufacturing site technology transfer and qualification', 'manufacturing', '8-12 weeks', 18, 'critical', '{"steps": ["Transfer Protocol", "Process Qualification", "Method Transfer", "Validation Studies", "Site Assessment", "Documentation"]}'),
-('comparability-template', 0, 'Comparability Assessment', 'Pre and post-change comparability studies for manufacturing changes', 'assessment', '6-10 weeks', 14, 'high', '{"steps": ["Comparability Protocol", "Quality Testing", "Impurity Profiling", "Dissolution Studies", "Stability Assessment", "Statistical Analysis"]}'),
-('dissolution-dev-template', 0, 'Dissolution Method Development', 'Biorelevant dissolution method development and validation', 'analytical', '4-6 weeks', 12, 'medium', '{"steps": ["Medium Selection", "Apparatus Selection", "Condition Optimization", "Method Validation", "IVIVC Assessment", "Documentation"]}'),
-('cleaning-validation-template', 0, 'Cleaning Validation', 'Multi-product facility cleaning validation and verification', 'validation', '3-5 weeks', 9, 'medium', '{"steps": ["Cleaning Procedure", "Acceptance Criteria", "Analytical Methods", "Worst-case Selection", "Validation Studies", "Documentation"]}'),
-('process-validation-template', 0, 'Process Validation', 'Stage 2 process performance qualification per FDA guidance', 'validation', '8-12 weeks', 16, 'critical', '{"steps": ["Validation Protocol", "Batch Manufacturing", "IPCs Monitoring", "Quality Testing", "Statistical Analysis", "Final Report"]}'),
-('stability-supplement-template', 0, 'Stability Data Supplement', 'Comprehensive stability data analysis and shelf-life justification', 'stability', '2-3 weeks', 5, 'medium', '{"steps": ["Study Design Review", "Data Analysis", "Statistical Evaluation", "Shelf-life Justification", "Report Generation"]}')
+INSERT INTO cmc_workflows (id, organization_id, name, description, category, total_tasks, priority, template_data) VALUES
+('ind-cmc-template', 0, 'IND CMC Package', 'Complete Chemistry, Manufacturing, and Controls package for IND submission', 'submission', 6, 'high', '{"steps": ["Drug Substance Characterization", "Manufacturing Process", "Container Closure", "Stability Protocol", "Analytical Methods", "Quality Specifications"]}'),
+('nda-cmc-template', 0, 'NDA/BLA CMC Module 3', 'Comprehensive Module 3 Quality section for NDA/BLA submission', 'submission', 4, 'critical', '{"steps": ["3.2.S Drug Substance", "3.2.P Drug Product", "3.2.A Appendices", "Regional Requirements"]}'),
+('annual-product-review-template', 0, 'Annual Product Review (APR)', 'EU Annual Product Review for marketing authorization maintenance', 'post-market', 5, 'high', '{"steps": ["Quality Review", "Non-clinical Review", "Clinical Review", "Risk Assessment", "Benefit-Risk Analysis"]}'),
+('method-validation-template', 0, 'Analytical Method Validation', 'ICH Q2(R1) compliant analytical method validation protocol', 'analytical', 8, 'high', '{"steps": ["Specificity", "Linearity", "Accuracy", "Precision", "Detection Limit", "Quantitation Limit", "Robustness", "System Suitability"]}'),
+('qbd-development-template', 0, 'Quality by Design Development', 'ICH Q8/Q9/Q10 QbD approach for pharmaceutical development', 'development', 6, 'high', '{"steps": ["QTPP Definition", "CQA Identification", "Risk Assessment", "DOE Studies", "Control Strategy", "Lifecycle Management"]}'),
+('change-control-template', 0, 'Post-Approval Change Control', 'ICH Q12 compliant change control and variation management', 'change-control', 6, 'high', '{"steps": ["Change Classification", "Risk Assessment", "Impact Analysis", "Validation Studies", "Regulatory Filing", "Implementation"]}'),
+('tech-transfer-template', 0, 'Technology Transfer', 'Manufacturing site technology transfer and qualification', 'manufacturing', 6, 'critical', '{"steps": ["Transfer Protocol", "Process Qualification", "Method Transfer", "Validation Studies", "Site Assessment", "Documentation"]}'),
+('comparability-template', 0, 'Comparability Assessment', 'Pre and post-change comparability studies for manufacturing changes', 'assessment', 6, 'high', '{"steps": ["Comparability Protocol", "Quality Testing", "Impurity Profiling", "Dissolution Studies", "Stability Assessment", "Statistical Analysis"]}'),
+('dissolution-dev-template', 0, 'Dissolution Method Development', 'Biorelevant dissolution method development and validation', 'analytical', 6, 'medium', '{"steps": ["Medium Selection", "Apparatus Selection", "Condition Optimization", "Method Validation", "IVIVC Assessment", "Documentation"]}'),
+('cleaning-validation-template', 0, 'Cleaning Validation', 'Multi-product facility cleaning validation and verification', 'validation', 6, 'medium', '{"steps": ["Cleaning Procedure", "Acceptance Criteria", "Analytical Methods", "Worst-case Selection", "Validation Studies", "Documentation"]}'),
+('process-validation-template', 0, 'Process Validation', 'Stage 2 process performance qualification per FDA guidance', 'validation', 6, 'critical', '{"steps": ["Validation Protocol", "Batch Manufacturing", "IPCs Monitoring", "Quality Testing", "Statistical Analysis", "Final Report"]}'),
+('stability-supplement-template', 0, 'Stability Data Supplement', 'Comprehensive stability data analysis and shelf-life justification', 'stability', 5, 'medium', '{"steps": ["Study Design Review", "Data Analysis", "Statistical Evaluation", "Shelf-life Justification", "Report Generation"]}')
 ON CONFLICT (id) DO NOTHING;
+
+-- 2026-10-15 (see the note at the top): rows the seed wrote on earlier deploys.
+-- A template's task count is its step count, wherever the two differ.
+UPDATE cmc_workflows
+   SET total_tasks = jsonb_array_length(template_data->'steps'), updated_at = NOW()
+ WHERE organization_id = 0
+   AND id IN (
+     'ind-cmc-template', 'nda-cmc-template', 'annual-product-review-template',
+     'method-validation-template', 'qbd-development-template',
+     'change-control-template', 'tech-transfer-template',
+     'comparability-template', 'dissolution-dev-template',
+     'cleaning-validation-template', 'process-validation-template',
+     'stability-supplement-template'
+   )
+   AND jsonb_typeof(template_data->'steps') = 'array'
+   AND total_tasks IS DISTINCT FROM (
+     CASE WHEN jsonb_typeof(template_data->'steps') = 'array'
+          THEN jsonb_array_length(template_data->'steps') END
+   );
+
+-- No source gave these durations; withdrawn where they are still the seeded text.
+UPDATE cmc_workflows w
+   SET estimated_time = NULL, updated_at = NOW()
+  FROM (VALUES
+    ('ind-cmc-template', '4-6 weeks'), ('nda-cmc-template', '12-16 weeks'),
+    ('annual-product-review-template', '6-8 weeks'), ('method-validation-template', '3-4 weeks'),
+    ('qbd-development-template', '6-8 weeks'), ('change-control-template', '4-8 weeks'),
+    ('tech-transfer-template', '8-12 weeks'), ('comparability-template', '6-10 weeks'),
+    ('dissolution-dev-template', '4-6 weeks'), ('cleaning-validation-template', '3-5 weeks'),
+    ('process-validation-template', '8-12 weeks'), ('stability-supplement-template', '2-3 weeks')
+  ) AS s(id, seeded_time)
+ WHERE w.organization_id = 0
+   AND w.id = s.id
+   AND w.estimated_time = s.seeded_time;
 
 -- Row-count assertion (RULE 1). The seed above must land all twelve templates.
 -- A truncated INSERT list — a row lost to a bad merge or a hand edit — would

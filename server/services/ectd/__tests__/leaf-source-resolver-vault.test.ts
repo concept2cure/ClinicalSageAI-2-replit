@@ -126,6 +126,7 @@ beforeAll(async () => {
   // resolver reads it with raw SQL through the programme, so both are needed.
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}');
     -- The programme spine: the resolver scopes a vault document through it,
     -- because that is the authoritative owner of one.
     CREATE TABLE IF NOT EXISTS regulatory_programs (
@@ -147,6 +148,7 @@ beforeAll(async () => {
       document_code TEXT
     );
   `);
+  await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));

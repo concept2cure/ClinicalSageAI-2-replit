@@ -1,0 +1,133 @@
+{
+  "branch": "concept2cure-v2",
+  "head": "171866a97b58376db6652790dbe39326891e7c39",
+  "capturedAtUtc": "2026-10-14T08:15:25.366917+00:00",
+  "qualification": "Completed merged-source local gates; no whole hosted/native/browser or regulatory qualification.",
+  "typecheck": {
+    "exitCode": 0,
+    "errors": 0,
+    "baseline": 0,
+    "heapMb": 12288,
+    "nodeMajor": 22
+  },
+  "build": {
+    "exitCode": 0,
+    "clientSeconds": 47.45,
+    "serverCompleted": true
+  },
+  "focusedTests": {
+    "exitCode": 0,
+    "passed": 648,
+    "files": 36,
+    "skipped": 0,
+    "durationSeconds": 232.05
+  },
+  "eslint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 6090,
+    "baseline": 6090,
+    "reportEntries": 8440
+  },
+  "sourcePinCount": 101,
+  "sourcePinsVerifiedUnchanged": true,
+  "privateRawRecords": [
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-typecheck.txt",
+      "bytes": 204,
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-build.txt",
+      "bytes": 14419,
+      "sha256": "fab359124b155a30c9d7feb2505c4208f0c6a58ce1b69e084bda1c1d648606e2"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-tests.txt",
+      "bytes": 451683,
+      "sha256": "f4d952c249b61c4736456fc682353c2c16095d23802f636fc67a87d18f2cba67"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-eslint.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-eslint-ratchet.txt",
+      "bytes": 156,
+      "sha256": "b9012c955532882189a8d89488c267769bd30bf7b1ee308c6e787c7ebc30c6f9"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-claude-merged-eslint.json",
+      "bytes": 52652520,
+      "sha256": "6b8c72705c65226cc875524b6612c480ad0027bc9ba0dc7cce5c4cb3d2ce89a4"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/README.md",
+      "bytes": 2670,
+      "sha256": "e8322b57999da00f5f758b8ea4323cc91fa44742dd023de9997ad968c8582016"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/client-server-build.txt",
+      "bytes": 14419,
+      "sha256": "fab359124b155a30c9d7feb2505c4208f0c6a58ce1b69e084bda1c1d648606e2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/client-server-build.txt.raw.gz",
+      "bytes": 4165,
+      "sha256": "8c4b175e29be5f2fd35bbfdef1b5966a13f4d76fec698c8e9194972678fb18c7"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/focused-648-pass.txt",
+      "bytes": 451682,
+      "sha256": "a11913628cce612d0a26ffaf8893318fe2d6d9cf2bee1eb3b86d564090609650"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/focused-648-pass.txt.raw.gz",
+      "bytes": 26615,
+      "sha256": "634b798c63898a49c79d166c3709223c41f25d4c1cf26c01468494f12551a391"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/focused-suite-inputs.json",
+      "bytes": 5843,
+      "sha256": "c01cf9f26c010c0c075dbbda1e4e40d198651b727bf39bab10e233cd7c0653e0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/global-eslint-ratchet.txt",
+      "bytes": 156,
+      "sha256": "b9012c955532882189a8d89488c267769bd30bf7b1ee308c6e787c7ebc30c6f9"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/global-eslint-ratchet.txt.raw.gz",
+      "bytes": 132,
+      "sha256": "b534cc6dfab561b96dbf9923942622d35b2a10394061216c89be54269c80601b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/global-eslint-run.txt",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/global-eslint-run.txt.raw.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/source-pins.json",
+      "bytes": 19708,
+      "sha256": "a3ff26904becedffcc5d423574809eaa40b2d3447e38abb7d45454c80bef368b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/typecheck-zero.txt",
+      "bytes": 204,
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/claude-merged-gates/typecheck-zero.txt.raw.gz",
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    }
+  ]
+}

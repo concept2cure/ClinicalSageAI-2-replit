@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: the DTD row counts the stylesheets: all five DTDs present is NOT ready
+ok 1 - the DTD row counts the stylesheets: all five DTDs present is NOT ready
+  ---
+  duration_ms: 80.806564
+  type: 'test'
+  ...
+# Subtest: the DTD row blocks on EACH required supportive file when it alone is absent
+ok 2 - the DTD row blocks on EACH required supportive file when it alone is absent
+  ---
+  duration_ms: 316.868332
+  type: 'test'
+  ...
+# Subtest: POSITIVE CONTROL: every supportive file present reads ready
+ok 3 - POSITIVE CONTROL: every supportive file present reads ready
+  ---
+  duration_ms: 35.039964
+  type: 'test'
+  ...
+# Subtest: the checksum row reads the manifest of the drop-point in use and names the unrecorded files
+ok 4 - the checksum row reads the manifest of the drop-point in use and names the unrecorded files
+  ---
+  duration_ms: 43.184148
+  type: 'test'
+  ...
+# Subtest: the checksum row does not read a manifest it never opened (label honesty)
+ok 5 - the checksum row does not read a manifest it never opened (label honesty)
+  ---
+  duration_ms: 46.950968
+  type: 'test'
+  ...
+# Subtest: the checksum row verifies HASHES, not line count: seven wrong hashes is not ready
+ok 6 - the checksum row verifies HASHES, not line count: seven wrong hashes is not ready
+  ---
+  duration_ms: 37.273969
+  type: 'test'
+  ...
+# Subtest: the checksum row rejects seven lines that are not manifest entries at all
+ok 7 - the checksum row rejects seven lines that are not manifest entries at all
+  ---
+  duration_ms: 39.158264
+  type: 'test'
+  ...
+# Subtest: the checksum row rejects seven valid entries for files nobody requires
+ok 8 - the checksum row rejects seven valid entries for files nobody requires
+  ---
+  duration_ms: 34.979033
+  type: 'test'
+  ...
+# Subtest: POSITIVE CONTROL: a manifest recording every vendored file with matching hashes reads ready
+ok 9 - POSITIVE CONTROL: a manifest recording every vendored file with matching hashes reads ready
+  ---
+  duration_ms: 35.893301
+  type: 'test'
+  ...
+# Subtest: ca:hc_cesg is blocked as unverified with every HC_CESG_* variable set
+ok 10 - ca:hc_cesg is blocked as unverified with every HC_CESG_* variable set
+  ---
+  duration_ms: 115.463699
+  type: 'test'
+  ...
+# Subtest: current official form and populated map presence cannot qualify PreSTAR administrative prefills as complete requests
+ok 11 - current official form and populated map presence cannot qualify PreSTAR administrative prefills as complete requests
+  ---
+  duration_ms: 67.484506
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 727.954605

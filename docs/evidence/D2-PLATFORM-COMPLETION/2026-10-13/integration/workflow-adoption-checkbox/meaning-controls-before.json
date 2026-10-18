@@ -1,0 +1,71 @@
+{
+  "variant": "mobile",
+  "signed": false,
+  "credentialsEntered": false,
+  "metrics": {
+    "width": 16,
+    "height": 16,
+    "padding": "0px",
+    "outline": "2px",
+    "labelWidth": 300,
+    "labelHeight": 44,
+    "labelColor": "rgb(61, 61, 58)",
+    "hintColor": "rgb(107, 105, 99)",
+    "background": "rgb(250, 249, 245)",
+    "labelFontSize": "12px",
+    "hintFontSize": "11px",
+    "labelContrast": 10.34428152145095,
+    "hintContrast": 5.210086604274703
+  },
+  "adoptionText": "I have reviewed and consciously adopt the current saved working copy for this review.\n\nRequires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.",
+  "existingMeaningControls": [
+    {
+      "label": "Authorship",
+      "height": 19.5,
+      "padding": "0px"
+    },
+    {
+      "label": "Review",
+      "height": 19.5,
+      "padding": "0px"
+    },
+    {
+      "label": "Approval",
+      "height": 19.5,
+      "padding": "0px"
+    }
+  ],
+  "bodyWidth": 390,
+  "passed": true,
+  "consentUncheckedOnReopen": true,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "mutations": [],
+  "backgroundCollaborationRequests": [
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/users/me",
+      "method": "DELETE"
+    },
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/users/me",
+      "method": "DELETE"
+    },
+    {
+      "path": "/api/realtime-collab/rooms",
+      "method": "POST"
+    },
+    {
+      "path": "/api/realtime-collab/rooms/2b426b7b-be2d-43cb-a6a1-7086f0ad6d27/awareness",
+      "method": "PUT"
+    }
+  ]
+}

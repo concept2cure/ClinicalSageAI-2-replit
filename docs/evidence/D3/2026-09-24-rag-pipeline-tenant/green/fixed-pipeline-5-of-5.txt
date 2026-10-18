@@ -30,4 +30,3 @@ stderr | tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes 
       Tests  5 passed (5)
    Start at  19:06:00
    Duration  2.60s (transform 1.13s, setup 67ms, import 1.93s, tests 333ms, environment 0ms)
-

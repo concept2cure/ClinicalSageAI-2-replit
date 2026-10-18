@@ -351,8 +351,11 @@ function GlobalRiCapability({
   const required = schema.required ?? [];
   const [form, setForm] = React.useState<Record<string, unknown>>(() => {
     const init: Record<string, unknown> = {};
+    /* 2026-10-15: every boolean started as false and the whole form was sent,
+       so a question nobody answered arrived as a stated "No" (an unassessed
+       expedited-reporting case read "not reportable"). Unset is undefined. */
     Object.entries(props).forEach(([k, p]) => {
-      init[k] = p.type === 'boolean' ? false : '';
+      init[k] = p.type === 'boolean' ? undefined : '';
     });
     return init;
   });
@@ -361,7 +364,9 @@ function GlobalRiCapability({
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
   const run = () => {
     setRunning(true);
-    griRun(cap, form).then((r) => {
+    // Only what was stated is sent; an untouched field is not an answer.
+    const stated = Object.fromEntries(Object.entries(form).filter(([, v]) => v !== undefined && v !== ''));
+    griRun(cap, stated).then((r) => {
       setResult(r);
       setRunning(false);
     });
@@ -401,23 +406,16 @@ function GlobalRiCapability({
               </label>
               {p.description && <div className="desc">{p.description}</div>}
               {p.type === 'boolean' ? (
-                <div className="gri-toggle">
-                  <span
-                    className="gri-switch"
-                    role="switch"
-                    aria-checked={Boolean(form[k])}
-                    tabIndex={0}
-                    data-on={Boolean(form[k])}
-                    onClick={() => set(k, !form[k])}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        set(k, !form[k]);
-                      }
-                    }}
-                  />
-                  <span className="gri-toggle-l">{form[k] ? 'Yes' : 'No'}</span>
-                </div>
+                <select
+                  id={`gri-${k}`}
+                  className="gri-input"
+                  value={form[k] === undefined ? '' : form[k] ? 'yes' : 'no'}
+                  onChange={(e) => set(k, e.target.value === '' ? undefined : e.target.value === 'yes')}
+                >
+                  <option value="">Not stated</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
               ) : p.enum ? (
                 <select id={`gri-${k}`} className="gri-input" value={String(form[k])} onChange={(e) => set(k, e.target.value)}>
                   <option value="">Select…</option>

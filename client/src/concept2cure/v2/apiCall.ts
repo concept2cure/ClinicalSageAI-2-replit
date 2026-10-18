@@ -8,7 +8,7 @@ type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 /** Structural check for `ApiRequestError`, for the same reason: the class is
  *  not importable through the shadowed alias, and a structural test is robust
  *  across duplicate module instances anyway. */
-function isApiRequestError(err: unknown): err is { status: number; payload?: unknown } {
+export function isApiRequestError(err: unknown): err is { status: number; payload?: unknown } {
   return (
     typeof err === 'object' &&
     err !== null &&

@@ -28,10 +28,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'lead@example.test', displayName: 'R. Lead' } }),
 }));
 
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
 import { CmOverview, CmChange } from '../surfaces/CmcModule';
 
 function res(payload: unknown, status = 200) {
@@ -43,37 +45,13 @@ const calls = () => apiRequest.mock.calls as Array<[string, string, unknown?]>;
 const boardReads = () =>
   calls().filter((c) => c[0] === 'GET' && c[1] === '/api/cmc/module3-board');
 
-/** One open agency question citing the given section. */
-const question = (sectionRef: string) => ({
-  id: 1,
-  question: 'Please justify the proposed change and provide comparability data for the affected material.',
-  sectionRef,
-  priority: 'high',
-  severity: 'major',
-  status: 'open',
-  region: 'FDA',
-  dueDate: '2026-09-01',
-  overdue: true,
-  assignedTo: null,
-});
-
-/**
- * A live board with one submission, the given IR count, and the given questions.
- * `irOverdue: null` is the server saying the question store could not be read —
- * not that nothing is overdue.
- */
-const board = (irOverdue: number | null, correspondence: unknown[] = []) => ({
-  portfolio: [{ sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 82, ir: irOverdue, source: 'rpi' }],
-  sections: null,
-  kpis: { submissions: 1, rpiAverage: 82, irOverdue, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
-  correspondence,
-  meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, correspondenceUnreadable: irOverdue == null, generatedAt: '2026-08-24T00:00:00.000Z' },
-});
+import { board, question } from './cmcCorrCrossLinks.fixtures';
 
 /** The board answers as given; every other register read is honestly empty. */
 function wire(boardData: unknown) {
   apiRequest.mockImplementation(async (m: string, u: string) => {
     if (m === 'GET' && u === '/api/cmc/module3-board') return res({ success: true, data: boardData });
+    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: { fdaReportingCategory: 'pas', emaVariationCategory: 'type_ii', rationale: ['Recorded site change'], validationRequirements: ['Review comparability'], impactedCtdSections: ['3.2.S.2'], citations: ['21 CFR 314.70'] } });
     return res({ success: true, data: [] });
   });
 }
@@ -166,7 +144,10 @@ function simulate(desc: string) {
     screen.getByPlaceholderText(/switch the drug-substance supplier/),
     { target: { value: desc } },
   );
-  fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no'); choose('Site change', 'different_country');
+  fireEvent.click(screen.getByRole('button', { name: /Assess proposed variation/ }));
 }
 
 describe('CmChange — a simulated change collides with open agency questions', () => {
@@ -180,7 +161,7 @@ describe('CmChange — a simulated change collides with open agency questions', 
 
     const notice = await screen.findByTestId('cmc-corr-notice');
     expect(within(notice).getByText(/3\.2\.S\.2\.2/)).toBeTruthy();
-    expect(within(notice).getByText(/the sections this change refiles/)).toBeTruthy();
+    expect(within(notice).getByText(/the sections this change affects/)).toBeTruthy();
     // The signpost's jump goes to the record of truth.
     const setTab = vi.fn();
     (window as unknown as CmWindow).__cmSetTab = setTab;
@@ -196,7 +177,7 @@ describe('CmChange — a simulated change collides with open agency questions', 
     simulate('Switch the drug-substance supplier from A to B');
 
     // The assessment itself rendered…
-    await screen.findByText('Regulatory Change Impact Assessment', { selector: '.cm-doc-kind' });
+    await screen.findByText('Regulatory Change Impact Assessment', { selector: 'h3' });
     // …and the signpost DID read the board (so the silence below is a filtered
     // result, not an unresolved fetch)…
     await waitFor(() => expect(boardReads().length).toBeGreaterThan(0));
@@ -527,10 +508,10 @@ describe('CmPathway — the closed file, and refused writes', () => {
 function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method === 'POST' && url === '/api/authoring/docs') {
-      return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+      return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
     }
     if (method === 'POST' && url === '/api/authoring/sections') {
-      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
     }
     if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
       patches.push({ url, body });
@@ -593,10 +574,10 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     const navd: string[] = [];
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/authoring/docs') {
-        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+        return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
       }
       if (method === 'POST' && url === '/api/authoring/sections') {
-        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
       }
       if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
         // A concurrent close: the expectedStatus guard answers 409.
@@ -665,8 +646,8 @@ describe('CmPathway — with no project open, a draft response is refused (PF-07
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     // The refusal is stated, in the handoff's own words, and promises the work.
-    await screen.findByText(/open a project first/i);
-    expect(screen.getByText(/Nothing was saved; the draft response is still here/)).toBeTruthy();
+    await screen.findByText(/open a project first/i, { selector: '.scaf-note[role="alert"]' });
+    expect(screen.getByText(/Nothing was saved; the draft response is still here/, { selector: '.scaf-note[role="alert"]' })).toBeTruthy();
 
     // Nothing was created — no document, no section…
     const urls = calls().map((c) => String(c[1]));

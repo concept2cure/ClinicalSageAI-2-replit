@@ -38,13 +38,42 @@ const APPLIER = 'scripts/db/migration-set.mjs';
 const migrationList = () => C2C_MIGRATION_FILES;
 
 test('every migration in the applier allowlist exists on disk', () => {
-  const missing = migrationList().filter((f) => !existsSync(f));
+  const missing = migrationList().filter(f => !existsSync(f));
   assert.deepEqual(
     missing,
     [],
     `these files are listed in ${APPLIER} but do not exist: ${missing.join(', ')}. ` +
-      'A listed-but-missing file is skipped, so the migration silently never reaches any database.',
+      'A listed-but-missing file is skipped, so the migration silently never reaches any database.'
   );
+});
+
+test('feature toggles are provisioned by a replay-safe durable migration', async () => {
+  const migration = 'migrations/20260920_feature_toggles_provision.sql';
+  assert.ok(migrationList().includes(migration));
+
+  const db = new PGlite();
+  try {
+    const sql = readFileSync(path.resolve(migration), 'utf8');
+    await db.exec(sql);
+    await db.exec(sql);
+
+    const { rows } = await db.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'feature_toggles'`
+    );
+    assert.deepEqual(rows.map(row => row.column_name).sort(), [
+      'created_at',
+      'description',
+      'enabled',
+      'enabled_for_client_workspace_ids',
+      'enabled_for_organization_ids',
+      'feature_key',
+      'id',
+      'updated_at',
+    ]);
+  } finally {
+    await db.close();
+  }
 });
 
 test('the data-room migrations are listed, and the spine precedes its ALTER', () => {
@@ -58,7 +87,7 @@ test('the data-room migrations are listed, and the spine precedes its ALTER', ()
   assert.ok(scope >= 0, 'the program-scope migration must be listed');
   assert.ok(
     spine < scope,
-    'the spine creates cre_evidence_sources and the program-scope migration ALTERs it, so the spine must come first',
+    'the spine creates cre_evidence_sources and the program-scope migration ALTERs it, so the spine must come first'
   );
 });
 
@@ -86,7 +115,7 @@ test('the authoring loop tables are NOT listed — half a Part 11 subsystem is w
     -1,
     'the authoring loop tables must NOT be on this list: they carry frozen_documents and user_pins ' +
       'without authoring_audit_trail or authoring_signatures, so applying them alone stands up an ' +
-      'unaudited freeze and a broken e-sign.',
+      'unaudited freeze and a broken e-sign.'
   );
 });
 
@@ -99,19 +128,19 @@ test('the authoring entries on the list are guarded, additive ALTERs only', () =
   // WHERE the subsystem is already provisioned, and no-op with a NOTICE where it
   // is not. That is what makes them safe on this path when the loop tables are
   // not.
-  for (const file of files.filter((f) => /authoring/.test(f))) {
+  for (const file of files.filter(f => /authoring/.test(f))) {
     const sql = readFileSync(file, 'utf8');
     assert.match(
       sql,
       /to_regclass/,
       `${file} is on the applier list but does not guard on to_regclass — it would fail the run, ` +
-        'or provision part of a subsystem, on a database without the authoring tables.',
+        'or provision part of a subsystem, on a database without the authoring tables.'
     );
     assert.doesNotMatch(
       sql,
       /CREATE TABLE/i,
       `${file} creates a table. Only guarded additive ALTERs belong on this path for the authoring ` +
-        'subsystem; table creation is owned by the db/migrations lineage.',
+        'subsystem; table creation is owned by the db/migrations lineage.'
     );
   }
 });
@@ -127,7 +156,7 @@ test('the source-usage migration yields its index where the subsystem IS provisi
   ];
   assert.ok(
     migrationList().includes(files[1]),
-    'the source-usage migration must be on the applier list',
+    'the source-usage migration must be on the applier list'
   );
 
   const db = new PGlite();
@@ -137,12 +166,12 @@ test('the source-usage migration yields its index where the subsystem IS provisi
     }
     const idx = await db.query(
       `SELECT indexname FROM pg_indexes
-        WHERE tablename = 'authoring_citations' AND indexname = 'authoring_citations_reference_idx'`,
+        WHERE tablename = 'authoring_citations' AND indexname = 'authoring_citations_reference_idx'`
     );
     assert.equal(
       idx.rows.length,
       1,
-      'the back-reference index must exist — without it "which sections cite this source" is a full scan per source',
+      'the back-reference index must exist — without it "which sections cite this source" is a full scan per source'
     );
   } finally {
     await db.close();
@@ -156,7 +185,7 @@ test('the source-usage migration no-ops when authoring_citations is absent', asy
   const db = new PGlite();
   try {
     await db.exec(
-      readFileSync(path.resolve('migrations/20260726_authoring_citation_source_usage.sql'), 'utf8'),
+      readFileSync(path.resolve('migrations/20260726_authoring_citation_source_usage.sql'), 'utf8')
     );
   } finally {
     await db.close();
@@ -164,10 +193,10 @@ test('the source-usage migration no-ops when authoring_citations is absent', asy
 });
 
 test('the data-room migrations apply in listed order and yield the expected schema', async () => {
-  const files = migrationList().filter((f) =>
+  const files = migrationList().filter(f =>
     /20260724_clinical_regulatory_evidence_spine|20260726_file_uploads_tenancy|20260726_cre_source_program_scope/.test(
-      f,
-    ),
+      f
+    )
   );
   assert.equal(files.length, 3, 'expected all three data-room migrations to be listed');
 
@@ -181,18 +210,18 @@ test('the data-room migrations apply in listed order and yield the expected sche
     const src = await db.query(
       `SELECT column_name FROM information_schema.columns
         WHERE table_name = 'cre_evidence_sources'
-          AND column_name IN ('client_program_id', 'client_workspace_id', 'checksum')`,
+          AND column_name IN ('client_program_id', 'client_workspace_id', 'checksum')`
     );
     assert.equal(
       src.rows.length,
       3,
-      'cre_evidence_sources must carry checksum plus both project scopes after the trio applies',
+      'cre_evidence_sources must carry checksum plus both project scopes after the trio applies'
     );
 
     // The tenancy column whose absence silently dropped every chat attachment.
     const uploads = await db.query(
       `SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'file_uploads' AND column_name = 'organization_id'`,
+        WHERE table_name = 'file_uploads' AND column_name = 'organization_id'`
     );
     assert.equal(uploads.rows.length, 1, 'file_uploads must carry organization_id');
   } finally {
@@ -260,14 +289,14 @@ const KNOWN_UNLISTED = new Set([
 
 test('no NEW root migration is silently absent from the applier allowlist', async () => {
   const { readdir } = await import('node:fs/promises');
-  const files = (await readdir('migrations')).filter((f) => f.endsWith('.sql'));
+  const files = (await readdir('migrations')).filter(f => f.endsWith('.sql'));
   const listed = new Set(migrationList());
 
   const governed = files
-    .filter((f) => /^\d{8}/.test(f) && f.slice(0, 8) >= RATCHET_FROM)
-    .map((f) => `migrations/${f}`);
+    .filter(f => /^\d{8}/.test(f) && f.slice(0, 8) >= RATCHET_FROM)
+    .map(f => `migrations/${f}`);
 
-  const unaccounted = governed.filter((f) => !listed.has(f) && !KNOWN_UNLISTED.has(f));
+  const unaccounted = governed.filter(f => !listed.has(f) && !KNOWN_UNLISTED.has(f));
 
   assert.deepEqual(
     unaccounted,
@@ -280,26 +309,30 @@ test('no NEW root migration is silently absent from the applier allowlist', asyn
       `C2C_MIGRATION_FILES in ${APPLIER}.\n` +
       `  • If its objects come from shared/schema.ts and fresh installs get them via ` +
       `drizzle-kit push — add it to KNOWN_UNLISTED in this test with a one-line reason.\n\n` +
-      `Do not skip this: it is the mechanism behind "merged != applied".`,
+      `Do not skip this: it is the mechanism behind "merged != applied".`
   );
 });
 
 test('the grandfathered baseline stays honest (no stale or double-counted entries)', async () => {
   const { readdir } = await import('node:fs/promises');
-  const onDisk = new Set((await readdir('migrations')).map((f) => `migrations/${f}`));
+  const onDisk = new Set((await readdir('migrations')).map(f => `migrations/${f}`));
   const listed = new Set(migrationList());
 
   // A baselined file that no longer exists means the baseline is drifting.
-  const vanished = [...KNOWN_UNLISTED].filter((f) => !onDisk.has(f));
-  assert.deepEqual(vanished, [], `KNOWN_UNLISTED names files that no longer exist: ${vanished.join(', ')}`);
+  const vanished = [...KNOWN_UNLISTED].filter(f => !onDisk.has(f));
+  assert.deepEqual(
+    vanished,
+    [],
+    `KNOWN_UNLISTED names files that no longer exist: ${vanished.join(', ')}`
+  );
 
   // A file both baselined AND listed is contradictory — the ratchet should have
   // been loosened by REMOVING the baseline entry.
-  const both = [...KNOWN_UNLISTED].filter((f) => listed.has(f));
+  const both = [...KNOWN_UNLISTED].filter(f => listed.has(f));
   assert.deepEqual(
     both,
     [],
     `these are in BOTH the applier allowlist and KNOWN_UNLISTED: ${both.join(', ')}. ` +
-      `Now that they are applied, drop them from KNOWN_UNLISTED.`,
+      `Now that they are applied, drop them from KNOWN_UNLISTED.`
   );
 });

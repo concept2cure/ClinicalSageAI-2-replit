@@ -2,7 +2,7 @@
  * packs/mdx-qms.mjs — QMS controlled documents for the MDX pack: four SOPs,
  * two approved by the second signer as electronic signatures (password +
  * meaning APPROVED + reason + effective date, server/routes/mdx-qms.ts), one in
- * review, one draft, a training acknowledgement and a change-control record.
+ * review, one draft, personal acknowledgement readiness and a change-control record.
  * Called from mdx.mjs; nothing here runs on its own.
  */
 import { must } from '../lib.mjs';
@@ -86,7 +86,7 @@ async function ensureChangeControl({ api, run }, sops, vaultDocs) {
   return `${change.id} ${CHANGE_NUMBER} ${change.status} (${created ? 'created' : 'existing'}, ${links.length + linked} links)`;
 }
 
-export async function seedQms(ctx, signer, vaultDocs, identity) {
+export async function seedQms(ctx, signer, vaultDocs) {
   const { api, run } = ctx;
   const sops = {};
   for (const sop of SOPS) {
@@ -110,16 +110,20 @@ export async function seedQms(ctx, signer, vaultDocs, identity) {
     run.record('qms.sop104', sops.sop104);
     return `SOP-103 ${sops.sop103.status}; SOP-104 ${sops.sop104.status}`;
   });
-  await run.step('QMS: training acknowledgement of SOP-101 by the seed identity', async () => {
-    const mine = (must(await api('GET', '/api/mdx/qms/training'), 200, 'list training').data ?? [])
-      .find((x) => Number(x.document_id) === Number(sops.sop101.id) && String(x.user_id) === String(identity.userId));
-    if (mine) {
-      run.record('qms.training', { existing: true, id: mine.id, documentVersion: mine.document_version });
-      return `already acknowledged (record ${mine.id})`;
+  await run.step('QMS: inspect personal acknowledgement readiness of SOP-101', async () => {
+    const document = must(await api('GET', `/api/mdx/qms/documents/${sops.sop101.id}`), 200, 'read SOP-101 acknowledgement context');
+    const context = document.meta?.training;
+    if (context?.acknowledgement) {
+      const receipt = context.acknowledgement;
+      run.record('qms.training', { existing: true, id: receipt.id, documentVersion: receipt.documentVersion });
+      return `existing personal acknowledgement (record ${receipt.id})`;
     }
-    const r = must(await api('POST', `/api/mdx/qms/documents/${sops.sop101.id}/training-ack`, { method: 'attestation' }), 201, 'training-ack');
-    run.record('qms.training', { existing: false, id: r.data?.id, documentVersion: r.data?.document_version });
-    return `record ${r.data?.id} for v${r.data?.document_version}`;
+    const note = context?.eligible
+      ? 'A human must open SOP-101 in Quality, read the released text and choose Acknowledge this revision. Demo setup does not attest for the reader.'
+      : context?.unavailableReason ?? 'No verified readable release is available for personal acknowledgement.';
+    run.record('qms.training', { executed: false, note });
+    run.note(`QMS personal acknowledgement: ${note}`);
+    return note;
   });
   await run.step('QMS: change-control record for the NP-100 software release', async () => {
     const s = await ensureChangeControl(ctx, sops, vaultDocs);

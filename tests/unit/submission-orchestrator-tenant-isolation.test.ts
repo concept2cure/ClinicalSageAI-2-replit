@@ -327,7 +327,7 @@ function makeApp(ctx: AuthCtx = { organizationId: 100, userId: 7 }) {
       // Neither req.user nor req.tenantContext is set → 401.
     } else if (ctx.userWithoutOrg) {
       // Authenticated but no org → 403.
-      r.user = { id: ctx.userId ?? 7 };
+      r.user = { id: ctx.userId ?? 7, role: 'member' };
     } else {
       if (ctx.organizationId != null) {
         r.tenantContext = { organizationId: ctx.organizationId };
@@ -336,6 +336,7 @@ function makeApp(ctx: AuthCtx = { organizationId: 100, userId: 7 }) {
         r.user = {
           id: ctx.userId,
           organizationId: ctx.organizationId ?? undefined,
+          role: 'member',
         };
       }
     }

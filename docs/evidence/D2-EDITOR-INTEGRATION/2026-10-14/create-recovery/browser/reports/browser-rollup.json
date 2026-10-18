@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "caseCount": 20,
+  "captureCount": 52,
+  "productionFilesPinned": 14,
+  "fixtureFilesPinned": 11,
+  "sourcePinsMatchCurrent": true,
+  "fixturePinsMatchCurrent": true,
+  "explicitCreationPosts": 16,
+  "otherMutations": [],
+  "explicitUnknownRecoveryReads": 16,
+  "successfulScopedHostRefreshCallbacks": 8,
+  "exactDocumentNavigationHandoffs": 4,
+  "exactCreatedSectionOpenCases": 4,
+  "heldCases": 4,
+  "unexpectedRequests": 0,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "axeViolations": 0,
+  "axeIncompleteRules": [
+    "aria-prohibited-attr",
+    "color-contrast",
+    "label-content-name-mismatch"
+  ],
+  "nativeViewportCount": 8,
+  "minNativeViewportWidth": 300,
+  "minNativeViewportHeight": 279,
+  "qualification": [
+    "Explicitly synthetic local API records; no database, authorization, persistence, provider or deployed-environment claim.",
+    "Unknown outcomes use deliberately mismatched successful receipts. Failed recovery is a successful HTTP response with wrong-scope rows; production tests separately exercise HTTP/network failures.",
+    "The native Workbench document case records its exact editorTarget/onNav handoff boundary after the real unsaved-work decision. The local fixture does not emulate the shell router or claim a deployed reopen.",
+    "The native Workbench section case opens the exact returned section through its actual section refresh, leave guard and canonical RichSectionEditor.",
+    "All original style tokens and product components are imported directly; this host adds no product CSS or alternate editor.",
+    "Axe incomplete rules are retained per capture and require manual review; this is not a complete accessibility audit."
+  ]
+}

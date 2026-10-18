@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:typecheck:no-regression",
+    "--",
+    "--incremental"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 33.18,
+  "rawOutputSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "storedOutputSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+  "qualification": "Stored output omits redundant terminal newlines only; no baseline changed. Previous test-only typing failure retained separately."
+}

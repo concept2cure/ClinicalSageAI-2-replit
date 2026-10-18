@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag 4ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 1ms
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  23:33:01
+   Duration  413ms (transform 107ms, setup 102ms, import 55ms, tests 19ms, environment 0ms)
+

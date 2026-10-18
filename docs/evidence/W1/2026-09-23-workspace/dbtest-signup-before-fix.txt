@@ -401,4 +401,3 @@ Serialized Error: { length: 140, severity: 'ERROR', code: '42501', detail: undef
       Tests  8 failed | 8 passed (16)
    Start at  14:17:17
    Duration  4.48s (transform 1.42s, setup 74ms, import 1.38s, tests 2.70s, environment 0ms)
-

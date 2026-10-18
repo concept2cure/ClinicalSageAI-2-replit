@@ -105,11 +105,13 @@ export const DOMAIN_HISTORY_TABLES: readonly DomainHistoryTable[] = [
   {
     table: 'device_audit_trail',
     rowSemantics: 'One device/510(k) record change with before-after values and optional e-signature.',
-    // part11ComplianceService.ts:374 DOES emit an audit_logs row, but with
-    // resourceType = entityType, so the row does not name this table and the
-    // coverage query (keyed on table_name) cannot see it.
+    // part11ComplianceService.createElectronicSignature DOES emit an audit_logs
+    // row beside its device_audit_trail event, but with resourceType =
+    // entityType, so the row does not name this table and the coverage query
+    // (keyed on table_name) cannot see it. Its createAuditTrail writer was
+    // removed (no caller) on 2026-10-15.
     linked: false,
-    owner: 'server/services/part11ComplianceService.ts:355, server/services/medicalDeviceService.ts:876',
+    owner: 'server/services/part11ComplianceService.ts (createElectronicSignature), server/services/medicalDeviceService.ts:876',
   },
   {
     // Reclassified (a) DUPLICATE in the 2026-08 inventory §3.3: its columns map

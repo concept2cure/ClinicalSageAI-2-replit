@@ -1,0 +1,345 @@
+{
+  "fixture": {
+    "name": "c2c-d2-race-11d07072-0b1",
+    "database": "d2_processing_fixture",
+    "ownerRole": "d2_fixture_owner",
+    "host": "127.0.0.1",
+    "phase": "ready",
+    "startedAt": "2026-10-14T04:54:25.365Z",
+    "limitations": "Synthetic local owner fixture; no deployment, workload, OCR/provider, or deployed-role qualification.",
+    "dockerServerVersion": "28.4.0",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ],
+    "containerId": "23a3fead3bf7881cf95a77e9983e61c16ea70083c0945e66fb8569049e98b645",
+    "port": 32769,
+    "server": {
+      "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "database": "d2_processing_fixture",
+      "role": "d2_fixture_owner",
+      "pid": 70,
+      "rolsuper": true,
+      "rolbypassrls": true
+    },
+    "independentBackendPids": [
+      70,
+      71
+    ]
+  },
+  "hashes": {
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260906_vault_documents_fulltext.sql": "b9c50bd1d7f2fd7815ed3e21129add5d30ea673614c5a743d4c9fc9b4d277998",
+    "migrations/20261008c_data_room_source_text.sql": "c649a69cac300e9932b2ead12e7c53eab715bc18043f531afee4e5ef75afdb48",
+    "migrations/20261001_cre_evidence_sources_capture_immutability.sql": "571a2831d8b79526662de877411f2cdeba05a1a0b79e6d1d50a08c2931f0766f",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/document-data-disposition/service.ts": "b114ce3511d6e3b9e1e80628cc9a2a34838fb6aebf9807b6fc319895cbdca5a8",
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/document-data-disposition/impact.ts": "86a6a2117882b9725de1c90dcafb5a61a82a5cf67b16e1a4cef16d6cdbf5db1a",
+    "server/services/document-data-disposition/recorded-lineage.ts": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+    "server/services/document-data-disposition/derived-impact.ts": "cc94f15eab5296c942210cebaaba7f5715f1cd590c34d427deb958e30a539dc3",
+    "shared/data-room-processing-status.ts": "7f4788b2527bbd67bd32a41cd2d9da9a5d5b8ebe1b9b5368b2c50c83baa16ebe",
+    "tests/db/harness.ts": "3503577d45ccd381e8421dea685933a7a874b8a14e40a6d4f00636ee56010e29",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.test.mts": "b179ddbe0b85605b2ec8fe5d394543f3ed226b2a3bc147cd1a02c6b1c7cea351",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.config.mts": "d597a877cd3ce8d02ee414d0c33a27c80be34068dc481673aa202a04141ac2ef"
+  },
+  "finalHashes": {
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260906_vault_documents_fulltext.sql": "b9c50bd1d7f2fd7815ed3e21129add5d30ea673614c5a743d4c9fc9b4d277998",
+    "migrations/20261008c_data_room_source_text.sql": "c649a69cac300e9932b2ead12e7c53eab715bc18043f531afee4e5ef75afdb48",
+    "migrations/20261001_cre_evidence_sources_capture_immutability.sql": "571a2831d8b79526662de877411f2cdeba05a1a0b79e6d1d50a08c2931f0766f",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/document-data-disposition/service.ts": "b114ce3511d6e3b9e1e80628cc9a2a34838fb6aebf9807b6fc319895cbdca5a8",
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/document-data-disposition/impact.ts": "86a6a2117882b9725de1c90dcafb5a61a82a5cf67b16e1a4cef16d6cdbf5db1a",
+    "server/services/document-data-disposition/recorded-lineage.ts": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+    "server/services/document-data-disposition/derived-impact.ts": "cc94f15eab5296c942210cebaaba7f5715f1cd590c34d427deb958e30a539dc3",
+    "shared/data-room-processing-status.ts": "7f4788b2527bbd67bd32a41cd2d9da9a5d5b8ebe1b9b5368b2c50c83baa16ebe",
+    "tests/db/harness.ts": "3503577d45ccd381e8421dea685933a7a874b8a14e40a6d4f00636ee56010e29",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.test.mts": "b179ddbe0b85605b2ec8fe5d394543f3ed226b2a3bc147cd1a02c6b1c7cea351",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.config.mts": "d597a877cd3ce8d02ee414d0c33a27c80be34068dc481673aa202a04141ac2ef"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "observations": [
+    {
+      "server": {
+        "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+        "current_database": "d2_processing_fixture",
+        "current_user": "d2_fixture_owner",
+        "pg_backend_pid": 73
+      },
+      "image": [
+        "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+      ],
+      "role": "owner",
+      "RLS": "not established by owner tests"
+    },
+    {
+      "barrier": "claim-",
+      "blocker": 74,
+      "waiters": [
+        {
+          "pid": 75,
+          "application_name": "d2-race-claim-A-1",
+          "wait_event_type": "Lock",
+          "blockers": [
+            74
+          ]
+        },
+        {
+          "pid": 76,
+          "application_name": "d2-race-claim-B-1",
+          "wait_event_type": "Lock",
+          "blockers": [
+            74,
+            75
+          ]
+        }
+      ]
+    },
+    {
+      "case": "late-success",
+      "firstPid": 77,
+      "secondPid": 78,
+      "oldAttempt": "da27fae1-2a13-45e1-a364-e5dc59c01c61",
+      "acceptedAttempt": "6fe227c8-1fc5-475e-b44f-4b3386d3f7f2",
+      "sourceId": 2
+    },
+    {
+      "case": "late-extraction-failure",
+      "firstPid": 79,
+      "secondPid": 80,
+      "oldAttempt": "265364c5-f5cb-443c-a969-13a4c77cb2a3",
+      "acceptedAttempt": "4055209e-ca6e-4fc7-a095-8c685eb39e7e",
+      "sourceId": 3
+    },
+    {
+      "case": "late-profile-catch",
+      "firstPid": 81,
+      "secondPid": 82,
+      "oldAttempt": "4e069561-d099-4f81-b3f1-7514ce64094b",
+      "acceptedAttempt": "99e0a822-141a-4e39-aee2-da272d6a1911",
+      "sourceId": 4
+    },
+    {
+      "barrier": "clock-A",
+      "blocker": 84,
+      "waiters": [
+        {
+          "pid": 83,
+          "application_name": "d2-race-clock-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            84
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "supersede-A",
+      "blocker": 86,
+      "waiters": [
+        {
+          "pid": 85,
+          "application_name": "d2-race-supersede-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            86
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "project-A",
+      "blocker": 88,
+      "waiters": [
+        {
+          "pid": 87,
+          "application_name": "d2-race-project-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            88
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-same-program",
+      "blocker": 90,
+      "waiters": [
+        {
+          "pid": 89,
+          "application_name": "d2-race-recover-same-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            90
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-cross-program",
+      "blocker": 92,
+      "waiters": [
+        {
+          "pid": 91,
+          "application_name": "d2-race-recover-cross-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            92
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-null-program",
+      "blocker": 94,
+      "waiters": [
+        {
+          "pid": 93,
+          "application_name": "d2-race-recover-null-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            94
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "reverse-withdrawal",
+      "blocker": 95,
+      "waiters": [
+        {
+          "pid": 96,
+          "application_name": "d2-race-reverse-withdrawal-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            95
+          ]
+        }
+      ]
+    },
+    {
+      "case": "reverse fresh confirmation",
+      "scope": "same-program",
+      "obsoleteResult": "STALE_PREVIEW",
+      "freshCounts": {
+        "extractedTexts": 1,
+        "chunks": 0,
+        "atoms": 0,
+        "catalogValues": 0,
+        "citations": 0,
+        "downstreamReferences": 0
+      },
+      "receiptCounts": {
+        "atoms": 0,
+        "chunks": 0,
+        "citations": 0,
+        "catalogValues": 0,
+        "extractedTexts": 1,
+        "downstreamReferences": 0
+      }
+    },
+    {
+      "case": "reverse reservation order",
+      "scope": "same-program",
+      "withdrawal": "STALE_PREVIEW",
+      "recoveryPid": 95
+    },
+    {
+      "barrier": "reverse-withdrawal",
+      "blocker": 97,
+      "waiters": [
+        {
+          "pid": 98,
+          "application_name": "d2-race-reverse-withdrawal-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            97
+          ]
+        }
+      ]
+    },
+    {
+      "case": "reverse impact freshness",
+      "scope": "cross-program",
+      "previewCounts": {
+        "extractedTexts": 0,
+        "chunks": 0,
+        "atoms": 0,
+        "catalogValues": 0,
+        "citations": 0,
+        "downstreamReferences": 0
+      },
+      "receiptCounts": {
+        "atoms": 0,
+        "chunks": 0,
+        "citations": 0,
+        "catalogValues": 0,
+        "extractedTexts": 0,
+        "downstreamReferences": 0
+      },
+      "expectedExtractedTexts": 0,
+      "recoveryStatus": "extracted"
+    },
+    {
+      "case": "reverse reservation order",
+      "scope": "cross-program",
+      "withdrawal": "committed",
+      "recoveryPid": 97
+    },
+    {
+      "case": "local canonical policy DDL",
+      "table": "cre_evidence_sources",
+      "policy": "\n    CREATE POLICY tenant_isolation_policy ON public.cre_evidence_sources\n    FOR ALL\n    USING (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )\n    WITH CHECK (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )",
+      "sha256": "5b235fbde486f2ba99a0eb3e2cfb5d697504e6de566fc636701aa4b83ebce91b"
+    },
+    {
+      "case": "local canonical policy DDL",
+      "table": "file_uploads",
+      "policy": "\n    CREATE POLICY tenant_isolation_policy ON public.file_uploads\n    FOR ALL\n    USING (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )\n    WITH CHECK (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )",
+      "sha256": "389870d489885367e63eee9f1a1ef4f14823d25d71d54179384a256c73b75930"
+    },
+    {
+      "case": "local canonical policy DDL",
+      "table": "regulatory_programs",
+      "policy": "\n    CREATE POLICY tenant_isolation_policy ON public.regulatory_programs\n    FOR ALL\n    USING (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )\n    WITH CHECK (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )",
+      "sha256": "2ed44188da482eb66288992f40ca7ed007e97da56cd148051b50cba6b945fa8f"
+    },
+    {
+      "case": "local canonical policy DDL",
+      "table": "projects",
+      "policy": "\n    CREATE POLICY tenant_isolation_policy ON public.projects\n    FOR ALL\n    USING (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )\n    WITH CHECK (\n      NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'\n      OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT\n      OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT\n      OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'\n    )",
+      "sha256": "3e4b4db0fbd72fe7ec215c65a564b2f718c1d0dbdb95636e3ee87286b353a98b"
+    },
+    {
+      "case": "local canonical policy",
+      "identity": {
+        "role": "d2_fixture_runtime",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on"
+      },
+      "ownSource": 16,
+      "foreignSource": 17,
+      "foreignOrg": 1046013,
+      "foreignResult": "blocked"
+    }
+  ],
+  "limits": [
+    "Local synthetic PostgreSQL16 only",
+    "Controlled extraction/loader/profile/classifier/audit-seal seams",
+    "Canonical RLS policy tested locally in last case; deployed roles/configuration not qualified"
+  ]
+}

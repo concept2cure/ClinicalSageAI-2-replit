@@ -11,9 +11,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 // Stub the DB facade so importing the service does not open a real connection.
-vi.mock('../../../db', () => ({ db: {} }));
+vi.mock('../../../../db', () => ({ db: {} }));
+vi.mock('../configuration', () => ({ validateSubscriptionConfiguration: vi.fn(), ScheduleConfigurationError: class extends Error {} }));
 
-import { nextRunFor } from '../subscription-service';
+import { nextRunFor, subscriptionIsDue } from '../subscription-service';
 import * as subscriptionService from '../subscription-service';
 import { computeNextRun } from '../cadence';
 import type { ReportSchedule } from '../types';
@@ -37,6 +38,23 @@ describe('nextRunFor', () => {
     expect(next.getTime()).toBeGreaterThan(now.getTime());
     // Same weekday but time passed: rolls a full week from `now`.
     expect(next.toISOString()).toBe('2026-06-24T07:00:00.000Z');
+  });
+});
+
+describe('the persisted due cursor', () => {
+  const base = { schedule: { cadence: 'daily' as const, hour: 9 }, lastRunAt: null, createdAt: new Date('2026-06-15T10:00:00Z'), enabled: true };
+  it('does not fire a newly created schedule before its first nextRunAt', () => {
+    expect(subscriptionIsDue({ ...base, nextRunAt: new Date('2026-06-16T09:00:00Z') }, new Date('2026-06-15T11:00:00Z'))).toBe(false);
+  });
+  it('fires at the stored cursor, including a previously missed occurrence', () => {
+    expect(subscriptionIsDue({ ...base, nextRunAt: new Date('2026-06-16T09:00:00Z') }, new Date('2026-06-17T08:00:00Z'))).toBe(true);
+  });
+  it('uses createdAt for legacy rows without a cursor, never the epoch', () => {
+    expect(subscriptionIsDue({ ...base, nextRunAt: null }, new Date('2026-06-15T11:00:00Z'))).toBe(false);
+    expect(subscriptionIsDue({ ...base, nextRunAt: null }, new Date('2026-06-16T09:00:00Z'))).toBe(true);
+  });
+  it('ignores disabled schedules even when overdue', () => {
+    expect(subscriptionIsDue({ ...base, enabled: false, nextRunAt: new Date('2026-06-16T09:00:00Z') }, new Date('2026-06-17T09:00:00Z'))).toBe(false);
   });
 });
 

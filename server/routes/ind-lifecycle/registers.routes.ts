@@ -257,7 +257,7 @@ router.post('/submission/:id/safety-reports', limiter, requireRole(AUTHOR), asyn
       },
       ctx,
     );
-    res.status(201).json(row);
+    res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
     if (err instanceof SafetyReportError && (err.code === 'NOT_REPORTABLE' || err.code === 'NOT_DETERMINED')) {
       return res.status(422).json({ error: { code: err.code, message: err.message } });
@@ -327,7 +327,7 @@ router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), asyn
   }
   try {
     const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
-    res.status(201).json(row);
+    res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
     if (err instanceof AnnualReportError) {
       return res.status(err.code === 'VALIDATION' ? 400 : 404).json({ error: { code: err.code, message: err.message } });
@@ -399,7 +399,7 @@ router.post('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (r
       { submissionId, amendment: { indNumber: String(b.indNumber), projectId: String(b.projectId ?? ''), changedDocuments: b.changedDocuments } },
       ctx,
     );
-    res.status(201).json(row);
+    res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
     fail(res, err);
   }

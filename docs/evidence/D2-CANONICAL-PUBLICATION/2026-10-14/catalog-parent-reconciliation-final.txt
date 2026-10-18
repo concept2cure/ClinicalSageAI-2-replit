@@ -1,0 +1,142 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T21:53:15.588Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:53:15.590Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T21:53:15.590Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > checks metadata-free candidate identities before SQL count and LIMIT 4ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > additional private upload parents cannot displace the authorized page or counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > creator-owned unbound chat capture is available only without an open project 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_creator 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_capture_creator 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: not_chat 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: workspace_mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: duplicate_anchor 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_org 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: dead_parent 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: invalid_hash 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: changed_upload_hash 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: no_longer_current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown access/SQL state is unavailable instead of an empty authorized list 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > final upload parent revocation refuses already loaded headers 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > revocation of an upload outside the returned page cannot leave a stale authorized count 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown extraction ledger remains unknown in an authorized result 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > keep_data discloses original unavailable and preserves eligible retained text discovery 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > true authorized emptiness remains zero and does not scan a private top-N sample 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > lists a programme-bound capture whose client workspace differs from its project ID 92ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > lists a legacy workspace-only capture through its exact recorded artifact and file 61ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits a programme-bound capture with the wrong workspace without exposing its header 34ms
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > does not resolve ambiguous programme anchors through an accessible one
+{
+  "timestamp": "2026-10-14T21:53:18.435Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "f2fde572-7866-4eb7-be09-7456a2372ba2",
+    "projectIds": [
+      7,
+      8
+    ]
+  }
+}
+
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact 32ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact-file 30ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: workspace-coincidence 32ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > does not resolve ambiguous programme anchors through an accessible one 34ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > refuses a legacy artifact association that has two matching retained bindings 21ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > a private additional upload parent is excluded before counts and pagination 41ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > final canonical upload admission refuses parent revocation after the counted page loaded 40ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses revoked private-project admission and uses the transaction client 4ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > preserves a private input snapshot while connection acquisition yields 3ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a program removed at canonical held ownership before catalog metadata or DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves legacy review semantics without inventing extraction or context acceptance 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > returns no catalog data for a document with conflicting recorded tenant ownership 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > refuses a suggestion from a current viewer before catalogue metadata or a write 4ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > returns a named permission refusal before suggestion metadata if the current parent is private 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > checks a review using the current writer identity, despite absent cached request role 1ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > checks placement using the current writer identity before reading private programme modality 3ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > rolls back a suggestion when permission is revoked after its audited write 2ms
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts > catalogue and placement writers verify current actor on their transaction > allows a fresh member suggestion without relying on a cached request role 1ms
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path
+{
+  "timestamp": "2026-10-14T21:53:21.647Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion
+{
+  "timestamp": "2026-10-14T21:53:21.651Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the vector path 6ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path 3ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row vector completion 2ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion 1ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > the kind is the Vault vocabulary (S4) > refuses a kind outside it before reading anything 1ms
+
+ Test Files  4 passed (4)
+      Tests  69 passed (69)
+   Start at  21:53:14
+   Duration  7.46s (transform 1.32s, setup 90ms, import 3.95s, tests 2.93s, environment 1ms)
+

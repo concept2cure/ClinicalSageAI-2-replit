@@ -1,3 +1,29 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Phase 5 intelligent document system — traceability, compliance
+--          scoring tables and the global compliance rule catalogue.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+-- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2) — two defects, no DROP.
+--
+-- 1. The global rule seed minted 11 more rows on every deploy. Its guard was
+--    ON CONFLICT (organization_id, rule_id), and a global rule's
+--    organization_id is NULL — NULLs never conflict — so a replayed file
+--    added 11 copies each time (PGlite: 11 -> 22 -> 33). The seed now inserts
+--    only a rule_id no global row holds, and exact copies this seed left are
+--    removed (a copy differing in any field is kept).
+-- 2. intelligent_docs.calculate_compliance_score returned
+--    (rules - 2) / rules as a percentage — "-- Placeholder" — and 100 when no
+--    rule applied, for a document no rule was run against. Nothing calls it;
+--    it now returns NULL: there is no score until rules are executed.
+--
+-- RULE 1: this file is in C2C_MIGRATION_FILES and re-executes on every
+-- deploy; both changes are idempotent under replay.
 -- ============================================================================
 -- Phase 5: Intelligent Document System Migration
 -- ============================================================================
@@ -498,24 +524,37 @@ BEGIN
     AND (organization_id IS NULL OR organization_id = p_organization_id)
     AND p_submission_type = ANY(applicable_submissions);
   
-  -- For now, return a placeholder (actual calculation would check each rule)
-  -- This would be implemented with document analysis
-  v_passed_rules := COALESCE(v_total_rules - 2, 0);  -- Placeholder
-  v_score := CASE WHEN v_total_rules > 0 
-    THEN ROUND((v_passed_rules::FLOAT / v_total_rules) * 100)
-    ELSE 100 
-  END;
-  
-  RETURN v_score;
+  -- No rule is executed against the document here, so there is no score
+  -- (2026-10-15, see the header). It returned (rules - 2) / rules, and 100
+  -- when no rule applied.
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- SEED: Default Compliance Rules
 -- ============================================================================
+-- Exact copies the NULL-keyed guard let through (see the header): every copy
+-- of a global rule identical to an earlier one in every field is removed.
+DELETE FROM intelligent_docs.compliance_rules dup
+ USING intelligent_docs.compliance_rules keep
+ WHERE dup.organization_id IS NULL AND keep.organization_id IS NULL
+   AND dup.rule_id = keep.rule_id
+   AND (dup.created_at, dup.id) > (keep.created_at, keep.id)
+   AND dup.name IS NOT DISTINCT FROM keep.name
+   AND dup.description IS NOT DISTINCT FROM keep.description
+   AND dup.category IS NOT DISTINCT FROM keep.category
+   AND dup.severity IS NOT DISTINCT FROM keep.severity
+   AND dup.applicable_submissions IS NOT DISTINCT FROM keep.applicable_submissions
+   AND dup.validation_config IS NOT DISTINCT FROM keep.validation_config
+   AND dup.regulatory_reference IS NOT DISTINCT FROM keep.regulatory_reference
+   AND dup.is_active IS NOT DISTINCT FROM keep.is_active;
+
 INSERT INTO intelligent_docs.compliance_rules (
   rule_id, name, description, category, severity, regulatory_reference, applicable_submissions
-) VALUES
+)
+SELECT v.rule_id, v.name, v.description, v.category, v.severity, v.regulatory_reference, v.applicable_submissions
+FROM (VALUES
   ('STRUCT-001', 'Required Sections', 'All required sections for submission type must be present', 'structure', 'error', 'FDA Guidance', ARRAY['IND', '510K', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO', 'EUA']),
   ('STRUCT-002', 'Section Order', 'Sections must follow standard eCTD order', 'structure', 'warning', 'ICH M4', ARRAY['IND', 'NDA', 'BLA', 'MAA']),
   ('CONTENT-001', 'Minimum Content', 'Each section must have minimum substantive content', 'content', 'warning', NULL, ARRAY['IND', '510K', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO', 'EUA']),
@@ -527,7 +566,12 @@ INSERT INTO intelligent_docs.compliance_rules (
   ('SIG-001', 'Electronic Signature', 'Submission documents must be electronically signed', 'signature', 'error', '21 CFR Part 11 § 11.100', ARRAY['IND', '510K', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO', 'EUA']),
   ('REG-001', 'Regulatory Terminology', 'Use standard regulatory terminology', 'regulatory', 'info', 'ICH E6(R2)', ARRAY['IND', 'NDA', 'BLA', 'MAA']),
   ('FORMAT-001', 'PDF Compliance', 'PDFs must meet eCTD specifications', 'format', 'warning', 'ICH M2', ARRAY['IND', 'NDA', 'BLA', 'MAA'])
-ON CONFLICT (organization_id, rule_id) DO NOTHING;
+) AS v(rule_id, name, description, category, severity, regulatory_reference, applicable_submissions)
+-- A global rule's organization_id is NULL, which ON CONFLICT never matches.
+WHERE NOT EXISTS (
+  SELECT 1 FROM intelligent_docs.compliance_rules r
+   WHERE r.organization_id IS NULL AND r.rule_id = v.rule_id
+);
 
 COMMIT;
 

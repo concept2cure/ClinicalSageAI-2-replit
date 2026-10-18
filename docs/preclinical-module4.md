@@ -110,7 +110,7 @@ NC_TK_DATA_MISSING
 ## Known limitations
 
 - **Genotoxicity battery derivation** is a keyword heuristic over `study_title` / `genotoxicity_results` / `key_findings`. Studies that don't mention "Ames", "in vitro", or "in vivo" by name will look incomplete to the persona. Refine when the schema gains an explicit component column.
-- **Safety margin** prefers the `safety_margins` JSON column. When that's empty, falls back to `noael / mrhdMgPerKgPerDay` with both expressed as mg/kg/day. Other dosing bases need to be supplied via the simulator request.
+- **Safety margin** prefers the `safety_margins` JSON column. When that's empty, falls back to `noael / mrhdMgPerKgPerDay` with both expressed as mg/kg/day. A margin on any other dosing basis must be recorded in `safety_margins` on the study row: the simulator reads nonclinical facts only from `ctd_nonclinical_studies` (via `ctdProgramId`) and sets aside facts sent with the request (2026-10-15).
 - **Pivotal classification** is a `studyType` heuristic. Studies marked exploratory in source data will still be treated as pivotal until a column captures that signal.
 - **MRHD source**: must be passed in via `program.mrhdMgPerKgPerDay`. Not pulled from project-charter automatically yet.
 - **Background processing**: ingestion is synchronous in the request. Large PDFs may exceed default 2-minute proxy timeouts.

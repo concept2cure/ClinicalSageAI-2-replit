@@ -348,4 +348,3 @@ describe('AnA turns: the kernel decides risk, the gateway enforces it', () => {
     expect(entry.metadata.modelGovernance.declaredRiskTier).toBe('high');
   });
 });
-

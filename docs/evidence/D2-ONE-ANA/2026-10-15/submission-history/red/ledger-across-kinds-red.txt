@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+{
+  "timestamp": "2026-10-15T03:30:42.094Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT)
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe)
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger names nothing of another organisation's in a break
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history names nothing of another organisation's in a break
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger still names this organisation's own broken row
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history still names this organisation's own broken row
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger states a walk over no chained rows as not verified, never ok
+ ↓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history states a walk over no chained rows as not verified, never ok
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > a record's history across record kinds > reads the submission and its leaves, newest first, and nothing else 74ms
+   → expected [ [ 'Submission Created', …(1) ] ] to deeply equal [ [ 'Leaf Removed', …(1) ], …(2) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > a record's history across record kinds > reads the submission and its leaves, newest first, and nothing else
+AssertionError: expected [ [ 'Submission Created', …(1) ] ] to deeply equal [ [ 'Leaf Removed', …(1) ], …(2) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "Leaf Removed",
+-     "submission_leaf:70",
+-   ],
+-   [
+-     "Leaf Created",
+-     "submission_leaf:70",
+-   ],
+-   [
+      "Submission Created",
+      "submission:5",
+    ],
+  ]
+
+ ❯ server/routes/__tests__/audit-trail-ledger.routes.test.ts:450:50
+    448|       tableName: 'submission', recordId: '5', also: [{ tableName: 'sub…
+    449|     }, walkOk);
+    450|     expect(data.map((e) => [e.event, e.target])).toEqual([
+       |                                                  ^
+    451|       ['Leaf Removed', 'submission_leaf:70'],
+    452|       ['Leaf Created', 'submission_leaf:70'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+   Start at  03:30:40
+   Duration  5.30s (transform 868ms, setup 95ms, import 1.70s, tests 3.22s, environment 0ms)
+

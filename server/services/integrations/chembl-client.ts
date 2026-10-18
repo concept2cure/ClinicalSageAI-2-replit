@@ -105,9 +105,12 @@ export function maxPhaseLabel(phase: number | null | undefined): string {
     case 1:
       return 'Phase 1';
     case 0:
+      return 'Preclinical / not in clinical development';
+    // 2026-10-15: null/undefined were labelled 'Preclinical / not in clinical
+    // development' too — a stage nobody recorded. An empty field is not a phase.
     case null:
     case undefined:
-      return 'Preclinical / not in clinical development';
+      return 'Development phase not recorded in ChEMBL';
     default:
       return `Phase ${phase}`;
   }

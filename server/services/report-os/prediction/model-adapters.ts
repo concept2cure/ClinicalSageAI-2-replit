@@ -17,7 +17,9 @@
  *      honest "no assessment yet" response — never a rendered 0%.
  *   2. Surface cold-start honestly. `usingNetworkPrior` is set whenever the
  *      risk model leaned on a cross-tenant prior rather than a purely local
- *      trained model, so the assembler's disclosure block can say so.
+ *      trained model, so the assembler's disclosure block can say so. A target
+ *      with neither a model nor a prior is null (not assessed), and a draft
+ *      with no assessed target projects to `null`: nothing to report.
  *
  * The DB-touching functions are thin; the projection logic (`scoreDraftTo*`)
  * is PURE and unit-tested without a database.
@@ -90,15 +92,18 @@ export async function readinessTwinToTrajectoryInput(
  * orchestrator onto a normalized {@link DeficiencyRiskInput}. Exported for unit
  * testing without a database.
  *
- * `usingNetworkPrior` is true whenever the RTF prediction leaned on anything
- * other than a purely local trained model (cold-start, network prior, or a
- * blend) — so the assembler can disclose the cold-start honestly.
+ * Returns `null` when no target was assessed (no trained model and no network
+ * prior for any of them): there is nothing to report, and the caller refuses.
+ *
+ * `usingNetworkPrior` is true when a network prior contributed to any target
+ * (network prior or a blend). 2026-10-15: it was true for a cold start too, so
+ * the disclosure named a network prior that did not exist.
  */
 export function scoreDraftToDeficiencyRiskInput(
   result: ScoreDraftResult,
-): DeficiencyRiskInput {
-  const usingNetworkPrior =
-    result.rtf.source !== 'trained_model' || result.rtf.priorWeight > 0;
+): DeficiencyRiskInput | null {
+  const targets = [result.rtf, result.crl, result.firstCycleApproval];
+  if (targets.every((t) => t.probability === null)) return null;
 
   return {
     kind: 'deficiency_risk',
@@ -106,10 +111,9 @@ export function scoreDraftToDeficiencyRiskInput(
     crlProbability: result.crl.probability,
     firstCycleApprovalProbability: result.firstCycleApproval.probability,
     sampleSize: result.rtf.sampleSize,
-    usingNetworkPrior,
-    // Blended readiness (0..100) is the model's overall confidence signal;
-    // normalize to a 0..1 fraction for the disclosure block.
-    modelConfidence: Math.max(0, Math.min(1, result.blendedReadiness / 100)),
+    usingNetworkPrior: targets.some((t) => t.priorWeight > 0),
+    // No modelConfidence: it was blendedReadiness / 100, the rule-based
+    // completeness score relabelled (2026-10-15).
   };
 }
 
@@ -118,10 +122,12 @@ export function scoreDraftToDeficiencyRiskInput(
  * into a normalized {@link DeficiencyRiskInput}. Does real model IO via the
  * regulatory-intelligence orchestrator (rule-based completeness + logistic
  * risk model + cross-tenant priors), then the pure projection above.
+ *
+ * Null when no target was assessed. Callers MUST refuse rather than render it.
  */
 export async function runDeficiencyRiskForDraft(
   input: ScoreDraftInput,
-): Promise<DeficiencyRiskInput> {
+): Promise<DeficiencyRiskInput | null> {
   const result = await scoreSubmissionDraft(input);
   return scoreDraftToDeficiencyRiskInput(result);
 }

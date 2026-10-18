@@ -27,6 +27,37 @@ const router = Router();
 const logger = createScopedLogger('mission-control');
 const store = createFeatureStore('mission_control');
 
+/* What a client may set on a mission-control record: its own content, never
+   its identity, its actors, its timestamps or a governed state. Creates spread
+   the body FIRST and write the tenant, the parent from the URL and the acting
+   user after it; edits merge only these fields. Until 2026-10-15 the body came
+   last: it chose the organisation, program, author, requester or decider of
+   what it wrote, its id (which the store then read back over the row's), and
+   an edit set an artifact "approved" or "locked" without /transition. */
+const SERVER_OWNED_KEYS = new Set([
+  'id', 'organizationId',
+  'createdById', 'ownerId', 'authorId', 'requestedById', 'decisionOwnerId', 'detectedById',
+  'resolvedById', 'approvedById', 'lockedById', 'decisionBy', 'decisionById',
+  'createdAt', 'updatedAt', 'requestedAt', 'completedAt', 'resolvedAt', 'approvedAt', 'lockedAt', 'decisionAt',
+  'lifecycleState', 'approvalState', 'exportReady', 'outcome', 'threadRootId',
+]);
+function clientFields(body: unknown, ...alsoServerOwned: string[]): Record<string, unknown> {
+  if (!body || typeof body !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(body as Record<string, unknown>).filter(
+      ([k]) => !SERVER_OWNED_KEYS.has(k) && !alsoServerOwned.includes(k),
+    ),
+  );
+}
+
+/** The caller's organisation's mission-control record of this kind and id, or null. */
+async function missionEntity(orgId: number, subcategory: string, id: unknown): Promise<any | null> {
+  const n = typeof id === 'number' ? id : parseInt(String(id));
+  if (!Number.isInteger(n)) return null;
+  const [entity] = await store.query(orgId, subcategory, (e: any) => e.id === n);
+  return entity ?? null;
+}
+
 function getOrgId(req: Request): number {
   const orgId =
     (req as any).tenantContext?.organizationId ||
@@ -87,8 +118,10 @@ async function logProvenance(
       previousState: details?.prev,
       newState: details?.next,
     });
-  } catch {
-    // Non-blocking provenance logging
+  } catch (err) {
+    // Non-blocking, but not silent: a mutation whose provenance row failed is
+    // logged as such instead of passing for one that has it (2026-10-15).
+    logger.error('provenance row not written', { entityType, entityId, action, err });
   }
 }
 
@@ -226,7 +259,7 @@ router.put('/programs/:id', async (req: Request, res: Response) => {
     if (!partial.success) return res.status(400).json({ error: partial.error.flatten() });
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...prev } = existing;
-    const updated = withDerivedCenter({ ...prev, ...partial.data });
+    const updated = withDerivedCenter({ ...prev, ...clientFields(partial.data, 'programId') });
     const result = await store.update(id, orgId, updated, req.body.name);
     await logProvenance(orgId, id, 'program', id, 'updated', getUserId(req), { prev, next: updated });
     res.json({ data: result });
@@ -254,20 +287,16 @@ router.post('/programs/:programId/destinations', async (req: Request, res: Respo
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
       status: req.body.status || 'planned',
-      readinessArtifact: 0,
-      readinessEvidence: 0,
-      readinessReview: 0,
-      readinessApproval: 0,
-      readinessConsistency: 0,
-      readinessRouteFit: 0,
-      readinessAuthority: 0,
-      readinessCompliance: 0,
-      readinessTimeline: 0,
+      // Nine readiness fields were stored here as 0 and nothing ever computed
+      // or read them: a stored "0% ready" nobody measured (removed 2026-10-15).
     };
 
     const dest = await store.insert(orgId, 'destination', req.body.destinationType || 'Destination', data);
@@ -299,17 +328,18 @@ router.post('/destinations/:destId/routes', async (req: Request, res: Response) 
     const destId = parseInt(String(req.params.destId));
     const dests = await store.query(orgId, 'destination', (d: any) => d.id === destId);
     const dest = dests[0];
+    if (!dest) return res.status(404).json({ error: 'Destination not found' });
 
     const data = {
+      ...clientFields(req.body),
       destinationId: destId,
-      programId: dest?.programId || 0,
+      programId: dest.programId,
       organizationId: orgId,
-      ...req.body,
       status: req.body.status || 'draft',
     };
 
     const route = await store.insert(orgId, 'route_plan', req.body.name || 'Route Plan', data);
-    await logProvenance(orgId, dest?.programId, 'route-plan', route.id, 'created', getUserId(req));
+    await logProvenance(orgId, dest.programId, 'route-plan', route.id, 'created', getUserId(req));
     res.status(201).json({ data: route });
   } catch (err: any) {
     return serverError(res, logger, 'saving routes', err);
@@ -368,11 +398,20 @@ router.post('/programs/:programId/artifacts', async (req: Request, res: Response
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    const initialState = req.body.lifecycleState ?? 'planned';
+    if (initialState !== 'planned' && initialState !== 'drafting') {
+      return res.status(400).json({
+        error: 'An artifact is created planned or drafting; later states are reached through /transition',
+      });
+    }
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
-      lifecycleState: req.body.lifecycleState || 'planned',
+      lifecycleState: initialState,
       version: req.body.version || '0.1',
       evidenceScore: null,
       reviewScore: null,
@@ -398,7 +437,7 @@ router.put('/artifacts/:id', async (req: Request, res: Response) => {
     if (!existing) return res.status(404).json({ error: 'Artifact not found' });
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...prev } = existing;
-    const updated = { ...prev, ...req.body };
+    const updated = { ...prev, ...clientFields(req.body, 'programId') };
     const result = await store.update(id, orgId, updated, req.body.title);
     await logProvenance(orgId, existing.programId, 'artifact', id, 'updated', getUserId(req), {
       prev,
@@ -494,10 +533,13 @@ router.post('/programs/:programId/evidence', async (req: Request, res: Response)
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
       status: 'active',
     };
 
@@ -513,6 +555,9 @@ router.post('/artifacts/:artifactId/evidence', async (req: Request, res: Respons
   try {
     const orgId = getOrgId(req);
     const artifactId = parseInt(String(req.params.artifactId));
+    if (!(await missionEntity(orgId, 'artifact', artifactId))) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
     const data = {
       artifactId,
       evidenceNodeId: req.body.evidenceNodeId,
@@ -547,10 +592,13 @@ router.post('/programs/:programId/dependencies', async (req: Request, res: Respo
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
       isStale: false,
     };
 
@@ -595,12 +643,15 @@ router.post('/programs/:programId/decisions', async (req: Request, res: Response
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const userId = getUserId(req);
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
       decisionOwnerId: userId,
-      ...req.body,
       status: 'proposed',
     };
 
@@ -631,11 +682,12 @@ router.post('/artifacts/:artifactId/reviews', async (req: Request, res: Response
   try {
     const orgId = getOrgId(req);
     const artifactId = parseInt(String(req.params.artifactId));
-    const art = await store.getById(artifactId, orgId);
+    const art = await missionEntity(orgId, 'artifact', artifactId);
+    if (!art) return res.status(404).json({ error: 'Artifact not found' });
 
     const data = {
       artifactId,
-      programId: art?.programId || 0,
+      programId: art.programId,
       organizationId: orgId,
       cycleNumber: req.body.cycleNumber || 1,
       status: 'open',
@@ -650,12 +702,12 @@ router.post('/artifacts/:artifactId/reviews', async (req: Request, res: Response
 
     const review = await store.insert(orgId, 'review', `Review cycle for artifact #${artifactId}`, data);
 
-    if (art && art.lifecycleState === 'drafting') {
+    if (art.lifecycleState === 'drafting') {
       const { id: _id, createdAt: _ca, updatedAt: _ua, ...artData } = art;
       await store.update(artifactId, orgId, { ...artData, lifecycleState: 'in-review' });
     }
 
-    await logProvenance(orgId, art?.programId, 'review-cycle', review.id, 'created', getUserId(req));
+    await logProvenance(orgId, art.programId, 'review-cycle', review.id, 'created', getUserId(req));
     res.status(201).json({ data: review });
   } catch (err: any) {
     return serverError(res, logger, 'saving reviews', err);
@@ -670,22 +722,30 @@ router.put('/reviews/:id', async (req: Request, res: Response) => {
     if (!review) return res.status(404).json({ error: 'Review not found' });
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...prev } = review;
-    const updated: any = { ...prev, ...req.body };
+    const updated: any = { ...prev, ...clientFields(req.body, 'programId', 'artifactId') };
 
     if (req.body.status === 'approved') {
-      updated.completedAt = new Date().toISOString();
-      updated.outcome = 'approved';
-      const art = await store.getById(review.artifactId, orgId);
-      if (art) {
-        const { id: _aid, createdAt: _aca, updatedAt: _aua, ...artData } = art;
-        await store.update(review.artifactId, orgId, {
-          ...artData,
-          approvalState: 'approved',
-          lifecycleState: 'approved',
-          approvedById: getUserId(req),
-          approvedAt: new Date().toISOString(),
+      // A review approves its artifact only from review — the artifact's own
+      // transition table reaches approved only from in-review. It used to
+      // approve the artifact from any state, a planned one included, and to
+      // record the review approved when the artifact no longer existed.
+      const art = await missionEntity(orgId, 'artifact', review.artifactId);
+      if (!art) return res.status(409).json({ error: 'The reviewed artifact no longer exists' });
+      if (art.lifecycleState !== 'in-review') {
+        return res.status(409).json({
+          error: `The artifact is ${art.lifecycleState}, not in review; this review cannot approve it`,
         });
       }
+      updated.completedAt = new Date().toISOString();
+      updated.outcome = 'approved';
+      const { id: _aid, createdAt: _aca, updatedAt: _aua, ...artData } = art;
+      await store.update(review.artifactId, orgId, {
+        ...artData,
+        approvalState: 'approved',
+        lifecycleState: 'approved',
+        approvedById: getUserId(req),
+        approvedAt: new Date().toISOString(),
+      });
     }
 
     const result = await store.update(id, orgId, updated);
@@ -721,10 +781,13 @@ router.post('/programs/:programId/risks', async (req: Request, res: Response) =>
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
       status: 'open',
       detectedById: getUserId(req),
     };
@@ -762,17 +825,20 @@ router.get('/collaboration', async (req: Request, res: Response) => {
 router.post('/collaboration', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (req.body.programId !== undefined && !(await missionEntity(orgId, 'program', req.body.programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data: any = {
+      ...clientFields(req.body),
       organizationId: orgId,
       authorId: getUserId(req),
-      ...req.body,
       status: 'open',
     };
 
     if (data.parentId) {
-      const parents = await store.query(orgId, 'collaboration', (c: any) => c.id === data.parentId);
-      const parent = parents[0];
-      data.threadRootId = parent?.threadRootId || parent?.id || data.parentId;
+      const parent = await missionEntity(orgId, 'collaboration', data.parentId);
+      if (!parent) return res.status(404).json({ error: 'Parent comment not found' });
+      data.threadRootId = parent.threadRootId || parent.id;
     }
 
     const item = await store.insert(orgId, 'collaboration', req.body.body?.slice(0, 80) || 'Comment', data);
@@ -790,7 +856,7 @@ router.put('/collaboration/:id', async (req: Request, res: Response) => {
     if (!existing) return res.status(404).json({ error: 'Item not found' });
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = existing;
-    const updated: any = { ...data, ...req.body };
+    const updated: any = { ...data, ...clientFields(req.body, 'programId', 'parentId') };
     if (req.body.status === 'resolved') {
       updated.resolvedById = getUserId(req);
       updated.resolvedAt = new Date().toISOString();
@@ -833,11 +899,18 @@ router.post('/approval-requests', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    if (req.body.programId !== undefined && !(await missionEntity(orgId, 'program', req.body.programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
+    if (req.body.artifactId !== undefined && !(await missionEntity(orgId, 'artifact', req.body.artifactId))) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       organizationId: orgId,
       requestedById: userId,
-      ...req.body,
       status: 'pending',
+      decision: null,
     };
 
     const item = await store.insert(orgId, 'approval', req.body.title || 'Approval Request', data);
@@ -868,7 +941,9 @@ router.post('/approval-requests/:id/decide', async (req: Request, res: Response)
       ...data,
       status: decision,
       decision,
-      decisionBy: req.body.decisionBy || `User ${getUserId(req)}`,
+      // The person deciding, never a name the body supplies.
+      decisionById: getUserId(req),
+      decisionBy: `User ${getUserId(req)}`,
       decisionComment: comment || '',
       decisionAt: new Date().toISOString(),
     };
@@ -955,10 +1030,13 @@ router.post('/programs/:programId/authority-interactions', async (req: Request, 
   try {
     const orgId = getOrgId(req);
     const programId = parseInt(String(req.params.programId));
+    if (!(await missionEntity(orgId, 'program', programId))) {
+      return res.status(404).json({ error: 'Program not found' });
+    }
     const data = {
+      ...clientFields(req.body),
       programId,
       organizationId: orgId,
-      ...req.body,
       status: 'planned',
     };
 
@@ -1011,23 +1089,17 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
     const risks = await store.query(orgId, 'risk', (r: any) => r.programId === programId);
     const deps = await store.query(orgId, 'dependency', (d: any) => d.programId === programId);
     const decisions = await store.query(orgId, 'decision', (d: any) => d.programId === programId);
-    const provenance = await store.query(orgId, 'provenance', (p: any) => p.programId === programId);
 
-    const totalArts = arts.length || 1;
     const completedArts = arts.filter((a: any) =>
       ['approved', 'locked', 'exported'].includes(a.lifecycleState),
     ).length;
-    const draftingArts = arts.filter((a: any) => a.lifecycleState === 'drafting').length;
-    const reviewArts = arts.filter((a: any) => a.lifecycleState === 'in-review').length;
     const approvedArts = arts.filter((a: any) =>
       ['approved', 'locked'].includes(a.lifecycleState),
     ).length;
 
-    const totalEvidence = evidence.length || 1;
     const strongEvidence = evidence.filter((e: any) => e.strengthLevel === 'strong').length;
     const moderateEvidence = evidence.filter((e: any) => e.strengthLevel === 'moderate').length;
 
-    const totalReviews = reviews.length || 1;
     const completedReviews = reviews.filter((r: any) => r.status === 'approved').length;
 
     const openRisks = risks.filter(
@@ -1039,39 +1111,41 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
 
     const staleDeps = deps.filter((d: any) => d.isStale).length;
 
+    /* Each figure is a share of this program's own records, or null when it
+       has none of that kind to measure. Until 2026-10-15 four of the nine
+       dimensions measured nothing — routeFit was a constant 70,
+       complianceIntegrity 85 or 50 by whether any provenance row existed,
+       authorityConfidence and timelineConfidence 100 less invented per-risk
+       penalties — the rest divided by `length || 1` and gave invented partial
+       credit (a draft 0.5, a moderate evidence node 0.6), and a weighted
+       "overall confidence" of all nine read 66% for a program with no
+       records. The unmeasured ones are named, not scored. */
+    const share = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : null);
     const readiness = {
-      artifactCompleteness: Math.round(
-        ((completedArts + draftingArts * 0.5 + reviewArts * 0.7) / totalArts) * 100,
-      ),
-      evidenceAdequacy: Math.round(
-        ((strongEvidence * 1.0 + moderateEvidence * 0.6) / totalEvidence) * 100,
-      ),
-      reviewMaturity: Math.round((completedReviews / totalReviews) * 100),
-      approvalMaturity: Math.round((approvedArts / totalArts) * 100),
-      consistencyIntegrity: Math.max(0, 100 - staleDeps * 15),
-      routeFit: 70,
-      authorityConfidence: Math.max(0, 100 - criticalRisks * 25 - openRisks * 5),
-      complianceIntegrity: provenance.length > 0 ? 85 : 50,
-      timelineConfidence: Math.max(0, 100 - openRisks * 8),
+      /** approved, locked or exported */
+      artifactCompleteness: share(completedArts, arts.length),
+      /** approved or locked */
+      approvalMaturity: share(approvedArts, arts.length),
+      /** rated strong */
+      evidenceAdequacy: share(strongEvidence, evidence.length),
+      /** review cycles approved */
+      reviewMaturity: share(completedReviews, reviews.length),
+      /** dependencies not stale */
+      consistencyIntegrity: share(deps.length - staleDeps, deps.length),
     };
-
-    const weights = [0.15, 0.15, 0.12, 0.12, 0.1, 0.1, 0.1, 0.08, 0.08];
-    const values = Object.values(readiness);
-    const overallConfidence = Math.round(
-      values.reduce((sum, v, i) => sum + v * weights[i], 0),
-    );
+    const notMeasured = ['routeFit', 'authorityConfidence', 'complianceIntegrity', 'timelineConfidence'];
 
     const blockers = [];
-    if (readiness.evidenceAdequacy < 50)
+    if (readiness.evidenceAdequacy !== null && readiness.evidenceAdequacy < 50)
       blockers.push({
         type: 'evidence-gap',
-        message: `Evidence adequacy at ${readiness.evidenceAdequacy}% — weak evidence chains detected`,
+        message: `${strongEvidence} of ${evidence.length} evidence nodes rated strong`,
         severity: 'high',
       });
-    if (readiness.approvalMaturity < 30)
+    if (readiness.approvalMaturity !== null && readiness.approvalMaturity < 30)
       blockers.push({
         type: 'approval-gap',
-        message: `Only ${approvedArts}/${totalArts} artifacts approved`,
+        message: `Only ${approvedArts}/${arts.length} artifacts approved`,
         severity: 'medium',
       });
     if (staleDeps > 0)
@@ -1117,12 +1191,13 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
     res.json({
       data: {
         readiness,
-        overallConfidence,
+        notMeasured,
         summary: {
           totalArtifacts: arts.length,
           completedArtifacts: completedArts,
           totalEvidence: evidence.length,
           strongEvidence,
+          moderateEvidence,
           totalReviews: reviews.length,
           completedReviews,
           openRisks,

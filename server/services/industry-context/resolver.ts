@@ -2,7 +2,7 @@
  * industry-context resolver (CONTEXT-03).
  *
  * One server-side resolver that merges the layered industry context —
- * project → client → organization → license default — into a single
+ * project → organization — into a single
  * EffectiveIndustryContext that every module (Projects, Tasking, Study
  * Design, Reporting, AnA) reads. Replaces the scattered, partial signals
  * documented in docs/MDX_INDUSTRY_CONTEXT_GAP_ANALYSIS.md.
@@ -46,18 +46,33 @@ export type ApprovalRigor =
   | 'signoff_required';
 
 export interface EffectiveIndustryContext {
-  vertical: IndustryVertical;
+  /** null when neither the project nor the organization profile sets it. */
+  vertical: IndustryVertical | null;
   specialization: MdxSpecialization | null;
+  /** Which profile the specialization came from; null when neither sets one. */
+  specializationSource: 'project' | 'organization' | null;
   productType: string | null;
   lifecycleStage: string | null;
   pathways: string[];
   markets: string[];
   filingTypes: string[];
-  licensedModules: string[];
-  terminology: Record<string, string>;
-  approvalRigor: ApprovalRigor;
-  /** Where the effective vertical/specialization came from (for debugging/UI). */
-  source: 'project' | 'organization' | 'license_default';
+  /** null when the license could not be read — never [] for "not read". */
+  licensedModules: string[] | null;
+  /** null while the vertical is unset. */
+  terminology: Record<string, string> | null;
+  /** null when no organization profile is on file. */
+  approvalRigor: ApprovalRigor | null;
+  /** Where the effective vertical came from; 'none' when no profile sets it. */
+  source: 'project' | 'organization' | 'none';
+}
+
+/** A profile layer could not be read, so no effective context was resolved (routes answer 503). */
+export class IndustryContextUnavailableError extends Error {
+  readonly code = 'INDUSTRY_CONTEXT_UNAVAILABLE';
+  constructor(readonly layer: 'organization_profile' | 'project_profile') {
+    super(`The ${layer.replace('_', ' ')} could not be read, so the industry context was not resolved.`);
+    this.name = 'IndustryContextUnavailableError';
+  }
 }
 
 /** primary_industry → vertical. Only device/diagnostics maps to the MDX vertical. */
@@ -106,7 +121,8 @@ export interface ContextLayers {
     defaultMarkets?: string[] | null;
     defaultApprovalRigor?: string | null;
   } | null;
-  licensedModules?: string[];
+  /** Omitted or null = the license was not read. */
+  licensedModules?: string[] | null;
 }
 
 function firstNonEmptyArray(...arrs: Array<string[] | null | undefined>): string[] {
@@ -115,15 +131,16 @@ function firstNonEmptyArray(...arrs: Array<string[] | null | undefined>): string
 }
 
 /**
- * Pure precedence merge: project overrides org, org overrides the license
- * default. Never throws; missing layers fall through to safe defaults.
+ * Pure precedence merge: project overrides org. Never throws; a field no layer
+ * sets stays null (source 'none') rather than taking a default.
  */
 export function mergeIndustryContext(layers: ContextLayers): EffectiveIndustryContext {
-  const { project, org, licensedModules = [] } = layers;
+  const { project, org, licensedModules = null } = layers;
 
   // Vertical: an explicit project vertical wins; else derive from the org's
-  // primary industry; else biopharma.
-  let vertical: IndustryVertical;
+  // primary industry; else unset. 2026-10-15: "else" used to be 'biopharma' from
+  // a 'license_default' source — a source nothing reads.
+  let vertical: IndustryVertical | null;
   let source: EffectiveIndustryContext['source'];
   if (project?.vertical === 'mdx' || project?.vertical === 'biopharma') {
     vertical = project.vertical;
@@ -132,28 +149,29 @@ export function mergeIndustryContext(layers: ContextLayers): EffectiveIndustryCo
     vertical = verticalForPrimaryIndustry(org.primaryIndustry);
     source = 'organization';
   } else {
-    vertical = 'biopharma';
-    source = 'license_default';
+    vertical = null;
+    source = 'none';
   }
 
-  const specialization =
-    (project?.specialization as MdxSpecialization | undefined) ??
-    (org?.mdxSpecialization as MdxSpecialization | undefined) ??
-    null;
+  const projectSpecialization = (project?.specialization as MdxSpecialization | null | undefined) ?? null;
+  const orgSpecialization = (org?.mdxSpecialization as MdxSpecialization | null | undefined) ?? null;
+  const specialization = projectSpecialization ?? orgSpecialization;
 
-  const approvalRigor = (org?.defaultApprovalRigor as ApprovalRigor | undefined)
-    ?? defaultRigorForPrimaryIndustry(org?.primaryIndustry);
+  // The per-industry default applies only to an organization profile on file.
+  const approvalRigor = (org?.defaultApprovalRigor as ApprovalRigor | null | undefined)
+    ?? (org ? defaultRigorForPrimaryIndustry(org.primaryIndustry) : null);
 
   return {
     vertical,
     specialization,
+    specializationSource: projectSpecialization ? 'project' : orgSpecialization ? 'organization' : null,
     productType: project?.productType ?? null,
     lifecycleStage: project?.lifecycleStage ?? null,
     pathways: firstNonEmptyArray(project?.regulatoryPathways, org?.defaultPathways),
     markets: firstNonEmptyArray(project?.targetMarkets, org?.defaultMarkets),
     filingTypes: firstNonEmptyArray(project?.filingTypes),
     licensedModules,
-    terminology: terminologyForVertical(vertical),
+    terminology: vertical ? terminologyForVertical(vertical) : null,
     approvalRigor,
     source,
   };
@@ -169,8 +187,9 @@ export interface ResolveInput {
 /**
  * Load the stored layers and merge them into one effective context. Reads
  * the org profile, the optional project profile, and the org's licensed
- * modules; falls through to safe defaults when a layer is absent (fail-open,
- * so a missing profile degrades to biopharma rather than erroring a request).
+ * modules. An absent profile leaves its fields unset; a profile that cannot
+ * be read throws IndustryContextUnavailableError; an unreadable license is
+ * reported as licensedModules null.
  */
 export async function resolveEffectiveProjectContext(
   input: ResolveInput,
@@ -194,9 +213,11 @@ export async function resolveEffectiveProjectContext(
       };
     }
   } catch (err) {
-    // Fail-open to defaults so a new tenant / transient error doesn't 500 the
-    // request, but never silently — a real outage must be visible in logs.
-    log.warn('org industry profile lookup failed; using defaults', { organizationId, err });
+    // 2026-10-15: this answered with biopharma defaults (and work-packages then
+    // compiled a device plan for an IVD tenant). An absent row is not an error —
+    // a failed read is, and nothing is resolved from it.
+    log.error('org industry profile lookup failed; context not resolved', { organizationId, err });
+    throw new IndustryContextUnavailableError('organization_profile');
   }
 
   let project: ContextLayers['project'] = null;
@@ -224,16 +245,21 @@ export async function resolveEffectiveProjectContext(
         };
       }
     } catch (err) {
-      log.warn('project industry profile lookup failed; inheriting org', { projectId, err });
+      // 2026-10-15: this silently dropped the project layer and answered with the org's.
+      log.error('project industry profile lookup failed; context not resolved', { projectId, err });
+      throw new IndustryContextUnavailableError('project_profile');
     }
   }
 
-  let licensedModules: string[] = [];
+  // 2026-10-15: a failed read was reported as [] ("nothing licensed").
+  // getLicenseInfo answers null for a read it could not make, so null stays null.
+  let licensedModules: string[] | null = null;
   try {
     const lic = await getLicenseInfo(organizationId);
-    licensedModules = lic?.enabledModules ?? [];
+    licensedModules = lic ? lic.enabledModules : null;
+    if (!lic) log.error('license could not be read; licensedModules reported as null', { organizationId });
   } catch (err) {
-    log.warn('license lookup failed; empty entitlements', { organizationId, err });
+    log.error('license lookup failed; licensedModules reported as null', { organizationId, err });
   }
 
   return mergeIndustryContext({ project, org, licensedModules });

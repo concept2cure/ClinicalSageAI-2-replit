@@ -1,0 +1,1782 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/regional/__tests__/filing-content-sql.test.ts > Module 1 recorded-content coverage in PostgreSQL > does not use empty outline codes or archived/deleted records as document evidence 14ms
+ ✓ server/services/report-os/regional/__tests__/filing-content-sql.test.ts > Module 1 recorded-content coverage in PostgreSQL > counts only current non-empty content within the organization and retains the matched codes 6ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts > subscription lifecycle against PostgreSQL semantics > creates a governed schedule and does not fire before its first stored occurrence 3774ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts > subscription lifecycle against PostgreSQL semantics > rolls back creation when its chained audit event cannot be recorded 2771ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts > subscription lifecycle against PostgreSQL semantics > enables a legacy microsecond row and recomputes its next future occurrence 3361ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts > subscription lifecycle against PostgreSQL semantics > refuses a changed recurrence within the same timestamp millisecond 2988ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-lifecycle.pglite.test.ts > subscription lifecycle against PostgreSQL semantics > cannot toggle a subscription through a different organization 2797ms
+stderr | server/routes/__tests__/report-os-health-tenancy.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-health-tenancy.test.ts
+{
+  "timestamp": "2026-10-13T19:48:32.024Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-health-tenancy.test.ts
+{
+  "timestamp": "2026-10-13T19:48:32.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:48:32.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-health-tenancy.test.ts
+{
+  "timestamp": "2026-10-13T19:48:32.503Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-health-tenancy.test.ts > reporting diagnostics without database RLS > counts only the authenticated organization while keeping the global taxonomy count 36ms
+ ✓ server/routes/__tests__/report-os-health-tenancy.test.ts > reporting diagnostics without database RLS > does not disclose private-project organization totals to an ordinary reader 4ms
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Database connection test failed { error: "Cannot read properties of undefined (reading 'on')" }
+
+stdout | server/services/report-os/__tests__/run-history.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Initial connection test failed: Cannot read properties of undefined (reading 'on')
+
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > applies the canonical private-project policy before count and pagination 19ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > uses current sharing membership and pending review assignments with the existing manager policy 16ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > keeps historical program access bound to recorded members when current membership changes 36ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > searches and exposes the regional engine market metadata 10ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > finds a canonical run ID only inside the authenticated organization 5ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > searches all tenant records before paging, including a match older than the latest 100 9ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > keeps search wildcards literal and searches joined catalog labels 28ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > filters scope/status/type/workspace before totals and preserves organization isolation 12ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > sorts the full set before paging with deterministic ties and nulls last 11ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > returns an accurate total even when the requested page is empty 3ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > rejects invalid tenant and pagination without issuing a query 2ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts > first scheduled firing against real PostgreSQL semantics > handles a legacy microsecond updated_at and commits saved output, inbox row and cursor 5767ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts > first scheduled firing against real PostgreSQL semantics > rolls back the run, notification and cursor if delivery audit recording fails 3292ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.pglite.test.ts > first scheduled firing against real PostgreSQL semantics > refuses changed schedule content even if its updated_at has the same millisecond 1883ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > denies an unassigned same-organization member and viewer while allowing owner and explicit use members 16ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > retains public-project and pending-review access without admitting another organization 6ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses a writing creator who has no actual access to the private project 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > permits scheduling by an explicit project member and delivery to an authorized viewer 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > honors project-membership revocation on the next delivery validation 7ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses an unauthorized same-organization recipient before computing or persisting any output 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > requires access to every private project referenced by a program-group schedule 6ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps genuine organization registers governed by their existing organization policy 3ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > resolves owned project, document, submission, group and account scopes 14ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt project scope 21 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope foreign 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope foreign 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 2 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 999 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope broken 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope broken 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 3 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt account scope 8 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses a same-organization document from another client and a foreign workspace 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses unverified study scope and mismatched internal project proof 0ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 843ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 323ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 401ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 763ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 154ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 182ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 434ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 248ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 380ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 244ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 647ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 162ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 148ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 306ms
+ ✓ server/services/report-os/__tests__/domain-project-sql.test.ts > project grants reporting in PostgreSQL > isolates every aggregate to the project and its non-deleted awards within the organization 25ms
+ ✓ server/services/report-os/__tests__/domain-project-sql.test.ts > project grants reporting in PostgreSQL > returns a real empty project aggregate rather than organization totals for an unrepresented project 10ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 1207ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 394ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 1998ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 139ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:13.731Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:13.960Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:13.961Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:13.962Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id
+{
+  "timestamp": "2026-10-13T19:49:14.227Z",
+  "level": "error",
+  "message": "[report-os] report run not recorded on the audit chain; rolled back",
+  "context": {
+    "error": "Report run could not be recorded on the audit chain"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 52ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 41ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded
+{
+  "timestamp": "2026-10-13T19:49:14.251Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "Failed query: insert into \"report_snapshots\" (\"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, default) returning \"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\"\nparams: 41,7,project,11,1,true,{\"reportTypeId\":\"readiness.executive_digest\",\"providers\":[],\"summary\":{\"scopeLabel\":\"Reporting project\",\"computedScope\":\"project\"},\"confidence\":90},5",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 31ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 29ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 15ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 8ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 7ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 10ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 1217ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-13T19:49:15.922Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 208ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 176ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 8ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-13T19:49:16.252Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 175ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 143ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 4ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 518ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 237ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 463ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 188ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:19.692Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:19.873Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:19.874Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:19.874Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > runs without a project and stores its actual organization scope 49ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an account identity other than the authenticated organization 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an organization segment outside the register applicability 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses a report disabled by the registry operator 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified program identity 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified submission identity 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified document identity 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified study identity 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses a project run before reading its evidence or writing a snapshot 11ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run rendered before metadata or output leaves 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run seal before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run dependencies before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run export.pdf before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > refuses a registry choice it cannot compute and rejects invalid regional context 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 23ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 11ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 32ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > reads enriched run metadata from the authenticated tenant transaction for a deep link 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > returns not found when the tenant-scoped query has no record and refuses malformed IDs 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > passes search/sort/pagination through the tenant-scoped history reader 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 431ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 11ms
+ ✓ server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > reads the deployed type when a scheduled caller omits its declaration 306ms
+ ✓ server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > retains a supplied declaration and refuses its wrong region 2ms
+ ✓ server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > binds program output to a copy of the actual resolved project set 1ms
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:22.491Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:22.673Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:22.674Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:22.674Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit 46ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded 21ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row 12ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it 11ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction 13ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again 11ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere 6ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a final report is sent inside the platform without an e-signature (the platform channel has no signature gate) 9ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries needs the finalize tier (DP-61) > a member cannot send an outbound letter or record an export: 403, nothing written 5ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter 13ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run that carries no signature (409 E_SIGNATURE_REQUIRED) and records nothing 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW and unsigned, whatever the bundle recorded when it was made 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed final run is exported with no second ceremony: 201 'exported', and the record and chain row name the signature 12ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > the read is scoped to this organization and these runs 8ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature over a different seal does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature that was revoked (superseded) does not count: 409, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature marked invalid does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature whose verification status is revoked does not count: 409, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed run whose seal is not on its snapshot does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a live signature counts even when an older one on the run was revoked 9ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle of signed final runs is exported, naming each signature 12ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle with one unsigned final run is refused, naming that run only 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a non-final run needs no signature, and the delivery names none 7ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the correspondence write is refused, the log line carries the delivery id and the code, and no letter text 8ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the delivery record is refused, the log line carries the delivery id and the code, and no letter text 7ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the chain row is refused, the log line carries the delivery id and the code, and no letter text 12ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a failure before the transaction is logged by its code, with no error text 3ms
+ ✓ server/services/report-os/portfolio/__tests__/org-summary-concurrency.test.ts > fetchOrgPortfolioSummary > runs readiness computations concurrently, not one at a time 56ms
+ ✓ server/services/report-os/portfolio/__tests__/org-summary-concurrency.test.ts > fetchOrgPortfolioSummary > bounds the concurrency, so it cannot starve the shared pg pool 54ms
+ ✓ server/services/report-os/portfolio/__tests__/org-summary-concurrency.test.ts > fetchOrgPortfolioSummary > keeps results in program order however the runs interleave 54ms
+ ✓ server/services/report-os/portfolio/__tests__/org-summary-concurrency.test.ts > fetchOrgPortfolioSummary > still returns null for an organization with no programs 1ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship 56ms
+stderr | server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no request-scoped client the open program is not read at all — no shared-pool fallback
+{
+  "timestamp": "2026-10-13T19:49:25.406Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] insights-canvas overview error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > resolves the open program on the request-scoped client, not the shared pool 76ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no request-scoped client the open program is not read at all — no shared-pool fallback 16ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship 29ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead 100ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed 12ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open no program leads — the flagship does not stand in 5ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > offers actual organization registers to institutional clients without programs 32ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open 9ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > keeps the organization service identity without importing sibling product catalogs 48ms
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > answers a failed registry read as unavailable, never an empty successful catalog
+{
+  "timestamp": "2026-10-13T19:49:26.877Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] report registry catalog read failed",
+  "context": {
+    "organizationId": 7,
+    "error": "Error: storage unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program 14ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program 11ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > withdraws Run when the deployed registry disables a report 19ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > uses the deployed scope and region declarations rather than the seed 23ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > keeps discovery when the registry is empty while offering no unregistered run 18ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > answers a failed registry read as unavailable, never an empty successful catalog 6ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not 10ms
+stdout | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:49:28.359Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:28.361Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:49:28.361Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not turn a failed sharing read into a successful empty register
+{
+  "timestamp": "2026-10-13T19:49:28.671Z",
+  "level": "error",
+  "message": "[report-os-insights] loading subscriptions failed",
+  "context": {
+    "err": "sharing read unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > omits private scope and recipient details from the organization register 22ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > retains an authorized viewer read without trusting a stale token admin role 4ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses an inaccessible schedule before enablement=true or audit effects 25ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses an inaccessible schedule before enablement=false or audit effects 9ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > retains authorized schedule enablement=true with the current actor id 7ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > retains authorized schedule enablement=false with the current actor id 5ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > honors a project-access revocation on the next management request 9ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not turn a failed sharing read into a successful empty register 10ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses a missing numeric principal before reading or toggling schedules 9ms
+ ✓ server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not call the enablement service for an unknown subscription 6ms
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:49:30.413Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:49:30.755Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:30.756Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:49:30.756Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/report-os/program-groups/1
+{
+  "timestamp": "2026-10-13T19:49:31.012Z",
+  "level": "error",
+  "message": "[report-os] updating program groups failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups/1/snapshots
+{
+  "timestamp": "2026-10-13T19:49:31.016Z",
+  "level": "error",
+  "message": "[report-os] saving snapshots failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.select is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/program-groups is refused by the write gate 27ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > patch /api/report-os/program-groups/1 is refused by the write gate 5ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/program-groups/1/snapshots is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/runs is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/runs/1/finalize is refused by the write gate 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/bundles is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/deliveries is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/predictions is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/predictions/run is refused by the write gate 5ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/subscriptions is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > patch /api/insights/subscriptions/1 is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > never reaches the subscription service 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/report-os/program-groups/1 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups/1/snapshots 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/runs 5ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/bundles 9ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/deliveries 10ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/predictions 20ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/predictions/run 9ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/subscriptions 123ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/insights/subscriptions/1 6ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer can still read reporting > GET /api/report-os/portfolio/org answers 8ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer can still read reporting > GET /api/insights/subscriptions answers 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-13T19:49:32.706Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-13T19:49:33.139Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:33.140Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-13T19:49:33.140Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 170ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize where the signing policy admits the role: status, seal, chain row and signature commit together 14ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize where the signing policy admits the role: status, seal, chain row and signature commit together 6ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize where the signing policy admits the role: status, seal, chain row and signature commit together 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > limits signing attempts on finalize (11.300(d)) 1ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses no reason with 400 REASON_REQUIRED before reading anything 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a reason under 8 characters with 400 REASON_REQUIRED before reading anything 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a password that is not accepted with 401, before any transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a meaning a finalize cannot carry 6ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role owner, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role manager, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > refuses a viewer membership under a token saying admin (the role is the membership's), through the ceremony 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > refuses no membership in the organization, through the ceremony 13ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g)) > a role with authority is looked up once, by the ceremony, and signs 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-13T19:49:33.590Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-13T19:49:33.599Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an approval from the run's own requester (separation of duties) and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an authorship signature from someone who did not request the run 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses when a concurrent finalize won the lock, and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > records nothing when the truthfulness gate refuses the finalize 2ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > stores the exact sealed document beside its seal on the snapshot 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > refuses a run with no snapshot to hold its seal, and rolls back: nothing signed or recorded 3ms
+stderr | server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer
+{
+  "timestamp": "2026-10-13T19:49:35.017Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] org portfolio read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "connection reset by peer at 10.0.3.xxx:5432"
+  }
+}
+
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer 20ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > still answers 200 with leadProgram null for an organisation that has no program 6ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 200 with the open program when there are programs 26ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > names the lead program as the project its readiness was computed for 12ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > canonical report persistence > commits the run, snapshot, dependencies, chained audit and platform effect on one tenant connection 29ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > canonical report persistence > records a run with no dependencies without issuing an empty dependency insert 10ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects invalid organization before opening a transaction 2ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects cross-tenant snapshot before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects cross-tenant dependency before opening a transaction 2ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects a different requesting actor before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects a different snapshot actor before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects contradictory snapshot scope before opening a transaction 1ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects contradictory snapshot scope type before opening a transaction 1ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back the whole run when the audit chain refuses it and never calls delivery 9ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back the run and its audit when platform delivery fails 13ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_runs insert without recording or delivering 15ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_snapshots insert without recording or delivering 14ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_run_dependencies insert without recording or delivering 7ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > retains the audit failure type used by fail-closed HTTP callers 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > returns no success when COMMIT fails and rolls back before releasing the connection 7ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > destroys a connection whose rollback fails rather than returning an uncertain transaction to the pool 11ms
+stderr | server/routes/__tests__/report-os-bundle-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-bundle-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:37.879Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-bundle-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:38.174Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:38.174Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-bundle-recording.test.ts
+{
+  "timestamp": "2026-10-13T19:49:38.175Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > roundtrips more than 20,000 characters with one intact copy per project and a bound audit event 145ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > rolls both project copies back when the second write fails, before any success or audit event 28ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > rolls every copy back when the audit event fails 34ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > refuses manifests above the explicit size limit before writes or audit 31ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > refuses corrupt saved pack data instead of an empty register ({"bundleRecord":{"bundleId":) 19ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > refuses corrupt saved pack data instead of an empty register ({"bundleRecord":{"organizationId":99}}) 8ms
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T19:49:40.136Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T19:49:40.319Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:40.320Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T19:49:40.320Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > does not show a multi-project delivery after access to one carried project is lost 23ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > keeps a delivery visible only when all carried scopes still exist and are permitted 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > omits a delivery whose saved target run no longer exists 16ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":) 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":{"deliveryId":"22222222-2222-4222-8222-222222222222","organizationId":99,"projectId":11,"bundleId":"11111111-1111-4111-8111-111111111111","channel":"external_pdf_export","recipients":["partner"],"subject":"Restricted review pack","message":"Private project12 finding","status":"exported","createdAt":"2026-10-13T12:00:00Z"}}) 6ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > omits every group whose complete member set is inaccessible, while showing an authorized group 13ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses changing an inaccessible group before any membership can be replaced 21ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses adding an inaccessible project to a new or accessible existing group 24ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > checks historical snapshot project sets rather than changed live group membership 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses invalid saved snapshot membership instead of implying an empty register 6ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses taking a snapshot of an inaccessible live group 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > derives snapshot membership from the owned group despite a forged public-only binding in the request 9ms
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T19:49:42.026Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T19:49:42.218Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:42.219Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T19:49:42.219Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T19:49:42.363Z",
+  "level": "error",
+  "message": "[report-os] saving program groups failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T19:49:42.367Z",
+  "level": "error",
+  "message": "[report-os] saving program groups failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T19:49:42.372Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T19:49:42.375Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups refuses another organisation's workspace before reading or writing anything 32ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs refuses another organisation's workspace before reading or writing anything 8ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none 10ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none 8ms
+stderr | server/routes/__tests__/report-os-predictions-scoped.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-predictions-scoped.test.ts
+{
+  "timestamp": "2026-10-13T19:49:43.524Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > fails closed when project-sharing access cannot be read
+{
+  "timestamp": "2026-10-13T19:49:43.651Z",
+  "level": "error",
+  "message": "[report-os-insights] running predictions failed",
+  "context": {
+    "err": "sharing unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > the canvas render never computes a prediction > prediction.regulatory_forecast is refused before the orchestrator runs 5ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > the canvas render never computes a prediction > prediction.crl_rtf_premortem is refused before the orchestrator runs 1ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > the canvas render never computes a prediction > prediction.deficiency_risk is refused before the orchestrator runs 1ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a forecast before the plan gate or any read: its source records no organisation 27ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a pre-mortem over another tenant's project, and runs no model 6ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a submission that is not one of the caller's project's, and runs no model 4ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a submission named without its project 4ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > runs the pre-mortem over the caller's own project and submission 5ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a same-organization private project before any model or calibration IO 4ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > uses the current membership role for an authorized prediction instead of a stale token admin role 3ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > fails closed when project-sharing access cannot be read 4ms
+ ✓ server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > preserves an organization-only supplied draft without reading project context 6ms
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+{
+  "timestamp": "2026-10-13T19:49:45.172Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-portfolio-empty.test.ts
+{
+  "timestamp": "2026-10-13T19:49:45.343Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:45.344Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+{
+  "timestamp": "2026-10-13T19:49:45.344Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer
+{
+  "timestamp": "2026-10-13T19:49:45.599Z",
+  "level": "error",
+  "message": "[report-os] loading org failed",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers 200 with data: null when the organisation has no programs 24ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still answers the summary when there are programs 5ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still refuses an organisation the plan gate refuses 4ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer 4ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > binds delivery to the active creator, supported engine and owned scope 44ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses external delivery before any output or database write 4ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses a creator who is now a viewer 1ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > rechecks subscription entitlement at fire time 2ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > fails closed when the organization plan cannot be resolved 3ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > does not accept a client filter for an organization-wide register 12ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > does not accept a declared report scope that the engine does not compute 1ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses a named regional type with no computation 3ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses a foreign project and never resolves recipients 3ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses external or removed recipients instead of sending to arbitrary emails 2ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses a writing member who cannot use the private project 1ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > refuses a recipient who belongs to the organization but cannot use the private project 6ms
+ ✓ server/services/report-os/scheduling/__tests__/configuration.test.ts > subscription configuration gates > allows a recipient with actual project-use access and passes its current membership role 5ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > defines at least ~25 global report types 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry has all required ReportTypeDefinition fields 13ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry has non-empty allowedScopes and allowedPersonas 7ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every allowedScope is a valid ReportScope 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > all typeIds are unique within the global seed 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > no typeId collides with the existing REPORT_TYPE_SEED 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every governanceRequirements has part11 === true 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > region-specific families include a region key in governanceRequirements 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every truthfulnessRules allows partial where appropriate and is an object 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry includes the ana-ri module 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > spot-checks that specific expected typeIds exist 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > honors the recorded UTC offset across the local calendar boundary 3ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > honors IANA timezone daylight-saving changes 23ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > shifts a nonexistent local time forward by the spring DST gap 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > runs once at the earlier occurrence of an ambiguous autumn time 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > uses the local weekday and month rather than the UTC date 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > refuses an invalid timezone instead of silently running in UTC 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > returns today at the scheduled time when still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls to tomorrow when the time has already passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls forward when exactly at the scheduled time (strictly after) 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > lands on the correct dayOfWeek at the correct hour 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > can land today when the scheduled time is still ahead 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > rolls a full week when same weekday but time has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > uses this month when the day is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > rolls to next month when the day has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > clamps dayOfMonth 31 to 28 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > DEFAULT_WEEKLY_SCHEDULE yields a Monday 07:00 UTC 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is true when now is at or past the next run after lastRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is false just before the next run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > a never-run schedule is NOT due minutes after it was created 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > a never-run schedule IS due on its first real occurrence 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > the daily due-point anchored on createdAt is the stored nextRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > the weekly due-point anchored on createdAt is the stored nextRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > the monthly due-point anchored on createdAt is the stored nextRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final with the signature it was finalized under is allowed, not watermarked, and names that signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > a null signature is no signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + partial is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + draft is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > sealed flag forces e-signature on external even when not final 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + final has no watermark and no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + non-final is watermarked but needs no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > returns the expected normalized keys 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > defaults subscriptionId and reason to null when absent 0ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > retains the exact aggregate input, query criteria and source atoms 5ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > refuses unsupported client filtering before reading any domain rows 1ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > filters award children and proposals to the project for a grants report 2ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > keeps the scorecard source aggregates and fails when a contributing domain cannot be read 12ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is intact when the document, the stored seal and the chain all agree 3ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the stored document was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the document and its stored seal were both rewritten: the chain holds the original 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's sealing time was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's atom count was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's algorithm was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's canonicalizer was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the document's provenance atoms no longer match the recorded count 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the sealed document was removed after a finalize that stored it 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the stored seal was removed after a finalize that stored it 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the chain holds two finalizations of the run 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the chain row's content no longer matches its payload hash 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when a sealed document is stored but the chain holds no finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is not verifiable for a seal from before the chain row and the stored document existed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is not verifiable for a finalization recorded before the document was stored, whose seal agrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its stored seal disagrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its seal was removed from a snapshot that still exists 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row holds no chain position 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row does not link to the organisation's chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries no HMAC seal although the key is configured 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries an HMAC seal that does not verify 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when no electronic signature is recorded for a finalize that recorded storing the document 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the signature's manifest names another seal for a finalize that recorded storing the document 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > checks nothing against an unverified record: every other check says it was not run, none claims agreement 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > a malformed stored document is a failed check, never a crash 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reports the act as the chain recorded it, with the signature, and verifies the stored copies against it 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads a snapshot stored as json text too 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > binds the chain row's content to its payload hash: an edited row fails 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > does not trust a finalization row that holds no position on the chain: the app role can insert one 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > fails the chain check when the run was recorded as finalized twice 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > scopes every read to the run and its organisation 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain before the status, so a finalize committing between the two is not a contradiction 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > answers sealed: false for a run that is not final and never was 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > is a mismatch when the run's status was rewritten after the chain recorded its finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > shows only what the chain recorded: seal fields the snapshot carries beside it are never returned 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the sealed document was removed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the snapshot is gone 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the signature is gone 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > throws when a read fails: an error is never a verdict 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is intact when the row carries a valid seal over its link 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries no seal 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries a seal made without the key 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > return the stored document only when it verifies 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > has no sealed document for a run not marked final: a mismatch when the chain records its finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > a malformed stored document with no finalization on the chain is a mismatch, not a crash 1ms
+stdout | server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:49.011Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:49.013Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:49.013Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts
+[database] Database connection successful
+
+stderr | server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts
+{
+  "timestamp": "2026-10-13T19:49:49.067Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > the readiness digest runs the readiness orchestrator 4ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a domain register (etmf.completeness_pack) runs its OWN provider, not the digest 2ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a domain register (irb.submission_register) runs its OWN provider, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a domain register (fcoi.disclosure_register) runs its OWN provider, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a domain register (inspection.readiness_pack) runs its OWN provider, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a market assessment (usa_fda.ind_safety_readiness) runs the regional engine, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a market assessment (usa_fda.nda_bla_filing_readiness) runs the regional engine, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a market assessment (ema.maa_readiness_assessment) runs the regional engine, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a market assessment (japan_pmda.jnda_shonin_readiness) runs the regional engine, not the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > the evidence trace at DOCUMENT scope asks for the lineage engine, never the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > never passes the report type id as an explicitRegistryId — that was the j8 carrier 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a market assessment is not computed above one program, so a program scope throws 2ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > a type no engine computes throws, so the sweep fails the item instead of substituting the digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register-engine.test.ts > a scheduled report runs its own engine > the evidence trace is not computed at project scope, so it throws there too 1ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > ranks entitled before locked 15ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > boosts readiness when programs are in an active push, with a reason 1ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > boosts the computed eTMF pack for a CER program 3ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > demotes already-used/subscribed types below fresh ones and labels them 0ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > does not suggest regional, prediction or assurance types with no implemented engine 3ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > rankReportSuggestions > only suggests a report when at least one registry scope is actually computed 0ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > builds panels only from entitled, not-yet-used types 1ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > returns null when nothing is entitled 0ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > selects an implemented scope rather than the first advertised scope 1ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > rechecks candidates before slicing so unavailable or unknown rows cannot crowd out runnable panels 1ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > does not trust stale entitlement in a suggestion when the candidate is now locked 0ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > buildPresetSpec > returns null when saved suggestions have no computable registry scope 0ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > suggestReportsForOrg entitlement failures > does not offer a baseline plan when entitlement resolution is unavailable 2ms
+ ✓ server/services/report-os/canvas/__tests__/suggestion-service.test.ts > suggestReportsForOrg entitlement failures > does not turn an unavailable reporting-history read into unused reports and an empty portfolio 1ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > accepts entitled, known, well-scoped panels 2ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > flags an unknown report type 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > flags an invalid scope 1ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > flags a panel the tier does not entitle, with the required tier 1ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > lets enterprise through the same portfolio panel 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > reports issues per-panel with correct indices 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > refuses a registered, entitled type when no engine computes it 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > refuses a valid global scope that this registry type does not allow 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > refuses advertised readiness scopes that the actual engine does not compute 1ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > allows lineage on a document and refuses it on a project 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > validatePanels > refuses a type whose registry has no allowed scopes 0ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > createDefinition validation > does not save a standard report when entitlement resolution is unavailable 2ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > createDefinition validation > uses the fetched registry scope restriction before persisting a panel 1ms
+ ✓ server/services/report-os/canvas/__tests__/definition-service.test.ts > createDefinition validation > does not persist an entitled forecast as an executable panel 0ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > the engine only ever reads a Module 1 tree the record actually has > every listed kind is one its jurisdiction models, so no type can ask for a tree that does not exist 6ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > the engine only ever reads a Module 1 tree the record actually has > lists no jurisdiction outside the three the record models 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > the bindings agree with the governed type definitions > each type's declared region is the market its binding reads 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > the bindings agree with the governed type definitions > each type's region in the deployed seed is the same market 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > does not assess an FDA filing readiness for a program recorded as an EU MAA (the j8 defect, one level down) 5ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > does not assess an EMA readiness for a program recorded as a US NDA either 0ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses a program that records no filing, rather than picking one 0ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses a filing kind no Module 1 record models — a device filing is not eCTD 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses when the type's declared region is not the market this binding reads 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses a kind the Module 1 record models but this report is not about — an ANDA is not an NDA 0ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses a scope that is not one program 0ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it refuses rather than assess the wrong thing > refuses a program another organization owns, rather than assessing nothing about it 4ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > reports coverage as NOT ASSESSED when no section or document records a CTD code 4ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > names each required heading with no document, as a critical blocker 4ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > counts a document filed under a child heading as covering its container, and not the reverse 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > measures no confidence, so the truthfulness gate holds the report below final 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > discloses every declared dependency it does not compute, as its own provider row 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > does not let a partly-answered dependency read as fully assessed 1ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > states the market's own line and the specification its heading numbers come from 4ms
+ ✓ server/services/report-os/regional/__tests__/filing-readiness.test.ts > it reports what it measured, and says when it measured nothing > proceeds, and says so, when no rule pack can be read at all 1ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > produces metrics and exactly one validated:false disclosure for deficiency_risk 3ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > produces metrics and exactly one validated:false disclosure for readiness_trajectory 1ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > produces metrics and exactly one validated:false disclosure for trial_pos 1ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > classifies deficiency cold-start and mentions the network prior 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > classifies sample regimes by size 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > states that no approval-probability model exists rather than printing one 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > renders a modelled approval probability if one is ever supplied 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > says so when no statutory review clock is on record 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > uses heuristic_gap_score method for readiness trajectory 1ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > uses monte_carlo_simulation method for trial pos 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > omits the POS metric and includes a refusal summary when hasEvidence is false 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > presents a POS metric when evidence is supplied 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assemblePredictionReport > is deterministic when generatedAt is provided 1ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assertHasDisclosure > passes on an assembled report 0ms
+ ✓ server/services/report-os/prediction/__tests__/prediction.test.ts > assertHasDisclosure > throws on a hand-made report with no disclosure block 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > canonicalizeReport > is stable across object key insertion order 3ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > canonicalizeReport > sorts keys recursively 1ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > computeContentHash > is deterministic for the same report 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > computeContentHash > changes when any value changes 1ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > extractProvenanceAtoms > emits one atom per provenance ref with the correct blockPath 1ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > extractProvenanceAtoms > returns [] when no block carries provenance 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > reportIsAiDisclosed > is true when an aiGenerated narrative is present 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > reportIsAiDisclosed > is true when a disclosure block is present 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > reportIsAiDisclosed > is false otherwise 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > buildSealedRecord / verifySeal > populates all fields including atomCount 1ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > buildSealedRecord / verifySeal > defaults sealedAt to an ISO timestamp 1ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > buildSealedRecord / verifySeal > verifies ok for the same report 0ms
+ ✓ server/services/report-os/sealing/__tests__/sealing.test.ts > buildSealedRecord / verifySeal > detects tampering after a block value is mutated 0ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > persists the exact computation and commits notification, audit and cursor together 6ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > uses the domain engine for a register rather than the readiness digest 1ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > uses the shared regional dispatch without inventing an empty registry declaration 1ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > does not produce output for disabled or future occurrences 2ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > aborts the same transaction if notification persistence fails 1ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > refuses output if the subscription was disabled or edited while computing 1ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > generates stable distinct occurrence identities 1ms
+ ✓ server/services/report-os/scheduling/__tests__/generate-deliver.test.ts > governed scheduled output > validation failure produces no run or notification 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > worstRisk > orders low < medium < high < critical 2ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > worstRisk > returns low for an empty list 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > counts members by status 1ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > computes rounded means and sums 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > ranks attention ascending by readiness then descending by critical blockers 1ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > counts blocker themes sorted descending, top 5 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > does not mutate the input members order 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregatePortfolio > returns zeros and low risk for empty members, and no readiness average 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > readiness that was not computed > averages only the members with a readiness, and ranks the rest first for attention 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > readiness that was not computed > has no average when no member has a readiness 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregateOrgPortfolio > reuses the same math as aggregatePortfolio, scoped to the org 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregateOrgPortfolio > carries the truncated flag through 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > aggregateOrgPortfolio > returns zeros + low risk for an empty org 1ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > produces the three board-pack sections 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > orders the attention worklist ascending by readiness 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > uses 'final' status only when all ready and no critical blockers 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > renders a summary block when there are no blocker themes 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > renders a themes table when themes exist 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > is deterministic when generatedAt is provided 0ms
+ ✓ server/services/report-os/portfolio/__tests__/portfolio.test.ts > renderPortfolioReport > surfaces worst risk in the summary metrics 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > brierScore > computes the mean squared error for a known example 1ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > brierScore > returns null on empty input 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > brierScore > clamps out-of-range predicted values to [0, 1] 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationBuckets > counts sum to the input length 1ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationBuckets > places exactly 1.0 in the top bucket which is inclusive of 1.0 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationBuckets > computes observedRate and meanPredicted for a hand-built set 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationBuckets > reports 0 meanPredicted and observedRate for empty buckets 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationQuality > returns uncalibrated when sample size < 20 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationQuality > returns uncalibrated when brier is null 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > calibrationQuality > maps brier thresholds at >= 20 samples 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > summarizeQuality > wires brier, quality, sampleSize, and buckets together 1ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > summarizeQuality > honors a custom bucket count 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > freshnessRollup > marks providers within budget as fresh 1ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > freshnessRollup > marks providers beyond budget as stale 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > freshnessRollup > treats unparseable observedAt as stale 0ms
+ ✓ server/services/report-os/quality/__tests__/quality.test.ts > freshnessRollup > preserves input order within each list 0ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > uses a validated explicit regional registry instead of the stored default 5ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > rejects an unresolved explicit registry rather than falling back to project metadata 2ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > resolves an explicit submission type and records the selected request as provenance 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > rejects conflicting explicit registry and submission type before reading source records 0ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > never calls one approved artifact a compliance assurance check 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness was not computed for a project with no registry context, even with approved artifacts 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > reports no confidence: nothing in the run measures one 0ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness is not computed for a scope it is not evaluated over 1ms
+stdout | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > starts without Redis and ticks on the timer
+{
+  "timestamp": "2026-10-13T19:49:54.378Z",
+  "level": "info",
+  "message": "[report-subscription-sweep] report subscription sweep registered with PostgreSQL coordination",
+  "context": {
+    "intervalMs": 600000
+  }
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > starts without Redis and ticks on the timer
+{
+  "timestamp": "2026-10-13T19:49:54.378Z",
+  "level": "info",
+  "message": "[report-subscription-sweep] subscription sweep complete",
+  "context": {
+    "scanned": 0,
+    "ran": 0,
+    "skippedEntitlement": 0,
+    "failed": 0
+  }
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > starts without Redis and ticks on the timer
+{
+  "timestamp": "2026-10-13T19:59:54.378Z",
+  "level": "info",
+  "message": "[report-subscription-sweep] subscription sweep complete",
+  "context": {
+    "scanned": 0,
+    "ran": 0,
+    "skippedEntitlement": 0,
+    "failed": 0
+  }
+}
+
+stderr | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > holds one lock through the sweep and always releases it on failure
+{
+  "timestamp": "2026-10-13T19:49:54.386Z",
+  "level": "error",
+  "message": "[report-subscription-sweep] subscription sweep failed",
+  "context": {
+    "reason": "database unavailable"
+  }
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > does not report a healthy delivery sweep when an item failed
+{
+  "timestamp": "2026-10-13T19:49:54.388Z",
+  "level": "info",
+  "message": "[report-subscription-sweep] subscription sweep complete",
+  "context": {
+    "scanned": 1,
+    "ran": 0,
+    "skippedEntitlement": 0,
+    "failed": 1
+  }
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > destroys a pooled connection if advisory unlock cannot be proven
+{
+  "timestamp": "2026-10-13T19:49:54.389Z",
+  "level": "info",
+  "message": "[report-subscription-sweep] subscription sweep complete",
+  "context": {
+    "scanned": 0,
+    "ran": 0,
+    "skippedEntitlement": 0,
+    "failed": 0
+  }
+}
+
+stderr | server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > destroys a pooled connection if advisory unlock cannot be proven
+{
+  "timestamp": "2026-10-13T19:49:54.389Z",
+  "level": "error",
+  "message": "[report-subscription-sweep] subscription lock release failed",
+  "context": {
+    "reason": "connection lost"
+  }
+}
+
+ ✓ server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > starts without Redis and ticks on the timer 7ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > skips a sweep held by another process 2ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > holds one lock through the sweep and always releases it on failure 2ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > does not report a healthy delivery sweep when an item failed 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker-register.test.ts > Postgres-coordinated Redis-free worker > destroys a pooled connection if advisory unlock cannot be proven 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types 3ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > seeds every in-code report type, base, global and prediction, once each, row for row 3ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refreshes every descriptive column on conflict and never touches enabled 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > writes each json column as the JSON text drizzle sends for it 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > raises on a missing table and on a short registry 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > a copy with one label changed does not match 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refuses a duplicated type id and a missing column instead of writing a file that fails on deploy 2ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > REPORT_TOOL_SPECS > defines exactly the seven reporting tools 4ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > REPORT_TOOL_SPECS > has unique tool names 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > REPORT_TOOL_SPECS > every spec has a non-empty name, reviewer-grade description, and a zod schema 2ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > REPORT_TOOL_SPECS > references the no-fabrication guardrail in generate_report and get_prediction 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > getToolSpec > returns the spec for a known tool name 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > getToolSpec > returns undefined for an unknown tool name 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for list_report_types 2ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for generate_report 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for explain_blockers 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for portfolio_readiness 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for regional_gap_analysis 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for compare_regions 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > accepts valid args for get_prediction 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for list_report_types 1ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for generate_report 6ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for explain_blockers 5ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for portfolio_readiness 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for regional_gap_analysis 4ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for compare_regions 143ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects invalid/missing args for get_prediction 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > rejects a missing required object entirely 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > validateToolArgs > returns ok:false with an error for an unknown tool name 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > routeIntent > routes a clear utterance to the matching tool 0ms
+ ✓ server/services/report-os/ana/__tests__/report-tools.test.ts > routeIntent > returns candidates (no match) for an ambiguous or empty utterance 0ms
+stdout | server/services/report-os/__tests__/lineage-trace-report.test.ts
+{
+  "timestamp": "2026-10-13T19:49:56.927Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:56.928Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/lineage-trace-report.test.ts
+{
+  "timestamp": "2026-10-13T19:49:56.929Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/lineage-trace-report.test.ts
+[database] Database connection successful
+
+stderr | server/services/report-os/__tests__/lineage-trace-report.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/report-os/__tests__/lineage-trace-report.test.ts
+{
+  "timestamp": "2026-10-13T19:49:56.991Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is attributed characters over the text, as a whole percent 2ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is floored, so a document is never rounded up past the finalize threshold 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > a document with no text is not measured: null, never 0 or 100 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > carries the partition it was measured from 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is the dossier's measured provenance completeness 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a record-rich document with little traced text is not raised by its records 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a thin document whose every character has a recorded origin is 100 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null — nothing — when the completeness was not measured 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null when the decision record could not be read: the trace is not measured in full 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > prints the figure, the characters behind it and their partition, linked to the span lineage 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > says it was not measured rather than printing a number 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > lists the untraced text as a gap 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the data-lineage table names what its figure is > prints the recorded confidence beside its basis, never a bare "Confidence" 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the data-lineage table names what its figure is > says the basis was not recorded when the writer recorded none 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > produces a document-scoped RenderedReport for the evidence-trace type 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > includes the expected sections 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > emits AI-disclosed narrative for AnA reasoning 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > carries provenance atoms on the decision and data-lineage tables 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > governed seal integration (the whole point) > the EXISTING seal captures real provenance atoms — not the empty set 2ms
+stdout | server/services/report-os/portfolio/__tests__/fetch.test.ts
+{
+  "timestamp": "2026-10-13T19:49:58.028Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:49:58.030Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/portfolio/__tests__/fetch.test.ts
+{
+  "timestamp": "2026-10-13T19:49:58.030Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/portfolio/__tests__/fetch.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > riskFromBlockers > escalates with the count of critical blockers 2ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > maps a healthy run to a ready member, readiness from the evaluation, not the confidence 1ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > never claims "ready" while a critical blocker is open 0ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > maps a partial evaluation with no critical blockers to partial 0ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > is not "ready" when readiness was not computed, whatever the confidence says 0ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > carries no confidence when the run measured none 0ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > clamps confidence and readiness into 0..100 and surfaces up to 3 blocker themes 0ms
+ ✓ server/services/report-os/portfolio/__tests__/fetch.test.ts > toMemberInsight > reads no readiness when the run evaluated none, whatever its confidence 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > passes a clean final report with no reasons 2ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > leaves a draft request untouched regardless of rules 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > downgrades final to partial when critical blockers exist and partial is allowed 1ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > downgrades final to draft when critical blockers exist and partial is not allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > does not downgrade when there are no critical blockers 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > downgrades final to partial when confidence is below the threshold 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > keeps final when confidence is exactly at the threshold 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > downgrades to draft when confidence is low and partial is not allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireExplicitGaps > downgrades final to partial when the gaps section is missing 1ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireExplicitGaps > keeps final when the gaps section is present 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireBlockers > downgrades final to partial when blockers are present 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireBlockers > does not downgrade when there are no blockers 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > partial not allowed > downgrades a requested partial to draft when allowPartial is not true 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > partial not allowed > keeps a requested partial when allowPartial is true 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > aggregates multiple reasons and ends at the most restrictive status 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > applies confidence then gaps then blockers when partial is allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > ignores unknown extra keys in the rules object 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > advisory report types > holds a prediction with no disclosure at draft, whatever was requested 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > advisory report types > never lets a prediction be final, even with a disclosure 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > advisory report types > a forbidFinal type that does not allow partial falls to draft 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > advisory report types > leaves types without these rules unchanged 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > renders the four core sections 4ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > prints no confidence, whatever figure the run carries 7ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > produces one provider table row per provider 1ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > omits the blockers section when there are no blockers 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > includes the blockers section when blockers are present 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > says gaps were not evaluated when no gap evaluation ran, and claims no empty list 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > says no gaps were detected only when an evaluation ran and found none 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > does not read an empty missingArtifacts list as an evaluation, absent the assessed flag 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > withholds the no-gaps sentence while the same report lists blockers 1ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > renders the readiness run's own gaps, at their recorded severity 1ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > renders gaps from regulatory.missingArtifacts 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > adds readiness metrics when regulatory summary present 1ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > prepends a downgrade note when truthfulness.downgradedFrom is set 0ms
+ ✓ server/services/report-os/render/__tests__/render.test.ts > renderReport > is deterministic when generatedAt is passed 1ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > renders all evaluated gaps, including required sections when no artifact is missing 6ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > does not claim an assessment from a legacy empty artifact list 1ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > seals stored aggregate inputs and extracts rendered source atoms 6ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > states that readiness was not computed, and prints no confidence 1ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — readiness > states the evaluated readiness when the evaluator ran 1ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — scope > names the scope by the label the run stored, not by its row id 1ms
+ ✓ server/services/report-os/render/__tests__/render-one-readiness.test.ts > renderReport — a register > draws its own counts, says they are the organisation’s, and states no readiness 1ms
+stdout | server/services/report-os/__tests__/segment.test.ts
+{
+  "timestamp": "2026-10-13T19:50:00.675Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:00.677Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/segment.test.ts
+{
+  "timestamp": "2026-10-13T19:50:00.677Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/segment.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > maps each product type to its segment 2ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > returns the distinct union for multi-product orgs, in canonical order 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > is case/whitespace tolerant and drops unknown types 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > serviceSegmentFor > keeps CRO and CDMO service identities distinct 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > serviceSegmentFor > does NOT treat product-owning client types (incl. the pharma default) as service 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > institutional applicability and filing scope > derives supported institutional identities without inventing product segments 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > institutional applicability and filing scope > preserves institutional reports while excluding a sibling product catalog 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > institutional applicability and filing scope > offers common reporting to IVD, service and institutional clients 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > institutional applicability and filing scope > offers government research registers without showing drug market packs 2ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > CRO segment anchoring (real taxonomy) > a CRO org sees the eTMF completeness pack; a program-less non-service org does not 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > always keeps universal (empty allowedClientSegments) types 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > keeps a typed row only when its segments intersect the org segments 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > shows a multi-segment type to any matching segment 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > intersects on persona when a persona filter is given 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > anchors the real taxonomy: a pharma org excludes the device-only 510(k) matrix 0ms
+stdout | server/services/report-os/scheduling/__tests__/worker.test.ts
+{
+  "timestamp": "2026-10-13T19:50:03.214Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:03.219Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/scheduling/__tests__/worker.test.ts
+{
+  "timestamp": "2026-10-13T19:50:03.220Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/scheduling/__tests__/worker.test.ts
+[database] Database connection successful
+
+stderr | server/services/report-os/scheduling/__tests__/worker.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/report-os/scheduling/__tests__/worker.test.ts
+{
+  "timestamp": "2026-10-13T19:50:03.494Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/report-os/scheduling/__tests__/worker.test.ts > planSweep > isolates a single failure — the rest of the sweep still runs, cursor NOT advanced for the failure
+{
+  "timestamp": "2026-10-13T19:50:03.539Z",
+  "level": "error",
+  "message": "[report-subscription-sweep] subscription run failed",
+  "context": {
+    "subscriptionId": 2,
+    "reason": "provider down"
+  }
+}
+
+ ✓ server/services/report-os/scheduling/__tests__/worker.test.ts > planSweep > runs entitled subscriptions and advances their cursor 4ms
+ ✓ server/services/report-os/scheduling/__tests__/worker.test.ts > planSweep > skips a downgraded org (no scheduled_reports entitlement) and audits it, WITHOUT generating 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker.test.ts > planSweep > isolates a single failure — the rest of the sweep still runs, cursor NOT advanced for the failure 1ms
+ ✓ server/services/report-os/scheduling/__tests__/worker.test.ts > planSweep > mixes tiers per org: enterprise runs, free skips 1ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > clampConfidence > clamps below the floor 2ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > clampConfidence > clamps above the ceiling 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > clampConfidence > rounds within the band 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > confidenceFromBlockers > returns the ceiling for zero blockers without readiness 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > confidenceFromBlockers > clamps the floor when blockers drive the base below the minimum 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > confidenceFromBlockers > blends with readinessScore when provided 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > confidenceFromBlockers > blends and clamps the floor when blockers and readiness are both low 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > deriveLifecycleStatus > returns ready when approved/locked artifacts exist 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > deriveLifecycleStatus > returns partial when artifacts exist but none approved/locked 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > deriveLifecycleStatus > returns missing when there are no artifacts 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > isFresh > returns true within the freshness budget 1ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > isFresh > returns false outside the freshness budget 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > isFresh > returns false for an unparseable timestamp 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > registers and retrieves a provider by id 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > overwrites an existing id (idempotent registration) 1ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > returns undefined for an unknown id 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > lists all providers when no scope filter is given 1ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > filters providers by scope 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > clears all providers 0ms
+ ✓ server/services/report-os/providers/__tests__/providers.test.ts > registry > exposes an async compute on registered providers 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > picks the highest-scoring market as the lead 2ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > breaks lead ties by input order 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > flags markets below the mean as lagging 1ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > computes only mixed-presence harmonization gaps 2ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > lists artifacts present in every market as reusable 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > compareRegions > handles empty markets: null lead, empty arrays 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > renderRegionComparison > produces all four sections with the readiness table 2ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > renderRegionComparison > renders harmonization gaps as a gap-list 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > renderRegionComparison > renders the empty-state summary when there are no gaps 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > renderRegionComparison > names the lead and lagging markets in the summary 0ms
+ ✓ server/services/report-os/regional/__tests__/regional.test.ts > renderRegionComparison > is deterministic when generatedAt is provided 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > intersects declared scopes with engine scope and discloses organization counts 2ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > routes the Executive Readiness Digest to the readiness engine 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > routes every research-compliance register to its domain provider 1ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > runs the evidence trace over one document only 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > routes the four market filing assessments to the regional engine, over one program only 1ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for ema.rmp_psur_signal_alignment, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for compliance.audit_assurance_pack, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for china_nmpa.ctd_module_gap_analysis, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for usa_fda.estar_510k_equivalence_matrix, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for usa_fda.pma_submission_readiness, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for usa_fda.de_novo_classification_pack, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for canada_hc.nds_snds_readiness, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for uk_mhra.maa_readiness, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for china_nmpa.registration_dossier_readiness, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportEngineFor > has no engine for korea_mfds.drug_registration_readiness, so it is not run 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > refuses a device-only type for a biologic program 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > allows it for a device program, and a universal type for any 0ms
+ ✓ server/services/report-os/__tests__/report-engine.test.ts > reportTypeApplies > does not refuse on an unknown product type 0ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written before the serializer moved > still verify — the platform does not accuse its own records 2ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written before the serializer moved > still detect tampering 0ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written before the serializer moved > agree with the current serializer on ordinary JSON content 1ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written after > declare their generation 1ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written after > verify, and still detect tampering 0ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > seals written after > are insensitive to key order, which is why any of this is canonicalized 0ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > the one input where the generations disagree > v1 drops a Date from the hash; v2 does not 0ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > the one input where the generations disagree > a v1 seal over differing dates collides — and a v2 seal does not 1ms
+ ✓ server/services/report-os/sealing/__tests__/seal-canon-version.test.ts > the one input where the generations disagree > old and new seals of the same report coexist, each under its own generation 1ms
+stdout | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:50:06.852Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:06.854Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:50:06.854Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:50:07.055Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > report-os-insights router contract > exports an Express router (a function) 2ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > defines exactly three prediction report types 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > has unique typeIds in the prediction family 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > uses only valid allowedScopes 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > requires Part 11 governance on every prediction type 0ms
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-13T19:50:08.781Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:08.782Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-13T19:50:08.782Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps prediction forecast types to prediction_forecast_report 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps CRL/RTF pre-mortem types to crl_rtf_premortem 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps portfolio/board-pack types to portfolio_rollup 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > defaults every governed report family to report_families 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > assigns a feature key to every seeded report type (no orphans) 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > free tier is locked out of every paid report family 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > standard unlocks report_families but not prediction/portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > professional unlocks prediction + premortem but not enterprise portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > enterprise unlocks everything, including portfolio_rollup 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > does not claim submission readiness was not computed — it computed something else 2ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > prints the canonical market statement verbatim, and the specification its heading numbers follow 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > names each required heading with no document, with the heading’s own title 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > states a conditional heading as "required if", never as satisfied or not required 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > lists the Module 1 gaps rather than saying none were evaluated 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > says "no gaps" when every required heading has a document 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > withholds the clear result when the document also lists blockers 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > says WHY nothing could be evaluated, not the generic scope sentence 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > not assessed is its own statement > reports no coverage figure at all when nothing recorded a CTD code 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > not assessed is its own statement > says so when the market's offer refuses the filing, in the market's own words 0ms
+stderr | server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > still fails closed on an enterprise feature
+{
+  "timestamp": "2026-10-13T19:50:09.647Z",
+  "level": "error",
+  "message": "[report-entitlement] capability lookup failed; entitlement decided as standard",
+  "context": {
+    "organizationId": 1,
+    "typeId": "portfolio.board_pack",
+    "err": "capability store unreachable"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > marks the tier as unresolved rather than passing the assumption on as a plan
+{
+  "timestamp": "2026-10-13T19:50:09.650Z",
+  "level": "error",
+  "message": "[report-entitlement] capability lookup failed; entitlement decided as standard",
+  "context": {
+    "organizationId": 1,
+    "typeId": "portfolio.board_pack",
+    "err": "capability store unreachable"
+  }
+}
+
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > still fails closed on an enterprise feature 4ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > marks the tier as unresolved rather than passing the assumption on as a plan 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > control: a tier that was read is marked resolved, and entitles what it should 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > a read that returns standard is resolved — a real plan, not an assumption 0ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > decideReportEntitlement carries the flag through a whole catalog > defaults to resolved, because the caller handed us a tier 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > decideReportEntitlement carries the flag through a whole catalog > propagates an unresolved tier to each per-type decision 0ms
+stdout | server/services/report-os/providers/__tests__/db-providers.test.ts
+{
+  "timestamp": "2026-10-13T19:50:10.663Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:10.664Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/providers/__tests__/db-providers.test.ts
+{
+  "timestamp": "2026-10-13T19:50:10.664Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/providers/__tests__/db-providers.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/providers/__tests__/db-providers.test.ts > CORE_DB_PROVIDERS > exposes exactly three providers with the expected ids 3ms
+ ✓ server/services/report-os/providers/__tests__/db-providers.test.ts > CORE_DB_PROVIDERS > each provider has non-empty scopes, a positive freshness budget, and an async compute 1ms
+ ✓ server/services/report-os/providers/__tests__/db-providers.test.ts > registerCoreProviders > registers each core provider into the registry 1ms
+stderr | server/services/report-os/scheduling/__tests__/subscription-service.test.ts
+{
+  "timestamp": "2026-10-13T19:50:11.651Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > nextRunFor > delegates to computeNextRun for a weekly schedule 2ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > nextRunFor > returns a time strictly after `now` (anchored on now, not lastRunAt) 0ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > the persisted due cursor > does not fire a newly created schedule before its first nextRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > the persisted due cursor > fires at the stored cursor, including a previously missed occurrence 0ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > the persisted due cursor > uses createdAt for legacy rows without a cursor, never the epoch 0ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > the persisted due cursor > ignores disabled schedules even when overdue 0ms
+ ✓ server/services/report-os/scheduling/__tests__/subscription-service.test.ts > subscription-service module exports > exposes the expected function names 0ms
+stdout | server/services/report-os/prediction/__tests__/model-adapters.test.ts
+{
+  "timestamp": "2026-10-13T19:50:13.206Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:50:13.207Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/prediction/__tests__/model-adapters.test.ts
+{
+  "timestamp": "2026-10-13T19:50:13.207Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/prediction/__tests__/model-adapters.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/prediction/__tests__/model-adapters.test.ts > scoreDraftToDeficiencyRiskInput > projects the three risk probabilities verbatim 3ms
+ ✓ server/services/report-os/prediction/__tests__/model-adapters.test.ts > scoreDraftToDeficiencyRiskInput > flags network-prior use when the RTF model is not a pure local model 1ms
+ ✓ server/services/report-os/prediction/__tests__/model-adapters.test.ts > scoreDraftToDeficiencyRiskInput > does not flag network-prior for a purely local trained model 5ms
+ ✓ server/services/report-os/prediction/__tests__/model-adapters.test.ts > scoreDraftToDeficiencyRiskInput > normalizes blended readiness into a 0..1 model confidence 0ms
+ ✓ server/services/report-os/prediction/__tests__/model-adapters.test.ts > scoreDraftToDeficiencyRiskInput > always assembles into a partial report with a mandatory disclosure block 1ms
+
+ Test Files  64 passed (64)
+      Tests  757 passed (757)
+   Start at  19:48:03
+   Duration  129.93s (transform 9.10s, setup 1.34s, import 53.75s, tests 62.40s, environment 7ms)

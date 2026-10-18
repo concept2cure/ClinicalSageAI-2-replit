@@ -1,0 +1,19 @@
+{
+  "sources": {
+    "db/migrations/20260730_authoring_subsystem_schema.sql": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d",
+    "migrations/20260728_authoring_reviews.sql": "8514465d058ad27a11d18e6a97c806143e73c0f6583e622377c6f80374e9868a",
+    "docs/design/AUTHORING_HUMAN_REVIEW_BINDING_2026-10-14.md": "c631648cf44496b33ee7d1532e6864dc909f34455175a8f6aa26135cd9e5976e",
+    "scripts/db/install-fresh.mjs": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d",
+    "scripts/db/deploy-migrate.mjs": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5",
+    "scripts/db/authoring-subsystem.mjs": "5bff39183cfa8367a829eaab3173039239b7a219ba1e9ebf1dcc5912fb2af160",
+    "scripts/db/migration-set.mjs": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0",
+    "scripts/db/provision-app-role.mjs": "1cf41357d41035bd9d3fbe71343050697c1f089fe3415f6cd7ad1a3f6a91aa63",
+    "scripts/db/connection.mjs": "cc3069d79277b187693c2463d51579d7a1f3406b5785112be4add7c4864d9216",
+    "scripts/db/rls-coverage-check.sql": "528ecbb4270c81977b66306b63171597ae2f6e2e684dc4f5bfdf51b20139f1a7",
+    "shared/schema.ts": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+    "drizzle.config.ts": "acb2a5bc0a9a227e55a556365a38132a6f21d4a2aea90cc376b1c1b59cf8f9a4",
+    "db/migrations/20260314_phase12_multi_user_review.sql": "fb97c51feb824b1949b79aede1f8396eb01f1bc713fe6f809fdda5d2b08b9e63",
+    "db/migrations/20260401_project_sharing_visibility.sql": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0"
+  },
+  "allCriticalPinsUnchanged": true
+}

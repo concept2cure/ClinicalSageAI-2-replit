@@ -1,0 +1,41 @@
+2171: 2026-10-14T06:55:20.7440008Z stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+2172: 2026-10-14T06:55:20.7441147Z [AnA RI Stream] Error: Request-scoped database context is required
+2173: 2026-10-14T06:55:20.7441422Z
+2174: 2026-10-14T06:55:20.7581039Z  × tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers 281ms
+2175: 2026-10-14T06:55:20.7582474Z    → expected 'data: {"type":"status","phase":"orche…' to contain '"type":"done"'
+2205: 2026-10-14T06:55:21.6732129Z ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+2206: 2026-10-14T06:55:21.6732583Z
+2207: 2026-10-14T06:55:21.6735876Z  FAIL  tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+2208: 2026-10-14T06:55:21.6741196Z AssertionError: expected 'data: {"type":"status","phase":"orche…' to contain '"type":"done"'
+2209: 2026-10-14T06:55:21.6741981Z
+2210: 2026-10-14T06:55:21.6742261Z - Expected
+2211: 2026-10-14T06:55:21.6742722Z + Received
+2212: 2026-10-14T06:55:21.6742956Z
+2213: 2026-10-14T06:55:21.6743190Z - "type":"done"
+2214: 2026-10-14T06:55:21.6744177Z + data: {"type":"status","phase":"orchestrating","message":"Planning response…"}
+2215: 2026-10-14T06:55:21.6744943Z +
+2216: 2026-10-14T06:55:21.6745959Z + data: {"type":"status","phase":"loading_context","message":"Loading project memory…"}
+2217: 2026-10-14T06:55:21.6746853Z +
+2218: 2026-10-14T06:55:21.6748354Z + data: {"type":"timeline","event":{"seq":1,"at":"2026-10-14T06:55:20.743Z","kind":"end","round":0,"outcome":"failed","stoppedReason":null}}
+2219: 2026-10-14T06:55:21.6749475Z +
+2220: 2026-10-14T06:55:21.6751495Z + data: {"type":"error","error":"An error occurred while generating the response","turnRecord":{"status":"not_recorded","reason":"This turn had no organization to file it under."}}
+2221: 2026-10-14T06:55:21.6752995Z +
+2222: 2026-10-14T06:55:21.6753385Z +
+2223: 2026-10-14T06:55:21.6753604Z
+2224: 2026-10-14T06:55:21.6754263Z  ❯ tests/routes/ana-ri-health.test.ts:415:22
+2225: 2026-10-14T06:55:21.6834676Z     413|
+2226: 2026-10-14T06:55:21.6835286Z     414|     expect(res.status).toBe(200);
+2227: 2026-10-14T06:55:21.6836064Z     415|     expect(res.body).toContain('"type":"done"');
+2228: 2026-10-14T06:55:21.6836610Z        |                      ^
+2229: 2026-10-14T06:55:21.6837069Z     416|   });
+2230: 2026-10-14T06:55:21.6837528Z     417| });
+2231: 2026-10-14T06:55:21.6837818Z
+2232: 2026-10-14T06:55:21.6839274Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+2233: 2026-10-14T06:55:21.6839602Z
+2234: 2026-10-14T06:55:21.6843085Z
+2235: 2026-10-14T06:55:21.6850124Z  Test Files  1 failed | 3 passed (4)
+2236: 2026-10-14T06:55:21.6853250Z       Tests  1 failed | 302 passed (303)
+2237: 2026-10-14T06:55:21.6853888Z    Start at  06:55:04
+2238: 2026-10-14T06:55:21.6855734Z    Duration  16.79s (transform 7.85s, setup 122ms, import 9.58s, tests 6.49s, environment 0ms)
+2239: 2026-10-14T06:55:21.6857315Z
+2240: 2026-10-14T06:55:21.7661360Z ##[error]Process completed with exit code 1.

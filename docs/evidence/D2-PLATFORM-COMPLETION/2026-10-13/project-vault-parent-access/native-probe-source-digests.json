@@ -1,0 +1,24 @@
+{
+  "recorded_at_utc": "2026-10-13T23:46:07.863158+00:00",
+  "database": "platform_ci_native_recheck_20261013",
+  "runner": "Node 22, isolated native config, actual pg sockets and authenticated runtime requests",
+  "result": {
+    "tests": 12,
+    "passing_controls": 5,
+    "expected_privacy_failures": 7,
+    "skipped": 0
+  },
+  "sources": {
+    "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts": "87e40fb40128ba85c7d7621c3c9a78f7dad1bad6d5448edf8e9d550e836ad954",
+    "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/vitest.native-probe.config.ts": "02bf04aa39371455028727de08df08f053c5007970a0bfea830e7b47161b0b80",
+    "server/routes/c2c/projects.ts": "83375e9cd2187835010bae214579cef8dc08b7401798952c92bb6c8dc981b3a8",
+    "server/routes/c2c/project-vault.ts": "45fb17dca2028e69e1f9e41eb133f1da338c573cd4da17e73f8b4dd62252a181",
+    "server/routes/c2c/document-data-dispositions.ts": "78a7a9d13088290de5aca8a15b64936580dd19f49425f6094220f8494724fc54",
+    "server/services/c2c/program-access.ts": "b7879560db14239ab7ff1c3aa0258a5df1e1451dea5c362abf981281149d6d14",
+    "server/services/c2c/program-project-anchor.ts": "e05b25b9066602d60f130fdac1f4f58a5a42dec3a1e213c3752febc4a16b4bb1",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/ana/uploaded-file-access.ts": "980cd348d5c5762b3f265ba75f9e238f22c363fca936bad20c12d6ab13b14bec",
+    "server/services/vault/vault-relationships.ts": "dc9ee6b820a5e53f250bb9de6b41aaf4966a1ce29ca2df3464a9eb58a5d558e3",
+    "server/services/vault/vault-search.ts": "273ed4089920b4e80b93db00cb883b70720b65b5a670b930c40ae4a38b9e64e3"
+  }
+}

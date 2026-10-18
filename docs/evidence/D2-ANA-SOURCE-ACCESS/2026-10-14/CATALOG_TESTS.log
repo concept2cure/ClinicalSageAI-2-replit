@@ -1,0 +1,108 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T19:37:47.052Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:37:47.053Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T19:37:47.053Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > checks metadata-free candidate identities before SQL count and LIMIT 4ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > additional private upload parents cannot displace the authorized page or counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > creator-owned unbound chat capture is available only without an open project 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_creator 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_capture_creator 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: not_chat 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: workspace_mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: duplicate_anchor 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_org 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: dead_parent 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: invalid_hash 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: changed_upload_hash 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: no_longer_current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown access/SQL state is unavailable instead of an empty authorized list 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > final upload parent revocation refuses already loaded headers 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown extraction ledger remains unknown in an authorized result 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > keep_data discloses original unavailable and preserves eligible retained text discovery 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > true authorized emptiness remains zero and does not scan a private top-N sample 0ms
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-14T19:37:47.909Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:37:47.910Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-14T19:37:47.911Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > loads full text only within canonical allowed programs on the admitted executor 3ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-org 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-program 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: unknown-current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: invalid-bytes 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: catalog-hash-mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > same-length extraction replacement before return cannot return the old text 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > historical by-ID read is explicit and cannot earn a new current-source receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > keep_data serves retained text with original unavailable, without binary access 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > metadata-only reads do not claim a delivered extraction or earn a receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > an authenticated empty source scope remains empty 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > list queries use admitted scope before pagination and retain exact counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > returned source rows outside the admitted scope are unavailable, never post-filtered pages 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization 7 without producing headers or fabricated totals 3ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization null without producing headers or fabricated totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization undefined without producing headers or fabricated totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: foreign_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: deleted_parent 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: unidentified_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > scopes recorded source and live parent before computing window totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > a verified empty query remains empty, while query failure remains visible 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > bounds a full-text selected source to authorized programs in SQL 2ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > an empty authorized program list cannot widen to all tenant sources 0ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > applies permitted programs before window totals and LIMIT 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > runs source listing on the supplied protected executor, never the global pool 1ms
+
+ Test Files  4 passed (4)
+      Tests  45 passed (45)
+   Start at  19:37:45
+   Duration  5.32s (transform 1.20s, setup 97ms, import 4.67s, tests 43ms, environment 1ms)
+

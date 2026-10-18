@@ -1,0 +1,9 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > view changes preserve the existing unsaved-work decision > requires explicit device-draft discard before reapplying a retained remedy
+AssertionError: Wait for the section editor and resolve any Restore or Discard choice before applying this fix.: expected true to be false // Object.is equality
+
+Ignored nodes: comments, script, style
+AssertionError: Wait for the section editor and resolve any Restore or Discard choice before applying this fix.: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Duration  9.34s (transform 1.95s, setup 169ms, import 2.48s, tests 5.85s, environment 593ms)

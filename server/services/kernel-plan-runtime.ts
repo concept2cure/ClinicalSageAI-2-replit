@@ -187,8 +187,10 @@ export async function getGoalPlanRun(planRunId: string): Promise<{
           : result.rows[0].goal_plan,
     };
   } catch (error: any) {
+    // 2026-10-15: this returned null, so a failed read answered 404 "Plan run
+    // not found" for a run that may exist. null now means only "no such row".
     logger.warn(`Failed to fetch goal plan run: ${error?.message || 'unknown error'}`);
-    return null;
+    throw error;
   }
 }
 
@@ -241,45 +243,37 @@ export function findNextRunnableStep(goalPlan: GoalPlan) {
   });
 }
 
+/**
+ * Find the next dependency-satisfied step of a plan run. Nothing runs it.
+ *
+ * 2026-10-15: this set the step in_progress, then completed, and persisted a
+ * `step_executed` event, but no executor exists for goal-plan steps. "Run
+ * quality/risk checks" became completed with no check run. Nothing is marked or
+ * written now. A caller that did a step's work records it with
+ * advanceGoalPlanStep (POST /plan/:planRunId/advance).
+ */
 export async function executeNextGoalPlanStep(planRunId: string): Promise<{
-  ok: boolean;
-  executedStepId?: string;
-  message?: string;
+  ok: false;
+  code: 'PLAN_NOT_FOUND' | 'NO_RUNNABLE_STEP' | 'NO_STEP_EXECUTOR';
+  message: string;
+  nextStepId?: string;
 }> {
   const run = await getGoalPlanRun(planRunId);
-  if (!run) return { ok: false, message: 'Plan run not found' };
+  if (!run) return { ok: false, code: 'PLAN_NOT_FOUND', message: 'Plan run not found' };
 
   const nextStep = findNextRunnableStep(run.goalPlan);
   if (!nextStep) {
-    return { ok: false, message: 'No runnable pending steps' };
+    return { ok: false, code: 'NO_RUNNABLE_STEP', message: 'No runnable pending steps' };
   }
 
-  if (!canTransitionStepStatus(nextStep.status, 'in_progress')) {
-    return { ok: false, message: 'Cannot transition step to in_progress' };
-  }
-  nextStep.status = 'in_progress';
-  if (!canTransitionStepStatus(nextStep.status, 'completed')) {
-    return { ok: false, message: 'Cannot transition step to completed' };
-  }
-  nextStep.status = 'completed';
-
-  const allCompleted = run.goalPlan.steps.every(s => s.status === 'completed');
-  const runStatus = allCompleted ? 'completed' : 'active';
-
-  try {
-    await persistStepTransition({
-      planRunId,
-      goalPlan: run.goalPlan,
-      runStatus,
-      stepId: nextStep.id,
-      eventType: 'step_executed',
-      payload: { mode: 'auto_execute_next', runStatus },
-    });
-    return { ok: true, executedStepId: nextStep.id };
-  } catch (error: any) {
-    logger.warn(`Failed to execute next plan step: ${error?.message || 'unknown error'}`);
-    return { ok: false, message: 'Failed to persist executed step' };
-  }
+  return {
+    ok: false,
+    code: 'NO_STEP_EXECUTOR',
+    nextStepId: nextStep.id,
+    message:
+      `No executor is registered for goal-plan steps, so step "${nextStep.title}" was not run ` +
+      'and is still pending. Record work done elsewhere with POST /plan/:planRunId/advance.',
+  };
 }
 
 export async function listGoalPlanEvents(planRunId: string) {
@@ -293,7 +287,8 @@ export async function listGoalPlanEvents(planRunId: string) {
     );
     return result.rows;
   } catch (error: any) {
+    // 2026-10-15: this returned [], so a failed read answered "no events".
     logger.warn(`Failed to list plan events: ${error?.message || 'unknown error'}`);
-    return [];
+    throw error;
   }
 }

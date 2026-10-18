@@ -510,6 +510,14 @@ DECLARE
   -- child, fk column, parent, parent key column. Key types agree for every
   -- pair (checked against the catalog), so no cast is needed.
   chained TEXT[][] := ARRAY[
+    -- 2026-10-14 audit remediation: the canonical Shadow packet/export/job
+    -- store lives in predicate, not public. Both packet and export carry the
+    -- actual programme UUID; render jobs inherit the export's tenant. Keep
+    -- the complete descendant chain here so a missing route predicate cannot
+    -- expose another tenant's packet, export or rendering job.
+    ['predicate.defense_packets',                    'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.proof_pack_exports',                 'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.render_jobs',                        'proof_pack_id','predicate.proof_pack_exports',           'id'],
     ['ai_claims',                     'generation_run_id',  'ai_generation_runs',     'id'],
     ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],

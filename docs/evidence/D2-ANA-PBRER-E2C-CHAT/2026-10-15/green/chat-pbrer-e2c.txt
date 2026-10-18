@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > has the nineteen E2C(R2) headings, in order 4ms
+ ✓ tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > keeps its drafting guidance on the sections it belongs to 1ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  06:08:23
+   Duration  1.55s (transform 1.03s, setup 111ms, import 1.09s, tests 10ms, environment 0ms)
+

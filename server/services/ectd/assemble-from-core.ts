@@ -47,6 +47,7 @@ import {
   type AuditRowOutcome,
 } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
+import { readCompanyLegalSubmissionContext } from './company-legal-context';
 
 const logger = createScopedLogger('assemble-from-core');
 
@@ -288,6 +289,8 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     })),
     organizationId,
     stageDir,
+    legalTarget: leaves.some(leaf => leaf.documentTable === 'vault_documents' && leaf.lifecycleOp !== 'delete')
+      ? await readCompanyLegalSubmissionContext(queryableFromDrizzle(db), organizationId, sequenceId) : undefined,
   });
 
   // 2b. Path-safety gate (fail-closed): every staged leaf file must be a real,

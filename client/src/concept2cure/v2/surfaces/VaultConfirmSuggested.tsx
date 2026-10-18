@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import type { VaultDoc } from '../fixtures/vault-data';
+import { useVaultCanWrite } from './VaultViewOnly';
 
 /** The server's answer for one document (server/services/vault/vault-placement-batch.ts). */
 export type ConfirmItem =
@@ -105,18 +106,23 @@ export function useConfirmSuggested(projectId: string | null, onConfirmed: () =>
   return { busy, outcome, error, confirm };
 }
 
-function ConfirmGroup({ group, state }: { group: ReturnType<typeof suggestedGroups>[number]; state: ConfirmSuggested }) {
+function ConfirmGroup({ group, state, canWrite }: {
+  group: ReturnType<typeof suggestedGroups>[number]; state: ConfirmSuggested; canWrite: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const n = group.docs.length;
   const short = note.trim().length < GOVERNED_REASON_MIN;
-  if (!open) {
+  if (!open || !canWrite) {
+    // What awaits confirmation is said to every reader; the control only to a role the route admits.
     return (
       <div className="vd-confirm-acts">
-        <span className="vd-dr-meta">{n} suggested in {group.folderLabel}, awaiting confirmation.</span>
-        <button className="sp-ask" onClick={() => setOpen(true)} disabled={state.busy}>
-          Confirm {n} suggested in {group.folderLabel}
-        </button>
+        <span className="vd-dr-meta">{n} suggested in {group.folderLabel}, awaiting confirmation{canWrite ? '' : ' by a member or administrator'}.</span>
+        {canWrite ? (
+          <button className="sp-ask" onClick={() => setOpen(true)} disabled={state.busy}>
+            Confirm {n} suggested in {group.folderLabel}
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -150,10 +156,11 @@ function ConfirmGroup({ group, state }: { group: ReturnType<typeof suggestedGrou
 /** The confirm action for each folder of suggestions shown, and the answer for the last batch. */
 export function ConfirmSuggestedBar({ docs, state }: { docs: VaultDoc[]; state: ConfirmSuggested }) {
   const groups = suggestedGroups(docs);
+  const canWrite = useVaultCanWrite();
   if (groups.length === 0 && !state.outcome && !state.error) return null;
   return (
     <div className="vd-confirm" data-testid="vault-confirm-suggested">
-      {groups.map((g) => <ConfirmGroup key={g.folderId} group={g} state={state} />)}
+      {groups.map((g) => <ConfirmGroup key={g.folderId} group={g} state={state} canWrite={canWrite} />)}
       {state.error ? <div className="vd-dr-err" role="alert">{state.error}</div> : null}
       {state.outcome ? (
         <div className="vd-dr-file-result" role="status">

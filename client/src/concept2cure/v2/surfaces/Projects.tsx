@@ -30,6 +30,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { RegistryPicker } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -517,6 +518,18 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <p className="npw-seg-s" data-testid="npw-market-support">
                 <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
               </p>
+
+              <ProjectDiscoveryHandoff
+                fields={{ name, target, indication, intendedUse }}
+                isDeviceFiling={isDeviceFiling}
+                disabled={creating}
+                onApply={(fields) => {
+                  if (fields.name !== undefined) setName(current => current.trim() ? current : fields.name!);
+                  if (fields.target !== undefined) setTarget(current => current.trim() ? current : fields.target!);
+                  if (fields.indication !== undefined) setIndication(current => current.trim() ? current : fields.indication!);
+                  if (fields.intendedUse !== undefined) setIntendedUse(current => current.trim() ? current : fields.intendedUse!);
+                }}
+              />
 
               <div className="npw-fields">
                 <label className="npw-field">

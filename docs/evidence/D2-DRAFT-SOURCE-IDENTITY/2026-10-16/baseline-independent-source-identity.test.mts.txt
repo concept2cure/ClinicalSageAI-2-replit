@@ -1,0 +1,86 @@
+/** Held-out contract controls. Catalog/actor seams are mocked; production parsing and
+ * source verification run unchanged. These are not database or authorization proofs. */
+import { createHash } from 'node:crypto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const seams = vi.hoisted(() => ({ load: vi.fn(), actorLoad: vi.fn(), revalidate: vi.fn(), programRevalidate: vi.fn(), scope: vi.fn() }));
+vi.mock('../../../../server/services/vault/document-catalog.service.js', () => ({
+  loadDocumentForOrg: seams.load, loadDocumentForActor: seams.actorLoad, revalidateActorSourceScope: seams.revalidate,
+}));
+vi.mock('../../../../server/services/ana/catalog-scope.js', () => ({
+  catalogScope: seams.scope,
+  sourceReadInput: (ctx: { organizationId: number; userId: number; projectRef: string }) => ({ ...ctx }),
+}));
+vi.mock('../../../../server/services/c2c/current-program-access.js', () => ({ requireProgramScopeStillCurrent: seams.programRevalidate }));
+
+import { parseDraftSourceReferences, verifyDraftSourceReferences, verifySavedDraftSourceReferences } from '../../../../server/services/authoring/draft-source-references.js';
+
+const documentId = 'd0000000-0000-4000-8000-000000000001';
+const programId = 'e0000000-0000-4000-8000-000000000001';
+const contentHash = '1'.repeat(64);
+const original = 'PREFIX\nSensitivity 95.2%; specificity 98.1%.\nSUFFIX';
+const span = { start: 7, end: 42, totalChars: original.length };
+const sha = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
+const identity = (text: string, selected = span) => ({ version: 2 as const, extractedTextSha256: sha(text), spanSha256: sha(text.slice(selected.start, selected.end)) });
+const reference = () => ({ documentId, contentHash, span: { ...span }, ...identity(original) });
+const legacy = () => ({ documentId, contentHash, span: { ...span } });
+const q = { query: vi.fn(async () => ({ rows: [] })) };
+const actor = { id: '17', role: 'member' };
+const options = () => ({ actor });
+const current = (text = original) => ({
+  id: documentId, programId, contentHash, extractedText: text, extractedTextSha256: sha(text),
+  documentTitle: 'Diagnostic performance report', fileName: 'performance.pdf',
+  originalFileAvailable: true, disposition: null,
+  catalog: { contentHash, status: 'cataloged', extractionMethod: 'pdf-text', extractionConfidence: null },
+});
+const saved = (sources: unknown[], group = {}) => ({ client_program_id: programId, provenance: { projectSourceReferences: [{
+  sectionCode: '7.2', qualification: 'unassessed', verification: 'current_at_save',
+  sources: sources.map(source => ({ ...(source as object), programId })), ...group,
+}] } });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  seams.load.mockResolvedValue(current());
+  seams.actorLoad.mockResolvedValue(current());
+  seams.revalidate.mockResolvedValue(undefined);
+  seams.programRevalidate.mockResolvedValue(undefined);
+  seams.scope.mockResolvedValue({ programId, executor: q, admittedScope: {}, accessibleScope: {} });
+});
+
+describe('independent extraction-bound draft-source controls', () => {
+  it('retains complete V2 identity and drops caller text and qualification', () => {
+    expect(parseDraftSourceReferences([{ ...reference(), text: 'invented source', qualification: 'approved' }])).toEqual([reference()]);
+  });
+  it('refuses the unversioned shape for NEW writes', () => {
+    expect(() => parseDraftSourceReferences([legacy()])).toThrow();
+  });
+  it('accepts an unchanged V2 source at the actual verifier', async () => {
+    await expect(verifyDraftSourceReferences([reference()], q, 9, programId, options())).resolves.toHaveLength(1);
+    expect(seams.load).toHaveBeenCalledWith(documentId, 9, expect.objectContaining({ includeText: true, userId: 17, programId, currentOnly: true }));
+  });
+  it('refuses a same-length extraction correction INSIDE the selected span', async () => {
+    const changed = original.replace('95.2', '85.2');
+    expect(changed.length).toBe(original.length);
+    seams.load.mockResolvedValue(current(changed));
+    await expect(verifyDraftSourceReferences([reference()], q, 9, programId, options())).rejects.toThrow();
+  });
+  it('refuses a same-length extraction correction OUTSIDE the selected span', async () => {
+    const changed = 'X' + original.slice(1);
+    expect(changed.slice(span.start, span.end)).toBe(original.slice(span.start, span.end));
+    seams.load.mockResolvedValue(current(changed));
+    await expect(verifyDraftSourceReferences([reference()], q, 9, programId, options())).rejects.toThrow();
+  });
+  it.each(['extractedTextSha256', 'spanSha256'] as const)('refuses an incorrect %s even when file bytes and length match', async field => {
+    await expect(verifyDraftSourceReferences([{ ...reference(), [field]: '0'.repeat(64) }], q, 9, programId, options())).rejects.toThrow();
+  });
+  it('preserves stored legacy references under their historical byte-and-length semantics', async () => {
+    const source = legacy();
+    delete (source.span as Partial<typeof span>).start;
+    source.span.end = 9;
+    await expect(verifySavedDraftSourceReferences(saved([source]), q, 9, actor)).resolves.toBeUndefined();
+  });
+  it('refuses a withdrawn source even with a stored legacy receipt', async () => {
+    seams.load.mockResolvedValue({ ...current(), disposition: 'remove_data' });
+    await expect(verifySavedDraftSourceReferences(saved([legacy()]), q, 9, actor)).rejects.toThrow();
+  });
+});

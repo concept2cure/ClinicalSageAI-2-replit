@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "path": "server/routes/c2c/__tests__/projects-sources-window.test.ts",
+      "sha256": "24220e3801313129d6a3204f513a87d10734738f224633ffe7f3e4f8df19339c"
+    },
+    {
+      "path": "server/routes/__tests__/vault-data-room-counts.test.ts",
+      "sha256": "a2785d961da619bbed9e6b3ba52dcda642e3aec5cb160913420d46afcbc2a38b"
+    }
+  ],
+  "scope": "two delegated projection fixture repairs; no production permission or source code changes"
+}

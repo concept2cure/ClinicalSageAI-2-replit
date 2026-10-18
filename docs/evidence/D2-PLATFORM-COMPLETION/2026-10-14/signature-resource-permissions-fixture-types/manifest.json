@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-14T07:36:45.049690+00:00",
+  "rootHead": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "change": "Test-only explicit PGlite to_regclass result row type at two queries; SQL/fault/policy behavior unchanged.",
+  "vitest": {
+    "config": "vitest.config.ts",
+    "testFiles": 6,
+    "testsPassed": 90,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "durationSeconds": 14.23
+  },
+  "forcedLint": {
+    "files": 1,
+    "errors": 0,
+    "warnings": 0,
+    "flags": [
+      "--no-ignore",
+      "--no-cache",
+      "--format",
+      "json"
+    ]
+  },
+  "testFileRecords": [
+    {
+      "path": "server/services/governance/__tests__/permissions.test.ts",
+      "testsPassed": 18
+    },
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "testsPassed": 7
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "testsPassed": 5
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "testsPassed": 7
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "testsPassed": 28
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "testsPassed": 25
+    }
+  ],
+  "sourceRecords": [
+    {
+      "path": "migrations/20260603_governance_permission_grants.sql",
+      "bytes": 1358,
+      "digestAlgorithm": "sha256",
+      "digest": "80cd0aaf03cc65f59c346eb9ff6a2aaaf4a8f3a3f572484742b6da939cddebc7"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "bytes": 25221,
+      "digestAlgorithm": "sha256",
+      "digest": "db6ce27cd1e14185b61d62f4cb13051308415ca002dd35fd73a98bc5caae4e4e"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "bytes": 20383,
+      "digestAlgorithm": "sha256",
+      "digest": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
+      "path": "server/services/governance/__tests__/permissions.test.ts",
+      "bytes": 5932,
+      "digestAlgorithm": "sha256",
+      "digest": "0bf55da2f16a381006708d3e2c957f8b8fe3b8257bf762a33f7a770923d9ba02"
+    },
+    {
+      "path": "server/services/governance/permissions.ts",
+      "bytes": 10229,
+      "digestAlgorithm": "sha256",
+      "digest": "c5c74c6b4abaddff2a69ed3ee3c70684b08cdc5a5b99ac538b37dc6381c42a1d"
+    },
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "bytes": 8748,
+      "digestAlgorithm": "sha256",
+      "digest": "1d53630a1c1a7c54372c18c1ec75118eeb79a121e5717dc97242628453b1573e"
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "bytes": 6806,
+      "digestAlgorithm": "sha256",
+      "digest": "0cca11c11902b5ba5ab0eb2ba47108f89239e68ad28d7f77484d4c0515dc5677"
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "bytes": 3378,
+      "digestAlgorithm": "sha256",
+      "digest": "fcd5d3f38c50282d9261e2737e237c3b3dada8eb1ea5aa336d245d77d7a62f84"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 14438,
+      "digestAlgorithm": "sha256",
+      "digest": "dd9a4cd8f6c7837355ca8c5acecf039963cdfcf95d2b6d947d4e759bbdba105d"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "bytes": 2577,
+      "digestAlgorithm": "sha256",
+      "digest": "75bb7d16e54b6a1582024e3c61cf648dc2c31c6bd5a99709d0f86b41b4c1616b"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "bytes": 3045,
+      "digestAlgorithm": "sha256",
+      "digest": "2de1904c7109dfc31f7a33a7c494ab089659168248cef40e57e5b0434df1da74"
+    },
+    {
+      "path": "server/services/part11/signing-authority.ts",
+      "bytes": 1858,
+      "digestAlgorithm": "sha256",
+      "digest": "126acf712fdf68a55f57f1f9fe5a8418bd8c5015db32c838736f4ac43e7194fd"
+    }
+  ],
+  "sourceChangesFromPreviousPhase": [
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "beforeBytes": 8690,
+      "beforeDigest": "b9e00a4cda40b38e7ee657f4a8755db915a4f9412abdefc6ca24dbc4ac3d2dd8",
+      "afterBytes": 8748,
+      "afterDigest": "1d53630a1c1a7c54372c18c1ec75118eeb79a121e5717dc97242628453b1573e",
+      "digestAlgorithm": "sha256"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions-fixture-types/six-suite-green.txt",
+      "bytes": 24499,
+      "digestAlgorithm": "sha256",
+      "digest": "18df3a0a9d57116c6655d8cb62e5e5cdcc02fc432cf71b44febe0e36f11a3856",
+      "rawPath": "/tmp/signature-resource-fixture-types-green.txt",
+      "rawBytes": 24500,
+      "rawDigest": "d1a919f0fb639f313127bbda312fc0b79a357fd6dc0cecf11688292da416bcce",
+      "projection": "Trailing blank lines removed; one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions-fixture-types/forced-lint.json",
+      "bytes": 161,
+      "digestAlgorithm": "sha256",
+      "digest": "9afb1b84b13eed6c40cf4a801193244bc4bdbff5387e8afbfb82ed8431a29092",
+      "rawPath": "/tmp/signature-resource-fixture-types-lint.json",
+      "rawBytes": 292,
+      "rawDigest": "4e2b08a868f4312d2893601e8d422bbba10bb179f1dd7afe3334113384b9e9c7",
+      "projection": "ESLint count/path/message metadata; full JSON retained raw."
+    }
+  ],
+  "previousManifest": {
+    "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/manifest.json",
+    "digestAlgorithm": "sha256",
+    "digest": "9915768101b3bb8f06ab93d96643bfbcb81f3ab04b44552ed6d64587165bf2a7"
+  },
+  "compiler": "Not run by this workstream; root owns final whole-repository compilation."
+}

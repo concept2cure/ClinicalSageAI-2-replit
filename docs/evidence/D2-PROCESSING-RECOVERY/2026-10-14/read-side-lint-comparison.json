@@ -1,0 +1,393 @@
+{
+  "scope": "Eight existing implementation files before; all 21 owned implementation/fixture files after",
+  "before": [
+    {
+      "file": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/projectSourceCatalog.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DataRoom' has too many lines (301). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'DataRoom' has a complexity of 45. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1506). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AuthorWorkspace' has too many lines (146). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has too many lines (287). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has a complexity of 102. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 31. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/project-vault.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1634). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'createProjectVaultRoutes' has too many lines (928). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (274). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 42. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 25. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/projects.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (232). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 53. Maximum allowed is 15."
+        },
+        {
+          "rule": "no-useless-assignment",
+          "severity": 1,
+          "message": "The value assigned to 'scaffold' is not used in subsequent statements."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1400). Maximum allowed is 500."
+        },
+        {
+          "rule": "no-useless-assignment",
+          "severity": 1,
+          "message": "The value assigned to 'projectAnchor' is not used in subsequent statements."
+        }
+      ]
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'insertSource' has a complexity of 28. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'upsertStudy' has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'createFinding' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (640). Maximum allowed is 500."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'proposeDesignLesson' has a complexity of 19. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/types.ts",
+      "errorCount": 0,
+      "warnings": []
+    }
+  ],
+  "after": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/citationAdmission.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/projectSourceCatalog.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DataRoom' has too many lines (302). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'DataRoom' has a complexity of 46. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1507). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AuthorWorkspace' has too many lines (146). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has too many lines (287). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has a complexity of 102. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 31. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/__tests__/vault-data-room-counts.test.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-sources-processing.test.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/routes/c2c/project-vault.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1633). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'createProjectVaultRoutes' has too many lines (925). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (271). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 42. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 24. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/projects.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (232). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 53. Maximum allowed is 15."
+        },
+        {
+          "rule": "no-useless-assignment",
+          "severity": 1,
+          "message": "The value assigned to 'scaffold' is not used in subsequent statements."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1409). Maximum allowed is 500."
+        },
+        {
+          "rule": "no-useless-assignment",
+          "severity": 1,
+          "message": "The value assigned to 'projectAnchor' is not used in subsequent statements."
+        }
+      ]
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/data-room-processing-read.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "errorCount": 0,
+      "warnings": [
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'insertSource' has a complexity of 28. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'upsertStudy' has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'createFinding' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (648). Maximum allowed is 500."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Async function 'proposeDesignLesson' has a complexity of 19. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/types.ts",
+      "errorCount": 0,
+      "warnings": []
+    },
+    {
+      "file": "shared/data-room-processing-status.ts",
+      "errorCount": 0,
+      "warnings": []
+    }
+  ],
+  "beforeWarnings": 23,
+  "afterWarnings": 23,
+  "comparison": "Zero errors. Same 23 existing warning instances; no warnings in new shared/read helpers or focused fixtures. DataRoom function 301→302 lines, complexity45→46; ProjectHome file1506→1507. Vault reader function/arrow/file sizes decreased. projects.ts file1400→1409 includes caller-owner connection-release changes plus source DTO. Evidence-spine file640→648. Existing warning limits are not claimed warning-free."
+}

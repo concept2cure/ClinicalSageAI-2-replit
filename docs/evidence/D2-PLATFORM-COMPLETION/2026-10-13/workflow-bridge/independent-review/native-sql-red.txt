@@ -1,0 +1,31 @@
+Actual native PostgreSQL regression, prior to governance doc-id join cast repair.
+Source log: /tmp/workflow-bridge-native-current.txt
+No pg mocks. Runtime role app_service; RLS_ENFORCE=on.
+Fixture setup errors and an unrelated draft-export expectation are not counted as production regression proof.
+
+
+stderr | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption
+Error freezing document: error: operator does not exist: text = uuid
+    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at hasCurrentAdoption (/workspace/ClinicalSageAI-2-replit/server/services/authoring/workflow-import-governance.ts:164:18)
+    at assertWorkflowImportRelease (/workspace/ClinicalSageAI-2-replit/server/services/authoring/workflow-import-governance.ts:203:8)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:5091:7 {
+  length: 197,
+  severity: 'ERROR',
+  code: '42883',
+  detail: undefined,
+  hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+  position: '649',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_oper.c',
+  line: '647',
+  routine: 'op_error'
+}

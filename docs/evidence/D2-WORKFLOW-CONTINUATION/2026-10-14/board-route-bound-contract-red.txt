@@ -1,0 +1,1620 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:18.976Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:19.485Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:44:19.486Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:19.487Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:23.895Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:23.906Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "48e63361-7a29-4e68-bcfd-b52d4f6fbd52",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:23.987Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "b0000000-0000-4000-8000-00000000000b"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:23.992Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "aea435c8-f730-422f-99a1-f4debf44adfb",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:24.068Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 48e63361-7a29-4e68-bcfd-b52d4f6fbd52 by a***@f6.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:44:24.072Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "11",
+    "tenantId": 1,
+    "resourceId": "55b004bd-b120-4950-bdf5-0de529931bfb"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T19:44:24.092Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error
+{
+  "timestamp": "2026-10-14T19:44:24.177Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-10-14T19:44:24.209Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 48e63361-7a29-4e68-bcfd-b52d4f6fbd52 by a***@f6.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error 77ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-10-14T19:44:24.256Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-10-14T19:44:24.309Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-10-14T19:44:24.347Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-10-14T19:44:24.385Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+{
+  "timestamp": "2026-10-14T19:44:24.403Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 48e63361-7a29-4e68-bcfd-b52d4f6fbd52 by r***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+{
+  "timestamp": "2026-10-14T19:44:24.441Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+{
+  "timestamp": "2026-10-14T19:44:24.458Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+{
+  "timestamp": "2026-10-14T19:44:24.479Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-10-14T19:44:24.499Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc aea435c8-f730-422f-99a1-f4debf44adfb by a***@f6.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested) 205ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments 54ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it 40ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-10-14T19:44:24.533Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-10-14T19:44:24.576Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-10-14T19:44:24.610Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 48e63361-7a29-4e68-bcfd-b52d4f6fbd52 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-10-14T19:44:24.639Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-10-14T19:44:24.677Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one 101ms
+ × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail 12ms
+   → [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-14T19:44:24.695Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SUBMIT on doc aea435c8-f730-422f-99a1-f4debf44adfb by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-14T19:44:24.733Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-14T19:44:24.776Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-14T19:44:24.824Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off 90ms
+   → [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > rejects an empty workflow without transitioning the document
+{
+  "timestamp": "2026-10-14T19:44:24.877Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > rejects an empty workflow without transitioning the document
+{
+  "timestamp": "2026-10-14T19:44:24.882Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ba1a17a6-4f81-4fa3-ad1a-242d00b50d73",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > refuses retries on a draft or foreign document and malformed workflow inputs
+{
+  "timestamp": "2026-10-14T19:44:24.920Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > refuses retries on a draft or foreign document and malformed workflow inputs
+{
+  "timestamp": "2026-10-14T19:44:24.924Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "92a1af7a-905c-491e-9d30-35ea52e4bb9a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off 141ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > rejects an empty workflow without transitioning the document 68ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+{
+  "timestamp": "2026-10-14T19:44:25.008Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+{
+  "timestamp": "2026-10-14T19:44:25.010Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "c29ae1a9-aa2d-4587-850e-672d8c0cee83",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+CRITICAL: Failed to create audit trail: error: forced submit audit failure
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 147,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_review_submit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'c29ae1a9-aa2d-4587-850e-672d8c0cee83',
+    null,
+    'SUBMIT',
+    'author@f6.example',
+    'MEMBER',
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      workflowId: '56060c95-496e-4689-8484-6cb8a654df36',
+      steps: [Array]
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'f6e46380-fe19-4fd1-8de0-6be924eeee15',
+    1,
+    '11'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+{
+  "timestamp": "2026-10-14T19:44:25.042Z",
+  "level": "error",
+  "message": "[authoring-router] submitting docs failed",
+  "context": {
+    "err": "forced submit audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > refuses retries on a draft or foreign document and malformed workflow inputs 74ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a projection retry reuses the existing review workflow without new steps or another submit event
+{
+  "timestamp": "2026-10-14T19:44:25.106Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a projection retry reuses the existing review workflow without new steps or another submit event
+{
+  "timestamp": "2026-10-14T19:44:25.108Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "bf618d54-be11-4c94-b7fc-8948678a9049",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a projection retry reuses the existing review workflow without new steps or another submit event
+{
+  "timestamp": "2026-10-14T19:44:25.128Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SUBMIT on doc bf618d54-be11-4c94-b7fc-8948678a9049 by a***@f6.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together 87ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict
+{
+  "timestamp": "2026-10-14T19:44:25.193Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict
+{
+  "timestamp": "2026-10-14T19:44:25.199Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "43bb7db2-0410-4b54-b5a5-ed6b26104fa2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rejects malformed or duplicate reviewers before any request is saved
+{
+  "timestamp": "2026-10-14T19:44:25.240Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rejects malformed or duplicate reviewers before any request is saved
+{
+  "timestamp": "2026-10-14T19:44:25.244Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "eb15fe03-3c4a-42e8-9bf5-062d0de546a0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a projection retry reuses the existing review workflow without new steps or another submit event 105ms
+ × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict 47ms
+   → [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails
+{
+  "timestamp": "2026-10-14T19:44:25.325Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails
+{
+  "timestamp": "2026-10-14T19:44:25.328Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "57355fdf-6e60-4084-ba8c-982eace73468",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails
+Error requesting review: error: forced reviewer insert failure
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 152,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_second_reviewer() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_reviews\n' +
+    '           (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)\n' +
+    "           VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, NOW())\n" +
+    '           ON CONFLICT (doc_id, reviewer_id, tenant_id)\n' +
+    "           DO UPDATE SET requested_at = NOW(), requested_by = $6, review_status = 'pending',\n" +
+    '                         reviewed_at = NULL, review_comments = NULL, updated_at = NOW()\n' +
+    '           RETURNING *',
+  params: [
+    '89b84bcc-f509-447c-942a-354535722cde',
+    '57355fdf-6e60-4084-ba8c-982eace73468',
+    '31',
+    'Blake Bystander',
+    'bystander@f6.example',
+    'author@f6.example',
+    1
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-14T19:44:25.340Z",
+  "level": "error",
+  "message": "[authoring-router] saving request review failed",
+  "context": {
+    "err": "forced reviewer insert failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-10-14T19:44:25.378Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-10-14T19:44:25.382Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "2814a9b2-7adb-4650-b7f2-e30db4789567",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rejects malformed or duplicate reviewers before any request is saved 69ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails 64ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+CRITICAL: Failed to create audit trail: error: forced peer audit failure
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 142,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_peer_audit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '2814a9b2-7adb-4650-b7f2-e30db4789567',
+    null,
+    'review_requested',
+    'author@f6.example',
+    'MEMBER',
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      reviewerIds: [Array],
+      reviewIds: [Array],
+      grants: [Array],
+      reopenedVerdicts: []
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'd076a59e-f2fa-4140-8f20-f2c14b039cf8',
+    1,
+    '11'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+Error requesting review: error: forced peer audit failure
+    at pe.Le (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/concept2cure/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 142,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_peer_audit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '2814a9b2-7adb-4650-b7f2-e30db4789567',
+    null,
+    'review_requested',
+    'author@f6.example',
+    'MEMBER',
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      reviewerIds: [Array],
+      reviewIds: [Array],
+      grants: [Array],
+      reopenedVerdicts: []
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'd076a59e-f2fa-4140-8f20-f2c14b039cf8',
+    1,
+    '11'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-14T19:44:25.421Z",
+  "level": "error",
+  "message": "[authoring-router] saving request review failed",
+  "context": {
+    "err": "forced peer audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-10-14T19:44:25.444Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 2814a9b2-7adb-4650-b7f2-e30db4789567 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-10-14T19:44:25.493Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-10-14T19:44:25.497Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7bc0d9b0-424b-4dc0-91ee-083a06dffc4d",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-10-14T19:44:25.526Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 7bc0d9b0-424b-4dc0-91ee-083a06dffc4d by a***@f6.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails 110ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > refuses the document’s author as its reviewer, and writes nothing
+{
+  "timestamp": "2026-10-14T19:44:25.593Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > refuses the document’s author as its reviewer, and writes nothing
+{
+  "timestamp": "2026-10-14T19:44:25.595Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b9aa423e-6166-43ba-93f5-1a824aa5813d",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-10-14T19:44:25.651Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-10-14T19:44:25.655Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "cc1efd6f-3234-4d59-ba45-820912de1643",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict 96ms
+   → [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > refuses the document’s author as its reviewer, and writes nothing 71ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-10-14T19:44:25.684Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc cc1efd6f-3234-4d59-ba45-820912de1643 by a***@f6.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-10-14T19:44:25.705Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc cc1efd6f-3234-4d59-ba45-820912de1643 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+{
+  "timestamp": "2026-10-14T19:44:25.754Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "relation \"c2c_documents\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+{
+  "timestamp": "2026-10-14T19:44:25.757Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "dc604091-a222-40fe-9b18-bf5c8a22fdfb",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+{
+  "timestamp": "2026-10-14T19:44:25.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc dc604091-a222-40fe-9b18-bf5c8a22fdfb by b***@f6.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant 90ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made 78ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ expectedReview server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:129:55
+    127|   const response = await as(user)(request(app).get(`/api/authoring/doc…
+    128|   expect(response.status,JSON.stringify(response.body)).toBe(200);
+    129|   const { reviewContext } = authoringReviewReadSchema.parse(response.b…
+       |                                                       ^
+    130|   expect(reviewContext).toMatchObject({ actorId:user.id,organizationId…
+    131|   expect(reviewContext.myReview,'the reviewer has no captured request'…
+ ❯ decide server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:140:30
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:285:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { issues: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], addIssue: 'Function<anonymous>', addIssues: 'Function<anonymous>', errors: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], format: 'Function<format>', isEmpty: false, flatten: 'Function<flatten>', formErrors: { formErrors: [], fieldErrors: { reviews: [ 'Required', 'Required', 'Required', 'Required' ], reviewContext: [ 'Required' ], stats: [ 'Required', 'Required' ] } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ expectedReview server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:129:55
+    127|   const response = await as(user)(request(app).get(`/api/authoring/doc…
+    128|   expect(response.status,JSON.stringify(response.body)).toBe(200);
+    129|   const { reviewContext } = authoringReviewReadSchema.parse(response.b…
+       |                                                       ^
+    130|   expect(reviewContext).toMatchObject({ actorId:user.id,organizationId…
+    131|   expect(reviewContext.myReview,'the reviewer has no captured request'…
+ ❯ decide server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:140:30
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:316:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { issues: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], addIssue: 'Function<anonymous>', addIssues: 'Function<anonymous>', errors: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], format: 'Function<format>', isEmpty: false, flatten: 'Function<flatten>', formErrors: { formErrors: [], fieldErrors: { reviews: [ 'Required', 'Required', 'Required', 'Required' ], reviewContext: [ 'Required' ], stats: [ 'Required', 'Required' ] } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict
+ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ expectedReview server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:129:55
+    127|   const response = await as(user)(request(app).get(`/api/authoring/doc…
+    128|   expect(response.status,JSON.stringify(response.body)).toBe(200);
+    129|   const { reviewContext } = authoringReviewReadSchema.parse(response.b…
+       |                                                       ^
+    130|   expect(reviewContext).toMatchObject({ actorId:user.id,organizationId…
+    131|   expect(reviewContext.myReview,'the reviewer has no captured request'…
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:427:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { issues: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], addIssue: 'Function<anonymous>', addIssues: 'Function<anonymous>', errors: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], format: 'Function<format>', isEmpty: false, flatten: 'Function<flatten>', formErrors: { formErrors: [], fieldErrors: { reviews: [ 'Required', 'Required', 'Required', 'Required' ], reviewContext: [ 'Required' ], stats: [ 'Required', 'Required' ] } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "reviewed_snapshot_hash"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "reviews",
+      0,
+      "review_binding_basis"
+    ],
+    "message": "Required"
+  },
+  {
+    "expected": "'pending' | 'current' | 'stale' | 'unbound'",
+    "received": "undefined",
+    "code": "invalid_type",
+    "path": [
+      "reviews",
+      0,
+      "standing"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "undefined",
+    "path": [
+      "reviewContext"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "stale"
+    ],
+    "message": "Required"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "number",
+    "received": "undefined",
+    "path": [
+      "stats",
+      "unbound"
+    ],
+    "message": "Required"
+  }
+]
+ ❯ Object.get error [as error] node_modules/zod/v3/types.js:39:31
+ ❯ ZodObject.parse node_modules/zod/v3/types.js:114:22
+ ❯ expectedReview server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:129:55
+    127|   const response = await as(user)(request(app).get(`/api/authoring/doc…
+    128|   expect(response.status,JSON.stringify(response.body)).toBe(200);
+    129|   const { reviewContext } = authoringReviewReadSchema.parse(response.b…
+       |                                                       ^
+    130|   expect(reviewContext).toMatchObject({ actorId:user.id,organizationId…
+    131|   expect(reviewContext.myReview,'the reviewer has no captured request'…
+ ❯ decide server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:140:30
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:477:17
+ ❯ rejectPeerAudit server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:417:9
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:476:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { issues: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], addIssue: 'Function<anonymous>', addIssues: 'Function<anonymous>', errors: [ { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'reviewed_snapshot_hash' ], message: 'Required' }, { code: 'invalid_type', expected: 'string', received: 'undefined', path: [ 'reviews', +0, 'review_binding_basis' ], message: 'Required' }, { expected: '\'pending\' | \'current\' | \'stale\' | \'unbound\'', received: 'undefined', code: 'invalid_type', path: [ 'reviews', +0, 'standing' ], message: 'Required' }, { code: 'invalid_type', expected: 'object', received: 'undefined', path: [ 'reviewContext' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'stale' ], message: 'Required' }, { code: 'invalid_type', expected: 'number', received: 'undefined', path: [ 'stats', 'unbound' ], message: 'Required' } ], format: 'Function<format>', isEmpty: false, flatten: 'Function<flatten>', formErrors: { formErrors: [], fieldErrors: { reviews: [ 'Required', 'Required', 'Required', 'Required' ], reviewContext: [ 'Required' ], stats: [ 'Required', 'Required' ] } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 passed (20)
+   Start at  19:44:09
+   Duration  16.11s (transform 5.14s, setup 127ms, import 950ms, tests 14.60s, environment 0ms)

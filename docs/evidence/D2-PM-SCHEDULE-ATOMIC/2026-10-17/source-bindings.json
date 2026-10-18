@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
+  "branch": "concept2cure-v2",
+  "node": "22.23.3",
+  "postgres": "16",
+  "candidate_sha256": {
+    "server/services/projects/schedule-of-events/service.ts": "973374430ec7808c7361290fa0a4a3b340fc3a9f4fbc2e3007710017b92eeda2",
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": "95cf04c504a90eef57c1dd5e1bfff496a3f9ca0b728a50f9d36386fca5ec3a58",
+    "tests/db/project-schedule-atomic.dbtest.ts": "e75fa420aa53e488ff4c47710c7c0a49cc2fa420bd290680c71959ca4a529adf"
+  },
+  "scope": "Local implementation and verification only; not committed, pushed or deployed."
+}

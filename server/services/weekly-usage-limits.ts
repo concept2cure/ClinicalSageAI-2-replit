@@ -26,6 +26,7 @@
 
 import { pool } from '../db.js';
 import { logAuditEvent } from './audit/auditLogger.js';
+import { auditRowOutcomeFrom, type AuditRowOutcome } from './audit/audit-write-outcome.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('weekly-usage-limits');
@@ -280,7 +281,7 @@ export async function setWeeklyLimit(
   config: WeeklyLimitConfig,
   actor: { userId: number },
   reason: string,
-): Promise<WeeklyLimitRow> {
+): Promise<{ limit: WeeklyLimitRow; auditTrail: AuditRowOutcome }> {
   const errors = validateLimitConfig(config);
   if (errors.length) {
     const err = new Error(`Invalid weekly limit config: ${errors.join('; ')}`);
@@ -319,9 +320,12 @@ export async function setWeeklyLimit(
   );
   const saved = rowToLimit(res.rows[0]);
 
-  // Governed-action audit trail (reason-for-change + before/after).
+  // The configuration is already durable. Disclose a lost audit row without
+  // telling the caller to repeat a change that completed.
+  const auditContext = { action: previous ? 'compliance.weekly_usage_limit.update' : 'compliance.weekly_usage_limit.create', resourceType: 'weekly_usage_limit', resourceId: config.metric };
+  let auditTrail: AuditRowOutcome;
   try {
-    await logAuditEvent({
+    auditTrail = auditRowOutcomeFrom(await logAuditEvent({
       category: 'compliance',
       severity: 'info',
       action: previous ? 'weekly_usage_limit.update' : 'weekly_usage_limit.create',
@@ -333,13 +337,12 @@ export async function setWeeklyLimit(
       newValue: saved,
       metadata: { reason: reason.trim() },
       success: true,
-    });
+    }), auditContext);
   } catch (e) {
-    // Audit-trail outage must not break the governed action it records.
-    logger.error('weekly_usage_limit audit write failed', { err: e instanceof Error ? e.message : String(e) });
+    auditTrail = auditRowOutcomeFrom(undefined, { ...auditContext, thrown: e instanceof Error ? e.message : String(e) });
   }
 
-  return saved;
+  return { limit: saved, auditTrail };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

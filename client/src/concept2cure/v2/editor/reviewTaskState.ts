@@ -16,6 +16,7 @@
  * (docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/).
  */
 import type { AuthoringTaskRow, DocumentReviewsRead, StandingReview } from './ReviewTasksPanel';
+import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
 
 /** How a review state reads. Text, never colour alone. */
 const REVIEW_STATUS_LABEL: Record<string, string> = {
@@ -29,6 +30,19 @@ export function reviewStatusLabel(status: string): string {
   return REVIEW_STATUS_LABEL[status] ?? (status ? status.replace(/_/g, ' ') : 'status not reported');
 }
 
+/** A legacy or unknown binding never makes a recorded verdict current. */
+export function reviewStandingOf(status: string, standing: unknown): AuthoringReviewStanding {
+  if (status === 'pending') return 'pending';
+  if (standing === 'current' && ['approved', 'rejected', 'changes_requested'].includes(status)) return 'current';
+  return standing === 'stale' ? 'stale' : 'unbound';
+}
+
+export function reviewBindingNote(standing: 'stale' | 'unbound'): string {
+  return standing === 'stale'
+    ? 'The saved document has changed since that decision; a current review is needed.'
+    : 'Its saved-content binding is unavailable; a current review is needed.';
+}
+
 export const CLOSED_TASK = new Set(['completed', 'cancelled']);
 
 /** What the review request says about one task, for the row to state. */
@@ -38,8 +52,9 @@ export type TaskReviewState =
   | { kind: 'unread' }
   | { kind: 'pending'; reviewer: string }
   | { kind: 'recorded'; verdict: string }
+  | { kind: 'historical'; verdict: string; standing: 'stale' | 'unbound'; comments: string | null }
   /** A closed task opened before the reviewer's current request: it belongs to an earlier one. */
-  | { kind: 'earlier'; reviewer: string; askedOn: string; verdict: string | null };
+  | { kind: 'earlier'; reviewer: string; askedOn: string; verdict: string | null; standing: AuthoringReviewStanding; comments: string | null };
 
 /**
  * The earlier request a closed task belongs to, or null. Send for review
@@ -55,6 +70,8 @@ function earlierRequest(task: AuthoringTaskRow, row: StandingReview): TaskReview
     reviewer: row.reviewer,
     askedOn: asked.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }),
     verdict: row.status === 'pending' ? null : reviewStatusLabel(row.status),
+    standing: reviewStandingOf(row.status, row.standing),
+    comments: row.comments,
   };
 }
 
@@ -69,8 +86,12 @@ export function taskReviewState(task: AuthoringTaskRow, reviews: Pick<DocumentRe
   if (reviews.state !== 'ready') return { kind: 'reading' };
   const row = reviews.rows.find(r => r.reviewerId === String(task.assigneeId));
   if (!row) return { kind: 'none' };
-  return earlierRequest(task, row)
-    ?? (row.status === 'pending' ? { kind: 'pending', reviewer: row.reviewer } : { kind: 'recorded', verdict: reviewStatusLabel(row.status) });
+  const earlier = earlierRequest(task, row);
+  if (earlier) return earlier;
+  const standing = reviewStandingOf(row.status, row.standing);
+  if (standing === 'pending') return { kind: 'pending', reviewer: row.reviewer };
+  if (standing === 'current') return { kind: 'recorded', verdict: reviewStatusLabel(row.status) };
+  return { kind: 'historical', verdict: reviewStatusLabel(row.status), standing, comments: row.comments };
 }
 
 /** What a pending review leaves for the task: nothing (the verdict completes it), or a signature. */
@@ -90,9 +111,15 @@ export function reviewStateNote(task: AuthoringTaskRow, review: TaskReviewState)
         : `Completing this task does not record a verdict. ${review.reviewer}’s review is pending on the Review board${afterTheVerdict(task)}`;
     case 'recorded':
       return `Verdict recorded on the Review board: ${review.verdict}.`;
+    case 'historical':
+      return `Earlier verdict recorded on the Review board: ${review.verdict}. ${reviewBindingNote(review.standing)}` +
+        (review.comments ? ` Recorded reason: ${review.comments}` : '') +
+        (closed ? ' This task keeps its recorded history.' : ' Record the current verdict on the Review board before completing this task.');
     case 'earlier':
       return `This task belongs to an earlier review request. ${review.reviewer} was asked again on ${review.askedOn}; ` +
-        (review.verdict ? `the verdict on that request is recorded on the Review board: ${review.verdict}.` : 'that review is pending on the Review board.');
+        (review.verdict ? `the verdict on that request is recorded on the Review board: ${review.verdict}.` : 'that review is pending on the Review board.') +
+        (review.standing === 'stale' || review.standing === 'unbound' ? ` ${reviewBindingNote(review.standing)}` : '') +
+        (review.comments ? ` Recorded reason: ${review.comments}` : '');
     case 'unread':
       return closed
         ? 'Whether a verdict is recorded on the Review board could not be read.'

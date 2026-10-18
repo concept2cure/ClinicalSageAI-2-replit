@@ -40,12 +40,15 @@ export const ibcRegistrations = pgTable(
     submissionId: integer('submission_id').references(() => submissions.id),
     registrationNumber: text('registration_number').notNull(),
     title: text('title').notNull(),
-    nihGuidelinesSection: text('nih_guidelines_section').$type<NihGuidelinesSection>().notNull().default('not_applicable'),
-    /** Declared containment for the work. */
-    biosafetyLevel: text('biosafety_level').$type<BiosafetyLevel>().notNull().default('BSL-1'),
-    involvesRecombinantDna: boolean('involves_recombinant_dna').notNull().default(false),
+    /** NULL means not recorded, NOT "not applicable" (2026-10-15: was NOT NULL DEFAULT 'not_applicable'). */
+    nihGuidelinesSection: text('nih_guidelines_section').$type<NihGuidelinesSection>(),
+    /** Declared containment for the work. NULL means not declared, NOT BSL-1 (2026-10-15: was NOT NULL DEFAULT 'BSL-1'). */
+    biosafetyLevel: text('biosafety_level').$type<BiosafetyLevel>(),
+    /** NULL means not recorded, NOT "no" (2026-10-15: was NOT NULL DEFAULT false). */
+    involvesRecombinantDna: boolean('involves_recombinant_dna'),
     /** Human gene transfer (CGT) — NIH Guidelines III-C / additional oversight. */
-    involvesHumanGeneTransfer: boolean('involves_human_gene_transfer').notNull().default(false),
+    /** NULL means not recorded, NOT "no" (2026-10-15: was NOT NULL DEFAULT false). */
+    involvesHumanGeneTransfer: boolean('involves_human_gene_transfer'),
     status: text('status').$type<IbcStatus>().notNull().default('draft'),
     approvalDate: date('approval_date'),
     expirationDate: date('expiration_date'),
@@ -99,8 +102,8 @@ export const ibcReviews = pgTable(
     organizationId: integer('organization_id').notNull().references(() => organizations.id),
     registrationId: integer('registration_id').notNull().references(() => ibcRegistrations.id),
     outcome: text('outcome').$type<'approved' | 'conditional' | 'disapproved' | 'tabled'>().notNull(),
-    /** Whether a quorum of the convened IBC voted (required for III-A/B/C). */
-    convenedQuorum: boolean('convened_quorum').notNull().default(false),
+    /** Whether a quorum of the convened IBC voted (required for III-A/B/C). NULL means not recorded, NOT "no" (2026-10-15: was NOT NULL DEFAULT false). */
+    convenedQuorum: boolean('convened_quorum'),
     conditions: text('conditions'),
     determinationDate: date('determination_date'),
     createdBy: integer('created_by').notNull().references(() => users.id),

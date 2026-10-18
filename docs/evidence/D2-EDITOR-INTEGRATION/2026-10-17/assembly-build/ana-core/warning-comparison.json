@@ -1,0 +1,47 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+    "baselineSource": "eceb747d3",
+    "candidateSha256": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "baseline": {
+      "errors": 0,
+      "warnings": 5,
+      "rules": [
+        "max-lines-per-function",
+        "complexity",
+        "complexity",
+        "complexity",
+        "max-lines"
+      ]
+    },
+    "candidate": {
+      "errors": 0,
+      "warnings": 2,
+      "rules": [
+        "max-lines-per-function",
+        "complexity"
+      ]
+    }
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx",
+    "baselineSource": "eceb747d3",
+    "candidateSha256": "32f7ada068a8e3a5d694c47ca42bd964a7200f0eb1c4a80f2972ba60b89b2178",
+    "baseline": {
+      "errors": 0,
+      "warnings": 2,
+      "rules": [
+        "max-lines-per-function",
+        null
+      ]
+    },
+    "candidate": {
+      "errors": 0,
+      "warnings": 2,
+      "rules": [
+        "max-lines-per-function",
+        null
+      ]
+    }
+  }
+]

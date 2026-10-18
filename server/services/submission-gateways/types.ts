@@ -279,6 +279,14 @@ export interface GatewayTransmitRequest {
   submissionType?: string;
   /** Free-form metadata stored on the transmittal row. */
   metadata?: Record<string, unknown>;
+  /** Internal server binding; public transmit routes do not accept this field. */
+  dispatchBinding?: {
+    attemptId: string;
+    organizationId: number;
+    sequenceId: number;
+    signatureActionId: string;
+    bundleSha256: string;
+  };
   /**
    * The organisation's chosen account for this gateway and environment —
    * the platform's or its own (gateway-accounts.ts). Set by the guard in
@@ -342,7 +350,10 @@ export interface GatewayAcknowledgment {
   transmissionId: string;
   contentType: string;
   buffer: Buffer;
-  receivedAt: Date;
+  /** Actual recorded receipt time; null when unknown, never the download time. */
+  receivedAt: Date | null;
+  /** When this platform generated its own summary, separate from agency receipt. */
+  generatedAt?: Date;
   /**
    * Who authored these bytes.
    *

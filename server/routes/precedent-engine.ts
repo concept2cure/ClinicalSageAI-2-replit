@@ -240,15 +240,20 @@ router.post('/ingest', async (req: Request, res: Response) => {
     // organization there is nothing to attribute it to, so it is refused.
     const organizationId = precedentOrgId((req as any).user?.organizationId);
     if (organizationId === undefined) return orgRequired(res);
+    // Who ingested it is recorded; it was 'system' (2026-10-15).
+    const userId = (req as any).user?.id;
+    if (userId == null) return res.status(401).json({ success: false, error: 'Authentication required' });
     const id = await precedentEngine.ingestPrecedent(
       {
         ...parsed.data,
         fdaQuestions: parsed.data.fdaQuestions || [],
         riskFactors: parsed.data.riskFactors || [],
         sourceType: parsed.data.sourceType || 'Manual',
-        confidenceScore: parsed.data.confidenceScore ?? 1.0,
+        // A confidence the ingester did not state is not full confidence.
+        confidenceScore: parsed.data.confidenceScore ?? null,
       } as any,
-      organizationId
+      organizationId,
+      String(userId),
     );
 
     res.status(201).json({ success: true, data: { id } });

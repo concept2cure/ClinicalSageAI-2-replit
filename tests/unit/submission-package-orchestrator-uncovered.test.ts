@@ -500,56 +500,24 @@ describe('region-CHECK violation handling', () => {
     }
   });
 
-  it('transient persist failures (no Postgres code) are STILL swallowed — every step gets a fresh `runStep` cycle', async () => {
-    // Connection-level / generic errors without a SCHEMA_SHAPE_ERROR_CODES
-    // code stay on the swallow path: a transient blip should not abort the
-    // in-memory pipeline; retrying or running ephemerally is the safe
-    // default for those.
-    const err = new Error('connection refused');
-    hoisted.poolQuery.mockRejectedValue(err);
-
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-    try {
-      // skipValidation keeps this test focused on its actual subject —
-      // PERSISTENCE failures being swallowed without marking any step failed.
-      // Since Move 3 wired package.validate to the real hardened validator, a
-      // minimal fixture is (correctly) not gateway-ready, so the validate
-      // step's own WORK fails independently of persistence. That work-failure
-      // is out of scope here; skipping validation isolates the persistence
-      // path the assertion below actually exercises.
-      const inputs = inputsWithSomeData({ skipValidation: true });
-      const result = await runOrchestrator(inputs);
-
-      // All known step keys appear in the run record regardless of DB state.
-      const stepKeys = result.run.steps.map(s => s.key);
-      expect(stepKeys).toEqual(
-        expect.arrayContaining([
-          'm3.compose',
-          'csr.tabulate',
-          'm2.3.qos',
-          'm2.4.nonclinical',
-          'm2.5.clinical',
-          'm2.7.clinical',
-          'm1.admin',
-          'package.assemble',
-          'package.validate',
-        ])
-      );
-      // Persistence failures are still swallowed (not surfaced as failed steps).
-      // With skipValidation set, package.validate is marked 'skipped' (the
-      // orchestrator's else-branch) rather than run — so it cannot fail on its
-      // own merits here. The net effect is NO failed step, which is exactly this
-      // test's subject: a transient persistence blip never aborts the pipeline.
-      const failedKeys = result.run.steps.filter(s => s.status === 'failed').map(s => s.key);
-      expect(failedKeys).toEqual([]);
-      const validateStep = result.run.steps.find(s => s.key === 'package.validate');
-      expect(validateStep?.status).toBe('skipped');
-    } finally {
-      warnSpy.mockRestore();
-    }
+  it('refuses step-audit persistence failure before running the step body', async () => {
+    hoisted.poolQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes('INSERT INTO submission_orchestrator_steps')) throw new Error('step audit unavailable');
+      return { rows: [] };
+    });
+    const result = await runOrchestrator(inputsWithSomeData({ skipValidation: true }));
+    expect(result.run.status).toBe('failed');
+    expect(result.run.steps.find(s => s.key === 'm3.compose')?.status).toBe('failed');
+    expect(result.outputs.module3Sections).toEqual([]);
+    expect(result.run.steps.find(s => s.key === 'package.sign')?.status).toBe('pending');
   });
 
+  it('refuses transient run persistence failure before starting composers or external jobs', async () => {
+    const err = new Error('connection refused');
+    hoisted.poolQuery.mockRejectedValue(err);
+    await expect(runOrchestrator(inputsWithSomeData({ skipValidation: true }))).rejects.toThrow('connection refused');
+    expect(hoisted.poolQuery).toHaveBeenCalledTimes(1);
+  });
   it('happy path: a region the CHECK accepts (`US`) persists without surfacing warnings', async () => {
     // Default beforeEach mock: every query resolves OK. No warnings should
     // mention persistRun.

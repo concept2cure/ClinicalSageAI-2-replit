@@ -1,0 +1,220 @@
+{
+  "qualification": "Raw ESLint outputs are retained privately; source properties omitted from the bounded evidence. Initial restoration-control findings were corrected by aggregating errors after finally, retaining causes and all original assertions. No rule/baseline change.",
+  "phases": [
+    {
+      "phase": "original-five",
+      "files": 5,
+      "errorCount": 0,
+      "warningCount": 0,
+      "results": [
+        {
+          "path": "tests/db/actor-displays.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-checkin.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-compare.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-versions.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-where-used.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    {
+      "phase": "first-current-restoration-control",
+      "files": 6,
+      "errorCount": 4,
+      "warningCount": 2,
+      "results": [
+        {
+          "path": "tests/db/actor-displays.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-current-access-fixture.ts",
+          "errorCount": 2,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "no-unsafe-finally",
+              "severity": 2,
+              "line": 119,
+              "column": 25,
+              "message": "Unsafe usage of ThrowStatement."
+            },
+            {
+              "ruleId": "preserve-caught-error",
+              "severity": 1,
+              "line": 119,
+              "column": 25,
+              "message": "There is no `cause` attached to the symptom error being thrown."
+            },
+            {
+              "ruleId": "no-unsafe-finally",
+              "severity": 2,
+              "line": 120,
+              "column": 7,
+              "message": "Unsafe usage of ThrowStatement."
+            }
+          ]
+        },
+        {
+          "path": "tests/db/vault-version-checkin.dbtest.ts",
+          "errorCount": 2,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "no-unsafe-finally",
+              "severity": 2,
+              "line": 325,
+              "column": 27,
+              "message": "Unsafe usage of ThrowStatement."
+            },
+            {
+              "ruleId": "preserve-caught-error",
+              "severity": 1,
+              "line": 325,
+              "column": 27,
+              "message": "There is no `cause` attached to the symptom error being thrown."
+            },
+            {
+              "ruleId": "no-unsafe-finally",
+              "severity": 2,
+              "line": 326,
+              "column": 9,
+              "message": "Unsafe usage of ThrowStatement."
+            }
+          ]
+        },
+        {
+          "path": "tests/db/vault-version-compare.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-versions.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-where-used.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    {
+      "phase": "first-current-clean",
+      "files": 6,
+      "errorCount": 0,
+      "warningCount": 0,
+      "results": [
+        {
+          "path": "tests/db/actor-displays.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-current-access-fixture.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-checkin.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-compare.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-versions.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-where-used.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    {
+      "phase": "final-six",
+      "files": 6,
+      "errorCount": 0,
+      "warningCount": 0,
+      "results": [
+        {
+          "path": "tests/db/actor-displays.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-current-access-fixture.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-checkin.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-version-compare.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-versions.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "tests/db/vault-where-used.dbtest.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    }
+  ],
+  "finalWarningGrowth": 0
+}

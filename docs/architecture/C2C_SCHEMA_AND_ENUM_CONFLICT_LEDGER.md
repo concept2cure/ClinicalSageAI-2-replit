@@ -11,18 +11,18 @@ names the file and line that settles it, so it can be re-verified independently.
 
 ## Summary
 
-| # | Conflict | Severity | Blocks |
-|---|---|---|---|
-| C-1 | `assumption_records` defined twice — **RESOLVED in direction** (deployed shape canonical per revised ADR-0007; orphan deprecated, zero importers; physical dual-DDL hazard remains until ADR-0006 retires dead 0010) | ~~Blocking~~ direction resolved | ADR-0006 file retirement |
-| C-2 | `decision_records` defined twice — **RESOLVED in direction** (same as C-1; `decision-record-service` vocabulary confirmed canonical) | ~~Blocking~~ direction resolved | ADR-0006 file retirement |
-| C-3 | `contradiction_findings` / `contradiction_overlay_rules` / `contradiction_consequence_log` defined twice | **Blocking** | WO-07, WO-08 |
-| C-4 | Receipt existed only as a mutable, unhashed memo blob — **FIXED 2026-07-25** (append-only hashed store + verifier) | ~~Blocking~~ fixed | — |
-| C-5 | Receipt type defined twice — **RESOLVED**: canonical is `shared/types/resolution.ts` (the rival had zero importers; deprecated in place) | ~~High~~ resolved | — |
-| C-6 | Two competing migration lineages; the manifest covers only one | **Blocking (root cause of C-1…C-3)** | all schema work |
-| C-7 | Service-vs-enum divergence — **CLOSED, polarity reversed**: the services were right; the enums described a shape that never deployed. Enums deprecated. | ~~High~~ closed | — |
-| C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
-| C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage) | ~~Critical~~ fixed | — |
-| C-11 | **Flagship authoring loop had NO DDL anywhere — FIXED 2026-07-25** (code-derived reconstruction; both residuals since resolved: authoring signature store + §11.70 signature/snapshot binding) | ~~Critical~~ **closed** | — |
+| #    | Conflict                                                                                                                                                                                                             | Severity                             | Blocks                   |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------ |
+| C-1  | `assumption_records` defined twice — **RESOLVED in direction** (deployed shape canonical per revised ADR-0007; orphan deprecated, zero importers; physical dual-DDL hazard remains until ADR-0006 retires dead 0010) | ~~Blocking~~ direction resolved      | ADR-0006 file retirement |
+| C-2  | `decision_records` defined twice — **RESOLVED in direction** (same as C-1; `decision-record-service` vocabulary confirmed canonical)                                                                                 | ~~Blocking~~ direction resolved      | ADR-0006 file retirement |
+| C-3  | `contradiction_findings` / `contradiction_overlay_rules` / `contradiction_consequence_log` defined twice                                                                                                             | **Blocking**                         | WO-07, WO-08             |
+| C-4  | Receipt existed only as a mutable, unhashed memo blob — **FIXED 2026-07-25** (append-only hashed store + verifier)                                                                                                   | ~~Blocking~~ fixed                   | —                        |
+| C-5  | Receipt type defined twice — **RESOLVED**: canonical is `shared/types/resolution.ts` (the rival had zero importers; deprecated in place)                                                                             | ~~High~~ resolved                    | —                        |
+| C-6  | Two competing migration lineages; the manifest covers only one                                                                                                                                                       | **Blocking (root cause of C-1…C-3)** | all schema work          |
+| C-7  | Service-vs-enum divergence — **CLOSED, polarity reversed**: the services were right; the enums described a shape that never deployed. Enums deprecated.                                                              | ~~High~~ closed                      | —                        |
+| C-8  | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed)                                                                                                     | ~~Critical~~ fixed                   | —                        |
+| C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage)                                                                                                      | ~~Critical~~ fixed                   | —                        |
+| C-11 | **Flagship authoring loop had NO DDL anywhere — FIXED 2026-07-25** (code-derived reconstruction; both residuals since resolved: authoring signature store + §11.70 signature/snapshot binding)                       | ~~Critical~~ **closed**              | —                        |
 
 C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
 commercially consequential finding. **C-8 is the most safety-consequential: a
@@ -34,7 +34,7 @@ before acting on C-1 or C-2.
 
 ---
 
-## C-6 — Two competing migration lineages *(root cause)*
+## C-6 — Two competing migration lineages _(root cause)_
 
 The repository has **two** unrelated migration directories, both containing live,
 non-archived DDL:
@@ -48,19 +48,19 @@ Plus additional DDL in `sql/`, `server/sql/`, `server/schema/`, and
 **72 tables are defined in more than one non-archived `.sql` file.** Directory
 participation in those duplicates:
 
-| Directory | Duplicate-table definitions |
-|---:|---|
-| 58 | `db/migrations` |
-| 51 | `migrations` |
-| 23 | `db/migrations/_consolidated` |
-| 11 | `sql` |
-| 8 | `scripts/db-verify` |
-| 1 | `server/sql` |
+| Directory | Duplicate-table definitions   |
+| --------: | ----------------------------- |
+|        58 | `db/migrations`               |
+|        51 | `migrations`                  |
+|        23 | `db/migrations/_consolidated` |
+|        11 | `sql`                         |
+|         8 | `scripts/db-verify`           |
+|         1 | `server/sql`                  |
 
-*(Method: regex over every `.sql` file for `CREATE TABLE [IF NOT EXISTS] <schema?>.<name>`,
+_(Method: regex over every `.sql` file for `CREATE TABLE [IF NOT EXISTS] <schema?>.<name>`,
 schema-qualified so that `CREATE TABLE audit.foo` is not miscounted as a table named
 `audit`; then excluding `_legacy/`, `_deprecated_migrations/`, and `docs/archive/`.
-1,208 distinct schema-qualified tables total.)*
+1,208 distinct schema-qualified tables total.)_
 
 ### Why this is unresolved rather than merely untidy
 
@@ -75,27 +75,28 @@ const migrationsDir = path.join(repoRoot, 'db', 'migrations');
 The manifest therefore:
 
 - covers **202** migrations, all in `db/migrations/`;
-- has a `conflicts` field that resolves **prefix-number** collisions *within that
-  directory* (`007`, `008`, `009`, `010`, …);
+- has a `conflicts` field that resolves **prefix-number** collisions _within that
+  directory_ (`007`, `008`, `009`, `010`, …);
 - **has no awareness of the root `migrations/` directory at all.**
 
 So the one mechanism in the repo designed to resolve migration conflicts is
 structurally incapable of seeing the cross-directory table collisions in C-1
 through C-3. Confirmed by probe:
 
-| Migration | In manifest? |
-|---|---|
-| `db/migrations/20260323_assumption_decision_contradiction.sql` | **yes** |
-| `migrations/0010_operating_system_foundation.sql` | **no** |
-| `migrations/20260524_contradiction_engine_schema.sql` | **no** |
+| Migration                                                      | In manifest? |
+| -------------------------------------------------------------- | ------------ |
+| `db/migrations/20260323_assumption_decision_contradiction.sql` | **yes**      |
+| `migrations/0010_operating_system_foundation.sql`              | **no**       |
+| `migrations/20260524_contradiction_engine_schema.sql`          | **no**       |
 
-Every colliding table's *Drizzle-shaped* definition lives in the directory the
-manifest cannot see, while its *raw-SQL-shaped* rival is manifest-managed.
+Every colliding table's _Drizzle-shaped_ definition lives in the directory the
+manifest cannot see, while its _raw-SQL-shaped_ rival is manifest-managed.
 
 Note also `20260501_q_sub.sql`, which exists with the **same filename in both
 directories** — the clearest signal that the two lineages were never reconciled.
 
 ### Resolution required
+
 An ADR selecting one canonical lineage, a reconciliation of the 72 duplicates,
 and a manifest whose scope covers whatever is chosen. **Until this lands, no
 migration in this program should be authored** — a new migration added to either
@@ -103,21 +104,21 @@ directory inherits the ambiguity.
 
 ---
 
-## C-1 — `assumption_records` defined twice, incompatibly *(blocking)*
+## C-1 — `assumption_records` defined twice, incompatibly _(blocking)_
 
 Both definitions are guarded by `CREATE TABLE IF NOT EXISTS`, so **whichever
 applies first wins silently and the other becomes a no-op.** The resulting table
 shape is therefore determined by deployment history, not by the code.
 
-| | `migrations/0010_operating_system_foundation.sql:84` | `db/migrations/20260323_assumption_decision_contradiction.sql:12` |
-|---|---|---|
-| identity | `name`, `description` | `assumption_code`, `title` |
-| value | `value_type`, `numeric_value`, `text_value`, `json_value` | `assumed_value TEXT` |
-| category | `assumption_category` **pgEnum** — `effect_size`, `variance`, `event_rate`, `attrition`, `endpoint`, `analysis_population`, `comparator`, `scenario`, `regulator_overlay`, `missing_data`, `multiplicity`, `other` | `TEXT CHECK` — `efficacy`, `safety`, `statistical`, `design`, `population`, `endpoint`, `dosing`, `manufacturing`, `regulatory_pathway`, `comparator`, `dropout`, `missing_data`, `effect_size`, `prevalence`, `enrollment`, `timeline`, `cost` |
-| confidence | `assumption_confidence` — `strong`, `moderate`, `provisional`, `uncertain` | `confidence_level` — `definitive`, `high`, `moderate`, `low`, `speculative` |
-| status | `assumption_status` — `draft`, `review`, `approved`, `superseded`, `rejected` | not enum-typed |
-| `domain_track` | `domain_track` enum — `biotech`, `device`, `diagnostics`, `combination`, `biosimilar` | `TEXT CHECK` — `clinical`, `nonclinical`, `cmc`, `biostatistics`, `regulatory`, `pharmacology`, `safety`, `labeling`, `commercial` |
-| FKs | `organizations(id)`, `projects(id)`, `concept2cure_artifacts(id)` | none |
+|                | `migrations/0010_operating_system_foundation.sql:84`                                                                                                                                                               | `db/migrations/20260323_assumption_decision_contradiction.sql:12`                                                                                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| identity       | `name`, `description`                                                                                                                                                                                              | `assumption_code`, `title`                                                                                                                                                                                                                      |
+| value          | `value_type`, `numeric_value`, `text_value`, `json_value`                                                                                                                                                          | `assumed_value TEXT`                                                                                                                                                                                                                            |
+| category       | `assumption_category` **pgEnum** — `effect_size`, `variance`, `event_rate`, `attrition`, `endpoint`, `analysis_population`, `comparator`, `scenario`, `regulator_overlay`, `missing_data`, `multiplicity`, `other` | `TEXT CHECK` — `efficacy`, `safety`, `statistical`, `design`, `population`, `endpoint`, `dosing`, `manufacturing`, `regulatory_pathway`, `comparator`, `dropout`, `missing_data`, `effect_size`, `prevalence`, `enrollment`, `timeline`, `cost` |
+| confidence     | `assumption_confidence` — `strong`, `moderate`, `provisional`, `uncertain`                                                                                                                                         | `confidence_level` — `definitive`, `high`, `moderate`, `low`, `speculative`                                                                                                                                                                     |
+| status         | `assumption_status` — `draft`, `review`, `approved`, `superseded`, `rejected`                                                                                                                                      | not enum-typed                                                                                                                                                                                                                                  |
+| `domain_track` | `domain_track` enum — `biotech`, `device`, `diagnostics`, `combination`, `biosimilar`                                                                                                                              | `TEXT CHECK` — `clinical`, `nonclinical`, `cmc`, `biostatistics`, `regulatory`, `pharmacology`, `safety`, `labeling`, `commercial`                                                                                                              |
+| FKs            | `organizations(id)`, `projects(id)`, `concept2cure_artifacts(id)`                                                                                                                                                  | none                                                                                                                                                                                                                                            |
 
 The two `category` vocabularies overlap in only three values
 (`endpoint`, `comparator`, `missing_data`, `effect_size`). `domain_track` has
@@ -126,10 +127,10 @@ The two `category` vocabularies overlap in only three values
 
 ### Two live consumers, each assuming a different shape
 
-| Consumer | Access | Assumes |
-|---|---|---|
-| `shared/schema/operating-system.ts:146` (`assumptionRecords`) | Drizzle ORM | the `migrations/0010` shape |
-| `server/services/assumption-registry-service.ts` | raw SQL (`:224`, `:297`, `:351`, `:365`, `:466`, `:479`, `:498`, `:557`) | the `db/migrations/20260323` shape |
+| Consumer                                                      | Access                                                                   | Assumes                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| `shared/schema/operating-system.ts:146` (`assumptionRecords`) | Drizzle ORM                                                              | the `migrations/0010` shape        |
+| `server/services/assumption-registry-service.ts`              | raw SQL (`:224`, `:297`, `:351`, `:365`, `:466`, `:479`, `:498`, `:557`) | the `db/migrations/20260323` shape |
 
 `assumption-registry-service.ts` writes status values `active`, `under_review`,
 `withdrawn`, `challenged` (type at `:56`; `updateStatus(..., 'active', ...)` at
@@ -147,26 +148,27 @@ Downstream consumers of the service — all of which inherit the ambiguity:
 `server/routes/governed-intelligence-inconsistency-routes.ts`.
 
 ### Stop condition
-This meets master work order §9: *"the actual schema conflicts with the service
-contract"* and *"two active canonical stores claim the same responsibility."*
+
+This meets master work order §9: _"the actual schema conflicts with the service
+contract"_ and _"two active canonical stores claim the same responsibility."_
 Resolution requires an ADR plus a data-preserving migration. **Do not migrate
 before determining which shape exists in each deployed environment** — the answer
 may differ per environment, and a wrong guess reinterprets regulated history.
 
 ---
 
-## C-2 — `decision_records` defined twice, incompatibly *(blocking)*
+## C-2 — `decision_records` defined twice, incompatibly _(blocking)_
 
 Identical failure pattern.
 
-| | `migrations/0010_operating_system_foundation.sql:195` | `db/migrations/20260323_assumption_decision_contradiction.sql:75` |
-|---|---|---|
-| identity | `context_type` enum + `context_description` | `decision_code`, `title`, `domain_track` |
-| recommendation | `recommendation_type TEXT` (free) | `recommendation_type TEXT CHECK` (12 fixed values) |
-| confidence | `decision_confidence` enum — `strong`, `moderate`, `provisional`, `uncertain` | `confidence_level TEXT CHECK` — `definitive`, `high`, `moderate`, `low`, `speculative` |
-| evidence | `evidence_sources JSONB` | `evidence_basis TEXT CHECK` — `rules_based`, `validation_based`, `ai_inferred`, `expert_judgment`, `precedent_based` |
-| action | `action_state` enum — `recommended_only`, `prepared`, `executed`, `rejected`, `superseded` | — |
-| FKs | `organizations(id)`, `projects(id)`, artifacts | none |
+|                | `migrations/0010_operating_system_foundation.sql:195`                                      | `db/migrations/20260323_assumption_decision_contradiction.sql:75`                                                    |
+| -------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| identity       | `context_type` enum + `context_description`                                                | `decision_code`, `title`, `domain_track`                                                                             |
+| recommendation | `recommendation_type TEXT` (free)                                                          | `recommendation_type TEXT CHECK` (12 fixed values)                                                                   |
+| confidence     | `decision_confidence` enum — `strong`, `moderate`, `provisional`, `uncertain`              | `confidence_level TEXT CHECK` — `definitive`, `high`, `moderate`, `low`, `speculative`                               |
+| evidence       | `evidence_sources JSONB`                                                                   | `evidence_basis TEXT CHECK` — `rules_based`, `validation_based`, `ai_inferred`, `expert_judgment`, `precedent_based` |
+| action         | `action_state` enum — `recommended_only`, `prepared`, `executed`, `rejected`, `superseded` | —                                                                                                                    |
+| FKs            | `organizations(id)`, `projects(id)`, artifacts                                             | none                                                                                                                 |
 
 Related: `db/migrations/20260324_ai_kernel_decision_records.sql:5` creates a
 third, differently-named table `ai_kernel_decision_records`. It does not collide,
@@ -175,7 +177,7 @@ service map.
 
 ---
 
-## C-7 — Service vocabularies diverge from Drizzle enums *(high)*
+## C-7 — Service vocabularies diverge from Drizzle enums _(high)_
 
 `server/services/decision-record-service.ts:40-46` uses action states
 `proposed`, `approved`, `rejected`, `executed`, `escalated`.
@@ -185,7 +187,7 @@ service map.
 
 Overlap is **two of five** (`executed`, `rejected`). The service writes
 `actionState: 'approved'` (`:265`, `:450`) and `'escalated'` (`:274`, `:477`) —
-neither exists in the enum. Note that the schema models approval as a *separate*
+neither exists in the enum. Note that the schema models approval as a _separate_
 `decision_approval_state` enum (`not_required`, `pending_review`, `approved`,
 `rejected`), so the service is collapsing two orthogonal state machines into one
 column. That is a semantic conflict, not just a naming mismatch, and it must be
@@ -193,7 +195,7 @@ resolved by decision — not by widening an enum.
 
 ---
 
-## C-3 — Contradiction tables defined twice *(blocking)*
+## C-3 — Contradiction tables defined twice _(blocking)_
 
 `contradiction_findings`, `contradiction_overlay_rules`, and
 `contradiction_consequence_log` each appear in both:
@@ -215,7 +217,7 @@ cleanup: `intelligence.pattern_contradictions`, `evidence.contradiction_scans`,
 
 ---
 
-## C-4 — `BundleExecutionReceipt` is never persisted *(blocking, and the most consequential finding here)*
+## C-4 — `BundleExecutionReceipt` is never persisted _(blocking, and the most consequential finding here)_
 
 The resolution receipt is described across the strategy material as the platform's
 strongest differentiator — "detect, decide, execute, and prove." **The proof
@@ -240,7 +242,7 @@ Verified:
    `biostats-signal-engine/engine.ts:399`) are both real, persisted receipt
    tables. The resolution path simply never got one.
 
-### What *is* durable
+### What _is_ durable
 
 This is not a claim that corrections are fake. The executor performs real,
 persisted work:
@@ -256,9 +258,9 @@ persisted work:
 response ends, the only remaining evidence is reconstructible inference from
 bundle-item statuses — which is precisely what master work order WO-03 forbids:
 
-> *"Do not treat a status field such as `completed` as proof by itself. Receipt
+> _"Do not treat a status field such as `completed` as proof by itself. Receipt
 > verification must resolve the linked object, current version, expected
-> prior/new state, and hashes or durable transition evidence."*
+> prior/new state, and hashes or durable transition evidence."_
 
 ### Consequence for the program
 
@@ -266,8 +268,8 @@ bundle-item statuses — which is precisely what master work order WO-03 forbids
   for any bundle executed before a receipt table ships. The Proof Packet's
   "correction bundle receipts with executed/prepared/blocked steps" is
   unimplementable for historical data.
-- **WO-08's acceptance gate** — *"Verify each execution receipt against durable
-  object state before marking resolution complete"* — has no durable receipt to
+- **WO-08's acceptance gate** — _"Verify each execution receipt against durable
+  object state before marking resolution complete"_ — has no durable receipt to
   verify against.
 - Any external claim that the platform "persists a BundleExecutionReceipt" is
   **not currently supported by the code** and should not be made until a receipt
@@ -278,15 +280,15 @@ WO-03, not a part of it. It should be pulled forward.
 
 ---
 
-## C-5 — `BundleExecutionReceipt` defined twice *(high)*
+## C-5 — `BundleExecutionReceipt` defined twice _(high)_
 
-| Definition | Shape |
-|---|---|
-| `shared/types/resolution.ts:238` | no `id`, no `projectId`, no `decisionId`; has `contradictionIds`, `overlayContext` |
+| Definition                              | Shape                                                                                                                |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `shared/types/resolution.ts:238`        | no `id`, no `projectId`, no `decisionId`; has `contradictionIds`, `overlayContext`                                   |
 | `shared/types/resolution-bundle.ts:114` | has `id`, `bundleId`, `projectId`, `decisionId`, nested `plan { summary, contradictionIds, actionCount, rationale }` |
 
 `bundle-executor.ts:30` imports from **`shared/types/resolution`** — the shape
-*without* an `id`.
+_without_ an `id`.
 
 The `resolution-bundle.ts` variant carries `id`, `projectId`, and `decisionId`:
 the shape of a row. It reads as a persistence design that was specified and never
@@ -295,21 +297,21 @@ ADR that resolves C-4, and the other retired.
 
 ---
 
-## C-9 — Execution-path evidence: `migrations/0010` has NO execution path *(WO-02, unblocking)*
+## C-9 — Execution-path evidence: `migrations/0010` has NO execution path _(WO-02, unblocking)_
 
-WO-00 recorded as an open question: *"which physical table shape exists in each
-deployed environment."* It stated only a live database could answer it.
+WO-00 recorded as an open question: _"which physical table shape exists in each
+deployed environment."_ It stated only a live database could answer it.
 
 **That was too pessimistic.** The execution paths are determinable from code, and
 they converge on one answer.
 
 ### The three candidate paths, all checked
 
-| Path | Applies | Does it create the Drizzle shape? |
-|---|---|---|
-| `drizzle-kit push` — the CI-validated deploy gate (`db-schema-validation.yml:85`) | diffs `shared/schema.ts` against the DB; **ignores migration files entirely** | **No.** `shared/schema.ts` does **not** export `./schema/operating-system` (0 references). The operating-system tables are not in the push surface. |
-| `drizzle-kit migrate` | only journaled migrations | **No.** `migrations/meta/_journal.json` contains **exactly one** entry, `0000_sweet_joseph`. `0010_operating_system_foundation` is not journaled. |
-| `scripts/db/apply-c2c-migrations.mjs` | exactly 3 named files (`20260603_ai_capability_governance`, `_pv_operational`, `_commitments`) | **No.** `0010` is not among them. |
+| Path                                                                              | Applies                                                                                        | Does it create the Drizzle shape?                                                                                                                   |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `drizzle-kit push` — the CI-validated deploy gate (`db-schema-validation.yml:85`) | diffs `shared/schema.ts` against the DB; **ignores migration files entirely**                  | **No.** `shared/schema.ts` does **not** export `./schema/operating-system` (0 references). The operating-system tables are not in the push surface. |
+| `drizzle-kit migrate`                                                             | only journaled migrations                                                                      | **No.** `migrations/meta/_journal.json` contains **exactly one** entry, `0000_sweet_joseph`. `0010_operating_system_foundation` is not journaled.   |
+| `scripts/db/apply-c2c-migrations.mjs`                                             | exactly 3 named files (`20260603_ai_capability_governance`, `_pv_operational`, `_commitments`) | **No.** `0010` is not among them.                                                                                                                   |
 
 ### Conclusion
 
@@ -322,29 +324,29 @@ explicit `executionOrder`).
 
 **Therefore the raw-SQL shape is the deployed shape**, and:
 
-| Consumer | Status against deployed reality |
-|---|---|
-| `assumption-registry-service.ts` (raw SQL) | **correct** |
-| `decision-record-service.ts` (raw SQL) | **correct** — its `proposed`/`approved`/`rejected`/`executed`/`escalated` vocabulary matches the deployed CHECK constraint exactly |
-| `shared/schema/operating-system.ts` (Drizzle) | **orphaned** — describes a table that likely exists nowhere |
-| `governance-boundary-service.ts` (Drizzle consumer) | **broken — see C-8** |
+| Consumer                                            | Status against deployed reality                                                                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `assumption-registry-service.ts` (raw SQL)          | **correct**                                                                                                                        |
+| `decision-record-service.ts` (raw SQL)              | **correct** — its `proposed`/`approved`/`rejected`/`executed`/`escalated` vocabulary matches the deployed CHECK constraint exactly |
+| `shared/schema/operating-system.ts` (Drizzle)       | **orphaned** — describes a table that likely exists nowhere                                                                        |
+| `governance-boundary-service.ts` (Drizzle consumer) | **broken — see C-8**                                                                                                               |
 
 ### This inverts ADR-0007
 
 ADR-0007 proposed adopting the Drizzle-typed schema as canonical, on the grounds
 that it has real enums and real foreign keys. On this evidence that is the wrong
-direction: it would migrate production data *away* from the shape that is actually
-deployed and *toward* one that has never run, to satisfy a schema file that
+direction: it would migrate production data _away_ from the shape that is actually
+deployed and _toward_ one that has never run, to satisfy a schema file that
 nothing executes.
 
 **ADR-0007 must be revised** to either (a) adopt the deployed raw-SQL shape and
-retire the Drizzle definition, or (b) keep the Drizzle *typing* but regenerate it
+retire the Drizzle definition, or (b) keep the Drizzle _typing_ but regenerate it
 to match deployed reality. This remains subject to confirmation against a live
 database — but the burden of proof has now flipped.
 
 ### Residual uncertainty — stated honestly
 
-This establishes what the *repository* can execute. It does not prove what was run
+This establishes what the _repository_ can execute. It does not prove what was run
 historically: an operator could have applied `0010` manually. The confirming query
 is cheap and remains the recommended next action:
 
@@ -357,7 +359,7 @@ WHERE table_name = 'assumption_records' ORDER BY ordinal_position;
 
 ---
 
-## C-8 — Governance boundary gates failed OPEN *(critical — FIXED 2026-07-25)*
+## C-8 — Governance boundary gates failed OPEN _(critical — FIXED 2026-07-25)_
 
 `server/services/governance-boundary-service.ts` implements promotion gates: the
 controls that stop an artifact moving to a higher governance boundary until its
@@ -393,11 +395,11 @@ transition audit record was ever written.
 
 Vocabulary defects that would have broken the gates even with storage present:
 
-| Gate | Defect |
-|---|---|
-| decisions resolved (`:229`) | filtered `action_state = 'recommended_only'` — not a legal deployed value; can never match |
-| minimum confidence (`:249`) | ranked `uncertain/provisional/moderate/strong`; deployed vocabulary is `definitive/high/moderate/low/speculative`, so `definitive` scored **0**, equal to `speculative`; read a `confidence` column that is `confidence_level` in deployed DDL |
-| assumptions approved (`:210`) | excluded `'approved'` — not a legal deployed value; the gate was unsatisfiable |
+| Gate                          | Defect                                                                                                                                                                                                                                         |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| decisions resolved (`:229`)   | filtered `action_state = 'recommended_only'` — not a legal deployed value; can never match                                                                                                                                                     |
+| minimum confidence (`:249`)   | ranked `uncertain/provisional/moderate/strong`; deployed vocabulary is `definitive/high/moderate/low/speculative`, so `definitive` scored **0**, equal to `speculative`; read a `confidence` column that is `confidence_level` in deployed DDL |
+| assumptions approved (`:210`) | excluded `'approved'` — not a legal deployed value; the gate was unsatisfiable                                                                                                                                                                 |
 
 ### The fix (commit accompanying this entry)
 
@@ -450,7 +452,7 @@ belongs to the WO-01 journey work that exercises those routes end-to-end.
 
 ---
 
-## C-10 — Resolution-layer storage was dead in production *(critical — FIXED 2026-07-25)*
+## C-10 — Resolution-layer storage was dead in production _(critical — FIXED 2026-07-25)_
 
 Found while executing ADR-0009. `resolution_plans`, `resolution_bundles`,
 `resolution_bundle_items` and `supersession_records` were defined **only** in
@@ -474,7 +476,7 @@ real `executeBundle()` end-to-end against this DDL. Rollback: four empty tables,
 
 ---
 
-## C-4 addendum — wording correction and fix record *(2026-07-25)*
+## C-4 addendum — wording correction and fix record _(2026-07-25)_
 
 The original C-4 stated the receipt was "never persisted — no table exists."
 **Half right.** Executing ADR-0009 found `bundle-executor.ts` step 8 writes the
@@ -520,7 +522,7 @@ capture — no durable proof available," never inferred from bundle-item status.
 
 ---
 
-## C-1/C-2/C-7 resolution record *(2026-07-25, revised ADR-0007 executed)*
+## C-1/C-2/C-7 resolution record _(2026-07-25, revised ADR-0007 executed)_
 
 - **Canonical shape:** `db/migrations/20260323_assumption_decision_contradiction.sql`.
   The raw-SQL services were correct all along; their vocabularies are canonical,
@@ -548,7 +550,7 @@ capture — no durable proof available," never inferred from bundle-item status.
 
 ---
 
-## C-11 — The flagship authoring loop had no storage at all *(critical — FIXED 2026-07-25, two residuals)*
+## C-11 — The flagship authoring loop had no storage at all _(critical — FIXED 2026-07-25, two residuals)_
 
 Found while building Golden Journey A. The authoring document loop
 (`server/routes/authoring.router.ts`: document create, sections, automatic
@@ -585,7 +587,7 @@ e-sign (hash independently recomputed from durable state) → approver sign-off
 with auto-freeze → forged-JWT, wrong-PIN, cross-tenant and no-title
 known-bads. 11 ok, 4 blocked-as-expected, 0 failed.
 
-### Residual 1 — `electronic_signatures` shape conflict *(open)*
+### Residual 1 — `electronic_signatures` shape conflict _(open)_
 
 The code inserts `(doc_id, signer_email, signature_intent, document_hash,
 pin_verified, ip_address, user_agent, tenant_id, …)`; the deployed push-surface
@@ -596,7 +598,7 @@ deliberately EXCLUDES this table; Journey A carries the code shape as test-only
 DDL. Needs its own reconciliation decision (align code to the push shape, or
 extend the push shape) before e-sign works in production.
 
-### Residual 2 — freeze and signature hash chains are not linked *(open)*
+### Residual 2 — freeze and signature hash chains are not linked _(open)_
 
 Freeze hashes the full JSON snapshot **including a `frozenAt` timestamp** (not
 reproducible from content); e-sign hashes the section-content join
@@ -613,16 +615,16 @@ byte-identical twin in `docs/archive/`. Baseline 78 → 64.
 
 ---
 
-## C-12 — `lumen.data_atoms` defined twice, incompatibly *(high — FIXED 2026-07-25)*
+## C-12 — `lumen.data_atoms` defined twice, incompatibly _(high — FIXED 2026-07-25)_
 
 **Found by the guard, on its first exposure to new work.** Merging
 `origin/concept2cure-v2` (54 commits: AnA modernization, CRE spine, QMS) into this
 branch made `ci:duplicate-table-ddl` fail immediately:
 
-| definition | shape | applied by |
-|---|---|---|
-| `db/migrations/044b_gcc_lumen_schema_prerequisite.sql` (manifest #25) | 12 columns, `id UUID DEFAULT uuid_generate_v4()` | manifest lineage |
-| `migrations/20260724_lumen_council_provisioning.sql` (new) | 5 columns, `id TEXT`, no default | `npm run db:apply-c2c` |
+| definition                                                            | shape                                            | applied by             |
+| --------------------------------------------------------------------- | ------------------------------------------------ | ---------------------- |
+| `db/migrations/044b_gcc_lumen_schema_prerequisite.sql` (manifest #25) | 12 columns, `id UUID DEFAULT uuid_generate_v4()` | manifest lineage       |
+| `migrations/20260724_lumen_council_provisioning.sql` (new)            | 5 columns, `id TEXT`, no default                 | `npm run db:apply-c2c` |
 
 Both `CREATE TABLE IF NOT EXISTS`, applied by **different mechanisms**. Whichever
 ran first won; the loser no-opped permanently, because a losing `IF NOT EXISTS`
@@ -667,7 +669,7 @@ resulting table carries the provenance columns and accepts the ingestion pipelin
 exact INSERT. A fourth test pins that INSERT's column list against the pipeline
 source, so the two cannot drift apart silently.
 
-Negative-tested both ways: re-adding the rival `CREATE TABLE` fails the guard *and*
+Negative-tested both ways: re-adding the rival `CREATE TABLE` fails the guard _and_
 the contract test; removing it makes both pass.
 
 ### Guard defect found while fixing this
@@ -683,14 +685,14 @@ removed was the phantom).
 
 ---
 
-## C-13 — The phase-1 evidence graph has storage on only ONE of three paths *(latent, dormant)*
+## C-13 — The phase-1 evidence graph has storage on only ONE of three paths _(latent, dormant)_
 
 The merge brought in **two** clinical-regulatory evidence implementations:
 
-| | tables | migration | manifest | live callers |
-|---|---|---|---|---|
-| CRE **spine** | `cre_evidence_sources`, `cre_clinical_studies`, … | `db/migrations/20260724_clinical_regulatory_evidence_spine.sql` | ✅ journaled | ✅ `study-design-evidence.service.ts`, AnA tools, `scripts/cre/generate-atoms.ts` |
-| phase-1 **graph** | `clinical_evidence_sources`, `regulatory_findings`, … | `migrations/20260725_clinical_regulatory_evidence.sql` | ❌ not journaled, **and in no apply script's file list** | ❌ none |
+|                   | tables                                                | migration                                                       | manifest                                                 | live callers                                                                      |
+| ----------------- | ----------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| CRE **spine**     | `cre_evidence_sources`, `cre_clinical_studies`, …     | `db/migrations/20260724_clinical_regulatory_evidence_spine.sql` | ✅ journaled                                             | ✅ `study-design-evidence.service.ts`, AnA tools, `scripts/cre/generate-atoms.ts` |
+| phase-1 **graph** | `clinical_evidence_sources`, `regulatory_findings`, … | `migrations/20260725_clinical_regulatory_evidence.sql`          | ❌ not journaled, **and in no apply script's file list** | ❌ none                                                                           |
 
 The phase-1 tables are declared in `shared/schema.ts`, which `drizzle.config.ts`
 names as the push surface — so `npm run db:push` creates them and a
@@ -709,7 +711,7 @@ No action taken here; it is not mine to retire.
 
 ---
 
-## C-14 — The authoring loop could not export, and its Part 11 audit trail went nowhere *(critical — FIXED 2026-07-25)*
+## C-14 — The authoring loop could not export, and its Part 11 audit trail went nowhere _(critical — FIXED 2026-07-25)_
 
 Found while extending Journey A into the export path. Three separate defects, one
 root cause — **code writing to tables nothing creates**:
@@ -756,13 +758,13 @@ swallowing catch. Two independent reasons the audit trail could not exist.
 
 ### The fix
 
-| defect | fix |
-|---|---|
-| `authoring_exports` phantom | removed; the record is written by the existing `logExport()` **after** the bytes are generated, so `file_name`/`file_size` are real. A stale `// Note: the export endpoint should be modified to call logExport()` had sat in the file. |
-| `doc_exports` phantom | fully retired. The reader now baselines against `authoring_export_history` — the table the export path actually writes. ANA's `command-executor` export logging redirected there too, so ANA-initiated exports are recorded instead of discarded. |
-| `listDocTokens` | `s.code` / `s.doc_id`, plus tenant scoping threaded through the endpoint. |
-| `authoring_audit_trail` | new code-derived migration `db/migrations/20260725_authoring_audit_trail.sql` — no FKs, because an audit trail must outlive the rows it describes. |
-| synthesized request | carries `user.organizationId`, so `getTenantId` resolves. |
+| defect                      | fix                                                                                                                                                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authoring_exports` phantom | removed; the record is written by the existing `logExport()` **after** the bytes are generated, so `file_name`/`file_size` are real. A stale `// Note: the export endpoint should be modified to call logExport()` had sat in the file.           |
+| `doc_exports` phantom       | fully retired. The reader now baselines against `authoring_export_history` — the table the export path actually writes. ANA's `command-executor` export logging redirected there too, so ANA-initiated exports are recorded instead of discarded. |
+| `listDocTokens`             | `s.code` / `s.doc_id`, plus tenant scoping threaded through the endpoint.                                                                                                                                                                         |
+| `authoring_audit_trail`     | new code-derived migration `db/migrations/20260725_authoring_audit_trail.sql` — no FKs, because an audit trail must outlive the rows it describes.                                                                                                |
+| synthesized request         | carries `user.organizationId`, so `getTenantId` resolves.                                                                                                                                                                                         |
 
 ### Proof
 
@@ -775,7 +777,7 @@ of those steps failed before this fix.**
 
 ---
 
-## C-15 — Fourteen more phantom tables in the authoring router alone *(open, prioritized backlog)*
+## C-15 — Fourteen more phantom tables in the authoring router alone _(open, prioritized backlog)_
 
 C-14's root cause is not a one-off. A systematic scan of the authoring router
 classifies every table it touches into three groups:
@@ -815,7 +817,7 @@ ever resolve.
 
 ---
 
-## C-16 — The eCTD compile surface could not compile, and history leaked across tenants *(critical — FIXED 2026-07-25)*
+## C-16 — The eCTD compile surface could not compile, and history leaked across tenants _(critical — FIXED 2026-07-25)_
 
 Found by building Journey B (marketing application). Three defects on the
 submission spine.
@@ -850,17 +852,17 @@ INSERT INTO ectd_compilations (organization_id, compilation_name, compilation_ty
 Five placeholders, **six** values passed, with `orgId` duplicated in second
 position. Everything after it landed one column to the left:
 
-| column | intended | actually received |
-|---|---|---|
-| `compilation_name` | `IND Compilation — Project N` | the org id |
-| `compilation_type` | `initial` | the compilation name |
-| `status` | `completed` / `failed` | `initial` |
-| `xml_backbone` | the eCTD XML | `completed` / `failed` |
-| — | — | the XML backbone, **dropped** |
+| column             | intended                      | actually received             |
+| ------------------ | ----------------------------- | ----------------------------- |
+| `compilation_name` | `IND Compilation — Project N` | the org id                    |
+| `compilation_type` | `initial`                     | the compilation name          |
+| `status`           | `completed` / `failed`        | `initial`                     |
+| `xml_backbone`     | the eCTD XML                  | `completed` / `failed`        |
+| —                  | —                             | the XML backbone, **dropped** |
 
 It could never execute in any case: `module_id` and `compiled_by` are `NOT NULL`
 and were unsupplied, and the parameter count alone is an error. All of it was
-swallowed by a catch that logged *"table not available, skipping record"* —
+swallowed by a catch that logged _"table not available, skipping record"_ —
 blaming a missing table for a parameter-count error and two NOT NULL violations.
 **A swallowed write that misattributes its own cause is how this survived.**
 
@@ -910,7 +912,7 @@ longer turns a schema gap into a false "database unreachable" outage.
 
 ---
 
-## C-17 — The Part 11 release-signature gate was provisioned on only one path *(critical — FIXED 2026-07-25)*
+## C-17 — The Part 11 release-signature gate was provisioned on only one path _(critical — FIXED 2026-07-25)_
 
 `POST /api/submissions/:submissionId/sign-release` is the human-credential gate
 between a validated submission package and transmit. Its final step binds the
@@ -976,10 +978,10 @@ forensic chain intact (OQ-4), and a run parking in `awaiting-signature`.
 
 The authoring loop has **two** signature implementations, neither functional:
 
-| path | writes | state |
-|---|---|---|
+| path                                 | writes                  | state                                                                                                                                                                                                                                                                     |
+| ------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/e-sign` (authoring.router.ts:2946) | `electronic_signatures` | shape is incompatible with the canonical table — `doc_id` UUID vs `document_id` integer FK, and it supplies none of `version_id`, `signature_type`, `signature_purpose`, `signer_id`, `authentication_method`, `authentication_timestamp`, `signature_hash`, all NOT NULL |
-| the other signing endpoint (:4547) | `authoring_signatures` | purpose-built shape (UUID `doc_id`, `meaning`, `reason`, `method`, `content_hash`, `signature_digest`, `tenant_id`) — but the table is one of the C-15 phantoms, created by nothing |
+| the other signing endpoint (:4547)   | `authoring_signatures`  | purpose-built shape (UUID `doc_id`, `meaning`, `reason`, `method`, `content_hash`, `signature_digest`, `tenant_id`) — but the table is one of the C-15 phantoms, created by nothing                                                                                       |
 
 These are genuinely different concepts that collided on a name: canonical
 `electronic_signatures` signs `documents`/`document_versions` (integer-keyed
@@ -992,7 +994,7 @@ done in passing.
 
 ---
 
-## C-18 — Authoring role gates were bypassable with a request header *(critical security — FIXED 2026-07-25)*
+## C-18 — Authoring role gates were bypassable with a request header _(critical security — FIXED 2026-07-25)_
 
 **Demonstrated, not inferred.** A valid JWT carrying no `roles` claim, plus a
 forged `x-roles: ADMIN,QA,RA_CMC` header, returned **201 Created** on
@@ -1013,7 +1015,7 @@ if (claims.tenant_id)  { req.headers['x-tenant-id']   = …from claims… }
 
 Overwrite without delete is only half a guard. When a claim was **absent**, the
 client's header survived untouched and everything downstream trusted it. The
-partial protection is what made this hard to see: a token that *did* carry
+partial protection is what made this hard to see: a token that _did_ carry
 `roles: ['AUTHOR']` correctly had its forged header overwritten, so the gate
 looked like it worked. Only a token missing the claim entirely opened the hole —
 and that is the ordinary shape of tokens in this system (Journey A's tokens carry
@@ -1089,7 +1091,7 @@ Three layers now, so no single mistake re-opens it:
 
 ---
 
-## C-11 residual 1 — RESOLVED: the authoring loop has its own signature store *(2026-07-25)*
+## C-11 residual 1 — RESOLVED: the authoring loop has its own signature store _(2026-07-25)_
 
 Recorded at C-17 as "the next step", now done.
 
@@ -1097,10 +1099,10 @@ Recorded at C-17 as "the next step", now done.
 
 Two signing endpoints, storage for neither:
 
-| endpoint | wrote | why it could not work |
-|---|---|---|
+| endpoint                   | wrote                   | why it could not work                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST /docs/:docId/e-sign` | `electronic_signatures` | that is the Part 11 table for the **integer-keyed legacy document system** — `document_id INTEGER REFERENCES documents(id)` against this loop's UUID doc ids, plus seven NOT NULL columns (`version_id`, `signature_type`, `signature_purpose`, `signer_id`, `authentication_method`, `authentication_timestamp`, `signature_hash`) the authoring insert never supplied |
-| `POST /docs/:docId/sign` | `authoring_signatures` | the table existed nowhere (a C-15 phantom) |
+| `POST /docs/:docId/sign`   | `authoring_signatures`  | the table existed nowhere (a C-15 phantom)                                                                                                                                                                                                                                                                                                                              |
 
 Meanwhile `GET /docs/:docId/signatures` — the only reader — selects from
 `authoring_signatures`. So a document could be signed twice and its signature
@@ -1190,7 +1192,7 @@ journey.
 
 ---
 
-## C-18 addendum — the same class, repo-wide *(FIXED 2026-07-25)*
+## C-18 addendum — the same class, repo-wide _(FIXED 2026-07-25)_
 
 C-18 was found in one router. Turning it into a lint rule found it in four more
 files, on the first run.
@@ -1200,12 +1202,12 @@ files, on the first run.
 `x-roles`, `x-user-email`, `x-user-name`, `x-user-id`. **11 violations** across
 four files:
 
-| file | what the header decided |
-|---|---|
-| `server/api/templates/routes.ts` (2) | `userId` passed straight into `getRecentDocuments(userId, orgId)` — a caller could read **another user's documents** by naming them |
+| file                                        | what the header decided                                                                                                             |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `server/api/templates/routes.ts` (2)        | `userId` passed straight into `getRecentDocuments(userId, orgId)` — a caller could read **another user's documents** by naming them |
 | `server/src/routes/stability.router.ts` (5) | GxP attribution: `stab_audit.actor`, `stab_results.reviewed_by`, `stab_chain.actor` (chain of custody), `stab_samples.collected_by` |
-| `server/api/cmc/regulatoryIR.ts` (4) | actor on regulatory information-request audit rows |
-| `server/src/mw/observability.ts` (1) | telemetry label only — **exempted**, with the same rationale the file already carries for the tenant rule |
+| `server/api/cmc/regulatoryIR.ts` (4)        | actor on regulatory information-request audit rows                                                                                  |
+| `server/src/mw/observability.ts` (1)        | telemetry label only — **exempted**, with the same rationale the file already carries for the tenant rule                           |
 
 The defaults are their own finding: `|| 'user'`, `|| 'reviewer'`, `|| 'collector'`.
 A placeholder that identifies nobody still satisfies a NOT NULL attribution
@@ -1232,7 +1234,7 @@ under enforcement for the first time.
 
 ---
 
-## C-19 — The submission orchestrator store is provisioned only by `drizzle-kit push` *(critical — FIXED 2026-07-25)*
+## C-19 — The submission orchestrator store is provisioned only by `drizzle-kit push` _(critical — FIXED 2026-07-25)_
 
 Found while building Journey B phase 2.
 
@@ -1250,7 +1252,7 @@ four is in the `apply-c2c-migrations.mjs` allowlist, and none is in the manifest
 `getRun()` selects `run_id, …, submission_id_fk` from a relation that does not
 exist. The query throws, and `getRun`'s own catch returns **null**. Every caller
 then reports "run not found" — so `POST /sign-release` answers **404**, and the
-orchestrator looks *empty* rather than *unprovisioned*. A 500 gets investigated; a
+orchestrator looks _empty_ rather than _unprovisioned_. A 500 gets investigated; a
 404 gets believed.
 
 ### It also exposed a defect in the C-17 port
@@ -1271,7 +1273,7 @@ parked in `awaiting-signature`.
 
 ---
 
-## C-20 — Electronic signatures are impossible on any migration-provisioned environment *(critical — FIXED 2026-07-25)*
+## C-20 — Electronic signatures are impossible on any migration-provisioned environment _(critical — FIXED 2026-07-25)_
 
 The widest-blast-radius finding of this class.
 
@@ -1284,13 +1286,13 @@ bare `select().from(users)`, which drizzle expands to **every column declared in
 `public.users` as `migrations/0000_sweet_joseph.sql` creates it has 14 columns.
 `shared/schema.ts` declares 16 more that no migration adds:
 
-| group | columns |
-|---|---|
-| lockout | `locked_until`, `failed_login_attempts`, `last_failed_login` |
-| MFA | `mfa_enabled`, `mfa_secret`, `mfa_backup_codes`, `mfa_method`, `mfa_verified_at` |
-| email OTP | `email_otp_hash`, `email_otp_expires_at`, `email_otp_attempts` |
-| password policy | `password_changed_at`, `password_history`, `must_change_password` |
-| reset | `reset_token`, `reset_token_expires_at` |
+| group           | columns                                                                          |
+| --------------- | -------------------------------------------------------------------------------- |
+| lockout         | `locked_until`, `failed_login_attempts`, `last_failed_login`                     |
+| MFA             | `mfa_enabled`, `mfa_secret`, `mfa_backup_codes`, `mfa_method`, `mfa_verified_at` |
+| email OTP       | `email_otp_hash`, `email_otp_expires_at`, `email_otp_attempts`                   |
+| password policy | `password_changed_at`, `password_history`, `must_change_password`                |
+| reset           | `reset_token`, `reset_token_expires_at`                                          |
 
 (`db/migrations/051_gcc_multi_tenant_identity.sql` does define
 `failed_login_attempts` — on `identity.users`, a different schema-qualified
@@ -1340,22 +1342,22 @@ and it is why ADR-0006 is still the highest-value open decision in this ledger.
 
 **`ci:unbacked-tables` cannot see this class.** It asks "does any `.sql` file
 create this table?" — and `0018_submission_orchestrator.sql` does. It has no model
-of whether that file is ever *applied*, and no model of columns at all. A guard
+of whether that file is ever _applied_, and no model of columns at all. A guard
 for lineage-reachability is the natural successor and is not yet written.
 
 ---
 
-## C-23 — The migration manifest applies nothing, so journey-proven schema never shipped *(critical — FIXED 2026-07-30)*
+## C-23 — The migration manifest applies nothing, so journey-proven schema never shipped _(critical — FIXED 2026-07-30)_
 
-C-17/C-19/C-20 closed the *column*-level face of C-6 for the signing path. This is
-the *table*-level face, and the guard C-20 named as "the natural successor" that
+C-17/C-19/C-20 closed the _column_-level face of C-6 for the signing path. This is
+the _table_-level face, and the guard C-20 named as "the natural successor" that
 "is not yet written."
 
 ### The mechanism
 
 `db/migrations/migrations_manifest.json` carries an `executionOrder` that reads
 like an apply order. **Nothing consumes it.** It is ordering metadata that
-`readiness-audit.mjs` only *reports* on. The durable apply paths a real
+`readiness-audit.mjs` only _reports_ on. The durable apply paths a real
 environment actually runs are exactly four:
 
 1. `migrations/meta/_journal.json` → drizzle `migrate()` replays the journaled
@@ -1367,7 +1369,7 @@ environment actually runs are exactly four:
 
 `drizzle-kit push` (from `shared/schema.ts`) is a fifth, but provisions **fresh
 installs only** — so it can never close a gap on an existing customer database,
-which is the environment that *has* the gap.
+which is the environment that _has_ the gap.
 
 A migration authored into `db/migrations/` and listed in the manifest, but not on
 one of the four, is applied by **nothing**. It lands only on the throwaway PGlite
@@ -1383,15 +1385,15 @@ golden-journey test provisions and drives a regulatory workflow against. Seven o
 those were deploy-dead — meaning the storage behind **C-1, C-8, C-10 and C-16**
 never landed on a real deploy even after those entries were marked FIXED:
 
-| file | ledger | what it stores |
-|---|---|---|
-| `20260220_ind_section_tracking.sql` | C-16 | `project_sections` + section tracking |
-| `20260323_assumption_decision_contradiction.sql` | C-1 | the operating-system core |
-| `20260725_governance_boundary_tables.sql` | C-8 | governance rules/transitions |
-| `20260725_resolution_orchestration_tables.sql` | C-10 | resolution plans/bundles/supersession |
-| `20260725_bundle_execution_receipts.sql` | C-10 | ADR-0009 execution receipts |
-| `20260725_project_sections_content_columns.sql` | C-16 | `project_sections` content ALTER |
-| `20260725_ectd_compilations_project_level.sql` | C-16 | project-level eCTD compile unblock |
+| file                                             | ledger | what it stores                        |
+| ------------------------------------------------ | ------ | ------------------------------------- |
+| `20260220_ind_section_tracking.sql`              | C-16   | `project_sections` + section tracking |
+| `20260323_assumption_decision_contradiction.sql` | C-1    | the operating-system core             |
+| `20260725_governance_boundary_tables.sql`        | C-8    | governance rules/transitions          |
+| `20260725_resolution_orchestration_tables.sql`   | C-10   | resolution plans/bundles/supersession |
+| `20260725_bundle_execution_receipts.sql`         | C-10   | ADR-0009 execution receipts           |
+| `20260725_project_sections_content_columns.sql`  | C-16   | `project_sections` content ALTER      |
+| `20260725_ectd_compilations_project_level.sql`   | C-16   | project-level eCTD compile unblock    |
 
 None of the first six primary tables is in `shared/schema.ts` either, so `push`
 did not create them on fresh installs — they existed on **no** real database. The
@@ -1412,18 +1414,18 @@ ci:journey-migration-reachability`, wired into `.github/workflows/ci.yml`). It
 takes the golden-journey suite as the oracle — every migration path a
 `tests/golden-journeys/*.ts` file provisions as a standalone quoted literal — and
 fails the build if any is not on one of the four durable appliers. It counts
-`push` deliberately *not* as durable, because doing so would re-admit the exact
+`push` deliberately _not_ as durable, because doing so would re-admit the exact
 existing-customer drift. No baseline, no `--strict`: the reachable set must be
 complete at all times. Verified green at 14/14, and verified to fire when any one
 port is removed from its applier.
 
 This does not resolve C-6 (two competing lineages) — ADR-0006 still owns that.
-What it does is make the *class* fail CI instead of shipping silently: a journey
+What it does is make the _class_ fail CI instead of shipping silently: a journey
 can no longer prove a migration works while no deploy applies it.
 
 ---
 
-## C-24 — The document-enrollment dedup guard never actually counted *(medium — FIXED 2026-07-30)*
+## C-24 — The document-enrollment dedup guard never actually counted _(medium — FIXED 2026-07-30)_
 
 `ModuleIntegrationService.documentExists()` — the dedup check at the canonical
 module-document enrollment boundary (`GET /api/module-integration/document-exists`,
@@ -1450,7 +1452,7 @@ match including a same-`originalId` different-tenant collision.
 
 ---
 
-## C-25 — eCTD export leaked one tenant's authored content to another *(critical security — FIXED 2026-07-30)*
+## C-25 — eCTD export leaked one tenant's authored content to another _(critical security — FIXED 2026-07-30)_
 
 Surfaced by the submission-export golden journey (below).
 
@@ -1471,7 +1473,7 @@ belongs to that org. So an authenticated user at org B could
 `POST /api/ectd/export/<org-A-project-id>` and receive an eCTD package containing
 org A's authored Module-3 section content rendered as leaf PDFs — a cross-tenant
 disclosure of regulated dossier text (IDOR). The module/granule queries returned
-nothing for the mismatched org, which made the package *look* empty while the
+nothing for the mismatched org, which made the package _look_ empty while the
 section leaves silently carried the other tenant's content.
 
 **Fix:** scope the query by `organization_id` too (the column is NOT NULL on
@@ -1482,7 +1484,7 @@ every sibling query already used.
 project id must contain no leaf named from org A's section and zero content
 leaves. Verified to FAIL before the fix (the leaf was present) and pass after.
 
-## C-26 — Any non-WinAnsi glyph 500'd the entire eCTD export *(high — FIXED 2026-07-30)*
+## C-26 — Any non-WinAnsi glyph 500'd the entire eCTD export _(high — FIXED 2026-07-30)_
 
 Also surfaced by the export journey, on the very first incomplete-dossier build.
 
@@ -1527,7 +1529,7 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
-## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — RESOLVED 2026-07-30)*
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) _(high — RESOLVED 2026-07-30)_
 
 Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
 exactly its job.
@@ -1543,6 +1545,7 @@ runtime: the router mints valid-UUID strings, which coerce into the UUID columns
 
 A column-level diff of the 10 colliding tables settled what "incompatible" really
 means:
+
 - **7 tables are column-identical** (`authoring_documents`, `authoring_citations`,
   `authoring_audit_trail`, `authoring_workflow_steps`, `authoring_signatures`,
   `frozen_documents`, `doc_permissions`) — the canonical 0725 version already has
@@ -1609,15 +1612,15 @@ by the golden-journey-proven `20260725_authoring_*` migrations
 The two definitions are **incompatible**, not merely redundant. For
 `authoring_documents` alone:
 
-| column | 20260725 (loop tables) | 20260730 (Codex, router-derived) |
-|---|---|---|
-| `id` | `UUID PRIMARY KEY` | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
-| `template_id` | `UUID` | `TEXT` |
-| `current_workflow_id` | `UUID` | `TEXT` |
-| `created_by` | `TEXT NOT NULL` | `TEXT` (nullable) |
+| column                | 20260725 (loop tables) | 20260730 (Codex, router-derived)                   |
+| --------------------- | ---------------------- | -------------------------------------------------- |
+| `id`                  | `UUID PRIMARY KEY`     | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
+| `template_id`         | `UUID`                 | `TEXT`                                             |
+| `current_workflow_id` | `UUID`                 | `TEXT`                                             |
+| `created_by`          | `TEXT NOT NULL`        | `TEXT` (nullable)                                  |
 
 Under `CREATE TABLE IF NOT EXISTS` the FIRST definition to run wins and the other
-silently no-ops, so the surviving column *types* depend on apply order — the exact
+silently no-ops, so the surviving column _types_ depend on apply order — the exact
 C-6 hazard. Two consumers disagree on the shape: the freeze/signature handlers
 behind the ind-authoring golden journey assume the UUID shape (0725); Codex's
 `authoring.router.ts` mints TEXT ids app-side and its schema-contract test pins the
@@ -1657,7 +1660,7 @@ from that analysis worth preserving:
   cannot be ALTERed onto a table whose `id` is UUID (FK type mismatch). The
   delta inventory the router needs on the deployed shape:
   `authoring_comments.user_name/user_email/parent_comment_id/position_data/
-  resolved_by/resolved_at/resolution_note/updated_at`,
+resolved_by/resolved_at/resolution_note/updated_at`,
   `authoring_sections.document_id/order_idx/section_number/created_by/updated_by`,
   `user_pins.last_changed`, plus `frozen_documents.version` TEXT↔INTEGER.
 - The identity-type decision is the same decision as the platform's
@@ -1668,7 +1671,7 @@ from that analysis worth preserving:
 
 ---
 
-## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration *(high — FIXED 2026-07-30)*
+## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration _(high — FIXED 2026-07-30)_
 
 The other half of the PR #1202/#1205 authoring-spine landing (commit `398500dc6`
 “retire runtime DDL”), exposed the moment C-27's `duplicate-table-ddl` fix let the
@@ -1681,7 +1684,7 @@ proof tier run again.
 The canonical-spine refactor correctly retired that anti-pattern and moved the DDL
 into `db/migrations/20260730_authoring_runtime_ddl.sql` — but wired that migration
 into **nothing**: not `AUTHORING_SUBSYSTEM_FILES`, not the journal, no `_gcc_`
-infix. So the tables were created *nowhere* on a real deploy (C-23 all over again),
+infix. So the tables were created _nowhere_ on a real deploy (C-23 all over again),
 and the router would 500 on first use in production. Three proof-tier tests failed
 on the missing relations (`authoring-router-columns`, `authoring-role-gate`,
 `ind-authoring`), and had been failing on the base since the merge — masked only
@@ -1697,7 +1700,7 @@ this migration.
 
 ---
 
-## C-29 — Push-vs-overlay identity collisions: four more tables defined twice, three features dead on every real database *(high — PARTIALLY FIXED / BASELINED 2026-07-30)*
+## C-29 — Push-vs-overlay identity collisions: four more tables defined twice, three features dead on every real database _(high — PARTIALLY FIXED / BASELINED 2026-07-30)_
 
 Found by making the blank-DB provisioning job locally reproducible (real
 postgres 16 + pgvector, the CI job's exact five-step sequence). install-fresh
@@ -1740,11 +1743,11 @@ reported nine root-tree files unapplied; each traced to one of three classes.
 Same anatomy as C-27 (two live features on one table name, incompatible
 identity/column models — no additive migration can express the difference):
 
-| table(s) | shape A (deploys via push) | shape B (raw SQL, dead on real DBs) |
-|---|---|---|
-| `ivdr_classifications` | schema.ts: `ivdr_class`, `companion_diagnostic`, … (ivd-completeness-routes) | 001_create_ivdr_tables: `classification CHAR(1)`, `is_cdx`, `rule_trace`, … (ivdr-routes — mounted) |
-| `risk_management_files` / `risk_items` / `risk_controls` | schema.ts: program-scoped integer-scored model (rbm risk-report, mdx-rbm) | 20260609_design_risk: RMF-anchored uuid model with `rmf_id` (design-risk.service — mounted) |
-| ~~`unified_documents`~~ | — | ~~only creator is `_consolidated/20250108_…`~~ — **RESOLVED**, see below |
+| table(s)                                                 | shape A (deploys via push)                                                   | shape B (raw SQL, dead on real DBs)                                                                 |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `ivdr_classifications`                                   | schema.ts: `ivdr_class`, `companion_diagnostic`, … (ivd-completeness-routes) | 001_create_ivdr_tables: `classification CHAR(1)`, `is_cdx`, `rule_trace`, … (ivdr-routes — mounted) |
+| `risk_management_files` / `risk_items` / `risk_controls` | schema.ts: program-scoped integer-scored model (rbm risk-report, mdx-rbm)    | 20260609_design_risk: RMF-anchored uuid model with `rmf_id` (design-risk.service — mounted)         |
+| ~~`unified_documents`~~                                  | —                                                                            | ~~only creator is `_consolidated/20250108_…`~~ — **RESOLVED**, see below                            |
 
 Interim disposition: install-fresh now carries an explicit per-file
 CLASSIFIED_OVERLAY_SKIPS map (each entry names its tracked resolution;
@@ -1789,7 +1792,7 @@ because it hard-failed on every re-run once 0021 had policied
 
 ---
 
-## C-30 — The authoring WORKFLOW tables were deploy-dead: twelve router-queried tables on no apply path *(high — FIXED 2026-07-30)*
+## C-30 — The authoring WORKFLOW tables were deploy-dead: twelve router-queried tables on no apply path _(high — FIXED 2026-07-30)_
 
 The residue of C-27. After C-27 retired the ten duplicate CREATE TABLE blocks
 from `db/migrations/20260730_authoring_subsystem_schema.sql` (the 0725 files own
@@ -1805,15 +1808,15 @@ audit, AI-suggestion, compliance-scoring, change-request and checklist endpoints
 each 500'd with a missing-relation error — precisely what the SCOPE NOTEs in the
 router's change-request and checklist handlers already recorded ("`doc_change_
 requests` … has no CREATE statement anywhere in the repo, so the handler 500s").
-The schema itself was already *proven* (`authoring-migration.pglite.integration.
+The schema itself was already _proven_ (`authoring-migration.pglite.integration.
 test.ts` applies the file and executes the router's real SQL; the schema-contract
 test pins the columns) — it simply never shipped. "Merged, green, never applied."
 
 ### Fix
 
 - **Durable applier.** The file is now the last entry in `AUTHORING_SUBSYSTEM_
-  FILES` (`scripts/db/authoring-subsystem.mjs`) — the atomic unit `deploy-migrate.
-  mjs` and `apply-c2c-migrations.mjs` run. It applies after the loop/audit/
+FILES` (`scripts/db/authoring-subsystem.mjs`) — the atomic unit `deploy-migrate.
+mjs` and `apply-c2c-migrations.mjs` run. It applies after the loop/audit/
   signature files (its tables soft-reference them but declare no cross-file FK).
 - **Tenant isolation, two shapes.** The eight tenant_id-carrying tables join
   `AUTHORING_SUBSYSTEM_TABLES` and take the standard `tenant_isolation_policy`
@@ -1846,7 +1849,7 @@ follow-up, not part of this reachability fix.
 
 ---
 
-## C-31 — The eCTD sequence-continuity gate could not execute, and blamed a DB outage *(high — FIXED 2026-07-30)*
+## C-31 — The eCTD sequence-continuity gate could not execute, and blamed a DB outage _(high — FIXED 2026-07-30)_
 
 The "recorded, not fixed" residue of C-16. `detectSequenceGaps` — step 5 of
 `validateEctdPackageHardened`, the hardened gateway-readiness gate wired at
@@ -1863,7 +1866,7 @@ Two independent defects made that query throw on every real deploy:
 2. **`ectd_submissions` is itself deploy-dead** — its sole creator
    `db/migrations/082_ectd_submission_agent.sql` is on no durable path (no
    `_gcc_`, not in the journal, not in any applier), though `ectd-submission-agent.
-   ts` writes it live. On a deploy that has not stood that subsystem up the table
+ts` writes it live. On a deploy that has not stood that subsystem up the table
    is absent, so even a column-complete UNION throws `42P01 undefined_table`.
 
 Either way the handler's catch reported `SEQ_QUERY_FAILED` "submission tracking
@@ -1908,13 +1911,13 @@ a follow-up in its own right.
 
 ---
 
-## C-32 — `ci:unbacked-tables` could not see deploy-dead creators; 112 queried tables exist on no real database *(high — GUARD LANDED + FIRST BATCH FIXED 2026-07-30)*
+## C-32 — `ci:unbacked-tables` could not see deploy-dead creators; 112 queried tables exist on no real database _(high — GUARD LANDED + FIRST BATCH FIXED 2026-07-30)_
 
 Found by chasing C-31's residual (the deploy-dead `ectd_submissions`). It is not
 one subsystem — it is a **blind spot in the guard that was supposed to catch this
 class**, and the reason the same defect keeps recurring under new numbers.
 
-`ci:unbacked-tables` asks *"does any file create this table?"* and counts, by its
+`ci:unbacked-tables` asks _"does any file create this table?"_ and counts, by its
 own documented rule, "a non-archived .sql migration (db/migrations/,
 migrations/)". It never asks whether an applier **runs** that .sql. A migration
 sitting in `db/migrations/` on no apply path — not `_gcc_`, not in the drizzle
@@ -1989,7 +1992,7 @@ makes the number visible, prevents it growing, and reports progress as it falls.
 
 ---
 
-## C-33 — Ratcheting the deploy-dead debt 108 → 46, and the isolation hazard that wiring creates *(high — FIXED 2026-07-30)*
+## C-33 — Ratcheting the deploy-dead debt 108 → 46, and the isolation hazard that wiring creates _(high — FIXED 2026-07-30)_
 
 The follow-through on C-32's ratchet, plus the hazard the ratchet itself
 introduces.
@@ -2003,11 +2006,11 @@ file is entirely self-contained (it needs no table, schema or extension it does
 not itself create, so nothing in it can abort a deploy on a missing dependency),
 and its shape is inspectable for the tenant-key check below. Of 63 candidates:
 
-| outcome | n | disposition |
-|---|---|---|
-| clean double-apply, integer or no tenant key | **40** | wired |
-| clean, but **uuid/text** tenant key | 3 | NOT wired — see below |
-| needs a prerequisite a blank DB lacks | 20 | stays baselined |
+| outcome                                      | n      | disposition           |
+| -------------------------------------------- | ------ | --------------------- |
+| clean double-apply, integer or no tenant key | **40** | wired                 |
+| clean, but **uuid/text** tenant key          | 3      | NOT wired — see below |
+| needs a prerequisite a blank DB lacks        | 20     | stays baselined       |
 
 The 20 exclusions fail only on things a real database has (`organizations`,
 `users`, `concept2cure_artifacts`, the `vector`/`pgcrypto` extensions, the
@@ -2018,8 +2021,8 @@ verified against a real base schema rather than wired on an assumption.
 ### The hazard the wiring creates
 
 `migrations/0021_enable_rls_everywhere.sql` policies every tenant-keyed table —
-but it runs **once**, on install-fresh, over the tables that exist *at that
-moment*. Every table added later by the apply-c2c / deploy-migrate set lands on an
+but it runs **once**, on install-fresh, over the tables that exist _at that
+moment_. Every table added later by the apply-c2c / deploy-migrate set lands on an
 already-provisioned database where 0021 has long since run and will never revisit
 it, and under `RLS_ENFORCE=on` a table with no RLS is **fully readable across
 tenants**. Wiring 40 files would therefore have provisioned ~27 new tenant-keyed
@@ -2066,7 +2069,7 @@ The last two are worth calling out. `20260801_labeling_pi_store.sql` (live write
 `labeling-pi-service.ts` behind `POST /api/labeling-pi`) and
 `20260801_program_journey_store.sql` (live writer: `program-journey-service.ts`)
 both landed the same day as this batch, each with a real service and **no
-applier** — fresh instances of the exact class, created *after* C-32 and caught by
+applier** — fresh instances of the exact class, created _after_ C-32 and caught by
 C-32's guard rather than by anyone noticing. The second was caught on a routine
 rebase, minutes after it merged. Both also arrived without the enforced eCTD audit
 header, so they were additionally taking the Lint job — and every downstream guard
@@ -2080,15 +2083,15 @@ files matters less than the fact that number 43 now cannot land silently.
 
 ---
 
-## C-34 — A blank database was the wrong bar; base-schema fixture takes the debt 45 → 21 *(high — FIXED 2026-07-30)*
+## C-34 — A blank database was the wrong bar; base-schema fixture takes the debt 45 → 21 _(high — FIXED 2026-07-30)_
 
 C-33 screened candidates by applying them to a **blank** Postgres and left 20 files
 baselined as "needs a prerequisite a blank DB lacks", explicitly refusing to wire
 them on the assumption they would be fine on a real database. That refusal was
 right — but the bar was wrong. A blank database is not the state a deploy
 presents, so the screen was rejecting files for legitimately building on core
-tables. Refusing to wire an unverified file and refusing to *build a real
-verifier* are different things; C-33 did the first and called it done.
+tables. Refusing to wire an unverified file and refusing to _build a real
+verifier_ are different things; C-33 did the first and called it done.
 
 ### The fixture
 
@@ -2122,13 +2125,13 @@ Five stay unwired, each for a **named** reason rather than an unexamined
 "probably fine", and are pinned by a test so a later batch cannot sweep them in on
 momentum:
 
-| file | reason |
-|---|---|
-| `20260207_phase6_6a_fda_clearance_universe` | requires the `vector` extension — PGlite cannot load it, so this harness **cannot verify it at all** |
-| `20260306_precedent_engine` | same |
-| `20260208_phase6_6a_risk_rollups` | needs `predicate.fda_510k_clearances` from the first of those two; blocked behind them |
-| `068_regulatory_schema_alignment` | needs `regulatory.submissions`, which **nothing in the repo creates** — a real missing-creator defect (C-11 class), not a reachability one |
-| `20260125_enhanced_cortex_schema` | its `lumen_knowledge_graph_edges_source_atom_id_fkey` cannot be implemented against the canonical `lumen_data_atoms` key type — a real shape conflict |
+| file                                        | reason                                                                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260207_phase6_6a_fda_clearance_universe` | requires the `vector` extension — PGlite cannot load it, so this harness **cannot verify it at all**                                                  |
+| `20260306_precedent_engine`                 | same                                                                                                                                                  |
+| `20260208_phase6_6a_risk_rollups`           | needs `predicate.fda_510k_clearances` from the first of those two; blocked behind them                                                                |
+| `068_regulatory_schema_alignment`           | needs `regulatory.submissions`, which **nothing in the repo creates** — a real missing-creator defect (C-11 class), not a reachability one            |
+| `20260125_enhanced_cortex_schema`           | its `lumen_knowledge_graph_edges_source_atom_id_fkey` cannot be implemented against the canonical `lumen_data_atoms` key type — a real shape conflict |
 
 The distinction is the point: three are genuine defects that need fixing, and two
 are simply **beyond what this harness can prove**. Wiring an unverifiable file into
@@ -2151,7 +2154,7 @@ reachability debt but a short list of specific, named defects and decisions.
 
 ---
 
-## C-35 — The reachability guard had its own blind spot: 337 schema-qualified tables went unchecked *(high — FIXED 2026-07-30)*
+## C-35 — The reachability guard had its own blind spot: 337 schema-qualified tables went unchecked _(high — FIXED 2026-07-30)_
 
 Found while working the C-34 residual. One remaining baseline entry was a "table"
 called **`regulatory`** — which is a schema, not a table. Pulling that thread found
@@ -2170,13 +2173,13 @@ FROM predicate.fda_510k_clearances       → recorded reference "predicate"
 Both sides agreed, so nothing looked broken — and the **~337 schema-qualified
 tables in this repo were never actually checked**. Not a cosmetic defect: a
 false-negative hole covering every `predicate.*`, `precedent.*`, `agent_runtime.*`,
-`ai.*` table. It also risked *masking*, since `predicate.runs` and
+`ai.*` table. It also risked _masking_, since `predicate.runs` and
 `precedent.runs` would have collapsed to the same identity.
 
 Fixing it moved durably-created tables **1034 → 1292** and immediately surfaced
 **five real findings that had been invisible**: `precedent.regulatory_precedents`
 and four `predicate.*` tables, all backing the live `precedent-engine.ts`. So
-C-34's "21 remaining" was *understating* the debt, not overstating it.
+C-34's "21 remaining" was _understating_ the debt, not overstating it.
 
 Identity is now normalized: `public.foo` ≡ `foo`, any other schema retained.
 
@@ -2187,7 +2190,7 @@ The scan read raw text. A migration header reading
 English sentence in a `.ts` prompt string ("Update only the …") registered a
 matching reference — a phantom finding.
 
-The masking direction is the dangerous one: a commented-out or merely *described*
+The masking direction is the dangerous one: a commented-out or merely _described_
 `CREATE TABLE` counted as a **durable creator**, which would hide a genuinely
 missing one. SQL comments are now stripped before parsing, and a
 `NOT_A_RELATION` set filters keywords (`ONLY`, `LATERAL`, `UNNEST`, …) and common
@@ -2215,7 +2218,18 @@ collisions (C-33), and the `_consolidated/` tree (C-29 Class 3).
 
 ---
 
-## C-36 — Enhanced cortex was keyed to an atom store that does not exist *(high — FIXED 2026-07-30)*
+## C-36 — Enhanced cortex was keyed to an atom store that does not exist _(high — FIXED 2026-07-30)_
+
+### Amendment 2026-09-20
+
+A populated provisioned database retains UUID-keyed `public.lumen_data_atoms`
+records, while the runtime Cortex services accept atom IDs as strings and query
+that public table directly. Converting those governed records to integers in a
+deploy would be destructive and cannot be inferred safely. The Cortex migration
+now derives its child-key, array, and traversal-function types from the existing
+parent key, and C-40 only recreates empty child tables whose key differs from
+that parent. This preserves both the integer fixture shape and populated UUID
+stores without a lossy conversion.
 
 The largest single item C-34 left baselined, and the first of the residual that
 turned out to be a **defect to fix** rather than a harness limit.
@@ -2230,7 +2244,7 @@ source_atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE
 ```
 
 But the canonical `lumen_data_atoms.id` is **`serial`** — an integer — in both the
-drizzle journal and `shared/schema.ts`. The FK is therefore *unimplementable*, which
+drizzle journal and `shared/schema.ts`. The FK is therefore _unimplementable_, which
 is why the file failed every screen.
 
 The deeper point is that the FK was not the only casualty. The services'
@@ -2244,7 +2258,7 @@ Against `uuid` columns that fails with `operator does not exist: integer = uuid`
 So even if the tables had somehow been provisioned, **the queries could not have
 run**. The file was written against an imagined uuid-keyed atom store that exists
 nowhere in the repo — the same identity-model family as C-27 / C-29, but here the
-canonical side is unambiguous (journal *and* push surface agree on `serial`), so
+canonical side is unambiguous (journal _and_ push surface agree on `serial`), so
 this is a correction, not a decision.
 
 ### Fix
@@ -2284,7 +2298,7 @@ Baseline **25 → 19**.
 
 ---
 
-## C-37 → C-40 — The reachability debt taken to ZERO *(high — FIXED 2026-07-30)*
+## C-37 → C-40 — The reachability debt taken to ZERO _(high — FIXED 2026-07-30)_
 
 C-36 left 19 tables, described as "genuinely hard rather than merely unwired":
 pgvector-blocked, identity collisions, and the quarantined `_consolidated` tree.
@@ -2293,7 +2307,7 @@ Each was resolved. **`ci:migration-reachability` is now 0** — from 112 at C-32
 ### C-37 — pgvector: replace the harness, don't accept the gap
 
 Three files were written off as "unverifiable" because PGlite cannot load
-`vector`. That was a property of the *harness*, not the files. So the harness was
+`vector`. That was a property of the _harness_, not the files. So the harness was
 replaced: **a real PostgreSQL 16.13 + pgvector 0.6.0**, seeded with the drizzle
 journal base schema and the full C2C set, each file then applied **twice**. All
 three came up clean and are wired, in dependency order (`risk_rollups` reads
@@ -2305,7 +2319,7 @@ migrations were long-standing members of the set, and `001_gcc_core.sql` creates
 the extension.
 
 `scripts/db/verify-migration-set.mjs` makes that harness reusable — it applies the
-set twice against a real database, separates *missing-prerequisite* failures from
+set twice against a real database, separates _missing-prerequisite_ failures from
 genuine errors, and fails on any unisolated tenant table.
 
 ### C-38 — the identity collisions, reconciled rather than excluded
@@ -2314,11 +2328,11 @@ Three files carried uuid/text tenant keys the integer RLS sweep cannot police.
 The resolution was never "leave them dead"; it was to reconcile them to the
 identity the **code already uses**:
 
-| file | was | evidence it should be integer |
-|---|---|---|
-| `ai_provider_audit_log` | `organization_id`/`user_id`/`project_id` UUID | canonical `organizations.id`, `users.id`, `projects.id` are all `serial` — a real id would have been *rejected* by those columns |
-| `ana_kernel_decision_log` | `tenant_id` TEXT | nothing writes the table and no query filters on it; conversion is what lets the sweep isolate it |
-| `conversation_os_accepted_artifact_versions` | `organization_id` TEXT | `conversation-os.ts` does `String(authUser.organizationId)` in and `Number(ctx.organizationId)` out — the identity was always integer; only the column disagreed |
+| file                                         | was                                           | evidence it should be integer                                                                                                                                    |
+| -------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ai_provider_audit_log`                      | `organization_id`/`user_id`/`project_id` UUID | canonical `organizations.id`, `users.id`, `projects.id` are all `serial` — a real id would have been _rejected_ by those columns                                 |
+| `ana_kernel_decision_log`                    | `tenant_id` TEXT                              | nothing writes the table and no query filters on it; conversion is what lets the sweep isolate it                                                                |
+| `conversation_os_accepted_artifact_versions` | `organization_id` TEXT                        | `conversation-os.ts` does `String(authUser.organizationId)` in and `Number(ctx.organizationId)` out — the identity was always integer; only the column disagreed |
 
 ### C-39 — the `_consolidated` tree: extracted, not imported
 
@@ -2405,7 +2419,7 @@ artifact on no apply path, using an entirely different uuid CRO model.
 
 ---
 
-## C-41 — Proving it: the real deploy sequence runs, and CI now runs it *(high — FIXED 2026-07-31)*
+## C-41 — Proving it: the real deploy sequence runs, and CI now runs it _(high — FIXED 2026-07-31)_
 
 Everything from C-31 to C-40 was verified against SQL text or PGlite. Both are
 real, but neither is the thing a deploy actually does. So the whole program was
@@ -2429,7 +2443,7 @@ the program holds on a real database.
 
 ### The gap this closes, permanently
 
-The static guards reason about SQL *text*. None of them RUNS the deploy — which is
+The static guards reason about SQL _text_. None of them RUNS the deploy — which is
 exactly how this class kept recurring. `.github/workflows/ci.yml`'s
 `blank-db-provisioning` job already ran the real sequence against a pgvector
 service (blank → refuse → install-fresh → deploy-migrate → deploy-migrate →
@@ -2448,7 +2462,7 @@ not errors. The full sequence above is the authoritative proof.
 
 ---
 
-## C-42 — The Part 11 hash-chain verifier reported "valid" for a chain that does not exist *(high — FIXED 2026-07-31)*
+## C-42 — The Part 11 hash-chain verifier reported "valid" for a chain that does not exist _(high — FIXED 2026-07-31)_
 
 The item C-40 left flagged, run to ground — and it was worse than "empty state
 semantics". `GET /kernel/hash-chain/verify` is a 21 CFR Part 11 tamper-evidence
@@ -2506,13 +2520,13 @@ day that writer lands.
 
 ---
 
-## C-43 — a `tenant_isolation_policy` without `FORCE` is bypassed for the table owner *(medium — FIXED 2026-07-31)*
+## C-43 — a `tenant_isolation_policy` without `FORCE` is bypassed for the table owner _(medium — FIXED 2026-07-31)_
 
 Isolation was being certified by "does the table carry `tenant_isolation_policy`?"
 — the invariant the whole C-31→C-40 program, the sweep, `deploy-smoke-assert`, and
 the readiness gate all check. But a row-level-security policy is **silently
 bypassed for the table owner** unless the table is also `FORCE`d. Postgres applies
-RLS to everyone *except* the owner by default; `FORCE ROW LEVEL SECURITY` removes
+RLS to everyone _except_ the owner by default; `FORCE ROW LEVEL SECURITY` removes
 that exemption.
 
 The boot guard (`server/db/rlsEnforcement.ts`) refuses to boot production unless
@@ -2536,7 +2550,7 @@ false-pass too.
 
 1. **`db/migrations/20260801_tenant_isolation_sweep.sql`** gains a **second pass**:
    after the "policy where none exists" loop, it `FORCE`s every table that
-   *already* carries `tenant_isolation_policy` but was left un-`FORCE`d by whatever
+   _already_ carries `tenant_isolation_policy` but was left un-`FORCE`d by whatever
    source created it. Separate from the first loop by design — that loop skips
    tables the policy already exists on (so it never clobbers a subsystem's own),
    which is exactly the path that would let a policy-without-force slip through.
@@ -2564,7 +2578,7 @@ confirming the pre-existing surface was sound and the guard is now the proof).
 
 ---
 
-## C-44 — the deploy-time sweep's allowlist diverged from the source of truth and broke api-key auth *(HIGH — FIXED 2026-07-31)*
+## C-44 — the deploy-time sweep's allowlist diverged from the source of truth and broke api-key auth _(HIGH — FIXED 2026-07-31)_
 
 The most consequential defect this program has surfaced, and it was **self-inflicted
 by C-33**. `server/db/rlsAllowlist.ts` → `RLS_ALLOWLIST` is the documented single
@@ -2580,7 +2594,7 @@ tables that have no tenant column at all).
 (`server/services/api-key-service.ts`) authenticates a request by hashing the
 presented key and looking it up **`FROM api_keys WHERE key_hash = $1`** on the raw
 pool — **before any tenant context exists**, because the whole point of the lookup
-is to *discover* which `organization_id` the key belongs to. `0021` exempts
+is to _discover_ which `organization_id` the key belongs to. `0021` exempts
 `api_keys` for exactly this reason. The sweep, not knowing, applied
 `tenant_isolation_policy` (and `FORCE`) to it.
 
@@ -2593,7 +2607,7 @@ set, the role is not `app_super_admin` → the row is filtered → `rows.length 
 → **"API key not found" for every key. All api-key authentication breaks.**
 
 CI could not see it. `rls-coverage-check.sql` allowlists `api_keys` (so it does not
-care whether it is policied); `deploy-smoke-assert` saw it *was* policied and passed.
+care whether it is policied); `deploy-smoke-assert` saw it _was_ policied and passed.
 Both gates green; the only symptom is a runtime auth outage that appears the moment
 `RLS_ENFORCE=on` — precisely the production configuration this whole program drives
 toward.
@@ -2610,7 +2624,7 @@ theoretical.
 
 1. **The sweep and `deploy-smoke-assert.mjs` now carry the canonical six**
    (`organization_users, __drizzle_migrations, stripe_events, billing_budgets,
-   billing_alerts, api_keys`), byte-for-byte with `RLS_ALLOWLIST`, `0021`, and
+billing_alerts, api_keys`), byte-for-byte with `RLS_ALLOWLIST`, `0021`, and
    `rls-coverage-check.sql`.
 2. **`check-rls-allowlist-sync.mjs` was extended from 2 to 4 consumers** — it now
    pins `RLS_ALLOWLIST` against `0021`, the deploy-time sweep, `rls-coverage-check.sql`,
@@ -2620,8 +2634,8 @@ theoretical.
    any copy fails the guard with the offending file named.)
 3. **A self-heal pass** in the sweep (`C-44`) drops `tenant_isolation_policy` from
    any allowlisted table that wrongly carries it and restores the exempt shape (RLS
-   off, FORCE off). The forward fix stops *new* databases from hitting the bug, but
-   the first loop only ever *adds* a policy — it cannot undo one an earlier revision
+   off, FORCE off). The forward fix stops _new_ databases from hitting the bug, but
+   the first loop only ever _adds_ a policy — it cannot undo one an earlier revision
    already created, so any environment that ran the buggy sweep would stay broken.
    An allowlisted table means "must not be policied", so a `tenant_isolation_policy`
    on one is unambiguously wrong and safe to drop; only our own policy name is
@@ -2641,7 +2655,7 @@ unpoliced by the first loop — 18/18 pass. The four-consumer sync guard passes.
 
 ---
 
-## C-45 — wiring the deploy-dead files exposed integer-tenant tables the public-only sweep never covers *(medium — RESOLVED 2026-07-31)*
+## C-45 — wiring the deploy-dead files exposed integer-tenant tables the public-only sweep never covers _(medium — RESOLVED 2026-07-31)_
 
 Found while verifying C-44 on a from-scratch deploy: `rls-coverage-check.sql` — the
 CI gate that scans **every** schema — flagged six integer-keyed tenant tables with
@@ -2658,13 +2672,13 @@ deploy-dead — the tables never reached a provisioned database, so no coverage 
 ever saw them. Now they land on every deploy, but both `0021` and the
 `tenant_isolation_sweep` operate on the **`public` schema only**, so nothing
 policies a non-public tenant table. (The CI job that runs `rls-coverage-check` has
-been *skipped*, not passing — `blank-db-provisioning` `needs: lint`, and lint has
+been _skipped_, not passing — `blank-db-provisioning` `needs: lint`, and lint has
 been red on an unrelated base typecheck regression — so the gate had not yet
 actually fired. It would have, the moment lint went green.)
 
 ### Why the answer is EXEMPT, not isolate
 
-The api_keys lesson (C-44), applied deliberately rather than by omission. All six
+The api*keys lesson (C-44), applied deliberately rather than by omission. All six
 are read **only** by background jobs (`pattern-maintenance`, `counterfactual-replay`,
 `risk-model`, `calibration`) that import the **raw pool** and never set a tenant
 context — and by **no** route/request path (verified: zero references under
@@ -2674,7 +2688,7 @@ and the risk models are maintained/trained across the entire dataset. Attaching
 reads to zero rows and silently break the intelligence subsystem — the identical
 mechanism that broke api-key auth — while preventing no leak, because nothing
 user-facing reads them. That is exactly the "cross-tenant by design (admin /
-analytics)" rationale under which `billing_*` and `api_keys` are already exempt.
+analytics)" rationale under which `billing*\*`and`api_keys` are already exempt.
 
 ### Fix
 
@@ -2696,11 +2710,11 @@ smaller gap did exist and is closed in C-46.
 
 ---
 
-## C-46 — the non-public uuid-keyed tenant tables that no subsystem policied *(medium — FIXED 2026-07-31)*
+## C-46 — the non-public uuid-keyed tenant tables that no subsystem policied _(medium — FIXED 2026-07-31)_
 
 The C-45 "left open" item, verified and closed. A read/verify triage of **every**
 unpoliced uuid-tenant BASE TABLE (not the assumed ~80 — the real count was **31**,
-because most non-public schemas *do* carry per-subsystem uuid RLS) found a genuine
+because most non-public schemas _do_ carry per-subsystem uuid RLS) found a genuine
 cross-tenant gap: 31 uuid-keyed tenant tables with no policy, several
 request-path-exposed. The tenant-identity split is real, but so was the hole.
 
@@ -2714,7 +2728,7 @@ to **zero** and break them. Each cluster was classified from its actual access
 pattern:
 
 - **POLICY (29)** — tenant-owned: `core.programs`/`program_ownerships`,
-  `manufacturing.*` (5), `regulatory_intel.*` (11, each org holds a *private copy*
+  `manufacturing.*` (5), `regulatory_intel.*` (11, each org holds a _private copy_
   of the pattern library), `regulatory_harmonization.*` (5, keyed on **`tenant_id`**
   — `organization_id` there is secondary metadata), the three `cortex` gaps,
   `compliance.data_residency`, `global_dossier.dossier_instances`, and
@@ -2739,10 +2753,10 @@ Two properties are load-bearing and were proven on real PostgreSQL as a
 **non-superuser** role: **(1)** a context-less read (the raw-pool services that set
 no GUC) sees **all** rows — the policy does not filter, so the subsystem is not
 broken; the app-level `WHERE col = $caller_org` remains the active isolation and
-the policy is defense-in-depth for any *scoped* reader. **(2)** a scoped read
+the policy is defense-in-depth for any _scoped_ reader. **(2)** a scoped read
 (`app.current_org_id` set) sees only its own org plus `col IS NULL` rows, so
 federation-wide signals (`safety_signals`, org NULL by design) stay visible. This
-is why the stricter `identity.can_access_org()` form (used by the schemas that *do*
+is why the stricter `identity.can_access_org()` form (used by the schemas that _do_
 set a context) was deliberately not retrofitted here.
 
 ### Guard + proof
@@ -2759,7 +2773,7 @@ non-breaking-yet-isolating COALESCE behavior on a non-superuser role.
 
 Follow-up, stated honestly: for the raw-pool subsystems (`regulatory_intel`,
 `manufacturing`) the policy is defense-in-depth, not the primary boundary, because
-they set no session context — DB-level *enforcement* there requires migrating those
+they set no session context — DB-level _enforcement_ there requires migrating those
 services onto a tenant-scoped client that runs `set_config('app.current_org_id', …)`.
 The application-layer half of the gap (`manufacturing`'s cross-tenant `/overview`
 aggregates and the unfiltered `core.programs … LIMIT 1` fallbacks) is addressed in
@@ -2767,7 +2781,7 @@ C-47.
 
 ---
 
-## C-47 — the application-layer half: cross-tenant reads that RLS alone can't stop *(medium — FIXED 2026-07-31)*
+## C-47 — the application-layer half: cross-tenant reads that RLS alone can't stop _(medium — FIXED 2026-07-31)_
 
 C-46 added defense-in-depth RLS, but the primary isolation for the raw-pool
 subsystems is the query itself. Two app-layer leaks the triage surfaced are closed
@@ -2820,7 +2834,7 @@ an integer (a no-op) or by silently leaving the reads unscoped.
 
 ---
 
-## C-48 — the org-uuid identity split: verified design for unification *(architectural — DESIGN, needs decisions before build)*
+## C-48 — the org-uuid identity split: verified design for unification _(architectural — DESIGN, needs decisions before build)_
 
 The C-47 follow-up ("resolve the integer↔uuid org-identity mapping"), run to ground
 with four investigation agents and a real-DB verification workflow (empirical probe →
@@ -2900,7 +2914,7 @@ the reverse.
    rows visible to every scoped reader. The write path must stamp `org_id`, and these
    tables need the `IS NULL` arm removed once populated.
 2. **`public.*` data tables never classified.** The canonical org table's own schema's
-   tenant tables (documents, projects, submissions, …) were audited by the *integer*
+   tenant tables (documents, projects, submissions, …) were audited by the _integer_
    sweep (0021 / the public sweep) but not reconciled against the uuid track — confirm
    they are not a third space.
 3. **`identity.users.home_org_id`** and any inbound FK beyond "the five" must be
@@ -2915,7 +2929,7 @@ posture for the legitimate cross-org readers.
 
 ---
 
-## C-49 — Stage 0: carry the org uuid on every authenticated request *(low — FIXED 2026-07-31)*
+## C-49 — Stage 0: carry the org uuid on every authenticated request _(low — FIXED 2026-07-31)_
 
 The first, decision-independent slice of the C-48 plan, and the piece that completes
 the C-47 manufacturing residual. `req.user.organizationUuid` was populated only by
@@ -2945,7 +2959,7 @@ membership/auth tests (incl. the WebSocket `checkOrgMembership` path) pass.
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
    until this lands.
 2. **Environment survey.** Determine, per deployed environment, which physical
-   shape each colliding table actually has. This is a *read-only* investigation
+   shape each colliding table actually has. This is a _read-only_ investigation
    and must precede any migration.
 3. **ADR-0007 — canonical operating-system schema** (resolves C-1, C-2, C-7),
    including whether approval state stays orthogonal to action state.
@@ -2974,20 +2988,20 @@ Per the no-documents rule, the following are **open questions**, not findings:
 - Whether the six commands in `COMMAND_REGISTRY` (76 entries) that lack a
   `COMMAND_HANDLERS` key (70 keys) are dead, aliased, or dispatched elsewhere.
 
-## C-50 — `compliance_tracking` is two different tables sharing one name *(medium — OPEN, contained 2026-09-08)*
+## C-50 — `compliance_tracking` is two different tables sharing one name _(medium — OPEN, contained 2026-09-08)_
 
 The C-6 pattern again, on a table that had gone unexamined. Two lineages declare
 `compliance_tracking` with **no columns in common beyond `id`, `organization_id`,
 `risk_level`, `assigned_to` and the timestamps**, and which one an estate has is
 decided by migration order rather than by code:
 
-| | `migrations/0000_sweet_joseph.sql:1729` | `db/migrations/20260402_cmc_runtime_ddl_to_migration.sql:20` |
-|---|---|---|
-| `id` | `serial` | `uuid DEFAULT gen_random_uuid()` |
-| tenant | `organization_id integer NOT NULL` | `organization_id integer` (**nullable**) |
-| subject | `product_id varchar(100) NOT NULL`, `agency_id integer NOT NULL` | `project_id uuid` |
+|         | `migrations/0000_sweet_joseph.sql:1729`                                                       | `db/migrations/20260402_cmc_runtime_ddl_to_migration.sql:20`                    |
+| ------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `id`    | `serial`                                                                                      | `uuid DEFAULT gen_random_uuid()`                                                |
+| tenant  | `organization_id integer NOT NULL`                                                            | `organization_id integer` (**nullable**)                                        |
+| subject | `product_id varchar(100) NOT NULL`, `agency_id integer NOT NULL`                              | `project_id uuid`                                                               |
 | finding | `compliance_status`, `compliance_score`, `requirements`/`findings`/`remediation_actions` json | `guideline`, `requirement`, `status`, `evidence`, `justification`, `mitigation` |
-| dates | `last_assessment_date`, `next_assessment_date` | `due_date`, `completed_date` |
+| dates   | `last_assessment_date`, `next_assessment_date`                                                | `due_date`, `completed_date`                                                    |
 
 Only the second is in `C2C_MIGRATION_FILES`; the first reaches an estate through
 drizzle-kit push from `shared/schema.ts`. Both are effectively
@@ -3019,8 +3033,8 @@ tenant; `tests/schema-contract/cmc-compliance-tracking-tenancy.contract.test.ts`
 proves that on both shapes.
 
 **The collision itself is untouched.** Reconciling two live definitions that
-share a name but not a subject — one tracks a *product against an agency*, the
-other a *project against an ICH guideline* — is not a column rename. It needs a
+share a name but not a subject — one tracks a _product against an agency_, the
+other a _project against an ICH guideline_ — is not a column rename. It needs a
 decision about whether these are one concept or two, and if two, one of them
 needs a different table name and a data move. Until then:
 
@@ -3032,7 +3046,7 @@ needs a different table name and a data move. Until then:
 
 ---
 
-## C-51 — C-48 Stage 1: unify the two org-uuid identity spaces *(architectural — FIXED 2026-09-19)*
+## C-51 — C-48 Stage 1: unify the two org-uuid identity spaces _(architectural — FIXED 2026-09-19)_
 
 The first schema stage of the C-48 plan, built after re-confirming the split still
 exists on the current branch (no backfill existed; only the 9 seed INSERTs in 051/055
@@ -3071,6 +3085,17 @@ orphan (count 1 with the trigger dropped) and the backfill then **heals** it (�
 cases) pins wiring/backfill/seed-preservation/forward-sync/idempotency/invariant;
 `ci:migration-set-order`, `ci:migration-drop-safety`, reachability, security-patterns
 and typecheck all pass; the existing uuid-isolation contract stays green.
+
+**Amendment 2026-09-20.** Existing estates can retain an older
+`audit.audit_trigger_func()` body that dereferences `NEW.title` directly. That
+fails on `identity.organizations`, whose row type uses `legal_name`, before the
+C-48 backfill can insert a mirror. The deploy-set repair
+`20260920_audit_trigger_jsonb_entity_names.sql` republished the current,
+shape-safe JSONB lookup before C-48. It changes no audit rows or trigger
+attachments and is covered by the C-48 contract with the audit trigger active.
+The prerequisite `20260129_add_org_uuid_alignment.sql` is also explicitly in the
+deploy set ahead of C-48, so a database without `public.organizations.uuid` is
+aligned before the bridge's backfill can run.
 
 **Remaining (Stage 2→4, unchanged from C-48):** reliably populate `app.current_org_id`
 for all scoped paths (C-49 already carries the uuid on `req.user`; wiring it into the

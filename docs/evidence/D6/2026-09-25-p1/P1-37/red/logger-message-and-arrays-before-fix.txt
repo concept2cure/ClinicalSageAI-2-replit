@@ -360,4 +360,3 @@ AssertionError: expected { context: { value: [ …(2) ] } } to deeply equal { co
       Tests  11 failed | 38 passed (49)
    Start at  13:19:47
    Duration  808ms (transform 516ms, setup 237ms, import 354ms, tests 98ms, environment 0ms)
-

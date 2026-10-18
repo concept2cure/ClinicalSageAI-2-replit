@@ -49,11 +49,15 @@ describe('the standalone ISS anticipates FDA ST&F and OCMQ review', () => {
 });
 
 describe('the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3', () => {
-  it('12.2.2 carries the ST&F IG and OCMQ bases as regulator-text and frames the layout as anticipation', () => {
+  it('12.2.2 carries the ST&F IG and OCMQ bases, seen in search extracts, and frames the layout as anticipation', () => {
     const s = getE3Section('12.2.2');
     const stf = s?.basis?.find((b) => b.url === STF_IG_URL);
-    expect(stf?.confidence).toBe('regulator-text');
-    expect(s?.basis?.find((b) => b.url === OCMQ_URL)?.confidence).toBe('regulator-text');
+    const ocmq = s?.basis?.find((b) => b.url === OCMQ_URL);
+    // Search extracts of fda.gov, so recall (pinned as regulator-text until 2026-10-15).
+    for (const b of [stf, ocmq]) {
+      expect(b?.confidence).toBe('recall');
+      expect(b?.note).toMatch(/search extract/i);
+    }
     const presentation = (s?.presentation ?? []).join(' ');
     expect(presentation).toMatch(/OCMQ/);
     expect(presentation).toMatch(/anticipate/i);

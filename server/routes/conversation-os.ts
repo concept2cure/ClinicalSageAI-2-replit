@@ -26,6 +26,7 @@ import {
   isDocumentStackFeatureEnabled,
 } from '../services/documentIntelligence/featureFlags';
 import { listDocumentArtifactVersions } from '../services/ana/artifactVersionStore';
+import { projectBelongsToTenant } from '../services/cmc/project-membership';
 
 const router = Router();
 
@@ -49,6 +50,35 @@ const resolveContext = (req: any) => {
     organizationId,
   };
 };
+
+/* Every conversation-OS record — tool manifests, retrieval chunks, scout
+   findings, plans, proposals, accepted versions — is keyed by the project the
+   request names in its body or query, and none of those tables carries a tenant
+   column the RLS sweep can police. Nothing checked that the project was the
+   caller's, so any signed-in user could read or write another organization's
+   conversation records by naming its project. The project is checked against
+   the caller's organization before any route runs (2026-10-15): another
+   organization's project is not found, and a check that cannot complete
+   refuses rather than proceeding. */
+router.use(async (req, res, next) => {
+  const ctx = resolveContext(req);
+  if (!ctx.projectId) return next();
+  let ours: boolean;
+  try {
+    ours = await projectBelongsToTenant({ organizationId: ctx.organizationId, projectId: ctx.projectId });
+  } catch {
+    res.status(503).json({
+      success: false,
+      error: 'Could not confirm the project belongs to your organization; nothing was read or written',
+    });
+    return;
+  }
+  if (!ours) {
+    res.status(404).json({ success: false, error: 'Project not found' });
+    return;
+  }
+  next();
+});
 
 function requireContext(res: any, ctx: { projectId?: string; userId?: string }, op: string) {
   if (!ctx.projectId || !ctx.userId) {
@@ -114,10 +144,18 @@ router.post('/conversations/:conversationId/scout/:findingId/promote', async (re
 router.post('/conversations/:conversationId/plan-execute', async (req, res) => {
   const ctx = resolveContext(req);
   if (!requireContext(res, ctx, 'plan execute')) return;
-  const result = await planAndExecute({ ...ctx, task: req.body.task });
+  const task = typeof req.body?.task === 'string' ? req.body.task.trim() : '';
+  // The proposal names the artifact it is for. A missing one was filled with
+  // `artifact-<conversationId>`, an id no artifact has.
+  const artifactId = typeof req.body?.artifactId === 'string' ? req.body.artifactId.trim() : '';
+  if (!task || !artifactId) {
+    res.status(400).json({ success: false, error: 'plan execute requires a task and the artifactId the proposal is for' });
+    return;
+  }
+  const result = await planAndExecute({ ...ctx, task });
   const proposal = await createProposal({
     ...ctx,
-    artifactId: req.body.artifactId ?? `artifact-${req.params.conversationId}`,
+    artifactId,
     content: result.draft,
     quality: result.quality,
   });
@@ -152,7 +190,7 @@ router.post('/conversations/:conversationId/proposals/:proposalId/accept', async
     return;
   }
   try {
-    const result = await acceptProposal({ ...ctx, proposalId: req.params.proposalId });
+    const result = await acceptProposal({ ...ctx, proposalId: req.params.proposalId, ipAddress: req.ip ?? null });
     res.json({ success: true, result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -162,8 +200,12 @@ router.post('/conversations/:conversationId/proposals/:proposalId/accept', async
 router.post('/conversations/:conversationId/proposals/:proposalId/reject', async (req, res) => {
   const ctx = resolveContext(req);
   if (!requireContext(res, ctx, 'proposal reject')) return;
-  const proposal = await rejectProposal({ ...ctx, proposalId: req.params.proposalId });
-  res.json({ success: true, proposal });
+  try {
+    const proposal = await rejectProposal({ ...ctx, proposalId: req.params.proposalId });
+    res.json({ success: true, proposal });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
 });
 
 router.post('/conversations/:conversationId/quality/lint', async (req, res) => {

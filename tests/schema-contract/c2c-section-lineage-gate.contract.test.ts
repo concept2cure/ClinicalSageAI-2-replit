@@ -14,6 +14,11 @@
  * the authoring path, returns a coverage figure, and is silent about the
  * sections written through the other door. Partial provenance reads as complete.
  *
+ * 2026-10-17 (document store consolidation step 5): that route no longer writes
+ * section text — it refuses it (409 SECTION_TEXT_IS_AUTHORED) and the authoring
+ * write-through is the one writer. The gate below is kept as the contract of the
+ * span-lineage service and the serialisation every reader of the table uses.
+ *
  * ── What is asserted ──────────────────────────────────────────────────────────
  * Against real DDL on PGlite, using the real span-lineage service:
  *   • saving content writes spans covering it, in the same transaction;
@@ -35,7 +40,7 @@ import {
   assertLineageCoversContent,
 } from '../../server/services/clinical-regulatory-evidence/span-lineage.service';
 import { detectSpans } from '../../server/services/sentenceTraceabilityService';
-import { sectionPlainText } from '../../server/routes/c2c/documents';
+import { sectionPlainText } from '../../server/services/c2c/section-content';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LINEAGE = path.join(REPO, 'db/migrations/20260803_document_span_lineage.sql');
@@ -64,7 +69,7 @@ beforeEach(async () => {
 });
 afterEach(async () => { await pg?.close(); });
 
-/** Exactly what the route does, so the test exercises the route's own logic. */
+/** What the route did when it wrote text (the same service calls the authoring save makes). */
 async function saveLikeTheRoute(content: unknown, userId = 11) {
   const plain = sectionPlainText(content);
   const spans = detectSpans(plain, 'clause').map((s) => ({

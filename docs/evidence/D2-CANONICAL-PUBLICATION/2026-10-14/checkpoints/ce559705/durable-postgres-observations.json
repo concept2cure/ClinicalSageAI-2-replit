@@ -1,0 +1,308 @@
+{
+  "runtime": "v22.23.3",
+  "fixture": {
+    "name": "c2c-durable-receipts-c9ed93cd-6de",
+    "database": "ana_durable_receipt_fixture",
+    "applier": "durable_fixture_applier",
+    "runtimeRole": "app_service",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ]
+  },
+  "proofScope": "Actual application selected writer, ledger/history, installed FORCE tenant RLS, idempotence/concurrency, complete tenant export and controlled canonical purge SQL plus merged request/current-program actor helper and autocommit/transaction missing-vector recovery on owned synthetic PostgreSQL. Synthetic minimum precursor schema/core program functions/audit HMAC and deterministic offline embeddings. Not deployed roles/full schema/provider or regulatory qualification.",
+  "observations": [
+    {
+      "runtime": {
+        "current_database": "ana_durable_receipt_fixture",
+        "current_user": "app_service",
+        "pg_backend_pid": 75,
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "policy": {
+        "relrowsecurity": true,
+        "relforcerowsecurity": true
+      },
+      "purger": {
+        "rolcanlogin": false,
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcreaterole": false
+      },
+      "ordinaryMutationProof": "Actual triggers, not merely missing runtime privileges; applier ordinary DML also refuses. Schema administrators remain outside immutable-runtime guarantee."
+    },
+    {
+      "barrier": "id-identical",
+      "blocker": 85,
+      "waiters": [
+        {
+          "pid": 86,
+          "application_name": "durable-id-identical",
+          "wait_event_type": "Lock",
+          "blockers": [
+            85
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "id-mismatch",
+      "blocker": 87,
+      "waiters": [
+        {
+          "pid": 88,
+          "application_name": "durable-id-mismatch",
+          "wait_event_type": "Lock",
+          "blockers": [
+            87
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "re-extract",
+      "blocker": 91,
+      "waiters": [
+        {
+          "pid": 92,
+          "application_name": "durable-re-extract",
+          "wait_event_type": "Lock",
+          "blockers": [
+            91
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "export-change",
+      "blocker": 104,
+      "waiters": [
+        {
+          "pid": 105,
+          "application_name": "durable-export-change",
+          "wait_event_type": "Lock",
+          "blockers": [
+            104
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "status-change",
+      "blocker": 108,
+      "waiters": [
+        {
+          "pid": 109,
+          "application_name": "durable-status-change",
+          "wait_event_type": "Lock",
+          "blockers": [
+            108
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "status-change",
+      "blocker": 112,
+      "waiters": [
+        {
+          "pid": 113,
+          "application_name": "durable-status-change",
+          "wait_event_type": "Lock",
+          "blockers": [
+            112
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "hold-change",
+      "blocker": 116,
+      "waiters": [
+        {
+          "pid": 117,
+          "application_name": "durable-hold-change",
+          "wait_event_type": "Lock",
+          "blockers": [
+            116
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "purge-after-writer",
+      "blocker": 120,
+      "waiters": [
+        {
+          "pid": 121,
+          "application_name": "durable-purge-after-writer",
+          "wait_event_type": "Lock",
+          "blockers": [
+            120
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "late-status",
+      "blocker": 124,
+      "waiters": [
+        {
+          "pid": 125,
+          "application_name": "durable-late-status",
+          "wait_event_type": "Lock",
+          "blockers": [
+            124
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "late-hold",
+      "blocker": 124,
+      "waiters": [
+        {
+          "pid": 126,
+          "application_name": "durable-late-hold",
+          "wait_event_type": "Lock",
+          "blockers": [
+            124
+          ]
+        }
+      ]
+    },
+    {
+      "mergedControl": "autocommit-absent-vector",
+      "actualErrors": [
+        {
+          "sql": "SAVEPOINT vault_dense_search",
+          "code": "25P01",
+          "message": "SAVEPOINT can only be used in transaction blocks"
+        },
+        {
+          "sql": "WITH scoped AS MATERIALIZED (",
+          "code": "42704",
+          "message": "type \"vector\" does not exist"
+        }
+      ],
+      "openedTransaction": false,
+      "requestExecutorQualified": true
+    },
+    {
+      "mergedControl": "caller-transaction-absent-vector",
+      "actualErrors": [
+        {
+          "sql": "WITH scoped AS MATERIALIZED (",
+          "code": "42704",
+          "message": "type \"vector\" does not exist"
+        }
+      ],
+      "callerRollbackRemovedSentinel": true
+    }
+  ],
+  "before": {
+    "shared/ana/source-admission-receipts.ts": "62710ab0555de812b41c60f2ec31b705508f9358bbce75d6a7bfde3766de6391",
+    "server/services/ana/read-receipts.ts": "1a3d09867945190cbf212eb4de58ab5a93d0e73e9ade98f83389e3ffa6d5cb86",
+    "server/services/ana/source-read-receipt.ts": "60fbe6d691b9449242b0dffb9f3f907a74aed7c853247c1d0e6b75e888a3438d",
+    "server/services/ana/source-admission-receipt-store.ts": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+    "server/services/ana/source-admission-receipt-history.ts": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+    "server/services/ana/source-read-scope.ts": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2",
+    "server/services/ana/project-scope-admission.ts": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454",
+    "server/services/vault/document-catalog.service.ts": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+    "server/services/vault/document-catalog-actor-access.ts": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d",
+    "server/services/vault/document-catalog-admission.ts": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/tenant/tenant-offboarding.ts": "da3762523a15660dd0bba217e524ebbc8dfb2930e3a82d111af92687312b00d8",
+    "server/services/tenant/tenant-source-read-receipt-purge.ts": "5f8926a51e39110330ec06db48e0a155d299a2e3ef57b111b19df7ee0565a8a0",
+    "server/services/tenant/tenant-purge-audit.ts": "10065387058ff9bda1eb7c74ed8db176a732b3f52a711016068bb66851d98bc7",
+    "server/services/tenant-export/tenant-full-export.service.ts": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c",
+    "server/services/auditService.ts": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c",
+    "server/services/audit/chain.ts": "7247d385cd16282fae584d10c8d82944dd5590034b69e72745dd9ab2415eaeb9",
+    "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+    "server/db/sessionScope.ts": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9",
+    "server/services/advancedRAGPipeline.ts": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+    "server/services/rag-filters.ts": "20f013c86e949f7ab5a080d1d4ced47680ab22d0d6dc192b5e16198a9b4077b6",
+    "server/db/currentTenant.ts": "f3b31f1293f045709be3a4c9a4ad35fbbc6dc9574f6d7a9dc935ebef27016c29",
+    "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/c2c/program-project-anchor.ts": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496",
+    "server/services/csr/project-scope.ts": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049",
+    "server/services/vault/document-catalog-document.ts": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+    "server/services/vault/retrieval-source-access.ts": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+    "server/services/vault/vault-search.ts": "5af3f9a7bf4fb9fef1c341a17ba17566034e79baf4f4333137e7ff9ab4660022",
+    "server/services/enhancedEmbeddingService.ts": "91c28af39b4be5e8984670ad94f83fc3f9773844e4146c0a482984d2153fa0ce",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20260906b_vault_legal_holds.sql": "177f5d8ce2ae070e5ff2a99d2a331e5a516e00f7198112fc37c75b47e14d5dc8",
+    "migrations/20260813_tenant_offboarding_lifecycle.sql": "6c4f4c009400c989554c3806cbc255380bf8fd3ffd38e1ca87c519feb134ba04",
+    "migrations/20260813b_tenant_export_receipts.sql": "1ba1825e53b6fad38ff062595c841928bbf60f8e2531200794e2b7755b7bb7d7",
+    "migrations/20260921_audit_logs_chain_seq.sql": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
+    "migrations/20260926_vault_documents_record_immutability.sql": "827ea20041d41cf1155f71415a5d1bf355ad9e303947d4a9df414ac37beba415",
+    "migrations/20261014_ana_source_read_receipts.sql": "ec96e38a9cf0466c6abea7c223e0ea715b64bedaccd1b85f43967b462c7cb9dd",
+    "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql": "e81f30c5669464ce122c7e9e1154e2a45d52326ccdb84461ad86b3ea399dec90",
+    "db/migrations/20260813_child_table_parent_scoped_rls.sql": "8b3bff9d1f3876840ef78198034a427dab6f2f4254ed2b213d9b1f07d123a235",
+    "db/migrations/20260801_tenant_isolation_sweep.sql": "8bd0a6e2df8ce113d5b8aaa3201310a219702019776d09e5a509c75171aa1419",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts": "b1e8c58a3b14daf1ed3059cdda8d39c464581ea46a07ab609ae3293536138557",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.config.mts": "721edd2187f3e2fcd6d18eefcec8c69e681776d3ce9278466de4cb16c5030de5"
+  },
+  "after": {
+    "shared/ana/source-admission-receipts.ts": "62710ab0555de812b41c60f2ec31b705508f9358bbce75d6a7bfde3766de6391",
+    "server/services/ana/read-receipts.ts": "1a3d09867945190cbf212eb4de58ab5a93d0e73e9ade98f83389e3ffa6d5cb86",
+    "server/services/ana/source-read-receipt.ts": "60fbe6d691b9449242b0dffb9f3f907a74aed7c853247c1d0e6b75e888a3438d",
+    "server/services/ana/source-admission-receipt-store.ts": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+    "server/services/ana/source-admission-receipt-history.ts": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+    "server/services/ana/source-read-scope.ts": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2",
+    "server/services/ana/project-scope-admission.ts": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454",
+    "server/services/vault/document-catalog.service.ts": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+    "server/services/vault/document-catalog-actor-access.ts": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d",
+    "server/services/vault/document-catalog-admission.ts": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/tenant/tenant-offboarding.ts": "da3762523a15660dd0bba217e524ebbc8dfb2930e3a82d111af92687312b00d8",
+    "server/services/tenant/tenant-source-read-receipt-purge.ts": "5f8926a51e39110330ec06db48e0a155d299a2e3ef57b111b19df7ee0565a8a0",
+    "server/services/tenant/tenant-purge-audit.ts": "10065387058ff9bda1eb7c74ed8db176a732b3f52a711016068bb66851d98bc7",
+    "server/services/tenant-export/tenant-full-export.service.ts": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c",
+    "server/services/auditService.ts": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c",
+    "server/services/audit/chain.ts": "7247d385cd16282fae584d10c8d82944dd5590034b69e72745dd9ab2415eaeb9",
+    "server/services/tenant/governed-tenant-context.ts": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d",
+    "server/db/sessionScope.ts": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9",
+    "server/services/advancedRAGPipeline.ts": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+    "server/services/rag-filters.ts": "20f013c86e949f7ab5a080d1d4ced47680ab22d0d6dc192b5e16198a9b4077b6",
+    "server/db/currentTenant.ts": "f3b31f1293f045709be3a4c9a4ad35fbbc6dc9574f6d7a9dc935ebef27016c29",
+    "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/c2c/program-project-anchor.ts": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496",
+    "server/services/csr/project-scope.ts": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049",
+    "server/services/vault/document-catalog-document.ts": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+    "server/services/vault/retrieval-source-access.ts": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+    "server/services/vault/vault-search.ts": "5af3f9a7bf4fb9fef1c341a17ba17566034e79baf4f4333137e7ff9ab4660022",
+    "server/services/enhancedEmbeddingService.ts": "91c28af39b4be5e8984670ad94f83fc3f9773844e4146c0a482984d2153fa0ce",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20260906b_vault_legal_holds.sql": "177f5d8ce2ae070e5ff2a99d2a331e5a516e00f7198112fc37c75b47e14d5dc8",
+    "migrations/20260813_tenant_offboarding_lifecycle.sql": "6c4f4c009400c989554c3806cbc255380bf8fd3ffd38e1ca87c519feb134ba04",
+    "migrations/20260813b_tenant_export_receipts.sql": "1ba1825e53b6fad38ff062595c841928bbf60f8e2531200794e2b7755b7bb7d7",
+    "migrations/20260921_audit_logs_chain_seq.sql": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
+    "migrations/20260926_vault_documents_record_immutability.sql": "827ea20041d41cf1155f71415a5d1bf355ad9e303947d4a9df414ac37beba415",
+    "migrations/20261014_ana_source_read_receipts.sql": "ec96e38a9cf0466c6abea7c223e0ea715b64bedaccd1b85f43967b462c7cb9dd",
+    "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql": "e81f30c5669464ce122c7e9e1154e2a45d52326ccdb84461ad86b3ea399dec90",
+    "db/migrations/20260813_child_table_parent_scoped_rls.sql": "8b3bff9d1f3876840ef78198034a427dab6f2f4254ed2b213d9b1f07d123a235",
+    "db/migrations/20260801_tenant_isolation_sweep.sql": "8bd0a6e2df8ce113d5b8aaa3201310a219702019776d09e5a509c75171aa1419",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts": "b1e8c58a3b14daf1ed3059cdda8d39c464581ea46a07ab609ae3293536138557",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.config.mts": "721edd2187f3e2fcd6d18eefcec8c69e681776d3ce9278466de4cb16c5030de5"
+  },
+  "changedSources": [],
+  "sourcesUnchangedDuringRun": true
+}

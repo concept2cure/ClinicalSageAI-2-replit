@@ -1467,4 +1467,3 @@ stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
       Tests  330 passed (330)
    Start at  18:07:02
    Duration  46.96s (transform 8.47s, setup 1.60s, import 36.78s, tests 87.79s, environment 6.67s)
-

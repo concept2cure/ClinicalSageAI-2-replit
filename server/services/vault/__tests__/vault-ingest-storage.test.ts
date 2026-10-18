@@ -40,6 +40,21 @@ vi.mock('../../../db.js', () => ({ pool: { query, connect } }));
    member by default; the role cases below set it. */
 const { scope } = vi.hoisted(() => ({ scope: { role: 'member' as string | null } }));
 vi.mock('../../../db/tenantStore.js', () => ({ getTenantScope: () => scope }));
+const membership = { role: 'member' as string | null, active: true };
+
+/** SQL records for the actual canonical actor/anchor/sharing reader. This
+ * storage suite is not database authority proof; native tests provide that. */
+function currentAccessRows(sql: string): Array<Record<string, unknown>> | undefined {
+  if (/FROM regulatory_programs/.test(sql)) return [{ id: PROGRAM }];
+  if (/SELECT ou\.role FROM organization_users/.test(sql)) {
+    return membership.active ? [{ role: membership.role }] : [];
+  }
+  if (/client_workspace_id AS "clientWorkspaceId" FROM projects/.test(sql)) return [{ id: 42, clientWorkspaceId: null }];
+  if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return [{
+    id: 42, owner_id: 3, created_by_id: 3, settings: {}, visibility: 'private', members: [], review_assigned: false,
+  }];
+  return undefined;
+}
 
 const { put, del } = vi.hoisted(() => ({ put: vi.fn(), del: vi.fn() }));
 vi.mock('../../storage/index.js', () => ({
@@ -80,6 +95,7 @@ vi.mock('../../ocr/index.js', () => ({ extractDocumentText: async () => ({ text:
 vi.mock('../../ocr/pdfInspector.js', () => ({ pdfPageCount: async () => null }));
 
 import { ingestVaultDocument } from '../vault-ingest.service';
+import { AnaProjectScopeError } from '../../ana/project-scope-admission';
 
 const ORG = 7;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -95,6 +111,8 @@ function txClient(
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       calls.push({ sql: String(sql), params: (params ?? []) as unknown[] });
       if (fail && fail.on.test(String(sql))) throw fail.err;
+      const admitted = currentAccessRows(sql);
+      if (admitted) return { rows: admitted, rowCount: admitted.length };
       if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: insertReturns, rowCount: insertReturns.length };
       return { rows: [], rowCount: 0 };
     }),
@@ -126,10 +144,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   recordRefersToStoredBytes = false;
   scope.role = 'member';
+  membership.role = 'member';
+  membership.active = true;
   isFolderInView.mockReturnValue(true);
   del.mockResolvedValue(true);
   // Program ownership check passes; the reference check answers per test.
   query.mockImplementation(async (sql: string) => {
+    const admitted = currentAccessRows(sql);
+    if (admitted) return { rows: admitted, rowCount: admitted.length };
     if (/FROM vault\.documents/.test(String(sql))) {
       return recordRefersToStoredBytes ? { rows: [{ '?column?': 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
     }
@@ -201,26 +223,26 @@ describe('a role that may not write the Vault is refused before anything is stor
   it('a viewer: 403, nothing stored, nothing written', async () => {
     const { client, calls } = txClient();
     connect.mockResolvedValue(client);
-    scope.role = 'viewer';
+    membership.role = 'viewer';
     const res = await ingestVaultDocument(args());
     expect(res).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
     expect(put).not.toHaveBeenCalled();
     expect(calls).toEqual([]);
   });
 
-  it('no role at all: refused the same way', async () => {
-    scope.role = null;
+  it('missing current membership refuses despite the old member session', async () => {
+    membership.active = false;
     const res = await ingestVaultDocument(args());
-    expect(res).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(res).toMatchObject({ ok: false, status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
     expect(put).not.toHaveBeenCalled();
   });
 });
 
 describe('the tenant guard still runs before any of this', () => {
   it('refuses a programme the caller does not own, without touching storage', async () => {
-    query.mockImplementation(async () => ({ rows: [], rowCount: 0 }));
+    query.mockImplementation(async (sql: string) => ({ rows: /FROM regulatory_programs/.test(sql) ? [] : currentAccessRows(sql) ?? [], rowCount: 0 }));
     const res = await ingestVaultDocument(args());
-    expect(res).toMatchObject({ ok: false, status: 403, code: 'PROGRAM_FORBIDDEN' });
+    expect(res).toMatchObject({ ok: false, status: 404, code: 'PROJECT_NOT_FOUND' });
     expect(put).not.toHaveBeenCalled();
   });
 
@@ -228,6 +250,55 @@ describe('the tenant guard still runs before any of this', () => {
     const res = await ingestVaultDocument(args({ organizationId: null }));
     expect(res).toMatchObject({ ok: false, status: 403, code: 'NO_ORG_CONTEXT' });
     expect(put).not.toHaveBeenCalled();
+  });
+});
+
+describe('source and current actor checks use the admission executor', () => {
+  it('uses the explicit preview executor and actual BEGIN client before any child insert', async () => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    const executor = { query, connect };
+    const source = vi.fn(async (_q: unknown, phase: 'preview' | 'commit') => {
+      if (phase === 'preview') expect(put).not.toHaveBeenCalled();
+      else {
+        expect(calls[0].sql).toBe('BEGIN');
+        expect(calls.some(call => /INSERT INTO vault\.documents/.test(call.sql))).toBe(false);
+      }
+    });
+    expect(await ingestVaultDocument(args({ executor, assertSourceAccess: source }))).toMatchObject({ ok: true });
+    expect(source.mock.calls).toEqual([[executor, 'preview'], [client, 'commit']]);
+  });
+
+  it('uses a fresh member grant even when the old session still says viewer', async () => {
+    const { client } = txClient();
+    connect.mockResolvedValue(client);
+    scope.role = 'viewer';
+    expect(await ingestVaultDocument(args())).toMatchObject({ ok: true });
+  });
+
+  it('does not store bytes when source preview observes a current writer downgrade', async () => {
+    const source = vi.fn(async () => { membership.role = 'viewer'; });
+    expect(await ingestVaultDocument(args({ assertSourceAccess: source }))).toMatchObject({
+      ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED',
+    });
+    expect(put).not.toHaveBeenCalled();
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it.each([403, 409, 503] as const)('retains a named source %i refusal on the actual writer and removes unrecorded bytes', async status => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    const source = vi.fn(async (_q: unknown, phase: 'preview' | 'commit') => {
+      if (phase === 'commit') throw new AnaProjectScopeError(status, 'TEST_SOURCE_REFUSED', 'The source is unavailable.');
+    });
+    expect(await ingestVaultDocument(args({ assertSourceAccess: source }))).toMatchObject({
+      ok: false, status, code: 'TEST_SOURCE_REFUSED',
+    });
+    expect(calls.map(call => call.sql)).toContain('ROLLBACK');
+    expect(calls.some(call => /INSERT INTO vault\.documents/.test(call.sql))).toBe(false);
+    expect(writeChainedAuditRow).not.toHaveBeenCalled();
+    expect(del).toHaveBeenCalledWith('ver-abc', ORG);
+    expect(client.release).toHaveBeenCalled();
   });
 });
 
@@ -363,6 +434,8 @@ describe('a different file at an occupied code is refused with the document it c
   function conflictClient(head: Record<string, unknown> | null) {
     return {
       query: vi.fn(async (sql: string) => {
+        const admitted = currentAccessRows(sql);
+        if (admitted) return { rows: admitted, rowCount: admitted.length };
         if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: [], rowCount: 0 };
         if (/NOT EXISTS/.test(String(sql))) return { rows: head ? [head] : [], rowCount: head ? 1 : 0 };
         return { rows: [], rowCount: 0 };
@@ -401,6 +474,8 @@ describe('a check-in keeps the document it adds to: its code and filing, and rec
 
   it('the new version takes the head\'s code, and records the title it is given, so a retitled version shows the change', async () => {
     query.mockImplementation(async (sql: string) => {
+      const admitted = currentAccessRows(sql);
+      if (admitted) return { rows: admitted, rowCount: admitted.length };
       if (isHead(String(sql))) return { rows: [headRow], rowCount: 1 };
       if (/FROM vault\.documents/.test(String(sql))) return { rows: [], rowCount: 0 };
       return { rows: [{ '?column?': 1 }], rowCount: 1 };
@@ -409,6 +484,8 @@ describe('a check-in keeps the document it adds to: its code and filing, and rec
     connect.mockResolvedValue({
       query: vi.fn(async (sql: string, params?: unknown[]) => {
         calls.push({ sql: String(sql), params: (params ?? []) as unknown[] });
+        const admitted = currentAccessRows(sql);
+        if (admitted) return { rows: admitted, rowCount: admitted.length };
         if (isHead(String(sql))) return { rows: [headRow], rowCount: 1 };
         if (/INSERT INTO vault\.documents/.test(String(sql))) return { rows: [{ id: 'doc-2', processing_status: 'PENDING' }], rowCount: 1 };
         return { rows: [], rowCount: 0 };

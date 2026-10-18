@@ -129,6 +129,29 @@ describe('AuthoringCollab — real presence + locks', () => {
     expect(screen.queryByRole('button', { name: /Unlock/ })).toBeNull();
   });
 
+  it('takes over a lock with the reason entered after arming confirmation', async () => {
+    (window as any).C2C_PROJECT = { id: 'proj-1' };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/realtime-collab/rooms') return ok({ success: true, data: { room: { connectedUsers: [] } } });
+      if (method === 'GET' && url.startsWith('/api/realtime-collab/locks/')) {
+        return ok({ success: true, data: [{ documentId: 'D1', sectionId: 'S1', mine: false, lockedByLabel: 'Jo Park' }] });
+      }
+      return ok({ success: true });
+    });
+    const fireToast = vi.fn(); // Stable, as the canonical host's useToast is.
+    render(<AuthoringCollab documentId="D1" sectionId="S1" fireToast={fireToast} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Take over the section lock' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Reason for taking over the lock' }), {
+      target: { value: '  Jo asked me to finish the section.  ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm lock takeover' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/realtime-collab/locks', {
+      documentId: 'D1', sectionId: 'S1', lockType: 'section-edit', takeover: true,
+      reason: 'Jo asked me to finish the section.',
+    }));
+    expect(fireToast).toHaveBeenCalledWith('Lock taken over — the previous holder has been notified.');
+  });
+
   it('offers unlock for a lock the server says is mine', async () => {
     (window as any).C2C_PROJECT = { id: 'proj-1' };
     apiRequest.mockImplementation(async (method: string, url: string) => {

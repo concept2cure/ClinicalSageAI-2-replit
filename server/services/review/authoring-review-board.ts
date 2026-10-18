@@ -44,6 +44,14 @@
  */
 
 import type { RequestSqlClient } from '../../db/requestDb';
+import type { AuthoringReviewStanding } from '../../../shared/authoring/peer-review';
+import { fullVisibleAuthoringSnapshot, authoringSnapshotHash } from '../authoring/authoring-content-digests';
+import { authoringReviewStanding } from '../authoring/peer-review';
+import { AuthoringReadScopeError, getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
+import { boardActorId, deriveState, isOpenWork } from './authoring-review-board-standing';
+import { relTime, excerpt } from './authoring-review-board-formatting';
+export { deriveState, isOpenWork } from './authoring-review-board-standing';
+export { relTime, excerpt } from './authoring-review-board-formatting';
 
 export type ReviewScope = 'mine' | 'requested' | 'all';
 
@@ -53,6 +61,8 @@ export interface ReviewRequestView {
   reviewer: string;
   reviewerEmail: string | null;
   status: string;
+  /** Raw status is historical; standing verifies its saved-content binding. */
+  standing: AuthoringReviewStanding;
   comments: string | null;
   requestedBy: string | null;
   requestedAt: string | null;
@@ -73,6 +83,7 @@ export interface ReviewItemView {
   reviews: ReviewRequestView[];
   myReviewId: string | null;
   myReviewStatus: string | null;
+  myReviewStanding: AuthoringReviewStanding | null;
   awaitingMyReview: boolean;
   requestedByMe: boolean;
   atMySignOff: boolean;
@@ -148,35 +159,6 @@ export interface BuildReviewBoardInput {
 
 // ─── Pure helpers ────────────────────────────────────────────────────────────
 
-const MS_DAY = 86_400_000;
-
-/** "2h ago" / "yesterday" / "3 d ago" for a past instant; null when absent. */
-export function relTime(value: string | Date | null | undefined, now = Date.now()): string | null {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  const ms = now - d.getTime();
-  if (ms < 0) return 'just now';
-  if (ms < 3_600_000) return `${Math.max(1, Math.round(ms / 60_000))}m ago`;
-  if (ms < MS_DAY) return `${Math.round(ms / 3_600_000)}h ago`;
-  const days = Math.round(ms / MS_DAY);
-  return days === 1 ? 'yesterday' : `${days} d ago`;
-}
-
-/** Plain-text excerpt of a section body (authoring stores HTML). */
-export function excerpt(html: string | null | undefined, max = 600): string {
-  if (!html) return '';
-  const clean = html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean;
-}
-
 const iso = (v: unknown): string | null => {
   if (v == null) return null;
   const d = v instanceof Date ? v : new Date(String(v));
@@ -186,36 +168,14 @@ const iso = (v: unknown): string | null => {
 const same = (a: unknown, b: unknown): boolean =>
   a != null && b != null && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 
-/**
- * The document's review state from its own status and the verdicts on it.
- * An approved document (the last signature cleared the chain) is approved
- * whatever the request rows say; otherwise the most restrictive verdict wins.
- */
-export function deriveState(docStatus: string, reviews: Array<{ status: string }>): ReviewItemView['state'] {
-  if (String(docStatus).toUpperCase() === 'APPROVED') return 'approved';
-  if (reviews.some((r) => r.status === 'rejected')) return 'rejected';
-  if (reviews.some((r) => r.status === 'changes_requested')) return 'changes-requested';
-  if (reviews.length > 0 && reviews.every((r) => r.status === 'approved')) return 'approved';
-  return 'in-review';
-}
-
-/** Is there anything left to do on this document, for anyone? */
-export function isOpenWork(
-  docStatus: string,
-  reviews: Array<{ status: string }>,
-  steps: Array<{ status: string }>,
-): boolean {
-  if (String(docStatus).toUpperCase() === 'IN_REVIEW') return true;
-  if (reviews.some((r) => r.status !== 'approved')) return true;
-  return steps.some((s) => String(s.status).toUpperCase() === 'PENDING');
-}
-
 // ─── Rows ────────────────────────────────────────────────────────────────────
 
 interface DocRow {
   id: string;
   title: string;
   module: string | null;
+  locale: string | null;
+  product_code: string | null;
   status: string;
   program_id: string | null;
   program_name: string | null;
@@ -224,7 +184,7 @@ interface DocRow {
   updated_at: string | Date | null;
   created_by: string | null;
 }
-interface ReviewRow {
+interface ReviewRow extends Record<string, unknown> {
   id: string;
   doc_id: string;
   reviewer_id: string;
@@ -235,6 +195,9 @@ interface ReviewRow {
   reviewed_at: string | Date | null;
   requested_at: string | Date | null;
   requested_by: string | null;
+  reviewed_snapshot: unknown;
+  reviewed_snapshot_hash: string | null;
+  review_binding_basis: string | null;
 }
 interface StepRow {
   id: string;
@@ -248,7 +211,7 @@ interface StepRow {
   decided_at: string | Date | null;
 }
 interface CommentCountRow { doc_id: string; open_count: number | string; total: number | string }
-interface SectionRow { doc_id: string; id: string; code: string | null; title: string | null; content: string | null }
+interface SectionRow { doc_id: string; id: string; code: string; title: string | null; content: string | null }
 interface CommentRow {
   id: string;
   doc_id: string;
@@ -282,10 +245,10 @@ const groupBy = <T extends { doc_id: string }>(rows: T[]): Map<string, T[]> => {
  * sequence of named steps rather than as SQL with a loop after it.
  */
 async function loadReviewDocuments(
-  sql: RequestSqlClient, orgId: number, programId: string | null,
+  sql: RequestSqlClient, orgId: number, programId: string | null, admittedDocumentIds: string[],
 ): Promise<DocRow[]> {
   const result = await sql.query(
-    `SELECT d.id::text AS id, d.title, d.module, d.status,
+    `SELECT d.id::text AS id, d.title, d.module, d.locale, d.product_code, d.status,
             d.client_program_id::text AS program_id,
             p.name AS program_name,
             d.current_workflow_id::text AS workflow_id,
@@ -294,6 +257,7 @@ async function loadReviewDocuments(
        LEFT JOIN regulatory_programs p
          ON p.id = d.client_program_id AND p.organization_id = d.tenant_id
       WHERE d.tenant_id = $1
+        AND d.id = ANY($3::uuid[])
         AND ($2::text IS NULL OR d.client_program_id::text = $2::text)
         AND (
           upper(d.status) = 'IN_REVIEW'
@@ -304,7 +268,7 @@ async function loadReviewDocuments(
         )
       ORDER BY d.updated_at DESC NULLS LAST
       LIMIT 200`,
-    [orgId, programId],
+    [orgId, programId, admittedDocumentIds],
   );
   return result.rows as unknown as DocRow[];
 }
@@ -313,7 +277,7 @@ interface RelatedRowsByDoc {
   reviewsByDoc: Map<string, ReviewRow[]>;
   stepsByDoc: Map<string, StepRow[]>;
   openCommentsByDoc: Map<string, number>;
-  firstSectionByDoc: Map<string, SectionRow>;
+  sectionsByDoc: Map<string, SectionRow[]>;
 }
 
 /**
@@ -327,7 +291,8 @@ async function loadRelatedRowsByDoc(
   const [reviewRows, stepRows, countRows, sectionRows] = await Promise.all([
     sql.query(
       `SELECT id::text AS id, doc_id::text AS doc_id, reviewer_id, reviewer_name, reviewer_email,
-              review_status, review_comments, reviewed_at, requested_at, requested_by
+              review_status, review_comments, reviewed_at, requested_at, requested_by,
+              reviewed_snapshot, reviewed_snapshot_hash, review_binding_basis
          FROM authoring_reviews
         WHERE tenant_id = $1 AND doc_id::text = ANY($2::text[])
         ORDER BY requested_at DESC NULLS LAST, created_at DESC`,
@@ -351,10 +316,10 @@ async function loadRelatedRowsByDoc(
       [orgId, docIds],
     ).then((r) => r.rows as unknown as CommentCountRow[]),
     sql.query(
-      `SELECT DISTINCT ON (doc_id) doc_id::text AS doc_id, id::text AS id, code, title, content
+      `SELECT doc_id::text AS doc_id, id::text AS id, code, title, content
          FROM authoring_sections
         WHERE tenant_id = $1 AND doc_id::text = ANY($2::text[])
-        ORDER BY doc_id, order_index ASC NULLS LAST, created_at ASC`,
+        ORDER BY doc_id, order_index ASC NULLS LAST, created_at ASC, id ASC`,
       [orgId, docIds],
     ).then((r) => r.rows as unknown as SectionRow[]),
   ]);
@@ -363,7 +328,7 @@ async function loadRelatedRowsByDoc(
     reviewsByDoc: groupBy(reviewRows),
     stepsByDoc: groupBy(stepRows),
     openCommentsByDoc: new Map(countRows.map((c) => [c.doc_id, Number(c.open_count)])),
-    firstSectionByDoc: new Map(sectionRows.map((s) => [s.doc_id, s])),
+    sectionsByDoc: groupBy(sectionRows),
   };
 }
 
@@ -425,13 +390,14 @@ function stepsForCurrentWorkflow(doc: DocRow, all: StepRow[]): StepRow[] {
 }
 
 /** The review requests on a document, in the API's shape. */
-function toReviewRequestViews(rows: ReviewRow[]): ReviewRequestView[] {
+function toReviewRequestViews(rows: ReviewRow[], currentSnapshotHash: string): ReviewRequestView[] {
   return rows.map((r) => ({
     id: r.id,
     reviewerId: String(r.reviewer_id),
     reviewer: reviewerLabel(r),
     reviewerEmail: r.reviewer_email ?? null,
     status: r.review_status,
+    standing: authoringReviewStanding(r, currentSnapshotHash),
     comments: r.review_comments ?? null,
     requestedBy: r.requested_by ?? null,
     requestedAt: iso(r.requested_at),
@@ -443,10 +409,15 @@ interface ScopeFlags {
   currentStep: StepRow | null;
   myReviewId: string | null;
   myReviewStatus: string | null;
+  myReviewStanding: AuthoringReviewStanding | null;
   awaitingMyReview: boolean;
   requestedByMe: boolean;
   atMySignOff: boolean;
   mine: boolean;
+}
+
+function isAssignedReviewWork(review:ReviewRow|null,standing:AuthoringReviewStanding|null):boolean {
+  return Boolean(review?.requested_by) && standing!==null && standing!=='current';
 }
 
 /**
@@ -455,10 +426,13 @@ interface ScopeFlags {
  * answer and a board that disagrees with itself is the F-6 bug again.
  */
 function deriveScopeFlags(
-  doc: DocRow, reviews: ReviewRow[], steps: StepRow[], isMe: (idOrEmail: unknown) => boolean,
+  doc: DocRow, reviews: ReviewRow[], reviewViews: ReviewRequestView[], steps: StepRow[],
+  identity: {actorId:string;isMe:(idOrEmail:unknown)=>boolean},
 ): ScopeFlags {
-  const myReview = reviews.find((r) => isMe(r.reviewer_id) || isMe(r.reviewer_email)) ?? null;
-  const awaitingMyReview = !!myReview && myReview.review_status === 'pending';
+  const {actorId,isMe}=identity;
+  const myReview = reviews.find((r) => String(r.reviewer_id) === actorId) ?? null;
+  const myReviewStanding = reviewViews.find((r) => r.id === myReview?.id)?.standing ?? null;
+  const awaitingMyReview = isAssignedReviewWork(myReview,myReviewStanding);
   // The submitter of the approval chain is not recorded on the steps; the
   // document's creator is the closest attributable stand-in for "asked for
   // this sign-off" when no review request names a requester.
@@ -470,6 +444,7 @@ function deriveScopeFlags(
     currentStep,
     myReviewId: myReview?.id ?? null,
     myReviewStatus: myReview?.review_status ?? null,
+    myReviewStanding,
     awaitingMyReview,
     requestedByMe,
     atMySignOff,
@@ -551,6 +526,7 @@ function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
     reviews: reviewViews,
     myReviewId: flags.myReviewId,
     myReviewStatus: flags.myReviewStatus,
+    myReviewStanding: flags.myReviewStanding,
     awaitingMyReview: flags.awaitingMyReview,
     requestedByMe: flags.requestedByMe,
     atMySignOff: flags.atMySignOff,
@@ -627,31 +603,41 @@ function boardMeta(
 
 /** The row the thread is shown for: the one asked for, else the first returned. */
 function selectThreadItem(items: ReviewItemView[], itemId: string | null): ReviewItemView | null {
-  return (itemId ? items.find((q) => q.id === itemId) : undefined) ?? items[0] ?? null;
+  return itemId ? items.find((q) => q.id === itemId) ?? null : items[0] ?? null;
+}
+
+function currentSnapshotHash(doc:DocRow,sections:SectionRow[]):string {
+  try { return authoringSnapshotHash(fullVisibleAuthoringSnapshot({doc,sections})); }
+  catch { throw new AuthoringReadScopeError(503,'AUTHORING_REVIEW_SNAPSHOT_UNAVAILABLE','The complete saved document could not be verified.'); }
 }
 
 // ─── The read ────────────────────────────────────────────────────────────────
 
 export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): Promise<ReviewBoardView> {
-  const { sql, orgId, userId, userEmail, scope, programId, limit, itemId } = input;
+  const { sql, orgId, userId, scope, programId, limit, itemId } = input;
   const generatedAt = new Date().toISOString();
-
-  const docs = await loadReviewDocuments(sql, orgId, programId);
+  const scopeInput = {organizationId:orgId,userId:boardActorId(userId),programId,includeOrganizationDocuments:programId===null};
+  // Admission reads identity/status only. A section grant is deliberately absent
+  // from documentIds: this queue includes full-document decisions and comments.
+  const readScope = await getCurrentAuthoringReadScope(sql, scopeInput);
+  const docs = await loadReviewDocuments(sql, orgId, programId, readScope.documentIds);
   if (docs.length === 0) {
+    await requireAuthoringReadScopeStillCurrent(sql, scopeInput, readScope);
     return { queue: [], workflows: {}, thread: [], meta: boardMeta(input, 0, null, generatedAt) };
   }
 
-  const { reviewsByDoc, stepsByDoc, openCommentsByDoc, firstSectionByDoc } =
+  const { reviewsByDoc, stepsByDoc, openCommentsByDoc, sectionsByDoc } =
     await loadRelatedRowsByDoc(sql, orgId, docs.map((d) => d.id));
-  const isMe = makeIsMe(userId, userEmail);
+  const isMe = makeIsMe(String(readScope.actor.userId), readScope.actor.email);
 
   const queue: ReviewItemView[] = [];
   const workflows: Record<string, ReviewWorkflowView> = {};
   for (const doc of docs) {
     const reviews = reviewsByDoc.get(doc.id) ?? [];
     const steps = stepsForCurrentWorkflow(doc, stepsByDoc.get(doc.id) ?? []);
-    const reviewViews = toReviewRequestViews(reviews);
-    const flags = deriveScopeFlags(doc, reviews, steps, isMe);
+    const sections = sectionsByDoc.get(doc.id) ?? [];
+    const reviewViews = toReviewRequestViews(reviews, currentSnapshotHash(doc,sections));
+    const flags = deriveScopeFlags(doc, reviews, reviewViews, steps, {actorId:String(readScope.actor.userId),isMe});
     if (!isInScope(scope, isOpenWork(doc.status, reviewViews, steps), flags)) continue;
 
     queue.push(buildQueueItem({
@@ -660,7 +646,7 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
       reviewViews,
       steps,
       flags,
-      firstSection: firstSectionByDoc.get(doc.id) ?? null,
+      firstSection: sections[0] ?? null,
       openComments: openCommentsByDoc.get(doc.id) ?? 0,
     }));
     if (steps.length > 0) workflows[doc.id] = buildWorkflowChain(steps);
@@ -670,6 +656,7 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
   const limited = queue.slice(0, limit);
   const threadItem = selectThreadItem(limited, itemId);
   const thread = threadItem ? await loadCommentThread(sql, orgId, threadItem.id) : [];
+  await requireAuthoringReadScopeStillCurrent(sql, scopeInput, readScope);
 
   return {
     queue: limited,

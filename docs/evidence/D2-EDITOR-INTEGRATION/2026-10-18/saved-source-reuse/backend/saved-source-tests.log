@@ -1,0 +1,326 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:34:28.514Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:34:34.787Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:34:34.789Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:34:34.789Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text
+{
+  "timestamp": "2026-10-18T00:34:35.714Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 2a8f7485-1c83-48f9-be7a-7e4b794050c4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > reads an all-preserved source-based build after reopen without writing or returning source text 496ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > returns explicit null only for an admitted exact document with no saved selection 31ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest
+{
+  "timestamp": "2026-10-18T00:34:36.231Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 2ce4db89-02a5-4966-8549-6d8554e603ea by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > rechecks and returns the exact ordered mixed Data Room and Vault manifest 516ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window
+{
+  "timestamp": "2026-10-18T00:34:36.646Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 06fb9b09-d4cf-4ea0-a058-4a905b4fdcc6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > finds recorded source intent beyond the general audit rail window 368ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2030-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 59b9aaff-e288-416f-8d0f-189f23b9127e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order
+{
+  "timestamp": "2028-01-01T00:00:00.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 59b9aaff-e288-416f-8d0f-189f23b9127e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source references through the existing editor HTTP > uses canonical bigint order despite backwards recorded times and opposite trail time order 610ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document
+{
+  "timestamp": "2026-10-18T00:34:37.610Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 71eb09e6-00d5-4915-931f-3b6a3b2bb086 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a current whole-document viewer to read saved references on a frozen document 354ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=false 18ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true
+{
+  "timestamp": "2026-10-18T00:34:38.044Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc bd72baa8-372e-4afe-9635-26d5359f5b19 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses section-only readers even when saved history exists=true 301ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests
+{
+  "timestamp": "2026-10-18T00:34:38.311Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b418ac27-57e8-433f-8b36-ea3ddb2cb599 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses an exact document under a different project and malformed requests 284ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant
+{
+  "timestamp": "2026-10-18T00:34:38.655Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b56c74f0-4b1e-4b4a-b49b-cd005227564d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses private-project access despite a retained document owner grant 326ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:34:38.944Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc af4ecaf2-3a3a-41f3-b4d6-d16902a2281a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent
+{
+  "timestamp": "2026-10-18T00:34:39.370Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc af4ecaf2-3a3a-41f3-b4d6-d16902a2281a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses same-length extraction corrections without falling back to older intent 746ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes
+{
+  "timestamp": "2026-10-18T00:34:39.722Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc ab5e3b2a-ec53-4d8b-8d8c-4ea0d22ab09b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > allows a source-based build recorded against eligible retained text without reopening original bytes 437ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history
+{
+  "timestamp": "2026-10-18T00:34:40.132Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a6cb1791-8086-402b-b300-03d1eda6a9dc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > current whole-document and source read admission > refuses source withdrawal after a saved build and never returns it as empty history 317ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:34:40.399Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a4e48ba1-6737-4df4-84d1-5d35fe45801c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation
+{
+  "timestamp": "2026-10-18T00:34:40.613Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a4e48ba1-6737-4df4-84d1-5d35fe45801c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest trail-operation 456ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:34:40.845Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e9942239-e2e7-48dc-8169-6871c2f98b5c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action
+{
+  "timestamp": "2026-10-18T00:34:41.069Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc e9942239-e2e7-48dc-8169-6871c2f98b5c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest chain-action 453ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:34:41.288Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a21b4805-e4d2-454b-bc58-4c96ff991d2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata
+{
+  "timestamp": "2026-10-18T00:34:41.494Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a21b4805-e4d2-454b-bc58-4c96ff991d2d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest metadata 429ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:34:41.722Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 2166f93f-21a0-49b0-b7f8-25c8b4ff9f18 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time
+{
+  "timestamp": "2026-10-18T00:34:41.931Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 2166f93f-21a0-49b0-b7f8-25c8b4ff9f18 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest time 437ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:34:42.176Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc af7d91b9-4c79-41b7-be4f-cf68ef698596 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence
+{
+  "timestamp": "2026-10-18T00:34:42.390Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc af7d91b9-4c79-41b7-be4f-cf68ef698596 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses damaged newest sequence 457ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:34:42.610Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9e16dae2-336f-49b3-8d5e-cb12a09648e9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses unchained source evidence instead of returning the valid older pair 218ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:34:42.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc a84e8460-860e-4f8e-af96-14a3311a1e15 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses orphan source evidence instead of returning the valid older pair 250ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair
+{
+  "timestamp": "2026-10-18T00:34:43.091Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 371285e0-8524-4577-a9cc-ab716ec7323f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > refuses duplicate source evidence instead of returning the valid older pair 232ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered
+{
+  "timestamp": "2026-10-18T00:34:43.313Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc d3eed556-e434-4341-a0b5-36ad96956242 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > saved source record integrity refuses older fallback > recognizes damaged unchained reference metadata even when its operation was altered 221ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false
+{
+  "timestamp": "2026-10-18T00:34:43.551Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc cda02763-7e36-4a86-b006-83026fdf7d37 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=false 236ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:34:43.770Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 02257429-66d0-4407-b531-5928828c2623 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true
+{
+  "timestamp": "2026-10-18T00:34:43.983Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 02257429-66d0-4407-b531-5928828c2623 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a new source event arriving during an admitted read with history=true 477ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck
+{
+  "timestamp": "2026-10-18T00:34:44.244Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 1c11480e-f538-42ee-be5b-e84e29492d1e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses a source change during the late record recheck 293ms
+stdout | server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification
+{
+  "timestamp": "2026-10-18T00:34:44.539Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 7383b8bd-63e3-469d-91f9-9f67a8d1bf7b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > refuses current document grant loss during source verification 269ms
+ ✓ server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts > late saved-source changes are withheld > keeps an unavailable history query distinct from successfully empty history 12ms
+
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+   Start at  00:34:26
+   Duration  17.92s (transform 3.76s, setup 90ms, import 1.41s, tests 16.11s, environment 0ms)

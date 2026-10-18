@@ -1,0 +1,23 @@
+Source: GitHub Actions Tier 5 run 38508480912 / job 115671315425
+Head: 342ffc8d0d6465a85942518da59a1d01e45c6aa4
+Conclusion: success
+Selected safe test/migration verdicts; environment output excluded.
+
+2026-10-14T03:53:29.6541012Z  Test Files  1 passed (1)
+2026-10-14T03:53:29.6541730Z       Tests  4 passed (4)
+2026-10-14T03:54:05.4193682Z ##[group]Run npm run test:e2e:smoke -- tests/e2e/authenticated-app-smoke.e2e.spec.ts
+2026-10-14T03:54:05.4194016Z npm run test:e2e:smoke -- tests/e2e/authenticated-app-smoke.e2e.spec.ts
+2026-10-14T03:54:05.4860965Z > node scripts/db/deploy-migrate.mjs && node scripts/run-e2e-smoke.mjs tests/e2e/authenticated-app-smoke.e2e.spec.ts
+2026-10-14T03:54:07.1628024Z   ✓ applied: migrations/20261014_immutable_report_tenant_index.sql
+2026-10-14T03:54:07.3436766Z   ✓ 380/380 migration files applied
+2026-10-14T03:54:19.3649482Z Running 2 tests using 1 worker
+2026-10-14T03:54:23.5870084Z   ✓  1 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:39:3 › Tier 5 — authenticated app smoke (live server) › an authenticated session renders protected surfaces (landing + projects) (3.7s)
+2026-10-14T03:54:24.3523038Z   ✓  2 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:63:3 › Tier 5 — authenticated app smoke (live server) › negative control: the SAME protected route bounces an unauthenticated visitor to /login (757ms)
+2026-10-14T03:54:24.3878123Z   2 passed (5.1s)
+2026-10-14T03:54:24.5220309Z ##[group]Run npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts
+2026-10-14T03:54:24.5220629Z npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts
+2026-10-14T03:54:24.5884712Z > node scripts/db/deploy-migrate.mjs && node scripts/run-e2e-smoke.mjs tests/e2e/golden-customer-journey.e2e.ts
+2026-10-14T03:54:25.5739481Z   ✓ applied: migrations/20261014_immutable_report_tenant_index.sql
+2026-10-14T03:54:25.7303886Z   ✓ 380/380 migration files applied
+2026-10-14T03:54:42.1701196Z   ✓  1 [chromium] › tests/e2e/golden-customer-journey.e2e.ts:87:1 › fixture-free golden journey persists evidence, review, provenance, and governed draft export (7.0s)
+2026-10-14T03:54:42.2083082Z   1 passed (7.8s)

@@ -1,0 +1,1215 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in all scope 43ms
+   → expected [ { …(26) } ] to deeply equal []
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in mine scope 15ms
+   → expected [ { …(26) } ] to deeply equal []
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in requested scope 10ms
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > a section-only grant cannot disclose the full document review or thread 12ms
+   → expected [ { …(26) } ] to deeply equal []
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an explicit full-document grant permits the canonical board and selected thread 26ms
+   → expected { …(26) } to match object { …(4) }
+(23 matching properties omitted from actual)
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not let a document ACL bypass private project admission 13ms
+   → expected [ { …(26) } ] to deeply equal []
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > retains full-ACL organization-wide documents only in the unfiltered board 11ms
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses departed actor instead of returning cached private content 15ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-user actor instead of returning cached private content 15ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-organization actor instead of returning cached private content 12ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses foreign actor instead of returning cached private content 10ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses malformed-id actor instead of returning cached private content 11ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not treat a forged reviewer email as the caller assignment 13ms
+   → expected [ { …(26) } ] to deeply equal []
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > uses the current authoritative email for sign-off ownership, not the old token label 13ms
+   → expected [ { …(26) } ] to deeply equal []
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an unavailable requested item does not silently substitute another private thread 14ms
+   → expected [ …(2) ] to deeply equal [ Array(1) ]
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read document-grant change 15ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read membership change 12ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read project-sharing change 13ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ × server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read actor-email change 13ms
+   → promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > retains legacy approval and reason as unbound open work
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a current nonempty approval is not returned as open peer work
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a second-section change invalidates the full binding while retaining exact prior facts
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a document-title change invalidates the full binding while retaining exact prior facts
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a section-title change invalidates the full binding while retaining exact prior facts
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a version change invalidates the full binding while retaining exact prior facts
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a order change invalidates the full binding while retaining exact prior facts
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a departed reviewer does not erase their verified unchanged historical verdict
+ ↓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a stale rejection does not claim the current text is rejected
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in all scope
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": false,
++     "awaitingMyReview": true,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "none",
++     "firstSectionId": "f8d48e95-090a-4677-9f80-b6e3bd8bb393",
++     "id": "6a76e274-358c-4157-9fc5-23c3bfe02a2e",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": "e6ac6859-9c75-4207-a15e-16f0db457012",
++     "myReviewStatus": "pending",
++     "passage": "Private section 1 prose",
++     "pid": "6a76e274-358c-4157-9fc5-23c3bfe02a2e",
++     "prog": "Accessible project",
++     "programId": "a0000000-0000-4000-8000-000000000001",
++     "prov": "v0.4 · draft · review requested by 11",
++     "requestedAt": "2026-10-10T12:00:00.000Z",
++     "requestedByMe": false,
++     "reviewer": "Recorded reviewer",
++     "reviews": [
++       {
++         "comments": null,
++         "id": "e6ac6859-9c75-4207-a15e-16f0db457012",
++         "requestedAt": "2026-10-10T12:00:00.000Z",
++         "requestedBy": "11",
++         "reviewedAt": null,
++         "reviewer": "Recorded reviewer",
++         "reviewerEmail": "reader@example.test",
++         "reviewerId": "22",
++         "status": "pending",
++       },
++     ],
++     "role": "Reviewer",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:121:26
+    119|     const doc = await document();
+    120|     const result = await board({scope,itemId:doc.id});
+    121|     expect(result.queue).toEqual([]);
+       |                          ^
+    122|     expect(result.thread).toEqual([]);
+    123|     expect(result.meta).toMatchObject({total:0,threadDocumentId:null});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in mine scope
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": false,
++     "awaitingMyReview": true,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "none",
++     "firstSectionId": "37199d52-aaef-40e1-baa1-15fd2ce6070f",
++     "id": "8c988016-afcc-481b-9670-9e8aff3cc180",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": "c52d0a90-5538-4757-be57-b5982f5f928d",
++     "myReviewStatus": "pending",
++     "passage": "Private section 1 prose",
++     "pid": "8c988016-afcc-481b-9670-9e8aff3cc180",
++     "prog": "Accessible project",
++     "programId": "a0000000-0000-4000-8000-000000000001",
++     "prov": "v0.4 · draft · review requested by 11",
++     "requestedAt": "2026-10-10T12:00:00.000Z",
++     "requestedByMe": false,
++     "reviewer": "Recorded reviewer",
++     "reviews": [
++       {
++         "comments": null,
++         "id": "c52d0a90-5538-4757-be57-b5982f5f928d",
++         "requestedAt": "2026-10-10T12:00:00.000Z",
++         "requestedBy": "11",
++         "reviewedAt": null,
++         "reviewer": "Recorded reviewer",
++         "reviewerEmail": "reader@example.test",
++         "reviewerId": "22",
++         "status": "pending",
++       },
++     ],
++     "role": "Reviewer",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:121:26
+    119|     const doc = await document();
+    120|     const result = await board({scope,itemId:doc.id});
+    121|     expect(result.queue).toEqual([]);
+       |                          ^
+    122|     expect(result.thread).toEqual([]);
+    123|     expect(result.meta).toMatchObject({total:0,threadDocumentId:null});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > a section-only grant cannot disclose the full document review or thread
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": false,
++     "awaitingMyReview": true,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "none",
++     "firstSectionId": "5e48bb3f-9ba5-4dbb-888c-3be2ad503f4b",
++     "id": "176d26f7-8ed3-4644-b686-6a609ecde296",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": "bc38c71b-142a-49f7-8f48-32f7492ff60a",
++     "myReviewStatus": "pending",
++     "passage": "Private section 1 prose",
++     "pid": "176d26f7-8ed3-4644-b686-6a609ecde296",
++     "prog": "Accessible project",
++     "programId": "a0000000-0000-4000-8000-000000000001",
++     "prov": "v0.4 · draft · review requested by 11",
++     "requestedAt": "2026-10-10T12:00:00.000Z",
++     "requestedByMe": false,
++     "reviewer": "Recorded reviewer",
++     "reviews": [
++       {
++         "comments": null,
++         "id": "bc38c71b-142a-49f7-8f48-32f7492ff60a",
++         "requestedAt": "2026-10-10T12:00:00.000Z",
++         "requestedBy": "11",
++         "reviewedAt": null,
++         "reviewer": "Recorded reviewer",
++         "reviewerEmail": "reader@example.test",
++         "reviewerId": "22",
++         "status": "pending",
++       },
++     ],
++     "role": "Reviewer",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:129:50
+    127|     const doc = await document();
+    128|     await grant(doc,READER,doc.sections[0]);
+    129|     expect((await board({itemId:doc.id})).queue).toEqual([]);
+       |                                                  ^
+    130|   });
+    131|   it('an explicit full-document grant permits the canonical board and …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an explicit full-document grant permits the canonical board and selected thread
+AssertionError: expected { …(26) } to match object { …(4) }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "comments": 1,
+    "doc": "Private review title",
+    "id": "2014efbd-e9c8-49a9-971e-06d80951e1b2",
+-   "myReviewStanding": "pending",
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:136:29
+    134|     const result = await board({itemId:doc.id});
+    135|     expect(result.queue).toHaveLength(1);
+    136|     expect(result.queue[0]).toMatchObject({id:doc.id,doc:'Private revi…
+       |                             ^
+    137|     expect(result.thread[0]?.body).toBe('Private reviewer comment');
+    138|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not let a document ACL bypass private project admission
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": false,
++     "awaitingMyReview": true,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "none",
++     "firstSectionId": "a166b11d-66fe-44d0-a957-01fd417f3ed3",
++     "id": "2b856f6f-14f1-411f-9f15-cf552ea657ba",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": "bb48c45f-275b-4c34-8b6a-a9a994228661",
++     "myReviewStatus": "pending",
++     "passage": "Private section 1 prose",
++     "pid": "2b856f6f-14f1-411f-9f15-cf552ea657ba",
++     "prog": "Private project",
++     "programId": "a0000000-0000-4000-8000-000000000002",
++     "prov": "v0.4 · draft · review requested by 11",
++     "requestedAt": "2026-10-10T12:00:00.000Z",
++     "requestedByMe": false,
++     "reviewer": "Recorded reviewer",
++     "reviews": [
++       {
++         "comments": null,
++         "id": "bb48c45f-275b-4c34-8b6a-a9a994228661",
++         "requestedAt": "2026-10-10T12:00:00.000Z",
++         "requestedBy": "11",
++         "reviewedAt": null,
++         "reviewer": "Recorded reviewer",
++         "reviewerEmail": "reader@example.test",
++         "reviewerId": "22",
++         "status": "pending",
++       },
++     ],
++     "role": "Reviewer",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:142:35
+    140|     const doc = await document(PRIVATE_PROGRAM);
+    141|     await grant(doc);
+    142|     expect((await board()).queue).toEqual([]);
+       |                                   ^
+    143|   });
+    144|   it('retains full-ACL organization-wide documents only in the unfilte…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses departed actor instead of returning cached private content
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.025Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "e9c86863-11da-4fa2-b603-a0160d1328c8",
++     "threadItemId": "e9c86863-11da-4fa2-b603-a0160d1328c8",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "f5ee6708-0b6f-4ef7-9566-aa3b75513572",
++       "id": "e9c86863-11da-4fa2-b603-a0160d1328c8",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "c27687b9-0d4a-4c0b-bf53-5c471dda492f",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "e9c86863-11da-4fa2-b603-a0160d1328c8",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "c27687b9-0d4a-4c0b-bf53-5c471dda492f",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "a70fd187-81b9-4419-8b52-c87ceecb182b",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "f5ee6708-0b6f-4ef7-9566-aa3b75513572",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:160:35
+    158|       if (kind === 'foreign') userId = '44';
+    159|       if (kind === 'malformed-id') userId = '22garbage';
+    160|       await expect(board({userId})).rejects.toMatchObject({status:403}…
+       |                                   ^
+    161|     },
+    162|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-user actor instead of returning cached private content
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.041Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "42266e53-d725-4f9c-845a-860fac8c1929",
++     "threadItemId": "42266e53-d725-4f9c-845a-860fac8c1929",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "f1352104-99ec-483e-af3c-7a350547976a",
++       "id": "42266e53-d725-4f9c-845a-860fac8c1929",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "0c44f15a-b350-4b99-9669-1a5732614344",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "42266e53-d725-4f9c-845a-860fac8c1929",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "0c44f15a-b350-4b99-9669-1a5732614344",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "c392903a-9c4d-41ad-b049-b381e24c236f",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "f1352104-99ec-483e-af3c-7a350547976a",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:160:35
+    158|       if (kind === 'foreign') userId = '44';
+    159|       if (kind === 'malformed-id') userId = '22garbage';
+    160|       await expect(board({userId})).rejects.toMatchObject({status:403}…
+       |                                   ^
+    161|     },
+    162|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-organization actor instead of returning cached private content
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.054Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "24592de9-b772-4a3e-a41d-bf92e57909f5",
++     "threadItemId": "24592de9-b772-4a3e-a41d-bf92e57909f5",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "d9570ac7-7d4b-48cd-9602-6b819b50bc3c",
++       "id": "24592de9-b772-4a3e-a41d-bf92e57909f5",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "5adf635b-de1e-482d-9337-98111ff0dfea",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "24592de9-b772-4a3e-a41d-bf92e57909f5",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "5adf635b-de1e-482d-9337-98111ff0dfea",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "8dab08d8-3599-46e7-b4e2-25cd7a3a4c67",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "d9570ac7-7d4b-48cd-9602-6b819b50bc3c",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:160:35
+    158|       if (kind === 'foreign') userId = '44';
+    159|       if (kind === 'malformed-id') userId = '22garbage';
+    160|       await expect(board({userId})).rejects.toMatchObject({status:403}…
+       |                                   ^
+    161|     },
+    162|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses foreign actor instead of returning cached private content
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.065Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "b95904e0-9d35-4c0d-94bf-86b1d20e732f",
++     "threadItemId": "b95904e0-9d35-4c0d-94bf-86b1d20e732f",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "8ecb6470-08c4-4b8f-8f25-3039f50d0a3f",
++       "id": "b95904e0-9d35-4c0d-94bf-86b1d20e732f",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "2c721aa1-188c-4c63-9910-84088f553e69",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "b95904e0-9d35-4c0d-94bf-86b1d20e732f",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "2c721aa1-188c-4c63-9910-84088f553e69",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "48191845-6110-4721-89b7-b889c5c090a1",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "8ecb6470-08c4-4b8f-8f25-3039f50d0a3f",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:160:35
+    158|       if (kind === 'foreign') userId = '44';
+    159|       if (kind === 'malformed-id') userId = '22garbage';
+    160|       await expect(board({userId})).rejects.toMatchObject({status:403}…
+       |                                   ^
+    161|     },
+    162|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses malformed-id actor instead of returning cached private content
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.075Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "7ee50ee3-5f8b-476a-8267-9fa3aaf82eb4",
++     "threadItemId": "7ee50ee3-5f8b-476a-8267-9fa3aaf82eb4",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "588c7fb8-f9ab-4531-8da1-33d9de32d87c",
++       "id": "7ee50ee3-5f8b-476a-8267-9fa3aaf82eb4",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "74c9616b-2b8b-42e6-813d-7d7658c94841",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "7ee50ee3-5f8b-476a-8267-9fa3aaf82eb4",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "74c9616b-2b8b-42e6-813d-7d7658c94841",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "61b56a85-7767-4906-b3ed-1db1080ecd0b",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "588c7fb8-f9ab-4531-8da1-33d9de32d87c",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:160:35
+    158|       if (kind === 'foreign') userId = '44';
+    159|       if (kind === 'malformed-id') userId = '22garbage';
+    160|       await expect(board({userId})).rejects.toMatchObject({status:403}…
+       |                                   ^
+    161|     },
+    162|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not treat a forged reviewer email as the caller assignment
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": false,
++     "awaitingMyReview": true,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "none",
++     "firstSectionId": "2c2d69f3-0bf3-4d92-93d2-b219bc648020",
++     "id": "f844a397-6ab2-4372-82b8-5d752a41c88f",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": "59feb1a4-6370-46f8-ac32-41882d1e52c1",
++     "myReviewStatus": "pending",
++     "passage": "Private section 1 prose",
++     "pid": "f844a397-6ab2-4372-82b8-5d752a41c88f",
++     "prog": "Accessible project",
++     "programId": "a0000000-0000-4000-8000-000000000001",
++     "prov": "v0.4 · draft · review requested by 11",
++     "requestedAt": "2026-10-10T12:00:00.000Z",
++     "requestedByMe": false,
++     "reviewer": "Recorded reviewer",
++     "reviews": [
++       {
++         "comments": null,
++         "id": "59feb1a4-6370-46f8-ac32-41882d1e52c1",
++         "requestedAt": "2026-10-10T12:00:00.000Z",
++         "requestedBy": "11",
++         "reviewedAt": null,
++         "reviewer": "Recorded reviewer",
++         "reviewerEmail": "reader@example.test",
++         "reviewerId": "33",
++         "status": "pending",
++       },
++     ],
++     "role": "Reviewer",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:168:49
+    166|     await sql.query('DELETE FROM authoring_reviews WHERE doc_id=$1 AND…
+    167|     await pendingReview(doc.id,OTHER_REVIEWER,'reader@example.test');
+    168|     expect((await board({scope:'mine'})).queue).toEqual([]);
+       |                                                 ^
+    169|     expect((await board()).queue[0]).toMatchObject({myReviewId:null,my…
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > uses the current authoritative email for sign-off ownership, not the old token label
+AssertionError: expected [ { …(26) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "atMySignOff": true,
++     "awaitingMyReview": false,
++     "comments": 1,
++     "conf": null,
++     "doc": "Private review title",
++     "docStatus": "draft",
++     "due": "",
++     "esig": "pending",
++     "firstSectionId": "9a8e4f79-e17d-44ac-9544-85983a0f4a4b",
++     "id": "d2587eb0-4b7c-4ede-91e6-e780ecef7157",
++     "mine": true,
++     "module": "M2",
++     "myReviewId": null,
++     "myReviewStatus": null,
++     "passage": "Private section 1 prose",
++     "pid": "d2587eb0-4b7c-4ede-91e6-e780ecef7157",
++     "prog": "Accessible project",
++     "programId": "a0000000-0000-4000-8000-000000000001",
++     "prov": "v0.4 · draft",
++     "requestedAt": null,
++     "requestedByMe": false,
++     "reviewer": "former@example.test",
++     "reviews": [],
++     "role": "APPROVER sign-off",
++     "state": "in-review",
++     "tone": "",
++   },
++ ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:180:81
+    178|       (id,workflow_id,doc_id,step_no,role,approver_email,tenant_id)
+    179|       VALUES ($1,$2,$3,1,'APPROVER','former@example.test',$4)`,[random…
+    180|     expect((await board({scope:'mine',userEmail:'former@example.test'}…
+       |                                                                                 ^
+    181|     await sql.query("UPDATE authoring_workflow_steps SET approver_emai…
+    182|     expect((await board({scope:'mine',userEmail:'former@example.test'}…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an unavailable requested item does not silently substitute another private thread
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
++   "ee24bab4-adab-4929-8a9b-eac2de5cc95f",
+    "67d2db2a-2ab2-4a3c-a2d6-17ead7caa388",
+  ]
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:189:45
+    187|     await grant(allowed);
+    188|     const result = await board({itemId:privateDoc.id});
+    189|     expect(result.queue.map(row => row.id)).toEqual([allowed.id]);
+       |                                             ^
+    190|     expect(result.thread).toEqual([]);
+    191|     expect(result.meta.threadDocumentId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read document-grant change
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.125Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "e121e6aa-a2a4-42fe-be95-2883bfee56d1",
++     "threadItemId": "e121e6aa-a2a4-42fe-be95-2883bfee56d1",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "92b756e7-b2ea-485d-9b1c-860697e812fa",
++       "id": "e121e6aa-a2a4-42fe-be95-2883bfee56d1",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "caf36d10-dca5-46a4-a430-6bb9ef2969d5",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "e121e6aa-a2a4-42fe-be95-2883bfee56d1",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "caf36d10-dca5-46a4-a430-6bb9ef2969d5",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "a293f1fa-5145-4c32-9938-5396c7cd5fcd",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "92b756e7-b2ea-485d-9b1c-860697e812fa",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:209:58
+    207|         return result;
+    208|       }};
+    209|       await expect(board({sql:changingSql,itemId:doc.id})).rejects.toM…
+       |                                                          ^
+    210|       expect(changed).toBe(true);
+    211|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read membership change
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.141Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "edb67366-13e5-4171-9b61-1d244d9d2245",
++     "threadItemId": "edb67366-13e5-4171-9b61-1d244d9d2245",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "72dc1b04-e19b-4005-b2db-9692d589878a",
++       "id": "edb67366-13e5-4171-9b61-1d244d9d2245",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "43a0c98b-5e59-455d-aebe-dbd1bde0af81",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "edb67366-13e5-4171-9b61-1d244d9d2245",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "43a0c98b-5e59-455d-aebe-dbd1bde0af81",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "9b833bc4-9bba-44ff-881a-9aeed11157e2",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "72dc1b04-e19b-4005-b2db-9692d589878a",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:209:58
+    207|         return result;
+    208|       }};
+    209|       await expect(board({sql:changingSql,itemId:doc.id})).rejects.toM…
+       |                                                          ^
+    210|       expect(changed).toBe(true);
+    211|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read project-sharing change
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.154Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "d84ea482-37c3-4468-99ec-046bfa83b20c",
++     "threadItemId": "d84ea482-37c3-4468-99ec-046bfa83b20c",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "70e530d4-ca09-48e7-9b8f-a86313a8261b",
++       "id": "d84ea482-37c3-4468-99ec-046bfa83b20c",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "5cb29a4f-f639-4234-86a7-a375a6f1958b",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "d84ea482-37c3-4468-99ec-046bfa83b20c",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "5cb29a4f-f639-4234-86a7-a375a6f1958b",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "cfde5f2f-d72f-4cec-8985-109b2d8e50d8",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "70e530d4-ca09-48e7-9b8f-a86313a8261b",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:209:58
+    207|         return result;
+    208|       }};
+    209|       await expect(board({sql:changingSql,itemId:doc.id})).rejects.toM…
+       |                                                          ^
+    210|       expect(changed).toBe(true);
+    211|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read actor-email change
+AssertionError: promise resolved "{ queue: [ { …(26) } ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "meta": {
++     "generatedAt": "2026-10-14T19:42:55.167Z",
++     "programId": null,
++     "scope": "all",
++     "threadDocumentId": "c95ba3f8-104b-4b78-99f1-1aab9b85c98c",
++     "threadItemId": "c95ba3f8-104b-4b78-99f1-1aab9b85c98c",
++     "total": 1,
++   },
++   "queue": [
++     {
++       "atMySignOff": false,
++       "awaitingMyReview": true,
++       "comments": 1,
++       "conf": null,
++       "doc": "Private review title",
++       "docStatus": "draft",
++       "due": "",
++       "esig": "none",
++       "firstSectionId": "d8bcd463-90f3-4155-ad4d-b5b119767688",
++       "id": "c95ba3f8-104b-4b78-99f1-1aab9b85c98c",
++       "mine": true,
++       "module": "M2",
++       "myReviewId": "14734667-ea9a-4843-9766-0b3726bb711e",
++       "myReviewStatus": "pending",
++       "passage": "Private section 1 prose",
++       "pid": "c95ba3f8-104b-4b78-99f1-1aab9b85c98c",
++       "prog": "Accessible project",
++       "programId": "a0000000-0000-4000-8000-000000000001",
++       "prov": "v0.4 · draft · review requested by 11",
++       "requestedAt": "2026-10-10T12:00:00.000Z",
++       "requestedByMe": false,
++       "reviewer": "Recorded reviewer",
++       "reviews": [
++         {
++           "comments": null,
++           "id": "14734667-ea9a-4843-9766-0b3726bb711e",
++           "requestedAt": "2026-10-10T12:00:00.000Z",
++           "requestedBy": "11",
++           "reviewedAt": null,
++           "reviewer": "Recorded reviewer",
++           "reviewerEmail": "reader@example.test",
++           "reviewerId": "22",
++           "status": "pending",
++         },
++       ],
++       "role": "Reviewer",
++       "state": "in-review",
++       "tone": "",
++     },
++   ],
++   "thread": [
++     {
++       "ai": false,
++       "author": "Author",
++       "body": "Private reviewer comment",
++       "id": "c357912d-7cfd-49ca-a44e-ddadb7e48f88",
++       "parentId": null,
++       "role": "§2.5.1",
++       "sectionId": "d8bcd463-90f3-4155-ad4d-b5b119767688",
++       "state": "open",
++       "when": "1m ago",
++     },
++   ],
++   "workflows": {},
+  }
+
+ ❯ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts:209:58
+    207|         return result;
+    208|       }};
+    209|       await expect(board({sql:changingSql,itemId:doc.id})).rejects.toM…
+       |                                                          ^
+    210|       expect(changed).toBe(true);
+    211|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 2 passed | 9 skipped (28)
+   Start at  19:42:51
+   Duration  3.62s (transform 200ms, setup 107ms, import 761ms, tests 2.45s, environment 0ms)

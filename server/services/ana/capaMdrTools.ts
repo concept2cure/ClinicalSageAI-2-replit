@@ -88,8 +88,12 @@ export const CREATE_COMPLAINT: AnaTool = {
       channel: { type: 'string', enum: COMPLAINT_CHANNELS },
       receivedAt: { type: 'string', description: 'ISO-8601 date/time the complaint was received.' },
       eventNarrative: { type: 'string', description: 'What happened.' },
-      patientHarm: { type: 'string', enum: HARM_LEVELS },
-      severityAssessment: { type: 'string', enum: SEVERITY_LEVELS },
+      patientHarm: {
+        type: 'string',
+        enum: HARM_LEVELS,
+        description: 'The harm the complaint reports. Required — the reportability classification is computed from it; ask the user rather than assume "none".',
+      },
+      severityAssessment: { type: 'string', enum: SEVERITY_LEVELS, description: 'The intake severity assessment. Required; ask the user.' },
       isMalfunction: { type: 'boolean' },
       anticipatesCorrection: { type: 'boolean' },
       trendThresholdCrossed: { type: 'boolean' },
@@ -98,7 +102,7 @@ export const CREATE_COMPLAINT: AnaTool = {
       deviceUdiDi: { type: 'string' },
       deviceLot: { type: 'string' },
     },
-    required: ['programId', 'source', 'channel', 'receivedAt', 'eventNarrative'],
+    required: ['programId', 'source', 'channel', 'receivedAt', 'eventNarrative', 'patientHarm', 'severityAssessment'],
   },
 };
 

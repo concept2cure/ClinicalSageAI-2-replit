@@ -85,7 +85,7 @@ run 4 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
      Tests  3 failed | 47 passed (50)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
    server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
-     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached 
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached
      Tests  1 failed | 19 passed (20)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    restored: identical
@@ -95,7 +95,7 @@ run 4 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
      Tests  1 failed | 49 passed (50)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts:
-     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached 
+     × server/services/ind-lifecycle/__tests__/icsr-delivery-outcome.test.ts > ICSR AS2 — through a proxy: corrupted answers and WAN latency > TLS 1.3: a certificate refusal 60 ms away (each way) — transport, nothing reached
      Tests  1 failed | 19 passed (20)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    restored: identical
@@ -113,19 +113,19 @@ run 4 icsr-transmission-claim.pglite.integration.test.ts:  Tests 6 passed (6)
      Tests  9 failed | 41 passed (50)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
    server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts:
-     × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — the client-authentication gate (MDN final pass) > a peer alert refusing our bytes after the write, with no response parsed, is 
+     × server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts > ICSR — the client-authentication gate (MDN final pass) > a peer alert refusing our bytes after the write, with no response parsed, is
      Tests  1 failed | 12 passed (13)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    restored: identical
 ## M6 no pre-send claim (skeptic #3)
    server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:
-     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST 
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST
      Tests  1 failed | 5 passed (6)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    restored: identical
 ## M7 claim not conditional on prepared
    server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts:
-     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST 
+     × server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST
      Tests  1 failed | 5 passed (6)
      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
    restored: identical
@@ -223,9 +223,9 @@ row status updates: transmitting, transmission_unconfirmed
    -> REJECTED TransportError: HTTPS POST failed: socket hang up
    server app handler ran: false; body bytes at app: 0; server tlsClientError: ECONNRESET
 --- r3d-sserver.probe.mts.out
-s_server -tls1_3, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL 
+s_server -tls1_3, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL
    server log: verify depth is 1, must return a certificate Using default temp DH parameters ACCEPT depth=0 CN = rogue verify error:num=18:self-signed certificate 40F7B809017F0000:error:0A000086:SSL routines:tls_process_
-s_server -tls1_2, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL 
+s_server -tls1_2, untrusted client cert -> TransportError: HTTPS POST failed: C07CCAE30B7F0000:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL
    server log: verify depth is 1, must return a certificate Using default temp DH parameters ACCEPT depth=0 CN = rogue verify error:num=18:self-signed certificate 4087ED24CD7F0000:error:0A000086:SSL routines:tls_process_
 --- r3d-hang.probe.mts.out
 200 headers + partial MDN body, then connection reset -> REJECTED RequestSentTransportError: HTTPS POST failed: the response was cut short after the whole request was sent to an authenticated server; the recipient may ho
@@ -251,4 +251,4 @@ s_server -tls1_2, untrusted client cert -> TransportError: HTTPS POST failed: C0
 === server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts ::  Tests 41 passed (41)
 === server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts ::  Tests 13 passed (13)
 === server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts ::  Tests 89 passed (89)
-eslint persistence: 
+eslint persistence:

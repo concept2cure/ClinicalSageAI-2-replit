@@ -114,6 +114,14 @@ const h = vi.hoisted(() => {
   return { tables, poolWrites, poolValues, statements, calls, fail, readFail, sealed, db, pool, audit: vi.fn() };
 });
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -128,7 +136,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 
 import reportOsRouter from '../report-os';
 import logger from '../../utils/logger';
-import { tenantStampSql } from './_report-os-route-harness';
+import { boundInsertColumn, tenantStampSql } from './_report-os-route-harness';
 
 /** Every line handed to the logger, whichever scoped logger sent it (DP-67). */
 const logs: Array<{ level: string; message: string; context: unknown }> = [];
@@ -239,6 +247,8 @@ describe('POST /deliveries platform_send: the letter, the record and the chain r
     expect(at(/^COMMIT$/)).toBeGreaterThan(at(/<audit row>/));
     expect(h.calls.find((c) => CORRESPONDENCE.test(c.text))?.params[0]).toBe(correspondenceId);
     expect(JSON.stringify(h.calls.find((c) => MEMORY.test(c.text))?.params)).toContain(`delivery:${deliveryId}`);
+    const memory = h.calls.find(c => MEMORY.test(c.text));
+    expect(boundInsertColumn(memory!.text, memory!.params, 'confidence_score')).toBeNull();
     expect(h.poolWrites, 'nothing is written outside the transaction').toEqual([]);
     expect(h.audit).toHaveBeenCalledTimes(1);
     expect(auditEntry()).toMatchObject({

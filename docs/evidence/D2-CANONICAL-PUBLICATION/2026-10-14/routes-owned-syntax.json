@@ -1,0 +1,32 @@
+{
+  "scope": "owned-file parsing and repeated object-property check; not semantic TypeScript validation",
+  "files": [
+    "server/routes/c2c/project-vault.ts",
+    "server/routes/ana-ri/stream.ts",
+    "server/routes/chat/send-message.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/routes/c2c/projects.ts",
+    "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts",
+    "server/routes/c2c/__tests__/vault-catalog-source-review.test.ts",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts",
+    "server/routes/c2c/__tests__/projects-sources-processing.test.ts",
+    "server/routes/ana-ri/__tests__/stream-read-delivery.test.ts",
+    "server/services/ana/__tests__/read-delivery-executor.test.ts"
+  ],
+  "sourceSha256": {
+    "server/routes/c2c/project-vault.ts": "492aebc73f2d12341d992b726e89701deaac578c2984a4c5912a14a2cfbb8749",
+    "server/routes/ana-ri/stream.ts": "cd561668b55c84cc18184a77061262f09ce12ca251bda306bd9328571636bda4",
+    "server/routes/chat/send-message.ts": "4369d26f74e345d22bb89efc9038f4ea1eebf99a37a9faf8108bf5a54c8c0781",
+    "server/services/ana/AnaToolExecutor.ts": "dd05ed265d2c8642132025e775028ab3f201f330ceb6a0481e95343a99a649ae",
+    "server/routes/c2c/projects.ts": "c11129539c6d2d931012f42502b17ec2707bf4c2c4af4c39c3b09855ffe6c81e",
+    "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts": "54cf05d4f6c8654ac9cc7f2914d697a6e6206fc72fbff7d0de2795e6623d6588",
+    "server/routes/c2c/__tests__/vault-catalog-source-review.test.ts": "3f7430f7bc5db5e75ae23b39708817cd825ae8c4f1e284e6459ba3e8e4ed710a",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts": "bd43234ea5eebb87585f554dd5082467713e9ab445b01a60556c01e66850b86a",
+    "server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts": "07968c0282c07b777471a03219316308e88442331966bbdf1da05bb204be4454",
+    "server/routes/c2c/__tests__/projects-sources-processing.test.ts": "1d4340eb91394beacb6711bc15f0f35740614e4237d1df4b72341352a872f4af",
+    "server/routes/ana-ri/__tests__/stream-read-delivery.test.ts": "6f0ed66256b4ca83e5c078aa1fe87826bda4f564dab3526ab4fd228aac38ea49",
+    "server/services/ana/__tests__/read-delivery-executor.test.ts": "c0bc0db4ef1502203633f5c5730635b6bc48b7c046d9ca4c3bf4cb0673a166d3"
+  },
+  "issues": []
+}

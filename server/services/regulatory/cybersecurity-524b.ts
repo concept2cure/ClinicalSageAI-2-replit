@@ -6,13 +6,14 @@
  *   - SBOM completeness against the NTIA minimum elements (supplier, component
  *     name, version, unique identifier, plus document author + timestamp and
  *     dependency relationships), with a per-component gap list.
- *   - §524B readiness: presence of the required cybersecurity artifacts (SBOM,
- *     threat model, vulnerability-management plan, security testing, secure-by-
- *     design evidence, coordinated-disclosure policy, patchability plan, security
- *     risk assessment) → a readiness score and gap list.
+ *   - §524B artifact presence: for a cyber device, which of the cybersecurity
+ *     documentation items (market-specs/software-lifecycle.ts) are recorded
+ *     present → the share present and a gap list. Presence only, not readiness.
  *
  * Pure and deterministic.
  */
+
+import { fdaCybersecurityDocumentation } from '../market-specs/software-lifecycle';
 
 // ── SBOM completeness (NTIA minimum elements) ────────────────────────────────
 
@@ -117,45 +118,77 @@ export function scoreSbomCompleteness(input: SbomInput): SbomCompletenessResult 
   };
 }
 
-// ── §524B readiness ──────────────────────────────────────────────────────────
+// ── §524B artifact presence ──────────────────────────────────────────────────
 
-export const CYBER_524B_ARTIFACTS = [
-  'sbom',
-  'threatModel',
-  'vulnerabilityManagementPlan',
-  'securityTesting',
-  'secureByDesign',
-  'coordinatedDisclosurePolicy',
-  'patchabilityPlan',
-  'securityRiskAssessment',
-] as const;
+/**
+ * The §524B artifacts: the ids of the cybersecurity documentation in
+ * market-specs/software-lifecycle.ts (CYBER_ITEMS), read through
+ * fdaCybersecurityDocumentation so there is one list. Until 2026-10-15 this
+ * module kept eight camelCase ids of its own (threatModel, secureByDesign, …).
+ */
+export const CYBER_524B_ARTIFACTS: readonly string[] = Object.freeze(
+  fdaCybersecurityDocumentation({ cyberDevice: true }).items.map((item) => item.id),
+);
 
-export type Cyber524bArtifact = (typeof CYBER_524B_ARTIFACTS)[number];
-
-export interface Cyber524bReadinessResult {
-  /** 0–1 share of required §524B artifacts present. */
-  readinessScore: number;
-  present: Cyber524bArtifact[];
-  gaps: Cyber524bArtifact[];
-  ready: boolean;
+interface Cyber524bPresenceBase {
+  /** fdaCybersecurityDocumentation's reason for the status. */
+  rationale: string;
+  /** The §524B artifacts recorded as present. */
+  present: string[];
   framework: 'FDA FD&C Act §524B';
 }
 
-/** Assess §524B premarket-cybersecurity submission readiness. */
-export function assess524bReadiness(
-  artifacts: Partial<Record<Cyber524bArtifact, boolean>>
-): Cyber524bReadinessResult {
-  const present: Cyber524bArtifact[] = [];
-  const gaps: Cyber524bArtifact[] = [];
-  for (const a of CYBER_524B_ARTIFACTS) {
-    if (artifacts[a] === true) present.push(a);
-    else gaps.push(a);
+/** Which §524B artifacts are recorded present. Nothing reads their content, so nothing says ready. */
+export type Cyber524bArtifactPresence =
+  | (Cyber524bPresenceBase & {
+      /** A cyber device: §524B applies. */
+      status: 'required';
+      /** The required artifacts not recorded as present. */
+      gaps: string[];
+      /** Share (0–1) of the required artifacts recorded as present. */
+      completeness: number;
+      /** Every required artifact is recorded as present. */
+      allPresent: boolean;
+    })
+  | (Cyber524bPresenceBase & {
+      /** Not a cyber device (§524B does not apply), or the status is not stated. */
+      status: 'not_required' | 'undetermined';
+      gaps: null;
+      completeness: null;
+      allPresent: null;
+    });
+
+/**
+ * The §524B artifacts recorded as present, against what the device's cyber-device
+ * status requires (fdaCybersecurityDocumentation). 2026-10-15: this was
+ * assess524bReadiness, which applied §524B to every device whatever its status and
+ * called the share present `readinessScore` and all-present `ready`.
+ * @throws Error naming an id that is not a §524B artifact.
+ */
+export function assess524bArtifacts(
+  facts: { cyberDevice?: boolean },
+  presentArtifactIds: readonly string[],
+): Cyber524bArtifactPresence {
+  const unknown = presentArtifactIds.filter((id) => !CYBER_524B_ARTIFACTS.includes(id));
+  if (unknown.length > 0) {
+    throw new Error(`Unknown §524B artifact id(s): ${unknown.join(', ')}. Known: ${CYBER_524B_ARTIFACTS.join(', ')}.`);
   }
+  const documentation = fdaCybersecurityDocumentation(facts);
+  const base = {
+    rationale: documentation.rationale,
+    present: CYBER_524B_ARTIFACTS.filter((id) => presentArtifactIds.includes(id)),
+    framework: 'FDA FD&C Act §524B' as const,
+  };
+  if (documentation.status !== 'required') {
+    return { ...base, status: documentation.status, gaps: null, completeness: null, allPresent: null };
+  }
+  const required = documentation.items.map((item) => item.id);
+  const gaps = required.filter((id) => !base.present.includes(id));
   return {
-    readinessScore: present.length / CYBER_524B_ARTIFACTS.length,
-    present,
+    ...base,
+    status: 'required',
     gaps,
-    ready: gaps.length === 0,
-    framework: 'FDA FD&C Act §524B',
+    completeness: (required.length - gaps.length) / required.length,
+    allPresent: gaps.length === 0,
   };
 }

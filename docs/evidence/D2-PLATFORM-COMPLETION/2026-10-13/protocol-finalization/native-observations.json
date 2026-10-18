@@ -1,0 +1,90 @@
+{
+  "tag": "protocol-native-probe-72023-mv7bvpis-903fefa4",
+  "database": "platform_ci_native_recheck_20261013",
+  "cases": {
+    "clean-control": {
+      "documentId": 7,
+      "signatureId": 10,
+      "status": "finalized",
+      "version": "1.0",
+      "signatures": 1,
+      "versions": 1,
+      "bindingBasis": "protocol-document-content-sha256",
+      "digestMatches": true
+    },
+    "same-client-structural-regression": {
+      "documentId": 8,
+      "sectionId": 92,
+      "sectionKey": "synopsis",
+      "signingPid": 3349,
+      "independentPoolPid": 3355,
+      "refusalCode": null,
+      "finalized": true,
+      "status": "finalized",
+      "returnedCompleteness": {
+        "requiredCompletionPct": 100,
+        "requiredTotal": 11,
+        "requiredComplete": 11,
+        "findings": [],
+        "readyToFinalize": true
+      },
+      "currentReadyToFinalize": false,
+      "snapshotSectionStatus": "draft",
+      "signatures": 1,
+      "versions": 1
+    },
+    "finalizer-first-content-writer": {
+      "documentId": 9,
+      "sectionId": 105,
+      "holderPid": 3356,
+      "finalizerPid": 3349,
+      "writerPid": 3355,
+      "finalizedStatus": 201,
+      "finalizedError": null,
+      "writerStatus": 201,
+      "writerError": null,
+      "status": "finalized",
+      "signatures": 1,
+      "versions": 1,
+      "queuedContentCommitted": true,
+      "signedDigest": "7658064e001bd837d393fda041093a819007fb0dd34f33450a1b25911162ea7b",
+      "currentDigest": "a3722c871b26a88f2bd42ea2034c68c8f56445d346db10af40c68510a30eafeb",
+      "digestMatches": false
+    }
+  },
+  "runtime": {
+    "database": "platform_ci_native_recheck_20261013",
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on"
+  },
+  "stores": [
+    {
+      "relname": "c2c_ana_actions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "electronic_signatures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_versions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "organizationId": 18
+}

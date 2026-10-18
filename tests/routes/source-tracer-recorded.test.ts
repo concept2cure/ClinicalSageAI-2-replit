@@ -20,6 +20,10 @@ vi.mock('../../server/services/clinical-regulatory-evidence/source-usage.service
   listCitedSections: mockListCitedSections,
 }));
 
+import { ProgramReadAccessError } from '../../server/services/c2c/current-program-access';
+import { AuthoringReadScopeError } from '../../server/services/authoring/authoring-read-scope';
+import { SourceReadAccessError } from '../../server/services/clinical-regulatory-evidence/source-read-access';
+
 import createSourceTracerRoutes from '../../server/routes/source-tracer-routes';
 
 function getHandler() {
@@ -32,11 +36,14 @@ function getHandler() {
 }
 
 const ORG = 91;
+const USER = 42;
+const REQUEST_DB = { query: vi.fn() };
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 function authedReq(query: Record<string, string> = {}) {
   const r = createMockRequest({ query });
-  (r as any).user = { organizationId: ORG };
+  (r as any).user = { organizationId: ORG, id: USER };
+  (r as any).dbClient = REQUEST_DB;
   return r;
 }
 
@@ -91,7 +98,7 @@ describe('GET /api/source-tracer/sections', () => {
       currentChecksum: 'sha-1',
     });
     // The org came from authenticated context, not the request body.
-    expect(mockListCitedSections).toHaveBeenCalledWith(ORG, { documentId: null });
+    expect(mockListCitedSections).toHaveBeenCalledWith(REQUEST_DB, ORG, { userId: USER, documentId: null });
   });
 
   it('keeps an unresolved citation in the payload with null source fields', async () => {
@@ -125,7 +132,7 @@ describe('GET /api/source-tracer/sections', () => {
     mockListCitedSections.mockResolvedValue([]);
     const res = createMockResponse();
     await getHandler()(authedReq({ documentId: DOC }), res);
-    expect(mockListCitedSections).toHaveBeenCalledWith(ORG, { documentId: DOC });
+    expect(mockListCitedSections).toHaveBeenCalledWith(REQUEST_DB, ORG, { userId: USER, documentId: DOC });
   });
 
   it('fails closed with 503 when the citation store is not provisioned', async () => {
@@ -144,4 +151,17 @@ describe('GET /api/source-tracer/sections', () => {
     await getHandler()(authedReq(), res);
     expect((res.status as any).mock.calls[0][0]).toBe(500);
   });
+
+  it.each([
+    [new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'private detail'), 404, 'PROJECT_NOT_FOUND'],
+    [new AuthoringReadScopeError(503, 'AUTHORING_ACCESS_UNAVAILABLE', 'private detail'), 503, 'AUTHORING_ACCESS_UNAVAILABLE'],
+    [new SourceReadAccessError(403, 'SOURCE_ACCESS_DENIED', 'private detail'), 403, 'SOURCE_ACCESS_DENIED'],
+  ])('retains typed refusal without source details: %s', async (error, status, code) => {
+    mockListCitedSections.mockRejectedValue(error);
+    const res = createMockResponse();
+    await getHandler()(authedReq(), res);
+    expect(res.status).toHaveBeenCalledWith(status);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: code });
+  });
+
 });

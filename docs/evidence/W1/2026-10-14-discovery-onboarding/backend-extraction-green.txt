@@ -1,0 +1,339 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+{
+  "timestamp": "2026-10-14T03:14:05.754Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·············stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written
+{
+  "timestamp": "2026-10-14T03:14:06.202Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written
+{
+  "timestamp": "2026-10-14T03:14:06.210Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written
+{
+  "timestamp": "2026-10-14T03:14:06.213Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason
+{
+  "timestamp": "2026-10-14T03:14:06.215Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > revokes the cached membership once the change commits, so a demotion takes effect on the next request
+{
+  "timestamp": "2026-10-14T03:14:06.222Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed)
+{
+  "timestamp": "2026-10-14T03:14:06.226Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed)
+{
+  "timestamp": "2026-10-14T03:14:06.226Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads
+{
+  "timestamp": "2026-10-14T03:14:06.229Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text
+{
+  "timestamp": "2026-10-14T03:14:06.232Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text
+{
+  "timestamp": "2026-10-14T03:14:06.232Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a role set to the one the member already holds writes nothing and records nothing
+{
+  "timestamp": "2026-10-14T03:14:06.236Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded
+{
+  "timestamp": "2026-10-14T03:14:06.239Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed
+{
+  "timestamp": "2026-10-14T03:14:06.241Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed
+{
+  "timestamp": "2026-10-14T03:14:06.245Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed
+{
+  "timestamp": "2026-10-14T03:14:06.247Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership
+{
+  "timestamp": "2026-10-14T03:14:06.249Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched
+{
+  "timestamp": "2026-10-14T03:14:06.252Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched
+{
+  "timestamp": "2026-10-14T03:14:06.252Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > PATCH: 409 LAST_ADMINISTRATOR, a sentence that says nothing changed, nothing written or recorded
+{
+  "timestamp": "2026-10-14T03:14:06.254Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > DELETE: 409 LAST_ADMINISTRATOR and nothing removed or recorded
+{
+  "timestamp": "2026-10-14T03:14:06.256Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > locks the administrator rows FOR UPDATE on the change transaction, before the change
+{
+  "timestamp": "2026-10-14T03:14:06.258Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > with another administrator left, an administrator can be demoted and removed
+{
+  "timestamp": "2026-10-14T03:14:06.261Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > with another administrator left, an administrator can be demoted and removed
+{
+  "timestamp": "2026-10-14T03:14:06.262Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > promoting a member to administrator is never refused by the guard
+{
+  "timestamp": "2026-10-14T03:14:06.264Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: assigned with a reason, recorded with the role before and after
+{
+  "timestamp": "2026-10-14T03:14:06.266Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: assigned with a reason, recorded with the role before and after
+{
+  "timestamp": "2026-10-14T03:14:06.268Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: refused without a reason (400 REASON_REQUIRED), nothing written
+{
+  "timestamp": "2026-10-14T03:14:06.271Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: refused without a reason (400 REASON_REQUIRED), nothing written
+{
+  "timestamp": "2026-10-14T03:14:06.272Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > a role outside the assignable list is still refused
+{
+  "timestamp": "2026-10-14T03:14:06.274Z",
+  "level": "error",
+  "message": "[platform-admin-guard] Platform grant lookup failed — denying",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+···························stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list
+{
+  "timestamp": "2026-10-14T03:14:06.719Z",
+  "level": "error",
+  "message": "[tenant-users] Error retrieving pending invitations",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:172:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at Module.atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:229:20
+
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim
+{
+  "timestamp": "2026-10-14T03:14:06.766Z",
+  "level": "error",
+  "message": "[tenant-users] Error declining invitation",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-user-invitation-handoff.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:172:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/tenant-user-invitation-handoff.test.ts:375:20
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+·······························
+
+ Test Files  5 passed (5)
+      Tests  71 passed (71)
+   Start at  03:14:04
+   Duration  2.34s (transform 834ms, setup 88ms, import 258ms, tests 1.58s, environment 0ms)

@@ -1,0 +1,12 @@
+{
+  "originalNativePhaseManifestSha256": "36880db13803dac9e0a1c68479f4ab92ca23d963616b81e40226b00487bb62d4",
+  "originalPhaseUnchanged": true,
+  "privateArtifacts": {
+    "/tmp/submission-required-deliverables-native-final-source.txt": "56a1553e7a7731562a61ccefe9a939355a94e0e735b676b649821af0ce474ca0",
+    "/tmp/submission-required-deliverables-native-final-source-observations.json": "10833c230893bf00ba4d47f794b17daca5f3a950db2531ade773b3c19d10fcab",
+    "/tmp/submission-required-deliverables-native-final-source/run-native.py": "6dbcae20c51f79cf88a3bd47f4a3e7a69089635f5141422bbc6f5bcbd32fa1b3",
+    "/tmp/submission-required-deliverables-native-final-source/frozen-source-pins.json": "a6394a4bede458b98c6c8cb10757cba13a784825121077b9b2363dc2ce64c991"
+  },
+  "noSourceOrTestEdits": true,
+  "noCleanupDDLRepairGrantsProviders": true
+}

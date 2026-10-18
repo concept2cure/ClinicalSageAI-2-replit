@@ -1,0 +1,306 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:38:17.401Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:38:17.402Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:38:17.402Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 59ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:38:20.796Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0a9641e2-8a2b-4e49-811e-b6b55f77d4bc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:38:20.812Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0a9641e2-8a2b-4e49-811e-b6b55f77d4bc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 429ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 93ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > admits an explicitly assigned private-project member and refuses revoked access to their saved import 51ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > uses the current membership role rather than a previously issued member token 6ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T22:38:21.088Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "455a3638-d7cd-4080-b46b-ef67a73ed667",
+    "recorded": "c6273b32fce7",
+    "actual": "9375701c5719"
+  }
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:38:21.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a595d5bb-9e98-4aee-b3d9-f09a50b85c9d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:38:21.184Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a595d5bb-9e98-4aee-b3d9-f09a50b85c9d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > rechecks a sharing revocation during conversion inside the real canonical creation transaction 59ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses source/project mismatches and foreign tenants without creating anything 13ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 11ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > requires a stated reason and an editor role 5ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '672e846b-b6ed-42a0-a562-6131b1fcb43d',
+    '43306538-bdfc-4c57-97d6-9a5841d89e77',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'fa8bd4a2-5fe7-4124-9695-2a0b90be3460',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T22:38:21.249Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader 96ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 81ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 11ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:38:21.367Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 065db42f-dfbd-430f-a843-1561a1f19b48 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:38:21.383Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 065db42f-dfbd-430f-a843-1561a1f19b48 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:38:21.395Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 065db42f-dfbd-430f-a843-1561a1f19b48 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:38:21.439Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 065db42f-dfbd-430f-a843-1561a1f19b48 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+{
+  "timestamp": "2026-10-13T22:38:21.651Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d47f2917-1d97-45c9-878f-7cea5d44ed29 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse 244ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false) 51ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true) 128ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true)
+{
+  "timestamp": "2026-10-13T22:38:21.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f647928d-7622-419e-a886-5664cecee05e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false) 82ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true) 137ms
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T22:38:22.839Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:38:22.841Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T22:38:22.841Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T22:38:23.011Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous)
+{
+  "timestamp": "2026-10-13T22:38:23.715Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "authoring-source-import",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      42,
+      43
+    ]
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses private project access before source metadata, bytes, conversion or creation 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (viewer) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (null) 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 7tail before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 0 before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 9007199254740992 before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 2147483648 before any lookup 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses mismatched principal and audit actor identities before any lookup 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (unanchored) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > fails closed when current sharing cannot be read 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > rechecks sharing on the creation transaction after conversion 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses foreign projects before reading source bytes or writing 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses unavailable source identities before reading bytes 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (false) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (undefined) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses altered original bytes and records no authoring document 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > escapes extracted text, keeps custom types and verified origin, and states conversion loss 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > retains Word tables/headings and makes missing codes and embedded figures visible 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a changed source inside the canonical transaction 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > reopens the exact saved draft and keeps its edits and warnings 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > uses the captured upload with the same source hash rather than guessed Vault identities 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "" 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "short" 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > drops caller supplied import-source provenance at the public draft door 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > rejects source/program SQL-shaped inputs before any SQL or byte read 1ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every phase and every task deliverable, including pre-IND work 12ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every canonical IND section and preserves form/manual drafting limits 6ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > keeps official forms, signatures, datasets and agency receipts out of narrative-draft offers 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > keeps the first coded heading and names each repeated heading in its working-code warning 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > reserves all recorded codes before assigning uncoded or repeated working identifiers 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > retains unique recorded codes and the existing single-section source coordinate without extra warnings 0ms
+
+ Test Files  4 passed (4)
+      Tests  49 passed (49)
+   Start at  22:38:12
+   Duration  11.41s (transform 3.58s, setup 121ms, import 2.38s, tests 8.28s, environment 0ms)

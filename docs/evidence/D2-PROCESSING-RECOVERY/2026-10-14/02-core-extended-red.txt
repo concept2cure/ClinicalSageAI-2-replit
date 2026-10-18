@@ -1,0 +1,510 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 27ms
+   → expected { ok: true, extracted: { …(4) } } to match object { ok: false, status: 'blocked', …(1) }
+(5 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 7ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 5ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 4ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 4ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 4ms
+   → expected undefined to be 'stale_source' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 4ms
+   → expected undefined to be 'stale_source' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 3ms
+   → expected undefined to be 'completed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 5ms
+   → expected undefined to be 'completed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 5ms
+   → expected undefined to be 'completed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 3ms
+   → expected undefined to be 'completed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 3ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 3ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 3ms
+   → expected undefined to be 'blocked' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 4ms
+   → expected undefined to be 'busy' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 8ms
+   → expected undefined to be 'completed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 5ms
+   → expected undefined to be 'completed' // Object.is equality
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":31,"status":"extracted","text":null,"report":{"examined":0,"processed":0,"unreadable":[],"dryRun":true}}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":36,"done":{"ok":true,"extracted":{"text":"Different trial: serious adverse events only.","method":"plain-text","pageCount":null,"words":6}},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":37,"committed":true,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":1,"processed":0,"unreadable":[],"dryRun":true}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":1,"unreadable":[],"dryRun":false}
+
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 10ms
+   → expected { ok: true, extracted: { …(4) } } to match object { status: 'stale_source', …(1) }
+(6 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 4ms
+   → expected undefined to be 'extraction_failed' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > dry-run is read-only and strict invalid options refuse before I/O 7ms
+   → Cannot read properties of undefined (reading '0')
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > legacy readable text is already complete without fabricated stage history 5ms
+   → expected undefined to be 'already_complete' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > diagnostic malformed rows do not starve runnable slots 12ms
+   → undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 7ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 5ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 6ms
+   → expected true to be false // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 6ms
+   → expected true to be false // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 3ms
+   → expected 1 to be +0 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 7ms
+   → expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original
+AssertionError: expected { ok: true, extracted: { …(4) } } to match object { ok: false, status: 'blocked', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
+-   "reasonCode": "ORIGINAL_BYTES_MISSING",
+-   "status": "blocked",
++   "ok": true,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:110:18
+    108|     seam.load.mockRejectedValue(Object.assign(new Error('private stora…
+    109|     const done = await processCapturedSource(ORG,id,input(),opts());
+    110|     expect(done).toMatchObject({ok:false,status:'blocked',reasonCode:'…
+       |                  ^
+    111|     expect(seam.extract).not.toHaveBeenCalled();
+    112|     expect((await state(id)).extracted_text).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+AssertionError: expected undefined to be 'blocked' // Object.is equality
+
+- Expected:
+"blocked"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:118:73
+    116|     const id = await seed('pending');
+    117|     await exec.query(`UPDATE file_uploads SET checksum_sha256=$2 WHERE…
+    118|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    119|     expect(seam.extract).not.toHaveBeenCalled();
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project
+AssertionError: expected undefined to be 'blocked' // Object.is equality
+
+- Expected:
+"blocked"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:124:97
+    122|   it('refuses wrong caller project and a missing live project', async …
+    123|     const id = await seed('pending');
+    124|     expect((await processCapturedSource(ORG,id,input({programId:random…
+       |                                                                                                 ^
+    125|     await exec.query('UPDATE regulatory_programs SET deleted_at=now() …
+    126|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction
+AssertionError: expected undefined to be 'stale_source' // Object.is equality
+
+- Expected:
+"stale_source"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:133:73
+    131|     const id = await seed('pending');
+    132|     seam.extract.mockImplementation(async () => { await exec.query('UP…
+    133|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    134|     expect((await state(id)).extracted_text).toBeNull();
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes
+AssertionError: expected undefined to be 'stale_source' // Object.is equality
+
+- Expected:
+"stale_source"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:143:73
+    141|       return {text:BODY,method:'plain-text'};
+    142|     });
+    143|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    144|     expect((await state(id)).extracted_text).toBeNull();
+    145|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await
+AssertionError: expected undefined to be 'completed' // Object.is equality
+
+- Expected:
+"completed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:152:33
+    150|     const done = processCapturedSource(ORG,id,input({bytes}),opts());
+    151|     bytes.fill(0);
+    152|     expect((await done).status).toBe('completed');
+       |                                 ^
+    153|     expect(seam.extract.mock.calls[0][0]).toEqual(Buffer.from(BODY));
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success
+AssertionError: expected undefined to be 'completed' // Object.is equality
+
+- Expected:
+"completed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:160:87
+    158|     await exec.query(`UPDATE cre_evidence_sources SET provenance=prove…
+    159|     const preExtracted = {...extracted,sourceSha256:DIGEST,extractionR…
+    160|     expect((await processCapturedSource(ORG,id,input({preExtracted}),o…
+       |                                                                                       ^
+    161|     expect(seam.extract).not.toHaveBeenCalled();
+    162|     expect((await state(id)).provenance.extractionError).toBeUndefined…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content
+AssertionError: expected undefined to be 'completed' // Object.is equality
+
+- Expected:
+"completed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:168:133
+    166|   it('does not trust arbitrary supplied pre-extracted content', async …
+    167|     const id = await seed('pending');
+    168|     expect((await processCapturedSource(ORG,id,input({preExtracted:{..…
+       |                                                                                                                                     ^
+    169|     expect(seam.extract).toHaveBeenCalledTimes(1);
+    170|     expect((await state(id)).extracted_text).toBe(BODY);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt
+AssertionError: expected undefined to be 'completed' // Object.is equality
+
+- Expected:
+"completed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:175:73
+    173|   it('healthy same identity is idempotent without extraction or new at…
+    174|     const id = await seed('pending');
+    175|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    176|     const first = await stage(id);
+    177|     seam.extract.mockClear();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2}
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"}
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1}
+AssertionError: expected undefined to be 'blocked' // Object.is equality
+
+- Expected:
+"blocked"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:185:73
+    183|   it.each([{version:2}, {version:1,state:'running',leaseExpiresAt:'not…
+    184|     const id = await seed('pending',{metadata:{dataRoomProcessing:bad}…
+    185|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    186|     expect(await stage(id)).toEqual(bad);
+    187|     expect(seam.extract).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts
+AssertionError: expected undefined to be 'busy' // Object.is equality
+
+- Expected:
+"busy"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:200:22
+    198|     const b=await processCapturedSource(ORG,id,input(),opts());
+    199|     output.resolve({text:BODY,method:'plain-text'});
+    200|     expect(b.status).toBe('busy');
+       |                      ^
+    201|     expect((await a).status).toBe('completed');
+    202|     expect(seam.extract).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure
+AssertionError: expected undefined to be 'completed' // Object.is equality
+
+- Expected:
+"completed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:218:22
+    216|     output.resolve({text:BODY,method:'plain-text'});
+    217|     const old=await a;
+    218|     expect(b.status).toBe('completed');
+       |                      ^
+    219|     expect(old.status).toBe('stale_source');
+    220|     expect(await stage(id)).toEqual(winner);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize
+AssertionError: expected { ok: true, extracted: { …(4) } } to match object { status: 'stale_source', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reasonCode": "LEASE_EXPIRED",
+-   "status": "stale_source",
++   "extracted": {
++     "method": "plain-text",
++     "pageCount": null,
++     "text": "Clinical study protocol version 2.0. Cardiotoxicity monitoring is required.",
++     "words": 9,
++   },
++   "ok": true,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:230:21
+    228|     const a=processCapturedSource(ORG,id,input(),opts());
+    229|     await entered.promise; await expire(id); output.resolve({text:BODY…
+    230|     expect(await a).toMatchObject({status:'stale_source',reasonCode:'L…
+       |                     ^
+    231|     expect((await state(id)).extracted_text).toBeNull();
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error
+AssertionError: expected undefined to be 'extraction_failed' // Object.is equality
+
+- Expected:
+"extraction_failed"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:236:73
+    234|   it('failed extraction is named and requires explicit retry, then cle…
+    235|     const id=await seed('pending'); seam.extract.mockResolvedValue({te…
+    236|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    237|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+    238|     seam.extract.mockResolvedValue({text:BODY,method:'plain-text'});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > dry-run is read-only and strict invalid options refuse before I/O
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:248:19
+    246|     const report=await processPendingSources(ORG,{...opts(),limit:1});
+    247|     expect(report).toMatchObject({dryRun:true,examined:1,processed:0});
+    248|     expect(report.items[0].status).toBe('candidate');
+       |                   ^
+    249|     expect(seam.load).not.toHaveBeenCalled(); expect(seam.extract).not…
+    250|     expect(seam.query.mock.calls.every(([sql])=>!/^\s*(UPDATE|INSERT|B…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > legacy readable text is already complete without fabricated stage history
+AssertionError: expected undefined to be 'already_complete' // Object.is equality
+
+- Expected:
+"already_complete"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:257:73
+    255|   it('legacy readable text is already complete without fabricated stag…
+    256|     const id=await seed('extracted',{text:BODY});
+    257|     expect((await processCapturedSource(ORG,id,input(),opts())).status…
+       |                                                                         ^
+    258|     expect(await stage(id)).toBeUndefined(); expect(seam.extract).not.…
+    259|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > diagnostic malformed rows do not starve runnable slots
+TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:266:26
+    264|     const report=await processPendingSources(ORG,{...opts(),limit:1});
+    265|     expect(report.examined).toBe(1);
+    266|     expect(report.items).toContainEqual(expect.objectContaining({sourc…
+       |                          ^
+    267|     expect(report.diagnosticCounts.blocked).toBeGreaterThan(0);
+    268|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:285:29
+    283|     const report = await processPendingSources(ORG, { exec });
+    284|     console.log('lost-recovery probe', JSON.stringify({ sourceId: id, …
+    285|     expect(report.examined).toBe(1);
+       |                             ^
+    286|   });
+    287|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:334:21
+    332|     expect((await state(id)).checksum).toBe(DIGEST);
+    333|     console.log('capture-byte-binding probe', JSON.stringify({ sourceI…
+    334|     expect(done.ok).toBe(false);
+       |                     ^
+    335|     expect((await state(id)).extracted_text).toBeNull();
+    336|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:343:23
+    341|     const committed = await recordSourceProcessing(exec, ORG, id, { ex…
+    342|     console.log('stale-source probe', JSON.stringify({ sourceId: id, c…
+    343|     expect(committed).toBe(false);
+       |                       ^
+    344|   });
+    345|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:350:29
+    348|     const report = await processPendingSources(ORG, { exec });
+    349|     console.log('superseded-candidate probe', JSON.stringify(report));
+    350|     expect(report.examined).toBe(0);
+       |                             ^
+    351|   });
+    352|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/27]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:360:30
+    358|     expect((await state(id)).extracted_text).toBeNull();
+    359|     console.log('failed-extraction report probe', JSON.stringify(repor…
+    360|     expect(report.processed).toBe(0);
+       |                              ^
+    361|     expect(report.unreadable).toEqual([expect.objectContaining({ sourc…
+    362|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/27]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  27 failed | 3 passed (30)
+   Start at  04:08:34
+   Duration  2.82s (transform 375ms, setup 195ms, import 244ms, tests 2.09s, environment 0ms)
+

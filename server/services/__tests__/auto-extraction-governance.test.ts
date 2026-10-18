@@ -20,7 +20,7 @@ const SOURCE_TEXT =
 vi.mock('../../db.js', () => ({
   pool: {
     query: async (sql: string) => {
-      if (/SELECT content FROM concept2cure_artifacts/.test(sql)) return { rows: [{ content: SOURCE_TEXT }] };
+      if (/SELECT a\.content FROM concept2cure_artifacts a/.test(sql)) return { rows: [{ content: SOURCE_TEXT }] };
       if (/^\s*INSERT INTO concept2cure_artifacts/i.test(sql)) {
         S.inserts.push(sql);
         return { rows: [{ id: 7 }] };

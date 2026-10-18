@@ -9,9 +9,10 @@
  * reaction phenotyping (CYP / UGT / transporter fraction-metabolized), and
  * plasma protein binding.
  *
- * NO LLM, NO network, NO database, NO imports from other services. Every
- * function is closed-form and reproducible: identical input always yields
- * identical output.
+ * NO LLM, NO network, NO database. The one import is ComputationRefusal (and
+ * refuseUnlessStated, which throws it), thrown when an input an engine needs is
+ * missing so that AnA relays it as needs_parameters. Every function is
+ * closed-form and reproducible: identical input always yields identical output.
  *
  * Scope guard: this module is NONCLINICAL and IN-VITRO focused. It deliberately
  * does NOT perform clinical DDI risk classification (that lives elsewhere). It
@@ -36,19 +37,15 @@
  * @module server/services/nonclinical-adme/nonclinical-adme-knowledge
  */
 
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 0. Shared types
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Drug modality categories that drive the nonclinical ADME strategy. */
-export type Modality =
-  | 'small_molecule'
-  | 'peptide'
-  | 'oligonucleotide'
-  | 'antibody'
-  | 'adc'
-  | 'protein'
-  | 'other_biologic';
+const MODALITIES = ['small_molecule', 'peptide', 'oligonucleotide', 'antibody', 'adc', 'protein', 'other_biologic'] as const;
+export type Modality = (typeof MODALITIES)[number];
 
 /** Development stage relative to the regulatory lifecycle. */
 export type DevelopmentStage =
@@ -61,16 +58,8 @@ export type DevelopmentStage =
   | 'nda_bla';
 
 /** Route of administration. */
-export type Route =
-  | 'oral'
-  | 'iv'
-  | 'subcutaneous'
-  | 'intramuscular'
-  | 'inhalation'
-  | 'topical'
-  | 'ophthalmic'
-  | 'intrathecal'
-  | 'other';
+const ROUTES = ['oral', 'iv', 'subcutaneous', 'intramuscular', 'inhalation', 'topical', 'ophthalmic', 'intrathecal', 'other'] as const;
+export type Route = (typeof ROUTES)[number];
 
 /** Required / recommended / optional / not-applicable flag for a study. */
 export type StudyNecessity = 'required' | 'recommended' | 'conditional' | 'optional' | 'not_applicable';
@@ -87,6 +76,8 @@ export interface AdmeStudyRecommendation {
   system: 'in_vitro' | 'in_vivo' | 'in_silico';
   /** Necessity at the queried stage. */
   necessity: StudyNecessity;
+  /** When necessity is 'conditional': the unstated input it turns on, and the grade each answer gives. */
+  conditionalOn?: string;
   /** Timing relative to FIH (first-in-human) dosing. */
   timingRelativeToFIH: string;
   /** What the study delivers. */
@@ -110,6 +101,31 @@ function freezeList<T>(items: T[]): T[] {
 
 // Closed-form normal quantile helpers are not needed here; all engines are
 // rule-based or arithmetic.
+
+/** An input a design forks on: from a closed vocabulary (allowed), or free text. */
+interface StatedInput {
+  field: string;
+  value: unknown;
+  allowed?: readonly string[];
+}
+
+/**
+ * Refuses, naming every one, the inputs a design forks on that were not stated. 2026-10-15: they were
+ * read as defaults (an unknown stage as lead_optimization, no subject as an animal study) or failed
+ * with a TypeError; AnA relays this refusal as needs_parameters.
+ */
+function refuseUnstated(fn: string, inputs: StatedInput[]): void {
+  const checks = inputs.map(({ field, value, allowed }) => ({
+    field,
+    value,
+    ok: typeof value === 'string' && (allowed ? allowed.includes(value) : value.trim() !== ''),
+    expected: allowed ? `one of ${allowed.join(', ')}` : 'text',
+  }));
+  refuseUnlessStated(fn, checks, 'designed');
+}
+
+/** A stated true or false; anything else is not stated (null). Absent is not false. */
+const statedFlag = (v: unknown): boolean | null => (typeof v === 'boolean' ? v : null);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Canonical citation registry
@@ -146,13 +162,13 @@ export interface DesignADMEProgramParams {
   modality: Modality;
   developmentStage: DevelopmentStage;
   route: Route;
-  /** True if the program is for a small-molecule new chemical entity. */
+  /** True if the program is for a small-molecule new chemical entity. Unstated is not assumed either way; it grades the human mass balance. */
   isNewChemicalEntity?: boolean;
   /** Estimated elimination half-life in hours, if known. */
   halfLife_hours?: number;
-  /** True if metabolism is expected to be the major clearance route. */
+  /** True if metabolism is expected to be the major clearance route. Unstated, the study it decides is 'conditional'. */
   metabolicClearanceExpected?: boolean;
-  /** True if the molecule is known/expected to be a CYP/transporter victim or perpetrator. */
+  /** True if the molecule is known/expected to be a CYP/transporter victim or perpetrator. Unstated: 'conditional'. */
   ddiPotentialExpected?: boolean;
   /** Intended chronic (>= 6 month) dosing. */
   chronicDosing?: boolean;
@@ -469,15 +485,18 @@ function isSmallMoleculeLike(modality: Modality): boolean {
  * the modality, development stage, and route, with timing relative to FIH.
  */
 export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEProgramResult {
-  const {
-    modality,
-    developmentStage,
-    route,
-    isNewChemicalEntity = modality === 'small_molecule',
-    metabolicClearanceExpected = modality === 'small_molecule',
-    ddiPotentialExpected = false,
-    chronicDosing = false,
-  } = params;
+  refuseUnstated('designADMEProgram', [
+    { field: 'modality', value: params.modality, allowed: MODALITIES },
+    { field: 'developmentStage', value: params.developmentStage, allowed: STAGE_ORDER },
+    { field: 'route', value: params.route, allowed: ROUTES },
+  ]);
+  const { modality, developmentStage, route, chronicDosing = false } = params;
+  // 2026-10-15: these defaulted from the modality (a small molecule "is a new chemical entity" cleared by
+  // metabolism; an ADC's clearance "is not expected to dominate") and DDI potential to false. Unstated is now
+  // null: the checklist says so, and the study each one grades is 'conditional'.
+  const isNewChemicalEntity = statedFlag(params.isNewChemicalEntity);
+  const metabolicClearanceExpected = statedFlag(params.metabolicClearanceExpected);
+  const ddiPotentialExpected = statedFlag(params.ddiPotentialExpected);
 
   const smApplies = isSmallMoleculeLike(modality);
   const curIdx = stageIndex(developmentStage);
@@ -493,11 +512,13 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
         necessity = coreNecessity(entry.studyId, {
           metabolicClearanceExpected,
           ddiPotentialExpected,
+          isNewChemicalEntity,
           chronicDosing,
           route,
         });
       } else if (entryIdx === curIdx + 1) {
-        necessity = 'recommended';
+        // Due at the next stage; the human mass balance is due of an NCE only (coreNecessity).
+        necessity = entry.studyId === 'human_mass_balance' && isNewChemicalEntity !== true ? 'conditional' : 'recommended';
       } else {
         necessity = 'optional';
       }
@@ -508,6 +529,7 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
         domain: entry.domain,
         system: entry.system,
         necessity,
+        ...(necessity === 'conditional' ? { conditionalOn: conditionText(entry.studyId, isNewChemicalEntity) } : {}),
         timingRelativeToFIH: entry.timingRelativeToFIH,
         purpose: entry.purpose,
         designNotes: freezeList(entry.designNotes),
@@ -526,7 +548,7 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
     strategyNotes.push(
       'The human radiolabeled mass-balance study is a post-FIH activity (Phase 1) and is the definitive MIST input.',
     );
-    if (!metabolicClearanceExpected) {
+    if (metabolicClearanceExpected === false) {
       strategyNotes.push(
         'Metabolic clearance is not expected to dominate; reaction-phenotyping depth may be reduced but renal/biliary excretion and transporter substrate calls become more important.',
       );
@@ -571,9 +593,11 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
   }
 
   const requiredCount = studies.filter((s: AdmeStudyRecommendation) => s.necessity === 'required').length;
+  const conditionalCount = studies.filter((s: AdmeStudyRecommendation) => s.necessity === 'conditional').length;
+  const conditional = conditionalCount > 0 ? ` and ${conditionalCount} conditional on an input not stated (see conditionalOn)` : '';
 
   const summary = smApplies
-    ? `Nonclinical ADME package for a ${modality} (${route}) at ${developmentStage}: ${requiredCount} required studies of ${studies.length} catalogued; in-vitro metabolism and DDI package precede FIH, human 14C mass balance follows in Phase 1.`
+    ? `Nonclinical ADME package for a ${modality} (${route}) at ${developmentStage}: ${requiredCount} required studies${conditional}, of ${studies.length} catalogued; in-vitro metabolism and DDI package precede FIH, human 14C mass balance${isNewChemicalEntity === true ? '' : ', where needed,'} follows in Phase 1.`
     : `For modality "${modality}", classic small-molecule ADME largely does not apply; disposition characterization follows ICH S6(R1) (catabolism, TMDD, FcRn, immunogenicity).`;
 
   return {
@@ -590,10 +614,32 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
 }
 
 interface NecessityContext {
-  metabolicClearanceExpected: boolean;
-  ddiPotentialExpected: boolean;
+  /** null: not stated. */
+  metabolicClearanceExpected: boolean | null;
+  /** null: not stated. */
+  ddiPotentialExpected: boolean | null;
+  /** null: not stated. */
+  isNewChemicalEntity: boolean | null;
   chronicDosing: boolean;
   route: Route;
+}
+
+/** What a study graded 'conditional' turns on: the unstated input, and the grade each answer gives. */
+const CONDITIONAL_ON: Record<string, string> = {
+  reaction_phenotyping:
+    'metabolicClearanceExpected (not stated): required when metabolism is the major clearance route, recommended when it is not',
+  transporter_inhibition:
+    'ddiPotentialExpected (not stated): required when CYP/transporter DDI potential is expected, recommended when it is not',
+  human_mass_balance:
+    'isNewChemicalEntity (not stated): required for a new chemical entity; for a previously approved active moiety, whether its human mass balance and metabolite profile are already characterized for this route and formulation decides it',
+};
+
+/** The human mass balance of a program stated not to be an NCE: this engine grades it 'required' for an NCE only. */
+const MASS_BALANCE_NOT_NCE =
+  'isNewChemicalEntity is false (stated), and required is the grade for an NCE only: for a previously approved active moiety, whether its human mass balance and metabolite profile are already characterized for this route and formulation decides it (not stated)';
+
+function conditionText(studyId: string, isNCE: boolean | null): string {
+  return studyId === 'human_mass_balance' && isNCE === false ? MASS_BALANCE_NOT_NCE : CONDITIONAL_ON[studyId];
 }
 
 function coreNecessity(studyId: string, ctx: NecessityContext): StudyNecessity {
@@ -616,14 +662,16 @@ function coreNecessity(studyId: string, ctx: NecessityContext): StudyNecessity {
     return 'required';
   }
   if (studyId === 'human_mass_balance') {
-    // Required for an NCE program but performed after FIH.
-    return 'required';
+    // Required for an NCE program but performed after FIH. 2026-10-15: it was 'required' whatever was stated,
+    // so a program stated not to be an NCE, or whose NCE status was not stated, was graded as one.
+    return ctx.isNewChemicalEntity === true ? 'required' : 'conditional';
   }
   if (studyId === 'transporter_inhibition') {
+    if (ctx.ddiPotentialExpected === null) return 'conditional';
     return ctx.ddiPotentialExpected ? 'required' : 'recommended';
   }
-  if (studyId === 'reaction_phenotyping' && !ctx.metabolicClearanceExpected) {
-    return 'recommended';
+  if (studyId === 'reaction_phenotyping' && ctx.metabolicClearanceExpected !== true) {
+    return ctx.metabolicClearanceExpected === false ? 'recommended' : 'conditional';
   }
   if (alwaysRequired.has(studyId)) {
     if (studyId === 'caco2_permeability' && ctx.route === 'iv') {
@@ -637,7 +685,7 @@ function coreNecessity(studyId: string, ctx: NecessityContext): StudyNecessity {
 function buildFihChecklist(
   smApplies: boolean,
   studies: AdmeStudyRecommendation[],
-  isNCE: boolean,
+  isNCE: boolean | null,
 ): string[] {
   if (!smApplies) {
     return freezeList([
@@ -648,16 +696,22 @@ function buildFihChecklist(
   }
   const preFih = studies.filter(
     (s: AdmeStudyRecommendation) =>
-      s.timingRelativeToFIH.toLowerCase().includes('before fih') && s.necessity === 'required',
+      s.timingRelativeToFIH.toLowerCase().includes('before fih') &&
+      (s.necessity === 'required' || s.necessity === 'conditional'),
   );
   const out: string[] = [];
   out.push('Before FIH, the following nonclinical ADME deliverables should be in hand:');
   for (const s of preFih) {
-    out.push(`- ${s.name} (${s.domain}, ${s.system})`);
+    out.push(`- ${s.name} (${s.domain}, ${s.system})${s.conditionalOn ? ` — conditional on ${s.conditionalOn}` : ''}`);
   }
-  out.push('After FIH (Phase 1): human radiolabeled (14C) mass-balance / ADME study to finalize the MIST assessment.');
-  if (isNCE) {
+  const massBalanceCondition = isNCE === true ? '' : ` — conditional on ${conditionText('human_mass_balance', isNCE)}`;
+  out.push(`After FIH (Phase 1): human radiolabeled (14C) mass-balance / ADME study to finalize the MIST assessment${massBalanceCondition}.`);
+  if (isNCE === true) {
     out.push('This is a new chemical entity — the full in-vitro metabolism and DDI package is expected before FIH per ICH M3(R2).');
+  } else if (isNCE === null) {
+    out.push(
+      'Whether this is a new chemical entity (isNewChemicalEntity) was not stated, so it is not assumed; for an NCE the full in-vitro metabolism and DDI package is expected before FIH per ICH M3(R2).',
+    );
   }
   return out;
 }
@@ -715,15 +769,18 @@ export interface DesignMassBalanceStudyResult {
 export function designMassBalanceStudy(
   params: DesignMassBalanceStudyParams,
 ): DesignMassBalanceStudyResult {
+  refuseUnstated('designMassBalanceStudy', [{ field: 'subject', value: params.subject, allowed: ['human', 'animal'] }]);
   const {
     subject,
     isotope = '14C',
-    route = 'oral',
     halfLife_hours,
     slowEliminationExpected = false,
     biliaryExcretionSuspected = false,
     species,
   } = params;
+  // 2026-10-15: route defaulted to 'oral', so a design nobody gave a route for read "Route of administration: oral."
+  const route = params.route ?? null;
+  const routeText = route ?? 'route not stated';
 
   const labelPositionGuidance: string[] = [
     'Place the radiolabel at a metabolically stable position so the label tracks the molecule (and its metabolic core) rather than being lost as a one-carbon or small fragment.',
@@ -753,7 +810,11 @@ export function designMassBalanceStudy(
       doseGuidance.push(`Species for this study: ${species}.`);
     }
   }
-  doseGuidance.push(`Route of administration: ${route}.`);
+  doseGuidance.push(
+    route === null
+      ? 'Route of administration: not stated (route); the radiolabeled dose normally follows the intended clinical route.'
+      : `Route of administration: ${route}.`,
+  );
 
   const collectionSchedule: string[] = [
     'Collect ALL excreta to achieve mass balance: urine and feces are mandatory.',
@@ -816,8 +877,8 @@ export function designMassBalanceStudy(
 
   const summary =
     subject === 'human'
-      ? `Single-dose ${isotope} human mass-balance/ADME study (${route}): target >= 90% recovery, collect urine/feces (+ expired air / bile as needed), AUC-pooled plasma metabolite profiling to finalize MIST.`
-      : `${isotope} animal mass-balance study${species ? ` in ${species}` : ''} (${route}): characterize excretion routes and cross-species metabolites, target >= 90% recovery.`;
+      ? `Single-dose ${isotope} human mass-balance/ADME study (${routeText}): target >= 90% recovery, collect urine/feces (+ expired air / bile as needed), AUC-pooled plasma metabolite profiling to finalize MIST.`
+      : `${isotope} animal mass-balance study${species ? ` in ${species}` : ''} (${routeText}): characterize excretion routes and cross-species metabolites, target >= 90% recovery.`;
 
   return {
     subject,
@@ -876,13 +937,14 @@ export interface AssessMetaboliteSafetyParams {
 /** Per-metabolite MIST verdict. */
 export interface MetaboliteVerdict {
   name: string;
-  percentOfTotalDrugRelated: number;
-  /** True when the metabolite exceeds the 10% MIST threshold. */
-  exceedsThreshold: boolean;
+  /** The stated share of total drug-related exposure; null when none was stated. */
+  percentOfTotalDrugRelated: number | null;
+  /** True when the metabolite exceeds the 10% MIST threshold; null when its share was not stated. */
+  exceedsThreshold: boolean | null;
   /** True when adequate animal coverage is demonstrated. */
   animalCoverageAdequate: boolean | 'unknown';
-  /** Classification of the metabolite. */
-  classification: 'no_action' | 'monitor' | 'qualification_needed' | 'human_unique_qualification';
+  /** Classification of the metabolite; 'not_assessed' when its exposure share was not stated. */
+  classification: 'no_action' | 'monitor' | 'qualification_needed' | 'human_unique_qualification' | 'not_assessed';
   rationale: string[];
 }
 
@@ -895,12 +957,77 @@ export interface AssessMetaboliteSafetyResult {
   disproportionateOrMajor: string[];
   /** Names of human-unique metabolites of concern. */
   humanUniqueOfConcern: string[];
-  /** Overall whether nonclinical qualification activity is triggered. */
-  qualificationTriggered: boolean;
+  /**
+   * Overall whether nonclinical qualification activity is triggered. null when no
+   * metabolite data were supplied, or a metabolite was not assessed and none triggers it.
+   */
+  qualificationTriggered: boolean | null;
+  /** Metabolites whose exposure share was not stated, so MIST was not assessed for them. */
+  notAssessed: string[];
   /** Recommended actions. */
   recommendedActions: string[];
   citations: Citation[];
   summary: string;
+}
+
+const SHARE_NOT_STATED =
+  'Its share of total drug-related exposure (percentOfTotalDrugRelated) was not stated, so whether it exceeds the ' +
+  '10% MIST threshold was not assessed.';
+
+/** A stated exposure share, or null: a missing value or a non-number is not a share. */
+function statedShare(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/** What a MIST result concludes, given what was and was not assessed. */
+interface MistConclusionInput {
+  triggered: boolean;
+  metaboliteCount: number;
+  notAssessed: string[];
+  majorCount: number;
+  humanUniqueCount: number;
+}
+
+/**
+ * The overall verdict, the leading actions and the summary. 2026-10-15: an empty list and
+ * metabolites never assessed both read "no additional nonclinical qualification triggered";
+ * neither is a finding, so the verdict is null for them unless something else triggers it.
+ */
+function mistConclusion(c: MistConclusionInput): { qualificationTriggered: boolean | null; actions: string[]; summary: string } {
+  const names = c.notAssessed.join(', ');
+  const notAssessedAction = `Not assessed: ${names} — state each one's share of total drug-related exposure (percentOfTotalDrugRelated).`;
+  if (c.triggered) {
+    return {
+      qualificationTriggered: true,
+      actions: [
+        'Demonstrate adequate animal exposure to each disproportionate/human-unique metabolite, or conduct nonclinical studies on the metabolite itself (synthesized standard).',
+        'Where animal coverage is absent, options include selecting an alternate tox species that forms the metabolite, dosing the metabolite directly, or generic toxicology of the metabolite.',
+        ...(c.notAssessed.length > 0 ? [notAssessedAction] : []),
+      ],
+      summary:
+        `MIST: ${c.majorCount} metabolite(s) exceed 10% of total drug-related exposure; ${c.humanUniqueCount} human-unique. Nonclinical qualification or additional animal coverage is triggered.` +
+        (c.notAssessed.length > 0 ? ` Not assessed (exposure share not stated): ${names}.` : ''),
+    };
+  }
+  if (c.metaboliteCount === 0) {
+    return {
+      qualificationTriggered: null,
+      actions: ['No metabolite data were supplied, so MIST was not assessed: give each circulating human metabolite with its share of total drug-related exposure.'],
+      summary: 'MIST: no metabolite data supplied; MIST not assessed.',
+    };
+  }
+  if (c.notAssessed.length > 0) {
+    return {
+      qualificationTriggered: null,
+      actions: [notAssessedAction],
+      summary: `MIST: not assessed for ${c.notAssessed.length} metabolite(s) whose exposure share was not stated (${names}); no qualification verdict is given.`,
+    };
+  }
+  return {
+    qualificationTriggered: false,
+    actions: ['No metabolite exceeds the 10% threshold without adequate animal coverage — no additional nonclinical metabolite qualification is triggered on current data.'],
+    summary: 'MIST: no metabolite exceeds the 10% threshold without adequate animal coverage; no additional nonclinical qualification triggered on current data.',
+  };
 }
 
 /**
@@ -918,10 +1045,23 @@ export function assessMetaboliteSafety(
     chronicUse = false,
   } = params;
 
+  if (!Array.isArray(metabolites)) {
+    throw new ComputationRefusal(
+      'missing_input',
+      'assessMetaboliteSafety: metabolites is required — each circulating human metabolite with its share of total ' +
+        'drug-related exposure. No MIST assessment is made without it.',
+      'metabolites',
+    );
+  }
+
   const thresholdPercent = 10;
 
   const perMetabolite: MetaboliteVerdict[] = metabolites.map((m: MetaboliteInput) => {
-    const exceeds = m.percentOfTotalDrugRelated > thresholdPercent;
+    // 2026-10-15: an unstated share was compared as given, and undefined > 10 is false, so the
+    // metabolite was "below the 10% MIST threshold" ('no_action', "At undefined% ..."). A share
+    // that is not a number is now not assessed, and exceedsThreshold is null.
+    const share = statedShare(m.percentOfTotalDrugRelated);
+    const exceeds = share === null ? null : share > thresholdPercent;
     let coverage: boolean | 'unknown';
     if (typeof m.humanToAnimalExposureRatio === 'number') {
       // Animal coverage adequate when animal exposure >= human exposure,
@@ -939,13 +1079,18 @@ export function assessMetaboliteSafety(
       rationale.push(
         'Metabolite is human-unique (not formed at meaningful levels in tox species); animal toxicology cannot have covered it.',
       );
-      if (exceeds) {
+      if (exceeds === true) {
         rationale.push('Exceeds the 10% MIST threshold — nonclinical characterization/qualification is expected.');
-      } else {
+      } else if (exceeds === false) {
         rationale.push(
           'Below 10% but human-unique — evaluate whether qualification is warranted, particularly for structural alerts or chronic use.',
         );
+      } else {
+        rationale.push(SHARE_NOT_STATED);
       }
+    } else if (exceeds === null) {
+      classification = 'not_assessed';
+      rationale.push(SHARE_NOT_STATED);
     } else if (!exceeds) {
       classification = 'no_action';
       rationale.push(
@@ -981,7 +1126,7 @@ export function assessMetaboliteSafety(
 
     return {
       name: m.name,
-      percentOfTotalDrugRelated: m.percentOfTotalDrugRelated,
+      percentOfTotalDrugRelated: share,
       exceedsThreshold: exceeds,
       animalCoverageAdequate: coverage,
       classification,
@@ -997,24 +1142,21 @@ export function assessMetaboliteSafety(
     .filter((v: MetaboliteVerdict) => v.classification === 'human_unique_qualification')
     .map((v: MetaboliteVerdict) => v.name);
 
-  const qualificationTriggered = perMetabolite.some(
-    (v: MetaboliteVerdict) =>
-      v.classification === 'qualification_needed' || v.classification === 'human_unique_qualification',
-  );
+  const notAssessed = perMetabolite
+    .filter((v: MetaboliteVerdict) => v.classification === 'not_assessed')
+    .map((v: MetaboliteVerdict) => v.name);
+  const conclusion = mistConclusion({
+    triggered: perMetabolite.some(
+      (v: MetaboliteVerdict) =>
+        v.classification === 'qualification_needed' || v.classification === 'human_unique_qualification',
+    ),
+    metaboliteCount: metabolites.length,
+    notAssessed,
+    majorCount: disproportionateOrMajor.length,
+    humanUniqueCount: humanUniqueOfConcern.length,
+  });
 
-  const recommendedActions: string[] = [];
-  if (qualificationTriggered) {
-    recommendedActions.push(
-      'Demonstrate adequate animal exposure to each disproportionate/human-unique metabolite, or conduct nonclinical studies on the metabolite itself (synthesized standard).',
-    );
-    recommendedActions.push(
-      'Where animal coverage is absent, options include selecting an alternate tox species that forms the metabolite, dosing the metabolite directly, or generic toxicology of the metabolite.',
-    );
-  } else {
-    recommendedActions.push(
-      'No metabolite exceeds the 10% threshold without adequate animal coverage — no additional nonclinical metabolite qualification is triggered on current data.',
-    );
-  }
+  const recommendedActions: string[] = [...conclusion.actions];
   recommendedActions.push(
     'Base the MIST comparison on steady-state human exposure; metabolite percentages from a single-dose study should be confirmed at steady state.',
   );
@@ -1035,20 +1177,17 @@ export function assessMetaboliteSafety(
     { source: CITATIONS.ICH_M3R2, detail: 'Overall nonclinical safety context for metabolite testing.' },
   ];
 
-  const summary = qualificationTriggered
-    ? `MIST: ${disproportionateOrMajor.length} metabolite(s) exceed 10% of total drug-related exposure; ${humanUniqueOfConcern.length} human-unique. Nonclinical qualification or additional animal coverage is triggered.`
-    : `MIST: no metabolite exceeds the 10% threshold without adequate animal coverage; no additional nonclinical qualification triggered on current data.`;
-
   return {
     exposureBasis,
     thresholdPercent,
     perMetabolite,
     disproportionateOrMajor,
     humanUniqueOfConcern,
-    qualificationTriggered,
+    qualificationTriggered: conclusion.qualificationTriggered,
+    notAssessed,
     recommendedActions,
     citations,
-    summary,
+    summary: conclusion.summary,
   };
 }
 
@@ -1056,15 +1195,18 @@ export function assessMetaboliteSafety(
 // 5. Toxicokinetics (ICH S3A) design
 // ─────────────────────────────────────────────────────────────────────────────
 
+const TK_STUDY_TYPES = [
+  'single_dose',
+  'repeat_dose_rodent',
+  'repeat_dose_nonrodent',
+  'carcinogenicity',
+  'reproductive_dart',
+  'juvenile',
+] as const;
+
 export interface DesignToxicokineticsParams {
   /** Tox study type the TK is embedded in. */
-  studyType:
-    | 'single_dose'
-    | 'repeat_dose_rodent'
-    | 'repeat_dose_nonrodent'
-    | 'carcinogenicity'
-    | 'reproductive_dart'
-    | 'juvenile';
+  studyType: (typeof TK_STUDY_TYPES)[number];
   species: string;
   route: Route;
   /** Number of dose groups (excluding control), if known. */
@@ -1117,6 +1259,11 @@ export interface DesignToxicokineticsResult {
 export function designToxicokinetics(
   params: DesignToxicokineticsParams,
 ): DesignToxicokineticsResult {
+  refuseUnstated('designToxicokinetics', [
+    { field: 'studyType', value: params.studyType, allowed: TK_STUDY_TYPES },
+    { field: 'species', value: params.species },
+    { field: 'route', value: params.route, allowed: ROUTES },
+  ]);
   const {
     studyType,
     species,
@@ -1228,13 +1375,18 @@ export function designToxicokinetics(
   }
 
   const designConsiderations: string[] = [];
-  if (useSatelliteGroup) {
+  // 2026-10-15: an unstated useSatelliteGroup was read as false: "Main-study animals are sampled for TK".
+  if (useSatelliteGroup === true) {
     designConsiderations.push(
       'Satellite (TK) animals are used so that TK blood sampling does not compromise the main-study toxicology endpoints — appropriate when sampling burden is high (e.g., rodents).',
     );
-  } else {
+  } else if (useSatelliteGroup === false) {
     designConsiderations.push(
       'Main-study animals are sampled for TK; ensure the sampling volume/frequency does not confound toxicology endpoints (favor microsampling).',
+    );
+  } else {
+    designConsiderations.push(
+      'Whether TK is sampled from a satellite group or from main-study animals (useSatelliteGroup) was not stated: satellite animals keep TK sampling from compromising main-study endpoints (common in rodents); main-study sampling must not confound toxicology endpoints (favor microsampling).',
     );
   }
   if (typeof doseGroups === 'number') {
@@ -1390,7 +1542,7 @@ export function designReactionPhenotyping(
 ): DesignReactionPhenotypingResult {
   const {
     candidateEnzymes,
-    metabolismMajorClearance = true,
+    metabolismMajorClearance,
     fractionMetabolic,
     nonCypSuspected = false,
     preliminaryFm,
@@ -1412,9 +1564,10 @@ export function designReactionPhenotyping(
     }
   }
 
-  // Warranted unless metabolism is clearly negligible.
+  // Warranted unless metabolism is clearly negligible. 2026-10-15: metabolismMajorClearance defaulted to
+  // true, which overrode a stated fractionMetabolic below 0.25; unstated, the stated fraction decides.
   const warranted =
-    metabolismMajorClearance ||
+    metabolismMajorClearance === true ||
     (typeof fractionMetabolic === 'number' ? fractionMetabolic >= 0.25 : true);
 
   const approaches: string[] = [
@@ -1538,7 +1691,8 @@ export interface SpeciesBindingResult {
 }
 
 export interface AssessProteinBindingResult {
-  method: NonNullable<AssessProteinBindingParams['method']>;
+  /** The stated method; null when none was stated. */
+  method: NonNullable<AssessProteinBindingParams['method']> | null;
   perSpecies: SpeciesBindingResult[];
   /** Human fraction unbound, if human data present. */
   humanFractionUnbound?: number;
@@ -1560,6 +1714,41 @@ function bindingCategory(fu: number): string {
   return 'low_binding (<70% bound)';
 }
 
+/** The per-species data; without them there is nothing to assess, so the call is refused. */
+function requiredSpeciesData(value: unknown): SpeciesBindingInput[] {
+  if (Array.isArray(value)) return value as SpeciesBindingInput[];
+  throw new ComputationRefusal(
+    'missing_input',
+    'assessProteinBinding: speciesData is required — the fraction unbound or percent bound per species, human included.',
+    'speciesData',
+  );
+}
+
+/**
+ * The stated method, the caveat it carries and how the summary names it. 2026-10-15: an
+ * unstated method was reported as 'equilibrium_dialysis' ("Plasma protein binding by
+ * equilibrium_dialysis: ..."), which also dropped the correction owed to other methods.
+ */
+function describeMethod(stated: AssessProteinBindingParams['method']): {
+  method: AssessProteinBindingResult['method'];
+  caveat: string | null;
+  how: string;
+} {
+  if (stated === undefined || stated === null) {
+    return {
+      method: null,
+      caveat:
+        'The method was not stated: record it. Values from ultrafiltration or ultracentrifugation need correction for non-specific binding and validation against equilibrium dialysis for highly bound compounds.',
+      how: '(method not stated)',
+    };
+  }
+  const caveat =
+    stated === 'equilibrium_dialysis'
+      ? null
+      : `Method specified is ${stated}; if ultrafiltration/ultracentrifugation is used, correct for non-specific binding and validate against equilibrium dialysis for highly bound compounds.`;
+  return { method: stated, caveat, how: `by ${stated}` };
+}
+
 /**
  * assessProteinBinding — plasma protein binding assessment: method, fraction
  * unbound, cross-species comparison, and implications for free-drug exposure
@@ -1568,11 +1757,9 @@ function bindingCategory(fu: number): string {
 export function assessProteinBinding(
   params: AssessProteinBindingParams,
 ): AssessProteinBindingResult {
-  const {
-    speciesData,
-    method = 'equilibrium_dialysis',
-    concentrationDependentSuspected = false,
-  } = params;
+  const { concentrationDependentSuspected = false } = params;
+  const speciesData = requiredSpeciesData(params.speciesData);
+  const { method, caveat, how } = describeMethod(params.method);
 
   const perSpecies: SpeciesBindingResult[] = speciesData.map((d: SpeciesBindingInput) => {
     let fu: number;
@@ -1618,11 +1805,7 @@ export function assessProteinBinding(
     'Measure at multiple concentrations spanning the expected therapeutic range to detect saturable (concentration-dependent) binding.',
     'Use the SAME method across species so the cross-species comparison is internally consistent.',
   ];
-  if (method !== 'equilibrium_dialysis') {
-    methodGuidance.push(
-      `Method specified is ${method}; if ultrafiltration/ultracentrifugation is used, correct for non-specific binding and validate against equilibrium dialysis for highly bound compounds.`,
-    );
-  }
+  if (caveat) methodGuidance.push(caveat);
 
   const freeDrugImplications: string[] = [
     'Only the unbound (free) drug is available to distribute, bind targets, be metabolized, and be eliminated — interpret exposure and safety margins on a free (unbound) basis when binding differs across species.',
@@ -1658,10 +1841,10 @@ export function assessProteinBinding(
 
   const summary =
     typeof humanFractionUnbound === 'number'
-      ? `Plasma protein binding by ${method}: human fu = ${humanFractionUnbound}${
+      ? `Plasma protein binding ${how}: human fu = ${humanFractionUnbound}${
           typeof maxSpeciesFoldDifference === 'number' ? `, cross-species fu spread ~${maxSpeciesFoldDifference}-fold` : ''
         }; interpret margins on a free-drug basis.`
-      : `Plasma protein binding by ${method}: provide human plasma data to anchor free-drug margins.`;
+      : `Plasma protein binding ${how}: provide human plasma data to anchor free-drug margins.`;
 
   return {
     method,

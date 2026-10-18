@@ -1,0 +1,248 @@
+{
+  "projection": "ESLint diagnostics and counts only; embedded source fields omitted. Full raw originals remain in /tmp and are separately pinned.",
+  "phases": {
+    "base": {
+      "files": 9,
+      "errors": 0,
+      "warnings": 1,
+      "records": [
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-logic.ts",
+          "errorCount": 0,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "complexity",
+              "severity": 1,
+              "message": "Function 'renderProtocolMarkdown' has a complexity of 23. Maximum allowed is 15.",
+              "line": 120,
+              "column": 8,
+              "messageId": "complex",
+              "endLine": 120,
+              "endColumn": 39
+            }
+          ]
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-service.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    "actual-first": {
+      "files": 9,
+      "errors": 0,
+      "warnings": 3,
+      "records": [
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+          "errorCount": 0,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "max-lines",
+              "severity": 1,
+              "message": "File has too many lines (505). Maximum allowed is 500.",
+              "line": 570,
+              "column": 1,
+              "messageId": "exceed",
+              "endLine": 575,
+              "endColumn": 1
+            }
+          ]
+        },
+        {
+          "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-logic.ts",
+          "errorCount": 0,
+          "warningCount": 2,
+          "messages": [
+            {
+              "ruleId": "complexity",
+              "severity": 1,
+              "message": "Function 'signatureBlockLines' has a complexity of 23. Maximum allowed is 15.",
+              "line": 105,
+              "column": 1,
+              "messageId": "complex",
+              "endLine": 105,
+              "endColumn": 29
+            },
+            {
+              "ruleId": "complexity",
+              "severity": 1,
+              "message": "Function 'renderProtocolMarkdown' has a complexity of 23. Maximum allowed is 15.",
+              "line": 140,
+              "column": 8,
+              "messageId": "complex",
+              "endLine": 140,
+              "endColumn": 39
+            }
+          ]
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-service.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    },
+    "actual-final": {
+      "files": 10,
+      "errors": 0,
+      "warnings": 1,
+      "records": [
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/__tests__/_protocol-signature-schema-fixture.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-logic.ts",
+          "errorCount": 0,
+          "warningCount": 1,
+          "messages": [
+            {
+              "ruleId": "complexity",
+              "severity": 1,
+              "message": "Function 'renderProtocolMarkdown' has a complexity of 23. Maximum allowed is 15.",
+              "line": 150,
+              "column": 8,
+              "messageId": "complex",
+              "endLine": 150,
+              "endColumn": 39
+            }
+          ]
+        },
+        {
+          "path": "server/services/protocol-export/protocol-export-service.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "messages": []
+        }
+      ]
+    }
+  }
+}

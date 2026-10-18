@@ -83,7 +83,7 @@ async function readOrder(): Promise<string[]> {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`
-    CREATE TABLE authoring_documents (id UUID PRIMARY KEY, tenant_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'draft');
+    CREATE TABLE authoring_documents (id UUID PRIMARY KEY, tenant_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'draft', locked_at TIMESTAMPTZ, updated_at TIMESTAMPTZ DEFAULT now());
     CREATE TABLE authoring_sections (
       id UUID PRIMARY KEY, doc_id UUID NOT NULL, code TEXT NOT NULL, title TEXT NOT NULL,
       content TEXT DEFAULT '', order_index INTEGER DEFAULT 0, track_changes BOOLEAN DEFAULT false,

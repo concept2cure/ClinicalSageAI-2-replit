@@ -1,0 +1,7 @@
+Reconciled canonical-branch workstream regressions
+Command: Vitest run with vitest.config.ts, 77 listed files, dot reporter; Node 22.23.3
+Exit code: 0
+
+ Test Files  77 passed (77)
+      Tests  827 passed (827)
+   Duration  242.05s (transform 15.43s, setup 3.42s, import 37.77s, tests 170.68s, environment 18.06s)

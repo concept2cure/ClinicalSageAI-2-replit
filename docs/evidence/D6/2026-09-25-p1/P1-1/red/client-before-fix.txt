@@ -5,8 +5,8 @@ $ npx vitest run client/src/services/portal/__tests__/authService-session-end.te
   22 |  const __vi_import_1__ = await import("@testing-library/react");
   23 |  const __vi_import_2__ = await import("../IdleSessionGuard");
      |                                       ^
-  24 |  
-  25 |  
+  24 |
+  25 |
  ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41
  ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16
  ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23

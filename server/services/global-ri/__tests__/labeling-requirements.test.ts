@@ -112,17 +112,16 @@ describe('PMDA package insert — the numbered new format', () => {
     }
   });
 
-  it('gives every item a well-formed basis, and regulator-text only where the notice was seen', () => {
-    const regulatorText = new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '9.1', '9.2', '9.3', '9.4', '10', '11', '11.1', '11.2', '12', '13', '14']);
+  it('gives every item a well-formed basis, and a search-extract basis only where the notice was seen', () => {
+    // The notices were seen only in search extracts, so no item is regulator-text; the seen
+    // items carry a recall basis that says so (pinned as regulator-text until 2026-10-15).
+    const seenInExtract = new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '9.1', '9.2', '9.3', '9.4', '10', '11', '11.1', '11.2', '12', '13', '14']);
     for (const s of pmda()) {
       expect(s.basis?.length ?? 0, s.code).toBeGreaterThan(0);
       for (const b of s.basis ?? []) expect(basisProblems(b), s.code).toEqual([]);
-      const confidences = new Set((s.basis ?? []).map((b) => b.confidence));
-      if (s.number !== undefined && regulatorText.has(s.number)) {
-        expect(confidences.has('regulator-text'), s.code).toBe(true);
-      } else {
-        expect(confidences.has('regulator-text'), s.code).toBe(false);
-      }
+      expect((s.basis ?? []).some((b) => b.confidence === 'regulator-text'), s.code).toBe(false);
+      const seen = (s.basis ?? []).some((b) => b.confidence === 'recall' && /search extract/.test(b.note ?? ''));
+      expect(seen, s.code).toBe(s.number !== undefined && seenInExtract.has(s.number));
     }
   });
 
@@ -158,7 +157,8 @@ describe('PMDA package insert — the numbered new format', () => {
       expect(res.findings.find((x) => x.section === code)?.code, code).toBe('FORMAT_OBSOLETE');
     }
     const principal = OBSOLETE_LABELING_SECTIONS.PMDA?.find((o) => o.code === 'jp_principal_contraindications');
-    expect(principal?.basis.some((b) => b.confidence === 'regulator-text')).toBe(true);
+    // Seen in a search extract of the notice: recall that says so (regulator-text until 2026-10-15).
+    expect(principal?.basis.some((b) => b.confidence === 'recall' && /search extract/.test(b.note ?? ''))).toBe(true);
     const careful = OBSOLETE_LABELING_SECTIONS.PMDA?.find((o) => o.code === 'jp_careful_administration');
     expect(careful?.basis.every((b) => b.confidence === 'recall')).toBe(true);
     for (const o of OBSOLETE_LABELING_SECTIONS.PMDA ?? []) {

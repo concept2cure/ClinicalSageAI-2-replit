@@ -13,13 +13,15 @@
  * @compliance
  * - Append-only: acceptances are never updated or deleted.
  * - Provenance: each acceptance captures actor, timestamp, ip, user-agent,
- *   and a content hash; mirrored into audit_logs.
- * - Fail-safe: lazily ensures schema exists; read paths degrade gracefully.
+ *   and a hash that covers the agreement text; mirrored into audit_logs.
+ * - Fail-closed: a read that fails throws. (Until 2026-10-15 every read caught
+ *   its error and returned [], so an unreadable store meant "nothing
+ *   outstanding" and hasAcceptedAll() answered true.)
  */
 
 import crypto from 'crypto';
 import { pool } from '../../db.js';
-import auditService from '../auditService.js';
+import { writeChainedAuditRow } from '../auditService.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('eula-service');
@@ -64,6 +66,17 @@ export interface RecordAcceptanceInput {
   method?: 'clickwrap' | 'sso' | 'api';
 }
 
+/** A lost COMMIT acknowledgement cannot establish either success or rollback. */
+export class LicenseAcceptanceCommitUnconfirmedError extends Error {
+  readonly code = 'LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED';
+  readonly statusCode = 503;
+  readonly recoveryUrl = '/api/licensing/acceptances';
+  constructor() {
+    super('The acceptance commit could not be confirmed. Review your acceptance history before trying again.');
+    this.name = 'LicenseAcceptanceCommitUnconfirmedError';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (unit-testable, no DB)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,12 +95,48 @@ export function computeOutstanding(
   return active.filter(a => a.required && !acceptedAgreementIds.has(a.id));
 }
 
-/** Deterministic content hash for an acceptance event (tamper-evidence). */
+/**
+ * An agreement the system holds no text for — neither a body nor a url. An
+ * acceptance of it would record consent to nothing, so it is refused.
+ */
+export class AgreementTextMissingError extends Error {
+  readonly code = 'AGREEMENT_TEXT_MISSING';
+  readonly agreementId: string;
+  constructor(agreementId: string, title: string, version: string) {
+    super(
+      `Agreement '${title}' (version ${version}) has no text in the system, neither a body nor a url, so it cannot be accepted.`
+    );
+    this.name = 'AgreementTextMissingError';
+    this.agreementId = agreementId;
+  }
+}
+
+/**
+ * sha256 of the agreement text an acceptance is given against: the inline body
+ * and the url, as a labelled pair. null when the agreement holds neither.
+ * For a url-only agreement this binds the url, not the document behind it.
+ */
+export function hashAgreementContent(agreement: {
+  body: string | null;
+  url: string | null;
+}): string | null {
+  const body = agreement.body != null && agreement.body.trim() !== '' ? agreement.body : null;
+  const url = agreement.url != null && agreement.url.trim() !== '' ? agreement.url.trim() : null;
+  if (body == null && url == null) return null;
+  return crypto.createHash('sha256').update(JSON.stringify({ body, url })).digest('hex');
+}
+
+/**
+ * Deterministic hash for an acceptance event (tamper-evidence). 2026-10-15: it
+ * now covers the agreement text; before, it covered only user, org, key,
+ * version and time, so an edit to the text left every acceptance hash intact.
+ */
 export function buildAcceptanceHash(parts: {
   userId: number;
   organizationId?: number | null;
   agreementKey: string;
   agreementVersion: string;
+  agreementContentHash: string;
   acceptedAt: string;
 }): string {
   const canonical = [
@@ -95,6 +144,7 @@ export function buildAcceptanceHash(parts: {
     parts.organizationId ?? '',
     parts.agreementKey,
     parts.agreementVersion,
+    parts.agreementContentHash,
     parts.acceptedAt,
   ].join('|');
   return crypto.createHash('sha256').update(canonical).digest('hex');
@@ -160,7 +210,7 @@ async function ensureSchema(): Promise<void> {
       WHERE NOT EXISTS (SELECT 1 FROM license_agreements WHERE agreement_key = 'tos');
     `);
   })().catch(err => {
-    // Reset so a later call can retry; surface as warning (read paths degrade).
+    // Reset so a later call can retry. The caller's read or write fails with it.
     ensurePromise = null;
     logger.warn('Failed to ensure EULA schema', { err: err instanceof Error ? err.message : String(err) });
     throw err;
@@ -188,55 +238,59 @@ function mapAgreement(r: any): LicenseAgreement {
 // Queries
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** All currently-active agreements. */
+/**
+ * All currently-active agreements. Throws when they cannot be read — 2026-10-15:
+ * it used to return [] from a catch, as did the two reads below.
+ */
 export async function getActiveAgreements(): Promise<LicenseAgreement[]> {
-  try {
-    await ensureSchema();
-    const { rows } = await pool.query(
-      `SELECT * FROM license_agreements WHERE status = 'active' ORDER BY scope, agreement_key`
-    );
-    return rows.map(mapAgreement);
-  } catch {
-    return [];
-  }
+  await ensureSchema();
+  const { rows } = await pool.query(
+    `SELECT * FROM license_agreements WHERE status = 'active' ORDER BY scope, agreement_key`
+  );
+  return rows.map(mapAgreement);
 }
 
 /**
  * The active+required agreements a given user/org has NOT yet accepted.
  * Org-scoped agreements are satisfied by any acceptance for the organization.
+ * Throws when the agreements or acceptances cannot be read.
  */
 export async function getOutstandingAgreements(
   userId: number,
   organizationId?: number | null
 ): Promise<LicenseAgreement[]> {
-  try {
-    await ensureSchema();
-    const active = (await getActiveAgreements()).filter(a => a.required);
-    if (active.length === 0) return [];
+  await ensureSchema();
+  const active = (await getActiveAgreements()).filter(a => a.required);
+  if (active.length === 0) return [];
 
-    // Accepted by the user directly...
-    const userAccepted = await pool.query(
-      `SELECT DISTINCT agreement_id FROM license_acceptances WHERE user_id = $1`,
-      [userId]
+  // User acceptances satisfy user-scoped agreements only. A colleague's
+  // acceptance can satisfy an organization agreement only in that organization.
+  const userAccepted = await pool.query(
+    `SELECT DISTINCT acceptance.agreement_id
+       FROM license_acceptances acceptance
+       JOIN license_agreements agreement ON agreement.id = acceptance.agreement_id
+      WHERE acceptance.user_id = $1 AND agreement.scope = 'user'`,
+    [userId]
+  );
+  const acceptedIds = new Set<string>(userAccepted.rows.map((r: { agreement_id: string }) => r.agreement_id));
+  if (organizationId != null) {
+    const orgAccepted = await pool.query(
+      `SELECT DISTINCT acceptance.agreement_id
+         FROM license_acceptances acceptance
+         JOIN license_agreements agreement ON agreement.id = acceptance.agreement_id
+        WHERE acceptance.organization_id = $1 AND agreement.scope = 'organization'`,
+      [organizationId]
     );
-    const acceptedIds = new Set<string>(userAccepted.rows.map((r: any) => r.agreement_id));
-
-    // ...plus org-scoped agreements accepted by anyone in the org.
-    if (organizationId != null) {
-      const orgAccepted = await pool.query(
-        `SELECT DISTINCT agreement_id FROM license_acceptances WHERE organization_id = $1`,
-        [organizationId]
-      );
-      for (const r of orgAccepted.rows) acceptedIds.add(r.agreement_id);
-    }
-
-    return computeOutstanding(active, acceptedIds);
-  } catch {
-    return [];
+    for (const r of orgAccepted.rows) acceptedIds.add(r.agreement_id);
   }
+
+  return computeOutstanding(active, acceptedIds);
 }
 
-/** True when the actor has accepted every active, required agreement. */
+/**
+ * True when the actor has accepted every active, required agreement. Throws
+ * when that cannot be read; it never answers true by default.
+ */
 export async function hasAcceptedAll(
   userId: number,
   organizationId?: number | null
@@ -245,92 +299,82 @@ export async function hasAcceptedAll(
   return outstanding.length === 0;
 }
 
-/** Record an acceptance (append-only) and mirror to the audit log. */
+/** Record an append-only legal acceptance and its sealed audit in the same transaction. */
 export async function recordAcceptance(input: RecordAcceptanceInput): Promise<AcceptanceRecord> {
   await ensureSchema();
-
-  const agreementRes = await pool.query(
-    `SELECT id, agreement_key, version FROM license_agreements WHERE id = $1`,
-    [input.agreementId]
-  );
-  if (agreementRes.rows.length === 0) {
-    throw new Error(`Agreement '${input.agreementId}' not found`);
-  }
-  const agreement = agreementRes.rows[0];
-  const acceptedAt = new Date().toISOString();
-  const hash = buildAcceptanceHash({
-    userId: input.userId,
-    organizationId: input.organizationId ?? null,
-    agreementKey: agreement.agreement_key,
-    agreementVersion: agreement.version,
-    acceptedAt,
-  });
-
-  const { rows } = await pool.query(
-    `INSERT INTO license_acceptances
-       (agreement_id, agreement_key, agreement_version, user_id, organization_id,
-        accepted_at, ip_address, user_agent, acceptance_hash, method)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-     RETURNING id, agreement_id, agreement_key, agreement_version, user_id,
-               organization_id, accepted_at, method`,
-    [
-      input.agreementId,
-      agreement.agreement_key,
-      agreement.version,
-      input.userId,
-      input.organizationId ?? null,
-      acceptedAt,
-      input.ipAddress ?? null,
-      input.userAgent ?? null,
-      hash,
-      input.method ?? 'clickwrap',
-    ]
-  );
-
-  // Mirror into the canonical audit log. Routed through auditService rather
-  // than a raw INSERT: the raw form wrote a row with NULL sha256_chain /
-  // payload_hash / hmac_seal, i.e. a row that SITS IN audit_logs BUT OUTSIDE
-  // the hash chain — invisible to the chain verifier and therefore not
-  // tamper-evident. auditService computes the chain link and HMAC seal inside
-  // its own transaction (§11.10(e), §11.70).
-  await auditService.logAction({
-    organizationId: input.organizationId ?? undefined,
-    userId: input.userId,
-    action: 'license_accepted',
-    resourceType: 'license_acceptances',
-    resourceId: input.agreementId,
-    details: {
-      agreementKey: agreement.agreement_key,
-      version: agreement.version,
-      hash,
-      method: input.method ?? 'clickwrap',
-    },
-  });
-
-  const r = rows[0];
-  return {
-    id: r.id,
-    agreementId: r.agreement_id,
-    agreementKey: r.agreement_key,
-    agreementVersion: r.agreement_version,
-    userId: r.user_id,
-    organizationId: r.organization_id ?? null,
-    acceptedAt: r.accepted_at,
-    method: r.method,
-  };
-}
-
-/** A user's acceptance history (most recent first). */
-export async function getAcceptanceHistory(userId: number): Promise<AcceptanceRecord[]> {
+  const client = await pool.connect();
+  let commitStarted = false;
+  let connectionError: Error | undefined;
   try {
-    await ensureSchema();
-    const { rows } = await pool.query(
-      `SELECT id, agreement_id, agreement_key, agreement_version, user_id,
-              organization_id, accepted_at, method
-       FROM license_acceptances WHERE user_id = $1 ORDER BY accepted_at DESC`,
-      [userId]
+    await client.query('BEGIN');
+    const agreementRes = await client.query(
+      `SELECT id, agreement_key, version, title, body, url FROM license_agreements WHERE id = $1 FOR SHARE`,
+      [input.agreementId]
     );
-    return rows.map((r: any) => ({
+    if (agreementRes.rows.length === 0) {
+      throw new Error(`Agreement '${input.agreementId}' not found`);
+    }
+    const agreement = agreementRes.rows[0];
+    // Bind the acceptance to the exact available text held under this lock.
+    // For a URL-only agreement this binds its URL, not unverified remote bytes.
+    const contentHash = hashAgreementContent({ body: agreement.body ?? null, url: agreement.url ?? null });
+    if (contentHash == null) {
+      throw new AgreementTextMissingError(input.agreementId, agreement.title, agreement.version);
+    }
+    const acceptedAt = new Date().toISOString();
+    const hash = buildAcceptanceHash({
+      userId: input.userId,
+      organizationId: input.organizationId ?? null,
+      agreementKey: agreement.agreement_key,
+      agreementVersion: agreement.version,
+      agreementContentHash: contentHash,
+      acceptedAt,
+    });
+
+    const { rows } = await client.query(
+      `INSERT INTO license_acceptances
+         (agreement_id, agreement_key, agreement_version, user_id, organization_id,
+          accepted_at, ip_address, user_agent, acceptance_hash, method, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+       RETURNING id, agreement_id, agreement_key, agreement_version, user_id,
+                 organization_id, accepted_at, method`,
+      [
+        input.agreementId,
+        agreement.agreement_key,
+        agreement.version,
+        input.userId,
+        input.organizationId ?? null,
+        acceptedAt,
+        input.ipAddress ?? null,
+        input.userAgent ?? null,
+        hash,
+        input.method ?? 'clickwrap',
+        JSON.stringify({ agreementContentHash: contentHash }),
+      ]
+    );
+
+    // Legal acceptance is indivisible from its inspectable, sealed audit row.
+    // A best-effort mirror can resolve persisted:false after the append-only
+    // acceptance is already durable; use the canonical enlisted writer instead.
+    await writeChainedAuditRow(client, {
+      organizationId: input.organizationId ?? undefined,
+      userId: input.userId,
+      action: 'license_accepted',
+      resourceType: 'license_acceptances',
+      resourceId: input.agreementId,
+      details: {
+        agreementKey: agreement.agreement_key,
+        version: agreement.version,
+        hash,
+        contentHash,
+        method: input.method ?? 'clickwrap',
+      },
+    });
+
+    commitStarted = true;
+    await client.query('COMMIT');
+    const r = rows[0];
+    return {
       id: r.id,
       agreementId: r.agreement_id,
       agreementKey: r.agreement_key,
@@ -339,10 +383,44 @@ export async function getAcceptanceHistory(userId: number): Promise<AcceptanceRe
       organizationId: r.organization_id ?? null,
       acceptedAt: r.accepted_at,
       method: r.method,
-    }));
-  } catch {
-    return [];
+    };
+  } catch (error) {
+    if (commitStarted) {
+      connectionError = error instanceof Error ? error : new Error('Unconfirmed acceptance transaction');
+      logger.warn('Legal acceptance commit unconfirmed; acceptance history must be reviewed', {
+        organizationId: input.organizationId ?? null,
+        code: 'LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED',
+      });
+      throw new LicenseAcceptanceCommitUnconfirmedError();
+    }
+    try { await client.query('ROLLBACK'); } catch (rollbackError) {
+      connectionError = rollbackError instanceof Error ? rollbackError : new Error('Acceptance rollback failed');
+    }
+    throw error;
+  } finally {
+    client.release(connectionError);
   }
+}
+
+/** A user's acceptance history (most recent first). Throws when it cannot be read. */
+export async function getAcceptanceHistory(userId: number): Promise<AcceptanceRecord[]> {
+  await ensureSchema();
+  const { rows } = await pool.query(
+    `SELECT id, agreement_id, agreement_key, agreement_version, user_id,
+            organization_id, accepted_at, method
+     FROM license_acceptances WHERE user_id = $1 ORDER BY accepted_at DESC`,
+    [userId]
+  );
+  return rows.map((r: any) => ({
+    id: r.id,
+    agreementId: r.agreement_id,
+    agreementKey: r.agreement_key,
+    agreementVersion: r.agreement_version,
+    userId: r.user_id,
+    organizationId: r.organization_id ?? null,
+    acceptedAt: r.accepted_at,
+    method: r.method,
+  }));
 }
 
 /**

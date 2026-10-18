@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-18",
+  "branch": "concept2cure-v2",
+  "mode": "direct normal push; no PR, force push or hook bypass",
+  "sourcePublishedCommit": "0017c49fec308197816ccb0640895b12a21cafe4",
+  "remoteVerifiedBeforeAssessmentCommit": "0017c49fec308197816ccb0640895b12a21cafe4",
+  "implementationCommit": "4684ff1d490ae3b1c618d2565cbf36795160e9b1",
+  "contractCommit": "b81700aa7",
+  "initialPush": {
+    "exitCode": 1,
+    "reason": "Remote advanced during passing checks; normal merge retained both histories.",
+    "transcript": "code-push-initial-race.txt"
+  },
+  "mergedCodePush": {
+    "exitCode": 0,
+    "transcript": "code-push.txt",
+    "wholeProjectTypeScriptErrors": 0,
+    "lintWarningGrowth": 0
+  },
+  "targetedVerification": {
+    "tests": 156,
+    "suites": 10,
+    "exitCode": 0,
+    "frozenBaseline": {
+      "failures": 24,
+      "controlsPassed": 9
+    }
+  },
+  "synchronization": {
+    "entryHead": "87824205c33c4bc3e586060f61eab62ffb26a852",
+    "initialSync": "clean fast-forward to e62320e0a",
+    "incomingDuringChecks": "92928e3529e463d69ee4347e752f2308d401ef1e",
+    "merge": "0017c49fec308197816ccb0640895b12a21cafe4",
+    "incomingScope": "two generated repository-health reports only",
+    "textualConflicts": 0,
+    "unmergedIndexEntries": 0,
+    "productionAndFrozenTestHashesUnchanged": true,
+    "requiredAncestorsVerified": [
+      "87824205c33c4bc3e586060f61eab62ffb26a852",
+      "9fc40c80cf35c017bdc49c6b9247a146d31a68b7",
+      "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+      "e42a5e59b19a9874f32f4cc08d388533d909f6c3",
+      "e62320e0a9555188a08ce426d7c16c72d372d824",
+      "4684ff1d490ae3b1c618d2565cbf36795160e9b1",
+      "92928e3529e463d69ee4347e752f2308d401ef1e"
+    ]
+  },
+  "assessment": {
+    "path": "docs/reports/data-room-research-2026-10-14/remaining-needs-2026-10-18.md",
+    "sha256": "7afb84ab15affa130907f87fea082b24d0f9e9e7372f9bea97d2c3b7f570ad85",
+    "sourceManifest": "docs/reports/data-room-research-2026-10-14/remaining-needs-2026-10-18-source-manifest.json",
+    "sourceFilesPinned": 33,
+    "qualificationBoundary": "Source audit and retained pure probe; no live provider, deployed production or agency acceptance proof."
+  },
+  "publicationRecordBoundary": "This record verifies the completed source push. The subsequent documentation commit includes this record and the assessment; its final remote equality is checked after its normal push, avoiding self-referential commit hashes."
+}

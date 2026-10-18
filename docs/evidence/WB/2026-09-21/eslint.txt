@@ -7,4 +7,3 @@
   610:1  warning  File has too many lines (1413). Maximum allowed is 500  max-lines
 
 ✖ 3 problems (0 errors, 3 warnings)
-

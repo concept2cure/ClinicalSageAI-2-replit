@@ -1,0 +1,32 @@
+{
+  "files": {
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "6559f7a1628faac5a3bbc58fa25a33d9c15c4b99fce251ccb1dec48203a9ea89",
+    "server/services/ai-gateway/concurrency.ts": "afa41229884a7f965a91a46f8a44d69fd6ac8d8377f3c38d9c5bb09e3d4ebf93",
+    "server/services/ai-gateway/gateway-outcome.ts": "cdff239dde4910567f2126969581e5ccceaf7687b96ff9ef9d49320b27e3b2f8"
+  },
+  "sourcesUnchangedDuringFinalRuns": true,
+  "finalRegression": {
+    "files": 6,
+    "testsPassed": 45,
+    "exitCode": 0,
+    "includesNewCheckpointTests": 16
+  },
+  "counterfactual": {
+    "transformation": "Replace only await beforeDispatch() with await Promise.resolve() in Vite load hook; production source untouched",
+    "sourceSha256": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "transformedSha256": "0192a60d78f45479434c68c544c22a0b33c8daca81aa08e8c10c62df0f989b21",
+    "expectedFailingTests": 5,
+    "skippedTests": 11,
+    "exitCode": 1,
+    "testFailureKind": "Behavioral assertions: revoked work dispatched or original guard ignored; not a missing API/export"
+  },
+  "lint": {
+    "errors": 0,
+    "baselineWarnings": 25,
+    "finalWarnings": 25,
+    "ruleCountsUnchanged": true
+  },
+  "preliminaryCounterfactual": "Interrupted with SIGINT because mergeConfig concatenated base include patterns, importing unrelated skipped suites. Preserved first config/log; not qualification evidence. Final config explicitly overrides include and tests only the owned gateway suite."
+}

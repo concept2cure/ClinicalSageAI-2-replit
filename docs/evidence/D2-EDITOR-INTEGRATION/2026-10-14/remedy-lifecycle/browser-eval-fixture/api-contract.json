@@ -1,0 +1,76 @@
+{
+  "synthetic": true,
+  "limits": [
+    "No real project, provider, authorization decision or regulatory source is used.",
+    "The qualified model and recorded turn are explicit browser fixtures; this does not qualify any serving model."
+  ],
+  "program": {
+    "id": "22222222-2222-4222-8222-222222222221",
+    "name": "Synthetic remedy lifecycle project",
+    "phase": "ind_enabling",
+    "program_type": "ind",
+    "status": "active"
+  },
+  "document": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "title": "Synthetic stability summary",
+    "module": "M3",
+    "product_code": null,
+    "status": "DRAFT",
+    "c2c_document_id": null,
+    "client_program_id": "22222222-2222-4222-8222-222222222221",
+    "updated_at": "2026-10-14T06:00:00.000Z",
+    "section_count": 2,
+    "created_by": 1
+  },
+  "sections": [
+    {
+      "id": "22222222-2222-4222-8222-222222222223",
+      "doc_id": "22222222-2222-4222-8222-222222222222",
+      "code": "3.2.P.8.1",
+      "title": "Stability summary and conclusion",
+      "content": "<p>The synthetic product is stable for 18 months.</p>",
+      "order_index": 0,
+      "updated_at": "2026-10-14T06:00:00.000Z",
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222224",
+      "doc_id": "22222222-2222-4222-8222-222222222222",
+      "code": "3.2.P.8.2",
+      "title": "Stability source notes",
+      "content": "<p>Source notes retain the synthetic duration of 18 months.</p>",
+      "order_index": 1,
+      "updated_at": "2026-10-14T06:00:00.000Z",
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0
+    }
+  ],
+  "remedy": {
+    "sectionId": "22222222-2222-4222-8222-222222222223",
+    "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+    "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+    "quote": "18 months",
+    "replacement": "24 months",
+    "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+  },
+  "record": {
+    "status": "recorded",
+    "id": "22222222-2222-4222-8222-222222222225",
+    "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+    "servedBy": [
+      {
+        "provider": "synthetic-browser-fixture",
+        "model": "qualified-evaluation-fixture",
+        "qualified": true,
+        "approvedForHighRisk": true,
+        "pq": "passed"
+      }
+    ]
+  }
+}

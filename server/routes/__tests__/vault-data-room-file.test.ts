@@ -32,13 +32,30 @@ vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js',
 const { fileUploadIntoVault } = vi.hoisted(() => ({ fileUploadIntoVault: vi.fn() }));
 vi.mock('../../services/vault/vault-file-upload-to-vault.js', () => ({ fileUploadIntoVault }));
 
-import createProjectVaultRoutes from '../c2c/project-vault';
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization and, for a write, on
+   that membership's role (GOVERNED_WRITE_ROLES), read on the request's own
+   connection. Its reads are answered from seats (support/current-member.ts);
+   an unseated caller is refused exactly as the real gate refuses. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
+import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
+
+/** The caller's current membership carries the role their session does. */
 function app(role: string) {
+  clearSeats();
+  seatProgram(7, PROGRAM);
+  seatMember(7, 3, role);
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     Object.assign(req, { userRole: role, user: { organizationId: 7, id: 3, role } });
+    // The request's own connection, which the production request scope supplies.
+    Object.assign(req, { dbClient: { query } });
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());

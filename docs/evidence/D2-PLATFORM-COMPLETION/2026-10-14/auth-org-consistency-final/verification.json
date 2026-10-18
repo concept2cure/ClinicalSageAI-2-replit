@@ -1,0 +1,14 @@
+{
+  "branch": "concept2cure-v2",
+  "head_at_filing": "caa39331f29e0c3baeec36c6ccb570920a32223e",
+  "origin_at_filing": "3412596c16283567c34b3d900bdbb0ef5eef0497",
+  "source_pin_count": 13,
+  "final_tests": 122,
+  "final_files": 12,
+  "final_skips": 0,
+  "final_lint_errors": 0,
+  "final_existing_lint_warnings": 11,
+  "production_correction_owner": "root",
+  "regression_and_verification_owner": "auth_org_consistency",
+  "prior_97_and_121_evidence": "preserved unchanged"
+}

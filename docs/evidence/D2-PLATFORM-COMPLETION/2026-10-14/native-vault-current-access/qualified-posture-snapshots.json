@@ -1,0 +1,579 @@
+{
+  "qualification": "Actual PostgreSQL queries against the newly isolated database; credential verifiers never included in evidence. These checks do not prove a general concurrent permission commit guarantee.",
+  "database": "platform_ci_vault_fixture_20261014_b7d60e29",
+  "phases": [
+    {
+      "phase": "qualified-install",
+      "runtime": {
+        "database": "platform_ci_vault_fixture_20261014_b7d60e29",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on",
+        "row_security": "on"
+      },
+      "tables": [
+        {
+          "name": "public.organization_users",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.organizations",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.projects",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.regulatory_programs",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "vault.documents",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        }
+      ],
+      "policyCount": 18,
+      "signatures": [
+        {
+          "kind": "before exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "after exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "policies",
+          "digestAlgorithm": "sha256",
+          "digest": "30a9e1ac650014a8701e2ae755561f87db512f63b2ef4eff0cbf277f5c3f97cf"
+        }
+      ],
+      "functions": [
+        {
+          "name": "public.enforce_audit_logs_no_delete",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "5bc93d374ef1b83440f388fdf45585874375b0a9878267e72016e5e2d97cae9f"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_truncate",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "2561100d20aee97bd9fbe7d2147ebf637840159912872bace58a2d6204b4712b"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_update",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "60740839990d361e44ef8600a7af08a6d1c785529aafd371e677306e04c938de"
+        },
+        {
+          "name": "vault.documents_delete_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "b48a54487a0a71315d4d8d9df696563879610142d82428a2840ab6718a732168"
+        },
+        {
+          "name": "vault.documents_lineage_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "a6770023383e824da6e7eb014728883af3faef97878d4d1b66fb1f1bf80f02ac"
+        },
+        {
+          "name": "vault.documents_record_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "63da26c033bf5abf418df8b1fdd77bcfb842f27b9515d88a9ae016df3015238d"
+        },
+        {
+          "name": "vault.documents_truncate_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "05d69fbc19c3f187869b20996e004dd1824aa216700a12f84d2b564679f7a94f"
+        }
+      ],
+      "triggerCount": 7,
+      "index": [
+        {
+          "indisunique": true,
+          "indisvalid": true,
+          "indisready": true,
+          "indimmediate": true,
+          "definition": "CREATE UNIQUE INDEX vault_documents_one_successor ON vault.documents USING btree (supersedes_id) WHERE ((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))",
+          "predicate": "((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))"
+        }
+      ],
+      "bodyColumns": [
+        {
+          "attname": "content_hash",
+          "type": "character(64)",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_at",
+          "type": "timestamp with time zone",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_by",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "deleted_at",
+          "type": "timestamp with time zone",
+          "attnotnull": false
+        },
+        {
+          "attname": "file_size",
+          "type": "bigint",
+          "attnotnull": false
+        },
+        {
+          "attname": "id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "organization_id",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "program_id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "storage_version_id",
+          "type": "text",
+          "attnotnull": false
+        },
+        {
+          "attname": "supersedes_id",
+          "type": "uuid",
+          "attnotnull": false
+        },
+        {
+          "attname": "version",
+          "type": "text",
+          "attnotnull": false
+        }
+      ],
+      "rlsCoverageGaps": 0,
+      "parentScopeDelegates": "passed",
+      "globalRoleCatalogIncludingCredentialVerifiersUnchanged": true,
+      "exactBodyIndexTriggerPolicyTableOwnerUnchanged": true
+    },
+    {
+      "phase": "native44-3",
+      "runtime": {
+        "database": "platform_ci_vault_fixture_20261014_b7d60e29",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on",
+        "row_security": "on"
+      },
+      "tables": [
+        {
+          "name": "public.organization_users",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.organizations",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.projects",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.regulatory_programs",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "vault.documents",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        }
+      ],
+      "policyCount": 18,
+      "signatures": [
+        {
+          "kind": "before exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "after exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "policies",
+          "digestAlgorithm": "sha256",
+          "digest": "30a9e1ac650014a8701e2ae755561f87db512f63b2ef4eff0cbf277f5c3f97cf"
+        }
+      ],
+      "functions": [
+        {
+          "name": "public.enforce_audit_logs_no_delete",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "5bc93d374ef1b83440f388fdf45585874375b0a9878267e72016e5e2d97cae9f"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_truncate",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "2561100d20aee97bd9fbe7d2147ebf637840159912872bace58a2d6204b4712b"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_update",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "60740839990d361e44ef8600a7af08a6d1c785529aafd371e677306e04c938de"
+        },
+        {
+          "name": "vault.documents_delete_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "b48a54487a0a71315d4d8d9df696563879610142d82428a2840ab6718a732168"
+        },
+        {
+          "name": "vault.documents_lineage_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "a6770023383e824da6e7eb014728883af3faef97878d4d1b66fb1f1bf80f02ac"
+        },
+        {
+          "name": "vault.documents_record_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "63da26c033bf5abf418df8b1fdd77bcfb842f27b9515d88a9ae016df3015238d"
+        },
+        {
+          "name": "vault.documents_truncate_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "05d69fbc19c3f187869b20996e004dd1824aa216700a12f84d2b564679f7a94f"
+        }
+      ],
+      "triggerCount": 7,
+      "index": [
+        {
+          "indisunique": true,
+          "indisvalid": true,
+          "indisready": true,
+          "indimmediate": true,
+          "definition": "CREATE UNIQUE INDEX vault_documents_one_successor ON vault.documents USING btree (supersedes_id) WHERE ((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))",
+          "predicate": "((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))"
+        }
+      ],
+      "bodyColumns": [
+        {
+          "attname": "content_hash",
+          "type": "character(64)",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_at",
+          "type": "timestamp with time zone",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_by",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "deleted_at",
+          "type": "timestamp with time zone",
+          "attnotnull": false
+        },
+        {
+          "attname": "file_size",
+          "type": "bigint",
+          "attnotnull": false
+        },
+        {
+          "attname": "id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "organization_id",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "program_id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "storage_version_id",
+          "type": "text",
+          "attnotnull": false
+        },
+        {
+          "attname": "supersedes_id",
+          "type": "uuid",
+          "attnotnull": false
+        },
+        {
+          "attname": "version",
+          "type": "text",
+          "attnotnull": false
+        }
+      ],
+      "rlsCoverageGaps": 0,
+      "parentScopeDelegates": "passed",
+      "globalRoleCatalogIncludingCredentialVerifiersUnchanged": true,
+      "exactBodyIndexTriggerPolicyTableOwnerUnchanged": true
+    },
+    {
+      "phase": "native47",
+      "runtime": {
+        "database": "platform_ci_vault_fixture_20261014_b7d60e29",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on",
+        "row_security": "on"
+      },
+      "tables": [
+        {
+          "name": "public.organization_users",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.organizations",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.projects",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "public.regulatory_programs",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        },
+        {
+          "name": "vault.documents",
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "owner": "postgres"
+        }
+      ],
+      "policyCount": 18,
+      "signatures": [
+        {
+          "kind": "before exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "after exact table/policy/function/index/trigger/body-column snapshot",
+          "digestAlgorithm": "sha256",
+          "digest": "17e792d26098ed9d0a16496d4a10ddad0523c6fccad950db19c9957f2cdc5eac"
+        },
+        {
+          "kind": "policies",
+          "digestAlgorithm": "sha256",
+          "digest": "30a9e1ac650014a8701e2ae755561f87db512f63b2ef4eff0cbf277f5c3f97cf"
+        }
+      ],
+      "functions": [
+        {
+          "name": "public.enforce_audit_logs_no_delete",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "5bc93d374ef1b83440f388fdf45585874375b0a9878267e72016e5e2d97cae9f"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_truncate",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "2561100d20aee97bd9fbe7d2147ebf637840159912872bace58a2d6204b4712b"
+        },
+        {
+          "name": "public.enforce_audit_logs_no_update",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "60740839990d361e44ef8600a7af08a6d1c785529aafd371e677306e04c938de"
+        },
+        {
+          "name": "vault.documents_delete_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "b48a54487a0a71315d4d8d9df696563879610142d82428a2840ab6718a732168"
+        },
+        {
+          "name": "vault.documents_lineage_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "a6770023383e824da6e7eb014728883af3faef97878d4d1b66fb1f1bf80f02ac"
+        },
+        {
+          "name": "vault.documents_record_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "63da26c033bf5abf418df8b1fdd77bcfb842f27b9515d88a9ae016df3015238d"
+        },
+        {
+          "name": "vault.documents_truncate_guard",
+          "arguments": "",
+          "securityDefiner": false,
+          "owner": "postgres",
+          "digestAlgorithm": "sha256",
+          "digest": "05d69fbc19c3f187869b20996e004dd1824aa216700a12f84d2b564679f7a94f"
+        }
+      ],
+      "triggerCount": 7,
+      "index": [
+        {
+          "indisunique": true,
+          "indisvalid": true,
+          "indisready": true,
+          "indimmediate": true,
+          "definition": "CREATE UNIQUE INDEX vault_documents_one_successor ON vault.documents USING btree (supersedes_id) WHERE ((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))",
+          "predicate": "((supersedes_id IS NOT NULL) AND (deleted_at IS NULL))"
+        }
+      ],
+      "bodyColumns": [
+        {
+          "attname": "content_hash",
+          "type": "character(64)",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_at",
+          "type": "timestamp with time zone",
+          "attnotnull": true
+        },
+        {
+          "attname": "created_by",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "deleted_at",
+          "type": "timestamp with time zone",
+          "attnotnull": false
+        },
+        {
+          "attname": "file_size",
+          "type": "bigint",
+          "attnotnull": false
+        },
+        {
+          "attname": "id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "organization_id",
+          "type": "integer",
+          "attnotnull": false
+        },
+        {
+          "attname": "program_id",
+          "type": "uuid",
+          "attnotnull": true
+        },
+        {
+          "attname": "storage_version_id",
+          "type": "text",
+          "attnotnull": false
+        },
+        {
+          "attname": "supersedes_id",
+          "type": "uuid",
+          "attnotnull": false
+        },
+        {
+          "attname": "version",
+          "type": "text",
+          "attnotnull": false
+        }
+      ],
+      "rlsCoverageGaps": 0,
+      "parentScopeDelegates": "passed",
+      "globalRoleCatalogIncludingCredentialVerifiersUnchanged": true,
+      "exactBodyIndexTriggerPolicyTableOwnerUnchanged": true
+    }
+  ]
+}

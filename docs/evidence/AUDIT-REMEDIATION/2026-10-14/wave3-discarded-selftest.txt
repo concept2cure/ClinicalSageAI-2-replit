@@ -1,0 +1,21 @@
+  ✓ a void write is flagged
+  ✓ an awaited write whose result is discarded is flagged
+  ✓ a bare unawaited statement is flagged, including inline statements
+  ✓ returned arrow bodies and arguments retain their results
+  ✓ an awaited-and-reported write is not flagged
+  ✓ a write returned to the caller is not flagged
+  ✓ a write assigned to an existing variable is not flagged
+  ✓ a write passed as an argument across lines is not flagged
+  ✓ a discarded recordAuditRow is flagged too
+  ✓ a recordAuditRow whose outcome is returned is not flagged
+  ✓ a discarded logAuditEntry is flagged
+  ✓ a discarded auditTaskAction is flagged
+  ✓ a logAuditEntry whose outcome is returned is not flagged
+  ✓ the defect quoted in a comment is not flagged
+  ✓ a discarded INJECTED deps.audit.logAction is flagged
+  ✓ and the this.audit.logAction form too
+  ✓ an injected write whose outcome is returned is not flagged
+  ✓ a baselined file that GROWS is flagged
+  ✓ a baselined file at its baselined count is not flagged
+
+self-test PASSED — the gate flags the defect and the baseline cannot grow.

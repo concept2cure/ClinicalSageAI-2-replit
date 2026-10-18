@@ -1,0 +1,30 @@
+Sanitized test-name and result metadata only; no source bodies, credentials or database URLs.
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > lists only accessible anchored filings, without private-row counts 55ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > scoped list excludes inaccessible projects without querying an organization notOffered count 17ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1 before leaf metadata 14ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1/sequences before leaf metadata 11ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/leaves before leaf metadata 12ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/pathway-manifest?pathway=estar_510k before leaf metadata 10ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > returns genuine public/owner/member controls 56ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > supplies exact server-derived available framework metadata 21ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > retains manager metadata-only unanchored anchor remedy, but refuses sequence/source reads 32ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses fresh role demotion despite old request manager claims 10ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses disabled actors and does not turn missing request context into a pooled read 9ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses a live sequence whose actual parent was deleted 7ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses foreign parent/sequence identities and selected programme conflicts 13ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a deferred change to current programme filing type before supplying the combined pane 49ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a deferred change to recorded device flags before supplying the combined pane 35ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a deferred change to recorded framework before supplying the combined pane 35ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a deferred change to retained leaf pin before supplying the combined pane 36ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses current project membership withdrawal after the retained leaves were read 18ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > keeps unsupported IND coverage unavailable without inventing a framework 32ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > requires an explicit compatible choice when no live framework is recorded 51ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > does not evaluate another region or an incompatible explicit framework 28ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > binds the admitted sequence to this exact request executor and object 12ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > without programId, keeps the existing bare list shape for admitted records 23ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > with programId, returns admitted submissions without a hidden-row count 6ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > refuses a programId that is not a program uuid, rather than ignoring it and offering everything 4ms
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  20:40:07
+   Duration  11.96s (transform 3.71s, setup 111ms, import 4.12s, tests 7.28s, environment 0ms)

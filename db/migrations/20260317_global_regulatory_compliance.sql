@@ -1,3 +1,18 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: GDPR, pharmacovigilance and regional compliance tables.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - AMENDED IN PLACE 2026-10-15 (D2): the closing block that wrote a
+--     'system.migration' audit_events row is removed — see the note where it
+--     stood. CLAUDE.md RULE 1: this file re-runs on every deploy.
+-- =============================================================================
 -- ============================================================================
 -- Migration: Global Regulatory Compliance Infrastructure
 -- ============================================================================
@@ -322,24 +337,12 @@ CREATE TABLE IF NOT EXISTS regional_compliance_config (
 
 CREATE INDEX IF NOT EXISTS idx_regional_compliance_org ON regional_compliance_config(organization_id);
 
--- ============================================================================
--- Audit: record this migration
--- ============================================================================
-
-DO $$
-BEGIN
-  -- Try to log the migration to audit_events
-  INSERT INTO audit_events
-    (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-     user_role, ip_address, timestamp, reason, regulatory_significant, gxp_relevant)
-  VALUES
-    (1, 'system.migration', 'database', '20260317_global_regulatory_compliance',
-     0, 'system', 'system', '127.0.0.1', NOW(),
-     'Global regulatory compliance tables created: GDPR (RoPA, DPIA, consent, DSR, breach, transfers), Pharmacovigilance (AE, ICSR, periodic reports, signals, RMP), Regional compliance config',
-     true, true);
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Could not log migration to audit_events: %', SQLERRM;
-END;
-$$;
+-- Removed 2026-10-15: a block that, on every deploy, inserted an
+-- audit_events row for organisation 1 as user 0, 'system', from 127.0.0.1,
+-- saying these tables had been "created" — false on every re-run, filed in
+-- one tenant's trail, from an address nothing connected from. It never
+-- landed (a text entity_id into an integer column, swallowed by EXCEPTION
+-- WHEN OTHERS). A migration's application is recorded by
+-- c2c_migration_journal, not by a tenant's audit trail.
 
 COMMIT;

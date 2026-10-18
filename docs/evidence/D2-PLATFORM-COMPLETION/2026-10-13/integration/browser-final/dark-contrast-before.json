@@ -1,0 +1,12 @@
+{
+  "heading": {
+    "color": "rgb(12, 10, 9)",
+    "background": "rgb(38, 38, 36)",
+    "ratio": 1.3030501903758032
+  },
+  "tableHeader": {
+    "color": "rgb(250, 249, 245)",
+    "background": "rgb(240, 238, 230)",
+    "ratio": 1.1026737224207195
+  }
+}

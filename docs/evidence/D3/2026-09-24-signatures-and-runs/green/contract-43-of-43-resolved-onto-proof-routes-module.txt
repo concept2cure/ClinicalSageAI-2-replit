@@ -71,4 +71,3 @@ stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant applic
       Tests  43 passed (43)
    Start at  17:21:43
    Duration  10.82s (transform 2.40s, setup 114ms, import 4.30s, tests 5.97s, environment 0ms)
-

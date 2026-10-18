@@ -1,0 +1,137 @@
+TAP version 13
+# Subtest: a reference to an uncreated table after a string holding /* is reported
+ok 1 - a reference to an uncreated table after a string holding /* is reported
+  ---
+  duration_ms: 41.647772
+  type: 'test'
+  ...
+# Subtest: a SELECT-like prose description is not runtime SQL or an unbacked CYP store
+not ok 2 - a SELECT-like prose description is not runtime SQL or an unbacked CYP store
+  ---
+  duration_ms: 0.500823
+  type: 'test'
+  location: '/workspace/ClinicalSageAI-2-replit/scripts/ci/__tests__/unbacked-tables-strings.test.mjs:167:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [ci:unbacked-tables] 2 tables/views created across migrations, drizzle and runtime DDL; 14 referenced in server SQL; 12 unbacked (strict mode)
+    
+    🚫 Server SQL references tables that NOTHING in this repo creates:
+    
+      advisory_missing
+          server/services/advisory-reader.ts
+      aliased_projection_missing
+          server/services/select-projections.ts
+      counted_projection_missing
+          server/services/select-projections.ts
+      cyp
+          server/services/deterministic-tool-description.ts
+      first_cte_missing_store
+          server/services/first-column-missing-store.ts
+      ghost_blocks
+          server/services/ghost-notes.ts
+      ghost_notes
+          server/services/ghost-notes.ts
+      later_cte_missing_store
+          server/services/later-column-missing-store.ts
+      literal_projection_missing
+          server/services/select-projections.ts
+      qualified_projection_missing
+          server/services/select-projections.ts
+      sql_commented_notes
+          server/services/sql-commented.ts
+      statement_local_name
+          server/services/statement-local-cte.ts
+    
+      An unguarded query against a missing table throws "relation does not exist",
+      which route handlers turn into a 500 — the endpoint never works. A guarded
+      one degrades to a silent no-op, which is worse: it looks durable and is not.
+    
+      Fix: add a code-derived migration for the table (see ledger C-11/C-14), or
+      point the query at the table that actually holds the data.
+      If this is pre-existing debt being tracked:
+        npm run ci:unbacked-tables:write-baseline
+    
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/ClinicalSageAI-2-replit/scripts/ci/__tests__/unbacked-tables-strings.test.mjs:168:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: structural SELECT admission keeps aliases, functions, qualified columns and literal projections
+ok 3 - structural SELECT admission keeps aliases, functions, qualified columns and literal projections
+  ---
+  duration_ms: 0.120289
+  type: 'test'
+  ...
+# Subtest: runtime DDL after a string holding /* backs its table
+ok 4 - runtime DDL after a string holding /* backs its table
+  ---
+  duration_ms: 0.174038
+  type: 'test'
+  ...
+# Subtest: runtime DDL after an https:// string on the same line backs its table
+ok 5 - runtime DDL after an https:// string on the same line backs its table
+  ---
+  duration_ms: 0.194479
+  type: 'test'
+  ...
+# Subtest: DDL only inside real comments backs nothing
+ok 6 - DDL only inside real comments backs nothing
+  ---
+  duration_ms: 0.118175
+  type: 'test'
+  ...
+# Subtest: DDL inside an SQL comment within an embedded string backs nothing
+ok 7 - DDL inside an SQL comment within an embedded string backs nothing
+  ---
+  duration_ms: 0.139317
+  type: 'test'
+  ...
+# Subtest: a leading recursive CTE with declared and quoted columns is query-local storage
+ok 8 - a leading recursive CTE with declared and quoted columns is query-local storage
+  ---
+  duration_ms: 0.079298
+  type: 'test'
+  ...
+# Subtest: a leading column-list CTE still reports the missing storage it reads
+ok 9 - a leading column-list CTE still reports the missing storage it reads
+  ---
+  duration_ms: 0.239425
+  type: 'test'
+  ...
+# Subtest: a later recursive CTE with declared columns is query-local storage
+ok 10 - a later recursive CTE with declared columns is query-local storage
+  ---
+  duration_ms: 0.335718
+  type: 'test'
+  ...
+# Subtest: a later column-list CTE still reports the missing storage it reads
+ok 11 - a later column-list CTE still reports the missing storage it reads
+  ---
+  duration_ms: 0.145486
+  type: 'test'
+  ...
+# Subtest: a CTE declaration does not qualify the same table name in another statement
+ok 12 - a CTE declaration does not qualify the same table name in another statement
+  ---
+  duration_ms: 0.077395
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 11
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 97.538779

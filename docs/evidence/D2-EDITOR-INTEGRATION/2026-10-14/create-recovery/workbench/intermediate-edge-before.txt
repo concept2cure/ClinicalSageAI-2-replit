@@ -1,0 +1,376 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project bbbbbbbb-0000-4000-8000-000000000001 and held-switch refusal to creation 458ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project null and held-switch refusal to creation 173ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a filtered host through the existing editor handoff 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a pinned host through the existing editor handoff 160ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > consults the current dirty editor after a document-list refresh 547ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after project round trip 209ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after unmount 113ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > retains text typed while the section refresh is pending 371ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > opens the returned section after a clean refresh 190ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > ignores an older section refresh after a project round trip 174ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > keeps the current section while a refused refresh reports its read error 99ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > completes the current section read when the host filter changes while the first read is pending 5043ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+            >
+              Document tree
+            </div>
+            <div
+              class="ed-tree-m"
+            >
+              1 document · DRAFT
+            </div>
+          </div>
+          <div
+            class="scaf-note"
+            style="padding: 10px 12px; font-size: 12px;"
+          >
+            This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+          </div>
+          <div
+            class="ed-tree-scroll"
+          >
+            <div
+              class="ed-vol"
+            >
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="font-weight: 600;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  M3
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  Saved overview
+                </span>
+                <span
+                  class="rd-chip tone-idle"
+                  style="margin-left: auto;"
+                >
+                  —
+                </span>
+              </button>
+              <div
+                class="scaf-note"
+                role="status"
+                style="padding: 6px 12px;"
+              >
+                Loading sections…
+              </div>
+            </div>
+          </div>
+        </aside>
+        <section
+          class="ed-doc"
+        >
+          <header
+            class="ed-doc-h"
+          >
+            <div
+              class="ed-crumbs"
+            >
+              <span
+                class="sep-first"
+              >
+                M3
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="doc-title"
+                title="Saved overview"
+              >
+                Saved overview
+              </span>
+            </div>
+            <div
+              aria-label="Save and sign"
+              class="ed-doc-commit"
+              role="group"
+            >
+              <button
+                class="btn primary"
+                data-testid="save-section"
+                disabled=""
+                style="height: 30px;"
+                title="Open a section to edit and save it."
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+
+                Save
+              </button>
+            </div>
+            <div
+              class="ed-doc-actions"
+            >
+              <div
+                aria-label="Editor view"
+                class="ed-viewtoggle"
+                role="group"
+              >
+                <button
+                  aria-pressed="true"
+                  class="btn ghost"
+                  data-active="true"
+                  style="height: 30px;"
+                  title="Edit one section"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-pen-line"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 20h9"
+                    />
+                    <path
+                      d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+                    />
+                  ...
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > shows all statuses when checking documents from a narrowed list 106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > hands a pinned document to the full editor through the dirty-work guard 276ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > refreshes the current document sections without repeating a creation or changing the selected editor 101ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > completes the current section read when the host filter changes while the first read is pending
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ed"
+      >
+        <aside
+          class="ed-tree"
+        >
+          <div
+            class="ed-tree-h"
+          >
+            <div
+              class="ed-tree-t"
+            >
+              Document tree
+            </div>
+            <div
+              class="ed-tree-m"
+            >
+              1 document · DRAFT
+            </div>
+          </div>
+          <div
+            class="scaf-note"
+            style="padding: 10px 12px; font-size: 12px;"
+          >
+            This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+          </div>
+          <div
+            class="ed-tree-scroll"
+          >
+            <div
+              class="ed-vol"
+            >
+              <button
+                class="ed-tree-row"
+                data-active="true"
+                style="font-weight: 600;"
+              >
+                <span
+                  class="ed-num"
+                >
+                  M3
+                </span>
+                <span
+                  class="ed-lbl"
+                >
+                  Saved overview
+                </span>
+                <span
+                  class="rd-chip tone-idle"
+                  style="margin-left: auto;"
+                >
+                  —
+                </span>
+              </button>
+              <div
+                class="scaf-note"
+                role="status"
+                style="padding: 6px 12px;"
+              >
+                Loading sections…
+              </div>
+            </div>
+          </div>
+        </aside>
+        <section
+          class="ed-doc"
+        >
+          <header
+            class="ed-doc-h"
+          >
+            <div
+              class="ed-crumbs"
+            >
+              <span
+                class="sep-first"
+              >
+                M3
+              </span>
+              <span
+                aria-hidden="true"
+                class="sep"
+              >
+                ›
+              </span>
+              <span
+                class="doc-title"
+                title="Saved overview"
+              >
+                Saved overview
+              </span>
+            </div>
+            <div
+              aria-label="Save and sign"
+              class="ed-doc-commit"
+              role="group"
+            >
+              <button
+                class="btn primary"
+                data-testid="save-section"
+                disabled=""
+                style="height: 30px;"
+                title="Open a section to edit and save it."
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+
+                Save
+              </button>
+            </div>
+            <div
+              class="ed-doc-actions"
+            >
+              <div
+                aria-label="Editor view"
+                class="ed-viewtoggle"
+                role="group"
+              >
+                <button
+                  aria-pressed="true"
+                  class="btn ghost"
+                  data-active="true"
+                  style="height: 30px;"
+                  title="Edit one section"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-pen-line"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 20h9"
+                    />
+                    <path
+                      d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+                    />
+                  ...
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx:185:57
+    183|   rerender(<DocumentWorkbench {...props} status="DRAFT" />);
+    184|   await act(async () => { refresh.resolve(ok({ sections: [section] }))…
+    185|   await waitFor(() => expect(editorNode()?.textContent).toContain('18 …
+       |                                                         ^
+    186| });
+    187|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  21:50:55
+   Duration  11.32s (transform 1.72s, setup 191ms, import 2.26s, tests 8.20s, environment 480ms)

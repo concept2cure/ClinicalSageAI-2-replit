@@ -1,0 +1,5 @@
+Command (Node 22 toolchain, repository root):
+node_modules/.bin/eslint docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/*.ts docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/*.tsx docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/*.mjs --max-warnings 0
+
+Exit code: 0.
+Seven executable fixture files checked: no errors or warnings.

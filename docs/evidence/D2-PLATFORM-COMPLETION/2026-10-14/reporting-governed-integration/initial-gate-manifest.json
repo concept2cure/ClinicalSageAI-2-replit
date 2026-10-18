@@ -1,0 +1,89 @@
+{
+  "branch": "concept2cure-v2",
+  "basePublication": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "qualification": "Initial integration phase only; final corrected compiler and later catalog presentation checks are separate.",
+  "privateRawRecords": [
+    {
+      "path": "/tmp/reporting-governed-pack-final-typecheck.txt",
+      "bytes": 913,
+      "sha256": "5c6bf2e2c4001c108b49d76e734a088acaacd9211b5c21d8a76825174a7b1568"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-typecheck-solitary.txt",
+      "bytes": 2026,
+      "sha256": "5158cb4f41019b183c5b9d93368775e33928165309c1a67dde8c7248089b8d5a"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-final-build.txt",
+      "bytes": 14419,
+      "sha256": "f30cc2ba00fc6cc2f5d3776193987d250fe55f203354ee77aeec65f2eec3e1c8"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-global-eslint-ratchet.txt",
+      "bytes": 353,
+      "sha256": "fb044f97028755f167d8573a538764febc48909d8091716ec919629e1bf15488"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-lint-baseline-shrink.txt",
+      "bytes": 98,
+      "sha256": "e1279c7653b2deaf9ec7b730c06f432c0f0ed0982f2f65d8ae2a9f8957d81633"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/README.md",
+      "bytes": 3842,
+      "sha256": "ec5a891dffd1d02b47023d5720c4a7d90abb11aedc767dba385ed981ade49538"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/compiler-resource-failure-137.txt",
+      "bytes": 913,
+      "sha256": "5c6bf2e2c4001c108b49d76e734a088acaacd9211b5c21d8a76825174a7b1568"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/compiler-resource-failure-137.txt.raw.gz",
+      "bytes": 567,
+      "sha256": "b2cd0a6aaa58f708388f0b3e19fe39064e29c9974c2dd2f1b2494a6719fdadce"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/compiler-six-fixture-errors.txt",
+      "bytes": 2026,
+      "sha256": "5158cb4f41019b183c5b9d93368775e33928165309c1a67dde8c7248089b8d5a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/compiler-six-fixture-errors.txt.raw.gz",
+      "bytes": 725,
+      "sha256": "711237726817e788d6dcf1eb2dbd823aaecf402b0517bfeb10c9fe1ff249d98b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/global-lint-6090-vs-6120.txt",
+      "bytes": 353,
+      "sha256": "fb044f97028755f167d8573a538764febc48909d8091716ec919629e1bf15488"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/global-lint-6090-vs-6120.txt.raw.gz",
+      "bytes": 232,
+      "sha256": "93789697f695a09ec28193ffa1353a6e7f3ee0368241d34e0065d6a9f8838ccc"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/initial-final-source-build.txt",
+      "bytes": 14419,
+      "sha256": "f30cc2ba00fc6cc2f5d3776193987d250fe55f203354ee77aeec65f2eec3e1c8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/initial-final-source-build.txt.raw.gz",
+      "bytes": 4154,
+      "sha256": "28444780abd6f828e0dd35620800b9d7ac0d7142bf224f1e41de16965984cfdf"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/lint-baseline-shrink.txt",
+      "bytes": 98,
+      "sha256": "e1279c7653b2deaf9ec7b730c06f432c0f0ed0982f2f65d8ae2a9f8957d81633"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/lint-baseline-shrink.txt.raw.gz",
+      "bytes": 107,
+      "sha256": "24c8998450f8db2f24a704e4a8d6388108afdd53d3366d30e623099d1bc48d7a"
+    }
+  ]
+}

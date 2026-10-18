@@ -1,0 +1,48 @@
+Evaluation history and qualifications
+
+The first two preflight failure screenshots are harness diagnostics only. The
+fixture matched the required Document title control's accessible name exactly,
+omitting its required-field marker. The selector was corrected to match the real
+accessible name. No creation POST occurred in those timed-out preflights. They
+are not before-change failures of production behavior and are not counted as
+production red-test evidence.
+
+The first complete sweep passed all 24 cases and 96 oversight callbacks on the
+initial d6d8c19f base plus frozen feature files. Its 120 stage captures are kept
+as browser-preintegration-* because a subsequent incoming peer-review and
+dialog-style update required synchronization before final qualification.
+
+Two screenshot improvements followed manual inspection of that first sweep:
+scroll the actual selected Start from control into view in the long source
+description drawer; and scroll the created-empty native editor into view and
+apply the same minimum 250x100 editing viewport/full paragraph bounds as later
+read stages. These are evaluation-only changes. They do not suppress production
+timers or change any UI component, token, style or operation.
+
+The final synchronized replay is browser-summary.json and browser-desktop-*
+and browser-touch-*; its source and executable fixture hashes identify exactly
+what was run. Earlier preflight/preintegration images are diagnostics, not a
+claim about the final source base.
+
+Root visual review then identified a product density defect: putting every long
+regional limitation above the Start from selector pushed that control far down
+the existing drawer. The production owner replaced only new regional/component
+picker descriptions with a concise empty-working-copy/source-originals notice
+and an explicit pointer to full applicability and missing-outline notices in the
+existing editor guidance disclosure. IND and organization descriptions, all
+canonical source/guidance facts and server template hashes remain unchanged.
+
+The earlier synchronized sweep's JSON is preserved as browser-pre-picker-copy-*
+diagnostic metadata. Its final-path PNGs are replaced by the subsequent final
+replay; those diagnostic JSON metrics must not be paired with the new images.
+The final replay requires the Start from selector, CTD module and full concise
+summary to be visible at drawer scrollTop=0. It still verifies every full
+limitation in saved guidance and all 96 exact-source oversight callbacks.
+
+The concise-picker replay passed all 24 cases, but final lint qualification
+required behavior-preserving extraction of the picker description into a pure
+helper and extraction of the server template-list row mapper. Existing strings,
+conditionals, inputs, server template inventories and source fixtures did not
+change. Its JSON is preserved as browser-pre-lint-helpers-* diagnostic metadata.
+The final replay after the lint-clean source freeze replaces the final-path
+images and source/fixture pins.

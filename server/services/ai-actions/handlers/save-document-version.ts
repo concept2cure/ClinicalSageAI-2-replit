@@ -2,9 +2,20 @@
  * Save Document Version Handler
  *
  * Creates a real versioned snapshot in workflowDocumentVersions table,
- * increments the document counter, and optionally updates status.
+ * increments the document counter, and may move a draft into review.
  * All operations run in a transaction for atomicity.
+ *
+ * 2026-10-15: it wrote any valid `payload.status` — 'approved' and 'published'
+ * included — with no review, quorum or signature; a new version of an approved
+ * document kept 'approved' for content nobody approved; a version with no
+ * content anywhere was saved as an empty body; and the actor columns held the
+ * display name where every other writer stores the user id. Saving a version
+ * is not a decision: approval, publication, rejection and archiving go through
+ * the review workflow.
  */
+
+/** The statuses this action may set: workflow steps, not decisions. */
+const SETTABLE_STATUSES = ['draft', 'in_review'];
 
 import * as crypto from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -38,6 +49,13 @@ const handler: AIActionHandler = {
         code: 'INVALID_STATUS',
         message: `Invalid document status '${status}'. Allowed: draft, in_review, approved, published, archived, rejected`,
       });
+    } else if (status && !SETTABLE_STATUSES.includes(status)) {
+      errors.push({
+        code: 'GOVERNED_STATUS',
+        message:
+          `save_document_version cannot set status '${status}'. It may move a document to ${SETTABLE_STATUSES.join(' or ')}; ` +
+          'approval, publication, rejection and archiving go through the review workflow, which records who decided.',
+      });
     }
     return errors;
   },
@@ -64,9 +82,29 @@ const handler: AIActionHandler = {
 
     // 3. Execute in transaction: create version record + bump counter
     const newVersion = (doc.latestVersion || 1) + 1;
-    const newStatus = (payload.status as string) || doc.status;
     const changeReason = (payload.changeReason as string) || 'AI action: save version';
-    const content = (payload.content as string) || (doc.metadata as any)?.content || '';
+    const previousContent = ((doc.metadata as any)?.content as string | undefined) || '';
+    const content = (payload.content as string) || previousContent;
+    if (!content) {
+      throw new AIActionHandlerError(
+        'NO_CONTENT',
+        'There is no content to save as a version: none was supplied and the document holds none.',
+        400
+      );
+    }
+    // A changed approved/published document is a new, unapproved version: it
+    // returns to draft for review rather than carrying the old approval.
+    const warnings: string[] = [];
+    const approvedBefore = doc.status === 'approved' || doc.status === 'published';
+    const contentChanged = content !== previousContent;
+    let newStatus = (payload.status as string) || doc.status;
+    if (approvedBefore && contentChanged && !payload.status) {
+      newStatus = 'draft';
+      warnings.push(
+        `v${newVersion} changes the content of a ${doc.status} document and is not approved; the document returns to draft for review.`
+      );
+    }
+    const actor = String(ctx.user.userId);
 
     const { updated, versionRecord } = await db.transaction(async (tx: any) => {
       // 3a. Create actual version snapshot
@@ -80,7 +118,7 @@ const handler: AIActionHandler = {
             previousVersion: doc.latestVersion,
             contentHash: crypto.createHash('sha256').update(content).digest('hex'),
           },
-          createdBy: ctx.user.userName,
+          createdBy: actor,
           comments: changeReason,
           organizationId: doc.organizationId,
         })
@@ -91,7 +129,7 @@ const handler: AIActionHandler = {
         .update(unifiedDocuments)
         .set({
           latestVersion: newVersion,
-          updatedBy: ctx.user.userName,
+          updatedBy: actor,
           updatedAt: new Date(),
           status: newStatus,
           metadata: {
@@ -137,7 +175,7 @@ const handler: AIActionHandler = {
           status: updated.status,
         },
       ],
-      warnings: [],
+      warnings,
       errors: [],
       provenance: {
         actionId: ctx.actionId,

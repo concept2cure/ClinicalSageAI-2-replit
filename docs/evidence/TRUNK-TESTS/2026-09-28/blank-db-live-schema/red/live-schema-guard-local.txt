@@ -15,4 +15,3 @@
   C2C_MIGRATION_FILES in scripts/db/migration-set.mjs), then re-run the
   provisioning locally and confirm the table is there. Or delete the
   query, if the feature it belongs to is dead.
-

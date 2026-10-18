@@ -1,0 +1,22 @@
+{
+  "version": "8.28.0",
+  "canonicalCommit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "historyComplete": true,
+  "startedAtUtc": "2026-10-17T23:05:07.043550+00:00",
+  "workingIgnoreSha256": "0eb7d9068384a1e39ae324a5b25bcae61ba72729d1cdde9b70416c2377722771",
+  "dispositionFollowupNotYetCommitted": true,
+  "command": [
+    "/workspace/audit/gitleaks-bin/gitleaks",
+    "git",
+    "--no-banner",
+    "--redact",
+    "--config",
+    ".gitleaks.toml",
+    "--log-opts=--full-history --diff-filter=tuxdb e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+    ".",
+    "--report-format=json",
+    "--report-path=/workspace/audit/oct17-gitleaks-canonical-after-disposition-private.json"
+  ],
+  "exitCode": 0,
+  "completedAtUtc": "2026-10-17T23:05:33.845031+00:00"
+}

@@ -105,6 +105,8 @@ describe('answerUnfinished', () => {
     expect(answerUnfinished(turn({ interrupted: true }))).toBe(true);
     expect(answerUnfinished(turn({ stoppedReason: 'cancelled' }))).toBe(true);
     expect(answerUnfinished(turn({ stoppedReason: 'answer_cut_off' }))).toBe(true);
+    // Reloaded after the connection dropped: the saved text is what had streamed.
+    expect(answerUnfinished(turn({ stoppedReason: 'client_disconnected' }))).toBe(true);
     expect(answerUnfinished(turn({ progress: [{ phase: 'answering', label: 'Answering', status: 'stopped', startedAt: 0 }] }))).toBe(true);
   });
 

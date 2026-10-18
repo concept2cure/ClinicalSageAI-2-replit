@@ -75,4 +75,3 @@ AssertionError: expected { id: 'new', …(1) } to deeply equal { id: 'new', …(
       Tests  3 failed (3)
    Start at  17:54:56
    Duration  356ms (transform 99ms, setup 103ms, import 21ms, tests 18ms, environment 0ms)
-

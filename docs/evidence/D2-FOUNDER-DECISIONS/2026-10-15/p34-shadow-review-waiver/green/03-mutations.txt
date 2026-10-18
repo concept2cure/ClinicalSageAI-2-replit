@@ -1,0 +1,38 @@
+# Each gate, mutated, then its test run. Every mutation was reverted (cp from backup) before the next. 2026-10-15.
+
+## M1 — signatureSpentBy no longer counts SHADOW_REVIEW_WAIVED (single use)
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again 124ms
+   → expected SubmissionError: The waiver cites run #1,… { code: '…' } to match object { code: 'GOVERNED_REQUIRED', …(1) }
+      Tests  1 failed | 23 skipped (24)
+
+## M2 — invalid_ai_response made waivable
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as invalid_ai_response 22ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void 44ms
+   → expected null to match object { …(2) }
+      Tests  2 failed | 22 skipped (24)
+
+## M3 — the resolver ignores the leaf-manifest digest (no lapse)
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence 63ms
+   → expected { state: 'active', …(7) } to match object { state: 'lapsed', …(2) }
+      Tests  1 failed | 23 skipped (24)
+
+## M4 — the waive act skips its separation-of-duties check
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties) 68ms
+   → expected null to match object { code: 'FORBIDDEN', …(1) }
+      Tests  1 failed | 23 skipped (24)
+
+## M5 — Gate 1 skips the waiver's meaning rule (responsibility or approval)
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused 79ms
+   → expected null to match object { code: 'GOVERNED_REQUIRED', …(1) }
+      Tests  1 failed | 23 skipped (24)
+
+## M6 — an AnA source file reaches the waiver act
+ × server/services/ana/__tests__/ana-cannot-waive-shadow-review.test.ts > no AnA tool can waive Shadow Review > no AnA or MCP source reaches the waiver act 89ms
+   → expected [ Array(1) ] to deeply equal []
+      Tests  1 failed | 1 passed (2)
+
+## M7 — a refused waive does not void its signature (P-23)
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void 51ms
+   → expected 'Run #1 failed because the model\'s re…' to match /signature given for this Shadow Revie…/
+      Tests  1 failed | 23 skipped (24)

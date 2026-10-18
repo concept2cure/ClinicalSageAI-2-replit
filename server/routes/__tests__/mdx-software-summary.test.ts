@@ -152,9 +152,10 @@ describe('software-summary: the documentation level is determined, never assumed
     expect(s.docLevel).toBe('enhanced');
   });
 
-  it('carries the Documentation Level basis, with FDA 2023 guidance as regulator text', async () => {
+  it('carries the Documentation Level basis, the FDA 2023 guidance as seen in a search extract', async () => {
     const s = await summary();
-    expect(s.basis.some((b: any) => b.confidence === 'regulator-text' && /fda\.gov\/media\/153781/.test(b.url))).toBe(true);
+    // A search extract is recall (pinned as regulator-text until 2026-10-15).
+    expect(s.basis.some((b: any) => b.confidence === 'recall' && /search extract/i.test(b.note) && /fda\.gov\/media\/153781/.test(b.url))).toBe(true);
   });
 });
 

@@ -72,4 +72,3 @@ stdout | server/services/vault/__tests__/document-catalog.service.test.ts
       Tests  38 passed (38)
    Start at  16:36:08
    Duration  1.61s (transform 783ms, setup 152ms, import 1.31s, tests 31ms, environment 0ms)
-

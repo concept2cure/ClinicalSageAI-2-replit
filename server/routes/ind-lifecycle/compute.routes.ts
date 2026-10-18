@@ -12,9 +12,13 @@ import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-serv
 import { validateSequenceLeaves, isSequenceFilingType } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
 import { validateSequenceTypeTransition, auditSequenceHistory } from '../../services/ind-lifecycle/ind-sequence-lifecycle-validator';
-import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom, FILING_TYPE_VALUES } from './shared';
+import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom, overdueCountParam, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
+
+const OVERDUE_COUNT_INVALID = {
+  error: { code: 'VALIDATION', message: 'overdueSafetyReports must be a non-negative integer when supplied.' },
+};
 
 /**
  * IND filing readiness — deterministic verdict over the 108-section blueprint +
@@ -25,13 +29,15 @@ router.post('/readiness', limiter, requireRole(AUTHOR), (req, res) => {
   if (b.filingType !== 'initial' && b.filingType !== 'amendment') {
     return res.status(400).json({ error: { code: 'VALIDATION', message: "filingType must be 'initial' or 'amendment'." } });
   }
+  const overdueSafetyReports = overdueCountParam(b.overdueSafetyReports);
+  if (overdueSafetyReports === null) return res.status(400).json(OVERDUE_COUNT_INVALID);
   try {
     res.json(
       evaluateIndReadiness({
         filingType: b.filingType,
         sectionStatus: b.sectionStatus ?? {},
         completedForms: b.completedForms,
-        overdueSafetyReports: b.overdueSafetyReports,
+        overdueSafetyReports,
       }),
     );
   } catch (err) {
@@ -57,7 +63,9 @@ router.post('/timeline', limiter, requireRole(AUTHOR), (req, res) => {
 
 /**
  * Evaluate the IND regulatory clock — 30-day safe-to-proceed + clinical-hold
- * state (21 CFR 312.40 / 312.42). Body: { receiptDate, events?, asOf? }.
+ * state (21 CFR 312.40 / 312.42). Body: { receiptDate, receiptRecorded?,
+ * events?, asOf? }. The clock clears only when receiptRecorded is true (the
+ * date is FDA's recorded receipt) and events (the hold history) is supplied.
  */
 router.post('/clock', limiter, requireRole(AUTHOR), (req, res) => {
   const b = body(req);
@@ -65,7 +73,9 @@ router.post('/clock', limiter, requireRole(AUTHOR), (req, res) => {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'receiptDate (ISO) is required.' } });
   }
   try {
-    res.json(evaluateRegulatoryClock({ receiptDate: b.receiptDate, events: b.events, asOf: b.asOf }));
+    res.json(
+      evaluateRegulatoryClock({ receiptDate: b.receiptDate, receiptRecorded: b.receiptRecorded === true, events: b.events, asOf: b.asOf }),
+    );
   } catch (err) {
     fail(res, err);
   }
@@ -78,16 +88,22 @@ router.post('/clock', limiter, requireRole(AUTHOR), (req, res) => {
  */
 router.post('/action-items', limiter, requireRole(AUTHOR), (req, res) => {
   const b = body(req);
+  // One caller-stated count for both readiness and the action list (the
+  // top-level one, else readinessInput's), so they cannot disagree.
+  const top = overdueCountParam(b.overdueSafetyReports);
+  const nested = overdueCountParam(b.readinessInput?.overdueSafetyReports);
+  if (top === null || nested === null) return res.status(400).json(OVERDUE_COUNT_INVALID);
+  const overdueSafetyReports = top ?? nested;
   try {
     const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
     const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
     res.json(
       deriveIndActionItems({
-        readiness: readinessFrom(b.readinessInput),
+        readiness: readinessFrom(b.readinessInput, overdueSafetyReports),
         clock,
         timeline,
         sequenceValidation: validationFrom(b.sequenceValidationInput),
-        overdueSafetyReports: b.overdueSafetyReports,
+        overdueSafetyReports,
       }),
     );
   } catch (err) {

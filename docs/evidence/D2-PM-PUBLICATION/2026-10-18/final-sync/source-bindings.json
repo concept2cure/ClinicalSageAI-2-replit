@@ -1,0 +1,21 @@
+{
+  "implementationCommit": "03759e81692294ae95167debdd98550576478dcc",
+  "integratedCommit": "64832d9c5b481d6d02695a1334e8aa7745eaa2a0",
+  "remoteIntegrationBase": "92928e3529e463d69ee4347e752f2308d401ef1e",
+  "canonicalBranch": "concept2cure-v2",
+  "candidateSha256": {
+    "server/services/projects/schedule-of-events/service.ts": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff",
+    "server/services/projects/schedule-of-events/preservation.ts": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7",
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57",
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+    "server/routes/project-schedule-of-events.ts": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+    "server/routes/__tests__/project-schedule-of-events.test.ts": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+    "server/services/ana/AnaToolExecutor.ts": "720fc786b8532404202738ee779c455aaa72952a436d1d658500fdfef9028d49",
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+    "tests/db/project-schedule-atomic.dbtest.ts": "7bce8d4a4b4150bccb7683500dcfabe2c95d1dd734d8ec4c4923bda8b5c686ca"
+  },
+  "qualifiedCommit": "5d4203b47c13a95b14d1d816ebd646e3532fbd72",
+  "previousQualifiedCommit": "57117233ba20dd5f04da2783d56786dcf2d837d8",
+  "allPmCodeAndTestsUnchanged": true
+}

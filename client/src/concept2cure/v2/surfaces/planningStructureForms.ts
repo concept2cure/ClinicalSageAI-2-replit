@@ -229,4 +229,3 @@ export function parseActivity(v: Values, activityId: string): Parsed {
     throw e;
   }
 }
-

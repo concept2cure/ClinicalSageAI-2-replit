@@ -40,12 +40,15 @@ import {
 } from '../../../shared/schema/gspr-postmarket';
 import { reactiveDependencyService } from '../reactive-dependency-service';
 import { resolveLegacyProgram } from '../living-record/program-link';
+import { systemActorEmail } from '../part11/governed-actor';
 import {
   propagateClaimChange,
   propagateEvidenceChange,
   propagatePredicateChange,
   propagateRiskVocabChange,
+  type PacketAuditReceipt,
 } from '../regulatory-graph/defense-packet-staleness.service';
+import { combineAuditRowOutcomes, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain events
@@ -152,7 +155,9 @@ async function reactiveTrigger(req: RegulatoryChangeRequest): Promise<HandlerOut
       sourceId: req.sourceId,
       sourceLabel: req.sourceLabel,
       reason: req.reason ?? `regulatory event ${req.event}`,
-      triggeredBy: req.userId ?? 'system',
+      // 2026-10-15: was `req.userId ?? 'system'` — a cascade no user started was
+      // logged as 'system', which names nobody. It names this router now.
+      triggeredBy: req.userId || systemActorEmail('change-router'),
     });
     return { channel: 'reactive_dependency_service', detail: result };
   } catch (err: any) {
@@ -274,6 +279,24 @@ export interface PropagateRegulatoryChangeResult {
   sourceId: string;
   outcomes: HandlerOutcome[];
   totalAffected: number;
+  packetAuditReceipts: PacketAuditReceipt[];
+  auditTrail?: AuditRowOutcome;
+}
+
+function summarizeHandlerOutcomes(outcomes: HandlerOutcome[]) {
+  let totalAffected = 0;
+  const packetAuditReceipts: PacketAuditReceipt[] = [];
+  for (const outcome of outcomes) {
+    const detail = outcome.detail as Record<string, unknown> | null;
+    if (!detail || typeof detail !== 'object') continue;
+    for (const field of ['affectedRows', 'markedStaleCount', 'downstreamImpacted']) {
+      if (typeof detail[field] === 'number') totalAffected += detail[field];
+    }
+    if (outcome.channel.startsWith('defense_packet.') && Array.isArray(detail.packetAuditReceipts)) {
+      packetAuditReceipts.push(...detail.packetAuditReceipts as PacketAuditReceipt[]);
+    }
+  }
+  return { totalAffected, packetAuditReceipts };
 }
 
 export async function propagateRegulatoryChange(
@@ -297,21 +320,16 @@ export async function propagateRegulatoryChange(
     }
   }
 
-  // Best-effort total: sums any numeric "affectedRows" / "markedStaleCount".
-  let total = 0;
-  for (const o of outcomes) {
-    const d = o.detail as Record<string, unknown> | null;
-    if (!d || typeof d !== 'object') continue;
-    if (typeof d.affectedRows === 'number') total += d.affectedRows;
-    if (typeof d.markedStaleCount === 'number') total += d.markedStaleCount;
-    if (typeof d.downstreamImpacted === 'number') total += d.downstreamImpacted;
-  }
+  const { totalAffected, packetAuditReceipts } = summarizeHandlerOutcomes(outcomes);
 
   return {
     event: req.event,
     programId: req.programId,
     sourceId: req.sourceId,
     outcomes,
-    totalAffected: total,
+    totalAffected,
+    packetAuditReceipts,
+    ...(packetAuditReceipts.length ? { auditTrail: combineAuditRowOutcomes(packetAuditReceipts[0].auditTrail,
+      ...packetAuditReceipts.slice(1).map(receipt => receipt.auditTrail)) } : {}),
   };
 }

@@ -27,6 +27,7 @@
 
 import { pool } from '../db.js';
 import { unusableInvitePasswordHash } from './password-setup-token.js';
+import { recordInvitationConsent } from './tenant/invitation-consent.js';
 
 /**
  * Fallbacks for a NULL ceiling. They match the column defaults in
@@ -359,9 +360,10 @@ export async function atomicCreateUser(organizationId, userData) {
  *
  * @param {number} invitationId - Invitation to accept
  * @param {number} callerUserId - Session user id (must equal invitation.user_id)
+ * @param {object} [auditContext] - Request IP and user agent; actor is always callerUserId
  * @returns {object} Result with success, data, and error details
  */
-export async function atomicAcceptInvitation(invitationId, callerUserId) {
+export async function atomicAcceptInvitation(invitationId, callerUserId, auditContext = {}) {
   const client = await pool.connect();
 
   try {
@@ -418,12 +420,19 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
     }
 
     // Consent given: create the membership now.
-    await client.query(
+    const membership = await client.query(
       `INSERT INTO organization_users (organization_id, user_id, role, created_at, updated_at)
        VALUES ($1, $2, $3, NOW(), NOW())
-       ON CONFLICT (user_id, organization_id) DO NOTHING`,
+       ON CONFLICT (user_id, organization_id) DO NOTHING
+       RETURNING role`,
       [organizationId, invitation.user_id, invitation.role || 'member']
     );
+    const membershipCreated = membership.rows.length > 0;
+    const persistedRole = membership.rows[0]?.role ?? (
+      await client.query('SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2',
+        [organizationId, callerUserId])
+    ).rows[0]?.role;
+    if (!persistedRole) throw new Error('Accepted invitation has no persisted membership');
 
     await client.query(
       `UPDATE organization_invitations
@@ -432,6 +441,18 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
       [invitationId, organizationId]
     );
 
+    // The user's explicit acceptance and the access it grants have one
+    // transactionally coupled, chained audit row. A failed record rolls both
+    // the membership and invitation status back. Existing memberships retain
+    // their role, and the row records that actual role instead of a new grant.
+    await recordInvitationConsent(client, {
+      userId: callerUserId,
+      ipAddress: auditContext.ipAddress,
+      userAgent: auditContext.userAgent,
+    }, {
+      invitationId, organizationId, status: 'accepted',
+      invitationRole: invitation.role || 'member', membershipCreated, persistedRole,
+    });
     await client.query('COMMIT');
 
     return {
@@ -440,9 +461,10 @@ export async function atomicAcceptInvitation(invitationId, callerUserId) {
         invitationId,
         organizationId,
         userId: invitation.user_id,
-        role: invitation.role || 'member',
+        role: persistedRole,
         status: 'accepted',
       },
+      auditTrail: { persisted: true, chained: true },
     };
   } catch (error) {
     await client.query('ROLLBACK');

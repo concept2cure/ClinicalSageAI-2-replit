@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf 16ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an not yet effective registered version through generic upsertLeaf and writes no leaf 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong agency registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong country registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong application type registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong registered program registered version through generic upsertLeaf and writes no leaf 5ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > permits a matching registered draft for preparation and pins its original hash without claiming approval 12ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > keeps ordinary Vault placement available when a different registered document is expired 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > does not apply another organization’s registry metadata to this organization’s Vault version 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses re-pointing an existing ordinary leaf at an inapplicable legal version and preserves its old pin 13ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 2ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > matches the actual project, market, application and current approved version 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"active":false} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"effectiveOn":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"expiresOn":"2026-10-16"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"agencies":["EMA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"countries":["EU"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"submissionTypes":["NDA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"transmitRefusal":"not reviewed"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > never treats an unknown target as matching a restricted document 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > allows genuinely unrestricted applicability without inventing an agency requirement 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > keeps an expiry date valid through that calendar day 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > refuses an approved version when its registered validity has since expired 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > does not apply a retired inventory entry to unrelated Vault filing 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > binds validity to the exact source version and content hash 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"agency":"EMA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"country":"EU"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"submissionType":"NDA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":null} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"today":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > allows matching draft placement without granting approval 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > preserves ordinary Vault files and retired registry entries 0ms
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  22:46:55
+   Duration  5.97s (transform 2.36s, setup 94ms, import 3.39s, tests 1.98s, environment 0ms)

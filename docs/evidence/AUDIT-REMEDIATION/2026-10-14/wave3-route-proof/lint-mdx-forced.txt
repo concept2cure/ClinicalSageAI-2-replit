@@ -1,0 +1,24 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx
+  21:63  warning  'RequestInit' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts
+   89:61  warning  'RequestInit' is not defined  no-undef
+  168:61  warning  'RequestInit' is not defined  no-undef
+  185:73  warning  'RequestInit' is not defined  no-undef
+  251:61  warning  'RequestInit' is not defined  no-undef
+  298:61  warning  'RequestInit' is not defined  no-undef
+  324:71  warning  'RequestInit' is not defined  no-undef
+  333:67  warning  'RequestInit' is not defined  no-undef
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useCerLiterature.ts
+  418:8  warning  Async function 'screenCerLiterature' has a complexity of 20. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/cer/LiteratureTab.tsx
+   96:1  warning  Function 'ScreeningCell' has a complexity of 21. Maximum allowed is 15     complexity
+  177:8  warning  Function 'LiteratureTab' has too many lines (458). Maximum allowed is 100  max-lines-per-function
+  177:8  warning  Function 'LiteratureTab' has a complexity of 38. Maximum allowed is 15     complexity
+  564:1  warning  File has too many lines (585). Maximum allowed is 500                      max-lines
+
+✖ 13 problems (0 errors, 13 warnings)
+

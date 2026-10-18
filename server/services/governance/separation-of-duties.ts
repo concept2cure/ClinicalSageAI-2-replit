@@ -205,6 +205,81 @@ async function canonicalDocumentAuthors(db: AuthorshipReader, canonicalId: strin
   return set.result();
 }
 
+function unresolvedAuthoringHeading():SeparationOfDutiesAuthorUnresolvedError {
+  return new SeparationOfDutiesAuthorUnresolvedError(
+    'The recorded Authoring heading change cannot be identified reliably. Review independence is unresolved.',
+  );
+}
+
+function authoringHeadingChanged(raw:unknown):boolean {
+  if (!raw || typeof raw!=='object' || Array.isArray(raw)) throw unresolvedAuthoringHeading();
+  const change=raw as Record<string,unknown>;
+  if (typeof change.field!=='string') throw unresolvedAuthoringHeading();
+  if (!['title','code'].includes(change.field)) return false;
+  if (![change.from,change.to].every(value=>value===null || typeof value==='string')) throw unresolvedAuthoringHeading();
+  return change.from!==change.to;
+}
+
+/** RENAME's native from/to facts distinguish visible changes from noops and
+ * track-mode-only activity. Incomplete relevant evidence cannot establish independence. */
+function authoringHeadingAuditHasChange(metadata:unknown):boolean {
+  const changes=metadata && typeof metadata==='object' && !Array.isArray(metadata)
+    ? (metadata as Record<string,unknown>).changes : undefined;
+  if (!Array.isArray(changes)) throw unresolvedAuthoringHeading();
+  // Check the entire recorded set: a valid first change must not hide malformed later facts.
+  return changes.map(authoringHeadingChanged).some(Boolean);
+}
+
+/** Authoring uses the recorded creator, immutable prose revision actors and
+ * existing visible-mutation audit actors. Permissions never rewrite authorship. */
+async function authoringDocumentAuthors(db: AuthorshipReader, documentId: string, orgId: number): Promise<TargetAuthorship> {
+  const empty: TargetAuthorship = { modelled: true, authors: [], sources: [] };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) return empty;
+  const document = await db.query(
+    `SELECT d.created_by FROM authoring_documents d WHERE d.id = $1 AND d.tenant_id = $2 LIMIT 1`,
+    [documentId, orgId],
+  );
+  if (document.rows.length !== 1) return empty;
+  const actorId = (value: unknown): number => {
+    const canonical = typeof value === 'number' || (typeof value === 'string' && /^[1-9]\d*$/.test(value));
+    const id = canonical ? Number(value) : NaN;
+    if (!Number.isSafeInteger(id) || id < 1 || id > 2_147_483_647) {
+      throw new SeparationOfDutiesAuthorUnresolvedError(
+        'The recorded Authoring creator or content contributor cannot be identified reliably. Review independence is unresolved.',
+      );
+    }
+    return id;
+  };
+  const authors = new Set<number>([actorId(document.rows[0].created_by)]);
+  const sources = ['Authoring document creator'];
+  const revisions = await db.query(
+    `SELECT DISTINCT r.created_by FROM doc_revisions r
+       JOIN authoring_sections s ON s.id = r.section_id AND s.tenant_id = r.tenant_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+      WHERE d.id = $1 AND d.tenant_id = $2`,
+    [documentId, orgId],
+  );
+  for (const row of revisions.rows) authors.add(actorId(row.created_by));
+  if (revisions.rows.length) sources.push('Authoring revision ledger');
+  const mutations = await db.query(
+    `SELECT actor_id, operation_type, metadata FROM authoring_audit_trail
+      WHERE doc_id = $1 AND tenant_id = $2 AND (
+        (operation_type = 'CREATE' AND section_id IS NOT NULL)
+        OR operation_type = 'REORDER_SECTIONS'
+        OR (operation_type = 'RENAME' AND metadata->>'source' = 'section-metadata')
+      )`,
+    [documentId, orgId],
+  );
+  let visibleMutation = false;
+  for (const row of mutations.rows) {
+    if (row.operation_type==='RENAME' && !authoringHeadingAuditHasChange(row.metadata)) continue;
+    authors.add(actorId(row.actor_id));
+    visibleMutation = true;
+  }
+  if (visibleMutation) sources.push('Authoring visible mutation audit');
+  return { modelled: true, authors: [...authors].sort((a, b) => a - b), sources };
+}
+
 /**
  * A protocol's authors: everyone who wrote its content. That is its creator, the
  * creator of every live content row (sections, objectives, eligibility, visits,
@@ -337,6 +412,8 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
   }
 
   switch (prefix) {
+    case 'authoring-document':
+      return authoringDocumentAuthors(db, rest, orgId);
     case 'document':
       return documentAuthors(db, rest, orgId, null);
     case 'section': {
@@ -396,6 +473,7 @@ export async function assertSignerIsNotAuthor(
   try {
     authorship = await resolveTargetAuthors(target, orgId, opts.client);
   } catch (err: unknown) {
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw err;
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
     console.error('[governance/SoD] authorship lookup failed for "%s"; refusing to sign:', target, e?.message);
@@ -424,3 +502,37 @@ export async function assertSignerIsNotAuthor(
   }
   return { checked: true, reason: `Signer is not among the record's authors (${authorship.sources.join(', ')}).` };
 }
+
+/** What signing this record with an approval meaning would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type SignerIndependence = 'independent' | 'author' | 'unresolved' | 'unverified';
+
+/**
+ * Would assertSignerIsNotAuthor let this user sign this record as review,
+ * approval or release?
+ *
+ * Asked of the enforcing check itself, so a screen that warns in advance (the
+ * Submission Center's Dispatch tab: a sequence's creator cannot sign its
+ * freeze or dispatch) cannot disagree with what the sign step will do. Before
+ * this the route re-derived the rule from resolveTargetAuthors — a second
+ * copy, which would have drifted the day the rule changed. The gateway's
+ * transmitIndependenceOf asks its own check the same way.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the sign step still decides.
+ */
+export async function signerIndependenceOf(
+  target: string,
+  orgId: number,
+  signerId: number,
+): Promise<SignerIndependence> {
+  try {
+    await assertSignerIsNotAuthor(target, orgId, signerId, { command: 'sign', meaning: 'approval' });
+    return 'independent';
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return 'author';
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return 'unresolved';
+    return 'unverified';
+  }
+}
+

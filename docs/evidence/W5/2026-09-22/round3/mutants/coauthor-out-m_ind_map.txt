@@ -107,4 +107,3 @@ AssertionError: expected { 'm1.2': 'signed', …(2) } to deeply equal { 'm1.2': 
       Tests  3 failed | 16 passed (19)
    Start at  09:12:20
    Duration  5.07s (transform 456ms, setup 156ms, import 399ms, tests 4.09s, environment 0ms)
-

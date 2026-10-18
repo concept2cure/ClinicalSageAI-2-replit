@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 63ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 28ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 40ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 52ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 51ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 79ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":31,"status":"extracted","text":null,"report":{"examined":1,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[{"sourceId":31,"status":"candidate"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > dry-run is read-only and strict invalid options refuse before I/O 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > legacy readable text is already complete without fabricated stage history 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > diagnostic malformed rows do not starve runnable slots 56ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 174ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 50ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":36,"done":{"ok":false,"processed":false,"status":"blocked","reasonCode":"SOURCE_BYTES_MISMATCH"},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":37,"committed":false,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":0,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":0,"unreadable":[{"sourceId":39,"reason":"EXTRACTION_FAILED"}],"dryRun":false,"completed":0,"failed":1,"blocked":0,"skipped":0,"items":[{"sourceId":39,"status":"extraction_failed","reasonCode":"EXTRACTION_FAILED"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 61ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 46ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 84ms
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  04:20:30
+   Duration  3.51s (transform 168ms, setup 62ms, import 163ms, tests 3.06s, environment 0ms)
+

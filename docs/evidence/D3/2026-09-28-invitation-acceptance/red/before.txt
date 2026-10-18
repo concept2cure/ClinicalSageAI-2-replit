@@ -95,4 +95,3 @@ AssertionError: {"error":"Invitation not found"}: expected 404 to be 200 // Obje
       Tests  3 failed | 2 passed (5)
    Start at  18:14:26
    Duration  2.65s (transform 1.04s, setup 70ms, import 1.82s, tests 508ms, environment 0ms)
-

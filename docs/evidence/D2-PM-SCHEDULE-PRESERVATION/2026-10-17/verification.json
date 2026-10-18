@@ -1,0 +1,97 @@
+{
+  "baselineCommit": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
+  "branch": "concept2cure-v2",
+  "runtime": {
+    "node": "22.23.3",
+    "npm": "11.9.0",
+    "postgresql": "16.15"
+  },
+  "checks": {
+    "candidateFocused": {
+      "exitCode": 0,
+      "passed": 130,
+      "files": 8
+    },
+    "candidateNative": {
+      "exitCode": 0,
+      "passed": 29
+    },
+    "baselineNative": {
+      "exitCode": 1,
+      "failed": 20,
+      "passed": 9
+    },
+    "productionBuild": {
+      "exitCode": 0
+    },
+    "wholeRepositoryIncrementalTypecheck": {
+      "exitCode": 0
+    },
+    "eslint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 104
+    },
+    "companionScan": {
+      "exitCode": 0,
+      "filenameWarnings": 3
+    },
+    "dbTestIsolation": {
+      "exitCode": 0,
+      "files": 195
+    },
+    "diffCheck": {
+      "exitCode": 0
+    }
+  },
+  "sourceBindingsStillMatch": true,
+  "typecheckCacheBindings": {
+    "server/services/projects/schedule-of-events/service.ts": {
+      "cachedVersion": "b17701175681ee0e78df4ece851a554face0ef33155dcf91cc96747a9f50b751",
+      "sourceSha256": "b17701175681ee0e78df4ece851a554face0ef33155dcf91cc96747a9f50b751",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/preservation.ts": {
+      "cachedVersion": "47e5a4f00ad1f6cfae0c477b91bc81a3750db2a918d4eed29167d6e8d2b2d88d",
+      "sourceSha256": "47e5a4f00ad1f6cfae0c477b91bc81a3750db2a918d4eed29167d6e8d2b2d88d",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": {
+      "cachedVersion": "2ca7b7af9a3ff8734c7eb72c8e3c71be240a0312dafb4382b3b4e0d82b586f74",
+      "sourceSha256": "2ca7b7af9a3ff8734c7eb72c8e3c71be240a0312dafb4382b3b4e0d82b586f74",
+      "matches": true
+    },
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": {
+      "cachedVersion": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+      "sourceSha256": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+      "matches": true
+    },
+    "server/routes/project-schedule-of-events.ts": {
+      "cachedVersion": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+      "sourceSha256": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+      "matches": true
+    },
+    "server/routes/__tests__/project-schedule-of-events.test.ts": {
+      "cachedVersion": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+      "sourceSha256": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+      "matches": true
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "cachedVersion": "5edf86efa816c564d13e6bbfe621fe0a44f61efa83e95b235a8c1ffbab88cf94",
+      "sourceSha256": "5edf86efa816c564d13e6bbfe621fe0a44f61efa83e95b235a8c1ffbab88cf94",
+      "matches": true
+    },
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": {
+      "cachedVersion": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+      "sourceSha256": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+      "matches": true
+    },
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": {
+      "cachedVersion": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+      "sourceSha256": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+      "matches": true
+    }
+  },
+  "serverBundleSha256": "46ee79d42833e51c217b01e8ebaf4e825305fe81c70147d9c43d477fd392040d",
+  "scope": "Local implementation only; uncommitted, unpushed, undeployed."
+}

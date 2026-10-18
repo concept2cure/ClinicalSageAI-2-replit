@@ -1,0 +1,41 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a pending source search does not report zero matches 5073ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a malformed source list is unavailable, not empty: {"sources":{}} 5038ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 5034ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations 5033ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations 5040ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations 5042ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a pending source search does not report zero matches
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:193:18
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a malformed source list is unavailable, not empty: {"sources":{}}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:202:18
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > a malformed source list is unavailable, not empty: {"sources":[],"total":null}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:202:18
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > an unavailable or malformed change read preserves sources without implying no affected citations
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:390:18
+TypeError: sources.filter is not a function
+ ❯ DataRoom client/src/concept2cure/v2/surfaces/ProjectHome.tsx:539:27
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+ Test Files  1 failed (1)
+      Tests  6 failed | 26 passed (32)
+     Errors  1 error
+   Start at  01:03:14
+   Duration  35.52s (transform 1.52s, setup 206ms, import 2.11s, tests 32.07s, environment 872ms)

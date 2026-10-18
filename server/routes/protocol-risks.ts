@@ -85,8 +85,9 @@ async function governed(
 const riskSchema = z.object({
   category: z.enum(['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other']).optional(),
   description: z.string().min(1).max(2000),
-  likelihood: LIKELIHOOD.optional(),
-  impact: IMPACT.optional(),
+  // Both ratings are the assessor's; neither is defaulted (2026-10-15).
+  likelihood: LIKELIHOOD,
+  impact: IMPACT,
   mitigation: z.string().max(2000).optional(),
   owner: z.string().max(200).optional(),
   reason,

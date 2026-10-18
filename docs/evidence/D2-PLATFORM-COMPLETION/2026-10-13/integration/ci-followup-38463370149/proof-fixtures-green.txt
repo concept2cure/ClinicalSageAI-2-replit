@@ -1,0 +1,54 @@
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content 5762ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content 2905ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > editor default  { text } 2173ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > backfill shape  { paragraphs } 2031ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { markdown } 1895ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { xml } 1742ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > bare JSON string 1778ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > scaffold placeholder {} → no content 2967ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty text → no content 2870ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > whitespace-only text → no content 2662ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty paragraphs list → no content 1926ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > unrelated keys only → no content 1791ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty JSON string → no content 2584ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > a NULL content column does not error 2889ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > the key useSectionSave.ts actually sends is one the predicate accepts 3054ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > no route computes has_content from the paragraphs key alone 3898ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the fragment is not an injection surface > refuses anything that is not a plain or qualified identifier 3295ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500 6870ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version 4378ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger 3517ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write 3055ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored 2970ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human 2375ms
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > no route may set a GUC with a bind parameter > server/ contains no parameterised SET — the whole bug class, fenced 2287ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > the fixture table matches the Drizzle definition column-for-column 22ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > extracts every SELECT in the router — the gate is not vacuous 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a column its table does not have 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > no statement references a table that does not exist 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > every extracted statement plans cleanly 0ms
+ ✓ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma route registration order > registers /meetings before /:id so it is reachable 2ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it 5249ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked 2496ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented 2348ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save 2103ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next 2592ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected 3244ms
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  22:27:32
+   Duration  96.12s (transform 1.99s, setup 170ms, import 1.83s, tests 92.64s, environment 0ms)

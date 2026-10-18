@@ -41,6 +41,8 @@
 import type { SeriousnessCriteria } from '../compliance/pharmacovigilanceService';
 import type { IndSafetyReportObligation } from './ind-safety-report-service';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 // ---------------------------------------------------------------------------
 // Input model (caller-supplied period data)
 // ---------------------------------------------------------------------------
@@ -83,8 +85,17 @@ export interface IndAnnualReportInput {
   reportingPeriodStart: Date;
   reportingPeriodEnd: Date;
   studyStatuses: StudyStatusEntry[];
-  safetyReportsInPeriod: PeriodSafetyReportEntry[];
-  ibChanges: IbChangeEntry[];
+  /**
+   * IND Safety Reports submitted in the period. An empty or absent list is NOT
+   * "none": it leaves the section incomplete (nobody has read the register).
+   */
+  safetyReportsInPeriod?: PeriodSafetyReportEntry[];
+  /** The sponsor's statement that no IND Safety Report was submitted in the period — the only way "none" is printed. */
+  noSafetyReportsInPeriod?: boolean;
+  /** IB revisions in the period. Empty or absent is not "no revisions". */
+  ibChanges?: IbChangeEntry[];
+  /** The sponsor's statement that the IB was not revised in the period — the only way "no revisions" is printed. */
+  noIbChangesInPeriod?: boolean;
   /** Free-text summary of the safety information for the period (312.33(b)). */
   safetySummary?: string;
   /** General investigational plan for the coming year (312.33(c)). */
@@ -95,6 +106,63 @@ export interface IndAnnualReportInput {
   foreignMarketingDevelopments?: string;
   /** Log of outstanding business with FDA (312.33(g)). */
   outstandingBusiness?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Boundary parsing (dates arrive as JSON strings over HTTP)
+// ---------------------------------------------------------------------------
+
+/** A supplied value that is not a date, or a list that is not a list. Code VALIDATION: the routes answer 400. */
+export class IndAnnualReportInputError extends Error {
+  readonly code = 'VALIDATION';
+  constructor(public readonly field: string, problem: string) {
+    super(`${field} ${problem}.`);
+    this.name = 'IndAnnualReportInputError';
+  }
+}
+
+function dateField(value: unknown, field: string): Date {
+  const date = value instanceof Date ? value : typeof value === 'string' && value.trim() !== '' ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) throw new IndAnnualReportInputError(field, 'must be a valid date');
+  return date;
+}
+
+function listField(value: unknown, field: string): Array<Record<string, unknown>> | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) throw new IndAnnualReportInputError(field, 'must be a list');
+  value.forEach((entry, i) => {
+    if (!entry || typeof entry !== 'object') throw new IndAnnualReportInputError(`${field}[${i}]`, 'must be an object');
+  });
+  return value as Array<Record<string, unknown>>;
+}
+
+/**
+ * The 312.33 input as a request carries it, parsed once at the boundary: the
+ * reporting period and every listed date a Date, every list a list — or a
+ * refusal naming the field. The one parser for the preview, PDF, filing and
+ * draft paths. 2026-10-15: the preview and PDF routes passed the body straight
+ * through, so a listed safety report or IB revision (a JSON date string) threw
+ * from toISOString and answered 500.
+ */
+export function parseAnnualReportInput(raw: unknown): IndAnnualReportInput {
+  const b = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const studies = listField(b.studyStatuses, 'studyStatuses');
+  const safety = listField(b.safetyReportsInPeriod, 'safetyReportsInPeriod');
+  const ib = listField(b.ibChanges, 'ibChanges');
+  return {
+    ...(b as unknown as IndAnnualReportInput),
+    reportingPeriodStart: dateField(b.reportingPeriodStart, 'reportingPeriodStart'),
+    reportingPeriodEnd: dateField(b.reportingPeriodEnd, 'reportingPeriodEnd'),
+    studyStatuses: (studies ?? []) as unknown as StudyStatusEntry[],
+    safetyReportsInPeriod: safety?.map((r, i) => ({
+      ...(r as unknown as PeriodSafetyReportEntry),
+      submittedAt: dateField(r.submittedAt, `safetyReportsInPeriod[${i}].submittedAt`),
+    })),
+    ibChanges: ib?.map((c, i) => ({
+      ...(c as unknown as IbChangeEntry),
+      effectiveDate: dateField(c.effectiveDate, `ibChanges[${i}].effectiveDate`),
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -136,6 +204,74 @@ export interface AnnualReportGap {
 // Assembler (pure)
 // ---------------------------------------------------------------------------
 
+/** What closes a register section's gap: its listing, or the sponsor's statement of none. */
+const REGISTER_GAP_DETAIL: Record<string, string> = {
+  ind_safety_reports_list: 'list the IND Safety Reports submitted in the period, or state that none were submitted',
+  ib_changes: "list the Investigator's Brochure revisions made in the period, or state that none were made",
+};
+
+/**
+ * 312.33(b): the safety summary and the list of IND Safety Reports submitted.
+ * 2026-10-15: an empty list used to print "No IND Safety Reports were submitted
+ * during the period." (complete) and a count of 0 — what the IND screen sent
+ * for a register it never captured. "None" is now the sponsor's statement only
+ * (`noSafetyReportsInPeriod`); otherwise the list is incomplete and gapped, and
+ * no count is stated.
+ */
+function safetyReportSections(input: IndAnnualReportInput): AnnualReportSection[] {
+  const listed = input.safetyReportsInPeriod ?? [];
+  const statedNone = listed.length === 0 && input.noSafetyReportsInPeriod === true;
+  const reportLines = listed.map(
+    (r) =>
+      `${r.reportId} [${r.obligation}] ${r.reactionPt ?? 'unspecified reaction'} ` +
+      `(${r.seriousnessCriteria}) — submitted ${toIsoDate(r.submittedAt)}`,
+  );
+  const counts = countByObligation(listed);
+  const countLine =
+    listed.length > 0 || statedNone
+      ? `IND Safety Reports filed in period: ${listed.length} (7-day: ${counts.SEVEN_DAY}, 15-day: ${counts.FIFTEEN_DAY}).`
+      : '';
+  const listBody = reportLines.join('\n');
+  return [
+    {
+      key: 'summary_safety_information',
+      heading: 'Summary of Safety Information',
+      cfrRef: '312.33(b)',
+      dsurRef: 'E2F §§7–16 (Safety Summary)',
+      body: [input.safetySummary ?? '', countLine, listBody].filter(Boolean).join('\n'),
+      // Complete iff a narrative summary was supplied (the list alone is not a summary).
+      complete: nonEmpty(input.safetySummary),
+    },
+    {
+      // Dedicated IND safety reports list section (cross-reference to 312.32 filings).
+      key: 'ind_safety_reports_list',
+      heading: 'IND Safety Reports Submitted During the Period',
+      cfrRef: '312.33(b)',
+      dsurRef: 'E2F §15 / Appendix (Line Listings)',
+      body: listBody || (statedNone ? 'No IND Safety Reports were submitted during the period.' : ''),
+      complete: listed.length > 0 || statedNone,
+    },
+  ];
+}
+
+/**
+ * 312.33(d): IB revisions. "No revisions" is the sponsor's statement only
+ * (2026-10-15: an empty list used to print it, complete, for a history nobody read).
+ */
+function ibChangesSection(input: IndAnnualReportInput): AnnualReportSection {
+  const changes = input.ibChanges ?? [];
+  const statedNone = changes.length === 0 && input.noIbChangesInPeriod === true;
+  const listBody = changes.map((c) => `IB ${c.ibVersion} (effective ${toIsoDate(c.effectiveDate)}): ${c.summary}`).join('\n');
+  return {
+    key: 'ib_changes',
+    heading: "Investigator's Brochure Revisions",
+    cfrRef: '312.33(d)',
+    dsurRef: 'E2F §3 (Changes to RSI)',
+    body: listBody || (statedNone ? "No revisions to the Investigator's Brochure were made during the period." : ''),
+    complete: changes.length > 0 || statedNone,
+  };
+}
+
 /**
  * Assemble the structured IND Annual Report / DSUR section model and gap list.
  * Pure / deterministic.
@@ -168,42 +304,7 @@ export function assembleIndAnnualReport(input: IndAnnualReportInput): IndAnnualR
   }
 
   // (b) Summary safety information + IND safety reports list.
-  {
-    const reportLines = input.safetyReportsInPeriod.map(
-      (r) =>
-        `${r.reportId} [${r.obligation}] ${r.reactionPt ?? 'unspecified reaction'} ` +
-        `(${r.seriousnessCriteria}) — submitted ${toIsoDate(r.submittedAt)}`,
-    );
-    const counts = countByObligation(input.safetyReportsInPeriod);
-    const summaryBody = [
-      input.safetySummary ?? '',
-      `IND Safety Reports filed in period: ${input.safetyReportsInPeriod.length} ` +
-        `(7-day: ${counts.SEVEN_DAY}, 15-day: ${counts.FIFTEEN_DAY}).`,
-      reportLines.length > 0 ? reportLines.join('\n') : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-    sections.push({
-      key: 'summary_safety_information',
-      heading: 'Summary of Safety Information',
-      cfrRef: '312.33(b)',
-      dsurRef: 'E2F §§7–16 (Safety Summary)',
-      body: summaryBody,
-      // Complete iff a narrative summary was supplied (the list alone is not a summary).
-      complete: Boolean(input.safetySummary && input.safetySummary.trim().length > 0),
-    });
-
-    // Dedicated IND safety reports list section (cross-reference to 312.32 filings).
-    sections.push({
-      key: 'ind_safety_reports_list',
-      heading: 'IND Safety Reports Submitted During the Period',
-      cfrRef: '312.33(b)',
-      dsurRef: 'E2F §15 / Appendix (Line Listings)',
-      body: reportLines.length > 0 ? reportLines.join('\n') : 'No IND Safety Reports were submitted during the period.',
-      // This section is always "complete" — an empty period is a valid, explicit state.
-      complete: true,
-    });
-  }
+  sections.push(...safetyReportSections(input));
 
   // (c) General investigational plan.
   sections.push({
@@ -216,23 +317,7 @@ export function assembleIndAnnualReport(input: IndAnnualReportInput): IndAnnualR
   });
 
   // (d) IB changes.
-  {
-    const hasIb = input.ibChanges.length > 0;
-    const body = hasIb
-      ? input.ibChanges
-          .map((c) => `IB ${c.ibVersion} (effective ${toIsoDate(c.effectiveDate)}): ${c.summary}`)
-          .join('\n')
-      : 'No revisions to the Investigator\'s Brochure were made during the period.';
-    sections.push({
-      key: 'ib_changes',
-      heading: "Investigator's Brochure Revisions",
-      cfrRef: '312.33(d)',
-      dsurRef: 'E2F §3 (Changes to RSI)',
-      body,
-      // An explicit "no changes" is complete; if changes exist they are listed.
-      complete: true,
-    });
-  }
+  sections.push(ibChangesSection(input));
 
   // (e) Significant Phase 1 protocol modifications.
   sections.push({
@@ -270,7 +355,9 @@ export function assembleIndAnnualReport(input: IndAnnualReportInput): IndAnnualR
       sectionKey: s.key,
       heading: s.heading,
       cfrRef: s.cfrRef,
-      message: `Section "${s.heading}" (${s.cfrRef}) is incomplete and must be authored before filing.`,
+      message:
+        `Section "${s.heading}" (${s.cfrRef}) is incomplete and must be authored before filing` +
+        (REGISTER_GAP_DETAIL[s.key] ? ` — ${REGISTER_GAP_DETAIL[s.key]}.` : '.'),
     }));
 
   return {
@@ -299,19 +386,41 @@ export function computeAnnualReportDue(indEffectiveDate: Date, asOf: Date = new 
   // after the anniversary — the normal case — was due some 415 days out, and
   // listOverdueAnnualReports reported nothing overdue while the real 60-day
   // window ran out. Before the first anniversary, the first one is the target.
-  const anniversary = new Date(indEffectiveDate);
-  anniversary.setFullYear(asOf.getFullYear());
-  if (anniversary.getTime() > asOf.getTime()) {
-    anniversary.setFullYear(asOf.getFullYear() - 1);
-  }
-  if (anniversary.getTime() <= indEffectiveDate.getTime()) {
-    // asOf precedes the first anniversary: the first report is the one due.
-    anniversary.setTime(indEffectiveDate.getTime());
-    anniversary.setFullYear(indEffectiveDate.getFullYear() + 1);
-  }
-  const due = new Date(anniversary);
-  due.setDate(due.getDate() + 60);
-  return due;
+  let n = asOf.getUTCFullYear() - indEffectiveDate.getUTCFullYear();
+  if (indAnniversary(indEffectiveDate, n).getTime() > asOf.getTime()) n -= 1;
+  // asOf precedes the first anniversary: the first report is the one due.
+  if (n < 1) n = 1;
+  return annualReportDueAfter(indAnniversary(indEffectiveDate, n));
+}
+
+/**
+ * The 312.33 due date of the report for a STATED reporting period: 60 days
+ * after the IND anniversary that closes it — the first anniversary falling on
+ * or after the period's end, compared by UTC calendar day. Pure: it reads the
+ * report's own period, never the wall clock (2026-10-15: drafts used to be
+ * dated from `computeAnnualReportDue(effective)` at "now", so a draft opened
+ * early read overdue and one opened a year late read on time).
+ */
+export function computeAnnualReportDueForPeriod(indEffectiveDate: Date, reportingPeriodEnd: Date): Date {
+  let n = Math.max(1, reportingPeriodEnd.getUTCFullYear() - indEffectiveDate.getUTCFullYear());
+  if (utcDay(indAnniversary(indEffectiveDate, n)) < utcDay(reportingPeriodEnd)) n += 1;
+  return annualReportDueAfter(indAnniversary(indEffectiveDate, n));
+}
+
+/**
+ * The `n`th anniversary of the date the IND went into effect: whole calendar
+ * years (UTC), so it never drifts across a leap day. The one anniversary
+ * implementation — the due dates above and the regulatory timeline use it.
+ */
+export function indAnniversary(indEffectiveDate: Date, n: number): Date {
+  const d = new Date(indEffectiveDate.getTime());
+  d.setUTCFullYear(d.getUTCFullYear() + n);
+  return d;
+}
+
+/** 312.33: the annual report is due within 60 days of the anniversary. */
+export function annualReportDueAfter(anniversary: Date): Date {
+  return new Date(anniversary.getTime() + 60 * DAY_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -341,4 +450,9 @@ function nonEmpty(s: string | undefined | null): boolean {
 
 function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** A Date reduced to its UTC calendar day (epoch ms at UTC midnight). */
+function utcDay(d: Date): number {
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }

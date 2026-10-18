@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:16:41.544Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:16:41.729Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:16:41.730Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:16:41.730Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports persisted availability and a safe processing summary without private identity/error fields 23ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports recovered text under the same identity and drops obsolete failure presentation 6ms
+   → Cannot read properties of undefined (reading '0')
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports persisted availability and a safe processing summary without private identity/error fields
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/c2c/__tests__/projects-sources-processing.test.ts:34:22
+     32|     mocks.search.mockResolvedValue({ total: 1, currentTotal: 1, source…
+     33|     const r = await request(app()).get(`/api/c2c/projects/${P}/sources…
+     34|     expect(r.status).toBe(200);
+       |                      ^
+     35|     expect(r.body.sources[0]).toMatchObject({ id: 9, textAvailable: fa…
+     36|     expect(JSON.stringify(r.body)).not.toMatch(/private|storageRef|ide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports recovered text under the same identity and drops obsolete failure presentation
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/routes/c2c/__tests__/projects-sources-processing.test.ts:43:19
+     41|       metadata: { dataRoomProcessing: { ...stage('completed'), retryab…
+     42|     const r = await request(app()).get(`/api/c2c/projects/${P}/sources…
+     43|     expect(r.body.sources[0]).toMatchObject({ id: 9, checksum: 'a'.rep…
+       |                   ^
+     44|     expect(JSON.stringify(r.body)).not.toMatch(/PERSISTENCE_FAILED|pri…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  21:16:39
+   Duration  5.32s (transform 3.01s, setup 94ms, import 4.94s, tests 33ms, environment 0ms)
+

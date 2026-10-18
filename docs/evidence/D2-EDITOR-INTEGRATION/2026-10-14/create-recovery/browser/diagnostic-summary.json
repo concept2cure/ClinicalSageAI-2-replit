@@ -1,0 +1,87 @@
+{
+  "testedHead": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "completedAt": "2026-10-14T21:55:54.952Z",
+  "productionFrozenDuringCapture": true,
+  "sourceSha256": {
+    "design-system/colors_and_type.css": "1ddf6ace7e7631b0071c98159955aa812ad2cb284ceff705ce99dd89c74708fe",
+    "client/src/concept2cure/v2/C2CForm.tsx": "6d70e9b895364a167219a8fd970a6f278302bf1ea59bad27ab8b9fbee47f3721",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "4513363a8bd44e41316db97a5859284f5517cf545c4ff39bc6a1a81fdc343e8d",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "d0da81d83d590098a4bcf98d28441cefc34cf89bd4446557e518d811b7fda01a",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "cc8ecd9d83745ec141b110550256f2f41db251e6e77478673a72df069bc657e5",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editorTarget.ts": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d",
+    "client/src/concept2cure/v2/shellProject.ts": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30",
+    "client/src/concept2cure/v2/styles/app-v2.css": "d89975cea7ff560fba2827465767df0ccc34249c02fd781ff8997af5b06d0e59",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "14b5fd93e0e60c8b04c825c7f7e19d509f48bdad6cf0e00f6b2632d326cb3aea",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "c179cc1537b9de169714789a3a993eaad96a2e3136e4a780af637bd2f187115b",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3"
+  },
+  "fixtureSha256": {
+    "browser-checks.mjs": "2255eaac7ccdc47458231ca93996d24f826fce752eb8be579251ee8b6b76ee33",
+    "browser.mjs": "3456f0bab8f39b15b7fab47dd9adbd68c016b0471b181b03208736afc24c93bc",
+    "index.html": "a3e72794dc313640ccb5a1390d7f555f73dde3f2c67515e0e0a2fd833dc0ad0e",
+    "mock-api.mjs": "72447684cca71642689385e8e6669b8151ada9f1dfbdfe2336cc4b76cbe83e27",
+    "probe.tsx": "01b619cb9ad365d1de4411d0be3717e81e5442097c710583d6ca79a6e83d371b",
+    "records.json": "66c4eceab09fb90e626988b5f9e1b43f82c166c3d5c647ad063d21a9562cb4fc",
+    "server.mjs": "1e3a6138a10d75d201fde3e6558246e7cfeb0c1a39ca84bfbefedfbd370aaf43",
+    "unknown-cases.mjs": "ab9add276adbbe5b870c5be01f01e6909c590a7a6ebe5c568a0cafae79e3b5fd",
+    "visual-checks.mjs": "2c07fc6b5753491bd8bb4d2cacb8fdac5e900bcb6d01e619398cebd86d5b850f",
+    "workbench-cases.mjs": "9da31418e788066153765c71833cf35bf72bf33708da80f37e72e205b1faa4d2"
+  },
+  "contexts": [
+    {
+      "label": "diagnostic-touch-light",
+      "status": "fail",
+      "cases": [
+        {
+          "kind": "document",
+          "mode": "diagnostic-touch-light-unknown",
+          "status": "fail",
+          "stages": 1,
+          "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async assertRecovery (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:26:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:50:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:40:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19"
+        },
+        {
+          "kind": "section",
+          "mode": "diagnostic-touch-light-unknown",
+          "status": "fail",
+          "stages": 1,
+          "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async assertRecovery (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:26:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:50:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:40:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19"
+        },
+        {
+          "kind": "document",
+          "mode": "diagnostic-touch-light-native",
+          "status": "fail",
+          "stages": 0,
+          "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async cancelAndRetry (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:17:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:48:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:41:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19"
+        },
+        {
+          "kind": "section",
+          "mode": "diagnostic-touch-light-native",
+          "status": "fail",
+          "stages": 0,
+          "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async cancelAndRetry (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:17:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:48:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:41:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19"
+        },
+        {
+          "kind": "document",
+          "mode": "diagnostic-touch-light-held",
+          "status": "pass",
+          "stages": 1
+        }
+      ]
+    }
+  ],
+  "caseCount": 5,
+  "stageCount": 3,
+  "mutationCount": 4,
+  "limitations": [
+    "Explicitly synthetic local API records; no database, authorization, persistence, provider or deployed-environment claim.",
+    "Unknown outcomes use deliberately mismatched successful receipts. Failed recovery is a successful HTTP response with wrong-scope rows; production tests separately exercise HTTP/network failures.",
+    "The native Workbench document case records its exact editorTarget/onNav handoff boundary after the real unsaved-work decision. The local fixture does not emulate the shell router or claim a deployed reopen.",
+    "The native Workbench section case opens the exact returned section through its actual section refresh, leave guard and canonical RichSectionEditor.",
+    "All original style tokens and product components are imported directly; this host adds no product CSS or alternate editor.",
+    "Axe incomplete rules are retained per capture and require manual review; this is not a complete accessibility audit."
+  ],
+  "status": "fail"
+}

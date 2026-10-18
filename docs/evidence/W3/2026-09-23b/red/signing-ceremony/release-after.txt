@@ -91,4 +91,3 @@ stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submission
       Tests  18 passed (18)
    Start at  10:50:12
    Duration  553ms (transform 160ms, setup 80ms, import 225ms, tests 89ms, environment 0ms)
-

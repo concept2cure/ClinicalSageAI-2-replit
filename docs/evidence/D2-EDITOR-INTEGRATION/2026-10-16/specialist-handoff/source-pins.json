@@ -1,0 +1,65 @@
+{
+  "sourceHead": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "cd47d14e26ab93fc0ac0f000cc6aeb3c9fb05ed27c57073ad3b83079648bfe4b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+      "sha256": "1767db63a41ca3bdb0e81fd09080399ce6ce8482d687b9ac866430061eac72dd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+      "sha256": "11e38e5e07072968cfc79ca21c06cb90674907a17451f174fad07b5105a66042"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+      "sha256": "3368be06b5192f1b05f18f9fe2def1c7dabdf78765ea9965be3e92dd50504d17"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+      "sha256": "01a498cab01a95205dcc2833f070b84e2bc5b065a415f526eb0125dc4f1f4469"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+      "sha256": "1d6e4a9a3a34861d868fe59b0d46752689ccdf1d83aa7d152fd8bccd5d328c36"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+      "sha256": "acae5f79fd5809643fa385989e5120fd32924c23daa049095d9845961e87ce44"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+      "sha256": "0b4e849d05a9bba26b0dbd57e130f777bea87f04043498c54aa7430d11f77f75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+      "sha256": "7330887f60b2ead336eaf1136878915972aa21955255ab72f7e4c9ef40e11b16"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+      "sha256": "f0baab5e9dc176faf009d3a2afd9270c1519f64a0ab0b5d4be8f13fc6f286fd2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "sha256": "e2c5d5b40ba04cf501109829df6b0a61970c3e8be6215058f51d1a328ca9dc3b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "sha256": "1bb3108c08e08d43b72efa1c3c43755f726413758d2520bb5a840a7ce4447206"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellProject.test.ts",
+      "sha256": "45fe856e60404e5a7dddcfbab984bffd7c19168a60e50ab42258273c489d2e50"
+    },
+    {
+      "path": "tests/ci/no-ghost-globals.contract.test.ts",
+      "sha256": "c379a34a0a7337b392140b211cce3a2b6feb0ace589a93007dd515906fd09e76"
+    }
+  ]
+}

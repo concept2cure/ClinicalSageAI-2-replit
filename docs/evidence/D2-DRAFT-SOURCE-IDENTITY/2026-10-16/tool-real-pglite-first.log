@@ -1,0 +1,397 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:32:47.225Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:32:49.326Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:32:49.326Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:32:49.326Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata
+{
+  "timestamp": "2026-10-16T21:32:56.757Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 94eea5c7-bd05-4617-a36e-d89bb98d1af4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a)
+{
+  "timestamp": "2026-10-16T21:32:56.833Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4efc8bc4-2a57-4587-a0f4-77679775e7ea by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata 445ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a) 67ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains the original legacy NULL-organization source as a no-write admission refusal 35ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000002 before creating anything 21ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000003 before creating anything 22ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000001 before creating anything 29ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a failed-extraction catalog record without creating a document 34ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a stale-extraction catalog record without creating a document 38ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a same-length extraction change inside the selected span without authoring writes 33ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c)
+{
+  "timestamp": "2026-10-16T21:32:57.151Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7d263e5b-06a8-4e91-99af-720456c2d218 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > saves a reference whose excerpt starts inside the document, and every offset is the document's own (S5d)
+{
+  "timestamp": "2026-10-16T21:32:57.219Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d018e98-c5e5-475f-8de2-3f9a984101eb by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a same-length extraction change outside the selected span without authoring writes 30ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a new selected reference stripped of version rather than using historical compatibility 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a new selected reference stripped of extractedTextSha256 rather than using historical compatibility 6ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a new selected reference stripped of spanSha256 rather than using historical compatibility 4ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c) 68ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+{
+  "timestamp": "2026-10-16T21:32:57.336Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Test embedding unavailable"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-16T21:32:57.395Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4957ed44-322e-486e-a656-d99ae7934d54 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-16T21:32:57.406Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4957ed44-322e-486e-a656-d99ae7934d54 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-16T21:32:57.416Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4957ed44-322e-486e-a656-d99ae7934d54 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-16T21:32:57.449Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c6c4a05f-557a-4d4b-a5b8-99445c334821 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-16T21:32:57.460Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c6c4a05f-557a-4d4b-a5b8-99445c334821 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-16T21:32:57.471Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c6c4a05f-557a-4d4b-a5b8-99445c334821 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message
+{
+  "timestamp": "2026-10-16T21:32:57.500Z",
+  "level": "error",
+  "message": "[draft-authoring-document-tool] draft_authoring_document failed",
+  "context": {
+    "err": "relation \"authoring_sections\" does not exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-16T21:32:57.527Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00f3ae89-32a6-4754-a61b-60406132e991 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-16T21:32:57.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00f3ae89-32a6-4754-a61b-60406132e991 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-16T21:32:57.542Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00f3ae89-32a6-4754-a61b-60406132e991 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool
+{
+  "timestamp": "2026-10-16T21:32:57.605Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5647492e-b2ab-47c2-bea5-da8a31bde178 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > saves a reference whose excerpt starts inside the document, and every offset is the document's own (S5d) 59ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows 40ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor 55ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool 66ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > refuses an excerpt longer than 12,000 characters wherever it starts, and saves nothing 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a legacy project whose anchor names another organization’s program, and writes nothing (PF-04 P2) 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > is in the tool catalog the model sees 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message 22ms
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > saves an exact Unicode V2 window beyond 80,000 with unchanged receipt identities 4ms
+   → inconsistent types deduced for parameter $1
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses verbatim without an open project, and writes nothing 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program) 45ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a project another organization owns as "no project" — never a cross-tenant write 2ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied 90ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses malformed input as an error the model can read, not a crash 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist 56ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > refuses when normal remove_data commits immediately before authoring connect, without any authoring writes 133ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: a source already withdrawn by normal apply refuses with zero authoring writes 88ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:33:01.488Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:33:01.489Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:33:01.489Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-16T21:33:02.744Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d8f6bc96-e26c-4d05-84fd-211558c5f1fa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-16T21:33:02.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d8f6bc96-e26c-4d05-84fd-211558c5f1fa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-16T21:33:02.776Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d8f6bc96-e26c-4d05-84fd-211558c5f1fa by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > direct from-draft private project boundary > refuses direct private-program source references before reading source text or creating evidence 56ms
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > saves complete V2 identities in document and CREATE audit source receipts without a source prose copy 4ms
+   → inconsistent types deduced for parameter $1
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction inside the excerpt before any durable authoring write 1ms
+   → inconsistent types deduced for parameter $1
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction outside the excerpt before any durable authoring write 1ms
+   → inconsistent types deduced for parameter $1
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of version 1ms
+   → inconsistent types deduced for parameter $1
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of extractedTextSha256 1ms
+   → inconsistent types deduced for parameter $1
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of spanSha256 1ms
+   → inconsistent types deduced for parameter $1
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-16T21:33:02.854Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c4c563cb-84bd-4fc8-928a-7bd89777c852 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-16T21:33:02.950Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 55dd734a-4a26-4c5a-9fe8-5a0d306c4632 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 132ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 51ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 7ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 4ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-16T21:33:02.963Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 55dd734a-4a26-4c5a-9fe8-5a0d306c4632 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-16T21:33:02.973Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 55dd734a-4a26-4c5a-9fe8-5a0d306c4632 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-16T21:33:03.048Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7de16b9e-f6bd-4464-8e26-5b310e759710 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-16T21:33:03.060Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7de16b9e-f6bd-4464-8e26-5b310e759710 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-16T21:33:03.071Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7de16b9e-f6bd-4464-8e26-5b310e759710 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-16T21:33:03.101Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dd7cd76e-a77b-4ad4-9b08-006fc5686cce by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 124ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 64ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-16T21:33:03.136Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b582b34e-cc60-498f-b3ec-431f1ec550a2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 32ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it) 34ms
+stderr | server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:33:04.083Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'foreign' recorded tenant despite a matching program and valid catalog 23ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > refuses a legacy 'unassigned' recorded tenant despite a matching program and valid catalog 16ms
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts > new current-only saved-source admission requires a consistent recorded tenant > retains exact source verification when the document and program agree on the tenant 26ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > saves complete V2 identities in document and CREATE audit source receipts without a source prose copy
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction inside the excerpt before any durable authoring write
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction outside the excerpt before any durable authoring write
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of version
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of extractedTextSha256
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of spanSha256
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d) > saves an exact Unicode V2 window beyond 80,000 with unchanged receipt identities
+error: inconsistent types deduced for parameter $1
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 142, severity: 'ERROR', code: '42P08', detail: 'text versus uuid', hint: undefined, position: '151', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook', query: 'INSERT INTO vault.documents\n      (id,program_id,organization_id,document_code,document_title,document_type,content_hash,extracted_text)\n      VALUES($1,$2,$3,$1::text,\'Current source\',\'csr\',$4,$5)', params: [ '55c5d682-fb9f-4359-8c51-4c28bd3ab879', '11111111-1111-4111-8111-111111111111', 1, '7480c568dfec8b9eceb6dc5550e38faf69b06ab51c6b040d01855ebef764b5e3', 'Study introduction. Observed result 💊 awaits clinical review. Appendix conclusion.' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  7 failed | 46 passed (53)
+   Start at  21:32:44
+   Duration  22.27s (transform 7.67s, setup 92ms, import 11.62s, tests 10.10s, environment 0ms)
+

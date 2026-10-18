@@ -1,0 +1,139 @@
+{
+  "cases": [
+    {
+      "case": "renderer_help",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/render_study.py",
+        "--help"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "usage: render_study.py [-h] [--font-dir FONT_DIR] [--check] [source] [stem]\n\nRender a repository study without replacing its historical exports.\n\npositional arguments:\n  source               Markdown source relative to the repository root, or an\n                       absolute path inside it.\n  stem                 A filename stem, never a path.\n\noptions:\n  -h, --help           show this help message and exit\n  --font-dir FONT_DIR  Directory holding DejaVuSans.ttf, DejaVuSans-Bold.ttf\n                       and DejaVuSansMono.ttf.\n  --check              Validate source, filename, fonts and document parsing\n                       without writing exports.\n",
+      "stderr": ""
+    },
+    {
+      "case": "renderer_cross_cwd_check",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/render_study.py",
+        "docs/reports/DATA_ROOM_AI_MOAT_STUDY_2026-10-14.md",
+        "QA-source",
+        "--check"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "{'source': 'docs/reports/DATA_ROOM_AI_MOAT_STUDY_2026-10-14.md', 'stem': 'QA-source', 'blocks': 151, 'writes': False}\n",
+      "stderr": ""
+    },
+    {
+      "case": "renderer_traversal_refused",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/render_study.py",
+        "docs/reports/DATA_ROOM_AI_MOAT_STUDY_2026-10-14.md",
+        "../../unsafe",
+        "--check"
+      ],
+      "exitCode": 2,
+      "expectedExitCode": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "usage: render_study.py [-h] [--font-dir FONT_DIR] [--check] [source] [stem]\nrender_study.py: error: stem must be a plain filename of at most 200 characters, without path separators\n"
+    },
+    {
+      "case": "renderer_absolute_stem_refused",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/render_study.py",
+        "docs/reports/DATA_ROOM_AI_MOAT_STUDY_2026-10-14.md",
+        "/tmp/unsafe",
+        "--check"
+      ],
+      "exitCode": 2,
+      "expectedExitCode": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "usage: render_study.py [-h] [--font-dir FONT_DIR] [--check] [source] [stem]\nrender_study.py: error: stem must be a plain filename of at most 200 characters, without path separators\n"
+    },
+    {
+      "case": "renderer_external_source_refused",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/render_study.py",
+        "/workspace/reports/Concept2Cure-data-room-study-2026-10-14.md",
+        "QA-source",
+        "--check"
+      ],
+      "exitCode": 2,
+      "expectedExitCode": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "usage: render_study.py [-h] [--font-dir FONT_DIR] [--check] [source] [stem]\nrender_study.py: error: source must be inside the repository\n"
+    },
+    {
+      "case": "packager_help",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/package_study.py",
+        "--help"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "usage: package_study.py [-h] --baseline BASELINE [--check]\n\nRebuild a canonical review bundle from an explicit Git baseline after evidence\nis frozen.\n\noptions:\n  -h, --help           show this help message and exit\n  --baseline BASELINE  Existing Git commit/ref to compare with the current\n                       working tree.\n  --check              Check source selection and reverse patch application\n                       without writing artifacts or reading execution logs.\n",
+      "stderr": ""
+    },
+    {
+      "case": "packager_option_like_ref_refused",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/package_study.py",
+        "--baseline=--help",
+        "--check"
+      ],
+      "exitCode": 2,
+      "expectedExitCode": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "usage: package_study.py [-h] --baseline BASELINE [--check]\npackage_study.py: error: baseline must resolve to one existing Git commit\n"
+    },
+    {
+      "case": "packager_nonexistent_ref_refused",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/package_study.py",
+        "--baseline",
+        "nonexistent-concept2cure-baseline",
+        "--check"
+      ],
+      "exitCode": 2,
+      "expectedExitCode": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "usage: package_study.py [-h] --baseline BASELINE [--check]\npackage_study.py: error: baseline must resolve to one existing Git commit\n"
+    },
+    {
+      "case": "packager_cross_cwd_check",
+      "command": [
+        "python",
+        "/workspace/Concept2Cure/docs/publications/data-room-2026-10-14/package_study.py",
+        "--baseline",
+        "9ba70078fb55520244b5376d5d17d5e3f09e4471",
+        "--check"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "{\n  \"baseline\": \"9ba70078fb55520244b5376d5d17d5e3f09e4471\",\n  \"codeFiles\": 210,\n  \"deletedFiles\": 0,\n  \"patchBytes\": 1401043,\n  \"patchReverseCheck\": \"passed\",\n  \"writes\": false\n}\n",
+      "stderr": ""
+    }
+  ],
+  "writesArtifactModeRun": false,
+  "scriptSha256": {
+    "docs/publications/data-room-2026-10-14/render_study.py": "9ef18242bc7b07534a169fb94b0caff680d9b8093d03df77c640df5693664449",
+    "docs/publications/data-room-2026-10-14/package_study.py": "878f3b5ebd96ed15d38ebd682835248e7a23887c580d98fd3538a0430aaa4a80"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "nativeSourceWrites": 0,
+  "inertSourceWrites": 2,
+  "imageRequests": [
+    {
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "type": "Fetch",
+      "authenticated": true
+    }
+  ]
+}

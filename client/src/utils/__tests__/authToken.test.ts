@@ -20,6 +20,7 @@ import {
   clearAuthToken,
   getAuthHeaders,
   getOrgId,
+  capturedActorHeaders,
 } from '../authToken';
 
 const TOKEN_KEY = 'trialsage_access_token';
@@ -30,6 +31,31 @@ beforeEach(() => {
   // Reset the module's in-memory fallback so tests don't leak a token between
   // each other.
   clearAuthToken();
+});
+
+describe('captured actor headers for governed ceremonies', () => {
+  const token = (claims: unknown, nonce = 'fixture') => `fixture.${btoa(JSON.stringify(claims))}.${nonce}`;
+  const scope = { userId: 7, organizationId: 12 };
+  it('pins a refreshed same-actor bearer without trusting the organization storage fallback', () => {
+    localStorage.setItem('currentOrganizationId', '99');
+    const bearer = token({ userId: '7', organizationId: 12 }, 'refreshed-fixture');
+    setAuthToken(bearer);
+    expect(capturedActorHeaders(scope)).toEqual({ Authorization: `Bearer ${bearer}`, 'x-organization-id': '12' });
+  });
+  it.each([
+    { userId: 8, organizationId: 12 }, { userId: 7, organizationId: 13 },
+    { userId: '7garbage', organizationId: 12 }, { userId: 7, organizationId: '12garbage' },
+    { userId: null, organizationId: 12 }, null,
+  ])('refuses a replaced or malformed captured identity: %j', claims => {
+    setAuthToken(token(claims));
+    expect(() => capturedActorHeaders(scope)).toThrow('account or organization changed');
+  });
+  it('refuses missing or unreadable bearer instead of falling back to persisted identity', () => {
+    localStorage.setItem('trialsage_user', JSON.stringify({ id: 7, organizationId: 12 }));
+    expect(() => capturedActorHeaders(scope)).toThrow();
+    setAuthToken('fixture-malformed');
+    expect(() => capturedActorHeaders(scope)).toThrow();
+  });
 });
 
 describe('getAuthToken — fresh, non-mutating reads', () => {

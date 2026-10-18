@@ -52,12 +52,13 @@ export function isModuleType(value: unknown): value is ModuleType {
  * declared here rather than accepted as `any`: title/documentType/createdBy are
  * the NOT NULL columns of unified_documents, organizationId is its integer tenant
  * key, and moduleType/originalId form the module_documents identity that
- * documentExists() dedupes on.
+ * documentExists() dedupes on. There is no status: this service registers
+ * every document as 'draft'.
  */
 export interface RegisterDocumentInput {
   title: string;
   documentType: string;
-  status?: string;
+  /** The authenticated actor. A route takes it from the session, never from a request body. */
   createdBy: string;
   organizationId: number;
   moduleType: ModuleType;
@@ -65,6 +66,24 @@ export interface RegisterDocumentInput {
   content?: string | null;
   metadata?: Record<string, unknown>;
 }
+
+/**
+ * What updateDocument may change. status is a review outcome ('approved' is
+ * what the eCTD leaf resolver treats as finalized), and created_by,
+ * organization_id and latest_version are the server's, so none of them is here.
+ */
+export interface UpdateDocumentInput {
+  /** The authenticated actor. A route takes it from the session, never from a request body. */
+  updatedBy: string;
+  title?: string;
+  documentType?: string;
+  metadata?: Record<string, unknown>;
+  /** New content is written as a new version. */
+  content?: unknown;
+}
+
+/** The unified_documents columns a patch may set. */
+const PATCHABLE_FIELDS = ['title', 'documentType', 'metadata'] as const;
 
 export class ModuleIntegrationService {
   private workflowService: WorkflowService;
@@ -97,7 +116,11 @@ export class ModuleIntegrationService {
           .values({
             title: documentData.title,
             documentType: documentData.documentType,
-            status: documentData.status || 'draft',
+            // 2026-10-15: was `documentData.status || 'draft'`, and the route
+            // spread its request body into documentData, so a caller could
+            // register a document as 'approved' (finalized, to the eCTD leaf
+            // resolver) with no approval behind it. The server sets it.
+            status: 'draft',
             createdBy: documentData.createdBy,
             organizationId: documentData.organizationId,
             latestVersion: 1,
@@ -374,10 +397,10 @@ export class ModuleIntegrationService {
    * Update a document
    *
    * @param documentId The document ID
-   * @param updateData The data to update
+   * @param updateData The fields to change, and the actor changing them
    * @returns The updated document
    */
-  async updateDocument(documentId: number, updateData: any, organizationId: number) {
+  async updateDocument(documentId: number, updateData: UpdateDocumentInput, organizationId: number) {
     return this.db.transaction(async (tx: any) => {
       // Check if document exists
       const existingDoc = await tx
@@ -393,15 +416,24 @@ export class ModuleIntegrationService {
         throw new DocumentNotFoundException(documentId);
       }
 
+      // 2026-10-15: the whole patch was spread into the UPDATE, so a caller
+      // could set status, created_by, latest_version and organization_id —
+      // moving the document into another tenant. Only these columns are taken.
+      const docUpdateData: Record<string, unknown> = {};
+      for (const field of PATCHABLE_FIELDS) {
+        if (updateData[field] !== undefined) docUpdateData[field] = updateData[field];
+      }
+
       // Check if content is being updated
       let newVersion = null;
       if (updateData.content !== undefined) {
+        const nextVersion = existingDoc[0].latestVersion + 1;
         // Create a new version
         const [version] = await tx
           .insert(workflowDocumentVersions)
           .values({
             documentId,
-            version: existingDoc[0].latestVersion + 1,
+            version: nextVersion,
             content: updateData.content,
             createdBy: updateData.updatedBy,
             organizationId,
@@ -411,7 +443,7 @@ export class ModuleIntegrationService {
         newVersion = version;
 
         // Update latestVersion in document
-        updateData.latestVersion = existingDoc[0].latestVersion + 1;
+        docUpdateData.latestVersion = nextVersion;
 
         // Add audit log for version change
         await tx.insert(documentAuditLogs).values({
@@ -420,7 +452,7 @@ export class ModuleIntegrationService {
           performedBy: updateData.updatedBy,
           details: {
             previousVersion: existingDoc[0].latestVersion,
-            newVersion: updateData.latestVersion,
+            newVersion: nextVersion,
           },
         });
 
@@ -430,58 +462,57 @@ export class ModuleIntegrationService {
             tx,
             documentId,
             existingDoc[0].latestVersion,
-            updateData.latestVersion,
+            nextVersion,
             updateData.updatedBy
           );
         }
       }
 
-      // Remove content from updateData since it's stored in versions
-      const { content, ...docUpdateData } = updateData;
+      const changedFields = Object.keys(docUpdateData).filter(
+        key => docUpdateData[key] !== existingDoc[0][key]
+      );
 
-      // Update the document
-      if (Object.keys(docUpdateData).length > 0) {
-        const [updatedDoc] = await tx
-          .update(unifiedDocuments)
-          .set({
-            ...docUpdateData,
-            updatedAt: new Date(),
-          })
-          .where(and(
-            eq(unifiedDocuments.id, documentId),
-            eq(unifiedDocuments.organizationId, organizationId)
-          ))
-          .returning();
-
-        // Create audit log for document update
-        const changedFields = Object.keys(docUpdateData).filter(
-          key =>
-            key !== 'updatedBy' && key !== 'updatedAt' && docUpdateData[key] !== existingDoc[0][key]
-        );
-
-        if (changedFields.length > 0) {
-          changedFields.forEach(field => {
-            tx.insert(documentAuditLogs).values({
-              documentId,
-              action: 'field_updated',
-              performedBy: updateData.updatedBy,
-              details: {
-                field,
-                previous: existingDoc[0][field],
-                current: docUpdateData[field],
-              },
-            });
-          });
-        }
-
+      // Nothing changed: no write, so no "updated by" for an update that did not happen.
+      if (changedFields.length === 0) {
         return {
-          ...updatedDoc,
+          ...existingDoc[0],
           version: newVersion,
         };
       }
 
+      // Update the document
+      const [updatedDoc] = await tx
+        .update(unifiedDocuments)
+        .set({
+          ...docUpdateData,
+          updatedBy: updateData.updatedBy,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(unifiedDocuments.id, documentId),
+          eq(unifiedDocuments.organizationId, organizationId)
+        ))
+        .returning();
+
+      // 2026-10-15: these rows were built in a forEach and never awaited, and a
+      // Drizzle builder sends nothing until it is awaited — so no field change
+      // was ever audited. One awaited insert on this transaction: the change and
+      // its audit rows commit or roll back together.
+      await tx.insert(documentAuditLogs).values(
+        changedFields.map(field => ({
+          documentId,
+          action: 'field_updated',
+          performedBy: updateData.updatedBy,
+          details: {
+            field,
+            previous: existingDoc[0][field],
+            current: docUpdateData[field],
+          },
+        }))
+      );
+
       return {
-        ...existingDoc[0],
+        ...updatedDoc,
         version: newVersion,
       };
     });

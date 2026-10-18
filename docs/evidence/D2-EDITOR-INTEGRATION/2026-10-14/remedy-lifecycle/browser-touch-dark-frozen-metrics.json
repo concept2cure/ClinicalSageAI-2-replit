@@ -1,0 +1,85 @@
+{
+  "metrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "canvas": {
+      "x": 0,
+      "y": 0.78125,
+      "width": 390,
+      "height": 844,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 842,
+      "scrollHeight": 842
+    },
+    "editor": null,
+    "documentScroll": {
+      "x": 1,
+      "y": 576.78125,
+      "width": 388,
+      "height": 267,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 267,
+      "scrollHeight": 982
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 45,
+      "y": 612.78125,
+      "width": 300,
+      "height": 154.796875,
+      "clientWidth": 300,
+      "scrollWidth": 300,
+      "clientHeight": 154,
+      "scrollHeight": 154
+    },
+    "editorCount": 0
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "impact": "serious",
+        "targets": [
+          [
+            "div[data-state=\"closed\"] > div"
+          ]
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-num"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-lbl"
+          ]
+        ]
+      }
+    ],
+    "passes": 20
+  }
+}

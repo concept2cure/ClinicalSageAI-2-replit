@@ -1,0 +1,48 @@
+{
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "scope": "strict canonical blank install plus two deploy replays and read-only physical target inspection; no application runtime API claim",
+  "stores": [
+    {
+      "relname": "concept2cure_review_assignments",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "concept2cure_review_decisions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "updatedAt": {
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "now()"
+  },
+  "journal": [
+    {
+      "file": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "sha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+      "apply_count": 2
+    },
+    {
+      "file": "db/migrations/20260401_project_sharing_visibility.sql",
+      "sha256": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0",
+      "apply_count": 2
+    }
+  ],
+  "runtimeRole": {
+    "rolname": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  }
+}

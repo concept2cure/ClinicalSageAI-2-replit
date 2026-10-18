@@ -1,0 +1,893 @@
+{
+  "qualification": "Actual retained d25 fixture browser review with canonical development-only auth, no response mocking. Not full app boot, per-browser request-q instrumentation, production MFA, complete CTD, agency or clinical readiness.",
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "organizationId": 15,
+  "ownerId": 15,
+  "runtimeMetadata": "/tmp/submission-deliverables-browser-prep/runtime-20261014T211309Z-203285/process-metadata.json",
+  "bootPosture": {
+    "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+    "role": "app_service",
+    "pid": 22015,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on",
+    "tenant": null,
+    "user_role": null,
+    "bypass": null,
+    "admin": null,
+    "configuredRls": "on",
+    "qualification": "Actual app-role database introspection; no regulatory-table read or bypass grant."
+  },
+  "nativeActualRequestProof": "/tmp/submission-required-deliverables-native-observations.json",
+  "nativeObservationsSha256": "b0a05779a31cf6ef99dde01fa5efcad334aa3485d2f3860e648709a7544d27a3",
+  "variants": [
+    {
+      "case": "desktop-light-private",
+      "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+      "submissionId": 3,
+      "sequenceId": 3,
+      "variant": "desktop-light",
+      "screenshots": [
+        "desktop-light-private-page.png",
+        "desktop-light-private-card.png"
+      ],
+      "qualification": "Actual persisted native QA identities through the real development-auth UI; structural coverage, not filing approval.",
+      "scope": {
+        "organizationId": 15,
+        "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+        "projectId": 13,
+        "submissionId": 3,
+        "sequenceId": 3,
+        "sequenceRegion": "fda",
+        "programCode": "SDD-b655d24b",
+        "programTitle": "sdd_mv8kwco3_ac6856a8 private invented device programme",
+        "recordedApplicationType": "US_510K",
+        "recordedPathway": "estar_510k",
+        "evaluatedPathway": "estar_510k",
+        "memberStates": [],
+        "regulation": null,
+        "inputOrigin": "recorded",
+        "evaluation": "retained-placement-content-coverage",
+        "dispatchReadiness": "separate-governed-assessment"
+      },
+      "totals": {
+        "sections": 23,
+        "requiredPresent": 1,
+        "requiredMissing": 10,
+        "undetermined": 7
+      },
+      "statuses": {
+        "missing": 10,
+        "present": 1,
+        "undetermined": 7,
+        "optional-absent": 5
+      },
+      "sourceEvidence": [
+        {
+          "leafId": 3,
+          "label": "sdd_mv8kwco3_ac6856a8 private actual source",
+          "document": {
+            "table": "c2c_document_sections",
+            "keyKind": "integer",
+            "id": 1
+          },
+          "evidence": {
+            "content": "substantive",
+            "pin": "match",
+            "lifecycle": "finalized",
+            "reasonCode": null
+          },
+          "editor": null
+        }
+      ],
+      "editorLinks": {
+        "actualSavedTargets": 0,
+        "qualification": "Only exact sourceRefs.editor from actual admitted source data may expose a link. No alias was created for this review."
+      },
+      "coverage": "Actual structural/content response reflected; approval/dispatch remains separate.",
+      "viewportWidth": 1440,
+      "bodyWidth": 1440,
+      "darkClass": false,
+      "shellTheme": null,
+      "backgroundColor": "rgb(250, 249, 245)",
+      "tableWidths": [
+        {
+          "client": 1018,
+          "scroll": 1018
+        }
+      ],
+      "cardText": "Required deliverables \u00b7 sequence 0000\nstructural coverage\nCoverage of retained material placed in this sequence. This view does not approve the documents or clear the submission for dispatch.\nCoverage framework\nSelect a compatible framework\neSTAR 510k\nFDA eSTAR \u2014 510(k) premarket notification \u00b7 Recorded framework \u00b7 SDD-b655d24b \u00b7 sdd_mv8kwco3_ac6856a8 private invented device programme \u00b7 sequence 0000.\nProgram b655d24b-1eb2-4138-be39-b1f73b4c7e5d \u00b7 submission 3 \u00b7 sequence record 3\n23 SECTIONS\n1 REQUIRED PRESENT\n10 REQUIRED MISSING\n7 UNDETERMINED\nDELIVERABLE\tREQUIREMENT\tCOVERAGE\tRETAINED SOURCE\n\neSTAR\nCover letter / submission cover sheet\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nMDUFA user-fee cover sheet and payment (FDA 3601)\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nIndications for use (FDA 3881)\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nTruthful and Accurate Statement\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nDevice description\tRequired\nrequired\n\tPRESENT\t\nsdd_mv8kwco3_ac6856a8 private actual source\nLeaf 3 \u00b7 Filed document #1\nSUBSTANTIVE RETAINED CONTENT\nSOURCE PIN MATCHED\nRETAINED FINALIZED SOURCE\n\n\neSTAR\nProposed labeling\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nRisk management file\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nPerformance testing (bench / animal / clinical)\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nBiocompatibility\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nSterilization, shelf life and packaging validation\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nSoftware / firmware documentation\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nCybersecurity documentation\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nFinancial certification or disclosure (FDA 3454 / 3455)\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nCombination-product constituent information\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nImplant-specific labeling and long-term performance\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nCLIA waiver by application / dual submission\tConditional or optional\nundetermined\n\tUNDETERMINED\tNo admitted retained source\n\neSTAR\nElectrical safety, EMC and wireless coexistence\tConditional or optional\nApplicability needs a decision\nwhen-applicable\n\tOPTIONAL ABSENT\tNo admitted retained source\n\neSTAR\nHuman factors / usability engineering\tConditional or optional\nApplicability needs a decision\nwhen-applicable\n\tOPTIONAL ABSENT\tNo admitted retained source\n\neSTAR\nReprocessing instructions and validation\tConditional or optional\nApplicability needs a decision\nwhen-applicable\n\tOPTIONAL ABSENT\tNo admitted retained source\n\neSTAR\nDeclarations of Conformity (FDA 3654)\tConditional or optional\nApplicability needs a decision\nwhen-applicable\n\tOPTIONAL ABSENT\tNo admitted retained source\n\neSTAR\nClass III Summary and Certification\tConditional or optional\nApplicability needs a decision\nwhen-applicable\n\tOPTIONAL ABSENT\tNo admitted retained source\n\neSTAR\n510(k) Summary or 510(k) Statement\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n\neSTAR\nSubstantial equivalence comparison (predicate)\tRequired\nrequired\n\tMISSING\tNo admitted retained source\n5 applicability decisions remain to be checked.",
+      "passed": true
+    }
+  ],
+  "discoveredRetainedCases": [],
+  "errors": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "nonReadRequests": [
+    {
+      "method": "POST",
+      "path": "/api/510k/estar/assemble"
+    }
+  ],
+  "manifests": [
+    {
+      "path": "/api/submissions/sequences/3/pathway-manifest",
+      "query": "programId=b655d24b-1eb2-4138-be39-b1f73b4c7e5d&submissionId=3",
+      "status": 200,
+      "body": {
+        "pathway": "estar_510k",
+        "framework": "FDA eSTAR \u2014 510(k) premarket notification",
+        "generatedFrom": "canonical-core",
+        "ready": false,
+        "totals": {
+          "sections": 23,
+          "requiredPresent": 1,
+          "requiredMissing": 10,
+          "undetermined": 7
+        },
+        "scope": {
+          "organizationId": 15,
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": 13,
+          "submissionId": 3,
+          "sequenceId": 3,
+          "sequenceRegion": "fda",
+          "programCode": "SDD-b655d24b",
+          "programTitle": "sdd_mv8kwco3_ac6856a8 private invented device programme",
+          "recordedApplicationType": "US_510K",
+          "recordedPathway": "estar_510k",
+          "evaluatedPathway": "estar_510k",
+          "memberStates": [],
+          "regulation": null,
+          "inputOrigin": "recorded",
+          "evaluation": "retained-placement-content-coverage",
+          "dispatchReadiness": "separate-governed-assessment"
+        },
+        "entries": [
+          {
+            "path": "01-estar/cover-letter",
+            "id": "cover-letter",
+            "label": "Cover letter / submission cover sheet",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "02-estar/user-fee-cover-sheet",
+            "id": "user-fee-cover-sheet",
+            "label": "MDUFA user-fee cover sheet and payment (FDA 3601)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "03-estar/indications-for-use",
+            "id": "indications-for-use",
+            "label": "Indications for use (FDA 3881)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "04-estar/truthful-accurate-statement",
+            "id": "truthful-accurate-statement",
+            "label": "Truthful and Accurate Statement",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "05-estar/device-description",
+            "id": "device-description",
+            "label": "Device description",
+            "group": "eSTAR",
+            "required": true,
+            "status": "present",
+            "sources": [
+              "filing.device-description"
+            ],
+            "sourceRefs": [
+              {
+                "leafId": 3,
+                "sequenceId": 3,
+                "submissionId": 3,
+                "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+                "projectId": 13,
+                "document": {
+                  "table": "c2c_document_sections",
+                  "keyKind": "integer",
+                  "id": 1
+                },
+                "section": {
+                  "id": "1",
+                  "code": "actual-source-key"
+                },
+                "editor": null,
+                "evidence": {
+                  "content": "substantive",
+                  "pin": "match",
+                  "lifecycle": "finalized",
+                  "reasonCode": null
+                },
+                "label": "sdd_mv8kwco3_ac6856a8 private actual source"
+              }
+            ],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "06-estar/proposed-labeling",
+            "id": "proposed-labeling",
+            "label": "Proposed labeling",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "07-estar/risk-management",
+            "id": "risk-management",
+            "label": "Risk management file",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "08-estar/performance-testing",
+            "id": "performance-testing",
+            "label": "Performance testing (bench / animal / clinical)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "09-estar/biocompatibility",
+            "id": "biocompatibility",
+            "label": "Biocompatibility",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "10-estar/sterilization",
+            "id": "sterilization",
+            "label": "Sterilization, shelf life and packaging validation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "11-estar/software",
+            "id": "software",
+            "label": "Software / firmware documentation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "12-estar/cybersecurity",
+            "id": "cybersecurity",
+            "label": "Cybersecurity documentation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "13-estar/clinical-financial-disclosure",
+            "id": "clinical-financial-disclosure",
+            "label": "Financial certification or disclosure (FDA 3454 / 3455)",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "14-estar/combination-product",
+            "id": "combination-product",
+            "label": "Combination-product constituent information",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "15-estar/implant-labeling",
+            "id": "implant-labeling",
+            "label": "Implant-specific labeling and long-term performance",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "16-estar/clia-waiver",
+            "id": "clia-waiver",
+            "label": "CLIA waiver by application / dual submission",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "17-estar/emc-electrical",
+            "id": "emc-electrical",
+            "label": "Electrical safety, EMC and wireless coexistence",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "18-estar/human-factors",
+            "id": "human-factors",
+            "label": "Human factors / usability engineering",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "19-estar/reprocessing",
+            "id": "reprocessing",
+            "label": "Reprocessing instructions and validation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "20-estar/standards-conformance",
+            "id": "standards-conformance",
+            "label": "Declarations of Conformity (FDA 3654)",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "21-estar/class-iii-certification",
+            "id": "class-iii-certification",
+            "label": "Class III Summary and Certification",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "22-estar/510k-summary-or-statement",
+            "id": "510k-summary-or-statement",
+            "label": "510(k) Summary or 510(k) Statement",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "23-estar/substantial-equivalence",
+            "id": "substantial-equivalence",
+            "label": "Substantial equivalence comparison (predicate)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          }
+        ],
+        "sourceIssues": [],
+        "contradictions": [],
+        "checkApplicability": [
+          "emc-electrical",
+          "human-factors",
+          "reprocessing",
+          "standards-conformance",
+          "class-iii-certification"
+        ]
+      }
+    },
+    {
+      "path": "/api/submissions/sequences/3/pathway-manifest",
+      "query": "programId=b655d24b-1eb2-4138-be39-b1f73b4c7e5d&submissionId=3",
+      "status": 200,
+      "body": {
+        "pathway": "estar_510k",
+        "framework": "FDA eSTAR \u2014 510(k) premarket notification",
+        "generatedFrom": "canonical-core",
+        "ready": false,
+        "totals": {
+          "sections": 23,
+          "requiredPresent": 1,
+          "requiredMissing": 10,
+          "undetermined": 7
+        },
+        "scope": {
+          "organizationId": 15,
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": 13,
+          "submissionId": 3,
+          "sequenceId": 3,
+          "sequenceRegion": "fda",
+          "programCode": "SDD-b655d24b",
+          "programTitle": "sdd_mv8kwco3_ac6856a8 private invented device programme",
+          "recordedApplicationType": "US_510K",
+          "recordedPathway": "estar_510k",
+          "evaluatedPathway": "estar_510k",
+          "memberStates": [],
+          "regulation": null,
+          "inputOrigin": "recorded",
+          "evaluation": "retained-placement-content-coverage",
+          "dispatchReadiness": "separate-governed-assessment"
+        },
+        "entries": [
+          {
+            "path": "01-estar/cover-letter",
+            "id": "cover-letter",
+            "label": "Cover letter / submission cover sheet",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "02-estar/user-fee-cover-sheet",
+            "id": "user-fee-cover-sheet",
+            "label": "MDUFA user-fee cover sheet and payment (FDA 3601)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "03-estar/indications-for-use",
+            "id": "indications-for-use",
+            "label": "Indications for use (FDA 3881)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "04-estar/truthful-accurate-statement",
+            "id": "truthful-accurate-statement",
+            "label": "Truthful and Accurate Statement",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "05-estar/device-description",
+            "id": "device-description",
+            "label": "Device description",
+            "group": "eSTAR",
+            "required": true,
+            "status": "present",
+            "sources": [
+              "filing.device-description"
+            ],
+            "sourceRefs": [
+              {
+                "leafId": 3,
+                "sequenceId": 3,
+                "submissionId": 3,
+                "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+                "projectId": 13,
+                "document": {
+                  "table": "c2c_document_sections",
+                  "keyKind": "integer",
+                  "id": 1
+                },
+                "section": {
+                  "id": "1",
+                  "code": "actual-source-key"
+                },
+                "editor": null,
+                "evidence": {
+                  "content": "substantive",
+                  "pin": "match",
+                  "lifecycle": "finalized",
+                  "reasonCode": null
+                },
+                "label": "sdd_mv8kwco3_ac6856a8 private actual source"
+              }
+            ],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "06-estar/proposed-labeling",
+            "id": "proposed-labeling",
+            "label": "Proposed labeling",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "07-estar/risk-management",
+            "id": "risk-management",
+            "label": "Risk management file",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "08-estar/performance-testing",
+            "id": "performance-testing",
+            "label": "Performance testing (bench / animal / clinical)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "09-estar/biocompatibility",
+            "id": "biocompatibility",
+            "label": "Biocompatibility",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "10-estar/sterilization",
+            "id": "sterilization",
+            "label": "Sterilization, shelf life and packaging validation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "11-estar/software",
+            "id": "software",
+            "label": "Software / firmware documentation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "12-estar/cybersecurity",
+            "id": "cybersecurity",
+            "label": "Cybersecurity documentation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "13-estar/clinical-financial-disclosure",
+            "id": "clinical-financial-disclosure",
+            "label": "Financial certification or disclosure (FDA 3454 / 3455)",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "14-estar/combination-product",
+            "id": "combination-product",
+            "label": "Combination-product constituent information",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "15-estar/implant-labeling",
+            "id": "implant-labeling",
+            "label": "Implant-specific labeling and long-term performance",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "16-estar/clia-waiver",
+            "id": "clia-waiver",
+            "label": "CLIA waiver by application / dual submission",
+            "group": "eSTAR",
+            "required": false,
+            "status": "undetermined",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "undetermined",
+            "checkApplicability": false
+          },
+          {
+            "path": "17-estar/emc-electrical",
+            "id": "emc-electrical",
+            "label": "Electrical safety, EMC and wireless coexistence",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "18-estar/human-factors",
+            "id": "human-factors",
+            "label": "Human factors / usability engineering",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "19-estar/reprocessing",
+            "id": "reprocessing",
+            "label": "Reprocessing instructions and validation",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "20-estar/standards-conformance",
+            "id": "standards-conformance",
+            "label": "Declarations of Conformity (FDA 3654)",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "21-estar/class-iii-certification",
+            "id": "class-iii-certification",
+            "label": "Class III Summary and Certification",
+            "group": "eSTAR",
+            "required": false,
+            "status": "optional-absent",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "when-applicable",
+            "checkApplicability": true
+          },
+          {
+            "path": "22-estar/510k-summary-or-statement",
+            "id": "510k-summary-or-statement",
+            "label": "510(k) Summary or 510(k) Statement",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          },
+          {
+            "path": "23-estar/substantial-equivalence",
+            "id": "substantial-equivalence",
+            "label": "Substantial equivalence comparison (predicate)",
+            "group": "eSTAR",
+            "required": true,
+            "status": "missing",
+            "sources": [],
+            "sourceRefs": [],
+            "contentUndetermined": false,
+            "applicability": "required",
+            "checkApplicability": false
+          }
+        ],
+        "sourceIssues": [],
+        "contradictions": [],
+        "checkApplicability": [
+          "emc-electrical",
+          "human-factors",
+          "reprocessing",
+          "standards-conformance",
+          "class-iii-certification"
+        ]
+      }
+    }
+  ],
+  "authentication": {
+    "mode": "Canonical /api/auth/dev-login, ALLOW_DEV_AUTH=1 plus development mode",
+    "userId": "15",
+    "organizationId": "15",
+    "roles": [
+      "member",
+      "user"
+    ],
+    "mfaQualification": "Development shortcut bypasses MFA; production MFA evidence is separate.",
+    "noCredentialOrTokenArtifactWritten": true
+  },
+  "unexpectedGovernedWriteRequests": [],
+  "passed": true,
+  "limitations": [
+    "Background real API failures/non-read requests are recorded rather than replaced. The script clicks only tabs/selectors and calls live read endpoints plus the explicitly authorized development login.",
+    "Dynamic draft/pin/unknown cases are captured only if positively found in admitted retained records; absent states are not fabricated.",
+    "Native actual request-q/late-admission proof is retained separately; boot role posture is not per-browser request instrumentation.",
+    "Actual exact-editor targets are not created by this review; no retained authoring alias means reference-only is the correct result."
+  ],
+  "artifacts": [
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/diagnostic-one/review-20261014T211747Z-204706/desktop-light-private-card.png",
+      "bytes": 125704,
+      "digestAlgorithm": "sha256",
+      "digest": "22d6808a8e0f55de90713bacc48ceb47f5ddeb57e74a7b75a5926fbdf9f3b242"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/diagnostic-one/review-20261014T211747Z-204706/desktop-light-private-page.png",
+      "bytes": 154899,
+      "digestAlgorithm": "sha256",
+      "digest": "7b3087e966c1eda6cf3d288dc1a5137da6671b757557972a42843aff55f05d1f"
+    }
+  ]
+}

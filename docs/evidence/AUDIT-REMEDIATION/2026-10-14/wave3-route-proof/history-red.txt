@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ❯ server/routes/__tests__/safety-narrative-save.test.ts (11 tests | 1 failed | 10 skipped) 27ms
+     × TX_HISTORY: rolls back the current narrative when its only prior-content history cannot be recorded 24ms
+     ↓ encodes seriousness criteria as JSON for the actual TEXT column
+     ↓ 403 without org context
+     ↓ refuses a save with no reason for change — nothing is written
+     ↓ refuses a field that is not writable from this surface
+     ↓ refuses an empty change set rather than writing an audit entry for nothing
+     ↓ 404s on a case in another organization, and rolls back
+     ↓ locks the row inside the transaction before writing
+     ↓ writes both sides of every changed field, plus the reason, to the audit trail
+     ↓ returns the case as the store now holds it, with the clock recomputed
+     ↓ rejects a seriousness-criteria value that is not an array of strings
+ ❯ tests/routes/cerv2-literature-screening.test.ts (20 tests | 1 failed | 19 skipped) 9ms
+     × TX_HISTORY: rolls back the current screening decision if its superseded history cannot be recorded 7ms
+     ↓ records the decision org-scoped from the request, on the request-scoped client
+     ↓ ignores an org id smuggled in the body — org is request-derived only
+     ↓ 400s without an organization context
+     ↓ 400s without a named reviewer — an unattributed decision is not Part 11 evidence
+     ↓ 400s an exclusion with no reason (MEDDEV 2.7/1 Rev 4 §8)
+     ↓ 400s a reason attached to a non-exclusion — no stale rationale is stored
+     ↓ 400s an unknown stage or decision
+     ↓ 404s a programId outside the caller org without screening anything
+     ↓ accepts an org-visible programId and passes it through as the scope key
+     ↓ audits through the canonical auditService path, carrying old→new
+     ↓ audits a first decision as a create with a null superseded value
+     ↓ 422s a service refusal with its real reason, and does not audit a non-event
+     ↓ 500s with the envelope, never the driver text, when the write genuinely fails
+     ↓ reads the trail org-scoped from the request, on the request-scoped client
+     ↓ splits the pmids query into a list the service can filter on
+     ↓ 400s without an organization context
+     ↓ 404s a programId outside the caller org without reading anything
+     ↓ passes the honest unavailable payload through untouched
+     ↓ 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > TX_HISTORY: rolls back the current screening decision if its superseded history cannot be recorded
+AssertionError: expected "vi.fn()" to be called with arguments: [ 500 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/cerv2-literature-screening.test.ts:151:24
+    149|     const res = createMockResponse() as any;
+    150|     await getHandler('/literature/screen', 'post')(req, res);
+    151|     expect(res.status).toHaveBeenCalledWith(500);
+       |                        ^
+    152|     expect(res.json.mock.calls[0][0].screened).not.toBe(true);
+    153|     expect(fakePgClient.query).toHaveBeenCalledWith('ROLLBACK');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/safety-narrative-save.test.ts > PATCH /cases/:id > TX_HISTORY: rolls back the current narrative when its only prior-content history cannot be recorded
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/safety-narrative-save.test.ts:95:24
+     93|     writeChainedAuditRow.mockRejectedValueOnce(new Error('Synthetic hi…
+     94|     const res = await request(app()).patch('/api/safety-narratives/cas…
+     95|     expect(res.status).toBe(503);
+       |                        ^
+     96|     expect(res.body.saved).toBe(false);
+     97|     expect(res.body.error.code).toBe('SAE_CASE_HISTORY_UNAVAILABLE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 29 skipped (31)
+   Start at  20:45:34
+   Duration  1.50s (transform 588ms, setup 64ms, import 1.12s, tests 36ms, environment 0ms)
+

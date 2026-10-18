@@ -27,6 +27,12 @@ describe('assembleCloseoutReadiness', () => {
     expect(r.blockers).toEqual([]);
   });
 
+  it('does not close an award whose cost-share commitment nobody recorded', () => {
+    const r = assembleCloseoutReadiness(base({ costShare: costShareStatus(null, []) }));
+    expect(r.readyToClose).toBe(false);
+    expect(r.blockers.some((b) => /cost-share commitment is recorded/i.test(b))).toBe(true);
+  });
+
   it('blocks on outstanding 2 CFR 200.344 items', () => {
     const r = assembleCloseoutReadiness(base({
       closeout: evaluateCloseout({ finalRpprSubmitted: false, finalFfrSubmitted: true, equipmentInventoryReturned: true, finalInvoicesReconciled: true }, '2026-01-01', today),

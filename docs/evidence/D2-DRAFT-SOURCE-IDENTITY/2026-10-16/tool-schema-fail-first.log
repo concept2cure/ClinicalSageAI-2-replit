@@ -1,0 +1,119 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > accepts a JSON-round-tripped V2 receipt whose absolute window starts beyond 80,000 9ms
+   → [{"instancePath":"/sections/0/sourceReferences/0/span/start","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/start/const","keyword":"const","params":{"allowedValue":0},"message":"must be equal to constant"},{"instancePath":"/sections/0/sourceReferences/0/span/end","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/end/maximum","keyword":"maximum","params":{"comparison":"<=","limit":12000},"message":"must be <= 12000"}]: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires version instead of silently accepting a downgraded receipt 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires extractedTextSha256 instead of silently accepting a downgraded receipt 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires spanSha256 instead of silently accepting a downgraded receipt 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 1 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 3 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 2 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version null 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 contentHash 1ms
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 extractedTextSha256 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 spanSha256 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a UUID document identity 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start -1 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0.5 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > accepts a JSON-round-tripped V2 receipt whose absolute window starts beyond 80,000
+AssertionError: [{"instancePath":"/sections/0/sourceReferences/0/span/start","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/start/const","keyword":"const","params":{"allowedValue":0},"message":"must be equal to constant"},{"instancePath":"/sections/0/sourceReferences/0/span/end","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/end/maximum","keyword":"maximum","params":{"comparison":"<=","limit":12000},"message":"must be <= 12000"}]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/draft-authoring-source-schema.test.ts:45:71
+     43|     expect(receipt).not.toHaveProperty('text');
+     44|     expect(JSON.stringify(receipt)).not.toContain(source.text);
+     45|     expect(validate(input(receipt)), JSON.stringify(validate.errors)).…
+       |                                                                       ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires version instead of silently accepting a downgraded receipt
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires extractedTextSha256 instead of silently accepting a downgraded receipt
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires spanSha256 instead of silently accepting a downgraded receipt
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/draft-authoring-source-schema.test.ts:51:37
+     49|     const source: Record<string, unknown> = openingReference();
+     50|     delete source[key];
+     51|     expect(validate(input(source))).toBe(false);
+       |                                     ^
+     52|   });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 1
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 3
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 2
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version null
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/draft-authoring-source-schema.test.ts:55:65
+     53|
+     54|   it.each([1, 3, '2', null])('rejects unsupported or mistyped referenc…
+     55|     expect(validate(input({ ...openingReference(), version }))).toBe(f…
+       |                                                                 ^
+     56|   });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 extractedTextSha256
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 spanSha256
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/draft-authoring-source-schema.test.ts:59:79
+     57|
+     58|   it.each(['contentHash', 'extractedTextSha256', 'spanSha256'])('requi…
+     59|     expect(validate(input({ ...openingReference(), [key]: 'not-a-sha25…
+       |                                                                               ^
+     60|   });
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 5 passed (15)
+   Start at  21:30:58
+   Duration  473ms (transform 148ms, setup 86ms, import 151ms, tests 22ms, environment 0ms)
+

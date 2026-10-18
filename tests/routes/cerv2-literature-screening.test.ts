@@ -35,11 +35,11 @@ class FakeScreeningRefusal extends Error {
   }
 }
 
-const { mockScreen, mockRead, mockLogAction, mockProgramRows, fakeDb, fakePgClient } = vi.hoisted(
+const { mockScreen, mockRead, mockWriteChainedAuditRow, mockProgramRows, fakeDb, fakePgClient } = vi.hoisted(
   () => ({
     mockScreen: vi.fn(),
     mockRead: vi.fn(),
-    mockLogAction: vi.fn(async () => undefined),
+    mockWriteChainedAuditRow: vi.fn(async (..._args: unknown[]) => undefined),
     mockProgramRows: vi.fn<[], unknown[]>(() => []),
     fakeDb: { select: vi.fn(), insert: vi.fn(), update: vi.fn(), execute: vi.fn() } as any,
     // The program check (programInOrganization) reads regulatory_programs on the
@@ -56,7 +56,14 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-vi.mock('../../server/db', () => ({ db: fakeDb }));
+vi.mock('../../server/db', () => ({ db: fakeDb, pool: { connect: async () => ({ query: fakePgClient.query, release: vi.fn() }) } }));
+vi.mock('../../server/routes/c2c/project-access', () => ({
+  requireCurrentProjectActor: vi.fn(async () => ({ userId: 42, role: 'member' })),
+  requireProjectAdmission: vi.fn(), ProjectAdmissionRefusal: class extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } },
+}));
+vi.mock('../../server/services/ana/project-scope-admission', () => ({
+  admitAnaProjectScope: vi.fn(async () => ({ projectId: 1 })), AnaProjectScopeError: class extends Error {},
+}));
 vi.mock('../../server/db/requestDb', () => ({
   requestDb: () => fakeDb,
   requestPgClient: () => fakePgClient,
@@ -73,7 +80,8 @@ vi.mock('../../server/services/literature-screening.service', () => ({
 }));
 
 vi.mock('../../server/services/auditService', () => ({
-  default: { logAction: mockLogAction },
+  writeChainedAuditRow: mockWriteChainedAuditRow,
+  default: { logAction: vi.fn(async () => ({ persisted: false, chained: false, tamperProof: false })) },
 }));
 
 fakeDb.select = vi.fn(() => ({
@@ -126,6 +134,7 @@ function makeReq(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockWriteChainedAuditRow.mockReset().mockResolvedValue(undefined);
   mockScreen.mockResolvedValue({ current: STORED, superseded: null, outcome: 'created' });
   mockRead.mockResolvedValue({ available: true, decisions: [STORED] });
   mockProgramRows.mockReturnValue([]);
@@ -133,6 +142,17 @@ beforeEach(() => {
 
 describe('POST /api/cerv2/literature/screen', () => {
   const BODY = { pmid: '38012345', stage: 'title_abstract', decision: 'included' };
+
+  it('TX_HISTORY: rolls back the current screening decision if its superseded history cannot be recorded', async () => {
+    mockWriteChainedAuditRow.mockRejectedValueOnce(new Error('Synthetic history store failure'));
+    const req = makeReq({ body: BODY });
+    const res = createMockResponse() as any;
+    await getHandler('/literature/screen', 'post')(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json.mock.calls[0][0].screened).not.toBe(true);
+    expect(fakePgClient.query).toHaveBeenCalledWith('ROLLBACK');
+    expect(fakePgClient.query).not.toHaveBeenCalledWith('COMMIT');
+  });
 
   it('records the decision org-scoped from the request, on the request-scoped client', async () => {
     const req = makeReq({ body: BODY });
@@ -142,7 +162,8 @@ describe('POST /api/cerv2/literature/screen', () => {
 
     expect(mockScreen).toHaveBeenCalledTimes(1);
     const [client, orgId, userId, input] = mockScreen.mock.calls[0];
-    expect(client).toBe(fakePgClient); // request-scoped, not the shared pool
+    expect(client.query).toBe(fakePgClient.query);
+    expect(mockWriteChainedAuditRow.mock.calls[0][0]).toBe(client); // history and mutation share the checked-out TX
     expect(orgId).toBe(7);
     expect(userId).toBe(42);
     expect(input).toMatchObject({ pmid: '38012345', stage: 'title_abstract', decision: 'included' });
@@ -259,8 +280,8 @@ describe('POST /api/cerv2/literature/screen', () => {
 
     await getHandler('/literature/screen', 'post')(req, res);
 
-    expect(mockLogAction).toHaveBeenCalledTimes(1);
-    const entry = mockLogAction.mock.calls[0][0] as any;
+    expect(mockWriteChainedAuditRow).toHaveBeenCalledTimes(1);
+    const entry = mockWriteChainedAuditRow.mock.calls[0][1] as any;
     expect(entry.organizationId).toBe(7);
     expect(entry.userId).toBe(42);
     expect(entry.action).toBe('update');
@@ -281,7 +302,7 @@ describe('POST /api/cerv2/literature/screen', () => {
 
     await getHandler('/literature/screen', 'post')(req, res);
 
-    const entry = mockLogAction.mock.calls[0][0] as any;
+    const entry = mockWriteChainedAuditRow.mock.calls[0][1] as any;
     expect(entry.action).toBe('create');
     expect(entry.details.supersededDecision).toBeNull();
   });
@@ -303,7 +324,7 @@ describe('POST /api/cerv2/literature/screen', () => {
     expect(payload.screened).toBe(false);
     expect(payload.code).toBe('ENTRY_NOT_IN_CORPUS');
     expect(payload.error).toMatch(/not in this organization's literature corpus/);
-    expect(mockLogAction).not.toHaveBeenCalled();
+    expect(mockWriteChainedAuditRow).not.toHaveBeenCalled();
   });
 
   /* This case used to PIN the leak: it asserted the driver's text was in the
@@ -322,7 +343,7 @@ describe('POST /api/cerv2/literature/screen', () => {
     expect(payload.error).toBe('INTERNAL_ERROR');
     expect(payload.correlationId).toBe('req-p1-17-2');
     expect(JSON.stringify(payload)).not.toMatch(/deadlock/i);
-    expect(mockLogAction).not.toHaveBeenCalled();
+    expect(mockWriteChainedAuditRow).not.toHaveBeenCalled();
   });
 });
 

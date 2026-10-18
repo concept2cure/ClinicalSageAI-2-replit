@@ -1,0 +1,266 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence
+{
+  "timestamp": "2026-10-14T20:42:07.601Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for table document_read_receipts"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence
+{
+  "timestamp": "2026-10-14T20:42:07.604Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "new row violates row-level security policy for table \"document_read_receipts\""
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target)
+{
+  "timestamp": "2026-10-14T20:42:07.605Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for function is_vault_program_owner"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity)
+{
+  "timestamp": "2026-10-14T20:42:07.606Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "unexpected integrity failure"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero)
+{
+  "timestamp": "2026-10-14T20:42:07.607Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor)
+{
+  "timestamp": "2026-10-14T20:42:07.608Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response
+{
+  "timestamp": "2026-10-14T20:42:07.609Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "commit acknowledgement lost"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback
+{
+  "timestamp": "2026-10-14T20:42:07.611Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence
+{
+  "timestamp": "2026-10-14T20:42:07.611Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry 6ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > does not reuse one admission ID for two different tool deferrals 2ms
+   → expected undefined not to be undefined // Object.is equality
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > refuses direct durable writing without a genuine server deferral identity 1ms
+   → writer is not a function
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "0" 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "true" 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "" 1ms
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > records exact viewer source/slice/payload identities with the fresh role after actual COMMIT 3ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > keeps a custom reader role without promoting stale request/model role claims 1ms
+   → Cannot read properties of undefined (reading 'admittedRole')
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence 3ms
+   → expected +0 to be 1 // Object.is equality
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence 1ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor) 1ms
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves stable ID on identical retry and distinguishes it from a new row 1ms
+   → expected 1 to be +0 // Object.is equality
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence 1ms
+ × server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count 1ms
+   → expected 1 to be +0 // Object.is equality
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > cancellation after actual COMMIT retains the committed count 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:78:32
+     76|     const r = { ...candidate(), admissionId: 'caller-spoof', toolUseId…
+     77|     const pinned = deferred(r).get('server-tool')! as any;
+     78|     expect(pinned.admissionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9…
+       |                                ^
+     79|     expect(pinned.toolUseId).toBe('server-tool'); expect(pinned.admiss…
+     80|     expect(source.snapshotDeferredReadReceipt(pinned)).toMatchObject({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > does not reuse one admission ID for two different tool deferrals
+AssertionError: expected undefined not to be undefined // Object.is equality
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:86:53
+     84|     receipts.deferReadReceipt(receipts.readReceiptContext(map, 'one'),…
+     85|     receipts.deferReadReceipt(receipts.readReceiptContext(map, 'two'),…
+     86|     expect((map.get('one') as any).admissionId).not.toBe((map.get('two…
+       |                                                     ^
+     87|   });
+     88|   it('refuses direct durable writing without a genuine server deferral…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > refuses direct durable writing without a genuine server deferral identity
+TypeError: writer is not a function
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:90:18
+     88|   it('refuses direct durable writing without a genuine server deferral…
+     89|     const writer = (source as any).writeGuardedReadReceipt;
+     90|     await expect(writer({ ...candidate(), admissionId: '30000000-0000-…
+       |                  ^
+     91|     expect(h.append).not.toHaveBeenCalled(); expect(h.queries).not.toC…
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > records exact viewer source/slice/payload identities with the fresh role after actual COMMIT
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:104:27
+    102|     const map = deferred(candidate({ start: 4, end: TEXT.length })); c…
+    103|     expect(await settle(map, { onReceiptSettled: (id: string, result: …
+    104|     expect(h.descriptors).toHaveLength(1); expect(h.descriptors[0]).to…
+       |                           ^
+    105|       organizationId: 42, actorId: 7, admittedRole: 'viewer', programI…
+    106|       originalSha256: 'a'.repeat(64), extractionSha256: sha(TEXT), tot…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > keeps a custom reader role without promoting stale request/model role claims
+TypeError: Cannot read properties of undefined (reading 'admittedRole')
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:113:72
+    111|   it('keeps a custom reader role without promoting stale request/model…
+    112|     h.role = 'custom_scientist'; const r = candidate(); r.result = JSO…
+    113|     expect(await settle(deferred(r))).toBe(1); expect(h.descriptors[0]…
+       |                                                                        ^
+    114|   });
+    115|   it.each(['permission', 'rls'] as const)('allows narrowly identified …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:117:116
+    115|   it.each(['permission', 'rls'] as const)('allows narrowly identified …
+    116|     h.legacy = mode; const events: any[] = [];
+    117|     expect(await settle(deferred(), { onReceiptSettled: (_id: string, …
+       |                                                                                                                    ^
+    118|     expect(h.descriptors).toHaveLength(1); expect(h.queries).toContain…
+    119|     expect(h.queries.some(sql => sql.startsWith('ROLLBACK TO SAVEPOINT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves stable ID on identical retry and distinguishes it from a new row
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:131:111
+    129|     expect(await settle(map)).toBe(1); h.durableOutcome = 'already_rec…
+    130|     const retry: receipts.DeferredReadReceipts = new Map([['server-too…
+    131|     expect(await settle(retry, { onReceiptSettled: (_id: string, resul…
+       |                                                                                                               ^
+    132|     expect(h.descriptors.map(d => d.receiptId)).toEqual([r.admissionId…
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/durable-source-read-receipts.test.ts:154:69
+    152|   it('observed cancellation after append rolls back without an accepte…
+    153|     const controller = new AbortController(); h.abortAfterAppend = con…
+    154|     expect(await settle(deferred(), { signal: controller.signal })).to…
+       |                                                                     ^
+    155|   });
+    156|   it('cancellation after actual COMMIT retains the committed count', a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 12 passed (21)
+   Start at  20:42:06
+   Duration  844ms (transform 485ms, setup 65ms, import 521ms, tests 33ms, environment 0ms)
+

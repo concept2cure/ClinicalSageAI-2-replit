@@ -1,0 +1,283 @@
+{
+  "generatedAtUtc": "2026-10-14T06:39:11.189814+00:00",
+  "qualification": "Working-tree repaired sources for actual native/focused runs above; publishedBase records the base only, not a claim this increment was already committed. Red source/probe scope is separately captured in source-and-probe-red.json.",
+  "sources": [
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "bytes": 2577,
+      "digestAlgorithm": "sha256",
+      "digest": "75bb7d16e54b6a1582024e3c61cf648dc2c31c6bd5a99709d0f86b41b4c1616b"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "bytes": 3045,
+      "digestAlgorithm": "sha256",
+      "digest": "2de1904c7109dfc31f7a33a7c494ab089659168248cef40e57e5b0434df1da74"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 13377,
+      "digestAlgorithm": "sha256",
+      "digest": "ef0315187d151c56d6c86af2fd1e77af08d972ab6203dabb7c6f34c7df34610e"
+    },
+    {
+      "path": "server/services/part11/signing-authority.ts",
+      "bytes": 1858,
+      "digestAlgorithm": "sha256",
+      "digest": "126acf712fdf68a55f57f1f9fe5a8418bd8c5015db32c838736f4ac43e7194fd"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "bytes": 25221,
+      "digestAlgorithm": "sha256",
+      "digest": "db6ce27cd1e14185b61d62f4cb13051308415ca002dd35fd73a98bc5caae4e4e"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "bytes": 20383,
+      "digestAlgorithm": "sha256",
+      "digest": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+      "bytes": 29149,
+      "digestAlgorithm": "sha256",
+      "digest": "8befc7998e94d26c4e6a5e6a8aaff17de241d649e711bed130caddc5e19af818"
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "bytes": 3378,
+      "digestAlgorithm": "sha256",
+      "digest": "fcd5d3f38c50282d9261e2737e237c3b3dada8eb1ea5aa336d245d77d7a62f84"
+    },
+    {
+      "path": "tests/db/protocol-authority-after-parent.dbtest.ts",
+      "bytes": 21609,
+      "digestAlgorithm": "sha256",
+      "digest": "7f0c041cceca89bbf16e4da64719536886471f095ec58c59dd3740dd973110bb"
+    },
+    {
+      "path": "tests/db/protocol-approval-independence.dbtest.ts",
+      "bytes": 30805,
+      "digestAlgorithm": "sha256",
+      "digest": "230a14a2a7ce647bbec160bb2daf4af9d4978616fea20b947be500ff767fdb32"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "bytes": 31317,
+      "digestAlgorithm": "sha256",
+      "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29725,
+      "digestAlgorithm": "sha256",
+      "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-identity.ts",
+      "bytes": 4925,
+      "digestAlgorithm": "sha256",
+      "digest": "de8774ee5bf459834d36c8b0d77289359725549a86b9956e710596255f101e37"
+    },
+    {
+      "path": "server/services/part11/signature-persistence.ts",
+      "bytes": 48363,
+      "digestAlgorithm": "sha256",
+      "digest": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "bytes": 4073,
+      "digestAlgorithm": "sha256",
+      "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "bytes": 8777,
+      "digestAlgorithm": "sha256",
+      "digest": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/README.md",
+      "bytes": 6560,
+      "digestAlgorithm": "sha256",
+      "digest": "e606a6801d528891f4953b8df78a130a820cc3e1429fdfb9edb90eef1faba51e"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/both-retained-red-preservation.json",
+      "bytes": 1698,
+      "digestAlgorithm": "sha256",
+      "digest": "ce37e09a82e672c00870b66643a0c8f62a7b2d82c1d7c8919b60017f35703be9"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/focused-neighbours-green.txt",
+      "bytes": 48345,
+      "digestAlgorithm": "sha256",
+      "digest": "daa39e724e3a32d9546c0365daf29f978d12f2eacaa561c9945baaccb3f7079d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-neighbours-89-green.txt",
+      "bytes": 34222,
+      "digestAlgorithm": "sha256",
+      "digest": "fbe57a52f7ee4c934c3a195946b99dccc3b3933cab139becf92e6af6e54174c0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-positive-observations.json",
+      "bytes": 4955,
+      "digestAlgorithm": "sha256",
+      "digest": "f0ca1b2dd98c6483cb0ef7fd8f9adac11b4a96e69d5cf9c1fbdb139b14ae0225"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-and-positive-green.txt",
+      "bytes": 14414,
+      "digestAlgorithm": "sha256",
+      "digest": "fd6fe8ea5b87e11f7951fbe736dbe1e41dba9d532d21264dc0f159858e047553"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-green-observations.json",
+      "bytes": 3217,
+      "digestAlgorithm": "sha256",
+      "digest": "d5c10c1ff799db5e8d0f3487b2755589edab7acf0dcf75865dff6bddc0da1d15"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red-observations.json",
+      "bytes": 3213,
+      "digestAlgorithm": "sha256",
+      "digest": "5758b10dd9175b250115b1ba1c85500fbc9fb0563389fcb826cf7242faecf3ee"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red-preservation.json",
+      "bytes": 912,
+      "digestAlgorithm": "sha256",
+      "digest": "39a818f0360ab5bffa5b74a25ba975114d5190756d64f7ab4bd161c8ef68311b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red.txt",
+      "bytes": 7203,
+      "digestAlgorithm": "sha256",
+      "digest": "2ec1de9854c49730b46bd50c1c9bc83dd79988010f04d42c06a0cfa7521919c7"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/retained-role-red-fixture.json",
+      "bytes": 288,
+      "digestAlgorithm": "sha256",
+      "digest": "486a062f2cdb9ff112bb74ee8b900d595a7bc5ada3c76290c52f222f5ecd7687"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/retained-role-red-hash.py",
+      "bytes": 2416,
+      "digestAlgorithm": "sha256",
+      "digest": "9749085f2978e6fd10a9f7827af77acc4cee96d8fd1ca8ad0520d7ead3b19d16"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/scoped-lint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/source-and-probe-red.json",
+      "bytes": 4600,
+      "digestAlgorithm": "sha256",
+      "digest": "e5c64db8aee07dbb985a5ac367810315580b41edb7e216094069ca6637c175ae"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/verification-summary.json",
+      "bytes": 3926,
+      "digestAlgorithm": "sha256",
+      "digest": "04a25747405721b6ce5f1f108f555a612f072c59ca6d52620cee646a003a10e6"
+    }
+  ],
+  "rawFiles": [
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-native.txt",
+      "bytes": 7204,
+      "digestAlgorithm": "sha256",
+      "digest": "581370f078925251c7e2941dc46c0a534d2a9f02819b7db0da4f1505f70c8061",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red.txt"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-observations.json",
+      "bytes": 3213,
+      "digestAlgorithm": "sha256",
+      "digest": "5758b10dd9175b250115b1ba1c85500fbc9fb0563389fcb826cf7242faecf3ee",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red-observations.json"
+    },
+    {
+      "path": "/tmp/protocol-authority-after-parent-red-preservation.json",
+      "bytes": 912,
+      "digestAlgorithm": "sha256",
+      "digest": "39a818f0360ab5bffa5b74a25ba975114d5190756d64f7ab4bd161c8ef68311b",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-red-preservation.json"
+    },
+    {
+      "path": "/tmp/protocol-authority-retained-red-fixture.json",
+      "bytes": 288,
+      "digestAlgorithm": "sha256",
+      "digest": "486a062f2cdb9ff112bb74ee8b900d595a7bc5ada3c76290c52f222f5ecd7687",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/retained-role-red-fixture.json"
+    },
+    {
+      "path": "/tmp/protocol-authority-retained-red-hash.py",
+      "bytes": 2416,
+      "digestAlgorithm": "sha256",
+      "digest": "9749085f2978e6fd10a9f7827af77acc4cee96d8fd1ca8ad0520d7ead3b19d16",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/retained-role-red-hash.py"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-green-native.txt",
+      "bytes": 14415,
+      "digestAlgorithm": "sha256",
+      "digest": "c564e66dc3548f9005fb17cabf4bddfd8a72acfc736a6ad2122f6a1db3d4042d",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-and-positive-green.txt"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-green-observations.json",
+      "bytes": 3217,
+      "digestAlgorithm": "sha256",
+      "digest": "d5c10c1ff799db5e8d0f3487b2755589edab7acf0dcf75865dff6bddc0da1d15",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-role-green-observations.json"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-green-preservation.json",
+      "bytes": 1698,
+      "digestAlgorithm": "sha256",
+      "digest": "ce37e09a82e672c00870b66643a0c8f62a7b2d82c1d7c8919b60017f35703be9",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/both-retained-red-preservation.json"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-focused-neighbours.txt",
+      "bytes": 48346,
+      "digestAlgorithm": "sha256",
+      "digest": "2c5c9026171078b1b0c0e366e5a823517eba9850d9e58923423ff7122f8e7251",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/focused-neighbours-green.txt"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-native-neighbours-89.txt",
+      "bytes": 34223,
+      "digestAlgorithm": "sha256",
+      "digest": "2c46eaa558d137c786dfbf5e25269d3dc356ffeacff292086d019ad969809d31",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/native-neighbours-89-green.txt"
+    },
+    {
+      "path": "/tmp/protocol-current-authority-scoped-lint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/scoped-lint.txt"
+    }
+  ],
+  "unpublishedQualificationRefinement": {
+    "atUtc": "2026-10-14T06:43:16.055668+00:00",
+    "reason": "Explicitly distinguish proven canonical role/status reservation from the separate unchanged pre-parent feature-gated resource/grant policy. Sources and raw executed artifacts are unchanged.",
+    "priorManifest": {
+      "path": "/tmp/protocol-current-authority-proof-manifest-before-rbac-qualification.json",
+      "bytes": 11845,
+      "digestAlgorithm": "sha256",
+      "digest": "71379e0b60f6c8da45c5c5c4342b741fd50540a33480ec742bfbdfc7730630f9"
+    }
+  }
+}

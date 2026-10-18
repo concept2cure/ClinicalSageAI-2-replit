@@ -101,9 +101,21 @@ function basisLine(b: E3Basis): string {
   const how = b.confidence === 'regulator-text'
     ? `checked against the regulator's text ${b.checked ?? ''}`.trim()
     : b.confidence === 'recall'
-      ? 'ICH E3 (1995) as recalled; verbatim check owed'
+      ? recallHow(b)
       : 'platform practice, not a requirement';
   return `- ${b.ref} — ${how}${b.url ? ` (${b.url})` : ''}`;
+}
+
+/**
+ * A recall basis says what it rests on: its note (the regulator documents in
+ * regulatory-basis.ts were seen only in search extracts), else, for a heading's
+ * own E3 citation, the 1995 text as recalled. 2026-10-15: every recall basis
+ * read "ICH E3 (1995) as recalled", false for an FDA or CFR document once those
+ * stopped being labelled regulator-text.
+ */
+function recallHow(b: E3Basis): string {
+  if (b.note) return `recall: ${b.note}`;
+  return b.ref.startsWith('ICH E3 §') ? 'ICH E3 (1995) as recalled; verbatim check owed' : "recall — not checked against the regulator's text";
 }
 
 function bullets(label: string, items: string[] | undefined): string | null {

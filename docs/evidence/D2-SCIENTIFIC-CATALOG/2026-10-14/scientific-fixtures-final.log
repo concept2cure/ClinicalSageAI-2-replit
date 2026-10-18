@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total 138ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF02: Randomized count cannot use treated count 35ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF03: Drug arm cannot use placebo count 11ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF04: Incomplete clinical frame 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF05: CMC batch/method result 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF06: CMC batch substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF07: CMC method substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF08: CMC scalar cannot strip criterion bound 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF09: CMC specification bound preserved 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF10: Source precision retained 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF11: Device configuration/software result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF12: Device configuration substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF13: Device software substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF14: Device criterion cannot become measured scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF15: Device criterion bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF16: Complete diagnostic sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF17: Diagnostic assay substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF18: Diagnostic specimen substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF19: Diagnostic cutoff substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF20: Diagnostic denominator substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF21: Diagnostic reference substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF22: Diagnostic population substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF23: Comparator agreement remains agreement 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF24: Agreement cannot establish sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF25: Missing diagnostic context 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF26: Analytical LoD design/matrix/lot 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF27: Analytical lot/matrix substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF28: Analytical CV property substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF29: Scientific notation cannot be rewritten 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF30: Range preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF31: Range endpoint cannot establish scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF32: Approximation cannot establish exact scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF33: Approximation preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF34: Remote heading is not a local relation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF35: Large multi-subject anchor 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF36: Unsupported Japanese interpretation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF37: OCR remains unqualified context 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF41: Ordinary narrative is outside admitted row grammar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-document: Wrong source document 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-bytes: Wrong original-byte hash 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-text: Wrong extraction hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-range: Shifted exact quote range 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-quote: Fabricated exact quote 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF39: Unsupported computed result 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-status: Candidate cannot claim acceptance 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-actor: Candidate cannot supply authority 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-locator: Unsupported fabricated original locator 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH01: Repeated equal values still have different assays 7ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH02: Repeated equal values still have different configurations 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH03: Source software qualifier cannot be silently omitted 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH04: Restricted population cannot inherit its broader label 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH05: Duplicate assay labels remain ambiguous 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH06: Clipped value anchor cannot borrow remote context 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH07: An extra source qualifier cannot be discarded 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH08: A negative value cannot supply a positive scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH09: A scientific exponent cannot be clipped 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH10: Upper range endpoint cannot supply a scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH11: Decimal digits cannot bind an integer result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH12: Clipping a bound marker cannot establish a scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH13: Clipping a unit cannot establish unit binding 3ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH14: A witness with a different byte hash refuses 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH15: Server source object must bind its actual text hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH16: Unsupported semantic witness paths refuse 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH17: Earlier scalar occurrence cannot erase the named result bound 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH18: Source instrument cannot be omitted 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH19: Source reagent version cannot be omitted 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH20: Source analytical lot cannot be omitted 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH21: Source device test condition cannot be omitted 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH22: Remote clinical frame with equal count cannot supply local study 124ms
+ ✓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH23: An earlier cutoff bound cannot erase an exact named result 1ms
+
+ Test Files  2 passed (2)
+      Tests  70 passed (70)
+   Start at  06:37:53
+   Duration  1.19s (transform 377ms, setup 75ms, import 442ms, tests 370ms, environment 0ms)
+

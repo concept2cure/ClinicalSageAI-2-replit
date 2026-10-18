@@ -74,8 +74,9 @@ psql by hand should require a peer review.
 SELECT id, organization_id, name, code FROM regulatory_programs
 WHERE organization_id = <org-id>;
 ```
-If empty, the customer needs to use the program-creation flow (or, for
-demos, run `npm run db:seed:mdx-beta`).
+If empty, the customer needs to use the program-creation flow (or, for a
+labelled demonstration, `npm run demo:seed -- --pack mdx`; see the
+onboarding runbook).
 
 ### 3. "Cross-tenant data" report (P0 if confirmed)
 

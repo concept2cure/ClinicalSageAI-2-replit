@@ -1,0 +1,195 @@
+{
+  "tag": "protocol-sod-native-131376-mv7mnt0k-23bcc8dd",
+  "cases": {
+    "writerFirstSignerSecond": {
+      "documentId": 87,
+      "sectionId": 116,
+      "holderPid": 8056,
+      "writerWait": {
+        "pid": 8052,
+        "query": "SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        "wait_event": "transactionid",
+        "blocking_pids": [
+          8056
+        ]
+      },
+      "signerWait": {
+        "pid": 8057,
+        "query": "SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        "wait_event": "tuple",
+        "blocking_pids": [
+          8052
+        ]
+      },
+      "authorsBefore": {
+        "modelled": true,
+        "authors": [
+          1167528
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "authorsBeforeRelease": {
+        "modelled": true,
+        "authors": [
+          1167528
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "authorsAfter": {
+        "modelled": true,
+        "authors": [
+          1167528,
+          1463288
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "writerStatus": 201,
+      "signerStatus": 403,
+      "signerErrorCode": "SEPARATION_OF_DUTIES",
+      "document": {
+        "status": "in_development",
+        "version": "0.1",
+        "finalized_by": null,
+        "finalized_at": null
+      },
+      "changedProseRetained": true,
+      "editActionId": "act_9369d00194fc4da8bf7cf98b7ca50bb4",
+      "editAuditId": "d8ca9647-126e-4f97-a96c-a6fdbf9ff659",
+      "lineageRows": 5,
+      "liveWriterAuthorshipRows": 3,
+      "liveHashesMatch": true,
+      "signatureCount": 0,
+      "versionCount": 0,
+      "signActionCount": 0,
+      "signAuditCount": 0
+    },
+    "independentApproval": {
+      "documentId": 88,
+      "sectionId": 129,
+      "signerStatus": 201,
+      "authors": {
+        "modelled": true,
+        "authors": [
+          1167528
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "document": {
+        "status": "finalized",
+        "version": "1.0",
+        "finalized_by": 1831313,
+        "finalized_at": "2026-10-14T04:46:34.724Z"
+      },
+      "signatureCount": 1,
+      "versionCount": 1,
+      "signatureId": 23,
+      "signatureMeaning": "approval",
+      "authenticationMethod": "password",
+      "bindingBasis": "protocol-document-content-sha256",
+      "digestMatchesCurrent": true
+    },
+    "authorAuthorship": {
+      "documentId": 89,
+      "sectionId": 142,
+      "signerStatus": 201,
+      "authors": {
+        "modelled": true,
+        "authors": [
+          1167528
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "document": {
+        "status": "finalized",
+        "version": "1.0",
+        "finalized_by": 1167528,
+        "finalized_at": "2026-10-14T04:46:35.544Z"
+      },
+      "signatureCount": 1,
+      "versionCount": 1,
+      "signatureId": 24,
+      "signatureMeaning": "authorship",
+      "authenticationMethod": "password",
+      "bindingBasis": "protocol-document-content-sha256",
+      "digestMatchesCurrent": true
+    }
+  },
+  "signatureRequestsStarted": 3,
+  "scope": "Actual native protocol APIs; synthetic QA only",
+  "database": "platform_test",
+  "runtime": {
+    "database": "platform_test",
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on"
+  },
+  "stores": [
+    {
+      "relname": "audit_logs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_ana_actions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "document_span_lineage",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "electronic_signatures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_versions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "organizationId": 1784997,
+  "actorIds": {
+    "author": 1167528,
+    "writer": 1463288,
+    "independent": 1831313
+  },
+  "signerAttempts": {
+    "author": 1,
+    "writer": 1,
+    "independent": 1
+  }
+}

@@ -54,7 +54,7 @@ export interface KnowledgeCard {
   url: string;
   /** Distiller's self-assessed confidence (0..1). */
   confidence: number;
-  /** Whether the summary's claims were judged grounded in the source text. */
+  /** Whether the summary passed the distiller's token-overlap check against the source text (a heuristic, not a per-claim check). */
   grounded: boolean;
   status: CardStatus;
   /** ISO timestamp the card entered the pipeline. */

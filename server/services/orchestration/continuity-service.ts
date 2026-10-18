@@ -72,12 +72,24 @@ export interface ContinuityBaseline {
 }
 
 /**
+ * A blocker to look at. `id` is its target's numeric id, or null when the
+ * target has none (a module, a CMC contradiction), so no link is built to it.
+ */
+export interface ContinuityAttentionItem {
+  type: string;
+  id: number | null;
+  title: string;
+  reason: string;
+}
+
+/**
  * The briefing as served. ProjectContinuitySnapshot plus what the verdict was
  * measured against, so a reader can reproduce it.
  */
-export interface ContinuityBriefing extends Omit<ProjectContinuitySnapshot, 'trajectory'> {
+export interface ContinuityBriefing extends Omit<ProjectContinuitySnapshot, 'trajectory' | 'needsAttention'> {
   /** 'no_baseline' until a snapshot at least 24 h old exists for the project. */
   trajectory: ContinuityTrajectory;
+  needsAttention: ContinuityAttentionItem[];
   /** The baseline the verdict and "newly ready" were measured against, or null. */
   baseline: { snapshotAt: string; readinessScore: number } | null;
   /** Start of the "what changed" window: the baseline's time, else 7 days ago. */
@@ -373,13 +385,14 @@ function identifyNewlyReady(
 
 function identifyNeedsAttention(
   readiness: ReadinessAssessment
-): Array<{ type: string; id: number; title: string; reason: string }> {
-  const items: Array<{ type: string; id: number; title: string; reason: string }> = [];
+): ContinuityAttentionItem[] {
+  const items: ContinuityAttentionItem[] = [];
 
   for (const blocker of readiness.blockers) {
     items.push({
       type: blocker.targetType,
-      id: typeof blocker.targetId === 'number' ? blocker.targetId : 0,
+      // 2026-10-15: a target with no numeric id read 0, an object that does not exist.
+      id: typeof blocker.targetId === 'number' ? blocker.targetId : null,
       title: blocker.targetTitle || blocker.message,
       reason: blocker.suggestedResolution || blocker.message,
     });

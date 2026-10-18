@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:typecheck:no-regression",
+    "--",
+    "--incremental"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 262.11,
+  "rawOutputSha256": "dea8a54278234cda8485e0fc042018cbf606a313d85532db309d80b89ae1178d",
+  "storedOutputSha256": "dea8a54278234cda8485e0fc042018cbf606a313d85532db309d80b89ae1178d",
+  "qualification": "Stored output omits redundant terminal newlines only; no baseline changed."
+}

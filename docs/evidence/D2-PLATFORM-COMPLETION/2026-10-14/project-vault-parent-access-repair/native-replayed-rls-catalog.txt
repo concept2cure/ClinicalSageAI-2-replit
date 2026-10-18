@@ -1,0 +1,12 @@
+vault|documents|t|t|postgres
+public|cre_evidence_sources|t|t|postgres
+public|cre_evidence_sources|cre_explicit_global_public_read|SELECT|((organization_id IS NULL) AND (visibility_class = 'global_public'::text))|
+public|cre_evidence_sources|tenant_isolation_policy|ALL|((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))|((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+vault|documents|rls_vault_documents_delete|DELETE|core.can_write_program(program_id)|
+vault|documents|rls_vault_documents_insert|INSERT||core.can_write_program(program_id)
+vault|documents|rls_vault_documents_select|SELECT|core.can_access_program(program_id)|
+vault|documents|rls_vault_documents_update|UPDATE|core.can_write_program(program_id)|
+vault|documents|vault_documents_delete_policy|DELETE|core.can_write_program(program_id)|
+vault|documents|vault_documents_insert_policy|INSERT||core.can_write_program(program_id)
+vault|documents|vault_documents_select_policy|SELECT|core.can_access_program(program_id)|
+vault|documents|vault_documents_update_policy|UPDATE|core.can_write_program(program_id)|core.can_write_program(program_id)

@@ -39,6 +39,7 @@ import submissionsRouter from '../submissions';
 const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
+  Object.defineProperty(req, 'ip', { value:'192.0.2.17' });
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'member', roles: expandRoleClaims('member', undefined) };
   next();
 });
@@ -63,7 +64,8 @@ describe('removing a leaf takes its reason', () => {
       .delete('/api/submissions/sequences/5/leaves/63')
       .send({ reason: '  Duplicate placement of the cover letter  ' });
     expect(res.status).toBe(204);
-    expect(svc.removeLeaf).toHaveBeenCalledWith(63, 5, { userId: 3, organizationId: 7 }, 'Duplicate placement of the cover letter');
+    // The route's ctx carries the request's address since f2f656eed (governed-export provenance and audit rows).
+    expect(svc.removeLeaf).toHaveBeenCalledWith(63, 5, { userId: 3, organizationId: 7, ipAddress: '192.0.2.17' }, 'Duplicate placement of the cover letter');
     expect(res.headers['x-sequence-status-changed']).toBeUndefined();
   });
 
@@ -91,7 +93,33 @@ describe('a governed step can be asked before it is signed', () => {
     const res = await request(app).post('/api/submissions/sequences/6/governed-precheck').send({ step: 'freeze' });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ cleared: false, refusal: expect.stringMatching(/Shadow Review/) });
-    expect(svc.precheckGovernedStep).toHaveBeenCalledWith(6, 'freeze', { userId: 3, organizationId: 7 }, { environment: undefined });
+    expect(svc.precheckGovernedStep).toHaveBeenCalledWith(6, 'freeze', { userId: 3, organizationId: 7, ipAddress: '192.0.2.17' }, expect.anything());
+    // The options the route hands the step, key for key (toStrictEqual counts an
+    // undefined key): a freeze names no transmit destination, no finding and no
+    // disposition, and none is invented for it.
+    expect(svc.precheckGovernedStep.mock.calls[0][3]).toStrictEqual({
+      environment: undefined,
+      applicationId: undefined,
+      findingId: undefined,
+      disposition: undefined,
+    });
+  });
+
+  it('hands a finding disposition precheck the finding and the disposition it names (P-35)', async () => {
+    svc.precheckGovernedStep.mockResolvedValue({ step: 'shadow-finding-disposition', cleared: true, refusal: null });
+    const res = await request(app)
+      .post('/api/submissions/sequences/6/governed-precheck')
+      .send({ step: 'shadow-finding-disposition', findingId: 41, disposition: 'accepted' });
+    expect(res.status).toBe(200);
+    expect(svc.precheckGovernedStep.mock.calls[0].slice(0, 3)).toEqual([
+      6, 'shadow-finding-disposition', { userId: 3, organizationId: 7, ipAddress: '192.0.2.17' },
+    ]);
+    expect(svc.precheckGovernedStep.mock.calls[0][3]).toStrictEqual({
+      environment: undefined,
+      applicationId: undefined,
+      findingId: 41,
+      disposition: 'accepted',
+    });
   });
 
   it('refuses an unknown step', async () => {

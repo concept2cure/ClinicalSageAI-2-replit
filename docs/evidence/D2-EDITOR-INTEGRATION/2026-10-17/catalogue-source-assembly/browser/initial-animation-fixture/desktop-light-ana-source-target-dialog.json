@@ -1,0 +1,9 @@
+{
+  "viewportWidth": 1440,
+  "x": 930.13671875,
+  "right": 1450.13671875,
+  "width": 520,
+  "scrollWidth": 519,
+  "clientWidth": 519,
+  "text": "Selected sources → document editorBuild from selected sourcesTarget project: Synthetic assembly projectOpens the selected working document. Preview and build there, with or without AnA. No text is changed by opening it.Synthetic analytical source A.txt · 41SHA-256 1111111111111111111111111111111111111111111111111111111111111111Synthetic analytical source B.txt · 42SHA-256 2222222222222222222222222222222222222222222222222222222222222222The editor verifies the selected source versions before building. Retained readable data can be used when the original file is unavailable.Working documentChoose a working documentAssembly working documentTo create one, use New document in the editor, then return here to select it.Open document editorCancelOpen in editor"
+}

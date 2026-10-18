@@ -70,6 +70,8 @@ beforeAll(async () => {
   h.db = jdb.db;
   await jdb.pool.query(`INSERT INTO organizations (id, name, slug, tier, max_projects) VALUES (${ORG}, 'QA', 'qa', 'standard', 10)`);
   await jdb.pool.query(`INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'raj@j8.example', 'Raj', 'x')`);
+  // Creation admits only a current active member with a role (requireProjectCreationAccess).
+  await jdb.pool.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'manager')`);
   await jdb.pool.query(`INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES (1, ${ORG}, 'Default', 'default')`);
 
   const { default: router } = await import('../projects');

@@ -1,0 +1,18 @@
+[ci:tenant-isolation] WARN — 4 candidate violation(s) (37 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/services/report-os/scope-ownership.ts  (4)
+    L29  tables=[]
+      `SELECT id FROM report_program_groups WHERE id::text = $1 AND organization_id = $2 AND status = 'active'
+    L51  tables=[projects]
+      const project = await client.query(`SELECT id FROM projects WHERE id = $1 AND organization_id = $2 AND status <> 'archived'
+    L61  tables=[projects]
+      ? `SELECT s.project_id FROM concept2cure_artifacts s JOIN projects p ON p.id = s.project_id
+    … 1 more
+
+Total: 4 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] 8 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] FAIL — 4 NEW finding(s) above baseline of 8:
+  server/services/report-os/scope-ownership.ts#35d5cd95a846:
+  server/services/report-os/scope-ownership.ts#dd36e1edd172:projects
+  server/services/report-os/scope-ownership.ts#5ab872bb6ce3:projects
+  server/services/report-os/scope-ownership.ts#0d7804df7247:projects

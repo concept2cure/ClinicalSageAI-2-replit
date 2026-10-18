@@ -39,6 +39,7 @@ import { isActiveAccountStatus, isPendingVerificationStatus } from '../services/
 import { INVITE_PASSWORD_HASH_PREFIX } from '../services/password-setup-token';
 import { roleScopesOf } from '../services/tenant/role-scopes';
 import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
+import { idleWindowSecondsOf } from '../../shared/auth/session-policy';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -288,7 +289,9 @@ router.get('/admin', async (req: Request, res: Response) => {
     const orgSettings = (org.settings && typeof org.settings === 'object' ? org.settings : {}) as Record<string, any>;
     const security = (orgSettings.security && typeof orgSettings.security === 'object' ? orgSettings.security : {}) as Record<string, any>;
     const ssoOn = security.ssoEnabled === true;
-    const sessionMins = typeof security.sessionTimeout === 'number' ? security.sessionTimeout : null;
+    // The same clamped preference/default sign-in carries in its token. The
+    // legacy sessionTimeout key is ignored by runtime enforcement.
+    const sessionMins = idleWindowSecondsOf(orgSettings) / 60;
 
     const scimRows = await facet<{ enabled: boolean; updated_at: Date | string | null }>(
       'sso',
@@ -343,9 +346,9 @@ router.get('/admin', async (req: Request, res: Response) => {
     // Settings tab — only rows with a real backing value (honesty over completeness).
     const settings = [
       secondFactor,
-      orgRead && sessionMins != null && {
+      orgRead && {
         id: 'session-ttl', label: 'Session timeout', kind: 'duration',
-        value: `${sessionMins} minutes`, desc: 'Idle re-authentication interval',
+        value: `${sessionMins} ${sessionMins === 1 ? 'minute' : 'minutes'}`, desc: 'Idle interval applied at new sign-in; an idle session requires sign-in again',
       },
       orgRead && {
         id: 'sso', label: 'Single sign-on', kind: 'toggle',

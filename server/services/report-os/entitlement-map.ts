@@ -20,15 +20,15 @@
  * the SUBSCRIPTION is.
  *
  * The gate reuses resolveCapabilities() for the tier (never re-queries) and
- * the pure isEntitled(). Tier lookup failure defaults to `standard`, which
- * can never unlock a professional/enterprise feature — fail-closed on the
- * paid tiers, never a silent unlock.
+ * the pure isEntitled(). An unresolved tier retains the compatibility value
+ * `standard`, but cannot unlock any reporting feature or claim a known plan.
  */
 
 import { isEntitled, featureTier } from '../entitlements/mdx-entitlements';
 import { resolveCapabilities } from '../entitlements/resolver';
 import type { FeatureKey, Tier } from '../entitlements/types';
 import { createScopedLogger } from '../../utils/logger.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 
 const log = createScopedLogger('report-entitlement');
 
@@ -38,20 +38,8 @@ export interface ReportEntitlementDecision {
   /** The minimum tier that unlocks this report, for honest upgrade copy. */
   requiredTier: Tier;
   tier: Tier;
-  /**
-   * Whether `tier` was READ, or assumed after a failed read.
-   *
-   * `requireReportEntitlement` degrades to `standard` when `resolveCapabilities`
-   * throws, which is the right call for the gate — it can never silently unlock
-   * a paid feature. It was the wrong call for the sentence: the failure was
-   * swallowed by a bare `catch` and passed on unflagged, so an enterprise
-   * customer whose capability lookup threw was shown "Plan: Standard" and a
-   * screen of locked tiles, with nothing to say their plan had not been read
-   * (HS-1008-4, honest-state review 2026-10-08).
-   *
-   * False means: keep failing closed on the entitlement, and stop claiming to
-   * know the plan.
-   */
+  /** True only for a verified recorded plan; false refuses every report
+   *  feature and lets the surface explain that the plan could not be read. */
   tierResolved: boolean;
 }
 
@@ -98,7 +86,7 @@ export function decideReportEntitlement(
 ): ReportEntitlementDecision {
   const feature = reportTypeToFeatureKey(typeId, family);
   return {
-    entitled: isEntitled(feature, tier),
+    entitled: tierResolved && isEntitled(feature, tier),
     feature,
     requiredTier: (featureTier(feature) ?? 'standard') as Tier,
     tier,
@@ -108,34 +96,29 @@ export function decideReportEntitlement(
 
 /**
  * Resolve the org's tier (via resolveCapabilities) and decide entitlement for
- * a report type. Never throws — a resolution failure degrades to `standard`,
- * which fails closed on professional/enterprise features, and sets
- * `tierResolved: false` so the surface says the plan could not be read rather
- * than presenting `standard` as the organisation's plan.
+ * a report type. Unread or malformed plans keep the compatibility `standard`
+ * value with `tierResolved: false`, refusing every reporting feature. The
+ * optional executor keeps all resolver reads on the caller's owned SQL client.
  */
 export async function requireReportEntitlement(
   organizationId: number,
   typeId: string,
   family?: string,
+  executor?: RequestSqlClient,
 ): Promise<ReportEntitlementDecision> {
-  let tier: Tier = 'standard';
-  let tierResolved = true;
   try {
-    const caps = await resolveCapabilities(organizationId);
-    tier = caps.tier;
+    const caps = await resolveCapabilities(organizationId, executor);
+    // The resolver reports an unread plan as tier null (2026-10-15); it keeps
+    // this module's compatibility value and refuses, as before.
+    return caps.tier === null
+      ? decideReportEntitlement(typeId, family, 'standard', false)
+      : decideReportEntitlement(typeId, family, caps.tier, caps.tierResolved === true);
   } catch (err) {
-    /* Still `standard`, so the gate still fails closed on every paid feature.
-       But the failure is no longer silent in either direction: it is logged for
-       the operator, and `tierResolved: false` travels to the surface so the
-       screen can say the plan could not be read instead of naming one. The bare
-       `catch { tier = 'standard' }` this replaces discarded the error entirely. */
-    tier = 'standard';
-    tierResolved = false;
-    log.error('capability lookup failed; entitlement decided as standard', {
+    log.error('capability lookup failed; reporting entitlement refused', {
       organizationId,
       typeId,
       err: err instanceof Error ? err.message : String(err),
     });
+    return decideReportEntitlement(typeId, family, 'standard', false);
   }
-  return decideReportEntitlement(typeId, family, tier, tierResolved);
 }

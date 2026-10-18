@@ -1,0 +1,8 @@
+{
+  "originalCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "existingHelper": "shared/authoring/plain-text-html.ts:plainTextToHtml",
+  "contractIdenticalToOriginalGitBytes": true,
+  "bytes": 39567,
+  "originalBrowserEvidenceRetained": true,
+  "scannerSuppressionAdded": false
+}

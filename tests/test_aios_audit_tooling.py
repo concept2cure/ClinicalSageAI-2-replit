@@ -55,6 +55,37 @@ class TestAIOSAuditTooling(unittest.TestCase):
         self.assertIn("AIOS exit-gate decision is FAIL", result.stdout)
 
 
+    def test_sample_metrics_make_no_gate_decision(self):
+        """Invented sample metrics are labelled and decide nothing (2026-10-15)."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out = Path(tmp_dir) / "evidence.md"
+            subprocess.run(
+                ["python3", str(GEN_SCRIPT), "--metrics", str(SAMPLE_METRICS), "--output", str(out)],
+                check=True, cwd=ROOT,
+            )
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("SAMPLE, not evidence", text.splitlines()[0])
+        self.assertIn("Overall pilot gate decision: NOT MADE", text)
+        self.assertNotIn("Overall pilot gate decision: PASS", text)
+
+    def test_metrics_from_a_recorded_run_make_a_decision(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            recorded = Path(tmp_dir) / "recorded.json"
+            out = Path(tmp_dir) / "evidence.md"
+            metrics = json.loads(SAMPLE_METRICS.read_text(encoding="utf-8"))
+            metrics["source_run"] = {"id": "pilot-run-7", "sha256": "ab" * 32}
+            recorded.write_text(json.dumps(metrics), encoding="utf-8")
+            subprocess.run(
+                ["python3", str(GEN_SCRIPT), "--metrics", str(recorded), "--output", str(out)],
+                check=True, cwd=ROOT,
+            )
+            text = out.read_text(encoding="utf-8")
+
+        self.assertEqual(text.splitlines()[0], "# AIOS Evidence Pack (Generated)")
+        self.assertIn("Source run: pilot-run-7", text)
+        self.assertIn("Overall pilot gate decision: PASS", text)
+
     def test_controls_parser_reads_ids_and_exit_gates(self):
         controls = ROOT / "docs" / "aios" / "AIOS_AUDIT_CONTROLS.yaml"
         control_ids = parse_control_ids(controls)

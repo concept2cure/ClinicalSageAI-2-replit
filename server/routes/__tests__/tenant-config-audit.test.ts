@@ -44,7 +44,7 @@ function selectChain() {
     for: (strength: string) => rows(` FOR ${strength.toUpperCase()}`),
     then: (ok: (v: unknown) => unknown, ko?: (e: unknown) => unknown) => rows('').then(ok, ko),
   };
-  return { from: () => ({ where: () => ({ limit: () => limited }) }) };
+  return { from: () => ({ where: () => ({ ...limited, limit: () => limited }) }) };
 }
 const fakeDb = {
   select: () => selectChain(),
@@ -62,6 +62,7 @@ const fakeDb = {
   }),
 };
 
+vi.mock('../../db', () => ({ db: fakeDb, query: vi.fn(async () => ({ rows: [] })) }));
 vi.mock('../../db/requestDb', () => ({
   requestDb: () => fakeDb,
   requestPgClient: () => client,
@@ -69,7 +70,7 @@ vi.mock('../../db/requestDb', () => ({
 vi.mock('../../auth', () => ({
   authMiddleware: (req: Request, _res: Response, next: NextFunction) => {
     (req as any).userId = 5;
-    (req as any).user = { id: 5 };
+    (req as any).user = { id: 5, organizationId: 900, role: 'admin' };
     (req as any).userRole = 'admin';
     (req as any).tenantId = 900;
     next();
@@ -108,9 +109,11 @@ beforeEach(async () => {
     },
   };
   const mod = await import('../tenant-config');
+  const organizations = await import('../organizations-routes');
   app = express();
   app.use(express.json());
   app.use('/api/tenant-config', mod.default);
+  app.use('/api/organizations', organizations.default);
 });
 
 const flow = () => h.log.filter(s => s !== 'SELECT');
@@ -250,5 +253,55 @@ describe('settings writes keep what they do not manage (DP-62)', () => {
     expect(stored.security.maxConcurrentSessions).toBe(3);
     expect(stored.security.sessionTimeoutMinutes).toBe(60);
     expect(stored.anaToolPolicy).toEqual({ deny: ['send_external_email'] });
+  });
+});
+
+describe('general tenant settings do not disclose the project-scoped company library', () => {
+  const privateLibrary = {
+    revision: 4, address: 'private-company-address',
+    legalDocuments: [{ programId: 'private-program-id', vaultDocumentId: 'private-vault-version', title: 'private-legal-title' }],
+  };
+
+  beforeEach(() => { h.tenant!.settings.companyDocuments = clone(privateLibrary); });
+
+  it.each([
+    ['GET', () => request(app).get(`/api/tenant-config/${ORG}/settings`)],
+    ['PATCH', () => request(app).patch(`/api/tenant-config/${ORG}/settings`).send({ notifications: { slackEnabled: true } })],
+    ['reset', () => request(app).post(`/api/tenant-config/${ORG}/settings/reset`).send({})],
+  ])('%s returns ordinary settings without private company metadata and preserves the governed profile', async (_label, send) => {
+    const res = await send();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toHaveProperty('security');
+    expect(res.body).not.toHaveProperty('companyDocuments');
+    expect(JSON.stringify(res.body)).not.toContain('private-');
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
+  });
+
+  it('refuses a named company profile mutation before acquiring a settings transaction', async () => {
+    const res = await request(app).patch(`/api/tenant-config/${ORG}/settings`).send({ companyDocuments: null });
+    expect(res.status).toBe(403);
+    expect(h.log).toEqual([]);
+    expect(h.auditCalls).toEqual([]);
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
+  });
+
+  it('organization settings expose ordinary preferences without private company metadata, even to an admin', async () => {
+    const res = await request(app).get(`/api/organizations/${ORG}/settings`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.settings.notifications).toEqual({ slackEnabled: false });
+    expect(res.body.settings).not.toHaveProperty('companyDocuments');
+    expect(JSON.stringify(res.body)).not.toContain('private-');
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
+  });
+
+  it.each([
+    { settings: { companyDocuments: privateLibrary }, reason: 'Attempt to overwrite governed library' },
+    { companyDocuments: null },
+  ])('organization settings refuse a named company profile mutation before acquiring a settings transaction', async body => {
+    const res = await request(app).patch(`/api/organizations/${ORG}/settings`).send(body);
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(h.log).toEqual([]);
+    expect(h.auditCalls).toEqual([]);
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
   });
 });

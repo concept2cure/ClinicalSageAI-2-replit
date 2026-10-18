@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+  "runId": 38633619197,
+  "jobId": 116091143271,
+  "jobName": "Secret scan (full history)",
+  "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38633619197/job/116091143271",
+  "conclusion": "success",
+  "commitsScanned": 10240,
+  "bytesScanned": 656915605,
+  "findings": 0,
+  "scanCompletedAt": "2026-10-14T20:41:13Z",
+  "evidence": "GitHub App fetched completed job metadata and decoded log; summary extracted without raw credential output."
+}

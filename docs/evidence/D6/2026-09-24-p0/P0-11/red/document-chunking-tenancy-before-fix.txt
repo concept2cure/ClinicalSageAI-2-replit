@@ -100,4 +100,3 @@ undefined
       Tests  3 failed | 3 passed (6)
    Start at  01:18:33
    Duration  581ms (transform 166ms, setup 112ms, import 46ms, tests 67ms, environment 0ms)
-

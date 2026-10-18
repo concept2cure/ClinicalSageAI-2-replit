@@ -1,0 +1,11 @@
+{
+  "control": "source actor identity mismatch before embedding",
+  "mutation": "omit assertVaultSourceScope only in generated shadow module",
+  "expectedRed": true,
+  "exitCode": 1,
+  "sourceSha256Before": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+  "sourceSha256After": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+  "sourceUnchanged": true,
+  "variantSha256": "9396b403b0ca496bbaf4d79889da0da17a2aa55d4cbc5b53bd5f0d8dbfb99512",
+  "temporaryGeneratedCopyRemoved": true
+}

@@ -1,0 +1,3 @@
+ Test Files  1 failed | 188 passed | 1 skipped (190)
+      Tests  5 failed | 1883 passed | 2 skipped (1890)
+the 5 failures are server/services/vault/__tests__/vault-file-upload-to-vault.test.ts, red on trunk 1a34f8716 without this change

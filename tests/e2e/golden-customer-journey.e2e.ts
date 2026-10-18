@@ -84,7 +84,7 @@ async function authenticatedPage(
   return page;
 }
 
-test('fixture-free golden journey persists evidence, review, provenance, and governed draft export', async ({
+test('fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export', async ({
   browser,
 }, testInfo) => {
   // Generous, not arbitrary: this drives three authenticated browser contexts
@@ -167,6 +167,8 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   expect(missingEvidenceDraft.status).toBe(400);
   expect(JSON.stringify(missingEvidenceDraft.body)).toContain('SOURCE_EVIDENCE_NOT_FOUND');
 
+  const initialContent = 'Synthetic source finding: the test compound requires qualified human assessment.';
+  const revisedContent = `${initialContent} Revised synthetic finding: a qualified reviewer must assess the retained source before any regulatory use.`;
   const createdArtifact = await browserApi<any>(
     page,
     'POST',
@@ -175,7 +177,7 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
       type: 'document',
       category: 'document',
       title: JOURNEY.artifactTitle,
-      content: 'Synthetic source finding: the test compound requires qualified human assessment.',
+      content: initialContent,
       metadata: {
         generationMethod: 'manual',
         synthetic: true,
@@ -194,6 +196,61 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
   );
   expect(provenance.status).toBe(200);
   expect(JSON.stringify(payload(provenance))).toContain('human_create');
+
+  // A stale edit must not replace content or leave an orphan version. Recover
+  // with the current version through the same authenticated browser session.
+  const editPath = `/api/concept2cure/projects/${project.id}/artifacts/${artifact.id}`;
+  const rejectedEdit = await browserApi<any>(page, 'PUT', editPath, {
+    content: 'REJECTED SYNTHETIC EDIT — must never persist.',
+    expectedVersion: artifact.version - 1,
+    reason: 'Synthetic stale-version recovery control.',
+  });
+  expect(rejectedEdit.status).toBe(409);
+  expect(rejectedEdit.body.error.code).toBe('VERSION_CONFLICT');
+  const unchangedVersions = await browserApi<any>(page, 'GET', `${editPath}/versions`);
+  expect(unchangedVersions.status).toBe(200);
+  expect(payload<any>(unchangedVersions).currentVersion).toBe(1);
+  expect(payload<any>(unchangedVersions).versions).toHaveLength(1);
+  expect(payload<any>(unchangedVersions).versions[0].content).toBe(initialContent);
+
+  const edited = await browserApi<any>(page, 'PUT', editPath, {
+    content: revisedContent,
+    expectedVersion: artifact.version,
+    reason: 'Synthetic source-preserving content revision before review.',
+  });
+  expect(edited.status).toBe(200);
+  expect(payload<any>(edited)).toMatchObject({ id: artifact.id, version: 2, content: revisedContent });
+  expect(payload<any>(edited).metadata.sourceArtifactIds).toEqual([evidence.id]);
+
+  await page.reload();
+  const afterEdit = await browserApi<any>(page, 'GET', `/api/concept2cure/projects/${project.id}/artifacts`);
+  expect(afterEdit.status).toBe(200);
+  const retainedEdit = payload<Array<{ id: string; version: number; content: string; metadata: { sourceArtifactIds: string[] } }>>(afterEdit)
+    .find(row => row.id === artifact.id);
+  expect(retainedEdit).toMatchObject({ version: 2, content: revisedContent });
+  expect(retainedEdit?.metadata.sourceArtifactIds).toEqual([evidence.id]);
+
+  const editVersions = await browserApi<any>(page, 'GET', `${editPath}/versions`);
+  expect(editVersions.status).toBe(200);
+  const retainedVersions = payload<any>(editVersions);
+  expect(retainedVersions.currentVersion).toBe(2);
+  expect(retainedVersions.versions).toHaveLength(2);
+  const firstVersion = retainedVersions.versions.find((row: { version: number }) => row.version === 1);
+  const secondVersion = retainedVersions.versions.find((row: { version: number }) => row.version === 2);
+  expect(firstVersion.content).toBe(initialContent);
+  expect(secondVersion.content).toBe(revisedContent);
+  expect(secondVersion.contentHash).toMatch(/^[0-9a-f]{64}$/);
+  expect(secondVersion.contentHash).not.toBe(firstVersion.contentHash);
+  const revisedProvenance = await browserApi<any>(page, 'GET', `${editPath}/provenance`);
+  expect(revisedProvenance.status).toBe(200);
+  expect(payload<any>(revisedProvenance)).toMatchObject({
+    identity: { artifactId: artifact.id, version: 2 },
+    editHistory: { currentVersion: 2, totalVersions: 2 },
+  });
+  expect(payload<any>(revisedProvenance).compliance.versionChain).toEqual(expect.arrayContaining([
+    expect.objectContaining({ version: 1, hash: firstVersion.contentHash }),
+    expect.objectContaining({ version: 2, hash: secondVersion.contentHash }),
+  ]));
 
   const submitted = await browserApi<any>(
     page,
@@ -292,6 +349,8 @@ test('fixture-free golden journey persists evidence, review, provenance, and gov
           evidenceArtifactId: evidence.id,
           artifactId: artifact.id,
           provenance: payload(provenance),
+          editedProvenance: payload(revisedProvenance),
+          retainedVersions,
           reviewStatus: payload(reviewStatus),
         },
         null,

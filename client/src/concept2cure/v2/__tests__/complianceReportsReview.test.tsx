@@ -11,7 +11,7 @@
  *   3. An as-of report says which fields are as of the date and which are now.
  *   4. A section or catalog entry that does not parse is said to be unreadable —
  *      never rendered as "no records".
- *   5. The CSV download says it was a second run, and warns when it disagrees.
+ *   5. The CSV download uses the sealed snapshot, without querying the records again.
  *   6. Timestamps read as UTC.
  *   7. No audit-trail row has a blank actor.
  *   8. Who may run reports is the server's statement; 403 and 429 are told apart.
@@ -63,7 +63,7 @@ beforeEach(() => {
   saved.length = 0;
   route = catalogOr(ok(exportBody(SECTIONED)));
   apiCall.mockReset();
-  apiCall.mockImplementation(async (method: string, url: string, body?: unknown) => route(method, url, body));
+  apiCall.mockImplementation(async (method: string, url: string, body?: unknown) => url === '/api/audit/reviews' ? ok({ canSign: false, status: { access: { state: 'none', latest: null }, audit_trail: { state: 'none', latest: null } } }) : route(method, url, body));
   apiRequest.mockReset();
 });
 afterEach(() => {
@@ -295,27 +295,29 @@ describe('4. what does not parse is unreadable, never empty', () => {
   });
 });
 
-/* ── 5. The CSV download is a second run ───────────────────────────────── */
+/* ── 5. CSV uses the same sealed snapshot ───────────────────────────────── */
 
-describe('5. Download CSV says it ran the report again', () => {
-  it('names the new export and its time, and warns when its row counts differ', async () => {
+describe('5. Download CSV converts the saved snapshot', () => {
+  it('names the converted export and preserves the snapshot generation time', async () => {
     const csvManifest = {
-      ...MANIFEST, exportId: 'CR-EXPORT-CSV', generatedAt: '2026-10-01T09:05:00Z', format: 'csv',
-      sections: [{ key: 'events', rowCount: 2, truncated: false }, { key: 'summary', rowCount: 0, truncated: false }],
+      ...MANIFEST, exportId: 'CR-EXPORT-CSV', generatedAt: MANIFEST.generatedAt, format: 'csv', sourceExport: { exportId: MANIFEST.exportId, dataHash: MANIFEST.dataHash, format: 'json' },
+      sections: MANIFEST.sections,
     };
     route = (method, url) =>
-      url.includes('format=csv') ? ok(exportBody('# Events\r\n', csvManifest)) : catalogOr(ok(exportBody(SECTIONED)))(method, url);
+      url === '/api/audit/reports/convert' ? ok(exportBody('# Events\r\n', csvManifest)) : catalogOr(ok(exportBody(SECTIONED)))(method, url);
     mount();
     await selectReport(/Sign-in and session events/);
     await runSelected();
     expect(
-      screen.getByText('Each run is recorded on the audit trail. Download CSV runs the report again and is recorded as its own run.'),
+      screen.getByText('JSON and CSV use the report snapshot on screen. CSV conversion is sealed and recorded on the audit trail without running the report again.'),
     ).toBeTruthy();
     await clickAndSettle(await screen.findByRole('button', { name: 'Download CSV' }));
-    const note = await screen.findByText(/ran the report again/);
+    const note = await screen.findByText(/signed manifest from the report snapshot on screen/);
     expect(note.textContent).toContain('CR-EXPORT-CSV');
-    expect(note.textContent).toContain('2026-10-01 09:05:00 UTC');
-    expect(screen.getByText(/Events: 2 in the CSV, 1 on screen/)).toBeTruthy();
+    expect(note.textContent).toContain('2026-10-01 09:00:00 UTC');
+    const conversion = calls().find(c => c.url === '/api/audit/reports/convert');
+    expect(conversion).toEqual({ method: 'POST', url: '/api/audit/reports/convert', body: { export: { data: JSON.stringify(SECTIONED, null, 2), manifest: MANIFEST, signature: 'f'.repeat(64) }, format: 'csv' } });
+    expect(calls().filter(c => c.url.startsWith('/api/audit/reports/authentication-events?'))).toHaveLength(1);
   });
 });
 

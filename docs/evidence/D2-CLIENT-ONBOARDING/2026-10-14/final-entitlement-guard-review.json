@@ -1,0 +1,48 @@
+{
+  "tenant-entry-mdx-review-safe": {
+    "date": "2026-10-14",
+    "source_change_commit": "8fbe834fb76c8bc6330071ecfce1879a61ed591b",
+    "reviewed_source": "server/routes/mdx-admin.ts",
+    "change_type": "Session idle display aligns with canonical clamped sign-in preference/default; no route/authentication/SQL change",
+    "unchanged_boundary": [
+      "server/index.ts:138 default-deny /api boundary before routes",
+      "server/bootstrap/register-inline-routes.ts:1230 /api/mdx mount",
+      "/api/mdx/admin absent from public API allowlist",
+      "server/middleware/auth.ts:296-297 scope installation then tenant lifecycle guard",
+      "server/routes/mdx-admin.ts:142-149 session organization and admin refusal",
+      "server/routes/mdx-admin.ts:298 SCIM facet is filtered by organization_id, not SCIM authentication"
+    ],
+    "independent_reviews": 2,
+    "original_reason_preserved": true,
+    "refreshed_digest": "8f7fee1433cb1b26",
+    "removed_entry": "server/routes/api-keys.ts",
+    "removal_reason": "No code token matches alternative-authentication shape; session JWT/admin management router remains behind authenticated /api chain",
+    "baseline_before": 9,
+    "baseline_after": 8,
+    "other_baseline_entries_unchanged": true,
+    "gate_source_unchanged": true
+  },
+  "tenant-entry-points-final-safe-status": {
+    "command": [
+      "npm",
+      "run",
+      "ci:tenant-entry-points"
+    ],
+    "exit_code": 0,
+    "safe_summaries": [
+      "[ci:tenant-entry-points] 13 entry point(s); 5 consider tenant entitlement, 8 do not (baseline 8)",
+      "[ci:tenant-entry-points] OK \u2014 no unclassified tenant entry points."
+    ]
+  },
+  "tenant-entry-points-selftest-final-safe-status": {
+    "command": [
+      "npm",
+      "run",
+      "ci:tenant-entry-points:selftest"
+    ],
+    "exit_code": 0,
+    "safe_summaries": [
+      "[ci:tenant-entry-points:selftest] 29 passed \u2014 the gate fails on what it was tested against, but NOT on 3 KNOWN GAP(s) still open (marked ! above); it does not yet catch everything it exists to catch."
+    ]
+  }
+}

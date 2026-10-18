@@ -1,0 +1,9 @@
+
+/workspace/Concept2Cure/server/routes/ivdr-binder-routes.ts
+   31:16  warning  Function 'createIVDRBinderRoutes' has too many lines (841). Maximum allowed is 100  max-lines-per-function
+   99:3   warning  Async function 'emitAuditEvent' has too many parameters (6). Maximum allowed is 5   max-params
+  629:1   warning  File has too many lines (849). Maximum allowed is 500                               max-lines
+  828:68  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                  complexity
+
+✖ 4 problems (0 errors, 4 warnings)
+

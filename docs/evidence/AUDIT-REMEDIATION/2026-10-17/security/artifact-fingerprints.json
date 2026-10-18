@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 1775,
+      "sha256": "8e004c2f46cb32c137a76825a40e22d24b2e185add9818b60c81fe3982c976b7"
+    },
+    {
+      "file": "canonical-disposition-proof.json",
+      "bytes": 20918,
+      "sha256": "1b13ce3ec73cb2af286eba0edbbcbf8a69309fa7bfa930b9841c7dcd9adb0123"
+    },
+    {
+      "file": "canonical-scan-metadata.json",
+      "bytes": 758,
+      "sha256": "b4ed5d37f594addd6c7df28cc07d3e18a3ccf69b787b822ef972ec2d3e83f7a1"
+    },
+    {
+      "file": "final-local-integration-delta.json",
+      "bytes": 694,
+      "sha256": "cd550e91a4df18349f1a924e441f6474967ce7f673bbcaf24561646b56cdf198"
+    },
+    {
+      "file": "independent-source-hash-verification.json",
+      "bytes": 164,
+      "sha256": "ae73091f4b87c656ba33afcfd5a335fa0fe070aac8fba5487c77a3de00311b99"
+    }
+  ]
+}

@@ -75,6 +75,22 @@ describe('.gitleaks.toml carries the working-tree gate’s rules for the credent
     expect(new RegExp(literals(neon)[0]).test('npg_Q7vT2xN9pL4kR8sW')).toBe(true); // ci-secret-scan-ignore: negative test vector
   });
 
+  it('a file digest in an evidence manifest is not a key, and a key named as one still is', () => {
+    const block = ruleBlock('generic-api-key');
+    const at = block.indexOf('file digests in evidence manifests');
+    expect(at, 'generic-api-key has no file-digest allowlist').toBeGreaterThan(-1);
+    const digestLine = re2(literals(block.slice(at))[0]);
+    const hex = 'a2785d961da619bbed9e6b3ba52dcda642e3aec5cb160913420d46afcbc2a38b';
+    expect(digestLine.test(`      "server/routes/__tests__/vault-data-room-counts.test.ts": "${hex}",`)).toBe(true);
+    expect(digestLine.test(`"stream-project-private-access.pglite.test.ts": "${hex}"`)).toBe(true);
+    // Not a path, or not a digest, or more than the one pair: still scanned.
+    expect(digestLine.test(`"api_key": "${hex}",`)).toBe(false); // ci-secret-scan-ignore: negative test vector
+    expect(digestLine.test(`"access_token": "${hex}"`)).toBe(false); // ci-secret-scan-ignore: negative test vector
+    expect(digestLine.test(`"auth.test.ts": "${hex}", "api_key": "sk-live-0123456789abcdef"`)).toBe(false); // ci-secret-scan-ignore: negative test vector
+    expect(digestLine.test(`"auth.test.ts": "${hex.toUpperCase()}"`)).toBe(false);
+    expect(digestLine.test(`"auth.test.ts": "${hex.slice(0, 40)}"`)).toBe(false);
+  });
+
   it('one escape hatch for both scanners', () => {
     const marker = /const IGNORE_MARKER = '([^']+)';/.exec(GATE)?.[1];
     expect(marker).toBe('ci-secret-scan-ignore');

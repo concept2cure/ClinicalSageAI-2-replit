@@ -1,0 +1,12 @@
+Focused empty/nonempty current JSON behavior run before the JSON-availability fix.
+Source: template-oversight-json-guide-before.log
+Source SHA-256: a843fbcfe5a5300115c345d32b2895a316c9f1357d5d15be11b306952aa62b0e
+Selected verbatim runner header, failure headings/assertions and summary. Setup logs and repeated stack traces omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+ FAIL  server/services/ana/__tests__/saved-template-oversight.pglite.test.ts > template guidance availability describes the saved section > distinguishes empty current JSON references from a nonempty JSON sibling: false
+AssertionError: expected [] to deeply equal [ …(2) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 28 skipped (30)
+   Start at  19:53:21
+   Duration  5.49s (transform 1.88s, setup 84ms, import 2.80s, tests 2.31s, environment 0ms)

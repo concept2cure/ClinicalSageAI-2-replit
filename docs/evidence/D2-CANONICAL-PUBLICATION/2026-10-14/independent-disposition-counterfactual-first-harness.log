@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  21:26:37
+   Duration  2.05s (transform 728ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts [ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts ]
+Error: Cannot find module '../../../../server/services/../../../server/services/document-data-disposition/types' imported from /workspace/Concept2Cure/docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/disposition-counterfactual.mts
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/disposition-counterfactual.mts:7:1
+
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts:7:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

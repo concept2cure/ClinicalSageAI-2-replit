@@ -63,4 +63,3 @@ TypeError: svc.backfillVaultChunksForTenant is not a function
       Tests  2 failed | 2 passed (4)
    Start at  18:26:26
    Duration  1.67s (transform 712ms, setup 58ms, import 14ms, tests 1.36s, environment 0ms)
-

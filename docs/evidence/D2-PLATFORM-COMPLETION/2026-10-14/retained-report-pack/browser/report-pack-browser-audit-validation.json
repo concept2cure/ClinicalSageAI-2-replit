@@ -1,0 +1,337 @@
+{
+  "passed": true,
+  "readOnlyInspection": true,
+  "database": "platform_ci_native_recheck_20261013",
+  "organizationId": 67,
+  "bundleId": "6b9f7cf0-5bb3-4487-81ad-e376ee67cf36",
+  "observedAt": "2026-10-14T07:11:50.119Z",
+  "browserDownloads": 6,
+  "matchedDistinctSuccessfulAuditRows": 6,
+  "allBundleExportAuditRows": 7,
+  "priorNativeExportsExcludedFromBrowserMatch": [
+    {
+      "auditId": "1174bbb1-b4d3-4ecd-aeff-29c22ed95920",
+      "occurredAt": "2026-10-14T06:40:35.117Z",
+      "contentMode": "reports",
+      "sha256": "a7a418e6b9e044745e9f3475cab2f3ed038e88a7518331cca830253d893833a3",
+      "byteLength": 131328,
+      "reason": "Earlier native QA report export; not one of the six browser downloads"
+    }
+  ],
+  "canonicalTenantChain": {
+    "ok": true,
+    "rowsChecked": 14,
+    "tenants": 1,
+    "legacyRows": 0,
+    "sequencedRows": 14
+  },
+  "savedRunOrder": [
+    10,
+    9
+  ],
+  "retainedBundleRecords": 2,
+  "retainedBundlePayloadsIdentical": true,
+  "currentAuthoritativeRunStatuses": [
+    {
+      "runId": 10,
+      "status": "completed",
+      "runUuid": "06f91c7b-5624-42e4-b2ee-5d77524fcd4a",
+      "sealHash": null
+    },
+    {
+      "runId": 9,
+      "status": "final",
+      "runUuid": "6e58da9b-c433-4e18-89ab-136bc4b6e9b2",
+      "sealHash": "59fa00c058d667d425b1331d7eaa19be7520627305e85008326a1ef155e3b32a"
+    }
+  ],
+  "browserArtifactValidation": [
+    {
+      "variant": "light",
+      "contentMode": "reports",
+      "downloadPath": "/tmp/report-pack-browser-light/reports.pdf",
+      "downloadSha256": "3b1d4433ad647601c02f9a19029b6dedd328cb5a6479f724246f2c87ffba30e0",
+      "downloadBytes": 131337,
+      "browserSuggestedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditId": "892e8cb0-5a17-427a-be4a-0d97399d4c82",
+      "chainSequence": "5594",
+      "chainHash": "2855d885ec80d0644e8eb543b67419902ffba86ca5e638cd934e61cea226efc4",
+      "chainPreviousHash": "9ff4753f644bf33876e8032e6f233aab66b63b7c12d0025544309a6f95bafd8a",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "e5e22194-de72-4ab6-8417-d2e995501f91",
+      "exportedAt": "2026-10-14T07:02:52.182Z",
+      "auditOccurredAt": "2026-10-14T07:03:16.040Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 29,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [
+        {
+          "runId": 10,
+          "bundledStatus": "completed",
+          "statusAtRead": "completed",
+          "sourceDocument": "retained-run-render",
+          "sealVerdict": null,
+          "sealHash": null,
+          "firstPage": 2,
+          "lastPage": 28,
+          "allPageFooterIdentitiesMatch": true
+        },
+        {
+          "runId": 9,
+          "bundledStatus": "final",
+          "statusAtRead": "final",
+          "sourceDocument": "verified-sealed",
+          "sealVerdict": "intact",
+          "sealHash": "59fa00c058d667d425b1331d7eaa19be7520627305e85008326a1ef155e3b32a",
+          "firstPage": 29,
+          "lastPage": 29,
+          "allPageFooterIdentitiesMatch": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "variant": "light",
+      "contentMode": "manifest",
+      "downloadPath": "/tmp/report-pack-browser-light/manifest.pdf",
+      "downloadSha256": "d315a30921a1296782d979a132384bd3d6f8f1a7dfbc174b69dc4732a4978808",
+      "downloadBytes": 19782,
+      "browserSuggestedFilename": "report-pack-native-150999-mv7qq8zd-975b02f4_positive_6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-bundle-6b9f7cf0.pdf",
+      "auditId": "d0e512e1-c543-43d9-9404-9f559fb48e02",
+      "chainSequence": "5598",
+      "chainHash": "6f25ccd0ecb00ff694d9903d8c55f094be60b7f52bcf48d6e26e19f3da6d7c7a",
+      "chainPreviousHash": "7e623c26a43213494e1ec47400e8578890c4a89942a09504374219bba4a7b117",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "4e7a9c01-54fb-4068-a657-c257f719e226",
+      "exportedAt": "2026-10-14T07:03:17.298Z",
+      "auditOccurredAt": "2026-10-14T07:03:18.152Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 1,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [],
+      "passed": true
+    },
+    {
+      "variant": "dark",
+      "contentMode": "reports",
+      "downloadPath": "/tmp/report-pack-browser-dark/reports.pdf",
+      "downloadSha256": "292718b402848944a87f1356123c57815c86ad740a70456d82589c58492598a5",
+      "downloadBytes": 131337,
+      "browserSuggestedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditId": "3208b7f3-0541-404a-a282-573437084780",
+      "chainSequence": "5587",
+      "chainHash": "9ff4753f644bf33876e8032e6f233aab66b63b7c12d0025544309a6f95bafd8a",
+      "chainPreviousHash": "1ee822887a763b06b7dd0e03feef5854a199fddf069663b12af2e8277d57d1fc",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "d605a41e-fb0b-4dd2-8ff7-8aa483e32bcd",
+      "exportedAt": "2026-10-14T07:02:51.849Z",
+      "auditOccurredAt": "2026-10-14T07:03:02.297Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 29,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [
+        {
+          "runId": 10,
+          "bundledStatus": "completed",
+          "statusAtRead": "completed",
+          "sourceDocument": "retained-run-render",
+          "sealVerdict": null,
+          "sealHash": null,
+          "firstPage": 2,
+          "lastPage": 28,
+          "allPageFooterIdentitiesMatch": true
+        },
+        {
+          "runId": 9,
+          "bundledStatus": "final",
+          "statusAtRead": "final",
+          "sourceDocument": "verified-sealed",
+          "sealVerdict": "intact",
+          "sealHash": "59fa00c058d667d425b1331d7eaa19be7520627305e85008326a1ef155e3b32a",
+          "firstPage": 29,
+          "lastPage": 29,
+          "allPageFooterIdentitiesMatch": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "variant": "dark",
+      "contentMode": "manifest",
+      "downloadPath": "/tmp/report-pack-browser-dark/manifest.pdf",
+      "downloadSha256": "b4860f1d98850511181a2ec931296921a33868800d6d0c49516546085806f4ba",
+      "downloadBytes": 19775,
+      "browserSuggestedFilename": "report-pack-native-150999-mv7qq8zd-975b02f4_positive_6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-bundle-6b9f7cf0.pdf",
+      "auditId": "9bde22db-3650-44c3-a80b-634d93785454",
+      "chainSequence": "5596",
+      "chainHash": "6f232b9131b336b9816a27e18abb7857445cae830bd5a9298db1c150815e175f",
+      "chainPreviousHash": "a39930441a4bacb77fdee791004f36cef2cc167630902db211caee59cddcceab",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "ecbfa80d-c73a-43ae-9e59-755a7a65aad1",
+      "exportedAt": "2026-10-14T07:03:16.077Z",
+      "auditOccurredAt": "2026-10-14T07:03:16.728Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 1,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [],
+      "passed": true
+    },
+    {
+      "variant": "mobile",
+      "contentMode": "reports",
+      "downloadPath": "/tmp/report-pack-browser-mobile/reports.pdf",
+      "downloadSha256": "17dc358b29311a5f813cd30730e57fd270884671a898459d779c2b756aab92ab",
+      "downloadBytes": 131225,
+      "browserSuggestedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-pack-6b9f7cf0.pdf",
+      "auditId": "30a4b1fa-4f46-4fa6-926b-4ed397f634c0",
+      "chainSequence": "5595",
+      "chainHash": "a39930441a4bacb77fdee791004f36cef2cc167630902db211caee59cddcceab",
+      "chainPreviousHash": "2855d885ec80d0644e8eb543b67419902ffba86ca5e638cd934e61cea226efc4",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "e5fe3bd8-c25f-40c1-bc6d-1f720f04a69e",
+      "exportedAt": "2026-10-14T07:03:02.301Z",
+      "auditOccurredAt": "2026-10-14T07:03:16.043Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 29,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [
+        {
+          "runId": 10,
+          "bundledStatus": "completed",
+          "statusAtRead": "completed",
+          "sourceDocument": "retained-run-render",
+          "sealVerdict": null,
+          "sealHash": null,
+          "firstPage": 2,
+          "lastPage": 28,
+          "allPageFooterIdentitiesMatch": true
+        },
+        {
+          "runId": 9,
+          "bundledStatus": "final",
+          "statusAtRead": "final",
+          "sourceDocument": "verified-sealed",
+          "sealVerdict": "intact",
+          "sealHash": "59fa00c058d667d425b1331d7eaa19be7520627305e85008326a1ef155e3b32a",
+          "firstPage": 29,
+          "lastPage": 29,
+          "allPageFooterIdentitiesMatch": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "variant": "mobile",
+      "contentMode": "manifest",
+      "downloadPath": "/tmp/report-pack-browser-mobile/manifest.pdf",
+      "downloadSha256": "94a008dbd232da76efbf4f65b3659fe14e1376059ab46b41634e6148a7cbac8f",
+      "downloadBytes": 19780,
+      "browserSuggestedFilename": "report-pack-native-150999-mv7qq8zd-975b02f4_positive_6b9f7cf0.pdf",
+      "auditRecordedFilename": "report-bundle-6b9f7cf0.pdf",
+      "auditId": "f5b687a5-0ecd-4d71-bf57-768007500601",
+      "chainSequence": "5597",
+      "chainHash": "7e623c26a43213494e1ec47400e8578890c4a89942a09504374219bba4a7b117",
+      "chainPreviousHash": "6f232b9131b336b9816a27e18abb7857445cae830bd5a9298db1c150815e175f",
+      "canonicalChainVerified": true,
+      "payloadHashMatches": true,
+      "sha256AndLengthExactlyMatch": true,
+      "exportId": "02d9687a-bc70-40f8-adb7-c810ed042221",
+      "exportedAt": "2026-10-14T07:03:16.811Z",
+      "auditOccurredAt": "2026-10-14T07:03:17.292Z",
+      "savedRunOrder": [
+        10,
+        9
+      ],
+      "pages": 1,
+      "allPdfPageExportIdentitiesMatch": true,
+      "finalAtExport": 1,
+      "constituents": [],
+      "passed": true
+    }
+  ],
+  "nativeInspectionRawJson": "/tmp/report-pack-browser-audit-native-rows.json",
+  "nativeInspectionRawSha256": "f20539f7389aed7bbfcadc7dd975ae214611f35f9a14aba4c2b4f1c8866fcf67",
+  "inspectionScriptSha256": "e21404354c5b3531e953bce8332fb60dc4128f2fdd3e5c22ebc8606058b5f9a0",
+  "validatorScript": "/tmp/validate-report-pack-browser-audits.py",
+  "qualification": "Read-only owner inspection on isolated native QA, canonical walkAuditChain/hashPayload plus exact actual browser PDF hashes, lengths, pages, identities and constituent/footer checks. Six browser matches only; earlier QA export retained separately. No writes, fixtures deletion, role grants, production/source/test changes or compiler. Actual-route/Vite browser composition is not a full-app/provider/deployed-browser or regulatory qualification.",
+  "sourcePins": [
+    {
+      "path": "server/routes/report-os.ts",
+      "sha256": "d476f4a8644bbf8c7107c4daa5b71ecf629d704769f6954f914e4722f3320cc6"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "sha256": "494a9281da5f313f349495d22628806df310a9feb49171eabb52b8bf9515fc39"
+    },
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "sha256": "7f0453a4c0eee7639a5911db01281f5a8dd7e1d919150b32d617acb7db9280fe"
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "sha256": "e0f5359fe4b15697e1e882007c42790de9213ad859afbb41a94780ef179be099"
+    },
+    {
+      "path": "server/services/auditService.ts",
+      "sha256": "b2e9e668edd4ccc7dfdba0ba4037512fb3725c99b2f50a15fd5fccce487b549c"
+    },
+    {
+      "path": "server/services/audit/chain.ts",
+      "sha256": "7247d385cd16282fae584d10c8d82944dd5590034b69e72745dd9ab2415eaeb9"
+    }
+  ],
+  "summaryPins": [
+    {
+      "variant": "light",
+      "path": "/tmp/report-pack-browser-light/summary.json",
+      "sha256": "6d76db7fcc93ad0f8e5d091e312919bf90470194539b73b2d5c06a34c32308d2"
+    },
+    {
+      "variant": "dark",
+      "path": "/tmp/report-pack-browser-dark/summary.json",
+      "sha256": "9b0ba06c3cc4eb8299fe471d19153d0cc5b77c62b1211b7a00459d5837b60254"
+    },
+    {
+      "variant": "mobile",
+      "path": "/tmp/report-pack-browser-mobile/summary.json",
+      "sha256": "20f10c7922dfc64660537c23ebd28112331173b57c8f69d58a0a54b26dd93c49"
+    }
+  ],
+  "validatorScriptSha256": "d88af89533e4ec130677dd86e6273ee4c3ecb10b780d0a447af1cf8ab94f4022",
+  "manifestFilenameQualification": "Browser saves the manifest using its existing client-derived suggested filename; audit filename records server Content-Disposition. SHA and byte length bind the same bytes despite that filename difference."
+}

@@ -1,0 +1,443 @@
+{
+  "scope": "Independent runtime contract assertions, no binary/provider/database/package/transmission.",
+  "passed": 22,
+  "failed": 0,
+  "results": [
+    {
+      "id": "configured-string-false",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but did not run (configured=false, ran=true). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT and the intended profile, then run the validator."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "configured-string-true",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but did not run (configured=false, ran=true). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT and the intended profile, then run the validator."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "selected-null",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "unknown",
+        "selectedValidatorName": null,
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the selected adapter is unknown; no qualifying external run is established."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "selected-empty-name",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "unknown",
+        "selectedValidatorName": null,
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the selected adapter is unknown; no qualifying external run is established."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "selected-whitespace-name",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "unknown",
+        "selectedValidatorName": null,
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the selected adapter is unknown; no qualifying external run is established."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "selected-kind-uppercase",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": false,
+        "validatorKind": "unknown",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the selected adapter is unknown; no qualifying external run is established."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "report-identity-leading-space",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": " lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported= lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "report-identity-case-change",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "LORENZ-EVALIDATOR",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=LORENZ-EVALIDATOR)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "profile-whitespace",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "date-iso-string",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "date-invalid-object",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "date-epoch-number",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "findings-null",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "findings-object",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "finding-null",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "finding-string",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "finding-severity-upper-case",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "warning-count-string",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "warning-count-negative",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "warning-count-unsafe",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 0,
+        "errorCountKnown": false,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": false,
+        "assessmentStatus": "invalid",
+        "enforced": true,
+        "blockers": [
+          "External validation is required for production but the report is invalid or does not match the selected engine (lorenz-evalidator; reported=lorenz-evalidator)."
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "id": "advisory-error-production",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 1,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": true,
+        "assessmentStatus": "failed",
+        "enforced": false,
+        "blockers": [],
+        "cleared": true
+      }
+    },
+    {
+      "id": "advisory-error-staging",
+      "outcome": "pass",
+      "result": {
+        "externalErrorCount": 1,
+        "errorCountKnown": true,
+        "ran": true,
+        "configured": true,
+        "validatorKind": "external_engine",
+        "selectedValidatorName": "lorenz-evalidator",
+        "reportedValidatorName": "lorenz-evalidator",
+        "qualifyingRun": true,
+        "assessmentStatus": "failed",
+        "enforced": false,
+        "blockers": [],
+        "cleared": true
+      }
+    }
+  ]
+}

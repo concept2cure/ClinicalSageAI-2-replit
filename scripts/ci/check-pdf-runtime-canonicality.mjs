@@ -73,8 +73,6 @@ const APPROVED = new Set([
   // stampExportIdentity), so a recorded hash can be re-verified by rendering
   // again. Held by report-os/pdf/__tests__/export-identity.test.ts.
   'server/services/report-os/pdf/writer.ts',
-  'server/services/report-os/pdf/run-pdf.ts',
-  'server/services/report-os/pdf/bundle-pdf.ts',
   // eCTD leaf rendering — pdfkit directly, and deliberately. The canonical
   // converter cannot pin what this file must pin: PDFKit stamps /CreationDate
   // and /ModDate from the wall clock and writes its own version into /Producer

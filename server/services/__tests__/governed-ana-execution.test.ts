@@ -62,7 +62,13 @@ function arrangeEvaluation() {
     decisionReference: { decisionId: 'dec_1', projectId: '2', intent: 'create', outcome: 'allow', actorId: '3', timestamp: new Date().toISOString() },
   });
   mocks.hasUnresolvedGovernedDecisions.mockResolvedValue({ hasUnresolved: true, unresolvedCount: 2, escalatedCount: 1, states: { under_review: 1 } });
-  mocks.integrateSignal.mockReturnValue({ runId: 'rim_run_1' });
+  // A completed capture, as integrateSignal reports one. This returned only a
+  // runId, and the run id came back as the reference whatever the capture's
+  // status; since 2026-10-15 only a completed capture is referenced.
+  mocks.integrateSignal.mockReturnValue({
+    runId: 'rim_run_1', status: 'completed', signalsGenerated: 1,
+    persistenceStatus: 'not_attempted', trendContextIncluded: false, warnings: [],
+  });
 }
 
 describe('governed-ana-execution', () => {

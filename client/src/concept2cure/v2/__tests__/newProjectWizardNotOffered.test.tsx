@@ -61,11 +61,11 @@ describe('New project wizard — a filing creation refuses', () => {
     expect(outcome.textContent).toContain('This filing is not offered here');
     expect(outcome.textContent).toContain(REASON);
     expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
-    const sent = apiRequest.mock.calls.length;
+    const sent = apiRequest.mock.calls.filter(([method, path]) => method === 'POST' && path === '/api/c2c/projects').length;
     fireEvent.click(screen.getByRole('button', { name: 'Choose another filing' }));
     await waitFor(() => expect(screen.getByRole('button', { name: /pick nds/i })).toBeTruthy());
     expect(screen.queryByTestId('new-project-outcome')).toBeNull();
-    expect(apiRequest.mock.calls.length).toBe(sent);
+    expect(apiRequest.mock.calls.filter(([method, path]) => method === 'POST' && path === '/api/c2c/projects').length).toBe(sent);
   });
 
   it('any other failure keeps "Try again"', async () => {

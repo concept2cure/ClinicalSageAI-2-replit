@@ -16,8 +16,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn() }));
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn() }));
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: {}, pool: {}, getPool: () => ({}), getDb: () => ({}), query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../utils/authedOrgId')>()),
@@ -32,7 +40,10 @@ vi.mock('../../services/report-os/segment', async (importOriginal) => ({
   deriveOrgSegments: h.segments,
   deriveProjectSegments: async () => null,
 }));
-vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor }));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
+// Consumer fixtures retain their original auth/portfolio assumptions; canonical
+// sharing and RLS are qualified separately by native current-program tests.
+vi.mock('../../services/c2c/current-program-access', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()), getCurrentAccessibleProgramScope: h.scope, requireProgramScopeStillCurrent: h.scopeRecheck }));
 vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
   fetchOrgPortfolioSummary: h.summary,
@@ -44,7 +55,8 @@ const app = express();
 // The request-scoped client the production mount's authenticateToken installs
 // (establishRequestTenantScope); the open program's anchor is read on it.
 app.use((req, _res, next) => {
-  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async (sql: string, values?: unknown[]) => ({ rows: /SELECT id FROM regulatory_programs/.test(sql) ? [{ id: values?.[0] }] : /SELECT metadata FROM projects/.test(sql) ? [{ metadata: {} }] : [] })) };
   next();
 });
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
@@ -59,7 +71,10 @@ const PROGRAM = {
 };
 
 beforeEach(() => {
-  h.gate.mockReset().mockResolvedValue({ entitled: false, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'standard' });
+  h.scope.mockReset().mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs', actor: { userId: 5, role: 'manager' }, programIds: [input.programId], reconciliationRequired: false }));
+  h.scopeRecheck.mockReset().mockResolvedValue(undefined);
+  h.actualAnchor.mockReset().mockResolvedValue({ id: 12 });
+  h.gate.mockReset().mockResolvedValue({ entitled: false, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'standard', tierResolved: true });
   h.segments.mockReset().mockResolvedValue(['pharma']);
   h.summary.mockReset();
   h.anchor.mockReset().mockResolvedValue(12);

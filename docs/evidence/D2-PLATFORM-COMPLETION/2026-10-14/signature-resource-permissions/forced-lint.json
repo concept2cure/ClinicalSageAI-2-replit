@@ -1,0 +1,26 @@
+[
+  {
+    "path": "server/services/governance/__tests__/permissions.test.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/governance/permissions.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/part11/governed-signature-ceremony.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  }
+]

@@ -166,7 +166,7 @@ beforeEach(async () => {
     // Post-commit steps are best-effort and out of the atomic guarantee; stub them
     // so this test does not reach for the real pool / heavy aggregators.
     async persistProvenance() { return 0; },
-    async recomputeReadiness() { return 0.5; },
+    async recomputeReadiness() { return { score: 50, notAssessed: [] }; },
     emitRefresh(event) { emitted.push(event); },
   };
 });

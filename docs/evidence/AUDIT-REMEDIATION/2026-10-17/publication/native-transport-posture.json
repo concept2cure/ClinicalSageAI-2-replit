@@ -1,0 +1,26 @@
+{
+  "database": "c2c_audit_oct17_final_tls",
+  "observations": [
+    {
+      "requestedMode": "verify-full",
+      "role": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "enforcement": "on",
+      "tls": true,
+      "certificateAuthorized": true,
+      "posture": "verified TLS"
+    },
+    {
+      "requestedMode": "disable",
+      "role": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "enforcement": "on",
+      "tls": false,
+      "certificateAuthorized": null,
+      "posture": "explicit local plaintext; no certificate verification claim"
+    }
+  ],
+  "productionSslPolicyUnchanged": true
+}

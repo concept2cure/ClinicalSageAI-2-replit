@@ -1,0 +1,171 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T19:43:06.421Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:43:06.422Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T19:43:06.423Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 64ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > withdraws changed exact source text before the follow-up gateway and writes no span 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > does not send a new follow-up request or write a span when cancellation occurs at handoff 6ms
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:43:16.998Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:43:16.999Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:43:16.999Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 47ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > an explicit program without a verified relationship is refused before context 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed access lookup refuses the turn, without source context 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > an access lookup deadline refuses the turn without starting optional readers 3004ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 9ms
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-14T19:43:23.663Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:43:23.663Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-14T19:43:23.664Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > aborts pending generation once after a dropped response without inventing a human cancel 40ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > ignores ordinary request completion and keeps its heartbeat active while generation waits 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > also aborts when an interrupted incoming request closes 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=true) 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=false) 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=true) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=false) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > keeps a durable disconnect distinct from a human control and settles it once 4ms
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:43:26.106Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:43:26.107Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:43:26.107Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > keeps the persisted creator upload readable and selectable by a viewer 87ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > denies another active member both upload and selected capture 72ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner 96ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not turn an unknown unbound capture origin into a creator grant 23ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader 39ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists 66ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not let a creator bypass a recorded private workspace 54ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 8ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 18ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > does not read files with a missing actor, while preserving other recall and naming the gap 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > keeps an explicit refused scope unavailable and consumes safe failure without disclosing details 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > org-level source recall carries the actor and no fabricated project 1ms
+
+ Test Files  5 passed (5)
+      Tests  54 passed (54)
+   Start at  19:42:55
+   Duration  37.68s (transform 12.57s, setup 166ms, import 28.14s, tests 8.32s, environment 0ms)
+

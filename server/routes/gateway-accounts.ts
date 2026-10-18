@@ -26,7 +26,7 @@ import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
 import { verifyReauth } from './c2c/actions';
-import { getGatewayUnguarded } from '../services/submission-gateways';
+import { getGatewayUnguarded, gatewayTransportReadiness } from '../services/submission-gateways';
 import {
   GatewayAccountInputError,
   listGatewayAccounts,
@@ -54,7 +54,12 @@ router.get('/', async (req: Request, res: Response) => {
     const accounts = await listGatewayAccounts(requestPgClient(req), orgId, (spec, environment) =>
       getGatewayUnguarded(spec.region, spec.gateway).isConfigured(orgId, environment),
     );
-    return res.json({ organizationId: orgId, accounts });
+    const accountsWithReadiness = await Promise.all(accounts.map(async (account) => ({
+      ...account,
+      credentialsConfigured: account.status === 'ready',
+      transportReadiness: await gatewayTransportReadiness(account.region, account.gateway, account.environment),
+    })));
+    return res.json({ organizationId: orgId, accounts: accountsWithReadiness });
   } catch (err) {
     log.error('gateway accounts read failed', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'The gateway accounts could not be read.' } });

@@ -10,9 +10,10 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { AuditWriteResult } from '../../../services/auditService';
 
 const queryMock = vi.fn();
-const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
+const logActionMock = vi.fn(async (..._a: any[]): Promise<AuditWriteResult> => ({ persisted: true, chained: true, tamperProof: true }));
 
 vi.mock('../../../db', () => ({
   query: (...args: unknown[]) => queryMock(...args),
@@ -56,6 +57,7 @@ const SUPPORT = JSON.stringify({ id: 2, role: 'support', email: 's@x.io' });
 beforeEach(() => {
   queryMock.mockReset();
   logActionMock.mockReset();
+  logActionMock.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
   invoicedByOrgMock.mockReset();
   invoicedByOrgMock.mockImplementation(async () => new Map<number, number>());
   queryMock.mockImplementation((sql: string, params?: unknown[]) => {
@@ -76,6 +78,39 @@ beforeEach(() => {
     if (/FROM usage_records/.test(sql))
       return Promise.resolve({ rows: [{ organization_id: 1, feature_id: 'deep_research', credits: 100 }] });
     return Promise.resolve({ rows: [{}] });
+  });
+});
+
+describe('post-commit audit outcomes', () => {
+  it.each(['/cost-rates/deep_research', '/tier-pricing/standard'])('%s retains the saved row and discloses a failed audit', async path => {
+    logActionMock.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'private audit database detail' });
+    const res = await request(makeApp()).patch(`/api/admin/business${path}`).set('x-test-user', BIZ)
+      .send({ unitCostCents: 30, monthlyPriceCents: 60000, reason: 'Approved rate adjustment' });
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(res.body.cost_key ?? res.body.tier).toBe(path.includes('cost-rates') ? 'deep_research' : 'standard');
+    expect(JSON.stringify(res.body)).not.toContain('private audit database detail');
+    expect(queryMock.mock.calls.filter(([sql]) => /INSERT INTO (platform_cost_rates|tier_pricing)/.test(sql))).toHaveLength(1);
+  });
+  it('a thrown audit writer also preserves a completed rate edit and carries a warning', async () => {
+    logActionMock.mockRejectedValueOnce(new Error('private audit database detail'));
+    const res = await request(makeApp()).patch('/api/admin/business/cost-rates/deep_research').set('x-test-user', BIZ)
+      .send({ unitCostCents: 30, reason: 'Approved rate adjustment' });
+    expect(res.status).toBe(200); expect(res.body.meta?.auditTrail.persisted).toBe(false);
+  });
+  it.each([true, false])('CSV download retains bytes and reports persisted=%s in canonical headers', async persisted => {
+    logActionMock.mockResolvedValueOnce({ persisted, chained: persisted, tamperProof: persisted });
+    const res = await request(makeApp()).get('/api/admin/business/cost-accounting.csv').set('x-test-user', BIZ);
+    expect(res.status).toBe(200); expect(res.text).toContain('organization_id,client,slug');
+    expect(res.headers['x-audit-row-persisted']).toBe(String(persisted));
+    expect(res.headers['x-audit-row-code']).toBe(persisted ? undefined : 'AUDIT_ROW_NOT_PERSISTED');
+  });
+  it('a failed rate save creates no audit receipt', async () => {
+    const original = queryMock.getMockImplementation()!;
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => /INSERT INTO platform_cost_rates/.test(sql) ? Promise.reject(new Error('write unavailable')) : original(sql, params));
+    const res = await request(makeApp()).patch('/api/admin/business/cost-rates/deep_research').set('x-test-user', BIZ)
+      .send({ unitCostCents: 30, reason: 'Approved rate adjustment' });
+    expect(res.status).toBe(500); expect(logActionMock).not.toHaveBeenCalled(); expect(res.body.meta).toBeUndefined();
   });
 });
 

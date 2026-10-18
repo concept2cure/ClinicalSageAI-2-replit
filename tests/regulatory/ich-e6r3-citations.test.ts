@@ -43,10 +43,7 @@ const SOURCE_EXT = /\.(ts|tsx|mjs|cjs|js)$/;
 
 /** Held by another lane on 2026-10-08; handed on at release. Count may only fall. */
 const HANDED_ON: Record<string, number> = {
-  'server/services/ai-gateway/gateway.ts': 1,
-  'server/services/ana/AnaToolDefinitions.ts': 2,
   'server/services/ana/AnaToolExecutor.ts': 2,
-  'server/services/ana/evidence-literature-tool-defs.ts': 2,
 };
 
 function sources(): string[] {

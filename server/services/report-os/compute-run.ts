@@ -24,10 +24,8 @@
  *     compiles; adding a fifth member to `ReportEngine` fails with
  *     "TS2322: Type 'string' is not assignable to type 'never'" at `unreached`.
  *     That is the guarantee against the next `regional`-shaped addition.
- *   - An engine handled by the WRONG ARM does not. `lineage` shares the
- *     `readiness` arm (it computes the generic run first, by design), so
- *     deleting the inner `if (engine === 'lineage')` that applies the dossier
- *     still compiles — verified by deleting it. Only
+ *   - An engine handled by the WRONG ARM does not. A lineage branch that asks
+ *     the readiness engine instead still compiles. Only
  *     `scheduling/__tests__/worker-register-engine.test.ts` catches that, which
  *     is why that case asserts the ENGINE ASKED FOR and not merely that the
  *     digest was avoided.
@@ -70,6 +68,8 @@ export interface ComputeRunInput {
   organizationId: number;
   scopeType: ReportScope | string;
   scopeId: string;
+  /** A client filter only supported engines can substantiate. */
+  clientWorkspaceId?: number | null;
   /** The registry row. The `regional` engine reads it; it reads the deployed row itself when omitted. */
   declared?: DeclaredType;
   /** Program scope only: the project ids of the report program group. */
@@ -121,6 +121,7 @@ async function applyLineage(
         reportTypeLabel: input.declared?.label ?? input.typeId,
         status: 'partial',
       });
+      rendered.computedScope = 'document';
     }
   } catch (err) {
     log.warn('lineage dossier unavailable for evidence trace run', {
@@ -160,13 +161,10 @@ function readinessOptions(input: ComputeRunInput): Parameters<typeof computeInit
  * is the market's own reason (regional/filing-readiness.ts).
  */
 async function regionalRun(input: ComputeRunInput): Promise<RunComputationResult> {
-  const declared = input.declared ?? {};
   try {
-    return await computeRegionalRun(input.typeId, input.organizationId, input.scopeType, input.scopeId, {
-      region: declared.region ?? null,
-      label: declared.label ?? null,
-      dataDependencies: declared.dataDependencies ?? null,
-    });
+    // Undefined asks the engine to read its deployed registry row. An empty
+    // declaration suppresses that read and refuses every scheduled market run.
+    return await computeRegionalRun(input.typeId, input.organizationId, input.scopeType, input.scopeId, input.declared);
   } catch (error) {
     if (error instanceof Error && error.name === 'RegionalNotComputed') {
       throw new ReportTypeNotComputed(error.message);
@@ -175,30 +173,42 @@ async function regionalRun(input: ComputeRunInput): Promise<RunComputationResult
   }
 }
 
+function recordAccessProjects(result: ComputeRunResult, input: ComputeRunInput): ComputeRunResult {
+  if (input.scopeType === 'program') {
+    if (!Array.isArray(input.programProjectIds) || !input.programProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) {
+      throw new ReportTypeNotComputed('The program group project set could not be verified, so this report was not run.');
+    }
+    result.computed.summary.accessProjectIds = [...input.programProjectIds];
+  }
+  return result;
+}
+
 export async function computeRunForType(input: ComputeRunInput): Promise<ComputeRunResult> {
   const { engine, typeId, organizationId, scopeType, scopeId } = input;
 
   if (engine === 'domain') {
-    return { computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId) };
+    return recordAccessProjects({ computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId, { clientWorkspaceId: input.clientWorkspaceId }) }, input);
   }
   if (engine === 'regional') {
-    return { computed: await regionalRun(input) };
+    return recordAccessProjects({ computed: await regionalRun(input) }, input);
   }
-  if (engine === 'readiness' || engine === 'lineage') {
-    /* The lineage trace computes the generic run FIRST and then replaces its
-       figures with the dossier's — that is what the route has always done, and
-       the generic providers' observations are what the run's evidence panel
-       shows it read. */
+  if (engine === 'lineage') {
+    // Only this document's dossier is evidence for its trace. Generic readiness
+    // treats a numeric scope as a project ID and cannot substantiate this record.
+    const computed: RunComputationResult = {
+      providers: [], confidence: null, blockers: [], criticalBlockers: [],
+      summary: { scopeType, scopeId, computedScope: 'document' },
+    };
+    return recordAccessProjects({ computed, lineageRendered: await applyLineage(computed, input) }, input);
+  }
+  if (engine === 'readiness') {
     const computed = await computeInitialRun(
       organizationId,
       scopeType as ReportScope,
       scopeId,
       readinessOptions(input),
     );
-    if (engine === 'lineage') {
-      return { computed, lineageRendered: await applyLineage(computed, input) };
-    }
-    return { computed };
+    return recordAccessProjects({ computed }, input);
   }
 
   /* Exhaustiveness, enforced by the compiler. A fifth engine stops the build

@@ -1,0 +1,6 @@
+
+/workspace/Concept2Cure/server/services/ectd/validation-rule-corpus.ts
+  606:1  warning  File has too many lines (583). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+

@@ -1,0 +1,15 @@
+{
+  "recordType": "Preserved initial observations copied from captured tool output; original tiny runner/result files were overwritten by retry",
+  "databaseAttempted": "platform_ci_fresh_verify_20261014_08aee74a",
+  "databaseCreated": false,
+  "steps": [],
+  "before": null,
+  "after": null,
+  "exitCode": 1,
+  "wrapperFailure": "Private verification query failed; no connection data printed.",
+  "diagnosis": {
+    "code": "42703",
+    "message": "column rolconfig does not exist",
+    "correctedBy": "Read role settings separately from pg_db_role_setting; leave role attributes/passwords in pg_authid."
+  }
+}

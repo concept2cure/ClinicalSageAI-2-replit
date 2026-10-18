@@ -14,11 +14,14 @@ describe('software classification (IEC 62304 §4.3)', () => {
   it('death/serious injury → Class C', () => {
     expect(classifySoftware({ canContributeToDeathOrSeriousInjury: true }).class).toBe('C');
   });
-  it('non-serious injury → Class B', () => {
-    expect(classifySoftware({ canContributeToNonSeriousInjury: true }).class).toBe('B');
+  // These two passed only the facts that were true and read the rest as "no":
+  // {} gave Class A (2026-10-15). An unstated harm fact now leaves the class
+  // undetermined (software-class-undetermined-without-harm-facts.test.ts).
+  it('non-serious injury, and no serious injury → Class B', () => {
+    expect(classifySoftware({ canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: true }).class).toBe('B');
   });
-  it('no possible injury → Class A', () => {
-    expect(classifySoftware({}).class).toBe('A');
+  it('no possible injury, recorded → Class A', () => {
+    expect(classifySoftware({ canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: false }).class).toBe('A');
   });
 });
 

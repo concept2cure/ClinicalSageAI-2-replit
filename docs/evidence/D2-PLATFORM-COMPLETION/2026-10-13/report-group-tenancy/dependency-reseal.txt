@@ -1,0 +1,4 @@
+Dependency risk reseal: OK — 3 reviewed High/Critical occurrence(s), finding set unchanged.
+  lockfileSha256: 529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961 -> 8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278
+  lockfileVersion 3; rootPackageVersion 1.0.0; npm 11.9.0; generatedAt 2026-10-13T22:26:28.111Z
+Commit the rewritten ledger together with the lockfile change, then verify with: npm run ci:dependency-risk

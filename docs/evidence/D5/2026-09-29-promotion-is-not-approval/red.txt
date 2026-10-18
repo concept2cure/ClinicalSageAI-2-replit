@@ -31,5 +31,5 @@
  ✓ artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay) 1647ms
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact does not approve it again, and it is NOT filable
-"It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's 
+"It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's
       Tests  8 failed | 14 passed (22)

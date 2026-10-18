@@ -24,12 +24,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
+import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
-const PREFIX = 'dbtest-catalog-governed ';
-const RUN = Date.now().toString(36);
+const RUN = nativeCatalogRunId();
+const PREFIX = `dbtest-catalog-governed-${RUN} `;
 const TEXT = 'Certificate of Analysis. Batch number: 23-104. Assay (HPLC): 99.2 % of label claim.';
 const MODEL = 'claude-test-model';
 
@@ -49,7 +51,8 @@ async function setMembership(role: string): Promise<void> {
 
 /** A document of the project with its text fully read, ready to be described. */
 async function readDocument(tag: string): Promise<string> {
-  const hash = `${RUN}${tag}`.padEnd(64, '0').slice(0, 64);
+  // A real SHA-256 (hex), unique per document: the source identity check requires one.
+  const hash = createHash('sha256').update(`${RUN}:${tag}:${TEXT}`).digest('hex');
   const doc = await owner.query(
     `INSERT INTO vault.documents
        (program_id, organization_id, document_code, document_title, document_type,
@@ -77,12 +80,11 @@ async function readDocument(tag: string): Promise<string> {
 async function anaCatalogs(documentId: string, kind = 'cert') {
   await setMembership('member');
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const handler = getToolHandler('catalog_project_document');
   if (!handler) throw new Error('catalog_project_document is not registered');
-  const raw = await runWithTenantScope(
-    { tenantId: String(orgId), orgUuid, role: 'member', source: 'request', caller: 'document-catalog-governed.dbtest' },
-    () =>
+  const raw = await withNativeCatalogClient(
+    { organizationId: orgId, organizationUuid: orgUuid, userId, role: 'member', caller: 'document-catalog-governed.dbtest' },
+    sqlClient =>
       handler(
         {
           document_id: documentId,
@@ -92,7 +94,7 @@ async function anaCatalogs(documentId: string, kind = 'cert') {
           key_data: { batch: '23-104', assay_pct: 99.2 },
         },
         {
-          organizationId: orgId, userId, humanConfirmed: true, model: MODEL, threadId: `thread-${RUN}`, turnId: `turn-${RUN}`,
+          organizationId: orgId, userId, sqlClient, humanConfirmed: true, model: MODEL, threadId: `thread-${RUN}`, turnId: `turn-${RUN}`,
           servingModel: { provider: 'anthropic', model: MODEL, requestId: `req-${RUN}` },
         } as never,
       ),
@@ -149,14 +151,14 @@ beforeAll(async () => {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PREFIX}tenant`, 'dbtest-catalog-governed-tenant'],
+    [`${PREFIX}tenant`, `dbtest-catalog-governed-tenant-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, 'Dana Reviewer', 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-catalog-governed@example.test'],
+    [`dbtest-catalog-governed-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
   const prog = await owner.query(
@@ -166,6 +168,7 @@ beforeAll(async () => {
     [`${PREFIX}program ${RUN}`, `CATGOV-${RUN}`.toUpperCase(), orgId],
   );
   programId = String(prog.rows[0].id);
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `dbtest-catalog-governed-${RUN}` });
 }, 60_000);
 
 afterAll(async () => {
@@ -203,12 +206,11 @@ describe("AnA's catalog write is a suggestion that names who wrote it", () => {
   });
 
   it('session recall labels it as her unconfirmed suggestion', async () => {
-    const { runWithTenantScope } = await import('../../server/db/tenantStore');
     const { getCatalogBootstrapDigest } = await import('../../server/services/vault/document-catalog.service');
     const { formatVaultFileLine } = await import('../../server/services/ana-session-bootstrap-format');
-    const digest = await runWithTenantScope(
-      { tenantId: String(orgId), orgUuid, role: 'member', source: 'request', caller: 'document-catalog-governed.dbtest' },
-      () => getCatalogBootstrapDigest(orgId, 50),
+    const digest = await withNativeCatalogClient(
+      { organizationId: orgId, organizationUuid: orgUuid, userId, role: 'member', caller: 'document-catalog-governed.dbtest' },
+      sqlClient => getCatalogBootstrapDigest(sqlClient, orgId, { userId, programId, limit: 50 }),
     );
     const file = digest.files.find(f => f.catalogStatus === 'cataloged');
     expect(file?.catalogState).toBe('suggested');

@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "phase": "fa39-migration-header-followup",
+  "branch": "concept2cure-v2",
+  "hostedRunId": 38625681016,
+  "hostedJobId": 116064098500,
+  "publishedHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "sourceRecords": [
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 7639,
+      "digestAlgorithm": "sha256",
+      "digest": "fb97c51feb824b1949b79aede1f8396eb01f1bc713fe6f809fdda5d2b08b9e63"
+    },
+    {
+      "path": "scripts/ci/require-migration-headers.sh",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 7206,
+      "digestAlgorithm": "sha256",
+      "digest": "4d9f6862cd98e77b5213d5960e302a174903e9e4ee64ad54635fcf80809325d0"
+    },
+    {
+      "path": "tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 4441,
+      "digestAlgorithm": "sha256",
+      "digest": "e612a7f15e0eb170154fb014959ba802c54d87ef9b8eb606d17ac13105128a73"
+    },
+    {
+      "path": "vitest.config.ts",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 142643,
+      "digestAlgorithm": "sha256",
+      "digest": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 229714,
+      "digestAlgorithm": "sha256",
+      "digest": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0"
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 5282,
+      "digestAlgorithm": "sha256",
+      "digest": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0"
+    },
+    {
+      "path": "migrations/20260928_platform_role_grants_platform_writes.sql",
+      "kind": "frozen-header-or-unchanged-validation-source",
+      "bytes": 5965,
+      "digestAlgorithm": "sha256",
+      "digest": "e55d4c0ed08368020687f728837468611e34cc00cc5ddebf53998c9e51af255e"
+    }
+  ],
+  "privateOriginalAndProofRecords": [
+    {
+      "path": "/tmp/fa39-ci-lint-job116064098500.decoded.log",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 2609112,
+      "digestAlgorithm": "sha256",
+      "digest": "1e3c83deb119c077268ad94e0caf83e0f8a28d525e0d35e4a3b203a50f7488ab"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/published-original.sql",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 6392,
+      "digestAlgorithm": "sha256",
+      "digest": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/hosted-step-summaries.json",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 22025,
+      "digestAlgorithm": "sha256",
+      "digest": "8aacac61d209ddb70f55b0a68eff9164ae0f8c3b3cc45debfbff4877ba264b49"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/hosted-run-metadata.json",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 498,
+      "digestAlgorithm": "sha256",
+      "digest": "d58aad54a306215def87273d4b3978acda0dd61b0bf118d182463c17804bd1e1"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/body-equality.json",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 474,
+      "digestAlgorithm": "sha256",
+      "digest": "687548a54f18a0fa8fae7d96b66bd995db248f3a6840a69595293cff0bc32d88"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/gate-scope.json",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 785,
+      "digestAlgorithm": "sha256",
+      "digest": "b16462836fae95c34538b57e2918390782187fa8a6fce35bb5bd9f6e5c8359d3"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/header-original.txt",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 1723,
+      "digestAlgorithm": "sha256",
+      "digest": "8f48184665b2ce28aed9800885794035a46ac1da32bb480f77121fdf2ed1e3ba"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/header-current.txt",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 244,
+      "digestAlgorithm": "sha256",
+      "digest": "fb4ad8dbb8e416c1a35bcc684e9b30587fce5dd28f59798fbc974a7ea9115e19"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/contract-green.txt",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 1397,
+      "digestAlgorithm": "sha256",
+      "digest": "0ac23da6e98613260c12e8b1853ad8339545eb345ced8c7fb9a38d0625f7f20c"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/run-header-scope.py",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 2965,
+      "digestAlgorithm": "sha256",
+      "digest": "a295ef863bb5639a5904846fd9e8b623d8360af5858464ac865725f16bfd4022"
+    },
+    {
+      "path": "/tmp/fa39-migration-header-followup/scope-bin/git",
+      "kind": "preserved-private-original-or-actual-proof",
+      "bytes": 546,
+      "digestAlgorithm": "sha256",
+      "digest": "fe02de9df98a8b2a66473d981bc19b75e728f6dd57c40874f1440abdf0043705"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/README.md",
+      "kind": "bounded-filed-artifact",
+      "bytes": 4515,
+      "digestAlgorithm": "sha256",
+      "digest": "136772f49d307bb4c5e2c67a18bf2a1c8b98b2b887fb3a32efb18ce7fe752340"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/body-equality.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 474,
+      "digestAlgorithm": "sha256",
+      "digest": "687548a54f18a0fa8fae7d96b66bd995db248f3a6840a69595293cff0bc32d88"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/contract-green.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 1397,
+      "digestAlgorithm": "sha256",
+      "digest": "0ac23da6e98613260c12e8b1853ad8339545eb345ced8c7fb9a38d0625f7f20c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/gate-scope.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 785,
+      "digestAlgorithm": "sha256",
+      "digest": "b16462836fae95c34538b57e2918390782187fa8a6fce35bb5bd9f6e5c8359d3"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/header-current.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 244,
+      "digestAlgorithm": "sha256",
+      "digest": "fb4ad8dbb8e416c1a35bcc684e9b30587fce5dd28f59798fbc974a7ea9115e19"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/header-original.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 1723,
+      "digestAlgorithm": "sha256",
+      "digest": "8f48184665b2ce28aed9800885794035a46ac1da32bb480f77121fdf2ed1e3ba"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/hosted-exact-header-failure.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 2932,
+      "digestAlgorithm": "sha256",
+      "digest": "d1b81bdb82b6bd1f0e574760d8381c3e9aed236398b2cc2286e62dbb44e34ef1"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/hosted-lint-step-projection.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 487,
+      "digestAlgorithm": "sha256",
+      "digest": "cd021f8ecd6b6ac7b72635691543f0abc618d39d8b6c7556d02ea1e8163eec0b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/hosted-run-metadata.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 498,
+      "digestAlgorithm": "sha256",
+      "digest": "d58aad54a306215def87273d4b3978acda0dd61b0bf118d182463c17804bd1e1"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-migration-header-followup/run-header-scope.py",
+      "kind": "bounded-filed-artifact",
+      "bytes": 2965,
+      "digestAlgorithm": "sha256",
+      "digest": "a295ef863bb5639a5904846fd9e8b623d8360af5858464ac865725f16bfd4022"
+    }
+  ],
+  "sqlBodyEquality": {
+    "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+    "originalBytes": 6392,
+    "originalSha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+    "newBytes": 7639,
+    "newSha256": "fb97c51feb824b1949b79aede1f8396eb01f1bc713fe6f809fdda5d2b08b9e63",
+    "addedCommentBytes": 1247,
+    "entireOriginalSuffixByteIdentical": true,
+    "addedPrefixCommentsOnly": true,
+    "qualification": "Static byte comparison; no SQL/native/database execution."
+  },
+  "qualifications": [
+    "Comment prefix only; whole original suffix identical.",
+    "File/journal descriptor SHA changed; no native replay or journal update.",
+    "Bounded published-range actual-gate red/green; scope wrapper disclosed.",
+    "5 static contracts; no compiler/installer/native/provider or hosted follow-up green claim."
+  ]
+}

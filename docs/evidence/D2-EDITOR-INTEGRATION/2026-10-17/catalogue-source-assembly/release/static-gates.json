@@ -1,0 +1,38 @@
+[
+  {
+    "gate": "ci:single-native-canvas",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:canvas-path",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:check-editor-integrity",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:design-system",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:token-cascade",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:token-contrast",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:check-phantom-tokens",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:gateway-bypass",
+    "exitCode": 0
+  },
+  {
+    "gate": "ci:sql-interpolation",
+    "exitCode": 0
+  }
+]

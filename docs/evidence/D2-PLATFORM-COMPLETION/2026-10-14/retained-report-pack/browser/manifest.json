@@ -1,0 +1,236 @@
+{
+  "scope": "Actual browser/export component verification on isolated actual-route/Vite composition; source freeze of export inputs",
+  "artifacts": [
+    {
+      "rawPath": "/tmp/report-pack-browser-review.py",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-review.py.source.txt",
+      "sha256": "b4c033aca82ac7c97bd9220743e98f44a3dcd528cd32ef35886b8e76ebde9618",
+      "bytes": 4826,
+      "projection": "byte-for-byte non-executing source artifact"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-fixtures.json",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-fixtures.json",
+      "sha256": "8d6ba8ba8e38fbe9d39a6893ae6b118c17dcadb09d922d6ca24082843a2d7822",
+      "bytes": 976,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-process-metadata.json",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-process-metadata.json",
+      "sha256": "6e0bd870444ea0f57295319e7fd3ad550d32ac95cd71a171e0520cce5380b1d4",
+      "bytes": 957,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-server.mts",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-server.mts.source.txt",
+      "sha256": "efeef06b37c9a59e8129772460ec4a81e4fb7df6ea2f1094cdd0313675271e26",
+      "bytes": 1942,
+      "projection": "byte-for-byte non-executing source artifact"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/summary.json",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/summary.json",
+      "sha256": "6d76db7fcc93ad0f8e5d091e312919bf90470194539b73b2d5c06a34c32308d2",
+      "bytes": 1329,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/bundles.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/bundles.png",
+      "sha256": "f344a3df7f0814564cd1dbd4dc1bb2a90bada9914479ea4d7fdbd29a60fd7fec",
+      "bytes": 125064,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/positive-pack-card.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/positive-pack-card.png",
+      "sha256": "e7baf827cc70c31d70db4dab305e23fa5a2263a9125c8f12450de21dd17cb03a",
+      "bytes": 23125,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/download-complete.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/download-complete.png",
+      "sha256": "107b94bab80aa6b0a307cd87c9f5c9c42e59e43eb019fcfcea81323daaf1ebbd",
+      "bytes": 133516,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/reports.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/reports.pdf",
+      "sha256": "3b1d4433ad647601c02f9a19029b6dedd328cb5a6479f724246f2c87ffba30e0",
+      "bytes": 131337,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light/manifest.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/manifest.pdf",
+      "sha256": "d315a30921a1296782d979a132384bd3d6f8f1a7dfbc174b69dc4732a4978808",
+      "bytes": 19782,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-light-final-run.txt",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-light-final-run.txt",
+      "sha256": "21073150c8ff322f14ee9460deda2b81d996a0a0eef9d870d70d775a0ef7b5ee",
+      "bytes": 613,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/summary.json",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/summary.json",
+      "sha256": "9b0ba06c3cc4eb8299fe471d19153d0cc5b77c62b1211b7a00459d5837b60254",
+      "bytes": 1328,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/bundles.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/bundles.png",
+      "sha256": "dd37afead6cee2714ec25599e12a6b8aafd6ebb5849c169edb9c5f464b490223",
+      "bytes": 122606,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/positive-pack-card.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/positive-pack-card.png",
+      "sha256": "90863b7b075f906e9122d090d3f60b6edd4faffc7aa9ce6a15574db36e259e9a",
+      "bytes": 22878,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/download-complete.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/download-complete.png",
+      "sha256": "98da0ca7bbdee287bb3153107c7a7c38b2b1252bf73858e5fa351c25710699b2",
+      "bytes": 130402,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/reports.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/reports.pdf",
+      "sha256": "292718b402848944a87f1356123c57815c86ad740a70456d82589c58492598a5",
+      "bytes": 131337,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark/manifest.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/manifest.pdf",
+      "sha256": "b4860f1d98850511181a2ec931296921a33868800d6d0c49516546085806f4ba",
+      "bytes": 19775,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-dark-final-run.txt",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-dark-final-run.txt",
+      "sha256": "b8cacba705b2cb839c946c21b83124ca5988197ac94c6d97d0c6ecd250f78764",
+      "bytes": 612,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/summary.json",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/summary.json",
+      "sha256": "20f10c7922dfc64660537c23ebd28112331173b57c8f69d58a0a54b26dd93c49",
+      "bytes": 1322,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/bundles.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/bundles.png",
+      "sha256": "1b19d3931db149fbd29124bf601964992a62fc5fb64fd04e4b5f797dac5ecdb6",
+      "bytes": 90349,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/positive-pack-card.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/positive-pack-card.png",
+      "sha256": "39a6bc0704059cf0d1697400496ddbd3a1c382fe9a9dec774554f1c678218760",
+      "bytes": 23890,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/download-complete.png",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/download-complete.png",
+      "sha256": "7efab820124efff2b60714df4a09f45e9427d5081a0342400475df7aa3f4a42b",
+      "bytes": 93144,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/reports.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/reports.pdf",
+      "sha256": "17dc358b29311a5f813cd30730e57fd270884671a898459d779c2b756aab92ab",
+      "bytes": 131225,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile/manifest.pdf",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/manifest.pdf",
+      "sha256": "94a008dbd232da76efbf4f65b3659fe14e1376059ab46b41634e6148a7cbac8f",
+      "bytes": 19780,
+      "projection": "byte-for-byte copy"
+    },
+    {
+      "rawPath": "/tmp/report-pack-browser-mobile-final-run.txt",
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/composition/report-pack-browser-mobile-final-run.txt",
+      "sha256": "67ef12736688e4c509585169b52c281f6736b9d47cd0013910822cc9b0c08b57",
+      "bytes": 612,
+      "projection": "byte-for-byte copy"
+    }
+  ],
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "6dfff90e38b57f70eb12ee10cc1024a8990c42dec95fff94af2e48affd1ebbf9",
+      "bytes": 119864
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "sha256": "37ad4b808994d04f329fbcc347870da5ba99401a40edc786647003523b377d6f",
+      "bytes": 6843
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "sha256": "e84b4dbca5d23b045a01a5fd1f29c13671509c25cee22829343f8b70494a235a",
+      "bytes": 24385
+    },
+    {
+      "path": "server/routes/report-os.ts",
+      "sha256": "d476f4a8644bbf8c7107c4daa5b71ecf629d704769f6954f914e4722f3320cc6",
+      "bytes": 136095
+    },
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "sha256": "7f0453a4c0eee7639a5911db01281f5a8dd7e1d919150b32d617acb7db9280fe",
+      "bytes": 12507
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "sha256": "494a9281da5f313f349495d22628806df310a9feb49171eabb52b8bf9515fc39",
+      "bytes": 10715
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "sha256": "e0f5359fe4b15697e1e882007c42790de9213ad859afbb41a94780ef179be099",
+      "bytes": 12620
+    },
+    {
+      "path": "server/services/report-os/entitlement-map.ts",
+      "sha256": "a20777e0a7222051dcab47d69edb847f866f3543affe1d0b0386ac122286e05a",
+      "bytes": 5164
+    },
+    {
+      "path": "server/services/entitlements/resolver.ts",
+      "sha256": "7a25b8d54c23b17c5f13088a35517e03745c1160f2f6f80d7550bdacdf6a52c0",
+      "bytes": 6785
+    }
+  ],
+  "auditByteMatch": {
+    "artifact": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-audit-validation.json",
+    "sha256": "b4f14e14653f942797fe2bee84d2f18ada824a4c37df1c75a7b6ac80b7e792be",
+    "bytes": 13068,
+    "downloads": 6,
+    "distinctExportRows": 6,
+    "tenantChainRowsVerified": 14,
+    "additionalPriorNativeExportRows": 1
+  }
+}

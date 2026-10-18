@@ -1,0 +1,12 @@
+A deliberately synthetic cell/key sentinel was returned in Zod validation messages before sanitization. The same regression test passed after fixed non-custom messages replaced raw Zod messages. Canonical field/index paths remain useful.
+
+Before:
+ × server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 5ms
+Received: "[{"path":"studyData.demographics.0.sex","message":"Invalid enum value. Expected 'M' | 'F' | 'Other', received 'private-participant-cell-sentinel'"},{"path":"","message":"Unrecognized key(s) in object: 'private-participant-cell-sentinel'"}]"
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+
+After:
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues 1ms
+ Test Files  4 passed (4)
+      Tests  65 passed (65)

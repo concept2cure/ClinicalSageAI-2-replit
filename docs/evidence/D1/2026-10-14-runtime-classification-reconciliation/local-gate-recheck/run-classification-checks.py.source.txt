@@ -1,0 +1,63 @@
+from pathlib import Path
+import datetime
+import hashlib
+import json
+import os
+import resource
+import subprocess
+import sys
+import tempfile
+import time
+
+if sys.argv[1:] != ['ROOT_HEAVY_READY']:
+    raise SystemExit('Await root ROOT HEAVY runner allocation before executing.')
+repo = Path('/workspace/ClinicalSageAI-2-replit')
+node = '/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node'
+run = Path(tempfile.mkdtemp(prefix='verapdf-runtime-classification-checks-', dir='/tmp'))
+os.chmod(run, 0o700)
+
+
+def inputs():
+    folders = [name for name in ('server', 'shared', 'modules', 'scripts') if (repo / name).is_dir()]
+    command = ['rg', '--files', *folders,
+               '-g', '*.ts', '-g', '*.tsx', '-g', '*.js', '-g', '*.mjs',
+               '-g', '*.cjs', '-g', '*.json', '-g', '*.yaml', '-g', '*.yml']
+    names = subprocess.check_output(command, cwd=repo, text=True).splitlines()
+    names += ['Dockerfile.optimized', '.dockerignore', 'package.json',
+              'package-lock.json', 'eslint.config.js']
+    return [{'path': name, 'bytes': (repo / name).stat().st_size,
+             'sha256': hashlib.sha256((repo / name).read_bytes()).hexdigest()}
+            for name in sorted(set(names)) if (repo / name).is_file()]
+
+
+before = inputs()
+(run / 'source-inputs-before.json').write_text(json.dumps(before, indent=2) + '\n')
+checks = []
+for name, script in [('gate', 'scripts/ci/check-image-runtime-assets.mjs'),
+                     ('selftest', 'scripts/ci/check-image-runtime-assets.selftest.mjs')]:
+    log = run / (name + '.txt')
+    started = time.monotonic()
+    with log.open('wb') as output:
+        os.chmod(log, 0o600)
+        result = subprocess.run([node, script], cwd=repo, stdout=output,
+                                stderr=subprocess.STDOUT, timeout=300)
+    checks.append({'name': name, 'argv': [node, script], 'exitCode': result.returncode,
+                   'elapsedSeconds': round(time.monotonic() - started, 3),
+                   'log': str(log), 'logBytes': log.stat().st_size,
+                   'logSha256': hashlib.sha256(log.read_bytes()).hexdigest()})
+after = inputs()
+(run / 'source-inputs-after.json').write_text(json.dumps(after, indent=2) + '\n')
+record = {'recordedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+          'rootHeavyAllocation': '#1 explicitly allocated by root',
+          'baseCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+          'branch': subprocess.check_output(['git', 'branch', '--show-current'], cwd=repo, text=True).strip(),
+          'sourceInputsCount': len(before), 'sourceInputsStable': before == after,
+          'sourceInputsBeforeSha256': hashlib.sha256((run / 'source-inputs-before.json').read_bytes()).hexdigest(),
+          'sourceInputsAfterSha256': hashlib.sha256((run / 'source-inputs-after.json').read_bytes()).hexdigest(),
+          'checks': checks,
+          'peakChildRssKiB': resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,
+          'dockerBuildPullInstallJarOrNativeExecution': False}
+(run / 'result.json').write_text(json.dumps(record, indent=2) + '\n')
+Path('/tmp/verapdf-runtime-classification-run-location.json').write_text(json.dumps({'directory': str(run)}, indent=2) + '\n')
+print(json.dumps(record, indent=2))
+raise SystemExit(0 if before == after and all(c['exitCode'] == 0 for c in checks) else 1)

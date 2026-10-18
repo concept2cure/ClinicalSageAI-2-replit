@@ -55,13 +55,16 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '../db.js';
 import { csrBuildJobs } from '@shared/schema';
 import { getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
 import { getCSRSectionOutputs } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { CsrScopeError, readCsrProjectActor, resolveCsrScope } from '../services/csr/project-scope';
+import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
 
 const logger = createScopedLogger('csr-workflow-routes');
 
@@ -199,7 +202,7 @@ export default function createCsrWorkflowRoutes(): Router {
         return res.status(401).json({ success: false, error: 'Organization context required' });
       }
 
-      const projectId = parseProjectIdQuery(req.query.projectId);
+      let projectId = parseProjectIdQuery(req.query.projectId);
       if (projectId === null) {
         return res.status(400).json({ success: false, error: 'projectId must be a positive integer' });
       }
@@ -209,11 +212,18 @@ export default function createCsrWorkflowRoutes(): Router {
         return res.status(503).json({ success: false, error: 'Database not available' });
       }
       const database = db;
+      const actorUserId = Number((req as Request & { user?: { id?: unknown; userId?: unknown } }).user?.id ?? (req as Request & { user?: { userId?: unknown } }).user?.userId);
+      const actor = await readCsrProjectActor(database, orgId, actorUserId);
+      const scope = await resolveCsrScope(database, orgId, { projectId, programId: req.query.programId, clientWorkspaceId: req.query.clientWorkspaceId }, { forWrite: false, actorUserId });
+      projectId = scope.projectId;
 
       // Latest CSR build job for this org (+ optional project), most recent first.
       const conditions = [eq(csrBuildJobs.organizationId, orgId)];
       if (projectId !== undefined) {
         conditions.push(eq(csrBuildJobs.projectId, projectId));
+      } else {
+        const accessible = await getAccessibleReportProjectIds(orgId, actor, queryableFromDrizzle(database));
+        conditions.push(accessible.length ? or(isNull(csrBuildJobs.projectId), inArray(csrBuildJobs.projectId, accessible))! : isNull(csrBuildJobs.projectId));
       }
 
       const [job] = await database
@@ -239,6 +249,8 @@ export default function createCsrWorkflowRoutes(): Router {
           meta: {
             hasProgram: false,
             projectId: projectId ?? null,
+            programId: scope.programId ?? null,
+            computedScope: projectId === undefined ? 'organization' : 'project',
           },
           generatedAt: new Date().toISOString(),
         };
@@ -267,6 +279,8 @@ export default function createCsrWorkflowRoutes(): Router {
           studyId: job.studyId,
           jobStatus: job.status,
           projectId: job.projectId,
+          programId: scope.programId ?? null,
+          computedScope: projectId === undefined ? 'organization' : 'project',
           sectionsDraftedTopLevel: draftedTopLevel,
           sectionsTotalTopLevel: sections.length,
           sectionOutputCount: outputs.length,
@@ -278,6 +292,7 @@ export default function createCsrWorkflowRoutes(): Router {
 
       return res.json({ success: true, data: board });
     } catch (error) {
+      if (error instanceof CsrScopeError) return res.status(error.status).json({ success: false, error: error.message, code: error.code });
       logger.error('csr-workflow board error', {
         err: error instanceof Error ? error.message : String(error),
       });

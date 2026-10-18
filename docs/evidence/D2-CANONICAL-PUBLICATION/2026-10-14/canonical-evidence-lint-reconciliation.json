@@ -1,0 +1,23 @@
+[
+  {
+    "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-recall-counterfactual.mjs",
+    "beforeSha256": "a98f088a9d340ca3e27b5301e94d0482266d69e39875a2bac2f98ba2eb0bd838",
+    "archive": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/canonical-run-recall-counterfactual.mjs.txt",
+    "afterSha256": "d92b9d5cedfa4182dcc87288bb8e06b6749585912925c4d1448d58c40113823e",
+    "change": "stdout-equivalent console.info or explicit native Node22 global annotation"
+  },
+  {
+    "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-routes-regression.mjs",
+    "beforeSha256": "98c63ce8442d5c588c8387afa7c64ae25990b3536e1198ee13d8920b7f62f4c8",
+    "archive": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/canonical-run-routes-regression.mjs.txt",
+    "afterSha256": "def89059e2c430687c653d21a7fed59d5568421e61c5275f326ef0ab9b8eb7b3",
+    "change": "stdout-equivalent console.info or explicit native Node22 global annotation"
+  },
+  {
+    "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/scientific-fixture-parity.cjs",
+    "beforeSha256": "55607a8f11caf47583d3e2fdc8232b9d2d3f98234730340a81f34fd41a68dd61",
+    "archive": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/canonical-scientific-fixture-parity.cjs.txt",
+    "afterSha256": "b6bfd29e5d06627e5df4bf1457c4154841bbcc64bdd13531ab0d4d66303e863b",
+    "change": "stdout-equivalent console.info or explicit native Node22 global annotation"
+  }
+]

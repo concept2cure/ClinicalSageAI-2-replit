@@ -15,8 +15,10 @@
  * both substrates or in neither. Its reverse counterpart `revoke-signature`
  * closes the §11.70 supersession chain in that same transaction: it marks the
  * revoked signature superseded and records the revocation as its own
- * attributable row, or — when no live signature is anchored to the target —
- * refuses (409 REVOCATION_TARGET_UNRESOLVED) and writes nothing at all.
+ * attributable row, or — when no live signature answers to what the payload
+ * names (`signatureId`, `signatureActionId`, `intent`) — refuses (409
+ * REVOCATION_TARGET_UNRESOLVED), or when more than one does, refuses (409
+ * REVOCATION_TARGET_AMBIGUOUS, with the candidates), and writes nothing at all.
  *
  * Legacy redirect (handled here):
  *   POST /api/cerv2-sections/:id/accept-ana-draft → delegate to accept-ai-suggestion
@@ -67,8 +69,8 @@ import {
   persistGovernedSignSignature,
   persistGovernedSignatureRevocation,
   SignatureMeaningError,
-  SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { revocationRefusal, revocationSelectorRefusal } from '../../services/part11/revocation-selection.js';
 import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
 import { programInOrganization } from '../../services/c2c/program-access';
@@ -633,9 +635,17 @@ export function separationOfDutiesRefusal(
  * route refuses a missing or unknown one before re-authentication, so a signer
  * is not asked for a password for a request the writer would refuse anyway
  * (the writer, persistGovernedActionSignature, enforces the same rule for every
- * caller). Other commands carry no signer-declared meaning here.
+ * caller). A `revoke-signature` is refused the same way when the signature it
+ * names is malformed (persistGovernedSignatureRevocation applies that rule
+ * too). Other commands carry no signer-declared meaning here.
  */
 function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
+  if (command === 'revoke-signature') {
+    // A revocation names the signature it withdraws (signatureId,
+    // signatureActionId or intent); a malformed name is refused here, before
+    // re-authentication, by the rule the writer applies too.
+    return revocationSelectorRefusal(body.payload);
+  }
   return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
@@ -751,11 +761,12 @@ function makeHandler(command: Command) {
       }
       const sod = separationOfDutiesRefusal(err, `c2c/actions/${command}`);
       if (sod) return res.status(sod.status).json(sod.body);
-      if (err instanceof SignatureRevocationUnresolvedError) {
-        // Nothing was written (the transaction rolled back). Say so plainly
-        // rather than returning an opaque 500 that reads as "maybe it worked".
-        return res.status(409).json({ error: err.code, detail: err.message });
-      }
+      // A revocation that resolved nothing, more than one signature, or a
+      // malformed name: nothing was written (the transaction rolled back). Say
+      // so plainly rather than returning an opaque 500 that reads as "maybe it
+      // worked"; an ambiguous one names the candidates.
+      const revocation = revocationRefusal(err);
+      if (revocation) return res.status(revocation.status).json(revocation.body);
       if (err instanceof SignatureMeaningError) {
         // Refused ahead of the signer lookup; nothing was written.
         return res.status(400).json({ error: err.code, detail: err.message });

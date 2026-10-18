@@ -138,7 +138,7 @@ describe('it refuses rather than assess the wrong thing', () => {
   it('refuses a program that records no filing, rather than picking one', async () => {
     stub({ project: { metadata: {} } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(
-      /records no registry context/,
+      'Record the program’s filing type before running this market readiness assessment. No market readiness was assessed.',
     );
   });
 

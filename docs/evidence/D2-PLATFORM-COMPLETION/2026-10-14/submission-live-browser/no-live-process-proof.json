@@ -1,0 +1,27 @@
+{
+  "productionFiles": 62,
+  "productionFilesChanged": [],
+  "ownedQaPid": 208757,
+  "ownedProcessGroup": [
+    {
+      "pid": 208757,
+      "state": "Z",
+      "parent": 1
+    },
+    {
+      "pid": 208780,
+      "state": "Z",
+      "parent": 1
+    },
+    {
+      "pid": 208811,
+      "state": "Z",
+      "parent": 1
+    }
+  ],
+  "noLiveOwnedProcesses": true,
+  "port5001Closed": true,
+  "port5000StillOpen": true,
+  "preservedMainPid": 120498,
+  "qualification": "Exit zombies may retain /proc metadata; the checked owned process group contains no running member. Only the owned5001 group was signalled."
+}

@@ -2,19 +2,19 @@ Skeptic probes re-run (2026-09-23, co-author final pass). BEFORE = current tree 
 
 ######## BEFORE: r3-probes
 [P4] accept on approved -> 200 {"success":true,"data":{"documentId":1,"supersededVersion":1,"framework":null}} row: {"status":"approved","content":"Text nobody approved, written into an approved snapshot by an ordinary member."}
-[E4] ["0e000000-0000-4000-8000-000000000004"] -> 500 Failed to create document 
-[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found 
-[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found 
-[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 404 Source document not found 
+[E4] ["0e000000-0000-4000-8000-000000000004"] -> 500 Failed to create document
+[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found
+[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found
+[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 404 Source document not found
 [E4] rows carrying FORGED: []
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
       Tests  3 failed | 3 passed (6)
 EXIT 1
 ######## AFTER: r3-probes
-[E4] ["0e000000-0000-4000-8000-000000000004"] -> 400 INVALID_SOURCE_DOCUMENT_ID 
-[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found 
-[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found 
-[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 400 INVALID_SOURCE_DOCUMENT_ID 
+[E4] ["0e000000-0000-4000-8000-000000000004"] -> 400 INVALID_SOURCE_DOCUMENT_ID
+[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found
+[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found
+[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 400 INVALID_SOURCE_DOCUMENT_ID
 [E4] rows carrying FORGED: []
 [P4] accept on approved -> 409 {"success":false,"error":"FINALIZED_DOCUMENT_READ_ONLY","message":"This document is approved and read-only: it is the copy that was signed off for a filing, and changing it here would file text nobody approved. Its text comes from its source authoring document and changes only when that document is placed into the filing again, which re-takes this copy from the source's current text and status. Nothing was saved.","currentStatus":"approved","governedPath":"POST /api/coauthor/documents with sourceAuthoringDocId — re-takes this copy (status, title, text) from its source authoring document; an APPROVED source files as approved, FROZEN as finalized, only while its sections and title are the ones its seal (frozen_documents) recorded"} row: {"status":"approved","content":"<p>approved text</p>"}
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯

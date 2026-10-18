@@ -11,11 +11,11 @@ import { I } from '../icons';
 import { apiCall } from '../apiCall';
 import { downloadText } from '../download';
 import {
-  SCREEN_ROW_LIMIT, cellFull, cellText, columnLabel, columnsFor, countDifferences, manifestFacts, verdictTone,
+  SCREEN_ROW_LIMIT, cellFull, cellText, columnLabel, columnsFor, manifestFacts, verdictTone,
   type ReportData, type Section, type StatementLine, type Tone,
 } from './complianceReportData';
 import {
-  fileBase, parseExport, pastAsOfNote, runErrorOf, runUrl, statementOf,
+  fileBase, parseExport, pastAsOfNote, runErrorOf, statementOf,
   type RunResult,
 } from './complianceReportsModel';
 import { JWT_SECRET_FALLBACK_KEY_ID } from '@shared/constants/audit-export-key';
@@ -184,7 +184,9 @@ function Downloads({ result, readersNotice }: { result: RunResult; readersNotice
   const saveCsv = async () => {
     setBusy(true);
     setNote(null);
-    const r = await apiCall('GET', runUrl(result.report, result.period, 'csv'));
+    const r = await apiCall('POST', '/api/audit/reports/convert', {
+        export: { data: result.exp.data, manifest: result.exp.manifest, signature: result.exp.signature }, format: 'csv',
+      });
     setBusy(false);
     if (!r.ok) return setNote({ ok: false, text: runErrorOf(r, readersNotice).message });
     const exp = parseExport(r.body);
@@ -196,15 +198,10 @@ function Downloads({ result, readersNotice }: { result: RunResult; readersNotice
       return setNote({ ok: false, text: `Saved ${base}.csv, but this browser refused its manifest, so the file cannot be verified on its own.` });
     }
     const second = manifestFacts(exp.manifest);
-    const diffs = countDifferences(result.data, exp.manifest);
     setNote({
       ok: true,
-      text: `Saved ${base}.csv and its signed manifest. Download CSV ran the report again: export ` +
+      text: `Saved ${base}.csv and its signed manifest from the report snapshot on screen: export ` +
         `${second.exportId ?? 'not named'}, generated ${second.generatedAt ?? 'at a time not stated'}.`,
-      warning: diffs.length
-        ? `The second run found different row counts from the report on screen — ${diffs.join('; ')}. ` +
-          'Records changed between the two runs; the CSV and its manifest describe the second run.'
-        : undefined,
     });
   };
 
@@ -217,7 +214,7 @@ function Downloads({ result, readersNotice }: { result: RunResult; readersNotice
         </button>
       </div>
       <div style={{ ...muted, marginTop: 6 }}>
-        Each run is recorded on the audit trail. Download CSV runs the report again and is recorded as its own run.
+        JSON and CSV use the report snapshot on screen. CSV conversion is sealed and recorded on the audit trail without running the report again.
       </div>
       {note && (
         <div role={note.ok ? 'status' : 'alert'} style={{ fontSize: 12, marginTop: 6, color: note.ok ? 'var(--text-300)' : 'var(--error)' }}>

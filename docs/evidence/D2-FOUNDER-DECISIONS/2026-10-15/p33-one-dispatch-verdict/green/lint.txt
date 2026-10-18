@@ -1,0 +1,24 @@
+# ESLint problem count per file: HEAD (git show HEAD:<file> | npx eslint --stdin) vs the working tree.
+server/services/ectd/assess-dispatch-readiness.ts HEAD=2 NOW=2
+server/services/ectd/ind-program-findings.ts HEAD=(new) NOW=0
+server/services/ectd/validation-rule-corpus.ts HEAD=1 NOW=1
+server/routes/ind-lifecycle/sequence.routes.ts HEAD=0 NOW=0
+server/routes/ind-lifecycle/submission.routes.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/ind-cockpit.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/ind-dispatch-snapshot-service.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/ind-portfolio.ts HEAD=0 NOW=0
+server/routes/ind-lifecycle/openapi.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/index.ts HEAD=0 NOW=0
+services/regulatory/ind-ectd-sections.ts HEAD=1 NOW=1
+server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts HEAD=0 NOW=0
+server/services/ectd/__tests__/validation-rule-corpus.test.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/__tests__/ind-cockpit.test.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/__tests__/ind-portfolio.test.ts HEAD=0 NOW=0
+server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts HEAD=0 NOW=0
+server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts HEAD=3 NOW=3
+server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts HEAD=(new) NOW=0
+server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts HEAD=(new) NOW=0
+tests/schema-contract/one-dispatch-verdict.contract.test.ts HEAD=(new) NOW=0
+server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts HEAD=0 NOW=0
+server/services/ectd/assess-dispatch-readiness.ts HEAD=2 NOW=2
+server/services/ectd/ind-program-findings.ts HEAD=(new) NOW=0

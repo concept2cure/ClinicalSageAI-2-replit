@@ -9,7 +9,7 @@
 
 ## Attempt 1: extensions created by the cluster superuser instead. Governed content fails:
   ⚠ 059_gcc_vector_embeddings.sql: psql:/home/user/ClinicalSageAI-2-replit/db/migrations/059_gcc_vector_embeddings.sql:19: ERROR:  must be owner of extension vector
-   • governed content (Part 11 audit): 2 of 42 file(s) failed: 059_gcc_vector_embeddings.sql — psql:/home/user/ClinicalSageAI-2-replit/db/migrations/059_gcc_vector_embeddings.sql:19: ERROR:  must 
+   • governed content (Part 11 audit): 2 of 42 file(s) failed: 059_gcc_vector_embeddings.sql — psql:/home/user/ClinicalSageAI-2-replit/db/migrations/059_gcc_vector_embeddings.sql:19: ERROR:  must
 ❌ Install INCOMPLETE — not reporting success.
 exit=6
 # 059_gcc ran COMMENT ON EXTENSION vector, which needs the extension's OWNER; 067 then failed on

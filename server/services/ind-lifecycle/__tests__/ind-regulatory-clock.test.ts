@@ -1,6 +1,11 @@
 /**
  * IND regulatory clock / clinical-hold tracker — deterministic 30-day + hold
  * state machine (21 CFR 312.40 / 312.42). No DB.
+ *
+ * 2026-10-15: these cases describe an IND whose FDA receipt IS recorded and
+ * whose hold history WAS supplied, so they now say so (`receiptRecorded: true`,
+ * `events: []`). They used to omit both, which is the input the engine wrongly
+ * cleared — see ind-regulatory-clock-unassessed-not-cleared.test.ts.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -16,14 +21,14 @@ describe('computeThirtyDayDate', () => {
 
 describe('evaluateRegulatoryClock', () => {
   it('is "submitted" and not safe-to-proceed within the 30-day window', () => {
-    const s = evaluateRegulatoryClock({ receiptDate: RECEIPT, asOf: '2026-01-15T00:00:00.000Z' });
+    const s = evaluateRegulatoryClock({ receiptDate: RECEIPT, receiptRecorded: true, events: [], asOf: '2026-01-15T00:00:00.000Z' });
     expect(s.status).toBe('submitted');
     expect(s.safeToProceed).toBe(false);
     expect(s.daysUntilThirtyDay).toBe(16);
   });
 
   it('is "safe_to_proceed" once 30 days elapse with no hold', () => {
-    const s = evaluateRegulatoryClock({ receiptDate: RECEIPT, asOf: '2026-02-15T00:00:00.000Z' });
+    const s = evaluateRegulatoryClock({ receiptDate: RECEIPT, receiptRecorded: true, events: [], asOf: '2026-02-15T00:00:00.000Z' });
     expect(s.status).toBe('safe_to_proceed');
     expect(s.safeToProceed).toBe(true);
     expect(s.daysUntilThirtyDay).toBe(0);
@@ -32,6 +37,7 @@ describe('evaluateRegulatoryClock', () => {
   it('a clinical hold blocks proceeding even after day 30', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-02-15T00:00:00.000Z',
       events: [{ type: 'clinical_hold_imposed', date: '2026-01-20T00:00:00.000Z' }],
     });
@@ -43,6 +49,7 @@ describe('evaluateRegulatoryClock', () => {
   it('lifting a hold restores safe-to-proceed (latest event wins)', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-03-01T00:00:00.000Z',
       events: [
         { type: 'clinical_hold_imposed', date: '2026-01-20T00:00:00.000Z' },
@@ -56,6 +63,7 @@ describe('evaluateRegulatoryClock', () => {
   it('honors partial holds', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-02-15T00:00:00.000Z',
       events: [{ type: 'partial_hold_imposed', date: '2026-02-01T00:00:00.000Z' }],
     });
@@ -67,6 +75,7 @@ describe('evaluateRegulatoryClock', () => {
   it('withdrawal is terminal regardless of the clock', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-03-01T00:00:00.000Z',
       events: [{ type: 'withdrawn', date: '2026-02-10T00:00:00.000Z' }],
     });
@@ -77,6 +86,7 @@ describe('evaluateRegulatoryClock', () => {
   it('ignores future-dated events relative to as-of', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-02-15T00:00:00.000Z',
       events: [{ type: 'clinical_hold_imposed', date: '2026-06-01T00:00:00.000Z' }],
     });
@@ -88,6 +98,7 @@ describe('evaluateRegulatoryClock', () => {
   it('reactivation clears inactive status', () => {
     const s = evaluateRegulatoryClock({
       receiptDate: RECEIPT,
+      receiptRecorded: true,
       asOf: '2026-04-01T00:00:00.000Z',
       events: [
         { type: 'inactivated', date: '2026-02-01T00:00:00.000Z' },

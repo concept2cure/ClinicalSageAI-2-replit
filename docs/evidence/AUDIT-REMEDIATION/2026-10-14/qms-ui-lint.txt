@@ -1,0 +1,20 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/App.tsx
+   69:8   warning  Function 'QualityApp' has too many lines (228). Maximum allowed is 100  max-lines-per-function
+  228:39  warning  Arrow function has a complexity of 16. Maximum allowed is 15            complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/ControlledDocumentDialogs.tsx
+  20:8   warning  Function 'ControlledDocumentSetup' has a complexity of 36. Maximum allowed is 15  complexity
+  42:20  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/SopRegister.tsx
+  118:8   warning  Function 'SopRegister' has too many lines (495). Maximum allowed is 100  max-lines-per-function
+  118:8   warning  Function 'SopRegister' has a complexity of 53. Maximum allowed is 15     complexity
+  395:28  warning  Arrow function has too many lines (102). Maximum allowed is 100          max-lines-per-function
+  599:1   warning  File has too many lines (562). Maximum allowed is 500                    max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx
+  64:69  warning  Arrow function has too many lines (109). Maximum allowed is 100  max-lines-per-function
+
+✖ 9 problems (0 errors, 9 warnings)
+

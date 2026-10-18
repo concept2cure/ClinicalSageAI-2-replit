@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > places creation notices outside the horizontally scrolling header actions 549ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project bbbbbbbb-0000-4000-8000-000000000001 and held-switch refusal to creation 152ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project null and held-switch refusal to creation 127ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a filtered host through the existing editor handoff 170ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a pinned host through the existing editor handoff 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created document after a clean all-status list refresh 266ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a filtered host 840ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a pinned host 545ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > consults the current dirty editor after a document-list refresh 319ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after project round trip 219ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after unmount 108ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > retains text typed while the section refresh is pending 387ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > opens the returned section after a clean refresh 263ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > ignores an older section refresh after a project round trip 247ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > does not select the created section when its refresh fails 258ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > completes the current section read when the host filter changes while the first read is pending 216ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > shows all statuses when checking documents from a narrowed list 202ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > hands a pinned document to the full editor through the dirty-work guard 523ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > refreshes the current document sections without repeating a creation or changing the selected editor 200ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  21:57:38
+   Duration  14.83s (transform 5.50s, setup 538ms, import 6.74s, tests 5.75s, environment 1.37s)

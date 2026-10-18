@@ -1,0 +1,660 @@
+{
+  "fixture": "Synthetic browser contract; no live service or original regulated record.",
+  "actor": {
+    "id": 1,
+    "email": "synthetic@example.invalid",
+    "displayName": "Synthetic evaluator",
+    "organizationId": 1,
+    "roles": [
+      "regulatory-author"
+    ]
+  },
+  "program": {
+    "id": "bbbbbbbb-0000-4000-8000-000000000091",
+    "name": "Synthetic template oversight program",
+    "stage": "IND",
+    "status": "ACTIVE",
+    "product_type": "drug"
+  },
+  "cases": [
+    {
+      "key": "M1-form",
+      "source": {
+        "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+        "entryId": "section:m1.1.1",
+        "version": 1,
+        "sha256": "74350d7b07f5815d82285b5db9491ed074791b56771e3e5118aa157912cecb95",
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "form",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000001",
+        "title": "Renamed administrative preparation",
+        "module": "M1",
+        "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+            "entryId": "section:m1.1.1",
+            "version": 1,
+            "sha256": "74350d7b07f5815d82285b5db9491ed074791b56771e3e5118aa157912cecb95",
+            "kind": "preparation",
+            "aiDraftable": false,
+            "authoringMode": "form",
+            "originalFormat": "pdf",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+              "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000001",
+          "doc_id": "dddddddd-0000-4000-8000-000000000001",
+          "code": "1.1.1",
+          "title": "Form FDA 1571",
+          "content": "<p>The synthetic sponsor contact is identified in the source record.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-1",
+            "guidance_text": "Investigational New Drug Application form — identifies sponsor, drug, IND number.\n\nForm FDA 1571 is the official transmittal and legal commitment form required by 21 CFR 312.23(a)(1) for the original IND and by 312.30/312.31 for amendments. The reviewer uses it to confirm the sponsor, the drug identity, the serial number continuity of the IND, the phase of the studies, and — critically — that the sponsor has affirmatively agreed to the Part 312 obligations (not to begin studies until 30 days after FDA receipt or upon notification, to comply with IRB and safety-reporting requirements). Acceptability depends on an unbroken, correctly incremented serial number, a completed contents checklist that matches the actual submission, and signature by the sponsor or an authorized representative with a U.S. agent named if the sponsor is foreign. Every field must be internally consistent with the cover letter and the eCTD backbone.\n\nReference scaffold only. Confirm applicability to this IND and use verified project evidence; no source facts, approvals or signatures are supplied.\n\nComplete or review the original form, dataset or signed record; this worksheet does not replace it.",
+            "regulatory_references": [
+              "21 CFR 312.23(a)(1)",
+              "Form FDA 1571 is the mandatory cover form for every IND submission and every subsequent amendment. It captures sponsor identity, the drug, the phase(s) of investigation, a contents checklist, and the sponsor's binding commitments under 21 CFR Part 312."
+            ],
+            "compliance_checklist": [
+              "Name, address, and telephone of sponsor",
+              "Date of submission and the IND serial number (0000 for original, incrementing sequentially)",
+              "Name of the drug (proprietary and established) and indication under study",
+              "Phase(s) of clinical investigation to be conducted (Phase 1/2/3)",
+              "Identification of whether the submission is an original IND, protocol amendment, information amendment, IND safety report, annual report, or response to clinical hold",
+              "Contents checklist (items 1–12) cross-referenced to the submission's location",
+              "Name and title of the person responsible for monitoring the conduct and progress of the investigation",
+              "Name and title of the person responsible for review and evaluation of safety information",
+              "Sponsor/authorized representative signature, printed name, title, and date; U.S. agent if sponsor is foreign",
+              "Transfer-of-obligations statement if any sponsor obligations are transferred to a CRO",
+              "Identify source records and unresolved evidence gaps."
+            ],
+            "common_pitfalls": [
+              "Serial number errors or gaps that break IND lifecycle continuity and confuse the reviewer's chronology",
+              "Contents checklist boxes checked that do not correspond to material actually present in the submission",
+              "Missing or non-authorized signatory, or a foreign sponsor without a named U.S. agent",
+              "Failing to name distinct individuals responsible for overall monitoring versus safety review as Part 312 requires",
+              "Phase designation inconsistent with the protocol in Module 5, prompting a reviewer query"
+            ],
+            "source_reference": "services/regulatory/ind-ectd-sections.ts; server/services/ind/ctd/authoring-guidance.ts",
+            "template_source": {
+              "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+              "entryId": "section:m1.1.1",
+              "version": 1,
+              "sha256": "74350d7b07f5815d82285b5db9491ed074791b56771e3e5118aa157912cecb95",
+              "kind": "preparation",
+              "aiDraftable": false,
+              "authoringMode": "form",
+              "originalFormat": "pdf",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic sponsor contact is identified in the source record."
+    },
+    {
+      "key": "M2-narrative",
+      "source": {
+        "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+        "entryId": "section:m2.5",
+        "version": 1,
+        "sha256": "dad7e4dc790a6d1da1e83a776ebfed634ba7ea9f6d6bb36ab683695d5e5e72c5",
+        "kind": "narrative",
+        "aiDraftable": true,
+        "authoringMode": "ai_draft",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000002",
+        "title": "Renamed clinical working notes",
+        "module": "M2",
+        "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+            "entryId": "section:m2.5",
+            "version": 1,
+            "sha256": "dad7e4dc790a6d1da1e83a776ebfed634ba7ea9f6d6bb36ab683695d5e5e72c5",
+            "kind": "narrative",
+            "aiDraftable": true,
+            "authoringMode": "ai_draft",
+            "originalFormat": "pdf",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000002",
+          "doc_id": "dddddddd-0000-4000-8000-000000000002",
+          "code": "2.5",
+          "title": "Clinical Overview",
+          "content": "<p>The synthetic clinical rationale awaits supporting project evidence.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-2",
+            "guidance_text": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFollow the ICH M4E structure: 2.5.1 Product Development Rationale, 2.5.2 Overview of Biopharmaceutics, 2.5.3 Overview of Clinical Pharmacology, 2.5.4 Overview of Efficacy, 2.5.5 Overview of Safety, and 2.5.6 Benefits and Risks Conclusions. Keep it critical and integrative — summarize and interpret rather than repeat 2.7. Reference how the development program aligns with FDA advice (End-of-Phase-2, SPA, Type C meetings) and applicable disease-specific guidances. Discuss the adequacy of the evidence (substantial evidence standard, number/design of adequate and well-controlled trials per 21 CFR 314.126), the appropriateness of endpoints, dose selection, and the relevance of the studied population to the labeled population. Conclusions must be supported and must foreshadow the proposed labeling.",
+            "regulatory_references": [
+              "ICH M4E(R2)",
+              "The Clinical Overview is the sponsor's concise, critical analysis of the clinical data and the central benefit-risk argument for approval. Per ICH M4E it is normally 30 pages or less and is interpretive, not descriptive: it justifies the development program, critiques the design and conduct of the studies, and builds the case that the product is effective and safe for the proposed use. FDA clinical reviewers and the division director read it as the sponsor's overarching argument and cross-check it against 2.7 and Module 5; acceptability requires reasoned interpretation, candid discussion of limitations, and conclusions that follow logically from the data."
+            ],
+            "compliance_checklist": [
+              "Product development rationale linking unmet need, MOA, and program design (2.5.1)",
+              "Overview of biopharmaceutics: formulation bridging, BA/BE, food effect (2.5.2)",
+              "Overview of clinical pharmacology: PK/PD, exposure-response, special populations, DDI (2.5.3)",
+              "Overview of efficacy: pivotal trial designs, endpoints, results, and consistency across studies (2.5.4)",
+              "Overview of safety: exposure, common and serious adverse events, and risk characterization (2.5.5)",
+              "Benefit-risk conclusions integrating efficacy and safety for the proposed use (2.5.6)",
+              "Critical appraisal of study design, conduct, GCP compliance, and data quality",
+              "Discussion of the substantial evidence basis and consistency with FDA guidance/agreements",
+              "Relationship of studied population and results to the proposed labeling",
+              "Table of clinical studies / development program overview (optional)",
+              "Key efficacy results summary (referenced from 2.7.3)"
+            ],
+            "common_pitfalls": [
+              "Descriptive duplication of 2.7 instead of critical, integrated analysis",
+              "Overstating efficacy or minimizing safety signals relative to the underlying data",
+              "Failing to justify endpoint selection, dose, or the adequacy/number of pivotal trials (21 CFR 314.126)",
+              "Ignoring regulatory interactions/agreements (EOP2, SPA) or relevant disease-specific guidances",
+              "Benefit-risk conclusion not clearly supported by the efficacy and safety sections or not aligned with 2.5.6",
+              "Studied population not reconciled with the proposed labeled population (generalizability gap)"
+            ],
+            "source_reference": "server/services/ind/ctd/authoring-guidance.ts#2.5",
+            "template_source": {
+              "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+              "entryId": "section:m2.5",
+              "version": 1,
+              "sha256": "dad7e4dc790a6d1da1e83a776ebfed634ba7ea9f6d6bb36ab683695d5e5e72c5",
+              "kind": "narrative",
+              "aiDraftable": true,
+              "authoringMode": "ai_draft",
+              "originalFormat": "pdf",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic clinical rationale awaits supporting project evidence."
+    },
+    {
+      "key": "M3-narrative",
+      "source": {
+        "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+        "entryId": "section:m3.2.S.1",
+        "version": 1,
+        "sha256": "686faffaa45515da2a4b668ff47207297660726ff23d05167328d1e074386afc",
+        "kind": "narrative",
+        "aiDraftable": true,
+        "authoringMode": "ai_draft",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000003",
+        "title": "Renamed quality working notes",
+        "module": "M3",
+        "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+            "entryId": "section:m3.2.S.1",
+            "version": 1,
+            "sha256": "686faffaa45515da2a4b668ff47207297660726ff23d05167328d1e074386afc",
+            "kind": "narrative",
+            "aiDraftable": true,
+            "authoringMode": "ai_draft",
+            "originalFormat": "pdf",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000003",
+          "doc_id": "dddddddd-0000-4000-8000-000000000003",
+          "code": "3.2.S.1",
+          "title": "General Information",
+          "content": "<p>The synthetic drug-substance description awaits verified supporting records.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-3",
+            "guidance_text": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.1 anchors the entire drug-substance dossier by unambiguously identifying the active moiety and its fundamental properties. An FDA reviewer reads it first to confirm the substance's identity, salt/hydrate form, and the properties (solubility, pKa, polymorphism, hygroscopicity, and for biologics higher-order structure and heterogeneity) that will drive formulation, control strategy, and stability. Acceptability requires internal consistency: the structure, molecular formula, and molecular weight stated here must exactly match those elucidated in 3.2.S.3.1. For biologics, describe the general nature (e.g., glycoprotein, mAb, isotype, expression system) and known post-translational modifications. This section is descriptive, not data-heavy, but errors here propagate throughout Module 3.",
+            "regulatory_references": [
+              "ICH Q6A/Q6B",
+              "Establishes the identity of the drug substance and its nomenclature, structure, and general physicochemical/biological properties."
+            ],
+            "compliance_checklist": [
+              "Nomenclature: INN/USAN, chemical (IUPAC/CAS) name, CAS registry number, company/laboratory code, and compendial name if applicable",
+              "Structural formula, including stereochemistry, and for biologics the amino acid sequence, disulfide bonds, and glycosylation sites",
+              "Molecular formula and relative molecular mass (free base/acid and the actual salt/hydrate form used)",
+              "General physicochemical properties: appearance, solubility across physiological pH range, pKa, partition coefficient (log P), melting point",
+              "Polymorphism, pseudopolymorphism (solvates/hydrates), and hygroscopicity statement",
+              "For biologics: isoform/charge heterogeneity, higher-order structure summary, and biological activity basis",
+              "Chirality/optical rotation and identification of the pharmacologically active enantiomer or isomer",
+              "Statement of drug substance form (e.g., besylate salt, monohydrate) consistent with 3.2.S.3.1 and 3.2.S.4.1",
+              "Table of physicochemical properties (appearance, solubility vs. pH, pKa, log P, melting point, specific rotation)",
+              "Annotated structural formula with stereocenters/disulfide map or sequence diagram for biologics"
+            ],
+            "common_pitfalls": [
+              "Molecular weight/formula inconsistent between S.1 and S.3.1 (e.g., free base vs. salt form confusion)",
+              "Omitting salt, hydrate, or solvate designation so the exact substance form is ambiguous",
+              "Failing to state polymorphic form or hygroscopicity when these affect manufacturability and stability",
+              "For biologics, giving an incomplete or non-annotated sequence or omitting known post-translational modifications",
+              "Using an outdated or non-final INN/USAN name inconsistent with other modules"
+            ],
+            "source_reference": "server/services/ind/ctd/authoring-guidance.ts#3.2.S.1",
+            "template_source": {
+              "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+              "entryId": "section:m3.2.S.1",
+              "version": 1,
+              "sha256": "686faffaa45515da2a4b668ff47207297660726ff23d05167328d1e074386afc",
+              "kind": "narrative",
+              "aiDraftable": true,
+              "authoringMode": "ai_draft",
+              "originalFormat": "pdf",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic drug-substance description awaits verified supporting records."
+    },
+    {
+      "key": "M4-outline",
+      "source": {
+        "id": "6df6b17d-ed72-51bf-91b4-05d5e0d0b012",
+        "entryId": "module:M4",
+        "version": 1,
+        "sha256": "babcc04033746c1fde2590b650a017e500c838cd8f732404142a7c40b8ac9de8",
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000004",
+        "title": "Renamed nonclinical preparation outline",
+        "module": "M4",
+        "template_id": "6df6b17d-ed72-51bf-91b4-05d5e0d0b012",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "6df6b17d-ed72-51bf-91b4-05d5e0d0b012",
+            "entryId": "module:M4",
+            "version": 1,
+            "sha256": "babcc04033746c1fde2590b650a017e500c838cd8f732404142a7c40b8ac9de8",
+            "kind": "preparation",
+            "aiDraftable": false,
+            "authoringMode": "manual",
+            "originalFormat": "mixed",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+              "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000004",
+          "doc_id": "dddddddd-0000-4000-8000-000000000004",
+          "code": "4",
+          "title": "Module 4: Nonclinical Study Reports",
+          "content": "<p>The synthetic nonclinical outline identifies outstanding original study records.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-4",
+            "guidance_text": "Full nonclinical study reports: pharmacology, pharmacokinetics, toxicology.\n\nReference scaffold only. Confirm applicability to this IND and use verified project evidence; no source facts, approvals or signatures are supplied.\n\nComplete or review the original form, dataset or signed record; this worksheet does not replace it.",
+            "regulatory_references": [
+              "21 CFR 312.23(a)(8)"
+            ],
+            "compliance_checklist": [
+              "Identify source records and unresolved evidence gaps."
+            ],
+            "common_pitfalls": [],
+            "source_reference": "services/regulatory/ind-ectd-sections.ts; server/services/ind/ctd/authoring-guidance.ts",
+            "template_source": {
+              "id": "6df6b17d-ed72-51bf-91b4-05d5e0d0b012",
+              "entryId": "module:M4",
+              "version": 1,
+              "sha256": "babcc04033746c1fde2590b650a017e500c838cd8f732404142a7c40b8ac9de8",
+              "kind": "preparation",
+              "aiDraftable": false,
+              "authoringMode": "manual",
+              "originalFormat": "mixed",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic nonclinical outline identifies outstanding original study records."
+    },
+    {
+      "key": "M4-GLP-record",
+      "source": {
+        "id": "4b968c7b-831a-5bbb-bbad-bc0aa8a96150",
+        "entryId": "phase4.glp_compliance:deliverable:0",
+        "version": 1,
+        "sha256": "22ff1d929c5bf380dcc9c3c15f937a8c1f1a0b0455df6174f2285f097ab6e2d2",
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "source-dependent",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000005",
+        "title": "Renamed nonclinical source checks",
+        "module": null,
+        "template_id": "4b968c7b-831a-5bbb-bbad-bc0aa8a96150",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "4b968c7b-831a-5bbb-bbad-bc0aa8a96150",
+            "entryId": "phase4.glp_compliance:deliverable:0",
+            "version": 1,
+            "sha256": "22ff1d929c5bf380dcc9c3c15f937a8c1f1a0b0455df6174f2285f097ab6e2d2",
+            "kind": "preparation",
+            "aiDraftable": false,
+            "authoringMode": "manual",
+            "originalFormat": "source-dependent",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+              "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000005",
+          "doc_id": "dddddddd-0000-4000-8000-000000000005",
+          "code": "preparation",
+          "title": "GLP compliance statements",
+          "content": "<p>The synthetic source-record inventory awaits the original signed GLP statement.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-5",
+            "guidance_text": "Preparation for Verify GLP compliance & statements in Module 4 — Nonclinical. This deliverable has no recorded CTD placement.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.",
+            "regulatory_references": [
+              "21 CFR Part 58"
+            ],
+            "compliance_checklist": [
+              "GLP compliance statement required for each pivotal nonclinical study",
+              "Non-GLP studies must be identified and justified"
+            ],
+            "common_pitfalls": [],
+            "source_reference": "services/regulatory/pyramids/ind-pyramid.ts:phase4.glp_compliance",
+            "template_source": {
+              "id": "4b968c7b-831a-5bbb-bbad-bc0aa8a96150",
+              "entryId": "phase4.glp_compliance:deliverable:0",
+              "version": 1,
+              "sha256": "22ff1d929c5bf380dcc9c3c15f937a8c1f1a0b0455df6174f2285f097ab6e2d2",
+              "kind": "preparation",
+              "aiDraftable": false,
+              "authoringMode": "manual",
+              "originalFormat": "source-dependent",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic source-record inventory awaits the original signed GLP statement."
+    },
+    {
+      "key": "M5-listings",
+      "source": {
+        "id": "12744024-d1df-5c16-97f1-ed796885deca",
+        "entryId": "section:m5.3.7",
+        "version": 1,
+        "sha256": "a5a95da279ddd60033f0173e2d79b7b74f211d5a286f9c5c6e0b6a35c24a437c",
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "data_import",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "document": {
+        "id": "dddddddd-0000-4000-8000-000000000006",
+        "title": "Renamed clinical source preparation",
+        "module": "M5",
+        "template_id": "12744024-d1df-5c16-97f1-ed796885deca",
+        "status": "DRAFT",
+        "updated_at": "2026-10-14T10:00:00.000Z",
+        "section_count": 1,
+        "created_by": 1,
+        "product_code": null,
+        "c2c_document_id": null,
+        "provenance": {
+          "source": "template",
+          "governedWrite": "unverified",
+          "templateSource": {
+            "id": "12744024-d1df-5c16-97f1-ed796885deca",
+            "entryId": "section:m5.3.7",
+            "version": 1,
+            "sha256": "a5a95da279ddd60033f0173e2d79b7b74f211d5a286f9c5c6e0b6a35c24a437c",
+            "kind": "preparation",
+            "aiDraftable": false,
+            "authoringMode": "data_import",
+            "originalFormat": "pdf",
+            "limitations": [
+              "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+              "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+              "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+              "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+            ]
+          }
+        }
+      },
+      "sections": [
+        {
+          "id": "aaaaaaaa-0000-4000-8000-000000000006",
+          "doc_id": "dddddddd-0000-4000-8000-000000000006",
+          "code": "5.3.7",
+          "title": "Case Report Forms and Individual Patient Listings",
+          "content": "<p>The synthetic source-record inventory awaits the original case report forms and patient listings.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T10:00:00.000Z"
+        }
+      ],
+      "guidance": {
+        "template_guidance": [
+          {
+            "id": "synthetic-guidance-6",
+            "guidance_text": "Blank CRFs and individual patient data listings for clinical studies.\n\nSection 5.3.7 contains the case report forms and individual patient data listings that support the study reports, organized as ICH E3 appendices (16.3 and 16.4): a blank/annotated sample CRF per study, plus CRFs for deaths, serious adverse events, and dropouts, and the individual patient efficacy and safety listings. Reviewers and inspectors use these to verify that summary tables in the CSRs and ISS/ISE trace to source-level records and to conduct data integrity checks. A complete section provides the annotated CRF mapped to dataset variables and the required patient-level listings, organized so a reviewer can locate any subject cited in the analyses. Missing death/SAE narratives or CRFs, or listings that cannot be reconciled to the analysis datasets, are frequent audit and information-request triggers.\n\nReference scaffold only. Confirm applicability to this IND and use verified project evidence; no source facts, approvals or signatures are supplied.\n\nComplete or review the original form, dataset or signed record; this worksheet does not replace it.",
+            "regulatory_references": [
+              "21 CFR 312.23(a)(6)(iii)(d)",
+              "Sample CRFs and the individual patient data listings appended to each study report, per ICH E3 appendices."
+            ],
+            "compliance_checklist": [
+              "Blank/annotated sample case report form for each study (ICH E3 Appendix 16.1.2)",
+              "CRFs for deaths, serious adverse events, and discontinuations due to AEs (Appendix 16.3)",
+              "Individual patient data listings, efficacy and safety (Appendix 16.4)",
+              "Patient narratives for deaths, other SAEs, and clinically significant events (Appendix 16.3)",
+              "Annotation mapping CRF fields to dataset (SDTM/ADaM) variables",
+              "Organization allowing traceability from summary tables to individual subjects",
+              "Cross-references from each CSR in 5.3.5 to its listings",
+              "Individual subject efficacy listings",
+              "Individual subject safety/adverse-event listings",
+              "Death, SAE, and dropout CRF sets",
+              "Annotated CRF with variable mapping",
+              "Identify source records and unresolved evidence gaps."
+            ],
+            "common_pitfalls": [
+              "Death/SAE CRFs or patient narratives missing for cited subjects",
+              "Patient listings not reconcilable with analysis datasets or summary tables",
+              "Sample CRF not annotated / not mapped to dataset variables",
+              "Incomplete listings for discontinued subjects, obscuring dropout patterns"
+            ],
+            "source_reference": "services/regulatory/ind-ectd-sections.ts; server/services/ind/ctd/authoring-guidance.ts",
+            "template_source": {
+              "id": "12744024-d1df-5c16-97f1-ed796885deca",
+              "entryId": "section:m5.3.7",
+              "version": 1,
+              "sha256": "a5a95da279ddd60033f0173e2d79b7b74f211d5a286f9c5c6e0b6a35c24a437c",
+              "kind": "preparation",
+              "aiDraftable": false,
+              "authoringMode": "data_import",
+              "originalFormat": "pdf",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            },
+            "source": "section-create-audit"
+          }
+        ]
+      },
+      "plainBody": "The synthetic source-record inventory awaits the original case report forms and patient listings."
+    }
+  ]
+}

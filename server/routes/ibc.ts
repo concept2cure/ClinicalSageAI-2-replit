@@ -91,7 +91,9 @@ async function governed(
 const registrationSchema = z.object({
   registrationNumber: z.string().min(1).max(120),
   title: z.string().min(1).max(500),
-  biosafetyLevel: BSL,
+  // Declared containment; omitted is stored as not declared. It was required
+  // here and the column defaulted it to BSL-1 (2026-10-15).
+  biosafetyLevel: BSL.optional(),
   nihGuidelinesSection: SECTION.optional(),
   submissionId: z.number().int().positive().optional(),
   involvesRecombinantDna: z.boolean().optional(),
@@ -104,9 +106,11 @@ router.post('/registrations', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id } = await createRegistrationTx(client, orgId, userId, parsed.data);
-    recordIbcRegistrationCreated(parsed.data.biosafetyLevel);
-    const convened = requiresConvenedReview(parsed.data.nihGuidelinesSection ?? 'not_applicable', parsed.data.involvesHumanGeneTransfer === true);
-    return { target: `ibc-registration:${id}`, payload: { bsl: parsed.data.biosafetyLevel }, body: { id, requiresConvenedReview: convened } };
+    recordIbcRegistrationCreated(parsed.data.biosafetyLevel ?? 'not_declared');
+    // null when the section or the gene-transfer answer is not recorded; both
+    // used to default to "no", reporting convened review as not required (2026-10-15).
+    const convened = requiresConvenedReview(parsed.data.nihGuidelinesSection ?? null, parsed.data.involvesHumanGeneTransfer ?? null);
+    return { target: `ibc-registration:${id}`, payload: { bsl: parsed.data.biosafetyLevel ?? null }, body: { id, requiresConvenedReview: convened } };
   });
 });
 
@@ -174,7 +178,10 @@ const reviewSchema = z.object({
   outcome: z.enum(['approved', 'conditional', 'disapproved', 'tabled']),
   convenedQuorum: z.boolean().optional(),
   conditions: z.string().max(4000).optional(),
-  determinationDate: z.string().optional(),
+  determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
+  // The expiration the COMMITTEE set on an approval. Absent, none is stored; it
+  // used to be computed (+1 year) and stored as the committee's (2026-10-15).
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expirationDate must be YYYY-MM-DD').optional(),
   reason,
 });
 
@@ -214,7 +221,8 @@ router.get('/registrations/:id/containment', async (req, res) => {
   try {
     const input = await getContainmentInput(client, orgId, id);
     const containment = evaluateContainment(input);
-    const expiration = registrationExpiration(input.approvalDate, new Date().toISOString().slice(0, 10));
+    // The committee's recorded expiration wins; approval + 1 year is labelled computed (2026-10-15).
+    const expiration = registrationExpiration(input.approvalDate, new Date().toISOString().slice(0, 10), input.expirationDate);
     res.json({ containment, expiration });
   } catch (err) {
     fail(res, err);

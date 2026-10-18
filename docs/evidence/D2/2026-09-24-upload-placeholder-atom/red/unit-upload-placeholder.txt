@@ -254,4 +254,3 @@ undefined
       Tests  1 failed | 4 passed (5)
    Start at  21:27:16
    Duration  12.93s (transform 6.82s, setup 81ms, import 11.38s, tests 1.17s, environment 0ms)
-

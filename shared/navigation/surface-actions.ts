@@ -814,18 +814,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Inconsistency board ──
-  {
-    id: 'inconsistency.set-regulator',
-    surfaceId: 'inconsistency',
-    label: 'Switch the regulator overlay',
-    description:
-      'On the inconsistency board, switch the FDA/EMA overlay — a client-side re-scoring of the same findings; the applied detail restates the gate verdict under the new overlay. Scans, resolutions, and assumption revaluations stay governed human acts.',
-    params: [
-      { name: 'regulator', required: true, description: 'The regulator overlay to apply.', enum: ['FDA', 'EMA'] },
-    ],
-  },
-
   // ── Capability catalog ──
   {
     id: 'intelligence-catalog.filter',
@@ -1543,7 +1531,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     description:
       'On Submission Gateway Transmittals, open the gateway-status card for one logged transmittal — ' +
       'the same read the row\'s Status control performs. Name the transmittal by its log number as ' +
-      'shown ("#12" or "12") or by its gateway reference; resolved against the real transmittal log, ' +
+      'shown ("#12" or "12") or by its gateway reference; resolved against the rows the log renders, ' +
       'with the logged numbers named back on a miss so the next attempt uses a real one. The card ' +
       'itself states whether the agency was polled or the last recorded state is being shown; it ' +
       'changes nothing at the agency and nothing on file.',
@@ -1556,19 +1544,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'its gateway reference string from the Gateway ref column.',
       },
     ],
-  },
-  {
-    id: 'submission-gateway.reload-findings',
-    surfaceId: 'submission-gateway',
-    label: 'Reload the refusal findings',
-    description:
-      'On Submission Gateway Transmittals, re-run the package preflight behind the refusal card and ' +
-      'show what it reports now — the same read the card\'s \'Reload findings\' control performs, for ' +
-      'the package the screen last worked on. Use it when a refused assembly or a refused transmit is ' +
-      'on screen and the person asks whether the blockers still stand. Preflight is a read plus a ' +
-      'derived cache of its own run (server/routes/submission-ops.ts:3341-3347), not a governed ' +
-      'transition; it assembles nothing and transmits nothing. Refused honestly when no refusal card ' +
-      'is showing, because that is the only state in which a person has this control.',
   },
   {
     id: 'ectd-compile.set-region',

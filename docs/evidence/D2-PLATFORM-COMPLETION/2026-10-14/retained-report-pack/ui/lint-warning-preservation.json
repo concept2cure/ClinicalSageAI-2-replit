@@ -1,0 +1,18 @@
+{
+  "originalSourceSha256": "21d4eb58897197a2cd81c2715cc750f146148453108a054b4276e135515ed655",
+  "originalErrors": 0,
+  "originalWarnings": 7,
+  "originalRules": [
+    "complexity",
+    "complexity",
+    "max-lines",
+    "complexity",
+    "complexity",
+    "max-lines-per-function",
+    "complexity"
+  ],
+  "finalScopedErrors": 0,
+  "finalScopedWarnings": 7,
+  "finalTestWarnings": 0,
+  "warningCountGrowth": 0
+}

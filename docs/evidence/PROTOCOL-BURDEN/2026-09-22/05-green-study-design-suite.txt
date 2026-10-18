@@ -280,4 +280,3 @@ stdout | server/services/study-design/__tests__/csr-evidence-source.test.ts
       Tests  219 passed (219)
    Start at  03:56:14
    Duration  7.49s (transform 3.20s, setup 667ms, import 7.95s, tests 4.87s, environment 2ms)
-

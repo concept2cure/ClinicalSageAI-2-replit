@@ -41,6 +41,7 @@ const NO_CANONICAL_SOURCES_ERROR =
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
+import { governedActorId } from '../../middleware/orgMembership';
 
 const router = express.Router();
 const log = createScopedLogger('module3-convergence');
@@ -60,6 +61,9 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
   try {
     const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
+    // 2026-10-15: with no user, the section's provenance event was written by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
 
     await client.query('BEGIN');
 
@@ -98,7 +102,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     }
 
     await persistComposedSection(client, orgId, projectId, section, {
-      actorId: String((req as any).user?.id ?? 'system'),
+      actorId: String(userId),
       event: 'compiled',
       eventPayload: { trigger: 'build-section-api' },
     });
@@ -116,7 +120,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      }, { createdById: Number((req as any).user?.id) || null });
+      }, { createdById: userId });
       if (bridged.bridged) {
         bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
       } else {

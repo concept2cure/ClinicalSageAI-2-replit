@@ -1,0 +1,21 @@
+# D01 / D04 implementation and verification
+
+## Implemented
+
+- GraphRAG's six route handlers and traversal SQL now use the authenticated request's pinned PostgreSQL client. Missing organization returns 403; missing request database scope returns 503. No shared-pool fallback remains. Failed vector, graph or citation reads return unavailable rather than empty or partial success. Health reports unreadable counts as null with 503 and distinguishes configured Neo4j from verified connectivity. Its feature descriptions name connected-component clustering and token overlap rather than claiming Leiden/BM25 or unimplemented embedding providers.
+- MDX analytics SQL now uses that same request client with explicit organization predicates. Missing tables/columns return sanitized 503 `ANALYTICS_UNAVAILABLE`; successful initialized sources may still return real zero counts. Unsupported pathway filtering returns 400, and the surface disables those choices with an explanation.
+- Analytics reads saved runs through the canonical `/api/report-os/runs` API, preserving its existing licensed and object-level access checks. Exact run links open Reporting through `reportRunId`. The register renders recorded status, scope and date; it invents no completion percentages, authors or signatures. Loading, refusal, malformed response and confirmed empty are separate states with retries. Report reads stay independent of unavailable metric sources.
+- Missing peer-cycle-time, FDA reviewer and per-tool acceptance sources have explicit messages. Blocker median, owner and trend are unrecorded rather than fabricated zero/flat values. Actual submission dates are labeled submission pace, not clearance. The monthly series anchors to the first day of each UTC month and excludes deleted programs. Explicit development sample mode remains marked as sample content.
+
+## Regression evidence
+
+- Before fixes, request-client/schema regressions failed 8 cases (1 passed): `/workspace/audit/deferred-data-before.log`.
+- Before the client fixes, all six saved-report/availability interaction regressions failed: `/workspace/audit/deferred-data-client-before.log`.
+- Integrated scoped verification passed **85 tests in 11 files**: `/workspace/audit/deferred-data-complete-verification.log`. This includes both existing MDX render/interactive smoke suites, GraphRAG extraction provenance, citation tenant constraints, request-client contracts, schema failures, Analytics saved-report UI and the TaskBoard typed recovery fixture.
+- The same **85/85** passed again after root restored the lockfile dependencies: `/workspace/audit/deferred-data-locked-deps-verification.log`. The final hook loading-state/null-payload checks also passed 10/10 in `/workspace/audit/deferred-data-client-final.log`.
+- PGlite executes actual route SQL as a `NOSUPERUSER` role with FORCE RLS and the graph migration's tenant predicate. It first reproduces the unscoped zero, then reads two nodes/one edge/one citation for tenant 7, isolates tenant 8, denies guessed foreign node/document traversal and excludes unattributed rows. Analytics reads two own programs and one own transmittal. Provider calls are mocked to throw and verified unused in this runtime-role suite.
+- ESLint, including normally ignored retained client files, reports zero errors and three existing size/complexity warnings: `/workspace/audit/deferred-data-eslint-final.log`. Owned-file whitespace checks pass. Root owns integrated TypeScript/build and wider repository validation.
+
+## Remaining qualifications and blockers
+
+These capabilities remain deferred; no module grants, catalog membership, mount activation or feature flags changed. This is verified source and local PostgreSQL-compatible execution, not a deployment or production-data attestation. External peer/FDA decision cohorts and per-tool acceptance attribution are not held by these sources, so those facets remain explicitly unavailable. No authoritative external data was acquired and no new provider call was made. Availability of actual deployed graph content and schemas requires the release/database checks owned by the deployment process. Graph ingestion's extraction/write completeness and forecasting qualification are outside this read-scope remedy.

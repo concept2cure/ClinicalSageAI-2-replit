@@ -1,0 +1,5 @@
+Scope: 2 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana/AnaToolExecutor.ts: 0 target diagnostics
+server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4650
+Total selected-scope diagnostics: 0

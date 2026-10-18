@@ -24,11 +24,21 @@
  * (filingVocabularyRefusal): a value outside it is refused, never stored.
  */
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultDocKindLabel } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { stableHash } from '../../../shared/canonical-json.js';
+import { LEGACY_CATALOG_VERIFICATION_SCOPE, type LegacyCatalogVerificationScope } from '../../../shared/ana/catalog-facts.js';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { supersededSql } from './vault-version-family.js';
+import { verifyKeyDataAgainstText, type UnverifiedKeyDataLeaf } from './document-catalog-core.js';
+import { admitCatalogActor, CatalogAdmissionError } from './document-catalog-admission.js';
+import { HASH_RE, textDigest, reserveCatalogWrite, lockedCatalogSource, sourceProblem, requireWritableSource, requireUpdateReceipt, missingVectorOperation } from './document-catalog-write-integrity.js';
 
 export type CatalogState = 'suggested' | 'confirmed' | 'corrected';
 
@@ -66,30 +76,34 @@ type Client = import('pg').PoolClient;
 
 const SUGGEST = `UPDATE vault.document_catalog SET
        catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
-       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = NOW(),
+       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = clock_timestamp(),
        catalog_state = 'suggested', proposed_by = $9, proposed_model = $10,
        proposed_thread_id = $11, proposed_turn_id = $12,
        confirmed_by = NULL, confirmed_at = NULL, correction_reason = NULL,
-       updated_at = NOW()
-     WHERE document_id = $7 AND content_hash = $8`;
+       updated_at = clock_timestamp()
+     WHERE document_id = $7 AND content_hash = $8
+     RETURNING document_id, content_hash, updated_at::text AS revision`;
 /** The same write with the vector, where the column exists (pgvector). */
 const SUGGEST_WITH_VECTOR = `UPDATE vault.document_catalog SET
        catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
-       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = NOW(),
+       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6, cataloged_at = clock_timestamp(),
        catalog_state = 'suggested', proposed_by = $9, proposed_model = $10,
        proposed_thread_id = $11, proposed_turn_id = $12,
        confirmed_by = NULL, confirmed_at = NULL, correction_reason = NULL,
-       updated_at = NOW(), embedding = $13::vector
-     WHERE document_id = $7 AND content_hash = $8`;
+       updated_at = clock_timestamp(), embedding = $13::vector
+     WHERE document_id = $7 AND content_hash = $8
+     RETURNING document_id, content_hash, updated_at::text AS revision`;
 
 // ─── AnA's suggestion ──────────────────────────────────────────────────────────
 
 export interface CatalogSuggestion {
   documentId: string;
   contentHash: string;
+  /** Exact text checked before asynchronous embedding; unchanged bytes are insufficient. */
+  expectedExtractedTextSha256: string;
   organizationId: number;
   programId: string;
-  documentTitle: string;
+  documentTitle: string | null;
   documentKind: string;
   purpose: string;
   summary: string;
@@ -103,7 +117,7 @@ export interface CatalogSuggestion {
 
 export type SuggestionResult =
   | { ok: true; embeddingStatus: 'embedded' | 'failed' }
-  | { ok: false; refusal: string };
+  | { ok: false; refusal: string; unverifiedKeyData?: UnverifiedKeyDataLeaf[] };
 
 /** The suggestion's UPDATE; the vector only where the column exists (pgvector). */
 async function updateSuggestion(client: Client, s: CatalogSuggestion): Promise<'embedded' | 'failed'> {
@@ -118,15 +132,19 @@ async function updateSuggestion(client: Client, s: CatalogSuggestion): Promise<'
     await client.query('SAVEPOINT catalog_vector');
     try {
       params[4] = 'embedded';
-      await client.query(sql(true), [...params, s.embeddingLiteral]);
+      const receipt = await client.query(sql(true), [...params, s.embeddingLiteral]);
+      requireUpdateReceipt(receipt, s.documentId, s.contentHash);
       await client.query('RELEASE SAVEPOINT catalog_vector');
       return 'embedded';
-    } catch {
+    } catch (err) {
+      if (!missingVectorOperation(err)) throw err;
       await client.query('ROLLBACK TO SAVEPOINT catalog_vector');
+      await client.query('RELEASE SAVEPOINT catalog_vector');
     }
   }
   params[4] = 'failed';
-  await client.query(sql(false), params);
+  const receipt = await client.query(sql(false), params);
+  requireUpdateReceipt(receipt, s.documentId, s.contentHash);
   return 'failed';
 }
 
@@ -158,6 +176,11 @@ function suggestionAuditDetails(
     from: { state: before.state, documentKind: before.document_kind, purpose: before.purpose },
     to: { state: 'suggested', documentKind: s.documentKind, purpose: s.purpose },
     keyDataPaths: s.keyData ? Object.keys(s.keyData) : [],
+    contentHash: s.contentHash,
+    extractedTextSha256: s.expectedExtractedTextSha256,
+    keyDataSha256: stableHash(s.keyData),
+    checkerRevision: 'legacy-key-data-presence:v1',
+    checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE,
     description: `${p ? 'AnA suggested catalog record' : 'Catalog record suggested'}: ${vaultDocKindLabel(s.documentKind)}. Not yet confirmed.`,
   };
 }
@@ -167,16 +190,49 @@ function suggestionAuditDetails(
  * transaction. Refused when the bytes changed since the read, and when a
  * person has already confirmed or corrected the record.
  */
-export async function writeCatalogSuggestion(s: CatalogSuggestion): Promise<SuggestionResult> {
+function validSuggestionIdentity(s: CatalogSuggestion): boolean {
+  return HASH_RE.test(s.contentHash) && HASH_RE.test(s.expectedExtractedTextSha256 ?? '')
+    && UUID_RE.test(s.documentId) && UUID_RE.test(s.programId);
+}
+
+function validSuggestionDescription(s: CatalogSuggestion): boolean {
+  return typeof s.purpose === 'string' && s.purpose.trim().length > 0 && s.purpose.length <= PURPOSE_MAX
+    && typeof s.summary === 'string' && s.summary.trim().length > 0 && s.summary.length <= SUMMARY_MAX;
+}
+
+function suggestionPreflight(s: CatalogSuggestion): string | null {
+  if (!validSuggestionIdentity(s) || !validSuggestionDescription(s)) {
+    return 'A valid source version, extraction digest and bounded description are required. Nothing was saved.';
+  }
+  return filingVocabularyRefusal({ evidenceKind: s.documentKind })?.message ?? null;
+}
+
+export async function writeCatalogSuggestion(input: CatalogSuggestion): Promise<SuggestionResult> {
+  // Snapshot before connection acquisition/embedding-related asynchronous work.
+  const s = JSON.parse(JSON.stringify(input)) as CatalogSuggestion;
+  const preflight = suggestionPreflight(s);
+  if (preflight) return { ok: false, refusal: preflight };
+  s.documentId = s.documentId.toLowerCase(); s.programId = s.programId.toLowerCase();
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await reserveCatalogWrite(client, s.organizationId, s.programId);
+    await admitCatalogActor(client, s, { write: true, hold: true });
+    const source = await lockedCatalogSource(client, s);
+    const extractedTextSha256 = requireWritableSource(source, s.organizationId, s.contentHash, s.expectedExtractedTextSha256);
+    s.expectedExtractedTextSha256 = extractedTextSha256;
+    const checked = verifyKeyDataAgainstText(s.keyData, source.extracted_text);
+    if (!checked.verified) {
+      await client.query('ROLLBACK');
+      return { ok: false, refusal: checked.reason ?? 'The key data does not match the current source text.', unverifiedKeyData: checked.unverified };
+    }
     const found = await client.query(
       `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary, c.confirmed_at
-         FROM vault.document_catalog c
-        WHERE c.document_id = $1 AND c.content_hash = $2
-        FOR UPDATE`,
-      [s.documentId, s.contentHash],
+         FROM vault.document_catalog c JOIN vault.documents d ON d.id = c.document_id
+        WHERE c.document_id = $1 AND c.content_hash = $2 AND d.content_hash = $2
+          AND d.program_id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $4 AND rp.deleted_at IS NULL)
+        FOR UPDATE OF c, d`,
+      [s.documentId, s.contentHash, s.programId, s.organizationId],
     );
     const before = found.rows[0] ? { ...found.rows[0], state: catalogStateOf(found.rows[0]) } : undefined;
     const refusal = !before ? VERSION_CHANGED : personDecided(before);
@@ -193,10 +249,14 @@ export async function writeCatalogSuggestion(s: CatalogSuggestion): Promise<Sugg
       resourceId: s.documentId,
       details: suggestionAuditDetails(s, before),
     });
+    await admitCatalogActor(client, s, { write: true, hold: true });
     await client.query('COMMIT');
     return { ok: true, embeddingStatus };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    // The record no longer describes the bytes AnA read: say that, not "no longer eligible".
+    if (err instanceof CatalogAdmissionError && err.code === 'SOURCE_VERSION_CHANGED') return { ok: false, refusal: VERSION_CHANGED };
+    if (err instanceof CatalogAdmissionError || err instanceof ProgramReadAccessError) return { ok: false, refusal: err.message };
     throw err;
   } finally {
     client.release();
@@ -213,6 +273,8 @@ export interface ReviewCatalogArgs {
   action: 'confirm' | 'correct';
   /** The content hash the person was shown: a record for other bytes is not confirmed. */
   expectedContentHash?: string;
+  /** Optional exact extraction shown; legacy callers retain whole-record semantics. */
+  expectedExtractedTextSha256?: string;
   /**
    * The record revision the person was shown (readCatalogRecord's `revision`).
    * Required: AnA may re-suggest on the same bytes between the read and the
@@ -266,8 +328,6 @@ function correctionFields(args: ReviewCatalogArgs): Partial<CatalogFields> | Rev
 
 /** The checks that need no database: role, ids, reason and fields. */
 function reviewPreflight(args: ReviewCatalogArgs): { reason: string | null; fields: Partial<CatalogFields> } | ReviewCatalogResult {
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) {
     return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
   }
@@ -296,24 +356,14 @@ interface ReviewRow {
   proposed_turn_id: string | null;
   key_data: unknown;
   revision: string;
+  extractedTextSha256: string;
 }
 
 /** The document of this project and its current record, locked; or the refusal. */
 async function lockRecord(client: Client, args: ReviewCatalogArgs): Promise<ReviewRow | ReviewCatalogResult> {
-  const doc = await client.query(
-    `SELECT d.document_title, d.content_hash
-       FROM vault.documents d
-      WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
-        AND EXISTS (SELECT 1 FROM regulatory_programs rp
-                     WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL)
-      FOR UPDATE OF d`,
-    [args.documentId, args.programId, args.organizationId],
-  );
-  if (!doc.rows[0]) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
-  const contentHash = String(doc.rows[0].content_hash);
-  if (args.expectedContentHash && args.expectedContentHash !== contentHash) {
-    return refuse(409, 'CONFLICT', 'This document has a newer version than the one shown. Reload the Vault and review the current record. Nothing was saved.');
-  }
+  const source = await lockedCatalogSource(client, args);
+  const extractedTextSha256 = requireWritableSource(source, args.organizationId, args.expectedContentHash, args.expectedExtractedTextSha256);
+  const contentHash = source.content_hash;
   const rec = await client.query(
     `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary,
             c.proposed_by, c.proposed_model, c.proposed_turn_id, c.key_data, c.updated_at::text AS revision
@@ -329,7 +379,7 @@ async function lockRecord(client: Client, args: ReviewCatalogArgs): Promise<Revi
     return refuse(409, 'CHANGED_SINCE_SHOWN',
       'The record changed after it was shown to you. Reload it and review the current text. Nothing was saved.');
   }
-  return { document_title: doc.rows[0].document_title, content_hash: contentHash, ...rec.rows[0], state: catalogStateOf(rec.rows[0]) } as ReviewRow;
+  return { document_title: source.document_title, content_hash: contentHash, ...rec.rows[0], state: catalogStateOf(rec.rows[0]), extractedTextSha256 } as ReviewRow;
 }
 
 function describeReview(state: 'confirmed' | 'corrected', changes: Array<{ field: keyof CatalogFields; from: string | null; to: string }>): string {
@@ -365,12 +415,15 @@ function decisionPlan(
  * Confirm AnA's description as written, or correct it with a reason. The
  * UPDATE and its chained audit row commit together or not at all.
  */
-export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<ReviewCatalogResult> {
+export async function reviewCatalogRecord(input: ReviewCatalogArgs): Promise<ReviewCatalogResult> {
+  const args = JSON.parse(JSON.stringify(input)) as ReviewCatalogArgs;
   const pre = reviewPreflight(args);
   if ('ok' in pre) return pre as ReviewCatalogResult;
+  args.documentId = args.documentId.toLowerCase(); args.programId = args.programId.toLowerCase();
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await reserveCatalogWrite(client, args.organizationId, args.programId);
+    await admitCatalogActor(client, args, { write: true, hold: true });
     const row = await lockRecord(client, args);
     if ('ok' in row) {
       await client.query('ROLLBACK');
@@ -384,17 +437,19 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
     const { current, changes } = plan;
     const state = args.action === 'confirm' ? 'confirmed' : 'corrected';
     const next = { ...current, ...pre.fields };
-    await client.query(
+    const receipt = await client.query(
       `UPDATE vault.document_catalog SET
          catalog_state = $1, document_kind = $2, purpose = $3, summary = $4,
-         confirmed_by = $5, confirmed_at = NOW(), correction_reason = $6,
+         confirmed_by = $5, confirmed_at = clock_timestamp(), correction_reason = $6,
          -- A changed description is no longer what its vector encodes.
          embedding_status = CASE WHEN $7 THEN 'stale' ELSE embedding_status END,
-         updated_at = NOW()
-       WHERE document_id = $8 AND content_hash = $9`,
+         updated_at = clock_timestamp()
+       WHERE document_id = $8 AND content_hash = $9 AND updated_at::text = $10
+       RETURNING document_id, content_hash, updated_at::text AS revision`,
       [state, next.documentKind, next.purpose, next.summary, args.userId, pre.reason, changes.length > 0,
-        args.documentId, row.content_hash],
+        args.documentId, row.content_hash, args.expectedRevision],
     );
+    requireUpdateReceipt(receipt, args.documentId, row.content_hash);
     await writeChainedAuditRow(client, {
       tenantId: args.organizationId,
       userId: args.userId ?? undefined,
@@ -408,6 +463,11 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
         programId: args.programId,
         documentTitle: row.document_title,
         contentHash: row.content_hash,
+        extractedTextSha256: row.extractedTextSha256,
+        extractionBindingShown: args.expectedExtractedTextSha256 !== undefined,
+        keyDataSha256: stableHash(row.key_data),
+        checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE,
+        reviewScope: 'whole_catalog_record',
         proposedBy: row.proposed_by,
         proposedModel: row.proposed_model,
         proposedTurnId: row.proposed_turn_id,
@@ -421,10 +481,12 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
         description: describeReview(state, changes),
       },
     });
+    await admitCatalogActor(client, args, { write: true, hold: true });
     await client.query('COMMIT');
     return { ok: true, state, changes };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof CatalogAdmissionError || err instanceof ProgramReadAccessError) return refuse(err.status, err.code, err.message);
     throw err;
   } finally {
     client.release();
@@ -435,6 +497,10 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
 
 export interface CatalogRecordView {
   contentHash: string;
+  extractedTextSha256: string | null;
+  /** Check coverage, never a retrospective assertion that this row passed. */
+  checkScope: Readonly<LegacyCatalogVerificationScope>;
+  currentUse: { eligible: boolean; reasonCode: string | null; originalFileAvailable: boolean };
   /** The record revision a confirm or correction must name (its updated_at). */
   revision: string | null;
   /** Whether the reader's role may confirm or correct; the server checks again on the write. */
@@ -456,47 +522,76 @@ export interface CatalogRecordView {
 }
 
 /** A row of the read, as the panel shows it. */
-function toRecordView(r: Record<string, any>): CatalogRecordView {
+function catalogAttributionView(r: Record<string, any>): Pick<CatalogRecordView,
+  'proposedBy' | 'proposedModel' | 'proposedAt' | 'confirmedBy' | 'confirmedAt' | 'correctionReason'> {
   const iso = (v: unknown) => (v ? new Date(String(v)).toISOString() : null);
   return {
+    proposedBy: r.proposed_by ?? null, proposedModel: r.proposed_model ?? null,
+    proposedAt: iso(r.cataloged_at),
+    confirmedBy: r.confirmed_by != null ? { id: Number(r.confirmed_by), name: r.confirmed_by_name ?? null } : null,
+    confirmedAt: iso(r.confirmed_at), correctionReason: r.correction_reason ?? null,
+  };
+}
+
+function toRecordView(r: Record<string, any>, organizationId: number, role: string): CatalogRecordView {
+  const problem = sourceProblem(r, organizationId);
+  const originalFileAvailable = r.original_file_available === true;
+  return {
     contentHash: String(r.content_hash),
+    extractedTextSha256: typeof r.extracted_text === 'string' && r.extracted_text.trim() ? textDigest(r.extracted_text) : null,
+    checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE,
+    currentUse: { eligible: problem === null, reasonCode: problem ?? (!originalFileAvailable ? 'SOURCE_ORIGINAL_UNAVAILABLE' : null), originalFileAvailable },
     revision: r.revision ?? null,
-    canWrite: vaultWriteRefusal() === null,
+    canWrite: vaultWriteRefusal(role) === null && GOVERNED_WRITE_ROLES.has(role) && problem === null && originalFileAvailable,
     state: catalogStateOf(r),
     documentKind: r.document_kind ?? null,
     documentKindLabel: r.document_kind ? vaultDocKindLabel(r.document_kind) : null,
     purpose: r.purpose ?? null,
     summary: r.summary ?? null,
     keyData: r.key_data ?? null,
-    proposedBy: r.proposed_by ?? null,
-    proposedModel: r.proposed_model ?? null,
-    proposedAt: iso(r.cataloged_at),
-    confirmedBy: r.confirmed_by != null ? { id: Number(r.confirmed_by), name: r.confirmed_by_name ?? null } : null,
-    confirmedAt: iso(r.confirmed_at),
-    correctionReason: r.correction_reason ?? null,
+    ...catalogAttributionView(r),
     extractionStatus: r.catalog_status ?? null,
   };
 }
 
 /** The current version's record, for a document of this project; null when it is not one. */
 export async function readCatalogRecord(args: {
+  executor?: RequestSqlClient;
   programId: string;
   documentId: string;
   organizationId: number;
+  userId?: number | null;
 }): Promise<CatalogRecordView | null> {
+  args = Object.freeze({ executor: args.executor, programId: args.programId, documentId: args.documentId, organizationId: args.organizationId, userId: args.userId });
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) return null;
-  const { rows } = await pool.query(
-    `SELECT d.content_hash, c.catalog_status, c.catalog_state,
+  const actorArgs = { ...args, userId: args.userId ?? null };
+  const owned = !args.executor || args.executor === pool;
+  const client = owned ? await pool.connect() : args.executor!;
+  try {
+    if (owned) await client.query('BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY');
+    await admitCatalogActor(client, actorArgs);
+    const { rows } = await client.query(
+    `SELECT d.organization_id, d.content_hash, d.extracted_text, c.content_hash AS catalog_content_hash,
+            ${vaultDataEligibleSql('d')} AS data_eligible, ${vaultBinaryAvailableSql('d')} AS original_file_available,
+            ${supersededSql('d')} AS superseded, c.catalog_status, c.catalog_state,
             c.document_kind, c.purpose, c.summary, c.key_data, c.proposed_by, c.proposed_model,
             c.cataloged_at, c.confirmed_by, u.name AS confirmed_by_name, c.confirmed_at, c.correction_reason,
             c.updated_at::text AS revision
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
        LEFT JOIN users u ON u.id = c.confirmed_by
-      WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
+      WHERE d.id = $1 AND d.program_id = $2 AND d.organization_id = $3 AND d.deleted_at IS NULL
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL)`,
     [args.documentId, args.programId, args.organizationId],
   );
-  return rows[0] ? toRecordView(rows[0]) : null;
+    const current = await admitCatalogActor(client, actorArgs);
+    const view = rows[0]?.organization_id === args.organizationId ? toRecordView(rows[0], args.organizationId, current.role) : null;
+    if (owned) await client.query('COMMIT');
+    return view;
+  } catch (err) {
+    if (owned) await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof CatalogAdmissionError && [401, 403, 404].includes(err.status)) return null;
+    throw err;
+  } finally { if (owned) (client as import('pg').PoolClient).release(); }
 }

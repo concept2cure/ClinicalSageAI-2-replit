@@ -73,4 +73,3 @@ AssertionError: expected [ 'System', 'System' ] to deeply equal [ 'WO03 displays
       Tests  2 failed | 4 passed (6)
    Start at  01:45:04
    Duration  2.87s (transform 1.06s, setup 71ms, import 1.79s, tests 736ms, environment 0ms)
-

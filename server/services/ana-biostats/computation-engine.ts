@@ -38,6 +38,33 @@ export class ComputationRefusal extends Error {
   }
 }
 
+/** One input an engine cannot proceed without, and whether it was stated in a readable form. */
+export interface RequiredInputCheck {
+  field: string;
+  value: unknown;
+  ok: boolean;
+  /** What a readable value is, e.g. "one of a, b" or "true or false". */
+  expected: string;
+}
+
+/**
+ * Refuses, naming every one, the required inputs not stated in a readable form; nothing stands in for
+ * them. missing_input when none of them was given, else invalid_input. `nothingIs` ends the message
+ * ("Nothing is assessed without it"). One copy since 2026-10-15; the labeling and nonclinical-ADME
+ * knowledge engines each carried their own.
+ */
+export function refuseUnlessStated(fn: string, inputs: readonly RequiredInputCheck[], nothingIs: string): void {
+  const bad = inputs.filter((i) => !i.ok);
+  if (bad.length === 0) return;
+  const absent = (v: unknown): boolean => v === undefined || v === null;
+  const named = bad.map((i) => `${i.field} (${i.expected}${absent(i.value) ? '' : `; got ${JSON.stringify(i.value)}`})`);
+  throw new ComputationRefusal(
+    bad.every((i) => absent(i.value)) ? 'missing_input' : 'invalid_input',
+    `${fn}: required and not stated: ${named.join('; ')}. Nothing is ${nothingIs} without ${bad.length > 1 ? 'them' : 'it'}.`,
+    bad[0].field,
+  );
+}
+
 export class ComputationEngine {
 
   // Φ and Φ⁻¹ are the canonical full-precision ones (stats/normal.ts). Before

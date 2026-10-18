@@ -1,0 +1,15 @@
+Actual bundled-entrypoint probe using canonical esbuild options and pinned Node 22.23.3.
+Scratch cwd; inherited environment cleared; no .env/provider credential; unused loopback DB URL.
+
+before-summary.json: {"signal": "SIGKILL", "status": null, "validatorReached": false}
+after-summary.json: {"signal": null, "status": 1, "validatorReached": true}
+ Test Files  8 passed (8)
+      Tests  62 passed (62)
+
+Function-source byte equality:
+{
+  "functionSourceByteIdentical": {
+    "computeAuthoringSignatureDigest": true,
+    "sectionsDigest": true
+  }
+}

@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T06:56:13.531Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T06:56:13.532Z","pid":101332,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:56:13.532Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/mdx-qms-request-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:56:13.821Z', poolSize: 1 }
+
+stdout | tests/db/mdx-qms-request-rls.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-10-14T06:56:15.315Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.319Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.322Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.326Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.329Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.333Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.335Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.338Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+{"level":30,"time":"2026-10-14T06:56:15.341Z","pid":101332,"hostname":"851fa3de1b8e","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc dc812484-1d53-4fd5-8599-39161990b895 by unknown"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 131ms
+(node:101332) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 21ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 5ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 71ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads retained versions and counts actual current-version training 50ms
+{"level":40,"time":"2026-10-14T06:56:15.525Z","pid":101332,"hostname":"851fa3de1b8e","context":{"action":"mdx.qms.training.acknowledge","resourceType":"qms_document","resourceId":4,"code":"42501"},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > keeps the actual acknowledgment when the captured audit client faults, reports missing history, then recovers on a fresh request 38ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > refuses exact foreign records, training acknowledgments and program claims without exposing prose 44ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > uses fresh membership to refuse an unshared member despite an admin token claim 26ms
+{"level":50,"time":"2026-10-14T06:56:15.614Z","pid":101332,"hostname":"851fa3de1b8e","context":{"err":"Request-scoped database context is required","correlationId":null,"code":"REQUEST_DB_CONTEXT_REQUIRED"},"msg":"[mdx-qms] doc-editor failed"}
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 4ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  06:56:12
+   Duration  3.60s (transform 1.47s, setup 52ms, import 150ms, tests 3.22s, environment 0ms)
+

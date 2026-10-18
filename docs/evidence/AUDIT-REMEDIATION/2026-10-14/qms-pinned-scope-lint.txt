@@ -1,0 +1,15 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/mdx-qms.ts
+  182:66  warning  Async arrow function has too many lines (102). Maximum allowed is 100                    max-lines-per-function
+  503:1   warning  Async function 'verifyApprovalSigner' has too many parameters (6). Maximum allowed is 5  max-params
+  725:1   warning  File has too many lines (1095). Maximum allowed is 500                                   max-lines
+  788:88  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-documents.ts
+  320:8  warning  Async function 'insertDocumentTx' has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/qms/controlled-document-service.ts
+  122:8  warning  Async function 'updateControlledQmsDocument' has a complexity of 19. Maximum allowed is 15  complexity
+
+✖ 6 problems (0 errors, 6 warnings)
+

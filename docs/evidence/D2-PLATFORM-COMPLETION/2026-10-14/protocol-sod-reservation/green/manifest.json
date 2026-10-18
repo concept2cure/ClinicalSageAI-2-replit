@@ -1,0 +1,279 @@
+{
+  "generatedAtUtc": "2026-10-14T04:55:16.721852+00:00",
+  "qualification": "Final source and evidence bytes for two distinct actual PostgreSQL native runs; branch publication and repository-wide gates are owned by the parent. Raw /tmp files remain private and unchanged.",
+  "digestAlgorithm": "sha256",
+  "sources": [
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 13132,
+      "digestAlgorithm": "sha256",
+      "digest": "67f674b631e1411043303cc2d912af5a3f99288c3979d47e116fbfac59044e4e"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "bytes": 31317,
+      "digestAlgorithm": "sha256",
+      "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29725,
+      "digestAlgorithm": "sha256",
+      "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-signature.ts",
+      "bytes": 1648,
+      "digestAlgorithm": "sha256",
+      "digest": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392"
+    },
+    {
+      "path": "server/services/governance/separation-of-duties.ts",
+      "bytes": 23176,
+      "digestAlgorithm": "sha256",
+      "digest": "105544380fb9de141784d356f5f2f53dd19e81d83d351fd7e42c3fbbb4559c9d"
+    },
+    {
+      "path": "server/services/part11/signature-persistence.ts",
+      "bytes": 48363,
+      "digestAlgorithm": "sha256",
+      "digest": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "bytes": 57213,
+      "digestAlgorithm": "sha256",
+      "digest": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/vault/vault-upload-source-admission.ts",
+      "bytes": 3423,
+      "digestAlgorithm": "sha256",
+      "digest": "6910eb5ded465561d7b4c90de13af01bdc2dce7935819f4b4254a47ca1bf2a07"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+      "bytes": 3008,
+      "digestAlgorithm": "sha256",
+      "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+    },
+    {
+      "path": "tests/db/protocol-approval-independence.dbtest.ts",
+      "bytes": 30805,
+      "digestAlgorithm": "sha256",
+      "digest": "230a14a2a7ce647bbec160bb2daf4af9d4978616fea20b947be500ff767fdb32"
+    },
+    {
+      "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+      "bytes": 42617,
+      "digestAlgorithm": "sha256",
+      "digest": "4fca47dbc7636d48602b9023fa637fcaaadf0486ba2acc196847d2bc533caf11"
+    },
+    {
+      "path": "tests/db/project-vault-parent-access.dbtest.ts",
+      "bytes": 38259,
+      "digestAlgorithm": "sha256",
+      "digest": "026e0299b255631135c8a9c2301dd05ebf660b5f554958593885a704851773fb"
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "bytes": 25473,
+      "digestAlgorithm": "sha256",
+      "digest": "be03f5cf21c2e7158f626bc79773bcf768e4425ddaac24aa9875f52d5e07efd8"
+    },
+    {
+      "path": "tests/db/report-tenant-index.dbtest.ts",
+      "bytes": 4525,
+      "digestAlgorithm": "sha256",
+      "digest": "d78fb716f4a5f5abd9de3d3c076a73891f218a0571c03260daa7e4e3071eba95"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "bytes": 4073,
+      "digestAlgorithm": "sha256",
+      "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "bytes": 8777,
+      "digestAlgorithm": "sha256",
+      "digest": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    },
+    {
+      "path": "migrations/0014_report_os_foundation.sql",
+      "bytes": 12813,
+      "digestAlgorithm": "sha256",
+      "digest": "723f7c1d0599b9285846b2f2ba3a688f5c52954be553184a2d02b04d35acfb5c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/README.md",
+      "bytes": 5012,
+      "digestAlgorithm": "sha256",
+      "digest": "7a1586297f24d71a9cb6730f0812b350573b91e92df6d8a27178a1d3eaddde41"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/assertion-preservation.json",
+      "bytes": 720,
+      "digestAlgorithm": "sha256",
+      "digest": "7cf93e88e314645ae8a6ae7f4531dbd3bd33dab038d9f80ec5a6abef85724063"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-before-helper-refactor.txt",
+      "bytes": 8941,
+      "digestAlgorithm": "sha256",
+      "digest": "a667e587df1bcf944c4358bcbbaa1d9b1b15845ed3fb72deb79f9c0ebafac845"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-final-four-files.txt",
+      "bytes": 34208,
+      "digestAlgorithm": "sha256",
+      "digest": "ac377f10f85e2ec76190c6d217b7f04e2e22ba5f9bd2e9b23492a8f4b9dd9e4a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-final-three.txt",
+      "bytes": 8939,
+      "digestAlgorithm": "sha256",
+      "digest": "290f7a862cd814713cbed908eca05f6d0e7757d28848ea3dfdbce1a39e3a64cf"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-test-lint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/observations-before-helper-refactor.json",
+      "bytes": 4955,
+      "digestAlgorithm": "sha256",
+      "digest": "9debde88378054a2704d8fe17923a063374ea63594b368fa487f9580db9da83d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/observations-final.json",
+      "bytes": 4955,
+      "digestAlgorithm": "sha256",
+      "digest": "77204c3b256bc8c56885f854edbb804f583bbd5ec3fa05dcf148d12fb8f2932d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/preservation-before-helper-refactor.json",
+      "bytes": 937,
+      "digestAlgorithm": "sha256",
+      "digest": "efa467208240a07e94a5dad757f85ab226d280fa4441d3384f7c33feaf3998c2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/preservation-final.json",
+      "bytes": 937,
+      "digestAlgorithm": "sha256",
+      "digest": "efa467208240a07e94a5dad757f85ab226d280fa4441d3384f7c33feaf3998c2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/source-snapshot-before-helper-refactor.json",
+      "bytes": 3486,
+      "digestAlgorithm": "sha256",
+      "digest": "a1f9a63e102e1afa8b684abd1b0f1f9478efcd0fdc31ae40e7769549a1f650bd"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/source-snapshot-final.json",
+      "bytes": 4389,
+      "digestAlgorithm": "sha256",
+      "digest": "ac4a1d5cc548a52600c39e777839dbfcd8e678476edf1ca0050f2f4c9137d0c0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/verification-summary.json",
+      "bytes": 1887,
+      "digestAlgorithm": "sha256",
+      "digest": "724ae64152260f46fa4dcc413d554d0b6df7e8e1c186fcd23ad3549146efea34"
+    }
+  ],
+  "rawFiles": [
+    {
+      "path": "/tmp/protocol-sod-green-native.txt",
+      "bytes": 8942,
+      "digestAlgorithm": "sha256",
+      "digest": "9173d9a714b9e4a40e0ec245faa1fb4138ae0e40b0d4f7eebb47a35964fc45db",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-before-helper-refactor.txt"
+    },
+    {
+      "path": "/tmp/protocol-sod-green-observations.json",
+      "bytes": 4955,
+      "digestAlgorithm": "sha256",
+      "digest": "9debde88378054a2704d8fe17923a063374ea63594b368fa487f9580db9da83d",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/observations-before-helper-refactor.json"
+    },
+    {
+      "path": "/tmp/protocol-sod-green-preservation.json",
+      "bytes": 936,
+      "digestAlgorithm": "sha256",
+      "digest": "5483deabf2fe97633051a34f3a62e2daedf0edcd69d8956178a14a85f7d7692b",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/preservation-before-helper-refactor.json"
+    },
+    {
+      "path": "/tmp/protocol-sod-green-final-native.txt",
+      "bytes": 8940,
+      "digestAlgorithm": "sha256",
+      "digest": "b381b2e4789da3faba8688feaa89a0d8403b616ef4d92720b3f94b04dbc7c171",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-final-three.txt"
+    },
+    {
+      "path": "/tmp/protocol-sod-green-final-observations.json",
+      "bytes": 4955,
+      "digestAlgorithm": "sha256",
+      "digest": "77204c3b256bc8c56885f854edbb804f583bbd5ec3fa05dcf148d12fb8f2932d",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/observations-final.json"
+    },
+    {
+      "path": "/tmp/protocol-sod-green-final-preservation.json",
+      "bytes": 936,
+      "digestAlgorithm": "sha256",
+      "digest": "5483deabf2fe97633051a34f3a62e2daedf0edcd69d8956178a14a85f7d7692b",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/preservation-final.json"
+    },
+    {
+      "path": "/tmp/protocol-sod-native-helper-lint-final.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-test-lint.txt"
+    },
+    {
+      "path": "/tmp/project-vault-sod-final-helper-native-89.txt",
+      "bytes": 34209,
+      "digestAlgorithm": "sha256",
+      "digest": "12dc46ff3db9c6a5d2ebec64e92c09951fad15bdfae6249434c1ef649c105ac8",
+      "filedCopy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/green/native-final-four-files.txt"
+    }
+  ],
+  "retainedBaselineDocuments": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/baseline/README.md",
+      "bytes": 4270,
+      "digestAlgorithm": "sha256",
+      "digest": "d4b5c1118be19a060a0fdb390085a1c74bb8f3f43c5a16928b4790c208d43b91"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/baseline/retained-red-fixture.json",
+      "bytes": 288,
+      "digestAlgorithm": "sha256",
+      "digest": "0c5a8d989ec2e3a04b78bd237c092918aae3fb3a1e5310266141720aca39bf2a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/baseline/database-qualification.json",
+      "bytes": 808,
+      "digestAlgorithm": "sha256",
+      "digest": "408b13b8cdb4c640198f9feaaa760d3cc475f49c746d0ac7ee207a489fa5b10b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-sod-reservation/baseline/manifest.json",
+      "bytes": 3606,
+      "digestAlgorithm": "sha256",
+      "digest": "51721c3c761bff4a9bec9df534cb0f0ac9e0c13e8745095a9b51ea99cd054b62"
+    }
+  ]
+}

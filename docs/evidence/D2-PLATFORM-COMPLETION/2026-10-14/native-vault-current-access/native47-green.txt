@@ -1,0 +1,51 @@
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words 437ms
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status 205ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 348ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 95ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 240ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 37ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 103ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 25ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 254ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 123ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 540ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 291ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 28ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 76ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 81ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 29ms
+ ✓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 215ms
+ ✓ tests/db/vault-versions.dbtest.ts > the data room names the version its file became (VR-16) > a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0' 152ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 1042ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 23ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 28ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 6ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 27ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 89ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 6ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 284ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 5ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 11ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 52ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 151ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 73ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 77ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 77ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author 191ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it 37ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left 14ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee 356ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program 10ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System" 10ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 103ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries 36ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account' 53ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left 56ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the collaborator list names a collaborator who left, so they can be removed 104ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error 42ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a dossier section's version history names the author who left 27ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the document journey names the creator and reviser who left 9ms
+ Test Files  5 passed (5)
+      Tests  47 passed (47)
+   Start at  20:47:47
+   Duration  30.86s (transform 8.96s, setup 221ms, import 7.87s, tests 21.81s, environment 0ms)

@@ -1,0 +1,7 @@
+{"level":40,"time":"2026-10-13T22:29:19.091Z","pid":26616,"hostname":"f0ef16673bbd","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{"level":40,"time":"2026-10-13T22:29:22.098Z","pid":26616,"hostname":"f0ef16673bbd","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{"level":40,"time":"2026-10-13T22:29:22.098Z","pid":26616,"hostname":"f0ef16673bbd","context":{},"msg":"[audit-service] Database pool not available — audit logging to console only"}
+Native Word section codes: [ '3.2.S.4.1', '3.2.S.4.1' ]
+{"level":30,"time":"2026-10-13T22:29:25.091Z","pid":26616,"hostname":"f0ef16673bbd","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d436b4f5-7577-4115-af0f-5d5434d2e2c3 by a***@canvas.example"}
+Thrown save error: {"code":"23505","constraint":"authoring_sections_doc_code_tenant_uq","message":"duplicate key value violates unique constraint \"authoring_sections_doc_code_tenant_uq\""}
+Authoring rows after refusal: [{"documents":0,"sections":0,"revisions":0,"audits":0}]

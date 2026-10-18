@@ -2,15 +2,22 @@ import type { DocumentDispositionLinkedIds, DocumentDispositionTarget } from '..
 import { DispositionError, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionQueryable, type Snapshot } from './types';
 import { hashSnapshot } from './tokens';
 import { readDerivedCaptureImpact } from './derived-impact';
+import { vaultDataEligibleSql } from './eligibility';
 const SUCCESSFUL_EXTRACTIONS = ['extracted', 'reconciled', 'verified'];
 const ACTIVE_STAGES = ['in_review', 'reviewed', 'approved', 'placed', 'packaged', 'submitted'];
 const iso = (v: unknown): string => v instanceof Date ? v.toISOString() : String(v);
 const unique = (values: string[]): string[] => [...new Set(values)].sort();
 // Server-verified references saved by Authoring are dependencies even when no
 // claim-level citation was created. Exact original identity/hash, within tenant.
-const SAVED_SOURCE_REFERENCE = `EXISTS (SELECT 1 FROM jsonb_path_query(
+const SAVED_SOURCE_REFERENCE = `(EXISTS (SELECT 1 FROM jsonb_path_query(
     COALESCE(to_jsonb(d)->'provenance','{}'::jsonb), '$.projectSourceReferences[*].sources[*]') saved(ref)
-  WHERE saved.ref->>'documentId' = ANY($2::text[]) AND lower(saved.ref->>'contentHash') = $3)`;
+  WHERE saved.ref->>'documentId' = ANY($2::text[]) AND lower(saved.ref->>'contentHash') = $3)
+  OR (d.client_program_id=$5::uuid AND to_jsonb(d)->'provenance'->'importSource'->>'programId'=$5::text
+    AND lower(to_jsonb(d)->'provenance'->'importSource'->>'sha256')=$3
+    AND ((to_jsonb(d)->'provenance'->'importSource'->>'kind'='vault'
+      AND to_jsonb(d)->'provenance'->'importSource'->>'id'=ANY($2::text[]))
+      OR (to_jsonb(d)->'provenance'->'importSource'->>'kind'='data-room'
+      AND to_jsonb(d)->'provenance'->'importSource'->>'id'=ANY($4::text[])))))`;
 async function source(q: DispositionQueryable, input: DispositionPreviewInput, id: string): Promise<any> {
   const rows = input.targetType === 'captured_source'
     ? (await q.query(`SELECT id, title, checksum AS hash, extraction_status, ingestion_status, previous_version_id,
@@ -84,21 +91,37 @@ async function readImpactCounts(q: DispositionQueryable, input: DispositionPrevi
   const governedReferences = await observe(q,'governedReferences',`SELECT g.* FROM governed_dependencies g JOIN projects p ON p.id=g.project_id AND p.organization_id=g.organization_id
     WHERE g.organization_id=$1 AND p.regulatory_program_id=$2 AND g.source_type='artifact' AND g.source_id=ANY($3::text[])`,[input.organizationId,input.programId,linkedIds.artifactIds],fingerprints);
   const savedDraftReferences = await observe(q,'savedDraftReferences',`SELECT d.* FROM authoring_documents d
-    WHERE d.tenant_id=$1 AND ${SAVED_SOURCE_REFERENCE}`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256],fingerprints);
-  const downstreamReferences = lineage+cmcReferences+governedReferences+savedDraftReferences;
+    WHERE d.tenant_id=$1 AND ${SAVED_SOURCE_REFERENCE}`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256,linkedIds.capturedSourceIds.map(String),input.programId],fingerprints);
+  // A -> imported Authoring B -> filed Vault C has different bytes. The
+  // filing receipt, not a guessed equal hash, proves this dependency. While C
+  // is a reusable source, A's data cannot be withdrawn and re-enter through C.
+  const filedImportRenditions = await observe(q,'filedImportRenditions',`SELECT DISTINCT v.id,v.content_hash,
+      origin.ref->>'kind' AS source_kind,origin.ref->>'id' AS source_id,origin.ref->>'sha256' AS source_hash
+    FROM authoring_export_history e
+    JOIN authoring_documents d ON e.document_id::text=d.id::text AND e.tenant_id=d.tenant_id
+    JOIN vault.documents v ON v.id::text=e.metadata->>'vaultDocumentId'
+    CROSS JOIN LATERAL (SELECT COALESCE(e.metadata->'importSource',to_jsonb(d)->'provenance'->'importSource') AS ref) origin
+    WHERE e.tenant_id=$1 AND d.client_program_id=$5::uuid AND v.program_id=$5::uuid AND v.organization_id=$1
+      AND e.metadata->>'filedToVault'='true' AND e.metadata->>'programId'=$5::text
+      AND e.metadata->>'artifactSha256'=v.content_hash AND v.deleted_at IS NULL AND ${vaultDataEligibleSql('v')}
+      AND origin.ref->>'programId'=$5::text AND lower(origin.ref->>'sha256')=$3
+      AND ((origin.ref->>'kind'='vault' AND origin.ref->>'id'=ANY($2::text[]))
+        OR (origin.ref->>'kind'='data-room' AND origin.ref->>'id'=ANY($4::text[])))`,
+    [input.organizationId,linkedIds.vaultDocumentIds,sourceSha256,linkedIds.capturedSourceIds.map(String),input.programId],fingerprints);
+  const downstreamReferences = lineage+cmcReferences+governedReferences+savedDraftReferences+filedImportRenditions;
   const legalHolds = await observe(q,'holds',`SELECT * FROM vault.legal_holds WHERE organization_id = $1 AND lifted_at IS NULL AND (program_id = $2 OR document_id::text = ANY($3::text[]))`,[input.organizationId,input.programId,linkedIds.vaultDocumentIds],fingerprints);
   const vaultApprovals = await observe(q,'approvals',`SELECT * FROM canonical_documents WHERE organization_id = $1 AND source_refs->'vault_documents'->>'nativeId' = ANY($2::text[]) AND stage = ANY($3::text[])`,[input.organizationId,linkedIds.vaultDocumentIds,ACTIVE_STAGES],fingerprints);
   const authorApprovals = await observe(q,'authorApprovals',`SELECT d.* FROM authoring_documents d WHERE d.tenant_id=$1
     AND (${SAVED_SOURCE_REFERENCE} OR EXISTS (SELECT 1 FROM authoring_sections s
       JOIN authoring_citations c ON c.section_id=s.id AND c.tenant_id=s.tenant_id
       WHERE s.doc_id=d.id AND s.tenant_id=d.tenant_id AND c.source='cre_evidence_source' AND c.reference_id=ANY($4::text[])))
-    AND (lower(d.status) IN ('review','in_review','approved','locked','submitted','frozen','effective') OR d.approved_at IS NOT NULL OR d.frozen_at IS NOT NULL OR d.locked_at IS NOT NULL)`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256,linkedIds.capturedSourceIds.map(String)],fingerprints);
+    AND (lower(d.status) IN ('review','in_review','approved','locked','submitted','frozen','effective') OR d.approved_at IS NOT NULL OR d.frozen_at IS NOT NULL OR d.locked_at IS NOT NULL)`,[input.organizationId,linkedIds.vaultDocumentIds,sourceSha256,linkedIds.capturedSourceIds.map(String),input.programId],fingerprints);
   const c2cApprovals = await observe(q,'c2cApprovals',`SELECT DISTINCT d.* FROM c2c_documents d LEFT JOIN c2c_document_sections s ON s.document_id=d.id
     JOIN document_span_lineage l ON l.organization_id=d.org_id AND ((l.document_table='c2c_documents' AND l.document_id=d.id) OR (l.document_table='c2c_document_sections' AND l.document_id=s.id::text))
     WHERE d.org_id=$1 AND d.project_id=$2 AND l.source='cre_evidence_source' AND l.reference_id=ANY($3::text[])
       AND (d.status IN ('review','approved','locked','submitted') OR s.status IN ('review','approved','locked'))`,[input.organizationId,input.programId,linkedIds.capturedSourceIds.map(String)],fingerprints);
   const active = vaultApprovals+authorApprovals+c2cApprovals+artifacts.filter((r)=>['approved','locked'].includes(r.status)).length;
-  return {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences};
+  return {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences,filedImportRenditions};
 }
 async function readCurrent(q: DispositionQueryable, input: DispositionPreviewInput, hash: string) {
   const params = [input.organizationId,input.programId,hash];
@@ -151,12 +174,13 @@ function retentionUntil(vaults: any[]): string|null {
 export async function readDispositionSnapshot(q: DispositionQueryable, input: DispositionPreviewInput, enabled: boolean): Promise<Snapshot> {
   const src = await source(q,input,String(input.targetId));
   const {captures,vaults,artifacts,linkedIds,fingerprints}=await readLinks(q,input,src);
-  const {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences}=await readImpactCounts(q,input,linkedIds,{artifacts,fingerprints,sourceSha256:src.hash});
+  const {atoms,vaultChunks,ragChunks,catalogValues,authorCitations,vaultCitations,downstreamReferences,legalHolds,active,cmcReferences,governedReferences,filedImportRenditions}=await readImpactCounts(q,input,linkedIds,{artifacts,fingerprints,sourceSha256:src.hash});
   const derived = await readDerivedCaptureImpact(q,input.organizationId,linkedIds,src.hash);
   fingerprints.derivedCaptures = derived.fingerprint;
   const dataWithdrawalBlockers = derived.count > 0
     ? [`${derived.count} derived workbook source${derived.count === 1 ? '' : 's'} depend on this data. Review their lineage before withdrawing or replacing it; retaining extracted data remains possible.${derived.unverifiedCount ? ' Some recorded parent links also require verification.' : ''}`]
     : [];
+  if (filedImportRenditions > 0) dataWithdrawalBlockers.push(`${filedImportRenditions} filed editor rendition${filedImportRenditions === 1 ? '' : 's'} depend on this original data and remain reusable in the Vault. Review their dependencies and withdraw their source data before withdrawing or replacing this original; retaining extracted data remains possible.`);
   const {current,currentDisposition}=await readCurrent(q,input,src.hash);
   const replacement=await readReplacement(q,input,src,fingerprints);
   const blockers=dispositionBlockers(input,src,{current,currentDisposition},enabled,{legalHolds,active,cmcReferences,governedReferences});

@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project 62ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 11ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > shows the rule’s title and id, its regions, its corpus severity and where it is enforced 65ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > a finding whose code no rule names says so, instead of passing for a rule 38ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > renders every gate the server composed, the release signature included, with its own blockers 22ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > no gate is a bare pass or fail: each states its outcome in words, beside its rule 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > never says dispatch is permitted while the server blocks it, and shows no percentage 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 66ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 11ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 26ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > says the IND is missing and names the MAA, never "no submission" 36ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > a program with nothing recorded is still "no submission", with its type named 8ms
+
+ Test Files  4 passed (4)
+      Tests  18 passed (18)
+   Start at  03:37:16
+   Duration  4.65s (transform 771ms, setup 463ms, import 1.38s, tests 447ms, environment 1.80s)
+

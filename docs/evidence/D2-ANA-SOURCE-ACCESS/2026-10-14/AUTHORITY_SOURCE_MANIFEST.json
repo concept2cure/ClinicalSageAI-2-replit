@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "path": "server/services/ana/project-scope-admission.ts",
+      "sha256": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454",
+      "bytes": 7911
+    },
+    {
+      "path": "server/services/ana/source-read-scope.ts",
+      "sha256": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2",
+      "bytes": 10512
+    },
+    {
+      "path": "server/services/ana/__tests__/source-read-scope.pglite.test.ts",
+      "sha256": "1a5e19492565efe12be503bb0d67fd0cfa7a22e02e89367cdbc6091336dca5f2",
+      "bytes": 14314
+    }
+  ],
+  "verification": {
+    "tests": 69,
+    "passed": 69,
+    "files": 2,
+    "targetTypecheckDiagnostics": 0,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "sequentialPGliteOnly": true
+  }
+}

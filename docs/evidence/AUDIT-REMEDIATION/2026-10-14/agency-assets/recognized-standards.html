@@ -1,0 +1,1043 @@
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+	
+	
+	
+	
+	
+ 
+
+
+
+	
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+  
+
+
+
+
+
+<style>
+	.stds { 
+		color: #000000;
+		float: center;		
+		width: 950px;
+		margin: 0px 25px 0px 0px;	
+		}
+	.stds-middle { 
+		color: #000000;
+		float: center;		
+		width: 575px;
+		margin: 0px 50px 50px 50px;	
+		}		
+	.stds-left { 
+		color: #000000;		
+		float: left;
+		width: 700px;
+		margin: 9px 0px 0px 0px;
+		}
+	.stds-search-left { 
+		float: left;
+		width: 610px;
+		margin: 9px 30px 0px 0;
+		}	
+	.stds-search-right { 
+		float: right;
+		width: 190px;
+		margin: 9px 18px 0 0;
+		padding: 8px 12px 10px 12px;
+		background-color: #f9f9f3;
+		border: 1px solid #b0b0b0;
+		-webkit-border-radius: 6px;
+		-moz-border-radius: 6px;
+		border-radius: 6px;
+		}	
+	.stds-right { 
+		color: #000000;	
+		float: right;
+		width: 170px;
+		margin: 9px 18px 0 0;
+		padding: 8px 12px 10px 12px;
+		background-color: #f3f3f3;
+		border: 1px solid #b0b0b0;
+		border-radius: 6px;
+		}		
+	.stds-intro {
+		margin: 0px 0px 18px 0px;
+		padding: 5px 12px 12px 12px;
+		background-color: #e8eff5;
+		border: 1px solid #b0b0b0;
+		border-radius: 6px;
+		}
+	#stds_nr-form { 
+		margin-top: 18px; 
+		padding-top: 12px; 
+		border-top: 1px dashed #b0b0b0; 
+		}	
+	#stds-form {
+	 	table-layout:fixed;
+		width: 700px;
+		font-size: 11px;		
+		border: 1px solid #b0b0b0;	
+		background-color: #f9f9f3;				
+		}
+	#stds-form-title{
+	    padding: 3px 3px 3px 3px;	
+		width: 100%;
+		background-color: #e8eff5;				
+		border-bottom: 1px solid #b0b0b0; 
+		margin-top: 0px;
+		}	
+	#stds-form-title-left { 	
+		font-size: 13px;	
+		font-weight:normal;
+		}	
+	#stds-form-title-right { 
+		/*float: right;*/	
+		font-size: 11px;	
+		padding: 0px 0px 0px 400px;
+		}	
+	#stds-form-results-right { 
+		/*float: right;*/	
+		font-size: 11px;	
+		padding: 0px 0px 0px 550px;
+		}			
+	#stds-search { 
+		height: 18px;
+		margin: 0px;
+		padding: 3px 10px;
+		border: 1px solid #b0b0b0;
+		font-size: 12px;
+		color: #484138;
+		}
+	#stds-search:focus, #stds-search:hover { 
+		-webkit-box-shadow: 0 0px 6px rgba(0,0,0,.1);
+		-moz-box-shadow: 0 0px 6px rgba(0,0,0,.1);
+		box-shadow: 0 0px 6px rgba(0,0,0,.1); 
+		}
+	#stds-results-number { 
+		margin-bottom: 12px; 
+		font-size: 10px; 
+		font-weight: bold; 
+		}
+	#stds-results-table {
+		margin-left:auto;
+		margin-right:auto;
+		text-align:left; 
+		padding: 0;
+		border-collapse:collapse;
+	 	table-layout:fixed;
+		background-color: #f9f9f3;
+	    border-color: #b0b0b0;
+	    border-width: 0 0 1px 1px;
+	    border-style: solid;
+		}
+		
+	#stds-results-table th {
+	    padding: 6px 12px;
+	    background-color: #f9f9f3;
+	    border-color: #b0b0b0;
+	   	border-width: 1px 1px 0 0;
+	    border-style: solid;
+		font-size: 12px;
+		}
+		
+	#stds-results-table td {
+	    padding: 6px 12px;
+	    border-color: #b0b0b0;
+	   	border-width: 1px 1px 0 0;
+	    border-style: solid;
+		text-transform: capitalize;
+		}
+		
+	#stds-results-table tr:nth-child(odd) {
+		/* background-color: #f3f3f3; */
+	}
+	
+	.sort {	
+		float: right; 
+		margin: 0px 10px 0px 0px;
+		padding: 0px 5px 5px 5px;
+	}
+	
+	/*
+	.sort {	float: right; 
+		margin-top: 5px;}
+	*/
+	.sort a { color: #484138; }
+	.sort a:hover { color: #0f2a8c; }
+</style>
+
+
+
+
+
+	
+
+
+
+
+	
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:addthis="http://www.addthis.com/help/api-spec">
+<head>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=7" />
+
+
+  <script type="text/javascript" src="/scripts/includes/js/wcm.toggle.js"></script>
+  <script type="text/javascript" src="/scripts/includes/js/ssajax_2012.js"></script>
+
+
+
+  
+
+  <title>Recognized Consensus Standards: Medical Devices</title>
+
+  <!-- /**** Begin CSS References ****/-->
+
+  
+    <link href="/scripts/cdrh/cfdocs/default_style.css" rel="stylesheet" media="all" type="text/css" />
+  
+
+  <link rel="stylesheet" type="text/css" media="screen" href="/scripts/includes/css/css_fda_gov_stylesheet-2013.css" />
+  <link rel="stylesheet" type="text/css" media="print" href="/scripts/includes/css/css_fda_gov_print_stylesheet-2013.css" />
+  <!--[if lt IE 9]>
+    <link rel="stylesheet" type="text/css" media="screen" href="/scripts/includes/css/css_fda_gov_stylesheet_ie-2013.css" />
+  <![endif]-->
+
+  
+  <!-- /**** Begin Script Library References ****/-->
+  <script type="text/javascript" src="/scripts/includes/js/js_jquery_142.js" language="JavaScript"></script>
+  
+  <!--[if lt IE 7]>
+    <script defer type="text/javascript" src="/scripts/includes/js/js_pngfix_fdagov.js"></script>
+  <![endif]-->
+
+  
+  <script type="text/javascript" src="/scripts/includes/js/js_fdagov_global.js" language="JavaScript"></script>
+  
+
+  <!-- ## ADDED qTip reference to support hover tips ## -->
+  
+
+  <!-- ## ADDED hoverIntent JavaScript to support the drop-down menus ## -->
+  
+
+  <!-- ## ADDED submenus Javascript reference to import code to handle displaying sub-menus when hovered over ## -->
+  
+
+  <!-- ## ADDED hovers Javascript reference to handle hovering over images and replacing that image with it's hover effect ## -->
+  
+
+  <!-- ## ADDED tips Javascript reference to handle styling the tool tips ## -->
+  
+
+  <!-- ## ADDED resize Javascript to handle text resize (ultimtely calls the FDA resize code) ## -->
+  <script type="text/javascript" src="/scripts/includes/js/js_fdagov_resize.js"></script>
+
+  <!-- /**** End Script Library References ****/-->
+
+  <!-- /**** End CSS References ****/-->
+
+<!-- /**** Search.gov Script ****
+<script>
+//<![CDATA[
+      var usasearch_config = { siteHandle:"fda1" };
+
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src = "//search.usa.gov/javascripts/remote.loader.js";
+      document.getElementsByTagName("head")[0].appendChild(script);
+
+//]]>
+</script>/-->
+
+<!-- /**** END  Search.gov Script ****/-->
+
+   
+
+ 
+  
+  
+      
+  <meta name="dc.title" content="Recognized Consensus Standards: Medical Devices" />
+  <meta name="dc.type" content="" />
+  <meta name="dc.description" content="" />
+  <meta name="dc.language" content="" />
+  <meta name="posted" content="" />
+  <meta name="Keywords" content="" />
+  <meta name="Description" content="" />
+  <meta name="dc.subject" content="" />
+  <meta name="dc.publisher" content="" />
+  <meta name="dc.audience" content="" />
+  <meta name="dc.creator" content="" />
+  <meta name="search_topic" content=""/> 
+  <meta name="google-site-verification" content="wxQkNTrqmvYnwVcNzA2mspBp7EDErzIhAzyX-YvvRWI" /> 
+  
+  
+  
+	
+		
+	
+  
+    <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject1']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.googletagmanager.com/gtag/js?id=G-B0V4T2XCW7','gtag');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+    gtag('config', 'G-B0V4T2XCW7');</script>
+    
+</head>
+<body>
+
+      <!-- DAP Code -->
+    <script language="javascript" id="_fed_an_ua_tag" src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=HHS&subagency=FDA&sdor=fda.gov&dclink=true"></script>
+     
+  <!--==== BEGIN PAGE OUTER WRAPPER ==== -->
+
+  <!--SS_BEGIN_SNIPPET(fragment26,1)--><div class="quicklinks">
+
+  <a href="#main" accesskey="2" class="quicklinks" tabindex="1" title="Skip to content">Quick Links: Skip to main page content</a>
+
+  <a href="#search_form" class="quicklinks" tabindex="1" title="Skip to search">Skip to Search</a>
+
+  <a href="#fda-topmenu-home" class="quicklinks" tabindex="1" title="Skip to FDA top menu">Skip to Topics Menu</a>
+
+  <a href="#footer" class="quicklinks" tabindex="1" title="Skip to site options">Skip to Common Links</a>
+</div>
+  <!--SS_END_SNIPPET(fragment26,1)-->
+
+  <div id="outerwrapper">
+
+    <!--==== BEGIN PAGE OUTER WRAPPER ==== -->
+
+      <!-- #** VALIDATION not sure what this tag is, but it will fail XHTML validation **# -->
+      <MAXAMINEIGNORE XMLNS="FDA">
+      <div id="hhs-masthead">
+        <!--googleoff: index-->
+        <!-- ==== BEGIN RIGHT HHS MASTHEAD ==== -->
+        <div id="hhs-rightmast">
+
+          <!-- ## ADD page-tools ## -->
+          <div id="page-tools">
+            <ul class="list-horizontal">
+              <li><a id="font-size-decrease" href="#" title="Decrease font size"><img src="/scripts/includes/images/img_fdagov_font_adj_small.png" alt="Decrease font size" title="Decrease font size"/></a></li>
+              <li><a id="font-size-standard" href="#" title="Return font size to normal"><img src="/scripts/includes/images/img_fdagov_font_adj_medium.png" alt="Return font size to normal" title="Return font size to normal"/></a></li>
+              <li><a id="font-size-increase" href="#" title="Increase font size"><img src="/scripts/includes/images/img_fdagov_font_adj_large.png" alt="Increase font size" title="Increase font size"/></a></li
+            </ul>
+          </div>
+          <!-- ## END page-tools ## -->
+
+        </div>
+        <!-- ==== END RIGHT HHS MASTHEAD ==== -->
+        <!-- ==== BEGIN LEFT HHS MASTHEAD ==== -->
+        <div id="hhs-leftmast">
+          <a href="http://www.hhs.gov/" title="U.S. Department of Health and Human Services"><img id="rrimg1" border="0" src="/scripts/includes/images/img_fdagov_hhs_masthead_logo_r.png" alt="U.S. Department of Health and Human Services" title="U.S. Department of Health and Human Services"/></a>
+        </div>
+        <!-- ==== END LEFT HHS MASTHEAD ==== -->
+      </div>
+      <div id="wrapper">
+
+        <!-- ==== BEGIN PAGE HEADER ==== -->
+        <div id="header">
+          <!-- ==== BEGIN MASTHEAD ==== -->
+          <div id="fda-masthead">
+            <!-- ==== BEGIN LEFT MASTHEAD ==== -->
+            <div id="fda-leftmast">
+              <div id="FDAlogo">
+                
+				<a href="https://www.fda.gov/" title="FDA, U.S. Food and Drug Administration"><img src="/scripts/includes/images/gov-fda-new-white.png" alt="FDA, U.S. Food and Drug Administration" border="0" title="FDA, U.S. Food and Drug Administration"/></a>
+              </div>
+
+              <!-- ## ADDED print-pagetitle This is what is displayed when the page is printed, rather than the logo ## -->
+              <div class="print-pagetitle">
+                U.S. Food &amp; Drug Administration
+              </div>
+              <!-- ## END print-pagetitle ## -->
+              <div class="clearfloat">&nbsp;</div>
+            </div>
+            <!-- ==== END LEFT FDA MASTHEAD ==== -->
+
+            <!-- ==== BEGIN RIGHT MASTHEAD ==== -->
+            <div id="fda-rightmast">
+              <!-- ## ADDED masthead-links ## -->
+              <div id="masthead-links">
+                <ul class="list-horizontal">
+                  <li><a href="https://www.fda.gov/news-events/interactive-media" title="Follow FDA">Follow FDA</a></li>
+                  <li class="last"><a title="En Espa&ntilde;ol" href="https://www.fda.gov/about-fda/fda-en-espanol">En Espa&ntilde;ol</a></li>
+
+                </ul>
+              </div>
+              <!-- ## END masthead-links ## -->
+              <div id="search-form">
+                    <form id="search_form" action="https://www.fda.gov/search" accept-charset="UTF-8" method="get">
+                        <label class="searchlable" for="query">Search FDA</label>
+                        <input accesskey="4" type="text" name="s" id="query" autocomplete="off" class="usagov-search-autocomplete" />
+                        <div id="go_button" style="left:150px">
+                            <a href="javascript:document.getElementById('search_form').submit();" title="Search this site"><img src="/scripts/includes/images/img_fdagov_mast_search_button.png" alt="Search" title="Search this site"/></a>
+                        </div>
+            
+                    </form>
+                <div class="clearfloat">&nbsp;</div>
+              </div>
+            </div>
+            <!-- ==== END RIGHT MASTHEAD ==== -->
+          </div>
+        </MAXAMINEIGNORE>
+<div id="fda-topmenu">
+
+            <ul class="menu-tabbed">
+                  <li><a id="fda-topmenu-home" title="Home" href="https://www.fda.gov/" accesskey="1"><span>Home</span></a></li>
+                  <li><a title="Food" href="https://www.fda.gov/food"><span>Food</span></a></li>
+                  <li><a title="Drugs" href="https://www.fda.gov/Drugs"><span>Drugs</span></a></li>
+                  <li><a title="Medical Devices" href="https://www.fda.gov/Medical-Devices"><span>Medical Devices</span></a></li>
+                  <li><a title="Radiation-Emitting Products" href="https://www.fda.gov/radiation-emitting-products"><span>Radiation-Emitting Products</span></a></li>
+                  <li><a title="Vaccines, Blood and Biologics" href="https://www.fda.gov/vaccines-blood-biologics"><span>Vaccines, Blood &amp; Biologics</span></a></li>
+                  <li class=""><a title="Animal and Veterinary" href="https://www.fda.gov/animal-veterinary"><span>Animal &amp; Veterinary</span></a></li>
+                  <li><a title="Cosmetics" href="https://www.fda.gov/cosmetics"><span>Cosmetics</span></a></li>
+                  <li><a title="Tobacco Products" href="https://www.fda.gov/tobacco-products"><span>Tobacco Products</span></a></li>
+            </ul>
+    </div>
+        <div class="clearfloat">&nbsp;</div>
+      </div>
+
+    <!--googleon: index-->
+    <div id="content">
+      <div class="clearfloat"> </div>
+
+      <div class="clearfloat"> </div>
+
+        <!--==== BEGIN Topic Page Title ==== -->
+
+
+
+        <span id="pageTitleHolder"><h1 id="topic_page_title" class="head1">Recognized Consensus Standards: Medical Devices</h1></span>
+
+        <!--==== END Topic Page Title ==== -->
+
+        <!-- ## ADD page-options ## -->
+        <div id="page-options" class="hover-fade">
+          		<ul class="list-horizontal">
+                	<li><a href="javascript:window.print();" title="Print this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_print.png" alt="Print"  title="Print this page"/></a></li>
+    
+                	<li><a href="http://www.addthis.com/bookmark.php?u508=true&v=152&amp;username=fdamain" class="addthis_button_compact" title="Share this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_share.png" alt="Share" title="Share this page"/></a></li>
+                	<li><a href="http://www.addthis.com/bookmark.php" class="addthis_button_email" title="E-mail this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_email.png" alt="E-mail" title="E-mail this page"/></a></li>
+          		</ul>
+			
+            <!-- BEGIN esEspanol Button -->
+              <script language="JavaScript" type="text/javascript">
+              var MP = {
+              <!-- mp_trans_disable_start -->
+                Version: '1.0.22',
+                Domains: {'es':'esp.fda.gov'},
+                SrcLang: 'en',
+              <!-- mp_trans_disable_end -->
+                UrlLang: 'mp_js_current_lang',
+                SrcUrl: unescape('mp_js_orgin_url'),
+              <!-- mp_trans_disable_start -->
+                init: function(){
+                  if (MP.UrlLang.indexOf('p_js_')==1) {
+                    MP.SrcUrl=window.top.document.location.href;
+                    MP.UrlLang=MP.SrcLang;
+                }
+              },
+              getCookie: function(name){
+                var start=document.cookie.indexOf(name+'=');
+                if(start < 0) return null;
+                start=start+name.length+1;
+                var end=document.cookie.indexOf(';', start);
+                if(end < 0) end=document.cookie.length;
+                while (document.cookie.charAt(start)==' '){ start++; }
+                return unescape(document.cookie.substring(start,end));
+              },
+              setCookie: function(name,value,path,domain){
+                var cookie=name+'='+escape(value);
+                if(path)cookie+='; path='+path;
+                if(domain)cookie+='; domain='+domain;
+                var now=new Date();
+                now.setTime(now.getTime()+1000*60*60*24*365);
+                cookie+='; expires='+now.toUTCString();
+                document.cookie=cookie;
+              },
+              switchLanguage: function(lang){
+                if(lang!=MP.SrcLang){
+                  var script=document.createElement('SCRIPT');
+                  script.src=location.protocol+'//'+MP.Domains[lang]+'/'+MP.SrcLang+lang+'/?1023749632;'+encodeURIComponent(MP.SrcUrl);
+                document.body.appendChild(script);
+                } else if(lang==MP.SrcLang && MP.UrlLang!=MP.SrcLang){
+                  var script=document.createElement('SCRIPT');
+                  script.src=location.protocol+'//'+MP.Domains[MP.UrlLang]+'/'+MP.SrcLang+MP.UrlLang+'/?1023749634;'+encodeURIComponent(location.href);
+                document.body.appendChild(script);
+                }
+                return false;
+              },
+              switchToLang: function(url) {
+                window.top.location.href=url;
+              }
+              <!-- mp_trans_disable_end -->
+              };
+              </script>
+            <!-- END enEspanol Button -->
+          	<script type="text/javascript" src="/scripts/includes/js/addthis_widget_2012.js#pub=fdamain"></script>
+
+<script type="text/javascript">var addthis_config = {data_track_clickback: true, ui_508_compliant: true, services_compact: 'facebook, twitter, linkedin, pinterest_share,  email', services_exclude: 'print', image_container: "#user_provided" } ;</script>
+        </div>
+        
+        
+        <!-- ## END page-options ## -->
+
+  <!--==== BEGIN Breadcrumbs ==== -->
+  <div id="fda-breadcrumbs">
+
+  <!-- Check if Node List exists and user is not at the homepage.  If the user is at the homepage, hide the breadcrumb -->
+
+  <!-- Limits Level of BreadCrumb to 4 -->
+
+  <div class="hmenu">
+    <ul class="list-horizontal">
+
+      <li><a href="https://www.fda.gov/" id="main">FDA Home</a></li>
+
+      
+        <li><a href="https://www.fda.gov/Medical-Devices">Medical Devices</a></li>
+
+        
+          <li><a href="https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance/medical-device-databases">Databases</a></li>
+
+          
+        
+      
+
+    </ul>
+  </div>
+</div>
+
+<!--==== END Breadcrumbs ==== -->
+
+<div class="clearfloat">
+ -
+</div>
+
+<!--==== BEGIN Topic Page Title ==== -->
+<!--==== END Topic Page Title ==== -->
+<!--==== BEGIN Breadcrumbs ==== -->
+<!--==== END Breadcrumbs ==== -->
+<!--==== BEGIN LEFT-COLUMN PAGE CONTENT ==== -->
+
+
+<span id="user_provided">
+
+
+
+	
+
+	
+	<script language="JavaScript1.1" type="text/JavaScript" src="/scripts/cdrh/cfdocs/validate_date.js"></script>
+	<script language="JavaScript1.1" type="text/JavaScript" src="/scripts/cdrh/cfdocs/datePicker.js"></script>
+	<script language="JavaScript" type="text/javascript">
+	<!--
+	function doSubmit()
+	{
+	 document.all.p_arg_values[0].value = 'N';
+	 document.all.p_arg_values[1].value = document.all.BasicSearch.start_date.value;
+	 document.all.p_arg_values[2].value = document.all.BasicSearch.end_date.value;
+	 document.all.p_arg_values[3].value = document.all.BasicSearch.report_format.value;
+	 document.all.p_arg_values[4].value = document.all.BasicSearch.top_value.value;
+	 document.date_form.submit();
+	}
+	function doClear()
+	{
+	 document.BasicSearch.reset();
+	}
+	//-->	
+	</script>
+	
+	
+	
+	<!-- start main -->
+	<div class="stds">		
+		<div class="stds-left">
+			<div class="stds-intro">
+				<p>
+				This database provides the most up-to-date list of voluntary consensus standards to which FDA will accept a Declaration of Conformity for medical devices. After FDA has decided to recognize a standard, we will update our online database to reflect the decision even before formal recognition of the standard occurs by publication in the Federal Register. Publications in the Federal Register to the lists of recognized consensus standards can be accessed at <A href="https://www.fda.gov/medical-devices/standards-and-conformity-assessment-program/federal-register-documents" style="text-decoration:underline;">https://www.fda.gov/medical-devices/standards-and-conformity-assessment-program/federal-register-documents</a>.
+				</p>
+				<p>
+				The following guidance document is applicable to all recognized standards:<li><A style="text-decoration:underline;" href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/appropriate-use-voluntary-consensus-standards-premarket-submissions-medical-devices">Appropriate Use of Voluntary Consensus Standards in Premarket Submissions for Medical Devices - Guidance for Industry and Food and Drug Administration Staff, issued September 2018.</A></li>
+				</p>
+				
+				<p><br>
+				<a title="Learn More" href="https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance/standards-and-conformity-assessment-program" style="text-decoration:underline;">Learn More...</a>
+				</p>
+								
+			</div>
+			
+			<div id="stds-form">
+				<table align="center" width="100%" id="stds-form-title">
+				
+				<tr>
+				<td id="stds-form-title-left">Search Database</td>
+				<td id="stds-form-title-right">
+					<a title="Standards Search Assistance" href="StandardsSearchAssistance.cfm"><img src="/scripts/cdrh/cfdocs/images/questionmark.gif" alt="Help">Standards Search Assistance</a>
+				</td>
+				</tr>
+							
+				</table>	
+				
+				<form action="results.cfm" method="post" name="BasicSearch" onreset="status='';" autocomplete="off">
+				<table width="100%" border=0 cellpadding="1" cellspacing="2"  align="center" style="font-family: arial; color: #23238e;"> 
+				<tr valign="middle">
+				<td align="left" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Standards Organization" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Standards Organization</A></td>
+				<td colspan="2" style="color:#484138;font-size:12px;"><select name="organization" id="organization" onchange="status=organizationarray[this.selectedindex];" style="width:475px;padding:2px 2px;" >
+					<option value="" selected>All Standards Organizations
+					
+						<option value="4"><span style="text-transform:capitalize; color:black; font-size:12px;">AAMI</span> - <span style="color:black; font-size:12px;">Association for the Advancement of Medical Instrumentation</span>  
+					
+						<option value="19"><span style="text-transform:capitalize; color:black; font-size:12px;">ADA</span> - <span style="color:black; font-size:12px;">American Dental Association</span>  
+					
+						<option value="161"><span style="text-transform:capitalize; color:black; font-size:12px;">AIM</span> - <span style="color:black; font-size:12px;">AIM, Inc.</span>  
+					
+						<option value="5"><span style="text-transform:capitalize; color:black; font-size:12px;">ANSI</span> - <span style="color:black; font-size:12px;">American National Standards Institute</span>  
+					
+						<option value="10"><span style="text-transform:capitalize; color:black; font-size:12px;">AOAC</span> - <span style="color:black; font-size:12px;">AOAC International</span>  
+					
+						<option value="20"><span style="text-transform:capitalize; color:black; font-size:12px;">ASA</span> - <span style="color:black; font-size:12px;">Acoustical Society of America</span>  
+					
+						<option value="12"><span style="text-transform:capitalize; color:black; font-size:12px;">ASME</span> - <span style="color:black; font-size:12px;">American Society of Mechanical Engineers</span>  
+					
+						<option value="26"><span style="text-transform:capitalize; color:black; font-size:12px;">ASQ</span> - <span style="color:black; font-size:12px;">American Society for Quality</span>  
+					
+						<option value="3"><span style="text-transform:capitalize; color:black; font-size:12px;">ASTM</span> - <span style="color:black; font-size:12px;">ASTM International</span>  
+					
+						<option value="15"><span style="text-transform:capitalize; color:black; font-size:12px;">CGA</span> - <span style="color:black; font-size:12px;">Compressed Gas Associated, Incorporated</span>  
+					
+						<option value="201"><span style="text-transform:capitalize; color:black; font-size:12px;">CIE</span> - <span style="color:black; font-size:12px;">International Commission on Illumination</span>  
+					
+						<option value="25"><span style="text-transform:capitalize; color:black; font-size:12px;">CLSI</span> - <span style="color:black; font-size:12px;">Clinical Laboratory Standards Institute</span>  
+					
+						<option value="21"><span style="text-transform:capitalize; color:black; font-size:12px;">ESD</span> - <span style="color:black; font-size:12px;">Electrostatic Discharge Association</span>  
+					
+						<option value="221"><span style="text-transform:capitalize; color:black; font-size:12px;">FIRST</span> - <span style="color:black; font-size:12px;">Forum on Internet Response and Security Teams</span>  
+					
+						<option value="27"><span style="text-transform:capitalize; color:black; font-size:12px;">HPS</span> - <span style="color:black; font-size:12px;">Health Physics Society</span>  
+					
+						<option value="301"><span style="text-transform:capitalize; color:black; font-size:12px;">ICDM</span> - <span style="color:black; font-size:12px;">International Committee for Display Metrology</span>  
+					
+						<option value="2"><span style="text-transform:capitalize; color:black; font-size:12px;">IEC</span> - <span style="color:black; font-size:12px;">International Electrotechnical Commission</span>  
+					
+						<option value="16"><span style="text-transform:capitalize; color:black; font-size:12px;">IEEE</span> - <span style="color:black; font-size:12px;">Institute of Electrical and Electronic Engineers</span>  
+					
+						<option value="24"><span style="text-transform:capitalize; color:black; font-size:12px;">IES</span> - <span style="color:black; font-size:12px;">Illuminating Engineering Society</span>  
+					
+						<option value="121"><span style="text-transform:capitalize; color:black; font-size:12px;">IHTSDO</span> - <span style="color:black; font-size:12px;">International Health Terminology Standards Development Organization (IHTSDO)</span>  
+					
+						<option value="281"><span style="text-transform:capitalize; color:black; font-size:12px;">INCITS</span> - <span style="color:black; font-size:12px;">International Committee for Information Technology Standards</span>  
+					
+						<option value="261"><span style="text-transform:capitalize; color:black; font-size:12px;">ISA</span> - <span style="color:black; font-size:12px;">International Society for Automation</span>  
+					
+						<option value="0"><span style="text-transform:capitalize; color:black; font-size:12px;">ISO</span> - <span style="color:black; font-size:12px;">International Organization for Standardization</span>  
+					
+						<option value="141"><span style="text-transform:capitalize; color:black; font-size:12px;">ISTA</span> - <span style="color:black; font-size:12px;">International Safe Transit Association (ISTA)</span>  
+					
+						<option value="241"><span style="text-transform:capitalize; color:black; font-size:12px;">JIS</span> - <span style="color:black; font-size:12px;">Japanese Industrial Standards </span>  
+					
+						<option value="7"><span style="text-transform:capitalize; color:black; font-size:12px;">NEMA</span> - <span style="color:black; font-size:12px;">National Electrical Manufacturers Association</span>  
+					
+						<option value="13"><span style="text-transform:capitalize; color:black; font-size:12px;">NFPA</span> - <span style="color:black; font-size:12px;">National Fire Protection Association</span>  
+					
+						<option value="9"><span style="text-transform:capitalize; color:black; font-size:12px;">RESNA</span> - <span style="color:black; font-size:12px;">Rehabilitation Engineering and Assistive Technology Society of North America</span>  
+					
+						<option value="101"><span style="text-transform:capitalize; color:black; font-size:12px;">RII</span> - <span style="color:black; font-size:12px;">Regenstrief Institute, Inc.</span>  
+					
+						<option value="181"><span style="text-transform:capitalize; color:black; font-size:12px;">SAE</span> - <span style="color:black; font-size:12px;">SAE International </span>  
+					
+						<option value="8"><span style="text-transform:capitalize; color:black; font-size:12px;">UL</span> - <span style="color:black; font-size:12px;">Underwriters Laboratories, Inc.</span>  
+					
+						<option value="11"><span style="text-transform:capitalize; color:black; font-size:12px;">USP-NF</span> - <span style="color:black; font-size:12px;">United States Pharmacopeia (USP) and the National Formulary (NF)</span>  
+					
+				    </select> 
+				</td>
+				<td>&nbsp;&nbsp;</td>
+				</tr>
+				
+				<tr valign="middle">	
+				<td align="left" nowrap style="color:#484138;font-size:12px;"><a title="Standards Search Assistance - Standard Designation Number" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;" >Standard Designation Number</a></td>
+				<td align="left" style="color:#484138;font-size:12px;"><input type="text" name="referencenumber" id="referencenumber" size="33" maxlength="30"></td>
+				<td align="right" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Recognition Number" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Recognition Number</A>&nbsp;<input type="text" name="recognitionnumber" id="recognitionnumber" size="12" maxlength="25"></td>
+				<td>&nbsp;&nbsp;</td>
+				</tr>				
+									
+				<tr valign="middle">	
+				<td align="left" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Keywords" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;" >Keywords</A></td>
+				<td align="left" style="color:#484138;font-size:12px;"><input type="text" name="title" id="title" size="33" maxlength="40"></td>
+				<td align="right" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Included in ASCA ?" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Included in ASCA?</A>&nbsp;<input type="Checkbox" name="ascapilotyn" id="ascapilotyn"></td>
+				<td>&nbsp;&nbsp;</td>
+				</tr>
+	
+				<tr valign="middle">
+				<td align="left" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Specialty Task Group Area" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Specialty Task Group Area</A></td>
+				<td align="left" colspan="2" style="color:#484138;font-size:12px;">
+					<select name="category" id="category" style="color:black;font-size:12px;padding:2px 2px;"> 
+						<option value="">All STG Categories (STG #)
+							<option value="Anesthesia">Anesthesiology (1)
+							<option value="Biocomp">Biocompatibility (2)
+							<option value="Card">Cardiovascular (3)
+							<option value="Dental/ENT">Dental/ENT (4)
+							<option value="General">General I (QS/RM) (5)
+							<option value="General2">General II (ES/EMC) (19)
+							<option value="GPS/GH">General Plastic Surgery/General Hospital (6)
+							<option value="InVitro">In Vitro Diagnostics (7)
+							<option value="Mat">Materials (8)
+							<option value="Nano">Nanotechnology (18)			
+							<option value="Neur">Neurology (17)
+							<option value="OBGYN/GU">ObGyn/Gastroenterology/Urology (9)
+							<option value="Ophth">Ophthalmic (10)
+							<option value="Ortho">Orthopedic (11)
+							<option value="PhysMed">Physical Medicine (16)
+							<option value="Radiology">Radiology (12)
+							<option value="Software">Software/Informatics (13)
+							<option value="Sterility">Sterility (14)
+							<option value="Tissue">Tissue Engineering (15)
+				     </select> 
+				</td>
+				<td>&nbsp;&nbsp;</td>				
+				</tr>
+				
+				<tr valign="middle">	
+				<td align="left" nowrap style="color:#484138;font-size:12px;"><label for="productcode"><A title="Standards Search Assistance - Product Code" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Product Code</a></label></td>
+				<td align="left" style="color:#484138;font-size:12px;"><input type="text" name="productcode" id="productcode" size="4" maxlength="3"></td>
+				<td align="right" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Regulation Number" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Regulation Number</A>&nbsp;<input type="text" name="regulationnumber" id="regulationnumber" size="8" maxlength="8"></td>
+				<td>&nbsp;&nbsp;</td>
+				</tr>
+																	
+				<tr valign="middle">	
+				<td align="left" style="color:#484138;font-size:12px;"><A title="Standards Search Assistance - Date of Entry" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Date of Entry</A></td>
+				<td align="left" style="color:#484138;font-size:12px;">
+					<input type="text" name="effectivedatefrom" id="effectivedatefrom" value=""  size="8" maxlength="10" style="vertical-align: baseline;">&nbsp;<a href="javascript:show_calendar('BasicSearch.effectivedatefrom');" onmouseover="window.status='date picker';return true;" onmouseout="window.status='';return true;"><img src="../images/show-calendar.gif" width="24" height="22" border="0" alt="use calendar to select date" style="vertical-align: text-bottom;"></a>
+					<label for="effectivedateto" style="color:blue;font-size:12px;">to</label>
+					<input type="text" name="effectivedateto" id="effectivedateto" value=""  size="8" maxlength="10" style="vertical-align: baseline;">&nbsp;<a href="javascript:show_calendar('BasicSearch.effectivedateto');" onmouseover="window.status='date picker';return true;" onmouseout="window.status='';return true;"><img src="../images/show-calendar.gif" width="24" height="22" border="0" alt="use calendar to select date" style="vertical-align: text-bottom;"></a>
+				</td>
+				<td align="right" style="color:#484138;font-size:12px;">
+					<A title="Standards Search Assistance - Sort" href="StandardsSearchAssistance.cfm" style="text-decoration:underline;text-transform: none;">Sort</A>&nbsp;
+					<select name="sortcolumn" id="sortcolumn">
+					<option value="pdd" selected>Date of Entry (9-0)
+					<option value="pd">Date of Entry(0-9) 
+					<option value="pa">STG Area (A-Z)
+					<option value="pad">STG Area (Z-A)
+					<option value="in">Recog No (0-9)
+					<option value="ind">Recog No (9-0)
+					<option value="rt">Extent Recog (A-Z)
+					<option value="rtd">Extent Recog (Z-A)
+					</select>
+				</td>
+				<td>&nbsp;&nbsp;</td>			
+				</tr>																	
+																	
+				<tr valign="middle">				
+				<td colspan="4" align="right" style="font-size:12px;"><A style="text-decoration:underline;" href="javascript:doClear();" onfocus="window.status='Clear';return true;" onmouseover="window.status='Clear';return true;" onmouseout="window.status='';return true;">Clear Form</a>&nbsp;&nbsp;&nbsp;<INPUT TYPE="submit" Name="Search" VALUE="Search"></td>					
+				</tr>				
+				</table>
+				</form>				
+		 	</div>
+			
+			
+		</div> 
+		
+		<div class="stds-right">
+			<span style="font-weight: bold;">Other Databases</span>
+<ul style="margin:-5px;">
+		<li><a href="/scripts/cdrh/cfdocs/cfPMN/pmn.cfm" title="Database of new or significantly changed device information submitted by medical device manufacturers prior to commercial distribution.">510(k)s</a></li>				
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPMN/denovo.cfm" title="Database of De Novos.">De Novo</a></li>	
+
+		<li><a href="/scripts/cdrh/cfdocs/cfMAUDE/TextSearch.cfm" title="Reports of adverse events involving medical devices.">Medical Device Reports (MAUDE)</a></li>				
+
+		<li><a href="/scripts/cdrh/cfdocs/cfRL/DTLS/rl_cert.cfm" title="This searchable database contains valid export certificates submitted electronically via CECATS (CDRH Export Certification Application and Tracking System) and issued by the Center for Devices and Radiological Health.">CDRH Export Certificate Validation (CECV)</a></li>	
+
+		<li><a href="/scripts/cdrh/devicesatfda/readingroom.cfm" title="CDRH FOIA Electronic Reading Room.">CDRH FOIA Electronic Reading Room</a></li>				
+
+		<li><a href="/scripts/cdrh/cfdocs/cfCFR/CFRSearch.cfm" title="Database of the most recent revision of Title 21 of the Code of Federal Regulations (CFR) from the Government Printing Office (GPO). ">CFR Title 21</a></li>					
+
+		<li><a href="/scripts/cdrh/cfdocs/cfClia/Search.cfm" title="Database of laboratory testing standards that ensure the accuracy, reliability and timeliness of patient tests.">CLIA</a></li>					
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPCD/classification.cfm" title="Database containing medical device names and associated information developed by the FDA Center for Devices and Radiological Health (CDRH) in support of its mission.">Device Classification</a></li>
+
+		<li><a href="http://www.fda.gov/RegulatoryInformation/Guidances/default.htm" title="FDA Guidance Documents. ">FDA Guidance Documents </a></li>
+
+		<li><a href="/scripts/cdrh/cfdocs/cfHDE/hde.cfm" title="Humanitaian Device Exemption (HDE) is the FDA process of scientific and regulatory review to evaluate the safety and effectiveness of Class III medical devices. Class III devices are those that support or sustain human life, are of substantial importance in preventing impairment of human health, or which present a potential, unreasonable risk of illness or injury. ">Humanitarian Device Exemption </a></li>
+		
+				
+		
+		<li><a href="/scripts/cdrh/cfdocs/Medsun/searchReportText.cfm" title="The Medical Product Safety Network (MedSun) improves FDA�s understanding of problems with the use of medical devices so that the FDA, healthcare facilities, clinicians, and manufacturers can better address safety concerns.">Medsun Reports</a></li>				
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPMA/pma.cfm" title="Database of Class III devices that support or sustain human life or are of substantial importance in preventing impairment of human health.">Premarket Approvals (PMAs)</a></li>			
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPMA/pma_pas.cfm" title="Database of Post-Approval Studies">Post-Approval Studies</a></li>			
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPMA/pss.cfm" title="Database of Postmarket Surveillance Studies">Postmarket Surveillance Studies</a></li>		
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPCD_RH/classification.cfm" title="The Radiation-Emitting Electronic Product Codes Database contains names of radiation-emitting electronic products and devices and associated information developed by the Center for Devices and Radiological Health (CDRH) in support of its mission. This database contains product names and their associated product codes. Additionally, the radiation type, definition, and applicable performance standards (21 CFR Parts 1020-1050) are provided.">Radiation-Emitting Products</a></li>					
+
+		<li><a href="/scripts/cdrh/cfdocs/cfPCD_RH/rh_res.cfm" title="Electronic products for which manufacturers are required to perform corrective actions when a radiation safety problem exists that was caused by the design, manufacturing, or assembly of the product.">Radiation-Emitting Electronic Products Corrective Actions</a></li>					
+
+		<li><a href="/scripts/cdrh/cfdocs/cfRES/res.cfm" title="Database of classified medical device recalls since November 1, 2002.">Recalls</a></li>						
+
+		<li><a href="/scripts/cdrh/cfdocs/cfRL/rl.cfm" title="Database of devices in commercial distribution in the United States submitted by domestic and foreign manufacturers and medical device establishment information submitted by domestic and foreign establishments.">Registration &amp; Listing</a></li>					
+		
+		
+
+		<li><a href="/scripts/cdrh/cfdocs/cfTPLC/tplc.cfm" title="The Total Product Life Cycle (TPLC) database integrates premarket and postmarket data about medical devices. It includes information pulled from CDRH databases including Premarket Approvals (PMA), Premarket Notifications (510[k]), Adverse Events, and Recalls.">Total Product Life Cycle</a></li>								
+
+		
+			<li><a href="/scripts/cdrh/cfdocs/cfAssem/assembler.cfm" title="Database of locations and identities of certified components of diagnostic x-ray systems for routine compliance testing at user facilities. ">X-Ray Assembler</a></li>
+ 			
+</ul>
+		
+		</div> 			
+																						
+		
+	</div> 		
+<!--  end main  -->	
+
+
+		
+</span>
+
+<div class="clearfloat">
+-
+</div>
+</div>
+
+<div class="clearfloat">
+-
+</div>
+
+<!--mp_trans_add
+<blockquote>
+<hr>
+<p>This website has been translated to Spanish from English, and is updated often. It is possible that some links will connect you to content only
+available in English or some of the words on the page will appear in English until translation has been completed (usually within 24 hours). We
+appreciate your patience with the translation process. In the case of any discrepancy in meaning, the English version is considered official. Thank
+you for visiting <a href="http://esp.fda.gov/TobaccoProducts/default.htm">esp.fda.gov/tabaco.</a></p>
+</blockquote>
+-->
+
+<!--==== END CTP Disclaimer ==== -->
+<script type="text/javascript">
+  setStyle();
+</script>
+
+    <!--==== BEGIN FOOTER ==== -->
+      <!--googleoff: index-->
+      <div id="footer">
+
+
+
+<!-- ==== BEGIN Footnote(s) ==== -->
+<div id="footnote"><h4>Links on this page:</h4><div></div></div>
+<!-- ==== END Footnote(s) ==== -->
+
+<!-- ==== BEGIN Page Tools Bottom ==== -->
+<div id="pagetools_bottom">
+  <div id="pagetools_right">
+
+    
+      <p>Page Last Updated: 09/28/2026</p>
+    
+
+    <p>
+      Note: If you need help accessing information in different file formats, see
+      <a href="https://www.fda.gov/about-fda/website-policies/viewing-files">Instructions for Downloading Viewers and Players</a>.
+<br>Language Assistance Available: <a title="Spanish" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#spanish">Español</a> | <a title="Chinese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#chinese">繁體中文</a> | <a title="Vietnamese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#vietnamese">Tiếng Việt</a> | <a title="Korean" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#korean">한국어</a> | <a title="Tagolog" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#tagalog">Tagalog</a> | <a title="Russian" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#russian">Русский</a> | <a title="Arabic" href="hhttps://www.fda.gov/about-fda/about-website/language-assistance-services#arabic">العربية</a> | <a title="Creole" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#creole">Kreyòl Ayisyen</a> | <a title="French" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#french">Français</a> | <a title="Polish" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#polish">Polski</a> | <a title="Portuguese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#portuguese">Português</a> | <a title="Italian" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#italian">Italiano</a> | <a title="German" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#german">Deutsch</a> | <a title="Japanese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#japanese">日本語</a> | <a title="Farsi" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#farsi">فارسی</a> | <a title="English" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#english">English</a>
+    </p>
+  </div>
+  <br class="clearfloat" />
+</div>
+
+
+
+        <!-- ## ADDED footer-heading ## -->
+        <div id="footer-heading">
+          <div id="footer-fdalinks">
+            <ul class="list-horizontal">
+              <li class="first"><a href="https://www.fda.gov/about-fda/about-website/accessibility" title="Accessibility">Accessibility</a></li>
+              <li><a href="https://www.fda.gov/about-fda/contact-fda" title="Contact FDA">Contact FDA</a></li>
+              <li><a href="https://www.fda.gov/about-fda/jobs-and-training-fda" title="Careers">Careers</a></li>
+              <li><a href="https://www.fda.gov/about-fda/transparency/fda-basics" title="FDA Basics">FDA Basics</a></li>
+              <li><a href="https://www.fda.gov/regulatory-information/freedom-information" title="Freedom of Information Act">FOIA</a></li>
+              <li><a href="https://www.fda.gov/about-fda/jobs-and-training-fda/no-fear-act" title="No FEAR Act">No FEAR Act</a></li>
+              <li><a title="Nondiscrimination" href="https://www.fda.gov/about-fda/about-website/fda-nondiscrimination-notice">Nondiscrimination</a></li>
+              <li class="last"><a href="https://www.fda.gov/about-fda/about-website/website-policies" title="Website Policies">Website Policies / Privacy</a></li>
+
+            </ul>
+          </div>
+          <div id="footer-fdalogo">
+            
+			<a href="http://www.fda.gov" title="FDA Homepage"><img src="/scripts/includes/images/fda-square-white-small.png" alt="FDA" title="FDA Homepage"/></a>
+          </div>
+        </div>
+        <!-- ## END footer-heading ## -->
+        <!-- ## ADDED footer-content ## -->
+        <div id="footer-content" class="three-column">
+
+          <div id="footer-fda" class="first">
+            <div class="footer-header">U.S. Food and Drug Administration</div>
+            <div class="address">
+              10903 New Hampshire Avenue <br/>
+              Silver Spring, MD 20993 <br/>
+              Ph. 1-888-INFO-FDA (1-888-463-6332)<br/>
+              <a href="https://www.fda.gov/about-fda/contact-fda" title="Contact FDA">Contact FDA</a>
+            </div>
+            <div id="social-links" class="hover-fade">
+
+              <ul class="list-horizontal">
+                <li><a href="http://www.usa.gov" title="USA.gov"><img src="/scripts/includes/images/img_fdagov_footer_logo_usagov.png" alt="USA.gov" title="USA.gov"/></a></li>
+                <li><a href="https://www.fda.gov/about-fda/contact-fda/get-email-updates" title="Subscribe to E-mails"><img src="/scripts/includes/images/img_fdagov_footer_icon_email.png" alt="E-mail" title="Subscribe to E-mails"/></a></li>
+                <li><a href="https://www.fda.gov/about-fda/contact-fda/subscribe-podcasts-and-news-feeds" title="Subscribe to RSS Feeds"><img src="/scripts/includes/images/img_fdagov_footer_icon_rss.png" alt="RSS" title="Subscribe to RSS Feeds"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#micro" title="Follow FDA on Twitter"><img src="/scripts/includes/images/img_fdagov_footer_icon_twitter.png" alt="Twitter" title="Follow FDA on Twitter"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#Facebook" title="Follow FDA on Facebook"><img src="/scripts/includes/images/img_fdagov_ftr_icon_facebook.png" alt="Facebook" title="Follow FDA on Facebook" /></a></li>
+                <li><a href="http://www.youtube.com/user/USFoodandDrugAdmin" title="View FDA Videos"><img src="/scripts/includes/images/img_fdagov_footer_icon_youtube.png" alt="YouTube" title="View FDA Videos"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#flickr" title="View FDA Photostream on Flickr"><img src="/scripts/includes/images/img_fdagov_footer_icon_flickr.png" alt="Flickr" title="View FDA Photostream on Flickr"></a></li>
+              </ul>
+
+            </div>
+            <div id="footer-audience">
+              <ul class="list-horizontal">
+                <li class="first"><a href="https://www.fda.gov/federal-state-local-tribal-and-territorial-officials" title="For Government">For Government</a></li>
+                <li class="last"><a href="https://www.fda.gov/news-events" title="For Press">For Press</a></li>
+              </ul>
+            </div>
+          </div>
+
+
+        <div id="footer-links" class="second">
+            <div>
+              <ul class="list-no-bullets">
+                <li><a href="https://www.fda.gov/combination-products" title="Combination Products">Combination Products</a></li>
+                <li><a href="https://www.fda.gov/advisory-committees" title="Advisory Committees">Advisory Committees</a></li>
+                <li><a href="https://www.fda.gov/Science-Research" title="Science &amp; Research">Science & Research</a></li>
+                <li><a href="https://www.fda.gov/Regulatory-Information" title="Regulatory Information">Regulatory Information</a></li>
+                <li><a href="https://www.fda.gov/Safety" title="Safety">Safety</a></li>
+                <li><a href="https://www.fda.gov/emergency-preparedness-and-response" title="Emergency Preparedness">Emergency Preparedness</a></li>
+                <li><a href="https://www.fda.gov/international-programs" title="International Programs">International Programs</a></li>
+                <li><a href="https://www.fda.gov/news-events" title="News &amp; Events">News & Events</a></li>
+                <li><a href="https://www.fda.gov/training-and-continuing-education" title="Training and Continuing Education">Training and Continuing Education</a></li>
+                <li><a href="https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations" title="Inspections/Compliance">Inspections/Compliance</a></li>
+                <li><a href="https://www.fda.gov/federal-state-local-tribal-and-territorial-officials" title="State &amp; Local Officials">State & Local Officials</a></li>
+                <li><a href="https://www.fda.gov/consumers" title="Consumers">Consumers</a></li>
+                <li><a href="https://www.fda.gov/industry" title="Industry">Industry</a></li>
+                <li><a href="https://www.fda.gov/health-professionals" title="Health Professionals">Health Professionals</a></li>
+				<li><a href="https://www.fda.gov/about-fda/about-website/fdagov-archive" title="FDA Archive">FDA Archive</a></li>
+        <li><a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank">Vulnerability Disclosure Policy</a></li>
+ </ul>
+            </div>
+          </div>
+
+          <div id="footer-hhs" class="third">
+            <div class="footer-header"><a href="http://www.hhs.gov" title="U.S. Department of Health &amp; Human Services"><img src="/scripts/includes/images/img_fdagov_footer_hhslogo.png" alt="U.S. Department of Health &amp; Human Services" title="U.S. Department of Health &amp; Human Services"/></a></div>
+
+          </div>
+
+          <div class="clearfloat">&nbsp;</div>
+        </div>
+        <!-- ## END footer-content ## -->
+        <!-- ==== BEGIN Footnote(s) ==== -->
+        <div id="footnote"><h4>Links on this page:</h4><div></div></div>
+        <!-- ==== END Footnote(s) ==== -->
+        <!-- ==== BEGIN Page Tools Bottom ==== -->
+        <!-- ## REMOVED pagetools_bottom ## -->
+
+        <!-- ==== END Page Tools Bottom ==== -->
+        <!-- ## REMOVED footer-menu ## -->
+      <!--googleon: index-->
+      </div>
+      <!-- ==== END PAGE FOOTER ==== -->
+<div class="clearfloat">
+
+    </div>
+  </div>
+  <div id="bottom_corner" class="box_bottom"></div>
+   <div class="clearfloat">
+
+
+  </div>
+
+<!--==== END OUTER PAGE WRAPPER ==== -->
+
+<script type="text/javascript"  src="/UDEYx8_EvBws/MBj0Rx/KNLrgB/uNihXkStNbtDfp/O1YpdQ/VXo2Hgc/GNxs"></script></body>
+</html>
+
+
+ 	

@@ -1,0 +1,10 @@
+{
+  "capturedAtUtc": "2026-10-17T23:56:07.585938+00:00",
+  "sourcePins": {
+    "client/src/concept2cure/v2/editorTarget.ts": "b72ac4cb56a1eb8603e8674529c8f01ed927d6906d039f96631ecb5fccdf072b",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "1d0fdab6dc695988003b5835482dbbad605822123f526314a5ce744e9fcbed53",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
+  }
+}

@@ -8,6 +8,41 @@
  * navigate — the same protocol V2App.startShellConversation and the Home
  * composer use. No second channel.
  */
+import type { AuthoringContextPack } from '@shared/types/authoring-context';
+
+/** The existing conversation-origin chip; saved editor identity is optional. */
+export interface AskOrigin {
+  surfaceId: string;
+  label: string;
+  moduleContext?: Record<string, unknown> | null;
+  authoringContext?: AuthoringContextPack | null;
+  authoringDocument?: { docId: string; programId: string; sectionId?: string };
+}
+
+export interface SavedSectionVersion { sectionId: string; updatedAt: string | null }
+
+/** A successful PATCH supplies the version before React adopts its row. */
+export function originWithSavedVersion(origin: AskOrigin, version?: SavedSectionVersion | null): AskOrigin {
+  if (!version || origin.authoringContext?.sectionId !== version.sectionId) return origin;
+  const loadedAt = Date.parse(origin.authoringContext.sectionUpdatedAt ?? '');
+  const confirmedAt = Date.parse(version.updatedAt ?? '');
+  if (Number.isFinite(loadedAt) && Number.isFinite(confirmedAt) && loadedAt > confirmedAt) return origin;
+  const authoringContext = { ...origin.authoringContext };
+  delete authoringContext.sectionUpdatedAt;
+  return {
+    ...origin,
+    authoringContext: { ...authoringContext, ...(version.updatedAt ? { sectionUpdatedAt: version.updatedAt } : {}) },
+    moduleContext: { ...origin.moduleContext, sectionUpdatedAt: version.updatedAt },
+  };
+}
+
+/** The shell's existing prefill protocol: continue the conversation; wait for Enter. */
+export function prefillConversation(prompt: string, origin: AskOrigin, onNav: (id: string) => void): void {
+  (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = {
+    id: 'current', seed: null, prefill: prompt.trim() || null, sendOnArrival: false, origin,
+  };
+  onNav('conversation-thread');
+}
 
 /**
  * One fixed sentence, whatever the program is called. The prompt is sent as

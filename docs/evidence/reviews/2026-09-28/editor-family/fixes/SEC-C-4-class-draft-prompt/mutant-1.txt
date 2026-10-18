@@ -6,7 +6,7 @@ index ca0b913e..a432a86b 100644
 @@ -9,9 +9,18 @@
   * composer use. No second channel.
   */
- 
+
 -export function askAnaToDraftPrompt(programName: string | null): string {
 -  return programName
 -    ? `Draft a document for ${programName} — tell me which document type and I will draft it into the project as an editable authoring document.`
@@ -24,7 +24,7 @@ index ca0b913e..a432a86b 100644
 +    ? `Draft a document for ${_programName} — tell me which document type and I will draft it into the project as an editable authoring document.`
      : 'Draft a document into this project — tell me which document type and I will draft it as an editable authoring document.';
  }
- 
+
  DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
 
  RUN  v4.1.7 ./
@@ -102,4 +102,3 @@ AssertionError: expected { id: 'new', …(1) } to deeply equal { id: 'new', …(
       Tests  3 failed (3)
    Start at  17:55:25
    Duration  283ms (transform 78ms, setup 77ms, import 23ms, tests 18ms, environment 0ms)
-

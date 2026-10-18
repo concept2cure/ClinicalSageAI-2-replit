@@ -1,0 +1,59 @@
+[
+  {
+    "file": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "file": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "file": "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'fakeQuery' has a complexity of 42. Maximum allowed is 15.",
+        "line": 67,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 67,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (191). Maximum allowed is 100.",
+        "line": 316,
+        "column": 77,
+        "messageId": "exceed",
+        "endLine": 316,
+        "endColumn": 79
+      }
+    ]
+  },
+  {
+    "file": "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/authoring/authoring-template-guidance.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  }
+]

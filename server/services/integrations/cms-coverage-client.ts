@@ -69,13 +69,18 @@ function endpointFor(type: CmsCoverageType): string {
   return type === 'lcd' ? 'reports/local-coverage-final-lcds' : 'reports/national-coverage-ncd/';
 }
 
-/** Defensively locate the items array regardless of envelope shape. */
-export function extractItems(data: any): any[] {
+/**
+ * Defensively locate the items array regardless of envelope shape; null when
+ * the body carries none of the envelopes this client knows.
+ */
+export function extractItems(data: any): any[] | null {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.result?.items)) return data.result.items;
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.data)) return data.data;
-  return [];
+  // 2026-10-15: returned [], so an unrecognised envelope read as "no coverage
+  // documents". Absent is not empty.
+  return null;
 }
 
 /** Build a public MCD viewer URL for citation; falls back to the MCD search page. */
@@ -130,6 +135,9 @@ export async function searchMedicareCoverage(
 
   const data = await res.json();
   const items = extractItems(data);
+  if (items === null) {
+    throw new Error('CMS Coverage API response had no items array (unexpected shape)');
+  }
   const kw = params.keyword?.trim().toLowerCase();
   const filtered = kw
     ? items.filter(it => String(it?.title ?? '').toLowerCase().includes(kw))

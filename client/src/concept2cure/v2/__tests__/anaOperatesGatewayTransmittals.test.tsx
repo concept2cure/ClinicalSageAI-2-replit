@@ -5,18 +5,23 @@
  * An audit of the shipped catalog found 13 of its 29 screens with no
  * registered action at all: she navigated there and then had nothing to do.
  * This is the last screen before bytes leave for an agency, so it is also the
- * one where the line between "operate" and "sign" matters most: the two
- * read-only reveals are hers (the row's Status button, the refusal card's
- * Reload findings button) and the five governed acts — transmit, rollback,
- * technical rejection, record identifiers, assemble — are not. Only the two
- * are registered, and this mounts the REAL surface to prove each one drives
- * the same function its control drives.
+ * one where the line between "operate" and "sign" matters most. Since the
+ * 2026-10-17 app audit (FILING_SPINE F12) it is a read-only transmittal log:
+ * assemble, identifiers, package transmit and unsigned rollback moved to the
+ * sequence's Dispatch tab in the Submission Center. What is left to operate is
+ * the row's Status button, and that is the one action registered. The signed
+ * technical rejection stays a person's own click.
  *
  * It pins the refusals too, because this screen's refusals are the honest
- * ones: a dispatch layer that did not answer is never reported as an
- * organization with no transmittals, a log number that is not on screen comes
- * back with the numbers that ARE, and "reload the findings" with no refusal
- * card says so flatly rather than being held until it times out.
+ * ones: a log that could not be read is never reported as an organization
+ * with no transmittals, and a log number that is not on screen comes back with
+ * the numbers that ARE.
+ *
+ * It also pins a removal. `submission-gateway.reload-findings` drove the
+ * refusal card's Reload findings button, and that card existed only after a
+ * refused assemble or transmit — both of which left this screen. An action
+ * whose control has gone is a dead end (AnA is told she can, tries, and the
+ * bus refuses), so it left the registry in the same change.
  *
  * Note on ids: the registry entries are `submission-gateway.*` (the
  * navigation-target id, shared/navigation/index.ts) while the surface
@@ -33,19 +38,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-// One submit button per dialog. Only the assemble form is driven here — it is
-// the human path that puts a refusal card (and a last package id) on screen,
-// which is the only state in which Reload findings exists at all.
-vi.mock('../C2CForm', () => ({
-  C2CForm: ({ config, onSubmit }: any) => (
-    <button
-      data-testid="form-submit"
-      onClick={() => onSubmit({ packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' })}
-    >
-      {config.submitLabel}
-    </button>
-  ),
-}));
+// The technical-rejection dialog's form. Never opened here: that rejection is a
+// signed act and stays a person's click.
+vi.mock('../C2CForm', () => ({ C2CForm: () => null }));
 
 import { GatewayTransmittals } from '../surfaces/GatewayTransmittals';
 import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
@@ -53,12 +48,10 @@ import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
 const GATEWAYS_URL = '/api/mdx/gateways';
 const LOG_URL = '/api/mdx/gateways/transmittals';
-const PREFLIGHT_URL = '/api/submission-ops/packages/77/preflight';
-const ASSEMBLE_URL = '/api/submission-ops/packages/77/assemble';
 
 const env = (data: unknown, status = 200) =>
   ({ ok: status < 400, status, json: async () => ({ data }) }) as Response;
-const serverError = () => ({ ok: false, status: 500, json: async () => ({ error: 'dispatch layer down' }) }) as Response;
+const serverError = () => ({ ok: false, status: 500, json: async () => ({ error: 'transmittal log unavailable' }) }) as Response;
 
 const GATEWAYS = [{ region: 'fda', gateway: 'esg', name: 'FDA ESG', configured: true, environment: 'production' }];
 const row = (id: number, ref: string | null, status: string) => ({
@@ -66,6 +59,9 @@ const row = (id: number, ref: string | null, status: string) => ({
   submitted_at: '2026-07-21T00:00:00Z', ack_received_at: null, submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace',
 });
 const LOG = [row(12, 'ESG-ALPHA-1', 'acknowledged'), row(13, 'ESG-BETA-2', 'received'), row(14, null, 'submitted')];
+// Linked from another screen (?transmittalId=99) and NOT on the log page the
+// read returns: the screen pins it to the top of the table anyway.
+const LINKED = row(99, 'ESG-LINKED-9', 'received');
 
 const props = () =>
   ({ surface: { id: 'gateway-transmittals', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
@@ -100,23 +96,10 @@ function serveEverything(overrides: Record<string, () => Response> = {}) {
     if (url === LOG_URL) return env(LOG);
     if (url === `${LOG_URL}/12/status`) return env({ transmittalId: 12, status: 'acknowledged', source: 'stored', gatewayState: 'DONE' });
     if (url === `${LOG_URL}/13/status`) return env({ transmittalId: 13, status: 'received', source: 'live', gatewayState: 'IN_TRANSIT' });
-    if (url === PREFLIGHT_URL) {
-      return env({ errorCount: 1, validation: { findings: [{ ruleId: 'MODULE1-BACKBONE', severity: 'error', message: 'Module 1 backbone incomplete' }] } });
-    }
-    if (url === ASSEMBLE_URL) {
-      // 422 from the packager: the human path to a refusal card, and the only
-      // state in which the Reload findings control exists.
-      return { ok: false, status: 422, json: async () => ({ error: 'the packager refused the bundle', validation: { findings: [{ ruleId: 'REGULATORY-IDENTIFIER-MISSING', severity: 'error', message: 'No application number recorded' }] } }) } as Response;
-    }
+    if (url === `${LOG_URL}/99`) return env(LINKED);
+    if (url === `${LOG_URL}/99/status`) return env({ transmittalId: 99, status: 'received', source: 'live', gatewayState: 'IN_TRANSIT' });
     return env(null);
   });
-}
-
-/** Drive the human assemble path to a refusal card, as a person would. */
-async function putARefusalCardOnScreen() {
-  fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-  fireEvent.click(screen.getByTestId('form-submit'));
-  await screen.findByText(/Bundle not transmittable/);
 }
 
 beforeEach(() => {
@@ -127,6 +110,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   __resetSurfaceActionBus();
+  window.history.replaceState({}, '', '/');
 });
 
 describe('show a transmittal’s gateway status — the row’s Status button, in her hands', () => {
@@ -262,7 +246,7 @@ describe('show a transmittal’s gateway status — its honest refusals', () => 
     render(<GatewayTransmittals {...props()} />);
 
     await refused(outcome);
-    expect(reasonOf(outcome)).toMatch(/The dispatch layer did not respond/);
+    expect(reasonOf(outcome)).toMatch(/The transmittal log could not be read/);
     expect(reasonOf(outcome), 'a failed read must not read as an organization with no transmittals')
       .toMatch(/not the same as this organization having none/);
   });
@@ -280,72 +264,42 @@ describe('show a transmittal’s gateway status — its honest refusals', () => 
     expect(detailOf(again), 'a no-op says so rather than claiming a change').toMatch(/Already showing the gateway status for transmittal #12/);
     expect(apiRequest.mock.calls.filter(([, u]) => u === `${LOG_URL}/12/status`).length).toBe(pollsSoFar);
   });
+  it('a transmittal linked from another screen is on the table, so she can name it too', async () => {
+    // Opened from a notification or another screen: the hook reads the exact
+    // row separately and pins it above the log page. A person can press its
+    // Status button, so the handler resolves against the rows the TABLE renders
+    // (logRows) rather than the log read alone, or AnA would refuse a row that
+    // is plainly on screen.
+    window.history.replaceState({}, '', '/?transmittalId=99');
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-LINKED-9');
+
+    const outcome = send('submission-gateway.show-status', { transmittal: '#99' });
+    await applied(outcome);
+    expect(detailOf(outcome)).toMatch(/transmittal #99/);
+    await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === `${LOG_URL}/99/status`)).toBe(true));
+  });
 });
 
-describe('reload the refusal findings — the card’s own control, in her hands', () => {
-  it('re-runs preflight for the package on the card, and the card carries the verdict', async () => {
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-ALPHA-1');
-    await putARefusalCardOnScreen();
-    expect(screen.getByRole('button', { name: /Reload findings/ })).toBeTruthy();
-
-    const outcome = send('submission-gateway.reload-findings', {});
-    await applied(outcome);
-    expect(detailOf(outcome)).toMatch(/Re-running preflight for package 77/);
-    // No count and no "clear" in the detail — the card states what preflight reports.
-    expect(detailOf(outcome), 'the handler must not report a finding count it never saw').not.toMatch(/\d+ (error|finding)/);
-
-    expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === PREFLIGHT_URL)).toBe(true);
-    await screen.findByText(/Preflight reports 1 error-severity finding on the stored bundle for package 77/);
-    expect(screen.getByText('Module 1 backbone incomplete')).toBeTruthy();
-  });
-
-  it('a preflight that could not be run reaches the card as that, not as a clear bundle', async () => {
-    serveEverything({ [`POST ${PREFLIGHT_URL}`]: () => serverError() });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-ALPHA-1');
-    await putARefusalCardOnScreen();
-
-    const outcome = send('submission-gateway.reload-findings', {});
-    await applied(outcome);
-    await screen.findByText(/Preflight could not be run for package 77/);
-    expect(screen.queryByText(/no error-severity findings/)).toBeNull();
-  });
-
-  it('with no refusal card showing it is refused flatly — never held until it times out', async () => {
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-ALPHA-1');
-    expect(screen.queryByRole('button', { name: /Reload findings/ }), 'the control only exists on the card').toBeNull();
-
-    const outcome = send('submission-gateway.reload-findings', {});
-    expect(outcome.immediate.status, 'a state the load can never reach must not be held').toBe('failed');
-    await refused(outcome);
-    expect(reasonOf(outcome)).toMatch(/No refusal findings are showing, so there is nothing to reload/);
-    expect(reasonOf(outcome)).toMatch(/appears only after an assembly or a transmit was refused/);
-    expect(apiRequest.mock.calls.some(([, u]) => u === PREFLIGHT_URL)).toBe(false);
-  });
-
-  it('is refused the same way when it arrives before the screen has mounted', async () => {
-    const outcome = send('submission-gateway.reload-findings', {});
-    expect(outcome.immediate, 'nothing is mounted yet, so the bus holds it').toEqual({ status: 'stashed' });
-    render(<GatewayTransmittals {...props()} />);
-
-    await refused(outcome);
-    expect(reasonOf(outcome)).toMatch(/No refusal findings are showing/);
-  });
-
-  it('takes no params at all, so the registry resolves it bare', () => {
+describe('reload-findings left with its control', () => {
+  it('is not a registered action — the refusal card it drove is gone from this screen', () => {
     const res = resolveSurfaceAction('submission-gateway.reload-findings', {});
-    expect(res.ok).toBe(true);
-    if (!res.ok) return;
-    expect(res.directive.params ?? {}).toEqual({});
-    // The registry's id is the nav target; the surface registers the alias.
-    expect(res.directive.surfaceId).toBe('submission-gateway');
+    expect(res.ok, 'an action whose control has left the screen is a dead end').toBe(false);
+    if (res.ok) return;
+    expect(res.code).toBe('unknown_action');
+  });
+
+  it('and the screen offers no Reload findings, assemble or package transmit to a person either', async () => {
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-ALPHA-1');
+    for (const name of [/Reload findings/, /Assemble bundle/, /^Transmit/]) {
+      expect(screen.queryByRole('button', { name }), `${name} must not be on the read-only log`).toBeNull();
+    }
   });
 });
 
 describe('the governed acts stay a person’s own click', () => {
-  it('neither registry id names governed work, and the five ceremonies have no action', () => {
+  it('no governed act on or formerly on this screen is a performable action', () => {
     for (const governed of [
       'submission-gateway.transmit',
       'submission-gateway.rollback',

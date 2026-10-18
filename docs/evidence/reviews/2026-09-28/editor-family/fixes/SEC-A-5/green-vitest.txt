@@ -8,7 +8,7 @@ $ npx vitest run <every test importing RichSectionEditor or deviceDraftCache, an
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 17ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 5ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs) is not refused 9ms
-✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not 
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a ragged table (a short row) is refused — the editor would pad it 26ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a rowspan that overflows the table is refused — the editor would clamp it 15ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a well-formed rectangular table is NOT refused — fixTables leaves it alone 8ms
@@ -143,7 +143,7 @@ $ npx vitest run <every test importing RichSectionEditor or deviceDraftCache, an
 ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling-smpc 307ms
 ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > licensing 312ms
 ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > lifecycle-mgmt 318ms
-✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed 
+✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed
 ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open 72ms
 ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > maa-cockpit 304ms
 ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > market-access 304ms

@@ -289,19 +289,36 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
      Product identity (name, manufacturer) is not carried in the label store, so
      it is collected here and validated server-side; the PROSE is always the
      org's stored sections. */
-  const [spl, setSpl] = useState({ productName: '', manufacturer: '', ndc: '', ingredient: '', strength: '' });
+  const [spl, setSpl] = useState({
+    productName: '', manufacturer: '', ndc: '', ingredient: '', strength: '', version: '', effectiveDate: '',
+  });
+  /* What the last downloaded SPL carries that nobody stated, as the server names
+     it. 2026-10-15: the server's `warnings` were dropped, so an SPL carrying
+     version 1 and the generation date as its effective date downloaded as clean. */
+  const [splNotStated, setSplNotStated] = useState<string[]>([]);
   const buildSpl = async () => {
     if (busy) return;
     setBusy('spl');
+    setSplNotStated([]);
     try {
       const res = await apiRequest('POST', '/api/labeling-pi/spl', {
         productName: spl.productName,
         manufacturer: spl.manufacturer,
         ndc: spl.ndc || undefined,
         activeIngredients: [{ name: spl.ingredient, strength: spl.strength || undefined }],
+        // Sent as typed; the server refuses a version or date it cannot use.
+        version: spl.version.trim() || undefined,
+        effectiveDate: spl.effectiveDate || undefined,
       });
       const j = (await res.json().catch(() => null)) as
-        | { data?: { xml: string; sectionCount: number; validation: { valid: boolean; findings: Array<{ message: string }> } } }
+        | {
+            data?: {
+              xml: string;
+              sectionCount: number;
+              validation: { valid: boolean; findings: Array<{ message: string }> };
+              warnings?: string[];
+            };
+          }
         | null;
       if (!res.ok || !j?.data?.xml) {
         fireToast(
@@ -316,12 +333,17 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
         'application/xml;charset=utf-8',
       );
       const v = j.data.validation;
+      const notStated = Array.isArray(j.data.warnings) ? j.data.warnings : [];
+      setSplNotStated(ok ? notStated : []);
       fireToast(
         ok
           ? `SPL downloaded — ${j.data.sectionCount} sections from this label. ` +
               (v?.valid
                 ? 'It passes the structural check.'
-                : `It does NOT pass the structural check: ${(v?.findings ?? []).map((f) => f.message).join('; ')}`)
+                : `It does NOT pass the structural check: ${(v?.findings ?? []).map((f) => f.message).join('; ')}`) +
+              (notStated.length > 0
+                ? ` It carries ${notStated.length} value${notStated.length === 1 ? '' : 's'} nobody stated — listed under the button.`
+                : '')
           : 'The SPL was built but the browser refused the download.',
         ok && v?.valid ? 'ok' : 'error',
       );
@@ -586,7 +608,9 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
             from §1 Indications, §2 Dosage and administration, §4 Contraindications and §5 Warnings
             and precautions as they stand in this label — nothing is re-authored. Product identity is
             not held in the label store, so supply it here — an SPL without a product name,
-            manufacturer or active ingredient is refused rather than emitted incomplete.
+            manufacturer or active ingredient is refused rather than emitted incomplete. The
+            labeling&apos;s version and effective date are not held there either: left blank, the SPL
+            carries version 1 and the date it was built, and says so below.
           </p>
           <div className="lp-spl-form">
             <label className="lp-spl-f">
@@ -629,6 +653,25 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
                 placeholder="00000-000-00"
               />
             </label>
+            <label className="lp-spl-f">
+              <span>Version (optional)</span>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={spl.version}
+                onChange={(e) => setSpl((s) => ({ ...s, version: e.target.value }))}
+                placeholder="1 for the first version of this label"
+              />
+            </label>
+            <label className="lp-spl-f">
+              <span>Effective date (optional)</span>
+              <input
+                type="date"
+                value={spl.effectiveDate}
+                onChange={(e) => setSpl((s) => ({ ...s, effectiveDate: e.target.value }))}
+              />
+            </label>
           </div>
           <button
             className="reg-btn pri"
@@ -637,6 +680,16 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
           >
             {I.download} {busy === 'spl' ? 'Building SPL…' : 'Build and download SPL XML'}
           </button>
+          {splNotStated.length > 0 && (
+            <div className="scaf-note" role="note" style={{ margin: '12px 0 0' }}>
+              <strong>The downloaded SPL carries values nobody stated:</strong>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                {splNotStated.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       ) : (
       <div className="lp-split">

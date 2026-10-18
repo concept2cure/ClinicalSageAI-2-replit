@@ -1,0 +1,6 @@
+{
+  "format": "Raw UTF-8 tool log encoded as JSON; bytes retained through text plus SHA-256.",
+  "sha256": "e329c515c87b25806d809f0e19b6dcc4ebf8d64793445d4f737c22c01d5fb301",
+  "bytes": 946,
+  "text": "\n RUN  v4.1.7 /workspace/ClinicalSageAI\n\nstdout | server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > can plan every existing universal builtin outline without writing rows or claiming generated content\nPure universal assembly plan coverage { templates: 305, sections: 4308, maximumOutline: 295 }\n\n \u2713 server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > plans the full existing Module 5 outline instead of imposing the unrelated from-draft 200-section cap 73ms\n \u2713 server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > can plan every existing universal builtin outline without writing rows or claiming generated content 160ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  22:59:28\n   Duration  2.55s (transform 1.40s, setup 212ms, import 1.40s, tests 237ms, environment 0ms)\n\n"
+}

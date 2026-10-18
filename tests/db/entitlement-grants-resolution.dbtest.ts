@@ -92,6 +92,7 @@ const ORG_FOREIGN = 91124; // a tenant the per-user scope must not reach
 const ORG_LICENSE = 91102; // license-manager, tier standard
 const ORG_LAUNCH_SETUP = 91103; // D2 via /api/setup (system scope)
 const ORG_LAUNCH_SIGNUP = 91104; // D2 via /api/auth/signup (pre-auth scope)
+const ORG_CMC_PROFESSIONAL = 91108; // eligible tier, with no explicit CMC grant
 const ORG_OWNER = 91105; // master-admin designation lookups
 const ORG_QUOTA = 91106; // checkProgramQuota (Projects create path)
 const ORG_LEGACY_QUOTA = 91107; // checkProjectQuota / usage panel (legacy projects table)
@@ -278,6 +279,7 @@ beforeAll(async () => {
     [ORG_LICENSE, 'standard'],
     [ORG_LAUNCH_SETUP, 'free'],
     [ORG_LAUNCH_SIGNUP, 'free'],
+    [ORG_CMC_PROFESSIONAL, 'professional'],
     [ORG_OWNER, 'standard'],
     [ORG_QUOTA, 'standard'],
     [ORG_LEGACY_QUOTA, 'standard'],
@@ -1002,7 +1004,7 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
     for (const r of rows) expect(r).toMatchObject({ enabled: true, expires_at: null, enabled_by: null });
   });
 
-  it('the rail: launch apps resolve available, non-launch modules resolve locked by launch scope', async () => {
+  it('the rail: granted launch apps open, professional CMC stays tier-locked, non-launch modules stay scope-locked', async () => {
     process.env.LAUNCH_SCOPE_ENFORCE = 'on';
     try {
       const result = await asUser(ORG_LAUNCH_SETUP, 'member', '/api/module-subscriptions/navigation', () =>
@@ -1019,8 +1021,12 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
       expect(liveLaunch.length).toBeGreaterThan(0);
       for (const id of liveLaunch) expect(v.get(id), id).toMatchObject({ entitled: true, source: 'subscribed' });
 
-      // Each launch app has at least one available module on the rail.
-      for (const app of LAUNCH_APPS) {
+      // CMC is in the launch scope without a perpetual free grant. Its
+      // professional entitlement remains the deployed product contract.
+      expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(['cmc']);
+      expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+      expect(await grantRow(ORG_LAUNCH_SETUP, 'cmc')).toEqual([]);
+      for (const app of LAUNCH_APPS.filter((entry) => entry.modules.length > 0)) {
         expect(app.modules.some((m) => v.get(m)?.entitled === true), app.id).toBe(true);
       }
 
@@ -1056,6 +1062,20 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
       if (liveCatalog.get('identity-console')?.tiers.includes('enterprise')) {
         expect(v.get('identity-console')).toMatchObject({ entitled: false, source: 'tier' });
       }
+    } finally {
+      delete process.env.LAUNCH_SCOPE_ENFORCE;
+    }
+  });
+
+  it('professional CMC opens under launch enforcement without acquiring an explicit module grant', async () => {
+    process.env.LAUNCH_SCOPE_ENFORCE = 'on';
+    try {
+      const result = await asUser(ORG_CMC_PROFESSIONAL, 'member', '/api/module-subscriptions/navigation', () =>
+        nav.resolveNavEntitlements(ORG_CMC_PROFESSIONAL, { masterAdmin: false }),
+      );
+      expect(result).toMatchObject({ resolved: true, tier: 'professional', launchScope: { enforced: true } });
+      expect(result.surfaces.find((surface) => surface.id === 'cmc')).toMatchObject({ entitled: true, source: 'included' });
+      expect(await grantRow(ORG_CMC_PROFESSIONAL, 'cmc')).toEqual([]);
     } finally {
       delete process.env.LAUNCH_SCOPE_ENFORCE;
     }

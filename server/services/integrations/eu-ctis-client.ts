@@ -133,10 +133,10 @@ export async function searchEuCtis(params: EuCtisSearchParams): Promise<EuCtisSe
       },
       { timeoutMs: REQUEST_TIMEOUT_MS }
     );
+    // 2026-10-15: a 404 returned `status: 'ok'` with zero trials. 404-as-no-match
+    // is documented for openFDA, not for this endpoint, so a moved or retired path
+    // answered every search "none found". It is a failed read like any other.
     if (!res.ok) {
-      if (res.status === 404) {
-        return { source: EU_CTIS_SOURCE, status: 'ok', totalCount: 0, trials: [] };
-      }
       return {
         source: EU_CTIS_SOURCE,
         status: 'unavailable',
@@ -153,7 +153,17 @@ export async function searchEuCtis(params: EuCtisSearchParams): Promise<EuCtisSe
         ? data.content
         : Array.isArray(data?.results)
           ? data.results
-          : [];
+          : null;
+    // 2026-10-15: a body with none of the arrays was read as zero trials.
+    if (content === null) {
+      return {
+        source: EU_CTIS_SOURCE,
+        status: 'unavailable',
+        totalCount: 0,
+        trials: [],
+        message: 'EU CTIS API response had no results array (unexpected shape)',
+      };
+    }
     const totalCount =
       Number(data?.pagination?.totalRecords ?? data?.totalElements ?? data?.total ?? content.length) ||
       content.length;

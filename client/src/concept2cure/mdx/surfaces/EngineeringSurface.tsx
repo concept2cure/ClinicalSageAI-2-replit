@@ -24,16 +24,7 @@ import { I } from '../icons';
 import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import { EmptyState } from '../../v2/dataConnect';
-import {
-  ENG_DHF,
-  ENG_ECRS,
-  ENG_ISSUES,
-  ENG_RISK_ACCEPT,
-  ENG_RISK_PROB,
-  ENG_RISK_SEVERITY,
-  ENG_RISKS,
-  ENG_TRACE,
-} from '../data/engineering';
+import { ENG_RISK_PROB, ENG_RISK_SEVERITY } from '../data/engineering';
 import { useEngineering, type PanelScope } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
@@ -355,7 +346,6 @@ export function EngineeringSurface({
               state={live.dhf}
               label="DHF sections"
               onRetry={live.refresh}
-              sample={ENG_DHF}
               dense
               emptyHint="Device-category sections appear here once the 510(k) section set is created."
             >
@@ -427,13 +417,12 @@ export function EngineeringSurface({
                       </div>
                       {ENG_RISK_PROB.map((p) => {
                         const key = `${s.id}${p.id}`;
-                        const verdict = (ENG_RISK_ACCEPT as unknown as Record<string, string>)[key];
                         const count = cellCounts[key] ?? 0;
                         const isFiltered = cellFilter === key;
                         return (
                           <button
                             key={key}
-                            className={`eng-heat-cell tone-${verdict}${isFiltered ? ' on' : ''}${
+                            className={`eng-heat-cell${isFiltered ? ' on' : ''}${
                               count === 0 ? ' empty' : ''
                             }`}
                             onClick={() => count > 0 && setCellFilter(isFiltered ? null : key)}
@@ -466,7 +455,6 @@ export function EngineeringSurface({
                   state={live.risks}
                   label="risk records"
                   onRetry={live.refresh}
-                  sample={ENG_RISKS}
                   dense
                   emptyHint="Add hazards to this program's ISO 14971 risk file to populate the matrix."
               regulation="Serves the ISO 14971 risk management file"
@@ -501,7 +489,6 @@ export function EngineeringSurface({
                   state={live.trace}
                   label="traceability rows"
                   onRetry={live.refresh}
-                  sample={ENG_TRACE}
                   dense
                   emptyHint="Design inputs trace to outputs, verification and validation once design controls are recorded."
                 >
@@ -523,7 +510,6 @@ export function EngineeringSurface({
               state={live.ecrs}
               label="change requests"
               onRetry={live.refresh}
-              sample={ENG_ECRS}
               dense
               emptyHint="Engineering change requests appear here as they are raised."
             >
@@ -543,7 +529,6 @@ export function EngineeringSurface({
               state={live.issues}
               label="non-conformances"
               onRetry={live.refresh}
-              sample={ENG_ISSUES}
               dense
               emptyHint="Non-conforming product records appear here when raised in the quality system."
             >

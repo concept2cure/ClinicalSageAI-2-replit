@@ -10,13 +10,14 @@
  *
  * This module gives ONE typed, comparable descriptor per market spanning BOTH
  * devices and IVDs: dossier standard, classification scheme, primary pathways,
- * language/localization, QMS expectation, and HONEST capability flags.
+ * language/localization, QMS expectation, and platform capability flags.
  *
- * HONEST BY CONSTRUCTION:
+ * CAPABILITY FLAGS:
  *   - `canAssemble` is true ONLY where the platform already has an assembler
  *     (eCTD backbone, FDA eSTAR mapper, EU CE technical-file / CER packager).
- *   - `canTransmit` is FALSE for every market — this registry never claims a
- *     transmission capability the platform does not have.
+ *   - `canTransmit` is never set by hand: market-registry.ts reads it from what
+ *     regulatory/market-support.ts states for the market's device and IVD
+ *     filings. It is false for every market today.
  *
  * PURE + DETERMINISTIC: static data + pure functions. No DB, no network, no LLM.
  *
@@ -127,16 +128,19 @@ export interface MarketDescriptor {
   /** What the platform can assemble today, or why it cannot (honest note). */
   assembleNote: string;
   /**
-   * Whether the platform can transmit to this market's regulatory gateway.
-   * True for the 11 markets that have a live submission gateway configured.
-   * False for markets without a wired gateway (JP, TW, SA, ZA, MDSAP). JP is
-   * false because no sourced PMDA transport exists (g-pmda-transmit-unverified,
-   * 2026-10-05).
+   * Whether the platform transmits this market's device and IVD filings: what
+   * regulatory/market-support.ts states for them (market-registry.ts
+   * `platformTransmitsTo`), never set by hand. False for every market today:
+   * market-support states that the platform transmits no device filing yet, and
+   * maps no channel for the markets it does not know.
    */
   canTransmit: boolean;
   /**
-   * The gateway Region key (from submission-gateways/types.ts) that maps this
-   * market to its transmission endpoint. Undefined for markets without a gateway.
+   * The gateway Region key (submission-gateways/types.ts) of the platform's
+   * adapter for this market's authority, when there is one for its filings. An
+   * adapter is not a channel: whether anything is sent is `canTransmit`.
+   * Undefined where there is none: a Notified Body; PMDA device applications,
+   * which the drug eCTD gateway does not take (2026-10-05); TW, SA, ZA, MDSAP.
    */
   gatewayRegion?: string;
   /** Citations / notes backing the descriptor's values. */

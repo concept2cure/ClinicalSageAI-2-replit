@@ -18,4 +18,3 @@
   204:62  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
 
 ✖ 12 problems (0 errors, 12 warnings)
-

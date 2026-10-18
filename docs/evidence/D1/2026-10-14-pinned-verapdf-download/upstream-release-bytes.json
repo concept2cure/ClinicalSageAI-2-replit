@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-14T07:52:13.159903+00:00",
+  "checks": [
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar.sha256",
+      "status": 200,
+      "bytes": 64,
+      "sha256": "79113b792bf64421af63fd76fc7e5d323c4402e0d9f300fb6463f51369df28d2",
+      "lastModified": "Wed, 03 Jun 2026 10:55:04 GMT",
+      "publishedChecksum": "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar",
+      "status": 200,
+      "bytes": 16038834,
+      "sha256": "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332",
+      "lastModified": "Wed, 03 Jun 2026 10:55:04 GMT"
+    },
+    {
+      "url": "https://repo1.maven.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar",
+      "status": 200,
+      "bytes": 16038834,
+      "sha256": "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332",
+      "lastModified": "Wed, 03 Jun 2026 10:55:04 GMT"
+    }
+  ],
+  "fallbackCheckedAt": "2026-10-14T07:59:19.599774+00:00"
+}

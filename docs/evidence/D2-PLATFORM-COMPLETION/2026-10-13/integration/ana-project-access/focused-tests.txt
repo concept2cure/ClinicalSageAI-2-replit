@@ -1,0 +1,142 @@
+Sanitized local Vitest evidence: test names and final results only.
+Application output, fixture identities and SQL metadata omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"[TEST_UUID]"} before SSE 94ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"[TEST_UUID]"}} before SSE 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"[TEST_UUID]"}} before SSE 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path 27ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation 31ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > preserves an organization conversation without a selected project 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a selected private source even when the open project is public and accessible 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a direct upload whose recorded source belongs to another private project 38ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":"[TEST_UUID]"} despite stale token admin role 125ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":42} despite stale token admin role 62ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"context":{"projectId":"[TEST_UUID]"}} despite stale token admin role 12ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_context":{"projectId":"[TEST_UUID]"}} despite stale token admin role 10ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval 9ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn 31ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads 4ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > rejects another member’s unbound file_id before thread or model work 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 55ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > an explicit program without a verified relationship is refused before context 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed access lookup refuses the turn, without source context 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > an access lookup deadline refuses the turn without starting optional readers 3012ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 3ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses an unrelated member before reading Vault titles or standing 49ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > reads recorded standing for an active shared member and for the project creator 76ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks a normalized share after revocation instead of trusting old JSON or a prior successful call 32ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks the live organization role after an administrator is downgraded 155ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a creator who is no longer an organization member 24ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a suspended actor even when their organization role still grants management access 23ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses standing from an inactive organization 60ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a requested private project without a pinned actor 19ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > fails closed before source reads when membership verification fails 21ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > keeps the general plan available without a project or actor and performs no database query 13ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > keeps static plan steps and the registered IND reference catalogue database-free 54ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > keeps an omitted project database-free, including ordinary null context fields 35ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"[TEST_UUID]"} 36ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11"} 90ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"proj_11"} 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectId":11} 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"[TEST_UUID]","projectId":11} 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > preserves a real unanchored numeric project without inventing a program 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"21"} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"[TEST_UUID]"} 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"999"} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses conflicting numeric and program references rather than choosing one 23ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"unknown-project"} into an organization-wide turn 7ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":0} into an organization-wide turn 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"[TEST_UUID]","projectId":"not-a-number"} into an organization-wide turn 113ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected 69ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > validates the stored program tenant even when the numeric project exists in this organization 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"[TEST_UUID]"} 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11"} 12ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > admits the private project creator and owner without an explicit member entry 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > uses normalized current membership after revocation instead of stale JSON sharing or a cached admission 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > rechecks the live role after an administrator is downgraded 28ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > allows a shared member with a tenant-specific role rather than introducing a new role allow-list 22ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a creator whose organization membership has been removed 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses ambiguous membership rows instead of selecting the most privileged role 29ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a suspended administrator and an inactive organization 46ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an explicit project without a valid pinned actor 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when organization_users cannot be read 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when project_members cannot be read 19ms
+ ✓ server/services/ana/__tests__/ind-pyramid-knowledge-tool.test.ts > AnA reads the same complete IND catalogue as the existing editor > walks every canonical entry once, through the last phase, within the serialized budget 48ms
+ ✓ server/services/ana/__tests__/ind-pyramid-knowledge-tool.test.ts > AnA reads the same complete IND catalogue as the existing editor > preserves official-form and dataset authoring limits instead of declaring them narrative drafts 13ms
+ ✓ server/services/ana/__tests__/ind-pyramid-knowledge-tool.test.ts > AnA reads the same complete IND catalogue as the existing editor > filters a phase or CTD section without losing page cursor semantics 8ms
+ ✓ server/services/ana/__tests__/ind-pyramid-knowledge-tool.test.ts > AnA reads the same complete IND catalogue as the existing editor > shrinks complete escaped rows to fit, marks clipped descriptions, and still visits every id 77ms
+ ✓ server/services/ana/__tests__/ind-pyramid-knowledge-tool.test.ts > AnA reads the same complete IND catalogue as the existing editor > rejects invalid filters and cursors, and routes through the existing tool identity 79ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 66ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > premise: the record tool is not always offered, so only the carry can offer it 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 195ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps the next question, session, direct handler scope and turn record 482ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps interview completion and its summary 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps refused handler failure honest without unused reads 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps throws handler failure honest without unused reads 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > keeps non-json handler failure honest without unused reads 20ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > handles malformed input without calling a handler or admitting unused reads 33ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > direct intelligence answers avoid unused model-turn reads > still starts both model-turn reads while optional route prefetch is pending 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > starts admitted memory before optional route prefetch finishes and waits for both before the model 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > awaits slow memory when optional route context has already returned 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation resolve fails 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation history fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation save fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > handles an early memory rejection while optional context is pending 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 6ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 31ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 7ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 27ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > says in its description and step detail that it matches by kind and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > fits the result budget with many misfiled, unspecific and noted documents 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+ Test Files  9 passed (9)
+      Tests  134 passed (134)
+   Start at  20:55:30
+   Duration  130.89s (transform 41.75s, setup 288ms, import 93.06s, tests 34.99s, environment 1ms)

@@ -9,7 +9,7 @@ interface FinderMetricsState {
   profilesUpserted: number;
   discoveriesRun: number;
   opportunitiesScored: number;
-  strongMatches: number; // fit score >= 70
+  strongMatches: number; // fit score >= 70 with eligibility confirmed
 }
 
 const state: FinderMetricsState = { profilesUpserted: 0, discoveriesRun: 0, opportunitiesScored: 0, strongMatches: 0 };
@@ -32,7 +32,7 @@ export function renderGrantFinderMetrics(): string[] {
   lines.push('# HELP grant_finder_opportunities_scored_total Opportunities scored across all discoveries');
   lines.push('# TYPE grant_finder_opportunities_scored_total counter');
   lines.push(`grant_finder_opportunities_scored_total ${state.opportunitiesScored}`);
-  lines.push('# HELP grant_finder_strong_matches_total Opportunities scored as a strong fit (>= 70)');
+  lines.push('# HELP grant_finder_strong_matches_total Opportunities scored as a strong fit (>= 70) with eligibility confirmed');
   lines.push('# TYPE grant_finder_strong_matches_total counter');
   lines.push(`grant_finder_strong_matches_total ${state.strongMatches}`);
   return lines;

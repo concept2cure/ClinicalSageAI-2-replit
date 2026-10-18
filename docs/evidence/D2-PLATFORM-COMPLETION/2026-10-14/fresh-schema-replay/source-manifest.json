@@ -1,0 +1,728 @@
+{
+  "observedHead": "caa39331f29e0c3baeec36c6ccb570920a32223e",
+  "branch": "concept2cure-v2",
+  "database": "platform_ci_fresh_verify_20261014_beb73055",
+  "sources": [
+    {
+      "path": "scripts/db/install-fresh.mjs",
+      "bytes": 99629,
+      "digestAlgorithm": "SHA-256",
+      "digest": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d"
+    },
+    {
+      "path": "scripts/db/deploy-migrate.mjs",
+      "bytes": 23308,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5"
+    },
+    {
+      "path": "scripts/db/connection.mjs",
+      "bytes": 2702,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cc3069d79277b187693c2463d51579d7a1f3406b5785112be4add7c4864d9216"
+    },
+    {
+      "path": "scripts/db/provision-app-role.mjs",
+      "bytes": 45550,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1cf41357d41035bd9d3fbe71343050697c1f089fe3415f6cd7ad1a3f6a91aa63"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "bytes": 229280,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4cb6f1ec23eb5a0a63be3df60ac80aac3b0de8ce1331a06f1c1b9918bb3fe99f"
+    },
+    {
+      "path": "scripts/db/readiness-contract.mjs",
+      "bytes": 13545,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8fa8c13de6eeea96e1533b64f8c787a5674c0d44fbe02175e245ec228e4cfb4a"
+    },
+    {
+      "path": "drizzle.config.ts",
+      "bytes": 808,
+      "digestAlgorithm": "SHA-256",
+      "digest": "acb2a5bc0a9a227e55a556365a38132a6f21d4a2aea90cc376b1c1b59cf8f9a4"
+    },
+    {
+      "path": "migrations/20261014_immutable_report_tenant_index.sql",
+      "bytes": 1361,
+      "digestAlgorithm": "SHA-256",
+      "digest": "575faf419d61a72d4dcc12be49dcc13a7887f9a3b35d45263d709e0058cef7d8"
+    },
+    {
+      "path": "shared/schema.ts",
+      "bytes": 862248,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9"
+    },
+    {
+      "path": "shared/schema/ai-ml-pccp.ts",
+      "bytes": 9361,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e322c35ed78186d54a06270a1ca436cd13fe0890c7bba070397e91ab4c577ebf"
+    },
+    {
+      "path": "shared/schema/ana-intelligence.ts",
+      "bytes": 21077,
+      "digestAlgorithm": "SHA-256",
+      "digest": "16c8f386deae7a22efc58c2cbd7e85931bb9c3ebc45f29faca11828c79b11354"
+    },
+    {
+      "path": "shared/schema/ana-relational.ts",
+      "bytes": 3766,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6f14c778368ec46fb881e442fef043601575ad25f6b3dd5c19418d512ae65687"
+    },
+    {
+      "path": "shared/schema/api-keys.ts",
+      "bytes": 2242,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1a909332128f1a5f617f28a928bd5d34cee136a7eee7cda4ce69170d9501315d"
+    },
+    {
+      "path": "shared/schema/biopharma-specialty.ts",
+      "bytes": 2208,
+      "digestAlgorithm": "SHA-256",
+      "digest": "41a9a9847388f85bb477d9eb8482dc84a4db70b0b603f4f8fabd3796a0efb220"
+    },
+    {
+      "path": "shared/schema/biosketch.ts",
+      "bytes": 4102,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4cae23dded92f888226ea33b5c9d31d54d9aff12c98a60b75d39a5a21d21716f"
+    },
+    {
+      "path": "shared/schema/canonical_documents.ts",
+      "bytes": 3351,
+      "digestAlgorithm": "SHA-256",
+      "digest": "20a122aee93ce5383a675c4ccbc0faab46fb765610a5c5639271f7a441753af9"
+    },
+    {
+      "path": "shared/schema/capa-mdr.ts",
+      "bytes": 26906,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d64af3c978c627b68858360ddb2118e2977fb88f6652d33008a23f72729d8055"
+    },
+    {
+      "path": "shared/schema/cdisc-reference.ts",
+      "bytes": 1366,
+      "digestAlgorithm": "SHA-256",
+      "digest": "99a2c9ef0de6da95b105b508ccd796ad9e33fbf88f3d3756e6462ec534c2193b"
+    },
+    {
+      "path": "shared/schema/change-assessments.ts",
+      "bytes": 1794,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c78c7bcf589d281743569dd91d443e4ff85e8256544cefceb0e7328096db4403"
+    },
+    {
+      "path": "shared/schema/cmc-os.ts",
+      "bytes": 5153,
+      "digestAlgorithm": "SHA-256",
+      "digest": "13c6e095edaa85d2bd70b89d9d6dced6a0236b3b3a8d1d9f1dbfb1bb24d5261a"
+    },
+    {
+      "path": "shared/schema/controlled-substances.ts",
+      "bytes": 5413,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b84498dd8bf3c74bc17a9d7210173eedf9b999ef0e6aec21aadfbc1957ed5b7a"
+    },
+    {
+      "path": "shared/schema/coverage-analysis.ts",
+      "bytes": 7167,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bfbe8f3323338670cfc6d8efc0fc613c7345ee83933d9fa38a9316331c9c650a"
+    },
+    {
+      "path": "shared/schema/csr-knowledge-db-results.ts",
+      "bytes": 9595,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f1cb9b98a5185c15be0c9c42f14cb3d3ab816789a17c167c8312d8dac4d42f41"
+    },
+    {
+      "path": "shared/schema/csr-knowledge-db.ts",
+      "bytes": 48892,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d6fa4fb234f0e2ce0497d15feb0b512213eff4e471e8b136b885cf10ef829919"
+    },
+    {
+      "path": "shared/schema/ctd-projects.ts",
+      "bytes": 5983,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3bf115fa97197b0e6e674d1fc719c111f25fd84a358d3c21499450066d9d1231"
+    },
+    {
+      "path": "shared/schema/defense-packets.ts",
+      "bytes": 4760,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5e9f58ca64a320f1c59ee6ba9c6f97db072aec987b75b0b5b3c7fd1de4693ce9"
+    },
+    {
+      "path": "shared/schema/dmsp.ts",
+      "bytes": 3783,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3f73a3268b62007f43f8a89a6fa4815df952c74392d818083c06d042a8c2e53e"
+    },
+    {
+      "path": "shared/schema/document-span-lineage.ts",
+      "bytes": 5897,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3f8e11f56839a3ad60bd4375344ae6143aeefeea09d99c9e50fc332a5438f0a0"
+    },
+    {
+      "path": "shared/schema/effort-certification.ts",
+      "bytes": 3893,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1c621d8b7bb71f7b1734f0691a2b1ff02c794057de01ee8a6760b5ad609d3440"
+    },
+    {
+      "path": "shared/schema/enablement-content.ts",
+      "bytes": 1422,
+      "digestAlgorithm": "SHA-256",
+      "digest": "973a57a71102aedda4a0faca162f0711cf9411f50495232322d0a2a1fa6b0c52"
+    },
+    {
+      "path": "shared/schema/estar-registration.ts",
+      "bytes": 5234,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c7b9b78c9b65684749c9ae72864dfc5a5d25447dd1b0ba53d2010e96dc68be61"
+    },
+    {
+      "path": "shared/schema/estar-submission.ts",
+      "bytes": 5389,
+      "digestAlgorithm": "SHA-256",
+      "digest": "af757b0693c797ab13450baf18eb2b090cbee32dda5cbceea59deb92e3f50b4a"
+    },
+    {
+      "path": "shared/schema/etmf.ts",
+      "bytes": 3749,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f530743da88ea3ca7ed1c535bd14068b4b2573bba114cf61bbf6d5dd657a921f"
+    },
+    {
+      "path": "shared/schema/evidence-sufficiency.ts",
+      "bytes": 3896,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ccf3f7e7373536d824259cfce0457c2d26de092adcbba9efc648e0f57289fa8f"
+    },
+    {
+      "path": "shared/schema/evidence.ts",
+      "bytes": 5080,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fac8587b6414673d634c778b91e4820d3905c021237d77875d4a822c8ff252ee"
+    },
+    {
+      "path": "shared/schema/export-control.ts",
+      "bytes": 3460,
+      "digestAlgorithm": "SHA-256",
+      "digest": "240abcf25269fcfe7d6ecea2a55be0e7efa9c4756d00453c416723a00825485d"
+    },
+    {
+      "path": "shared/schema/external-intelligence.ts",
+      "bytes": 3766,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cf526f195ba4fcfc92b757d212bdc52366134900f27cbc306176d34dc68538c3"
+    },
+    {
+      "path": "shared/schema/financial-disclosures.ts",
+      "bytes": 8318,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a56b5bdf999e00d525f335d16e123acd8556012cb9531f942078084cc410af47"
+    },
+    {
+      "path": "shared/schema/grant-funding-profiles.ts",
+      "bytes": 2062,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a1432eb060def57f20c9054eb218649e25192aba789141a2f11518bff95aeff6"
+    },
+    {
+      "path": "shared/schema/grants.ts",
+      "bytes": 19746,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7748492a3e34347eb549606be7da856dbbdb4a744ec97154599aa78188a7ae07"
+    },
+    {
+      "path": "shared/schema/gspr-postmarket.ts",
+      "bytes": 16164,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ba7efa5aa01c634f27772131c4c80325c45c1f2a4c5f2f15ea719525f5647a2a"
+    },
+    {
+      "path": "shared/schema/gspr.seed.ts",
+      "bytes": 8137,
+      "digestAlgorithm": "SHA-256",
+      "digest": "09e6b2da730eba5f3e99077e0f3a468598e5b942fd2afb80e5c86a604cf655d7"
+    },
+    {
+      "path": "shared/schema/ha-interactions.ts",
+      "bytes": 7686,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7e1b016cfd08ab0fc322b43739c45c695847ecf40a439368bca7e567f349e8a0"
+    },
+    {
+      "path": "shared/schema/iacuc.ts",
+      "bytes": 9173,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b69908de73a6af39d641ca6cde084251e2cad636a5ccf16c30cbab8bf664edb2"
+    },
+    {
+      "path": "shared/schema/ibc.ts",
+      "bytes": 6349,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f6362756e3af8cc0396a95ad4da21bc6d3de62a5d619e0b4e84d20da08399697"
+    },
+    {
+      "path": "shared/schema/ind-amendments.ts",
+      "bytes": 2666,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1bb3febc9b3381609afcb0eb2ddc09df22b012667feb1f4bad1c98d82d6a4d35"
+    },
+    {
+      "path": "shared/schema/ind-annual-reports.ts",
+      "bytes": 2973,
+      "digestAlgorithm": "SHA-256",
+      "digest": "550c7038cd951120af556aa4506376dba37871676c4a4931ab42e63bd2399c31"
+    },
+    {
+      "path": "shared/schema/ind-cross-references.ts",
+      "bytes": 2958,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2eaafa229e18c00aa830d6d4065a75dc046ca334ddfb6170cc7b2c80e6c6e359"
+    },
+    {
+      "path": "shared/schema/ind-dispatch-snapshots.ts",
+      "bytes": 2452,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f3bdb9be9e62977bf2b7695869f92ed9480f80ca237d1579747dd859c2cf6856"
+    },
+    {
+      "path": "shared/schema/ind-icsr-transmissions.ts",
+      "bytes": 5342,
+      "digestAlgorithm": "SHA-256",
+      "digest": "05db6a30330df75aeb878954374ade4968a29fe56194d9605443ac4724866fe4"
+    },
+    {
+      "path": "shared/schema/ind-master-data.ts",
+      "bytes": 10685,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0dc608c7a06eb9937bf1d94e61a4db141cafc5140dc923ff8625259f0bc8b593"
+    },
+    {
+      "path": "shared/schema/ind-safety-reports.ts",
+      "bytes": 3164,
+      "digestAlgorithm": "SHA-256",
+      "digest": "635a40cc46aa73137c49cf76798b2c09b8be1e3777d3e2f132e98c42cb591b6a"
+    },
+    {
+      "path": "shared/schema/index.ts",
+      "bytes": 20186,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c37e5543ef744dfe930c3971d70223faae2f1f48eed17d0672df86cc45d0e2ab"
+    },
+    {
+      "path": "shared/schema/inspection.ts",
+      "bytes": 6684,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b4e3e95f5f0a36dea901654ff3b47ad812c37cbe869862fd31e8b1b46298c19f"
+    },
+    {
+      "path": "shared/schema/invention-disclosure.ts",
+      "bytes": 2935,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7b8cfd8034d08714ba1260c6da1b0464d1672646988516d14bf16f59c9e14f2b"
+    },
+    {
+      "path": "shared/schema/irb.ts",
+      "bytes": 11930,
+      "digestAlgorithm": "SHA-256",
+      "digest": "352eda4aebb7d8c7737d6ddcefe5ba3ec1e07ee8282a441145cc424786b17389"
+    },
+    {
+      "path": "shared/schema/lifecycle.ts",
+      "bytes": 4456,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0c4abc3294ce9698cb4f6c813dcd53805e08a67e124b8edb1d0ea3f63bec924b"
+    },
+    {
+      "path": "shared/schema/living-record-spine.ts",
+      "bytes": 20661,
+      "digestAlgorithm": "SHA-256",
+      "digest": "08fc048fa4e268c70b21958064e045b7b3cbfb6bb6f77f0686294fa5380fcb87"
+    },
+    {
+      "path": "shared/schema/nonclinical.ts",
+      "bytes": 5702,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8e882edae74bfc3fbb0caa713c13438604e52b6914a4d1f754eff229a53ffc75"
+    },
+    {
+      "path": "shared/schema/operating-system.ts",
+      "bytes": 11539,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2af235d57f2a75ec479c8cd9c74c57fc684d5dabd999005885ac1f076accc862"
+    },
+    {
+      "path": "shared/schema/orchestration.ts",
+      "bytes": 26241,
+      "digestAlgorithm": "SHA-256",
+      "digest": "532fd89513b0207888245b68d8d282c0338fc1929976433ba133a331bc1a72e9"
+    },
+    {
+      "path": "shared/schema/org-lifecycle.ts",
+      "bytes": 10916,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b60421c4bafe6fc09d5b05fefa5518347531fccd20b6ba37325b92bef9d2514c"
+    },
+    {
+      "path": "shared/schema/other-support.ts",
+      "bytes": 5083,
+      "digestAlgorithm": "SHA-256",
+      "digest": "973fdec07b384a3d4a17b8da39921a121bbf200a42a8701381d03f8e6b067bee"
+    },
+    {
+      "path": "shared/schema/pdev-workflow.ts",
+      "bytes": 9995,
+      "digestAlgorithm": "SHA-256",
+      "digest": "04c92714925606733d90a6a360a347adb4cc174a3bc5db5da7afcdd6f34e73a1"
+    },
+    {
+      "path": "shared/schema/programs.ts",
+      "bytes": 22091,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b088a758e049882780c3b35423a98480071a962fdbe9cf103d27083af6137395"
+    },
+    {
+      "path": "shared/schema/project-charter.ts",
+      "bytes": 38134,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ea1ab66fe03410e2ab5ff4fbd4d3a2487acf09f62011d4a4c4044f80b4eaa930"
+    },
+    {
+      "path": "shared/schema/protocol-amendments.ts",
+      "bytes": 4045,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f703e5df295b17e6bc197ab9e25dbcea89b736514c9f05175f6b189b03c6b29f"
+    },
+    {
+      "path": "shared/schema/protocol-budget.ts",
+      "bytes": 3286,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1d200e1e8bc9543da06db89e2e5cd69a9248ccf3c3adcdc433a4a9ed212c4468"
+    },
+    {
+      "path": "shared/schema/protocol-consent.ts",
+      "bytes": 3671,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7c6f9149c5b0b70012be0f9a840a3a7a483910bde3839afdb803dd3323b0f839"
+    },
+    {
+      "path": "shared/schema/protocol-development.ts",
+      "bytes": 11729,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d0d59090512cd9b5fd9381bb0a939e86ed8e57f4e861b5b137ebf49670afdbad"
+    },
+    {
+      "path": "shared/schema/protocol-deviations.ts",
+      "bytes": 4897,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ce8b111b12de7ae52e3f928ff7e11ff46903dd6a6b5af1c495e9ab43ad734872"
+    },
+    {
+      "path": "shared/schema/protocol-milestones.ts",
+      "bytes": 2139,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cc8c951cce11429c0bd0f42eacc4f657c66023c85141137b6e1471e2a542b1c8"
+    },
+    {
+      "path": "shared/schema/protocol-reviews.ts",
+      "bytes": 4445,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d49b06121d6a9f63ff9aeea21e37d2904acd55c164592b24ef3397b0f5cd188b"
+    },
+    {
+      "path": "shared/schema/protocol-risks.ts",
+      "bytes": 2518,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e7d7cd064bafb9ee4eb76326e475826a79d6afff8c5f2f8a76370192feb51060"
+    },
+    {
+      "path": "shared/schema/protocol-soa.ts",
+      "bytes": 3097,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7cf942c2eba60738eab868a7838f30784f9fcb6dbe39fec379d2465794370088"
+    },
+    {
+      "path": "shared/schema/protocol-templates.ts",
+      "bytes": 3035,
+      "digestAlgorithm": "SHA-256",
+      "digest": "01965f47bc29d14af373893922cf638f0dcfbc76896b68607a37d03e84686de2"
+    },
+    {
+      "path": "shared/schema/q-sub.ts",
+      "bytes": 13907,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b82be0fd84e41ecda85e0d02b513d9638faa548fa66713a293b74d5bfb5da0e5"
+    },
+    {
+      "path": "shared/schema/qc-schemas.ts",
+      "bytes": 29820,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4b841e811ee72e9f616db2ad2f7bf5972a3c621a0c6e3e42f2a36ac56cd92285"
+    },
+    {
+      "path": "shared/schema/regulatory-assessments.ts",
+      "bytes": 2717,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5da2691bf07ed9d7449a7e712170c1aac89482181392816d4cce03d77ba2eb0d"
+    },
+    {
+      "path": "shared/schema/regulatory-atoms.ts",
+      "bytes": 23010,
+      "digestAlgorithm": "SHA-256",
+      "digest": "431ada2312451f2a8554659d417899242d984b260594bbe6813301f31b2056db"
+    },
+    {
+      "path": "shared/schema/regulatory-graph.ts",
+      "bytes": 5285,
+      "digestAlgorithm": "SHA-256",
+      "digest": "760471b819c7675a02ab3dce6dcb637dba2758aeb1d1458f40f367fd812ba85e"
+    },
+    {
+      "path": "shared/schema/regulatory-standards.seed.ts",
+      "bytes": 22344,
+      "digestAlgorithm": "SHA-256",
+      "digest": "87362df19e3eb63caaf68f624bfe2a81e5f52fbc5154992acb5bc24a07eef1e6"
+    },
+    {
+      "path": "shared/schema/report-os.ts",
+      "bytes": 15194,
+      "digestAlgorithm": "SHA-256",
+      "digest": "61f904e4b025402e829286563df3ec83525503efc2f9b94bdb0c3eecdba86217"
+    },
+    {
+      "path": "shared/schema/research-agreements.ts",
+      "bytes": 3379,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b90539037c27337decb655e95bca02d9e82e16e9b60f5d1a9a05eabd90d866e8"
+    },
+    {
+      "path": "shared/schema/research-committees.ts",
+      "bytes": 9941,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f211790513da89fae832187820e0e919ccd3c3eb2709dc9eaf9cd5443939e37d"
+    },
+    {
+      "path": "shared/schema/research-compliance.ts",
+      "bytes": 3850,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2c2a6f9165d7cdae6b6fb61a437d530a884a1b17c74a9f5f4445830fcf45e456"
+    },
+    {
+      "path": "shared/schema/research-security.ts",
+      "bytes": 2794,
+      "digestAlgorithm": "SHA-256",
+      "digest": "508aee0a47a9cebcc8bf488328421659a061bf5328569d55039e01bbebf50373"
+    },
+    {
+      "path": "shared/schema/resolution.ts",
+      "bytes": 16381,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f1a809dd5d9898fb15d2040d3fe90ef92c345522177de29f477b7d167bb31b8f"
+    },
+    {
+      "path": "shared/schema/reviewer-simulation.ts",
+      "bytes": 3075,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eb5b512661081677353922e727967a1b281f31d3c4706053b9cb41836e6f9b89"
+    },
+    {
+      "path": "shared/schema/rim.ts",
+      "bytes": 5156,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b13fbd4034940044cbddabf3db2c2046f52e3e9e83c11a11ff4ded1d29cc3fc6"
+    },
+    {
+      "path": "shared/schema/shadow-review.ts",
+      "bytes": 3370,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0c9a73aece7beb7ddca7db367acbc44d9fc65dc1002ba3771c1632192dfc1a0f"
+    },
+    {
+      "path": "shared/schema/submissions.ts",
+      "bytes": 17317,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1b20537144ed924b486e2d25f66f2ab666606a6d7924044b4f9f1894c732ae40"
+    },
+    {
+      "path": "shared/schema/support-admin.ts",
+      "bytes": 9037,
+      "digestAlgorithm": "SHA-256",
+      "digest": "22fcc3b856cc201e46ccd4934591b611f95c7f5e5f31060111b8d8ac74085548"
+    },
+    {
+      "path": "shared/schema/tmf-artifacts.ts",
+      "bytes": 2608,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a479a1b04928abb46ff55c6600dbe00e8444999376ce0e33ba3a8ecb53f9d036"
+    },
+    {
+      "path": "shared/schema/unified_workflow.ts",
+      "bytes": 14440,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0a1910f25add942b7a51aec8ea5557cc2c5b4fd6399e4d44b87170887a32bc39"
+    },
+    {
+      "path": "shared/schema/vault.ts",
+      "bytes": 17853,
+      "digestAlgorithm": "SHA-256",
+      "digest": "01c6bbc3555cb2d9f89dc77e113b4e834444d16e02803ebd17d3c524a4798d80"
+    }
+  ],
+  "tools": [
+    {
+      "path": "/tmp/platform-tools/psql",
+      "bytes": 379,
+      "digestAlgorithm": "SHA-256",
+      "digest": "85f7b0983c34602643aaa2b078493afad896c337ecc294c3e8eee986f3ce7c5d"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "red/first-install-missing-psql-path.txt",
+      "bytes": 4697,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4748a86a6ee00839b888c10739ebc84ed4eaf4d0e9a5c5a04457e876193cccb8",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-first-install-failure/project-vault-fresh-schema-install.txt",
+        "bytes": 4697,
+        "digestAlgorithm": "SHA-256",
+        "digest": "4748a86a6ee00839b888c10739ebc84ed4eaf4d0e9a5c5a04457e876193cccb8"
+      }
+    },
+    {
+      "path": "red/first-install-result.json",
+      "bytes": 2116,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5d3053322d3b66b2ec5aafb8a2aa5fa041805320e0be174bb1b2235180a37b41",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-first-install-failure/project-vault-fresh-schema-result.json",
+        "bytes": 2116,
+        "digestAlgorithm": "SHA-256",
+        "digest": "5d3053322d3b66b2ec5aafb8a2aa5fa041805320e0be174bb1b2235180a37b41"
+      }
+    },
+    {
+      "path": "red/initial-preflight-tool-observations.json",
+      "bytes": 612,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b9c24ab6658d177ed018e7a2e1e4a9275a0c2fccbba35e0b6015f43924fbea0e",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-initial-preflight-observations.json",
+        "bytes": 612,
+        "digestAlgorithm": "SHA-256",
+        "digest": "b9c24ab6658d177ed018e7a2e1e4a9275a0c2fccbba35e0b6015f43924fbea0e"
+      }
+    },
+    {
+      "path": "green/install-fresh.txt",
+      "bytes": 8201,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f21d7cc7ba57682155d855bc390bf5024e9b07ee60a510568bc008ffd8a6065c",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-install.txt",
+        "bytes": 8201,
+        "digestAlgorithm": "SHA-256",
+        "digest": "f21d7cc7ba57682155d855bc390bf5024e9b07ee60a510568bc008ffd8a6065c"
+      }
+    },
+    {
+      "path": "green/deploy-migrate.txt",
+      "bytes": 67116,
+      "digestAlgorithm": "SHA-256",
+      "digest": "893459d1c7653294ab8e838d859c7fd1e8cada312b4e767b99eee717c98a7798",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-deploy.txt",
+        "bytes": 67116,
+        "digestAlgorithm": "SHA-256",
+        "digest": "893459d1c7653294ab8e838d859c7fd1e8cada312b4e767b99eee717c98a7798"
+      }
+    },
+    {
+      "path": "green/runtime-grants.txt",
+      "bytes": 423,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fab9396c5933ad8bd51722df16bb178e4f3c29d8edd1e19d57f88499c9e610e0",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-grants.txt",
+        "bytes": 423,
+        "digestAlgorithm": "SHA-256",
+        "digest": "fab9396c5933ad8bd51722df16bb178e4f3c29d8edd1e19d57f88499c9e610e0"
+      }
+    },
+    {
+      "path": "green/runtime-grant-audit.json",
+      "bytes": 462,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9a8d55714a6305907342ead2946cd1b21f0bcd3fd347450545a57ea6ab62aac0",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-grant-audit.json",
+        "bytes": 462,
+        "digestAlgorithm": "SHA-256",
+        "digest": "9a8d55714a6305907342ead2946cd1b21f0bcd3fd347450545a57ea6ab62aac0"
+      }
+    },
+    {
+      "path": "green/verification-result.json",
+      "bytes": 2855,
+      "digestAlgorithm": "SHA-256",
+      "digest": "da296ea5226a5d84ae4b46b10813caddfc1c7f41833011916dd63f91bd693be2",
+      "raw": {
+        "path": "/tmp/project-vault-fresh-schema-result.json",
+        "bytes": 2855,
+        "digestAlgorithm": "SHA-256",
+        "digest": "da296ea5226a5d84ae4b46b10813caddfc1c7f41833011916dd63f91bd693be2"
+      }
+    }
+  ],
+  "results": {
+    "installFreshExitCode": 0,
+    "deployMigrateExitCode": 0,
+    "runtimeGrantAuditExitCode": 0,
+    "verification": {
+      "identity": {
+        "database": "platform_ci_fresh_verify_20261014_beb73055",
+        "owner": "postgres"
+      },
+      "index": [
+        {
+          "name": "irr_org_idx",
+          "valid": true,
+          "unique": false,
+          "leading_column": "organization_id",
+          "method": "btree"
+        }
+      ],
+      "runtime": {
+        "database": "platform_ci_fresh_verify_20261014_beb73055",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false
+      },
+      "rlsCoverageGaps": 0,
+      "parentScopeDelegates": "passed"
+    },
+    "globalRolesAndMembershipsUnchanged": true,
+    "schemaInputsChangedDuringRuns": []
+  },
+  "qualification": [
+    "Two actual schema runs used separate newly created isolated databases; the incomplete first database was retained without retrying its partially provisioned schema.",
+    "The initial catalogue probe error is preserved as observations copied from the captured tool record; its first tiny output files were overwritten by retry, so it is not presented as an untouched raw runtime log.",
+    "The first actual installer failed strictly because the recorded dev launcher PATH omitted the existing psql wrapper, skipping governed-content migrations; its raw installer and result files were preserved before retry.",
+    "The final strict installer, deploy replay and grant audit use the existing app_service role. APP_SERVICE_DB_PASSWORD was explicitly empty; all owner/admin connection selectors targeted only the new QA database.",
+    "Global role attributes and credential-state fingerprints, memberships and global settings are identical before and after. No credentials or credential verifiers are included in this evidence.",
+    "Original application databases were not migration targets. This verifies schema/grant readiness in native PostgreSQL, not application behavior, scientific/regulatory qualification, provider/storage performance or production deployment.",
+    "Published new logs normalize trailing whitespace/extra EOF only; exact raw execution files remain separately pinned in /tmp. Older sealed evidence is unchanged."
+  ]
+}

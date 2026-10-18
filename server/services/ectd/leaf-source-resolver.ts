@@ -62,6 +62,7 @@ import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
+import type { LegalDocumentContext } from '../../../shared/company-documents';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -76,6 +77,16 @@ const VAULT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 function looksLikePdf(buf: Buffer): boolean {
   return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
 }
+
+/** Read-only proof shared by coverage and materialization; never stages bytes. */
+export function verifyRetainedLeafBytes(bytes: Buffer, storedSha256: string | null, requirePdf = false):
+  { verified: true; sha256: string } | { verified: false; code: 'SOURCE_BYTES_HASH_MISMATCH' | 'SOURCE_FORMAT_UNVERIFIED' } {
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (!storedSha256 || sha256 !== storedSha256.trim().toLowerCase()) return { verified: false, code: 'SOURCE_BYTES_HASH_MISMATCH' };
+  if (requirePdf && !looksLikePdf(bytes)) return { verified: false, code: 'SOURCE_FORMAT_UNVERIFIED' };
+  return { verified: true, sha256 };
+}
+
 
 /** A leaf whose source document could not be materialized into the package. */
 export interface UnresolvedLeaf {
@@ -111,6 +122,8 @@ export interface MaterializeLeafSourcesParams {
   organizationId: number;
   /** Directory the rendered PDF leaves are written to. */
   stageDir: string;
+  /** Recorded submission destination. An unknown target refuses restricted company documents. */
+  legalTarget?: LegalDocumentContext;
 }
 
 export interface MaterializeLeafSourcesResult {
@@ -725,6 +738,7 @@ export async function materializeLeafSources(
         organizationId,
         documentUuid,
         vaultSha,
+        params.legalTarget ?? {},
       );
       if (notTransmittable) noteUnfinalized(vaultRow.file_name || `vault_documents:${documentUuid}`, notTransmittable);
       continue;

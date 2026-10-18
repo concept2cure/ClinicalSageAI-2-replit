@@ -11,11 +11,11 @@
  *       {(rows) => <DeviceTable rows={rows} />}
  *     </DataGate>
  *
- * Sample fixtures are supported, but only as a deliberate opt-in: pass
- * `sample` and the gate will render it *when the user has turned sample
- * mode on* (see ../lib/sampleMode), always under a standing banner. When
- * sample mode is off — which is always, in production — a non-ready
- * state renders the honest empty/error/loading treatment instead.
+ * There is no sample path. The gate used to take a `sample` prop and render
+ * it under a "Sample data" banner when the user had switched sample mode on;
+ * the prop, the mode and every example dataset it served were removed on
+ * 2026-10-14. A non-ready state renders the honest empty / error / loading
+ * treatment, always.
  *
  * Voice + visual rules (per the MDX kit conventions):
  *   - sentence case, no emoji, no exclamation, no cheerleading
@@ -30,14 +30,6 @@ import { openProgramAction } from '../../v2/programAction';
 import * as React from 'react';
 import { I } from '../icons';
 import type { DataState } from '../lib/dataState';
-import { isSampleMode, onSampleModeChange } from '../lib/sampleMode';
-
-/** Re-render the caller whenever sample mode is toggled. */
-export function useSampleMode(): boolean {
-  const [on, setOn] = React.useState<boolean>(() => isSampleMode());
-  React.useEffect(() => onSampleModeChange(() => setOn(isSampleMode())), []);
-  return on;
-}
 
 export interface DataGateProps<T> {
   /** The resolved state for this panel's source. */
@@ -52,12 +44,6 @@ export interface DataGateProps<T> {
   children: (data: T) => React.ReactNode;
   /** Wire to the hook's `refresh` to offer retry on error. */
   onRetry?: () => void;
-  /**
-   * Canonical example content for this panel. Rendered only when the
-   * user has explicitly enabled sample mode. Omit for panels that have
-   * no fixture — the gate then always shows the honest state.
-   */
-  sample?: T;
   /**
    * What the user should do to populate this panel, shown in the empty
    * state — e.g. "Import a predicate search to populate this table."
@@ -97,28 +83,13 @@ export function DataGate<T>({
   label,
   children,
   onRetry,
-  sample,
   emptyHint,
   emptyAction,
   idleAction,
   regulation,
   dense = false,
 }: DataGateProps<T>) {
-  const sampleOn = useSampleMode();
-
   if (state.status === 'ready') return <>{children(state.data)}</>;
-
-  /* Deliberate sample mode: show the fixture, but never silently. The
-     banner is a sibling of the content, not a replacement for it, so
-     the user sees example rows *and* the standing warning together. */
-  if (sampleOn && sample !== undefined) {
-    return (
-      <>
-        <SampleBanner label={label} />
-        {children(sample)}
-      </>
-    );
-  }
 
   return (
     <div className={`data-gate${dense ? ' data-gate-dense' : ''}`}>
@@ -217,23 +188,4 @@ function renderState(
 /** Sentence-case a label for use at the start of a sentence. */
 function cap(label: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-/**
- * Standing marker shown alongside every panel rendering canonical
- * example content. Deliberately not dismissible — the whole point is
- * that it stays visible for as long as the fiction does.
- */
-function SampleBanner({ label }: { label: string }) {
-  return (
-    <div className="data-gate-sample" role="status">
-      <span className="data-gate-icon" aria-hidden>
-        {I.alertCircle}
-      </span>
-      <span>
-        <strong className="data-gate-sample-tag">Sample data</strong> — the {label} below are
-        canonical examples, not your project. Turn off sample mode to see your workspace.
-      </span>
-    </div>
-  );
 }

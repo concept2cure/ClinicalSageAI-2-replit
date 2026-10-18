@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The editor's AnA pane offers "Insert into <section> as tracked suggestion"
+ * The canonical conversation offers "Insert into <section> as tracked suggestion"
  * only for an answer every model of which may write governed content (AnA
  * reasoning round 11, GRD-missed, 2026-10-05). A refused offer is shown
  * DISABLED with its reason as visible text the control is described by
@@ -26,7 +26,7 @@ vi.mock('@/services/portal/authService', () => ({
 
 import type { Editor } from '@tiptap/core';
 
-import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 const SHA = 'c'.repeat(64);
@@ -49,50 +49,45 @@ function anaStream(turnRecord: unknown, done: Record<string, unknown> = {}): Rea
   });
 }
 
-const doc = (status: string) => ({ id: 'D1', title: 'Quality Overall Summary', module: 'M3', product_code: 'ABC', status, updated_at: '2026-07-20T10:00:00Z', section_count: 1 });
+const doc = (status: string) => ({ id: 'dddddddd-0000-4000-8000-000000000001', title: 'Quality Overall Summary', module: 'M3', product_code: 'ABC', status, updated_at: '2026-07-20T10:00:00Z', section_count: 1 });
 const docStatus = { current: 'draft' };
 const DOCS = { success: true, get documents() { return [doc(docStatus.current)]; } };
 const SECTIONS = {
   success: true,
   sections: [{
-    id: 'S1', doc_id: 'D1', code: '3.2.S.1', title: 'General Information', content: 'The drug substance is a monoclonal antibody.',
+    id: 'aaaaaaaa-0000-4000-8000-000000000001', doc_id: 'dddddddd-0000-4000-8000-000000000001', code: '3.2.S.1', title: 'General Information', content: 'The drug substance is a monoclonal antibody.',
     order_index: 0, comment_count: 0, revision_count: 2, citation_count: 1, updated_at: '2026-07-20T10:00:00Z',
   }],
 };
 
-const props = () => ({
-  surface: { id: 'document-authoring', label: 'Authoring' } as never,
-  onAsk: vi.fn(),
-  onNav: vi.fn(),
-  segment: 'biotech',
-});
-
 beforeEach(() => {
+  setAuthoringFlowScope();
   docStatus.current = 'draft';
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
-    if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
-    if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) return ok({ success: true, comments: [] });
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history')) return ok({ success: true, revisions: [] });
+    if (method === 'GET' && url.startsWith('/api/authoring/documents/dddddddd-0000-4000-8000-000000000001/comments')) return ok({ success: true, comments: [] });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({ success: false }), ok: false, status: 404 };
     return ok({ success: true });
   });
 });
 
 afterEach(() => {
   cleanup();
+  clearAuthoringFlowScope();
   vi.unstubAllGlobals();
 });
 
-/** Ask in the pane, with the answer filed under `turnRecord`; the pane's insert offer for it. */
+/** Navigate with exact saved context, explicitly send, then inspect the canonical insert offer. */
 async function answeredWith(turnRecord: unknown, done?: Record<string, unknown>): Promise<{ pane: HTMLElement; insert: HTMLButtonElement }> {
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, body: anaStream(turnRecord, done) })));
-  render(<DocumentAuthoring {...props()} />);
+  serveAuthoringStream(() => anaStream(turnRecord, done));
+  render(<CanonicalAuthoringFlow />);
   await screen.findAllByText('General Information');
-  const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-  fireEvent.change(composer, { target: { value: 'Describe the drug substance.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-  const pane = await screen.findByLabelText(/AnA — document authoring/);
+  fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+  const pane = await sendAuthoringPrefill('Describe the drug substance.');
   const insert = (await within(pane).findByRole('button', { name: 'Insert into 3.2.S.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
   return { pane, insert };
 }
@@ -105,7 +100,7 @@ const describedBy = (el: HTMLElement): string => {
 
 const anaSuggestion = () => document.querySelector('ins[data-author-id="ana"]');
 
-describe('the pane’s insert follows the governed-write rule', () => {
+describe('the canonical insert follows the governed-write rule', () => {
   it('an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen', async () => {
     const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [SONNET] });
     await waitFor(() => expect(insert.disabled).toBe(true));

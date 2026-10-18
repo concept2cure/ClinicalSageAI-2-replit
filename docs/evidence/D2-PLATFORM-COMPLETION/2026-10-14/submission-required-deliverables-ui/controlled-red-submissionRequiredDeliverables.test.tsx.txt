@@ -1,0 +1,163 @@
+// @vitest-environment jsdom
+/** Actual SubmissionCenter interactions over the reviewed server-owned coverage contract. */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { DeliverableSourceRef } from '@shared/types/submission-api';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
+import { authService } from '@/services/portal/authService';
+import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
+import { publishShellProject } from '../shellProject';
+import { SubmissionCenter } from '../surfaces/SubmissionCenter';
+import { PROGRAM_A, PROGRAM_B, DOCUMENT_A, SOURCE, SUB_A, SEQ_A, fixtureRoute, response, manifest, deferred, requestUrl, openRequired, waitForManifest } from './_submission-deliverables-fixture';
+
+beforeEach(() => {
+  authService.setToken('fixture-deliverables-a', { id: '7', organizationId: '1' }, 'fixture-refresh-a', 3600);
+  publishShellProject({ id: PROGRAM_A, title: 'Program A' });
+  clearEditorTarget();
+  apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => fixtureRoute(url));
+});
+afterEach(() => { cleanup(); authService.endSession(null); clearEditorTarget(); delete window.C2C_PROJECT; vi.unstubAllGlobals(); });
+
+describe('required deliverables — native coverage and scope', () => {
+  it('opens through the existing tab and one SeqPicker, reading the exact selected records once', async () => {
+    await openRequired();
+    await screen.findByText('Retained protocol evidence');
+    expect(screen.getAllByRole('combobox', { name: 'Working sequence' })).toHaveLength(1);
+    const calls = requestUrl(apiRequest.mock.calls, '/pathway-manifest');
+    expect(calls).toHaveLength(1);
+    const url = new URL(String(calls[0][1]), 'https://fixture.invalid');
+    expect(url.pathname).toBe('/api/submissions/sequences/21/pathway-manifest');
+    expect(Object.fromEntries(url.searchParams)).toEqual({ programId: PROGRAM_A, submissionId: '41', pathway: 'ctis' });
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([['POST', '/api/510k/estar/assemble', { pathway: '510k', variant: 'device' }]]);
+  });
+
+  it('shows all five structural states and keeps coverage separate from governed dispatch', async () => {
+    await openRequired();
+    const protocol = (await screen.findByText('Retained protocol evidence')).closest('tr')!;
+    expect(within(protocol).getByText('Present')).toBeTruthy();
+    expect(within(screen.getByText('Missing retained document').closest('tr')!).getByText('Missing')).toBeTruthy();
+    expect(within(screen.getByText('Unanswered applicability').closest('tr')!).getByText('Undetermined')).toBeTruthy();
+    expect(within(screen.getByText('Optional unplaced material').closest('tr')!).getByText('Optional absent')).toBeTruthy();
+    expect(within(screen.getByText('Known excluded requirement').closest('tr')!).getByText('Not applicable')).toBeTruthy();
+    expect(screen.getByText(/does not approve.*clear.*dispatch/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /freeze|dispatch|transmit/i })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/full CTD complete|100%|filing ready/i);
+  });
+
+  it.each(['ind', 'nda', 'bla'])('keeps %s coverage explicitly unsupported and offers the existing Validation workspace', async applicationType => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === `/api/submissions?programId=${PROGRAM_A}`) return response([{ ...SUB_A, applicationType }]);
+      if (url === '/api/submissions/41/sequences') return response([{ ...SEQ_A, deliverables: { available: false, compatiblePathways: [], recordedPathway: null, reasonCode: 'UNSUPPORTED_FRAMEWORK' } }]);
+      return fixtureRoute(url);
+    });
+    await openRequired();
+    expect(await screen.findByText(/coverage catalogue.*not available/i)).toBeTruthy();
+    expect(requestUrl(apiRequest.mock.calls, '/pathway-manifest')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Validation' }));
+    expect(screen.getByRole('tab', { name: 'Validation' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('requires an explicit compatible framework when none is recorded, without selecting the first option', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => url === '/api/submissions/41/sequences'
+      ? response([{ ...SEQ_A, deliverables: { available: true, compatiblePathways: ['ctis'], recordedPathway: null, reasonCode: null } }]) : fixtureRoute(url));
+    await openRequired();
+    const picker = await screen.findByRole('combobox', { name: 'Coverage framework' }) as HTMLSelectElement;
+    expect(picker.value).toBe('');
+    expect(requestUrl(apiRequest.mock.calls, '/pathway-manifest')).toHaveLength(0);
+    fireEvent.change(picker, { target: { value: 'ctis' } });
+    await screen.findByText('Retained protocol evidence');
+    expect(requestUrl(apiRequest.mock.calls, '/pathway-manifest')).toHaveLength(1);
+  });
+
+  it('does not treat missing availability metadata as a supported catalogue', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === '/api/submissions/41/sequences') { const { deliverables: _omitted, ...seq } = SEQ_A; return response([seq]); }
+      return fixtureRoute(url);
+    });
+    await openRequired();
+    expect(await screen.findByText(/coverage.*could not be verified/i)).toBeTruthy();
+    expect(requestUrl(apiRequest.mock.calls, '/pathway-manifest')).toHaveLength(0);
+  });
+
+  it.each(['program', 'submission', 'sequence', 'organization', 'framework', 'member-state'] as const)('refuses a success envelope with the wrong %s identity before rendering source metadata', async mismatch => {
+    const current = manifest();
+    const changes = { program: { programId: PROGRAM_B }, submission: { submissionId: 42 }, sequence: { sequenceId: 22 }, organization: { organizationId: 2 }, framework: { evaluatedPathway: 'mdr' }, 'member-state': { memberStates: ['DE'] } };
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.includes('/pathway-manifest') ? response({ ...current, scope: { ...current.scope, ...changes[mismatch] } }) : fixtureRoute(url));
+    await openRequired();
+    expect(await screen.findByText(/couldn't load.*deliverables/i)).toBeTruthy();
+    expect(screen.queryByText('Retained protocol evidence')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open saved document' })).toBeNull();
+  });
+
+  it('surfaces a backend refusal without displaying the last result as success or empty coverage', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.includes('/pathway-manifest')
+      ? response({ error: { code: 'FRAMEWORK_CONFLICT', message: 'The recorded filing framework conflicts with this selection.' } }, 409) : fixtureRoute(url));
+    await openRequired();
+    expect(await screen.findByText(/recorded filing framework conflicts/i)).toBeTruthy();
+    expect(screen.queryByText('Retained protocol evidence')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/nothing is required|zero missing/i);
+  });
+
+  it('shows pin-change/content/lifecycle facts beside their source without relabeling them dispatch approval', async () => {
+    const changed: DeliverableSourceRef = { ...SOURCE, evidence: { content: 'undetermined', pin: 'mismatch', lifecycle: 'draft', reasonCode: 'CONTENT_CHANGED' } };
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.includes('/pathway-manifest') ? response(manifest({ entries: [{ ...manifest().entries[0], status: 'undetermined', sourceRefs: [changed] }], sourceIssues: [{ leafId: SOURCE.leafId, code: 'CONTENT_CHANGED', message: 'The retained source pin no longer matches the verified content.' }] })) : fixtureRoute(url));
+    await openRequired();
+    const row = (await screen.findByText('Retained protocol evidence')).closest('tr')!;
+    expect(within(row).getByText('Undetermined')).toBeTruthy();
+    expect(within(row).getByText('Source content changed')).toBeTruthy();
+    expect(within(row).getByText('Content undetermined')).toBeTruthy();
+    expect(within(row).getByText('Draft')).toBeTruthy();
+    expect(screen.getByText(/retained source pin no longer matches/)).toBeTruthy();
+  });
+});
+
+describe('required deliverables — exact saved sources and late reads', () => {
+  it('hands the exact authoring UUID/program and actual source section to the canonical editor once', async () => {
+    const onNav = await openRequired();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open saved document' }));
+    expect(onNav).toHaveBeenCalledExactlyOnceWith('document-authoring');
+    expect(peekEditorTarget()).toMatchObject({ docType: null, docId: DOCUMENT_A, programId: PROGRAM_A, sectionCode: 'SOURCE-PROTOCOL', sectionLabel: null });
+    expect(peekEditorTarget()?.sectionCode).not.toBe('filing-code-is-not-source-code');
+  });
+
+  it('keeps unverified/unsupported stores as references instead of guessing an authoring document', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.includes('/pathway-manifest') ? response(manifest({ entries: [{ ...manifest().entries[0], sourceRefs: [{ ...SOURCE, editor: null, document: { table: 'vault_documents', keyKind: 'uuid', id: DOCUMENT_A } }] }] })) : fixtureRoute(url));
+    const onNav = await openRequired();
+    await screen.findByText('Retained protocol evidence');
+    expect(screen.queryByRole('button', { name: 'Open saved document' })).toBeNull();
+    expect(onNav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeNull();
+  });
+
+  it('ignores a delayed response from the old working sequence after the new one settles', async () => {
+    const old = deferred<Response>();
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === '/api/submissions/41/sequences') return response([SEQ_A, { ...SEQ_A, id: 22, sequenceNumber: '0001' }]);
+      if (url.startsWith('/api/submissions/sequences/21/pathway-manifest')) return old.promise;
+      if (url.startsWith('/api/submissions/sequences/22/pathway-manifest')) return response(manifest({ scope: { ...manifest().scope, sequenceId: 22 }, entries: [{ ...manifest().entries[1], label: 'Current sequence evidence' }] }));
+      return fixtureRoute(url);
+    });
+    await openRequired();
+    await waitForManifest(apiRequest.mock.calls);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Working sequence' }), { target: { value: '22' } });
+    await screen.findByText('Current sequence evidence');
+    await act(async () => { old.resolve(response(manifest())); await old.promise; });
+    expect(screen.getByText('Current sequence evidence')).toBeTruthy();
+    expect(screen.queryByText('Retained protocol evidence')).toBeNull();
+  });
+
+  it('discards a delayed body after the reactive program changes, without painting old source controls', async () => {
+    const oldBody = deferred<unknown>();
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.startsWith('/api/submissions/sequences/21/pathway-manifest')
+      ? { ok: true, status: 200, json: () => oldBody.promise } as unknown as Response
+      : fixtureRoute(url));
+    await openRequired();
+    await waitForManifest(apiRequest.mock.calls);
+    act(() => publishShellProject({ id: PROGRAM_B, title: 'Program B' }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(c => c[1] === `/api/submissions?programId=${PROGRAM_B}`)).toBe(true));
+    await act(async () => { oldBody.resolve(manifest()); await oldBody.promise; });
+    expect(screen.queryByText('Retained protocol evidence')).toBeNull();
+    expect(peekEditorTarget()).toBeNull();
+  });
+});

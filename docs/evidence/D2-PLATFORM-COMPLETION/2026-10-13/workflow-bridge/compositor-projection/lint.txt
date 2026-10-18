@@ -1,0 +1,9 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+  141:45  warning  Arrow function has too many lines (122). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/services/clinical-regulatory-evidence/span-lineage.service.ts
+  581:8  warning  Async function 'recordMachineSpan' has a complexity of 18. Maximum allowed is 15  complexity
+  791:1  warning  File has too many lines (971). Maximum allowed is 500                             max-lines
+
+✖ 3 problems (0 errors, 3 warnings)

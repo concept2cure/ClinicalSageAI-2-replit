@@ -95,7 +95,10 @@ describe('MultiAgentCouncilService — gateway integration', () => {
       content: 'hello world',
       provider: 'anthropic',
       model: 'claude-opus-4-7',
-      fallbackUsed: false,
+      // The gateway's request id, which joins its ledger row and the real
+      // fallback chain. This pinned a hard-coded `fallbackUsed: false` until
+      // 2026-10-15 (multi-agent-council-audit-names-the-model-call.test.ts).
+      gatewayRequestId: 'req-1',
       latencyMs: 123,
       tokensUsed: { prompt: 10, completion: 20, total: 30 },
     });

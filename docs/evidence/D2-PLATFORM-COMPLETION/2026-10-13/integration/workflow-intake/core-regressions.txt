@@ -1,0 +1,790 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:47:46.494Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:47:46.495Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:47:46.495Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 82ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T20:47:55.491Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c7546fa8-b168-4468-b478-5cff5a0e4204 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T20:47:55.506Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c7546fa8-b168-4468-b478-5cff5a0e4204 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 1242ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 805ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > admits an explicitly assigned private-project member and refuses revoked access to their saved import 65ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > uses the current membership role rather than a previously issued member token 6ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T20:47:56.753Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "48f8ecf5-ec2c-496c-9f2f-cf84584892b0",
+    "recorded": "6f6c8ba78a2a",
+    "actual": "9375701c5719"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > rechecks a sharing revocation during conversion inside the real canonical creation transaction 162ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses source/project mismatches and foreign tenants without creating anything 23ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 21ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > requires a stated reason and an editor role 9ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T20:47:56.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 16f5ccb1-4ba3-4678-9dbf-0207693d7d09 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T20:47:56.918Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 16f5ccb1-4ba3-4678-9dbf-0207693d7d09 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'd7540d5f-bd97-485d-9195-eb5dfed64b96',
+    'b294842d-defe-4abb-8716-2d067f67e5ad',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '48109c12-b4ec-4ee5-9dbf-2db63c833acb',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T20:47:57.073Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader 162ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 354ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 18ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:48:07.063Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:48:07.064Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:48:07.065Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T20:48:09.630Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5db135d3-8dc4-4e65-b1ca-eb2c1e3c9981 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T20:48:09.647Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5db135d3-8dc4-4e65-b1ca-eb2c1e3c9981 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T20:48:09.660Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5db135d3-8dc4-4e65-b1ca-eb2c1e3c9981 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-13T20:48:09.927Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8d57f827-6d94-45ec-8238-97033e10d888 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 271ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T20:48:10.061Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 137a2d4d-cde2-4883-95fa-69cdeb9291ad by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T20:48:10.075Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 137a2d4d-cde2-4883-95fa-69cdeb9291ad by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T20:48:10.094Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 137a2d4d-cde2-4883-95fa-69cdeb9291ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 159ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 7ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses direct private-program source references before reading source text or creating evidence 20ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T20:48:10.290Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9413d685-4240-4505-b48b-c6be71e3609d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T20:48:10.347Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9413d685-4240-4505-b48b-c6be71e3609d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T20:48:10.358Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9413d685-4240-4505-b48b-c6be71e3609d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 158ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-13T20:48:10.407Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8f5ab7b1-40df-43d9-8fee-2f50457d3c4a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-13T20:48:10.449Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 52b05731-9495-4adb-82b0-e9414d0269ca by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 221ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 49ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it) 41ms
+stderr | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:48:12.721Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:48:22.497Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:48:22.507Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T20:48:22.508Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-10-13T20:48:23.072Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4fa06a46-f02b-40cf-a380-2678965ee3d4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-10-13T20:48:23.088Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4fa06a46-f02b-40cf-a380-2678965ee3d4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-10-13T20:48:23.109Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4fa06a46-f02b-40cf-a380-2678965ee3d4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-10-13T20:48:23.222Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ef1255d7-a05f-46f4-a2c6-63b78f27e5a1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-10-13T20:48:23.242Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ef1255d7-a05f-46f4-a2c6-63b78f27e5a1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-10-13T20:48:23.261Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ef1255d7-a05f-46f4-a2c6-63b78f27e5a1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s 303ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-10-13T20:48:23.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 61a19528-7d4f-421b-ac20-7c434677eb7a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-10-13T20:48:23.366Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 61a19528-7d4f-421b-ac20-7c434677eb7a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-10-13T20:48:23.563Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 61a19528-7d4f-421b-ac20-7c434677eb7a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict 138ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits 650ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-10-13T20:48:24.407Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 05473777-fd55-4e88-a74a-ca2770dfbe1a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-10-13T20:48:24.420Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 05473777-fd55-4e88-a74a-ca2770dfbe1a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-10-13T20:48:24.430Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 05473777-fd55-4e88-a74a-ca2770dfbe1a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.481Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b1c4d64e-e587-41d8-a1b2-f2102e8b2e36 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.492Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b1c4d64e-e587-41d8-a1b2-f2102e8b2e36 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.504Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b1c4d64e-e587-41d8-a1b2-f2102e8b2e36 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.553Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f380b091-5035-4b6d-9dcf-9bb88a3f4d2f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.569Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f380b091-5035-4b6d-9dcf-9bb88a3f4d2f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-10-13T20:48:24.580Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f380b091-5035-4b6d-9dcf-9bb88a3f4d2f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted 519ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-10-13T20:48:24.633Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc adeeab8d-43c8-462d-a15d-00fa856786b0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-10-13T20:48:24.661Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc adeeab8d-43c8-462d-a15d-00fa856786b0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-10-13T20:48:24.671Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc adeeab8d-43c8-462d-a15d-00fa856786b0 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model 148ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:24.812Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 813fa64f-78c2-4e53-bac3-69acfb673a45 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:24.942Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 813fa64f-78c2-4e53-bac3-69acfb673a45 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:24.988Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 813fa64f-78c2-4e53-bac3-69acfb673a45 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id 110ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:25.046Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b87fcaa3-9e6b-4a60-985f-b5e64ba63498 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:25.064Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b87fcaa3-9e6b-4a60-985f-b5e64ba63498 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-10-13T20:48:25.075Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b87fcaa3-9e6b-4a60-985f-b5e64ba63498 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.138Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5084493-b613-4447-ac8a-97858e0c4a86 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.153Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5084493-b613-4447-ac8a-97858e0c4a86 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.162Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5084493-b613-4447-ac8a-97858e0c4a86 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.208Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e494205b-14b8-44b1-aaaa-f9382dfbb908 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.220Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e494205b-14b8-44b1-aaaa-f9382dfbb908 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-10-13T20:48:25.231Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e494205b-14b8-44b1-aaaa-f9382dfbb908 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict 407ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-10-13T20:48:25.448Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe599a5b-a1e0-426d-89ed-aa7cafad2a4a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-10-13T20:48:25.466Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe599a5b-a1e0-426d-89ed-aa7cafad2a4a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-10-13T20:48:25.476Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fe599a5b-a1e0-426d-89ed-aa7cafad2a4a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either 141ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-10-13T20:48:25.530Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 755d2816-51af-408a-9528-710f8629cee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-10-13T20:48:25.540Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 755d2816-51af-408a-9528-710f8629cee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-10-13T20:48:25.553Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 755d2816-51af-408a-9528-710f8629cee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-10-13T20:48:25.613Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01a8c543-d2b1-4da9-8c19-ba18910cf740 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-10-13T20:48:25.623Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01a8c543-d2b1-4da9-8c19-ba18910cf740 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-10-13T20:48:25.631Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01a8c543-d2b1-4da9-8c19-ba18910cf740 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 246ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve 69ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document 79ms
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T20:48:28.733Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:48:28.738Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T20:48:28.739Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-10-13T20:48:29.925Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses private project access before source metadata, bytes, conversion or creation 43ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (viewer) 28ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (null) 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 7tail before any lookup 7ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 0 before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 9007199254740992 before any lookup 10ms
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous)
+{
+  "timestamp": "2026-10-13T20:48:31.790Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "authoring-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      42,
+      43
+    ]
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 2147483648 before any lookup 6ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses mismatched principal and audit actor identities before any lookup 23ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (unanchored) 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous) 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > fails closed when current sharing cannot be read 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > rechecks sharing on the creation transaction after conversion 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses foreign projects before reading source bytes or writing 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses unavailable source identities before reading bytes 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses altered original bytes and records no authoring document 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > escapes extracted text, keeps custom types and verified origin, and states conversion loss 14ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > retains Word tables/headings and makes missing codes and embedded figures visible 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a changed source inside the canonical transaction 12ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > reopens the exact saved draft and keeps its edits and warnings 8ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > uses the captured upload with the same source hash rather than guessed Vault identities 12ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires the stated change reason "" 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires the stated change reason "short" 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > drops caller supplied import-source provenance at the public draft door 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > rejects source/program SQL-shaped inputs before any SQL or byte read 4ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty 4ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops an author id the server does not name, rather than letting a caller attribute text to anyone 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops empty, whitespace-only and non-string text 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > returns nothing for anything that is not an array 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > keeps a turn record id that is a uuid 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > carries null when the claim names no turn, rather than dropping the entry 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > drops a malformed id to null instead of passing it to a uuid column 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > bounds the id before it is believed, so a long string cannot ride in on it 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > keeps a recognised machine author 2ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > takes the display name from the server, never from the request 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > drops ids it does not recognise, so a caller cannot invent an author 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > records a human co-author as nothing — created_by already names them 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > de-duplicates, so accepting six AnA suggestions names AnA once 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > treats malformed input as no attribution rather than as a guess 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > bounds the list so a save cannot carry an unbounded attribution payload 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > the origin a save records > is decided by whether machine-authored text was incorporated 0ms
+
+ Test Files  6 passed (6)
+      Tests  84 passed (84)
+   Start at  20:47:36
+   Duration  56.46s (transform 10.01s, setup 363ms, import 11.53s, tests 42.35s, environment 1ms)

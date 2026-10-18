@@ -63,6 +63,14 @@ router.get('/work-packages', async (req: Request, res: Response) => {
     });
     return ok(res, packages, { count: packages.length });
   } catch (err) {
+    // 2026-10-15: a failed profile read used to compile a plan from defaults
+    // (a device plan for an IVD tenant). No context, no plan.
+    if ((err as { code?: string } | null)?.code === 'INDUSTRY_CONTEXT_UNAVAILABLE') {
+      return res.status(503).json({
+        error: 'The industry profile could not be read, so no work-package plan was compiled. Try again shortly.',
+        details: { code: 'INDUSTRY_CONTEXT_UNAVAILABLE', layer: (err as { layer?: string }).layer ?? null },
+      });
+    }
     return serverError(res, log, 'work-packages', err);
   }
 });

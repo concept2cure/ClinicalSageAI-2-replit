@@ -1,0 +1,3397 @@
+{
+  "entry": "server/index.ts",
+  "limits": "Conservative non-type-only literal import/require/dynamic-import and mod/module manifest graph. Paths include branches gated by runtime flags and establish importability, not invocation or launch eligibility. No-path requires nonliteral-loader review before retiring code.",
+  "unbacked": [
+    {
+      "table": "academic_embeddings",
+      "files": [
+        "server/academic-knowledge-tracker.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/academic-knowledge-tracker.ts",
+          "ownerModule": "academic-knowledge-tracker",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "academic_resources",
+      "files": [
+        "server/academic-knowledge-tracker.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/academic-knowledge-tracker.ts",
+          "ownerModule": "academic-knowledge-tracker",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "agent_runtime.threads",
+      "files": [
+        "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts",
+          "ownerModule": "services/cognitive-ecosystem/langgraph-orchestrator.service",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "audit.audit_logs",
+      "files": [
+        "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/cognitive-ecosystem/cognitive-audit.service.ts",
+          "ownerModule": "services/cognitive-ecosystem/cognitive-audit.service",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "ectd_v4.submissions",
+      "files": [
+        "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/cognitive-ecosystem/cognitive-audit.service.ts",
+          "ownerModule": "services/cognitive-ecosystem/cognitive-audit.service",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "extraction_jobs",
+      "files": [
+        "server/routes/integration-test.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/routes/integration-test.ts",
+          "ownerModule": "routes/integration-test",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 50,
+              "target": "server/bootstrap/register-advanced-platform-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-advanced-platform-routes.ts",
+              "line": 9,
+              "target": "server/routes/integration-test.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "medline",
+      "files": [
+        "server/db/setupLiterature.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/db/setupLiterature.ts",
+          "ownerModule": "db/setupLiterature",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "reg_changes",
+      "files": [
+        "server/src/services/reg/rpi.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/src/services/reg/rpi.ts",
+          "ownerModule": "src/services/reg/rpi",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "reg_ectd_packages",
+      "files": [
+        "server/services/documentExportService.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/documentExportService.ts",
+          "ownerModule": "services/documentExportService",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 85,
+              "target": "server/routes/cerv2-export-routes.ts"
+            },
+            {
+              "file": "server/routes/cerv2-export-routes.ts",
+              "line": 914,
+              "target": "server/services/documentExportService.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "reg_m3_sections",
+      "files": [
+        "server/src/services/reg/rpi.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/src/services/reg/rpi.ts",
+          "ownerModule": "src/services/reg/rpi",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "reg_submissions",
+      "files": [
+        "server/src/services/integrations/gmail.ts",
+        "server/src/services/reg/rpi.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/src/services/integrations/gmail.ts",
+          "ownerModule": "src/services/integrations/gmail",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 40,
+              "target": "server/bootstrap/register-ai-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-ai-routes.ts",
+              "line": 108,
+              "target": "server/routes/ana-intelligence.ts"
+            },
+            {
+              "file": "server/routes/ana-intelligence.ts",
+              "line": 575,
+              "target": "server/services/ana/AnaToolExecutor.ts"
+            },
+            {
+              "file": "server/services/ana/AnaToolExecutor.ts",
+              "line": 55,
+              "target": "server/services/integrations/correspondence-search.ts"
+            },
+            {
+              "file": "server/services/integrations/correspondence-search.ts",
+              "line": 57,
+              "target": "server/src/services/integrations/gmail.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/src/services/reg/rpi.ts",
+          "ownerModule": "src/services/reg/rpi",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "regulatory_status",
+      "files": [
+        "server/sage-plus-service.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/sage-plus-service.ts",
+          "ownerModule": "sage-plus-service",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "site_intel.site_scorecard",
+      "files": [
+        "server/api/site-intel/routes.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/api/site-intel/routes.ts",
+          "ownerModule": "api/site-intel/routes",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "step_runs",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/workflow/WorkflowExecutionEngine.ts",
+          "ownerModule": "services/workflow/WorkflowExecutionEngine",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "trials",
+      "files": [
+        "server/storage.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/storage.ts",
+          "ownerModule": "storage",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 49,
+              "target": "server/bootstrap/register-clinical-intel-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-clinical-intel-routes.ts",
+              "line": 18,
+              "target": "server/routes/qc.routes.ts"
+            },
+            {
+              "file": "server/routes/qc.routes.ts",
+              "line": 16,
+              "target": "server/storage.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "vault.drafting_sessions",
+      "files": [
+        "server/api/drafting/routes.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/api/drafting/routes.ts",
+          "ownerModule": "api/drafting/routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 70,
+              "target": "server/api/gcc/index.ts"
+            },
+            {
+              "file": "server/api/gcc/index.ts",
+              "line": 21,
+              "target": "server/api/drafting/routes.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "vault.extracted_entities",
+      "files": [
+        "server/api/drafting/routes.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/api/drafting/routes.ts",
+          "ownerModule": "api/drafting/routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 70,
+              "target": "server/api/gcc/index.ts"
+            },
+            {
+              "file": "server/api/gcc/index.ts",
+              "line": 21,
+              "target": "server/api/drafting/routes.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "workflow_definitions",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/workflow/WorkflowExecutionEngine.ts",
+          "ownerModule": "services/workflow/WorkflowExecutionEngine",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "workflow_step_definitions",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ],
+      "consumers": [
+        {
+          "file": "server/services/workflow/WorkflowExecutionEngine.ts",
+          "ownerModule": "services/workflow/WorkflowExecutionEngine",
+          "importPathFromServerIndex": null
+        }
+      ]
+    }
+  ],
+  "writerless": [
+    {
+      "table": "anaProjectCapabilities",
+      "consumers": [
+        {
+          "file": "server/services/ana-capability-registry.ts",
+          "ownerModule": "services/ana-capability-registry",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 386,
+              "target": "server/services/ana-capability-registry.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/ana-context-router.ts",
+          "ownerModule": "services/ana-context-router",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 42,
+              "target": "server/bootstrap/register-governance-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-governance-routes.ts",
+              "line": 2,
+              "target": "server/routes/client-intelligence.ts"
+            },
+            {
+              "file": "server/routes/client-intelligence.ts",
+              "line": 696,
+              "target": "server/services/ana-context-router.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "auditTrail",
+      "consumers": [
+        {
+          "file": "server/routes/ana-features.ts",
+          "ownerModule": "routes/ana-features",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 40,
+              "target": "server/bootstrap/register-ai-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-ai-routes.ts",
+              "line": 27,
+              "target": "server/routes/ana-features.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "c2cDigests",
+      "consumers": [
+        {
+          "file": "server/routes/submission-ops.ts",
+          "ownerModule": "routes/submission-ops",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 41,
+              "target": "server/routes/submission-ops.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "cerSections",
+      "consumers": [
+        {
+          "file": "server/services/market-specs/stored-cer-assessment.ts",
+          "ownerModule": "services/market-specs/stored-cer-assessment",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 42,
+              "target": "server/bootstrap/register-governance-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-governance-routes.ts",
+              "line": 10,
+              "target": "server/routes/submissions.ts"
+            },
+            {
+              "file": "server/routes/submissions.ts",
+              "line": 909,
+              "target": "server/services/market-specs/stored-cer-assessment.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "cmcProjects",
+      "consumers": [
+        {
+          "file": "server/routes/knowledge-base.ts",
+          "ownerModule": "routes/knowledge-base",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 29,
+              "target": "server/routes/knowledge-base.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "croTeamAssignments",
+      "consumers": [
+        {
+          "file": "server/routes/cro.ts",
+          "ownerModule": "routes/cro",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 50,
+              "target": "server/bootstrap/register-advanced-platform-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-advanced-platform-routes.ts",
+              "line": 28,
+              "target": "server/routes/cro.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "ctqFactors",
+      "consumers": [
+        {
+          "file": "server/routes/quality-management-api.ts",
+          "ownerModule": "routes/quality-management-api",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 48,
+              "target": "server/bootstrap/register-project-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-project-routes.ts",
+              "line": 20,
+              "target": "server/routes/quality-management-api.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/tenant-ctq-factors.ts",
+          "ownerModule": "routes/tenant-ctq-factors",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 41,
+              "target": "server/routes/tenant-ctq-factors.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/tenant-quality-validation.ts",
+          "ownerModule": "routes/tenant-quality-validation",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 40,
+              "target": "server/routes/tenant-quality-validation.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/tenant-traceability.ts",
+          "ownerModule": "routes/tenant-traceability",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 39,
+              "target": "server/routes/tenant-traceability.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "dataLineageTracking",
+      "consumers": [
+        {
+          "file": "server/services/intelligent-report-engine.ts",
+          "ownerModule": "services/intelligent-report-engine",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 88,
+              "target": "server/routes/intelligent-reports.ts"
+            },
+            {
+              "file": "server/routes/intelligent-reports.ts",
+              "line": 15,
+              "target": "server/services/intelligent-report-engine.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "defensePackets",
+      "consumers": [
+        {
+          "file": "server/routes/regulatory-graph.ts",
+          "ownerModule": "routes/regulatory-graph",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/living-file/freshness-report.service.ts",
+          "ownerModule": "services/living-file/freshness-report.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            },
+            {
+              "file": "server/routes/regulatory-graph.ts",
+              "line": 51,
+              "target": "server/services/living-file/freshness-report.service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+          "ownerModule": "services/regulatory-graph/defense-packet-staleness.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 31,
+              "target": "server/jobs/driftSentinelSweep.ts"
+            },
+            {
+              "file": "server/jobs/driftSentinelSweep.ts",
+              "line": 18,
+              "target": "server/services/living-record/reconciliation-engine.ts"
+            },
+            {
+              "file": "server/services/living-record/reconciliation-engine.ts",
+              "line": 24,
+              "target": "server/services/living-file/change-router.service.ts"
+            },
+            {
+              "file": "server/services/living-file/change-router.service.ts",
+              "line": 43,
+              "target": "server/services/regulatory-graph/defense-packet-staleness.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "deviceProfiles",
+      "consumers": [
+        {
+          "file": "server/services/cerGenerationService.ts",
+          "ownerModule": "services/cerGenerationService",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 389,
+              "target": "server/routes/cer-routes.ts"
+            },
+            {
+              "file": "server/routes/cer-routes.ts",
+              "line": 12,
+              "target": "server/services/cer/index.ts"
+            },
+            {
+              "file": "server/services/cer/index.ts",
+              "line": 19,
+              "target": "server/services/cerGenerationService.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "evidenceClaimLinks",
+      "consumers": [
+        {
+          "file": "server/routes/rtm-export.ts",
+          "ownerModule": "routes/rtm-export",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 49,
+              "target": "server/bootstrap/register-clinical-intel-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-clinical-intel-routes.ts",
+              "line": 78,
+              "target": "server/routes/rtm-export.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-graph/regulatory-graph.service.ts",
+          "ownerModule": "services/regulatory-graph/regulatory-graph.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            },
+            {
+              "file": "server/routes/regulatory-graph.ts",
+              "line": 20,
+              "target": "server/services/regulatory-graph/regulatory-graph.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "evidenceClaims",
+      "consumers": [
+        {
+          "file": "server/routes/regulatory-graph.ts",
+          "ownerModule": "routes/regulatory-graph",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/rtm-export.ts",
+          "ownerModule": "routes/rtm-export",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 49,
+              "target": "server/bootstrap/register-clinical-intel-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-clinical-intel-routes.ts",
+              "line": 78,
+              "target": "server/routes/rtm-export.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/living-record/fact-change-orchestrator.ts",
+          "ownerModule": "services/living-record/fact-change-orchestrator",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 32,
+              "target": "server/routes/change-propagation.ts"
+            },
+            {
+              "file": "server/routes/change-propagation.ts",
+              "line": 30,
+              "target": "server/services/living-record/fact-change-orchestrator.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/living-record/reconciliation-engine.ts",
+          "ownerModule": "services/living-record/reconciliation-engine",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 31,
+              "target": "server/jobs/driftSentinelSweep.ts"
+            },
+            {
+              "file": "server/jobs/driftSentinelSweep.ts",
+              "line": 18,
+              "target": "server/services/living-record/reconciliation-engine.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/living-record/source-tracer.ts",
+          "ownerModule": "services/living-record/source-tracer",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 32,
+              "target": "server/routes/change-propagation.ts"
+            },
+            {
+              "file": "server/routes/change-propagation.ts",
+              "line": 43,
+              "target": "server/services/living-record/source-tracer.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+          "ownerModule": "services/regulatory-graph/defense-packet-staleness.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 31,
+              "target": "server/jobs/driftSentinelSweep.ts"
+            },
+            {
+              "file": "server/jobs/driftSentinelSweep.ts",
+              "line": 18,
+              "target": "server/services/living-record/reconciliation-engine.ts"
+            },
+            {
+              "file": "server/services/living-record/reconciliation-engine.ts",
+              "line": 24,
+              "target": "server/services/living-file/change-router.service.ts"
+            },
+            {
+              "file": "server/services/living-file/change-router.service.ts",
+              "line": 43,
+              "target": "server/services/regulatory-graph/defense-packet-staleness.service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-graph/regulatory-graph.service.ts",
+          "ownerModule": "services/regulatory-graph/regulatory-graph.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            },
+            {
+              "file": "server/routes/regulatory-graph.ts",
+              "line": 20,
+              "target": "server/services/regulatory-graph/regulatory-graph.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "evidenceSources",
+      "consumers": [
+        {
+          "file": "server/services/living-record/source-tracer.ts",
+          "ownerModule": "services/living-record/source-tracer",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 32,
+              "target": "server/routes/change-propagation.ts"
+            },
+            {
+              "file": "server/routes/change-propagation.ts",
+              "line": 43,
+              "target": "server/services/living-record/source-tracer.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "fda510kProjects",
+      "consumers": [
+        {
+          "file": "server/routes/510k-estar-routes.ts",
+          "ownerModule": "routes/510k-estar-routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 83,
+              "target": "server/routes/510k-estar-routes.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/cerv2-export-routes.ts",
+          "ownerModule": "routes/cerv2-export-routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 85,
+              "target": "server/routes/cerv2-export-routes.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/fda-forms.routes.ts",
+          "ownerModule": "routes/fda-forms.routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 79,
+              "target": "server/routes/fda-forms.routes.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/fieldSync.routes.ts",
+          "ownerModule": "routes/fieldSync.routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 80,
+              "target": "server/routes/fieldSync.routes.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/k510-document-preview.ts",
+          "ownerModule": "routes/k510-document-preview",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 49,
+              "target": "server/routes/k510-document-preview.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/DocumentOrchestrationService.ts",
+          "ownerModule": "services/DocumentOrchestrationService",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 87,
+              "target": "server/routes/documentOrchestrationRoutes.ts"
+            },
+            {
+              "file": "server/routes/documentOrchestrationRoutes.ts",
+              "line": 2,
+              "target": "server/services/DocumentOrchestrationService.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/DynamicContentAssembly.ts",
+          "ownerModule": "services/DynamicContentAssembly",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 81,
+              "target": "server/routes/contentAssembly.routes.ts"
+            },
+            {
+              "file": "server/routes/contentAssembly.routes.ts",
+              "line": 4,
+              "target": "server/services/DynamicContentAssembly.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/SmartFieldLinking.ts",
+          "ownerModule": "services/SmartFieldLinking",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 435,
+              "target": "server/socketServer.ts"
+            },
+            {
+              "file": "server/socketServer.ts",
+              "line": 938,
+              "target": "server/services/SmartFieldLinking.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/pathway-engines/estar/estar-administrative-data.ts",
+          "ownerModule": "services/pathway-engines/estar/estar-administrative-data",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 83,
+              "target": "server/routes/510k-estar-routes.ts"
+            },
+            {
+              "file": "server/routes/510k-estar-routes.ts",
+              "line": 33,
+              "target": "server/services/pathway-engines/estar/estar-administrative-data.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/socket/socketAuthz.ts",
+          "ownerModule": "socket/socketAuthz",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 435,
+              "target": "server/socketServer.ts"
+            },
+            {
+              "file": "server/socketServer.ts",
+              "line": 19,
+              "target": "server/socket/socketAuthz.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "fda510kStageProgress",
+      "consumers": [
+        {
+          "file": "server/routes/fda-forms.routes.ts",
+          "ownerModule": "routes/fda-forms.routes",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 79,
+              "target": "server/routes/fda-forms.routes.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/CrossReferenceMapping.ts",
+          "ownerModule": "services/CrossReferenceMapping",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 435,
+              "target": "server/socketServer.ts"
+            },
+            {
+              "file": "server/socketServer.ts",
+              "line": 938,
+              "target": "server/services/SmartFieldLinking.ts"
+            },
+            {
+              "file": "server/services/SmartFieldLinking.ts",
+              "line": 2,
+              "target": "server/services/CrossReferenceMapping.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/DocumentOrchestrationService.ts",
+          "ownerModule": "services/DocumentOrchestrationService",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 87,
+              "target": "server/routes/documentOrchestrationRoutes.ts"
+            },
+            {
+              "file": "server/routes/documentOrchestrationRoutes.ts",
+              "line": 2,
+              "target": "server/services/DocumentOrchestrationService.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/DynamicContentAssembly.ts",
+          "ownerModule": "services/DynamicContentAssembly",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 81,
+              "target": "server/routes/contentAssembly.routes.ts"
+            },
+            {
+              "file": "server/routes/contentAssembly.routes.ts",
+              "line": 4,
+              "target": "server/services/DynamicContentAssembly.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/SmartFieldLinking.ts",
+          "ownerModule": "services/SmartFieldLinking",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 435,
+              "target": "server/socketServer.ts"
+            },
+            {
+              "file": "server/socketServer.ts",
+              "line": 938,
+              "target": "server/services/SmartFieldLinking.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "fdaCommunications",
+      "consumers": [
+        {
+          "file": "server/services/pdev/pdev-fda-interactions.ts",
+          "ownerModule": "services/pdev/pdev-fda-interactions",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 86,
+              "target": "server/services/pdev/pdev-fda-interactions.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/pdev/pdev-orchestrator.ts",
+          "ownerModule": "services/pdev/pdev-orchestrator",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 81,
+              "target": "server/services/pdev/pdev-orchestrator.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "gsprRequirements",
+      "consumers": [
+        {
+          "file": "server/services/gspr-postmarket/gspr.service.ts",
+          "ownerModule": "services/gspr-postmarket/gspr.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 35,
+              "target": "server/routes/gspr-postmarket.ts"
+            },
+            {
+              "file": "server/routes/gspr-postmarket.ts",
+              "line": 37,
+              "target": "server/services/gspr-postmarket/gspr.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "methodRegulatoryOutcomes",
+      "consumers": [
+        {
+          "file": "server/services/biostat-knowledge-graph-service.ts",
+          "ownerModule": "services/biostat-knowledge-graph-service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 352,
+              "target": "server/routes/biostatPlatform.ts"
+            },
+            {
+              "file": "server/routes/biostatPlatform.ts",
+              "line": 20,
+              "target": "server/services/biostat-knowledge-graph-service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/estimand-engine-service.ts",
+          "ownerModule": "services/estimand-engine-service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 352,
+              "target": "server/routes/biostatPlatform.ts"
+            },
+            {
+              "file": "server/routes/biostatPlatform.ts",
+              "line": 23,
+              "target": "server/services/estimand-engine-service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "projectDocuments",
+      "consumers": [
+        {
+          "file": "server/routes/tenant-stats.ts",
+          "ownerModule": "routes/tenant-stats",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 38,
+              "target": "server/routes/tenant-stats.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "protocols",
+      "consumers": [
+        {
+          "file": "server/protocol-analyzer-service.ts",
+          "ownerModule": "protocol-analyzer-service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 49,
+              "target": "server/bootstrap/register-clinical-intel-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-clinical-intel-routes.ts",
+              "line": 17,
+              "target": "server/routes/protocol_routes.ts"
+            },
+            {
+              "file": "server/routes/protocol_routes.ts",
+              "line": 7,
+              "target": "server/protocol-analyzer-service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/strategic-report-generator.ts",
+          "ownerModule": "strategic-report-generator",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "qmpSectionGating",
+      "consumers": [
+        {
+          "file": "server/routes/quality-management-api.ts",
+          "ownerModule": "routes/quality-management-api",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 48,
+              "target": "server/bootstrap/register-project-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-project-routes.ts",
+              "line": 20,
+              "target": "server/routes/quality-management-api.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/tenant-ctq-factors.ts",
+          "ownerModule": "routes/tenant-ctq-factors",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 41,
+              "target": "server/routes/tenant-ctq-factors.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/routes/tenant-quality-validation.ts",
+          "ownerModule": "routes/tenant-quality-validation",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 47,
+              "target": "server/bootstrap/register-tenant-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-tenant-routes.ts",
+              "line": 40,
+              "target": "server/routes/tenant-quality-validation.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "qSubCommitments",
+      "consumers": [
+        {
+          "file": "server/services/pdev/pdev-fda-feedback-rollup.ts",
+          "ownerModule": "services/pdev/pdev-fda-feedback-rollup",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 97,
+              "target": "server/services/pdev/pdev-fda-feedback-rollup.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/pdev/pdev-fda-interactions.ts",
+          "ownerModule": "services/pdev/pdev-fda-interactions",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 86,
+              "target": "server/services/pdev/pdev-fda-interactions.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/q-sub/q-sub.service.ts",
+          "ownerModule": "services/q-sub/q-sub.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 38,
+              "target": "server/routes/q-sub.ts"
+            },
+            {
+              "file": "server/routes/q-sub.ts",
+              "line": 34,
+              "target": "server/services/q-sub/q-sub.service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-programs.service.ts",
+          "ownerModule": "services/regulatory-programs.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 42,
+              "target": "server/routes/regulatory-programs.ts"
+            },
+            {
+              "file": "server/routes/regulatory-programs.ts",
+              "line": 40,
+              "target": "server/services/regulatory-programs.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "qSubMeetings",
+      "consumers": [
+        {
+          "file": "server/services/pdev/pdev-fda-interactions.ts",
+          "ownerModule": "services/pdev/pdev-fda-interactions",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 86,
+              "target": "server/services/pdev/pdev-fda-interactions.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/q-sub/q-sub.service.ts",
+          "ownerModule": "services/q-sub/q-sub.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 38,
+              "target": "server/routes/q-sub.ts"
+            },
+            {
+              "file": "server/routes/q-sub.ts",
+              "line": 34,
+              "target": "server/services/q-sub/q-sub.service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-programs.service.ts",
+          "ownerModule": "services/regulatory-programs.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 42,
+              "target": "server/routes/regulatory-programs.ts"
+            },
+            {
+              "file": "server/routes/regulatory-programs.ts",
+              "line": 40,
+              "target": "server/services/regulatory-programs.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "qSubQuestions",
+      "consumers": [
+        {
+          "file": "server/services/pdev/pdev-fda-feedback-rollup.ts",
+          "ownerModule": "services/pdev/pdev-fda-feedback-rollup",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 97,
+              "target": "server/services/pdev/pdev-fda-feedback-rollup.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/pdev/pdev-fda-interactions.ts",
+          "ownerModule": "services/pdev/pdev-fda-interactions",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 86,
+              "target": "server/services/pdev/pdev-fda-interactions.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/q-sub/q-sub.service.ts",
+          "ownerModule": "services/q-sub/q-sub.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 38,
+              "target": "server/routes/q-sub.ts"
+            },
+            {
+              "file": "server/routes/q-sub.ts",
+              "line": 34,
+              "target": "server/services/q-sub/q-sub.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "qSubTimelineEntries",
+      "consumers": [
+        {
+          "file": "server/services/pdev/pdev-fda-interactions.ts",
+          "ownerModule": "services/pdev/pdev-fda-interactions",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 45,
+              "target": "server/bootstrap/register-regulatory-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-regulatory-routes.ts",
+              "line": 458,
+              "target": "server/routes/pdev/pdev-routes.ts"
+            },
+            {
+              "file": "server/routes/pdev/pdev-routes.ts",
+              "line": 86,
+              "target": "server/services/pdev/pdev-fda-interactions.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/q-sub/q-sub.service.ts",
+          "ownerModule": "services/q-sub/q-sub.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 38,
+              "target": "server/routes/q-sub.ts"
+            },
+            {
+              "file": "server/routes/q-sub.ts",
+              "line": 34,
+              "target": "server/services/q-sub/q-sub.service.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "regulatoryObligations",
+      "consumers": [
+        {
+          "file": "server/services/ana/deadline-radar.ts",
+          "ownerModule": "services/ana/deadline-radar",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 68,
+              "target": "server/startup/services.ts"
+            },
+            {
+              "file": "server/startup/services.ts",
+              "line": 436,
+              "target": "server/services/automation/scheduled-jobs.ts"
+            },
+            {
+              "file": "server/services/automation/scheduled-jobs.ts",
+              "line": 18,
+              "target": "server/services/digest/proactive-digest.ts"
+            },
+            {
+              "file": "server/services/digest/proactive-digest.ts",
+              "line": 12,
+              "target": "server/services/ana/deadline-radar.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "regulatorySequences",
+      "consumers": [
+        {
+          "file": "server/services/living-record/sequence-store.ts",
+          "ownerModule": "services/living-record/sequence-store",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            },
+            {
+              "file": "server/routes/regulatory-graph.ts",
+              "line": 60,
+              "target": "server/services/living-record/sequence-store.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "reports",
+      "consumers": [
+        {
+          "file": "server/intelligence-service.ts",
+          "ownerModule": "intelligence-service",
+          "importPathFromServerIndex": null
+        }
+      ]
+    },
+    {
+      "table": "sections",
+      "consumers": [
+        {
+          "file": "server/routes/snowglobe.ts",
+          "ownerModule": "routes/snowglobe",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 50,
+              "target": "server/bootstrap/register-advanced-platform-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-advanced-platform-routes.ts",
+              "line": 195,
+              "target": "server/routes/snowglobe.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/cmc/supac-classifier.ts",
+          "ownerModule": "services/cmc/supac-classifier",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 38,
+              "target": "server/bootstrap/register-core-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-core-routes.ts",
+              "line": 10,
+              "target": "server/api/cmc/routes.ts"
+            },
+            {
+              "file": "server/api/cmc/routes.ts",
+              "line": 1885,
+              "target": "server/services/cmc/supac-classifier.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/report-os/orchestrator.ts",
+          "ownerModule": "services/report-os/orchestrator",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 51,
+              "target": "server/bootstrap/register-inline-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-inline-routes.ts",
+              "line": 93,
+              "target": "server/routes/report-os.ts"
+            },
+            {
+              "file": "server/routes/report-os.ts",
+              "line": 35,
+              "target": "server/services/report-os/orchestrator.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "standardsApplicability",
+      "consumers": [
+        {
+          "file": "server/services/living-file/freshness-report.service.ts",
+          "ownerModule": "services/living-file/freshness-report.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 31,
+              "target": "server/routes/regulatory-graph.ts"
+            },
+            {
+              "file": "server/routes/regulatory-graph.ts",
+              "line": 51,
+              "target": "server/services/living-file/freshness-report.service.ts"
+            }
+          ]
+        },
+        {
+          "file": "server/services/regulatory-graph/standards-applicability.service.ts",
+          "ownerModule": "services/regulatory-graph/standards-applicability.service",
+          "importPathFromServerIndex": [
+            {
+              "file": "server/index.ts",
+              "line": 63,
+              "target": "server/startup/routes.ts"
+            },
+            {
+              "file": "server/startup/routes.ts",
+              "line": 46,
+              "target": "server/bootstrap/register-document-routes.ts"
+            },
+            {
+              "file": "server/bootstrap/register-document-routes.ts",
+              "line": 33,
+              "target": "server/routes/standards.ts"
+            },
+            {
+              "file": "server/routes/standards.ts",
+              "line": 22,
+              "target": "server/services/regulatory-graph/standards-applicability.service.ts"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "discardedAudit": [
+    {
+      "file": "server/integrations/veeva-vault/vault-sync-service.ts",
+      "ownerModule": "integrations/veeva-vault/vault-sync-service",
+      "importPathFromServerIndex": null
+    },
+    {
+      "file": "server/middleware/enterprise-security.ts",
+      "ownerModule": "middleware/enterprise-security",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 52,
+          "target": "server/startup/middleware.ts"
+        },
+        {
+          "file": "server/startup/middleware.ts",
+          "line": 30,
+          "target": "server/middleware/enterprise-security.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/admin/business-center.ts",
+      "ownerModule": "routes/admin/business-center",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 41,
+          "target": "server/bootstrap/register-admin-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-admin-routes.ts",
+          "line": 3,
+          "target": "server/routes/admin/business-center.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/admin/business/rate-cards.ts",
+      "ownerModule": "routes/admin/business/rate-cards",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 41,
+          "target": "server/bootstrap/register-admin-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-admin-routes.ts",
+          "line": 3,
+          "target": "server/routes/admin/business-center.ts"
+        },
+        {
+          "file": "server/routes/admin/business-center.ts",
+          "line": 35,
+          "target": "server/routes/admin/business/rate-cards.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/ana-intelligence.ts",
+      "ownerModule": "routes/ana-intelligence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 40,
+          "target": "server/bootstrap/register-ai-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ai-routes.ts",
+          "line": 108,
+          "target": "server/routes/ana-intelligence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/ai-editing.ts",
+      "ownerModule": "routes/c2c/ai-editing",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 11,
+          "target": "server/routes/c2c/ai-editing.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/communication-center.ts",
+      "ownerModule": "routes/c2c/communication-center",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 6,
+          "target": "server/routes/c2c/communication-center.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/context-intelligence.ts",
+      "ownerModule": "routes/c2c/context-intelligence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 14,
+          "target": "server/routes/c2c/context-intelligence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/conversations.ts",
+      "ownerModule": "routes/c2c/conversations",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 8,
+          "target": "server/routes/c2c/conversations.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/exports.ts",
+      "ownerModule": "routes/c2c/exports",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 9,
+          "target": "server/routes/c2c/exports.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/knowledge-sources.ts",
+      "ownerModule": "routes/c2c/knowledge-sources",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 17,
+          "target": "server/routes/c2c/knowledge-sources.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/c2c/project-knowledge.ts",
+      "ownerModule": "routes/c2c/project-knowledge",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 15,
+          "target": "server/routes/c2c/project-knowledge.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/cerv2-document-routes.ts",
+      "ownerModule": "routes/cerv2-document-routes",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 45,
+          "target": "server/bootstrap/register-regulatory-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-regulatory-routes.ts",
+          "line": 444,
+          "target": "server/routes/cerv2-document-routes.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/cmc-changes.routes.ts",
+      "ownerModule": "routes/cmc-changes.routes",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 109,
+          "target": "server/routes/cmc-changes.routes.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/concept2cure.ts",
+      "ownerModule": "routes/concept2cure",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 39,
+          "target": "server/bootstrap/register-concept2cure-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-concept2cure-routes.ts",
+          "line": 3,
+          "target": "server/routes/concept2cure.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/decision-lineage.ts",
+      "ownerModule": "routes/decision-lineage",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 34,
+          "target": "server/routes/decision-lineage.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/defense-packet.ts",
+      "ownerModule": "routes/defense-packet",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 296,
+          "target": "server/routes/defense-packet.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/inline-annotations.ts",
+      "ownerModule": "routes/inline-annotations",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 33,
+          "target": "server/routes/inline-annotations.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/market-access.routes.ts",
+      "ownerModule": "routes/market-access.routes",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 100,
+          "target": "server/routes/market-access.routes.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/program-journey.routes.ts",
+      "ownerModule": "routes/program-journey.routes",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 99,
+          "target": "server/routes/program-journey.routes.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/reg-change.routes.ts",
+      "ownerModule": "routes/reg-change.routes",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 963,
+          "target": "server/routes/reg-change.routes.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/safety-narrative.ts",
+      "ownerModule": "routes/safety-narrative",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 89,
+          "target": "server/routes/safety-narrative.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/routes/se-matrix.ts",
+      "ownerModule": "routes/se-matrix",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 295,
+          "target": "server/routes/se-matrix.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/DocumentDataCenterService.ts",
+      "ownerModule": "services/DocumentDataCenterService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 228,
+          "target": "server/routes/document-data-center.ts"
+        },
+        {
+          "file": "server/routes/document-data-center.ts",
+          "line": 6,
+          "target": "server/services/DocumentDataCenterService.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ana/ana-input-guard.ts",
+      "ownerModule": "services/ana/ana-input-guard",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 40,
+          "target": "server/bootstrap/register-ai-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ai-routes.ts",
+          "line": 34,
+          "target": "server/routes/ana-ri.ts"
+        },
+        {
+          "file": "server/routes/ana-ri.ts",
+          "line": 57,
+          "target": "server/routes/ana-ri/stream.ts"
+        },
+        {
+          "file": "server/routes/ana-ri/stream.ts",
+          "line": 155,
+          "target": "server/services/ana/ana-input-guard.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/api-key-service.ts",
+      "ownerModule": "services/api-key-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 52,
+          "target": "server/startup/middleware.ts"
+        },
+        {
+          "file": "server/startup/middleware.ts",
+          "line": 30,
+          "target": "server/middleware/enterprise-security.ts"
+        },
+        {
+          "file": "server/middleware/enterprise-security.ts",
+          "line": 801,
+          "target": "server/services/api-key-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/authoring/section-generation-service.ts",
+      "ownerModule": "services/authoring/section-generation-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 42,
+          "target": "server/bootstrap/register-governance-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-governance-routes.ts",
+          "line": 10,
+          "target": "server/routes/submissions.ts"
+        },
+        {
+          "file": "server/routes/submissions.ts",
+          "line": 64,
+          "target": "server/services/authoring/section-generation-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/autoExtractionPipeline.ts",
+      "ownerModule": "services/autoExtractionPipeline",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 8,
+          "target": "server/routes/audit-services.ts"
+        },
+        {
+          "file": "server/routes/audit-services.ts",
+          "line": 346,
+          "target": "server/services/autoExtractionPipeline.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/capa-mdr/capaMdr.service.ts",
+      "ownerModule": "services/capa-mdr/capaMdr.service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 39,
+          "target": "server/routes/capa-mdr.ts"
+        },
+        {
+          "file": "server/routes/capa-mdr.ts",
+          "line": 38,
+          "target": "server/services/capa-mdr/capaMdr.service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/cerGenerationService.ts",
+      "ownerModule": "services/cerGenerationService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 45,
+          "target": "server/bootstrap/register-regulatory-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-regulatory-routes.ts",
+          "line": 389,
+          "target": "server/routes/cer-routes.ts"
+        },
+        {
+          "file": "server/routes/cer-routes.ts",
+          "line": 12,
+          "target": "server/services/cer/index.ts"
+        },
+        {
+          "file": "server/services/cer/index.ts",
+          "line": 19,
+          "target": "server/services/cerGenerationService.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/etmf/tmf-artifact-persistence.ts",
+      "ownerModule": "services/etmf/tmf-artifact-persistence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 516,
+          "target": "server/routes/etmf.routes.ts"
+        },
+        {
+          "file": "server/routes/etmf.routes.ts",
+          "line": 13,
+          "target": "server/services/etmf/tmf-artifact-persistence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/figureGenerationService.ts",
+      "ownerModule": "services/figureGenerationService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 8,
+          "target": "server/routes/audit-services.ts"
+        },
+        {
+          "file": "server/routes/audit-services.ts",
+          "line": 41,
+          "target": "server/services/figureGenerationService.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ind-lifecycle/ind-amendment-persistence.ts",
+      "ownerModule": "services/ind-lifecycle/ind-amendment-persistence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 43,
+          "target": "server/bootstrap/register-ind-lifecycle-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ind-lifecycle-routes.ts",
+          "line": 30,
+          "target": "server/routes/ind-lifecycle.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle.routes.ts",
+          "line": 22,
+          "target": "server/routes/ind-lifecycle/filing.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle/filing.routes.ts",
+          "line": 13,
+          "target": "server/services/ind-lifecycle/ind-amendment-persistence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ind-lifecycle/ind-annual-report-persistence.ts",
+      "ownerModule": "services/ind-lifecycle/ind-annual-report-persistence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 43,
+          "target": "server/bootstrap/register-ind-lifecycle-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ind-lifecycle-routes.ts",
+          "line": 30,
+          "target": "server/routes/ind-lifecycle.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle.routes.ts",
+          "line": 22,
+          "target": "server/routes/ind-lifecycle/filing.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle/filing.routes.ts",
+          "line": 12,
+          "target": "server/services/ind-lifecycle/ind-annual-report-persistence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ind-lifecycle/ind-dispatch-snapshot-service.ts",
+      "ownerModule": "services/ind-lifecycle/ind-dispatch-snapshot-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 43,
+          "target": "server/bootstrap/register-ind-lifecycle-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ind-lifecycle-routes.ts",
+          "line": 30,
+          "target": "server/routes/ind-lifecycle.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle.routes.ts",
+          "line": 24,
+          "target": "server/routes/ind-lifecycle/sequence.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle/sequence.routes.ts",
+          "line": 17,
+          "target": "server/services/ind-lifecycle/ind-dispatch-snapshot-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/ind-lifecycle/ind-safety-report-persistence.ts",
+      "ownerModule": "services/ind-lifecycle/ind-safety-report-persistence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 43,
+          "target": "server/bootstrap/register-ind-lifecycle-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ind-lifecycle-routes.ts",
+          "line": 30,
+          "target": "server/routes/ind-lifecycle.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle.routes.ts",
+          "line": 22,
+          "target": "server/routes/ind-lifecycle/filing.routes.ts"
+        },
+        {
+          "file": "server/routes/ind-lifecycle/filing.routes.ts",
+          "line": 11,
+          "target": "server/services/ind-lifecycle/ind-safety-report-persistence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/keywordExtractionService.ts",
+      "ownerModule": "services/keywordExtractionService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 8,
+          "target": "server/routes/audit-services.ts"
+        },
+        {
+          "file": "server/routes/audit-services.ts",
+          "line": 268,
+          "target": "server/services/keywordExtractionService.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/licensing/eula-service.ts",
+      "ownerModule": "services/licensing/eula-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 85,
+          "target": "server/routes/licensing.ts"
+        },
+        {
+          "file": "server/routes/licensing.ts",
+          "line": 30,
+          "target": "server/services/licensing/eula-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/living-record/document-binder.ts",
+      "ownerModule": "services/living-record/document-binder",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 32,
+          "target": "server/routes/change-propagation.ts"
+        },
+        {
+          "file": "server/routes/change-propagation.ts",
+          "line": 37,
+          "target": "server/services/living-record/document-binder.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/living-record/fact-propagation.ts",
+      "ownerModule": "services/living-record/fact-propagation",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 32,
+          "target": "server/routes/change-propagation.ts"
+        },
+        {
+          "file": "server/routes/change-propagation.ts",
+          "line": 36,
+          "target": "server/services/living-record/fact-propagation.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/part11ComplianceService.ts",
+      "ownerModule": "services/part11ComplianceService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 46,
+          "target": "server/bootstrap/register-document-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-document-routes.ts",
+          "line": 187,
+          "target": "server/routes/submission-sign-release.ts"
+        },
+        {
+          "file": "server/routes/submission-sign-release.ts",
+          "line": 65,
+          "target": "server/services/part11ComplianceService.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/pathway-engines/estar/estar-registration-service.ts",
+      "ownerModule": "services/pathway-engines/estar/estar-registration-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 45,
+          "target": "server/bootstrap/register-regulatory-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-regulatory-routes.ts",
+          "line": 83,
+          "target": "server/routes/510k-estar-routes.ts"
+        },
+        {
+          "file": "server/routes/510k-estar-routes.ts",
+          "line": 81,
+          "target": "server/services/pathway-engines/estar/estar-registration-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/pathway-engines/estar/estar-submission-service.ts",
+      "ownerModule": "services/pathway-engines/estar/estar-submission-service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 45,
+          "target": "server/bootstrap/register-regulatory-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-regulatory-routes.ts",
+          "line": 83,
+          "target": "server/routes/510k-estar-routes.ts"
+        },
+        {
+          "file": "server/routes/510k-estar-routes.ts",
+          "line": 88,
+          "target": "server/services/pathway-engines/estar/estar-submission-service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts",
+      "ownerModule": "services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 42,
+          "target": "server/bootstrap/register-governance-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-governance-routes.ts",
+          "line": 10,
+          "target": "server/routes/submissions.ts"
+        },
+        {
+          "file": "server/routes/submissions.ts",
+          "line": 1511,
+          "target": "server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/regulatory-assessments/regulatory-assessment-persistence.ts",
+      "ownerModule": "services/regulatory-assessments/regulatory-assessment-persistence",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 51,
+          "target": "server/bootstrap/register-inline-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-inline-routes.ts",
+          "line": 530,
+          "target": "server/routes/regulatory-assessments.routes.ts"
+        },
+        {
+          "file": "server/routes/regulatory-assessments.routes.ts",
+          "line": 10,
+          "target": "server/services/regulatory-assessments/regulatory-assessment-persistence.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+      "ownerModule": "services/regulatory-graph/defense-packet-staleness.service",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 31,
+          "target": "server/jobs/driftSentinelSweep.ts"
+        },
+        {
+          "file": "server/jobs/driftSentinelSweep.ts",
+          "line": 18,
+          "target": "server/services/living-record/reconciliation-engine.ts"
+        },
+        {
+          "file": "server/services/living-record/reconciliation-engine.ts",
+          "line": 24,
+          "target": "server/services/living-file/change-router.service.ts"
+        },
+        {
+          "file": "server/services/living-file/change-router.service.ts",
+          "line": 43,
+          "target": "server/services/regulatory-graph/defense-packet-staleness.service.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/seat-licensing.ts",
+      "ownerModule": "services/seat-licensing",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 47,
+          "target": "server/bootstrap/register-tenant-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-tenant-routes.ts",
+          "line": 35,
+          "target": "server/routes/tenant-users.ts"
+        },
+        {
+          "file": "server/routes/tenant-users.ts",
+          "line": 439,
+          "target": "server/services/seat-licensing.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/weekly-usage-limits.ts",
+      "ownerModule": "services/weekly-usage-limits",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 40,
+          "target": "server/bootstrap/register-ai-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-ai-routes.ts",
+          "line": 6,
+          "target": "server/middleware/enforceWeeklyLimit.ts"
+        },
+        {
+          "file": "server/middleware/enforceWeeklyLimit.ts",
+          "line": 23,
+          "target": "server/services/weekly-usage-limits.ts"
+        }
+      ]
+    },
+    {
+      "file": "server/services/workflow/DecisionLineageService.ts",
+      "ownerModule": "services/workflow/DecisionLineageService",
+      "importPathFromServerIndex": [
+        {
+          "file": "server/index.ts",
+          "line": 63,
+          "target": "server/startup/routes.ts"
+        },
+        {
+          "file": "server/startup/routes.ts",
+          "line": 50,
+          "target": "server/bootstrap/register-advanced-platform-routes.ts"
+        },
+        {
+          "file": "server/bootstrap/register-advanced-platform-routes.ts",
+          "line": 34,
+          "target": "server/routes/decision-lineage.ts"
+        },
+        {
+          "file": "server/routes/decision-lineage.ts",
+          "line": 20,
+          "target": "server/services/workflow/DecisionLineageService.ts"
+        }
+      ]
+    }
+  ]
+}

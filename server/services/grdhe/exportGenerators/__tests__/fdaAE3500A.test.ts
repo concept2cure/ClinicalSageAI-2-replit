@@ -26,6 +26,11 @@ import { generateFDA3500AXML } from '../fdaAE3500A';
 import type { CanonicalAdverseEvent } from '../../types';
 
 const GENDER_OID = '2.16.840.1.113883.5.1';
+// The job's locked MedDRA version. 2026-10-15: these calls passed none, and the
+// generator invented '27.1'; it now refuses an export with no lock.
+const MEDDRA_LOCK = {
+  MEDDRA: { version_id: 'tv-meddra', version_code: '26.1', display_name: 'MedDRA 26.1', locked_at: '2026-10-15T00:00:00Z' },
+};
 
 function buildEvent(overrides: Record<string, any> = {}): CanonicalAdverseEvent {
   const base: Record<string, any> = {
@@ -39,29 +44,32 @@ function buildEvent(overrides: Record<string, any> = {}): CanonicalAdverseEvent 
     receiveDate: new Date(2026, 2, 15), // 2026-03-15 local
     eventDate: new Date(2026, 2, 15),
     isSerious: false,
+    // Canonical field names (server/services/grdhe/types.ts). 2026-10-15: this
+    // fixture used product_name, meddra_pt_code, reaction_term and
+    // patient_initials, which no type defines and the generator no longer reads.
     patient: {
-      patient_initials: 'AB',
+      initials: 'AB',
       sex: 'male',
     },
     reactions: [
       {
-        meddra_pt_code: '10012345',
-        reaction_term: 'Headache',
+        term_code: '10012345',
+        term: 'Headache',
         outcome: 'recovered',
         // String date-only field carrying a local-midnight time component, the
         // shape most exposed to a UTC shift.
         onset_date: '2026-03-15T00:00:00',
       },
     ],
-    suspectProducts: [{ product_name: 'TestDrug' }],
-    reporter: { qualification: '1' },
+    suspectProducts: [{ name: 'TestDrug' }],
+    reporter: { qualification_code: '1' },
   };
   return { ...base, ...overrides } as unknown as CanonicalAdverseEvent;
 }
 
 describe('generateFDA3500AXML — administrativeGenderCode (finding a)', () => {
   it('emits an HL7 AdministrativeGender code (M) for the gender OID, never the E2B numeric 1', () => {
-    const result = generateFDA3500AXML(buildEvent({ patient: { sex: 'male' } }), {} as any, {});
+    const result = generateFDA3500AXML(buildEvent({ patient: { sex: 'male' } }), {} as any, MEDDRA_LOCK);
     expect(result.success).toBe(true);
     expect(result.content).toContain(
       `<administrativeGenderCode code="M" codeSystem="${GENDER_OID}"/>`
@@ -73,7 +81,7 @@ describe('generateFDA3500AXML — administrativeGenderCode (finding a)', () => {
   });
 
   it('maps the canonical PatientInfo.sex letters (F) straight through', () => {
-    const result = generateFDA3500AXML(buildEvent({ patient: { sex: 'F' } }), {} as any, {});
+    const result = generateFDA3500AXML(buildEvent({ patient: { sex: 'F' } }), {} as any, MEDDRA_LOCK);
     expect(result.success).toBe(true);
     expect(result.content).toContain(
       `<administrativeGenderCode code="F" codeSystem="${GENDER_OID}"/>`
@@ -81,7 +89,7 @@ describe('generateFDA3500AXML — administrativeGenderCode (finding a)', () => {
   });
 
   it('falls back to UN (defined by the code system), not 0, when sex is absent', () => {
-    const result = generateFDA3500AXML(buildEvent({ patient: { patient_initials: 'CD' } }), {} as any, {});
+    const result = generateFDA3500AXML(buildEvent({ patient: { initials: 'CD' } }), {} as any, MEDDRA_LOCK);
     expect(result.success).toBe(true);
     expect(result.content).toContain(
       `<administrativeGenderCode code="UN" codeSystem="${GENDER_OID}"/>`
@@ -92,7 +100,7 @@ describe('generateFDA3500AXML — administrativeGenderCode (finding a)', () => {
 
 describe('generateFDA3500AXML — date-only fields do not shift (finding b)', () => {
   it('files a boundary onset date (string) as the stored calendar day in a UTC+ zone', () => {
-    const result = generateFDA3500AXML(buildEvent(), {} as any, {});
+    const result = generateFDA3500AXML(buildEvent(), {} as any, MEDDRA_LOCK);
     expect(result.success).toBe(true);
     // Reaction onset low + receiveDate activityTime both carry 2026-03-15.
     expect(result.content).toContain('value="20260315"');
@@ -104,7 +112,7 @@ describe('generateFDA3500AXML — date-only fields do not shift (finding b)', ()
     const result = generateFDA3500AXML(
       buildEvent({ receiveDate: new Date(2026, 2, 15) }),
       {} as any,
-      {}
+      MEDDRA_LOCK
     );
     expect(result.success).toBe(true);
     expect(result.content).toContain('<activityTime value="20260315"/>');

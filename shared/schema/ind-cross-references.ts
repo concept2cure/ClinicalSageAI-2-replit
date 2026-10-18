@@ -36,7 +36,7 @@ export const indCrossReferences = pgTable(
     referencedFileType: text('referenced_file_type').notNull(),
     referencedFileNumber: text('referenced_file_number').notNull(),
     subjectName: text('subject_name').notNull(),
-    /** Sections relied upon; empty ⇒ "the file in its entirety". */
+    /** Sections relied upon; empty ⇒ scope not recorded (SCOPE_NOT_SPECIFIED) — never "the file in its entirety" (2026-10-15). */
     authorizedSections: jsonb('authorized_sections').notNull().default([]),
 
     /** Whether a Letter of Authorization (m1.4.1) has been obtained/filed. */

@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 501ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 171ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 190ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 182ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 95ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  01:07:32
+   Duration  4.54s (transform 1.91s, setup 215ms, import 2.26s, tests 1.27s, environment 595ms)

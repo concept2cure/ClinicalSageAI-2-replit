@@ -17,15 +17,17 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../../db';
 import { indAnnualReports, type IndAnnualReportRow } from '../../../shared/schema/ind-annual-reports';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import {
   assembleIndAnnualReport,
-  computeAnnualReportDue,
-  type IndAnnualReportInput,
+  computeAnnualReportDueForPeriod,
+  parseAnnualReportInput,
 } from './ind-annual-report-service';
 
 const logger = createScopedLogger('ind-annual-report-persistence');
+
+export type AuditedIndAnnualReportRow = IndAnnualReportRow & { auditTrail: AuditRowOutcome };
 
 export type AnnualReportCtx = { organizationId: number; userId: number };
 
@@ -48,23 +50,9 @@ const requireDate = (v: unknown, field: string): Date => {
   return date;
 };
 
-/**
- * Coerce the period-input dates (which arrive as ISO strings over HTTP) to Date
- * so the pure assembler's date arithmetic is safe.
- */
-function coerceInput(raw: any): IndAnnualReportInput {
-  return {
-    ...raw,
-    // An absent or unparsable date used to become 1 January 1970, so a
-    // draft with no period dates assembled and persisted as a report covering
-    // the epoch. Refuse instead.
-    reportingPeriodStart: requireDate(raw.reportingPeriodStart, 'reportingPeriodStart'),
-    reportingPeriodEnd: requireDate(raw.reportingPeriodEnd, 'reportingPeriodEnd'),
-    safetyReportsInPeriod: (raw.safetyReportsInPeriod ?? []).map((r: any) => ({ ...r, submittedAt: requireDate(r.submittedAt, 'safetyReportsInPeriod[].submittedAt') })),
-    ibChanges: (raw.ibChanges ?? []).map((c: any) => ({ ...c, effectiveDate: requireDate(c.effectiveDate, 'ibChanges[].effectiveDate') })),
-    studyStatuses: raw.studyStatuses ?? [],
-  };
-}
+// The period input is parsed by the service's parseAnnualReportInput — the one
+// boundary parser the preview, PDF and filing routes share (an absent or
+// unparsable period date is refused; it once became 1 January 1970).
 
 export interface CreateAnnualReportDraftInput {
   submissionId: number;
@@ -78,11 +66,16 @@ export interface CreateAnnualReportDraftInput {
 export async function createAnnualReportDraft(
   input: CreateAnnualReportDraftInput,
   ctx: AnnualReportCtx,
-): Promise<IndAnnualReportRow> {
-  const coerced = coerceInput(input.report);
+): Promise<AuditedIndAnnualReportRow> {
+  const coerced = parseAnnualReportInput(input.report);
   const model = assembleIndAnnualReport({ ...coerced, organizationId: String(ctx.organizationId) });
-  const effective = d(input.indEffectiveDate);
-  const dueDate = effective ? computeAnnualReportDue(effective) : null;
+  // A supplied effective date that does not parse is refused (2026-10-15: it
+  // read as absent, so the draft silently had no due date).
+  const effective =
+    input.indEffectiveDate == null || input.indEffectiveDate === '' ? undefined : requireDate(input.indEffectiveDate, 'indEffectiveDate');
+  // Due from this report's own period (2026-10-15; it was dated from the wall
+  // clock, so an early draft read overdue and a year-late one read on time).
+  const dueDate = effective ? computeAnnualReportDueForPeriod(effective, coerced.reportingPeriodEnd) : null;
 
   const [row] = await db
     .insert(indAnnualReports)
@@ -101,7 +94,7 @@ export async function createAnnualReportDraft(
     })
     .returning();
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_ANNUAL_REPORT_DRAFTED',
@@ -110,7 +103,7 @@ export async function createAnnualReportDraft(
     details: { submissionId: input.submissionId, indNumber: model.indNumber, gapCount: model.gaps.length },
   });
   logger.info('Drafted IND annual report', { submissionId: input.submissionId, gapCount: model.gaps.length, organizationId: ctx.organizationId });
-  return row as IndAnnualReportRow;
+  return { ...(row as IndAnnualReportRow), auditTrail };
 }
 
 /** List a submission's annual reports (org-scoped, stable order). */
@@ -140,14 +133,14 @@ export async function markAnnualReportFiled(
   id: string,
   sequenceId: number,
   ctx: AnnualReportCtx,
-): Promise<IndAnnualReportRow> {
+): Promise<AuditedIndAnnualReportRow> {
   const [row] = await db
     .update(indAnnualReports)
     .set({ status: 'filed', sequenceId, filedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(indAnnualReports.id, id), eq(indAnnualReports.organizationId, ctx.organizationId)))
     .returning();
   if (!row) throw new AnnualReportError('NOT_FOUND', 'Annual report not found.');
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_ANNUAL_REPORT_FILED',
@@ -155,7 +148,7 @@ export async function markAnnualReportFiled(
     resourceId: row.id,
     details: { sequenceId },
   });
-  return row as IndAnnualReportRow;
+  return { ...(row as IndAnnualReportRow), auditTrail };
 }
 
 /**

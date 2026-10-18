@@ -1,0 +1,21 @@
+# P-35 client suite against HEAD's surfaces (no disposition controls, no chain) — 2026-10-15
+# npx vitest run client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with no later review: "Accept risk" only, and the screen says when "Mark fixed" comes
+   → Unable to find role="button" and name `/^Accept risk/`
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with a later completed review: both, and "Mark fixed" names that review
+   → Unable to find an accessible element with the role "button" and name `/^Accept risk/`
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a closed critical reads who closed it, how, when and why — and offers nothing
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > nothing is offered to the sequence author, and the screen says why
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an older server that sends no offer: nothing is offered and nothing is claimed
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > asks the precheck before the signature, signs the finding and the disposition, then closes that finding
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a refused precheck opens no signature and says the server's words
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a 409 SHADOW_FINDING_NOT_DISPOSABLE shows the server's words and no success
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a 403 GOVERNED_REQUIRED shows the server's words and no success
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > an unconfirmed act says so and claims nothing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find role="button" and name `/^Accept risk/`
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Accept risk/`
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)
+
+# The 'older server' case passes in red, as it should: nothing was ever offered. Mutation C4 (client-green/guard-mutations.txt) shows it failing.

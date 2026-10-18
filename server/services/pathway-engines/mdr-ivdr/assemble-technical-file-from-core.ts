@@ -59,8 +59,10 @@ import {
   governedSectionIsAuthored,
   type GovernedDeviceSectionRow,
 } from '../estar/estar-content-leaves';
-import auditService from '../../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../../audit/audit-write-outcome';
 import { createScopedLogger } from '../../../utils/logger';
+import { companyLegalSubmissionContext, readCompanyLegalSubmissionContext } from '../../ectd/company-legal-context';
+import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
 
 const logger = createScopedLogger('assemble-technical-file');
 
@@ -75,6 +77,7 @@ export interface AssembleTechnicalFileParams {
 }
 
 export interface AssembleTechnicalFileResult {
+  auditTrail: AuditRowOutcome;
   bundle: TechnicalFileBundle;
   /**
    * Remove the temp staging/output directory backing the bundle. Call once the
@@ -166,7 +169,7 @@ interface PackageTechnicalFileParams {
  */
 async function packageTechnicalFile(
   params: PackageTechnicalFileParams,
-): Promise<{ manifest: ReconciledTechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle; ready: boolean }> {
+): Promise<{ manifest: ReconciledTechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle; ready: boolean; auditTrail: AuditRowOutcome }> {
   const { leaves, regulation, organizationId, userId, unresolvedLeaves, materialized } = params;
 
   // 2026-09-23 (W5/D7, residual repair): the leaves are projected through the
@@ -209,7 +212,7 @@ async function packageTechnicalFile(
     });
   }
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'DEVICE_TECHNICAL_FILE_ASSEMBLED',
@@ -245,7 +248,7 @@ async function packageTechnicalFile(
     unresolved: unresolvedLeaves.length,
   });
 
-  return { manifest: plan.manifest, plan, bundle, ready };
+  return { manifest: plan.manifest, plan, bundle, ready, auditTrail };
 }
 
 /**
@@ -300,6 +303,8 @@ export async function assembleTechnicalFileFromCore(
         })),
         organizationId,
         stageDir,
+        legalTarget: coreLeaves.some(leaf => leaf.documentTable === 'vault_documents')
+          ? await readCompanyLegalSubmissionContext(queryableFromDrizzle(db), organizationId, sequenceId) : undefined,
       });
 
     const resolveFile: LeafFileResolver = (leaf) => {
@@ -311,7 +316,7 @@ export async function assembleTechnicalFileFromCore(
     };
 
     // 3-4. Project → plan → materialize → audit (shared spine).
-    const { plan, bundle, ready } = await packageTechnicalFile({
+    const { plan, bundle, ready, auditTrail } = await packageTechnicalFile({
       leaves: coreLeaves,
       resolveFile,
       regulation,
@@ -342,6 +347,7 @@ export async function assembleTechnicalFileFromCore(
 
     assembleReturned = true;
     return {
+      auditTrail,
       bundle,
       cleanup,
       skipped: plan.skipped,
@@ -373,6 +379,7 @@ export interface AssembleTechnicalFileFromProgramParams {
 }
 
 export interface AssembleTechnicalFileFromProgramResult {
+  auditTrail: AuditRowOutcome;
   /** The ZIP bytes — the staging directory is already gone when this returns. */
   buffer: Buffer;
   filename: string;
@@ -463,6 +470,7 @@ export async function assembleTechnicalFileFromProgram(
         leaves: coreLeaves.map((l) => ({ documentTable: l.documentTable ?? null, documentId: l.documentId ?? null })),
         organizationId,
         stageDir,
+        legalTarget: companyLegalSubmissionContext({ programId, region: 'EU', applicationType: regulation }),
       });
     const resolveFile: LeafFileResolver = (leaf) => {
       // Either key space identifies a source: integer-keyed stores carry
@@ -473,7 +481,7 @@ export async function assembleTechnicalFileFromProgram(
     };
 
     // 3-4. Project → plan → materialize → audit (shared spine).
-    const { manifest, plan, bundle, ready } = await packageTechnicalFile({
+    const { manifest, plan, bundle, ready, auditTrail } = await packageTechnicalFile({
       leaves: coreLeaves,
       resolveFile,
       regulation,
@@ -494,6 +502,7 @@ export async function assembleTechnicalFileFromProgram(
     const buffer = await fs.readFile(bundle.path);
 
     return {
+      auditTrail,
       buffer,
       filename: path.basename(bundle.path),
       sha256: bundle.sha256,

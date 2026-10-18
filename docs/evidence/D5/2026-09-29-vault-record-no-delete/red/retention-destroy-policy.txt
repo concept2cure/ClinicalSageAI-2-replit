@@ -440,4 +440,3 @@ AssertionError: expected { scanned: 2, archived: 1, …(4) } to deeply equal { s
       Tests  6 failed | 16 passed (22)
    Start at  19:58:36
    Duration  884ms (transform 314ms, setup 161ms, import 952ms, tests 63ms, environment 0ms)
-

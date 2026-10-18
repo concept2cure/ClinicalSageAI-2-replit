@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:canvas-path
+> node scripts/ci/check-canvas-path.mjs
+
+✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline

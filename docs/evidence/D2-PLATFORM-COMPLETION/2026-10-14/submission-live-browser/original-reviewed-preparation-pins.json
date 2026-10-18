@@ -1,0 +1,47 @@
+{
+  "status": "Prepared/read-only, not executed. No server/browser/SQL or credentials read.",
+  "artifacts": [
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/README.md",
+      "bytes": 4421,
+      "digestAlgorithm": "sha256",
+      "digest": "22f9ffe2d857e068b64fa3afa5856d202aca2da7f057465035ce09d1a1f280b5"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/fixture-identities.json",
+      "bytes": 2471,
+      "digestAlgorithm": "sha256",
+      "digest": "c03ff4a089ead0002399a420514c56d58fc2b139d69d8164ba3f0b152818c273"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/owned_environment.py",
+      "bytes": 3690,
+      "digestAlgorithm": "sha256",
+      "digest": "0e58bf91e07ab524f23d60093d12faae3adf7ac9ec5ac095bf0179c3a2368840"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/qa-server.mts",
+      "bytes": 3392,
+      "digestAlgorithm": "sha256",
+      "digest": "970b2de6a1adc7411b1979d5f1737165f5c1effd9eb5e266460b7cdcc1a2c143"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/review_live.py",
+      "bytes": 18581,
+      "digestAlgorithm": "sha256",
+      "digest": "64bf63063a8ad8d4d905f224f373c703311c7996afdc4b9958bf54c5cd0df3fd"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/start_qa.py",
+      "bytes": 3036,
+      "digestAlgorithm": "sha256",
+      "digest": "aaabdb4134a84a603867733059b37ac567a38f07b103b80fdbb5624757bca61f"
+    },
+    {
+      "path": "/tmp/submission-deliverables-browser-prep/stop_qa.py",
+      "bytes": 1536,
+      "digestAlgorithm": "sha256",
+      "digest": "fabaa26b9fea992f390480b0795f6906126d0893235d708069d2409f6982eebd"
+    }
+  ]
+}
