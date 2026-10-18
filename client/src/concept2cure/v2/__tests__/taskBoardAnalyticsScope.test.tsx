@@ -30,6 +30,17 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { TaskBoard } from '../surfaces/TaskBoard';
+import type { SurfaceViewProps } from '../surfaceViews';
+
+/* The shell's four required props, built rather than cast: the board reads
+   none of them on the Analytics path, and a real object says so where an
+   `as unknown as` would only silence the compiler. */
+const SHELL: SurfaceViewProps = {
+  surface: { id: 'tasks', label: 'Tasks' } as SurfaceViewProps['surface'],
+  onAsk: () => {},
+  onNav: () => {},
+  segment: 'pharma',
+};
 
 const task = (over: Record<string, unknown>) => ({
   taskId: 't-1', title: 'A task', project: '', moduleType: 'clinical', taskType: 'authoring',
@@ -58,7 +69,7 @@ const openAnalytics = async () => {
 describe('the Analytics tab says what it measured', () => {
   it('says nothing when the figures cover every card the board read', async () => {
     serve([task({ taskId: 't-1' }), task({ taskId: 't-2', moduleType: 'cmc' })]);
-    render(<TaskBoard />);
+    render(<TaskBoard {...SHELL} />);
     await openAnalytics();
     await waitFor(() => expect(screen.getByText('By module')).toBeDefined());
     expect(screen.queryByTestId('tb-analytics-scope')).toBeNull();
@@ -73,7 +84,7 @@ describe('the Analytics tab says what it measured', () => {
       task({ taskId: 't-2' }),
       task({ taskId: 't-3', status: 'cancelled' }),
     ]);
-    render(<TaskBoard />);
+    render(<TaskBoard {...SHELL} />);
     await openAnalytics();
     const note = await screen.findByTestId('tb-analytics-scope');
     expect(note.textContent ?? '').toMatch(/cover 2 of the 3 cards on the board/);
@@ -89,7 +100,7 @@ describe('the Analytics tab says what it measured', () => {
       task({ taskId: 't-2', moduleType: 'cmc' }),
       task({ taskId: 't-3', moduleType: 'cmc' }),
     ]);
-    render(<TaskBoard />);
+    render(<TaskBoard {...SHELL} />);
     await openAnalytics();
     await waitFor(() => expect(screen.getByText('By module')).toBeDefined());
     expect(screen.queryByTestId('tb-analytics-scope')).toBeNull();
