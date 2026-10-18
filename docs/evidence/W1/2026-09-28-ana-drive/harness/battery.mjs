@@ -171,9 +171,17 @@ const SCENARIOS = {
   // Acting on a screen the person is not on: the bus heads there and the
   // action arrives while the screen's read is in flight, so the screen holds
   // it until its data settles. Each ask is answered with "Act result: …
-  // Screen: …" (the stand-in's planAct). The Inconsistency overlay is
-  // project-scoped, so a program is opened first; the design needs the local
-  // study design the README names.
+  // Screen: …" (the stand-in's planAct). eCTD Compile is project-scoped, so a
+  // program is opened first; the design needs the local study design the
+  // README names.
+  //
+  // This first check drove the Inconsistency board's FDA/EMA overlay until
+  // upstream a76a50aec6 made that gate the server's alone: no client overlay,
+  // no re-scoring, and inconsistency.set-regulator left the registry with its
+  // handler. The eCTD Region menu is the same shape — a project-scoped
+  // selector whose very presence waits on a read (compilation readiness) — so
+  // it tests the same thing: a held action, sent from another screen, answered
+  // by the screen that holds it.
   async heldAction(page) {
     await goHome(page);
     await ask(page, 'open program BX-301');
@@ -197,15 +205,18 @@ const SCENARIOS = {
 
     let t = Date.now();
     let before = (await actResults()).length;
-    await ask(page, 'act inconsistency.set-regulator regulator=EMA');
-    const overlaySaid = await nextResult(before);
-    const overlayMs = Date.now() - t;
-    const overlay = await selectedText('button.gi-reg-b.on');
-    await page.screenshot({ path: `${SP}/e2e-held-overlay.png` });
+    await ask(page, 'act ectd-compile.set-region region=EMA');
+    const regionSaid = await nextResult(before);
+    const regionMs = Date.now() - t;
+    // Either the menu moved, or the sequence records its own region and the
+    // screen said so — both are the screen's own answer. A timeout ("not
+    // confirmed") or a menu left on FDA with no refusal is the failure.
+    const regionValue = await page.locator('#ectd-region').inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-held-region.png` });
     record(
-      "held action: an overlay switch sent from another screen gets the screen's own answer",
-      /Screen: /.test(overlaySaid) && !/not confirmed/.test(overlaySaid),
-      `${overlaySaid} (overlay ${overlay || 'unchanged'}; answered in ${overlayMs} ms)`,
+      "held action: a region switch sent from another screen gets the screen's own answer",
+      /Screen: /.test(regionSaid) && !/not confirmed/.test(regionSaid) && (regionValue === 'EMA' || /records region/.test(regionSaid)),
+      `${regionSaid} (Region menu: ${regionValue || 'not on screen'}; answered in ${regionMs} ms)`,
     );
 
     t = Date.now();
@@ -260,6 +271,80 @@ const SCENARIOS = {
     const bogus = await drive('act audit-trail.filter-entries kind=holodeck', async () => false);
     record('audit trail: a kind the screen does not have is refused, not guessed',
       /not|no |unknown|refus/i.test(bogus.said) && !/applied|filtered to holodeck/i.test(bogus.said), bogus.said.slice(0, 160));
+  },
+  // The second half of wave 7: the project-scoped screens. Same drive, but a
+  // program has to be open first — the bus lands on "Open a program" otherwise
+  // and the handler's own `ident == null` refusal is what AnA would get.
+  async coverage2(page) {
+    if (!process.env.DATABASE_URL) { record('coverage2 needs DATABASE_URL', false, 'set it to read the saved answers'); return; }
+    const answers = () =>
+      (psql("select replace(content, chr(10), ' ') from chat_messages where content like '%Act result:%' order by id")
+        .match(/Act result:[^\n]*/g) ?? []);
+    const nextAnswer = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(1000)) {
+        const all = answers();
+        if (all.length > before) return all[all.length - 1];
+      }
+      return '(no answer within 45 s)';
+    };
+    /* waitIdle between drives, which `coverage` gets for free: its checks all
+       wait out the full watch window, so the previous turn has always finished
+       by the time the next ask is typed. Here the first check stops as soon as
+       the card appears, and an ask typed into a composer that is still
+       streaming is dropped — the next answer then never arrives and reads as a
+       screen that did not respond. The race was in the harness, not the bus. */
+    const drive = async (ask_, until) => {
+      const before = answers().length;
+      await ask(page, ask_);
+      await watchUrls(page, { timeout: 45000, until });
+      await waitIdle(page);
+      return await nextAnswer(before);
+    };
+
+    await goHome(page);
+    await ask(page, 'open program BX-301');
+    await watchUrls(page, { until: s => s.some(q => q.endsWith('/project-home')) });
+    await waitIdle(page);
+
+    // eCTD Compile was not even REACHABLE before this wave: no navigation
+    // target resolved to it, so AnA could not get to a shipped Submission
+    // Center screen at all. Both menus are selectors — nothing is sent until a
+    // person clicks Validate or Compile.
+    const subSel = '#ectd-subtype';
+    const typeSaid = await drive('act ectd-compile.set-submission-type submissionType=amendment', async () =>
+      (await page.locator(subSel).inputValue().catch(() => '')) === 'amendment');
+    const subValue = await page.locator(subSel).inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-coverage2-ectd-subtype.png` });
+    record('eCTD compile: AnA switches the submission type the next compile is run as',
+      subValue === 'amendment', `menu: ${JSON.stringify(subValue)} — ${typeSaid.slice(0, 120)}`);
+
+    // A region the menu does not offer is refused by the registry before the
+    // bus is involved, naming the legal pair.
+    const regionSaid = await drive('act ectd-compile.set-region region=MARS', async () => false);
+    record('eCTD compile: a region the menu does not offer is refused, naming the pair',
+      /FDA/.test(regionSaid) && /EMA/.test(regionSaid) && !/Selected region MARS/i.test(regionSaid), regionSaid.slice(0, 160));
+
+    // The gateway transmittal log: a read of one row's agency status. The
+    // governed acts on that screen (transmit, rollback, technical rejection)
+    // stay a person's own click, so they are not registered at all.
+    // Read from the SCREEN, not from what AnA was told: this protocol reports a
+    // screen's own words back only when the action was refused (the deferred
+    // outcome), so a successful apply answers "Screen: no report" and the proof
+    // it worked is the card a person is looking at.
+    const logged = psql("select id from submission_transmittals order by id limit 1") || '1';
+    const card = `text=Gateway status · transmittal #${logged}`;
+    const statusSaid = await drive(`act submission-gateway.show-status transmittal=#${logged}`, async () =>
+      (await page.locator(card).count().catch(() => 0)) > 0);
+    const cardShown = (await page.locator(card).count().catch(() => 0)) > 0;
+    await page.screenshot({ path: `${SP}/e2e-coverage2-gateway-status.png` });
+    record('gateway transmittals: AnA opens one transmittal\'s gateway status',
+      cardShown, `card for #${logged}: ${cardShown ? 'on screen' : 'not shown'} — ${statusSaid.slice(0, 110)}`);
+
+    // A number that is not in the log must be refused with the numbers that
+    // are — never answered as though the transmittal existed.
+    const missSaid = await drive('act submission-gateway.show-status transmittal=#99999', async () => false);
+    record('gateway transmittals: a transmittal not in the log is refused, listing the logged numbers',
+      /99999/.test(missSaid) && /(Transmittals logged|No transmittal)/i.test(missSaid), missSaid.slice(0, 170));
   },
   async vaultSearch(page) {
     await goHome(page);
@@ -433,7 +518,7 @@ const SCENARIOS = {
 };
 
 const want = process.argv.slice(2);
-const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'coverage', 'vaultSearch', 'askFromScreen', 'demo', 'salesDemo', 'chipsWhenOff'];
+const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'coverage', 'coverage2', 'vaultSearch', 'askFromScreen', 'demo', 'salesDemo', 'chipsWhenOff'];
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
