@@ -18,24 +18,32 @@
  *
  *   Set CLAMAV_HOST=hostname (and optionally CLAMAV_PORT — defaults
  *   to 3310). When unset, `scanBuffer` returns `{ scanned: false,
- *   clean: true }` so callers behave as if the scan passed. This
- *   lets the route code call the scanner unconditionally; the gate
- *   activates the moment a clamd daemon is provisioned in staging
- *   without any code change.
+ *   clean: true, reason: 'clamav_not_configured' }`. That is not an
+ *   all-clear: only `scanned && clean` is. What a caller does with
+ *   `scanned: false` depends on where it runs (below).
  *
- * Failure modes:
+ * Failure modes, and who fails open:
  *
- *   - Network error / connect timeout → `{ scanned: false, clean:
- *     true, reason: 'clamav_unreachable' }`. We FAIL OPEN by design:
- *     the route's other defenses (signature check, tenant-scoped
- *     storage path, file size cap) still apply. A misconfigured
- *     clamav shouldn't block uploads. This is intentional but worth
- *     monitoring — log analyzers should alert on a rising rate of
- *     `clamav_unreachable` reasons.
+ *   This client reports; it does not decide. Every failure below, and an
+ *   argument that is not a Buffer (reason 'not_a_buffer'), resolves
+ *   `{ scanned: false, clean: true, reason }`, and the caller chooses:
  *
- *   - Daemon returns an unparseable response → `{ scanned: false,
- *     clean: true, reason: 'clamav_unparseable' }`. Same fail-open
- *     posture.
+ *   - PRODUCTION FAILS CLOSED. server/middleware/uploadSafety.ts
+ *     refuses every upload whose scan did not run (503
+ *     FILE_SCAN_UNAVAILABLE), and the boot self-test
+ *     (services/securityHealth.ts clamav_connectivity) refuses to start
+ *     a production process with no CLAMAV_HOST or a clamd that does not
+ *     detect EICAR. /readyz reports the scanner down (pingClamd below).
+ *
+ *   - OUTSIDE PRODUCTION (development, test) the upload is accepted
+ *     unscanned, with a warning, so a laptop without clamd can work. The
+ *     route's other defenses (signature check, tenant-scoped storage
+ *     path, file size cap) still apply there.
+ *
+ *   - Network error / connect timeout → reason 'clamav_unreachable'.
+ *
+ *   - Daemon returns an unparseable response → reason
+ *     'clamav_unparseable'.
  *
  *   - Daemon returns FOUND → `{ scanned: true, clean: false,
  *     signature: '<name>' }`. Caller rejects the upload.
@@ -49,8 +57,8 @@
  *
  * The scan is bounded: the connect timeout is 5s, the total scan
  * timeout is 30s. Beyond that we abandon the connection and report
- * fail-open. Large file scans run on the daemon side, which has its
- * own resource governance.
+ * 'clamav_unreachable' (refused in production, as above). Large file
+ * scans run on the daemon side, which has its own resource governance.
  */
 
 import net from 'node:net';
@@ -88,12 +96,19 @@ function isConfigured(): boolean {
  * Scan a buffer against the configured clamd daemon.
  *
  * Returns synchronously-resolved `{ scanned: false, clean: true,
- * reason: 'clamav_not_configured' }` when CLAMAV_HOST is unset — the
- * fail-open path that lets uploads work in environments without a
- * scanner. Callers must NOT treat `scanned: false` as a clean signal
+ * reason: 'clamav_not_configured' }` when CLAMAV_HOST is unset. Outside
+ * production uploadSafety.ts accepts that with a warning; production
+ * refuses it (503 FILE_SCAN_UNAVAILABLE) and does not boot without
+ * CLAMAV_HOST. Callers must NOT treat `scanned: false` as a clean signal
  * — only `clean: true && scanned: true` is a real all-clear.
  */
 export function scanBuffer(buffer: Buffer): Promise<VirusScanResult> {
+  // Only bytes can be scanned. Anything else is a scan that did not run, which
+  // production refuses (uploadSafety.ts: 503), never a TypeError thrown from the
+  // connect callback below, where nothing would catch it.
+  if (!Buffer.isBuffer(buffer)) {
+    return Promise.resolve({ scanned: false, clean: true, reason: 'not_a_buffer' });
+  }
   if (!isConfigured()) {
     return Promise.resolve({
       scanned: false,
@@ -101,10 +116,15 @@ export function scanBuffer(buffer: Buffer): Promise<VirusScanResult> {
       reason: 'clamav_not_configured',
     });
   }
+  // The same port rule as pingClamd, so /readyz and the scan cannot disagree
+  // about whether CLAMAV_PORT names a port. Not one: unreachable, not a throw.
+  const port = clamdPort();
+  if (port === null) {
+    return Promise.resolve({ scanned: false, clean: true, reason: 'clamav_unreachable' });
+  }
 
   return new Promise(resolve => {
     const host = process.env.CLAMAV_HOST as string;
-    const port = process.env.CLAMAV_PORT ? Number(process.env.CLAMAV_PORT) : DEFAULT_PORT;
 
     let settled = false;
     const settle = (result: VirusScanResult) => {
@@ -165,39 +185,145 @@ export function scanBuffer(buffer: Buffer): Promise<VirusScanResult> {
         settle(
           LIMITS_EXCEEDED.test(signature)
             ? { scanned: true, clean: false, incomplete: true, signature }
-            : { scanned: true, clean: false, signature },
+            : { scanned: true, clean: false, signature }
         );
         return;
       }
       settle({ scanned: false, clean: true, reason: 'clamav_unparseable' });
     });
 
-    socket.connect(port, host, () => {
+    // connect() throws synchronously on an argument it rejects (a host it
+    // cannot parse). A scan that cannot start is unreachable; it never rejects.
+    try {
+      socket.connect(port, host, () => {
+        clearTimeout(connectTimer);
+
+        // INSTREAM command — the `z` prefix delimits responses with NUL
+        // instead of newline; we don't care for one-shot scans but it
+        // matches clamd's recommended client pattern.
+        socket.write('zINSTREAM\x00');
+
+        // Stream the buffer in CHUNK_SIZE pieces with the 4-byte BE
+        // length prefix per chunk.
+        for (let offset = 0; offset < buffer.length; offset += CHUNK_SIZE) {
+          const end = Math.min(offset + CHUNK_SIZE, buffer.length);
+          const slice = buffer.subarray(offset, end);
+          const len = Buffer.alloc(4);
+          len.writeUInt32BE(slice.length, 0);
+          socket.write(len);
+          socket.write(slice);
+        }
+
+        // End-of-stream sentinel: zero-length chunk.
+        const terminator = Buffer.alloc(4);
+        terminator.writeUInt32BE(0, 0);
+        socket.write(terminator);
+      });
+    } catch {
       clearTimeout(connectTimer);
-
-      // INSTREAM command — the `z` prefix delimits responses with NUL
-      // instead of newline; we don't care for one-shot scans but it
-      // matches clamd's recommended client pattern.
-      socket.write('zINSTREAM\x00');
-
-      // Stream the buffer in CHUNK_SIZE pieces with the 4-byte BE
-      // length prefix per chunk.
-      for (let offset = 0; offset < buffer.length; offset += CHUNK_SIZE) {
-        const end = Math.min(offset + CHUNK_SIZE, buffer.length);
-        const slice = buffer.subarray(offset, end);
-        const len = Buffer.alloc(4);
-        len.writeUInt32BE(slice.length, 0);
-        socket.write(len);
-        socket.write(slice);
-      }
-
-      // End-of-stream sentinel: zero-length chunk.
-      const terminator = Buffer.alloc(4);
-      terminator.writeUInt32BE(0, 0);
-      socket.write(terminator);
-    });
+      settle({ scanned: false, clean: true, reason: 'clamav_unreachable' });
+    }
   });
 }
 
+/**
+ * CLAMAV_PORT as a TCP port, or null when it is not one. Unset or empty means
+ * clamd's default, 3310. Anything else must be an integer 1-65535: Number()
+ * alone lets 'abc' (NaN), '70000' and '3310.5' through to socket.connect, which
+ * throws on them synchronously.
+ */
+function clamdPort(): number | null {
+  const raw = (process.env.CLAMAV_PORT ?? '').trim();
+  if (raw === '') return DEFAULT_PORT;
+  if (!/^[0-9]+$/.test(raw)) return null;
+  const port = Number(raw);
+  return port >= 1 && port <= 65_535 ? port : null;
+}
+
+/**
+ * Is the configured clamd answering? Sends `zPING\0` and resolves `true` only
+ * on `PONG`. Anything else — CLAMAV_HOST unset, a CLAMAV_PORT that is not a
+ * port, a refused or reset connection, an unexpected reply, no reply within
+ * `timeoutMs` — resolves `false`. Never rejects. /readyz reads it
+ * (startup/inline-endpoints.ts), so a scanner that has gone away is visible
+ * before an upload finds it (MR-08).
+ */
+export function pingClamd(timeoutMs = 2000): Promise<boolean> {
+  if (!isConfigured()) return Promise.resolve(false);
+  const host = process.env.CLAMAV_HOST as string;
+  const port = clamdPort();
+  if (port === null) return Promise.resolve(false);
+
+  return new Promise(resolve => {
+    let settled = false;
+    let reply = '';
+    const socket = new net.Socket();
+    const timer = setTimeout(() => settle(false), timeoutMs);
+    function settle(ok: boolean) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.destroy();
+      resolve(ok);
+    }
+    const answer = () => reply.replace(/\0+$/, '').trim() === 'PONG';
+    socket.once('error', () => settle(false));
+    socket.on('data', chunk => {
+      reply += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk);
+      // The `z` prefix makes clamd end its reply with NUL.
+      if (reply.includes('\0')) settle(answer());
+    });
+    socket.once('close', () => settle(answer()));
+    // connect() throws synchronously on an argument it rejects (a bad port, a
+    // host it cannot parse). The promise must still resolve, never reject.
+    try {
+      socket.connect(port, host, () => {
+        socket.write('zPING\x00');
+      });
+    } catch {
+      settle(false);
+    }
+  });
+}
+
+/** How long /readyz may reuse a ping result. */
+export const PING_CACHE_MS = 30_000;
+let pingCache: { key: string; at: number; ok: boolean } | null = null;
+/** The ping in progress, per host:port: concurrent callers share it. */
+const pingInFlight = new Map<string, Promise<boolean>>();
+
+/**
+ * pingClamd, reused for at most PING_CACHE_MS per host:port, so a readiness
+ * poller cannot turn into a connection per request against clamd. /readyz is
+ * public and unauthenticated, so concurrent callers on an expired cache share
+ * the one ping in flight instead of each opening a connection. A cached entry
+ * whose age is negative (the clock stepped back) is expired, not fresh.
+ */
+export function pingClamdCached(timeoutMs = 2000, now: () => number = Date.now): Promise<boolean> {
+  const key = `${process.env.CLAMAV_HOST ?? ''}:${process.env.CLAMAV_PORT ?? DEFAULT_PORT}`;
+  if (pingCache && pingCache.key === key) {
+    const age = now() - pingCache.at;
+    if (age >= 0 && age < PING_CACHE_MS) return Promise.resolve(pingCache.ok);
+  }
+  const pending = pingInFlight.get(key);
+  if (pending) return pending;
+  const ping = pingClamd(timeoutMs)
+    .then(ok => {
+      pingCache = { key, at: now(), ok };
+      return ok;
+    })
+    .finally(() => {
+      pingInFlight.delete(key);
+    });
+  pingInFlight.set(key, ping);
+  return ping;
+}
+
 /** Exposed for tests. */
-export const __testing = { isConfigured };
+export const __testing = {
+  isConfigured,
+  resetPingCache: () => {
+    pingCache = null;
+    pingInFlight.clear();
+  },
+};

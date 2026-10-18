@@ -1,0 +1,82 @@
+$ docker compose -f docker-compose.yml --env-file <every required variable set to x> config   # clamav service and app wiring, rendered
+services:
+  app:
+    depends_on:
+      clamav:
+        condition: service_healthy
+        required: true
+      db:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    environment:
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: '3310'
+      NODE_ENV: production
+  clamav:
+    deploy:
+      resources:
+        limits:
+          memory: '4294967296'
+    environment:
+      CLAMD_CONF_AlertExceedsMax: 'yes'
+      CLAMD_CONF_StreamMaxLength: 100M
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 5m0s
+      test:
+      - CMD-SHELL
+      - clamdcheck.sh
+      timeout: 10s
+    image: clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23
+    networks:
+      c2c: null
+    platform: linux/amd64
+    restart: unless-stopped
+
+exit=0
+
+$ docker compose -f docker-compose.beta.yml --env-file <every required variable set to x> config   # clamav service and app wiring, rendered
+services:
+  app:
+    depends_on:
+      clamav:
+        condition: service_healthy
+        required: true
+      db:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    environment:
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: '3310'
+      NODE_ENV: production
+  clamav:
+    deploy:
+      resources:
+        limits:
+          memory: '4294967296'
+    environment:
+      CLAMD_CONF_AlertExceedsMax: 'yes'
+      CLAMD_CONF_StreamMaxLength: 100M
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 5m0s
+      test:
+      - CMD-SHELL
+      - clamdcheck.sh
+      timeout: 10s
+    image: clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23
+    networks:
+      c2c-beta: null
+    platform: linux/amd64
+    restart: unless-stopped
+
+exit=0
+

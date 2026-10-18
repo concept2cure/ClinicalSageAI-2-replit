@@ -1,0 +1,86 @@
+# After step 4 (server/services/securityHealth.ts: production + CLAMAV_HOST unset = critical fail)
+$ npx vitest run server/services/__tests__/securityHealth.test.ts server/services/__tests__/securityHealthScheduler.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtRotation > passes when no previous secret is set (no rotation) 141ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtRotation > warns (non-critical) when rotation is in progress 3ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > passes when JWT_SECRET is ≥32 chars 2ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > fails (critical) when JWT_SECRET is short 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > fails (critical) when no JWT secret is set 2ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkJwtSecretStrength > prefers the env-specific variant 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > skips when CLAMAV_HOST is unset 2ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > skips in development when CLAMAV_HOST is unset 1ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails (critical) in production when CLAMAV_HOST is unset 2ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails when daemon is unreachable 7ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > fails when daemon is up but doesnt detect EICAR (signature DB broken) 14ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkClamavConnectivity > passes when daemon detects EICAR (full path working) 6ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > passes when no flat-namespace files exist 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > passes when only tenant directories exist 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > checkCerReportMigration > warns when legacy flat files remain 4ms
+ ✓ server/services/__tests__/securityHealth.test.ts > runSecurityHealthChecks — overall rollup > rolls up to failing when a single critical check fails 90ms
+ ✓ server/services/__tests__/securityHealth.test.ts > runSecurityHealthChecks — overall rollup > rolls up to degraded when only non-critical warnings fire 6ms
+ ✓ server/services/__tests__/securityHealth.test.ts > inactive development audit trail > skips audit-only checks without querying an inactive trail 3ms
+ ✓ server/services/__tests__/securityHealth.test.ts > inactive development audit trail > keeps audit integrity checking active in production 2ms
+stdout | server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — disabled mode > does NOT start a timer when SECURITY_HEALTH_DISABLE_SCHEDULER=true
+{
+  "timestamp": "2026-10-18T18:51:53.849Z",
+  "level": "info",
+  "message": "[security-health-scheduler] scheduler disabled via SECURITY_HEALTH_DISABLE_SCHEDULER",
+  "context": {}
+}
+
+stdout | server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — basic run > runs once synchronously on start and caches the result
+{
+  "timestamp": "2026-10-18T18:51:53.859Z",
+  "level": "info",
+  "message": "[security-health-scheduler] scheduler started",
+  "context": {
+    "intervalMs": 60000
+  }
+}
+{
+  "timestamp": "2026-10-18T18:51:53.859Z",
+  "level": "info",
+  "message": "[security-health-scheduler] initial security posture observed",
+  "context": {
+    "overall": "healthy",
+    "failingChecks": []
+  }
+}
+
+stdout | server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — basic run > idempotent — calling start twice does not double-schedule
+{
+  "timestamp": "2026-10-18T18:51:53.883Z",
+  "level": "info",
+  "message": "[security-health-scheduler] scheduler started",
+  "context": {
+    "intervalMs": 60000
+  }
+}
+{
+  "timestamp": "2026-10-18T18:51:53.883Z",
+  "level": "info",
+  "message": "[security-health-scheduler] initial security posture observed",
+  "context": {
+    "overall": "healthy",
+    "failingChecks": []
+  }
+}
+
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — disabled mode > does NOT start a timer when SECURITY_HEALTH_DISABLE_SCHEDULER=true 27ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — basic run > runs once synchronously on start and caches the result 24ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — basic run > idempotent — calling start twice does not double-schedule 23ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — interval override > honors SECURITY_HEALTH_INTERVAL_MS 2ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — interval override > defaults to 5 min in production 1ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > securityHealthScheduler — interval override > defaults to 60s outside production 1ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > renderSecurityHealthMetrics > returns empty string when no run has completed 1ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > renderSecurityHealthMetrics > emits HELP/TYPE/value lines for overall and each check 2ms
+ ✓ server/services/__tests__/securityHealthScheduler.test.ts > renderSecurityHealthMetrics > maps overall states to 0/1/2 2ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  18:51:52
+   Duration  955ms (transform 298ms, setup 93ms, import 86ms, tests 387ms, environment 0ms)
+
+exit=0

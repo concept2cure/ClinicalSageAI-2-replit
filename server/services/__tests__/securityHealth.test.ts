@@ -112,11 +112,37 @@ describe('checkJwtSecretStrength', () => {
 
 describe('checkClamavConnectivity', () => {
   it('skips when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'test';
     delete process.env.CLAMAV_HOST;
     const { __testing } = await import('../securityHealth');
     const r = await __testing.checkClamavConnectivity();
     expect(r.status).toBe('skipped');
     expect(r.critical).toBe(false);
+  });
+
+  it('skips in development when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.CLAMAV_HOST;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkClamavConnectivity();
+    expect(r.status).toBe('skipped');
+    expect(r.critical).toBe(false);
+  });
+
+  // MR-08 stage 1. Production refuses every upload it cannot scan
+  // (middleware/uploadSafety.ts), so a production process with no scanner
+  // configured booted green and then refused every file. It now refuses to boot
+  // (startup/security-self-test.ts exits on a critical failure in production).
+  it('fails (critical) in production when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.CLAMAV_HOST;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkClamavConnectivity();
+    expect(r.status).toBe('fail');
+    expect(r.critical).toBe(true);
+    expect(r.reason).toBe(
+      'CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)',
+    );
   });
 
   it('fails when daemon is unreachable', async () => {

@@ -1,0 +1,113 @@
+# HEAD server/utils/virusScan.ts (no pingClamd), new pingClamd cases added
+$ npx vitest run server/utils/__tests__/virusScan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — bypass when not configured > returns scanned=false, clean=true when CLAMAV_HOST is unset 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — clean response > parses "stream: OK" as scanned + clean 16ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses signature name out of "stream: X FOUND" 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses multi-word signatures correctly 5ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > marks a Heuristics.Limits.Exceeded result incomplete, and not clean 5ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > does not mark a real signature incomplete 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason on unparseable response 6ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason when host is unreachable 2ms
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is true when clamd answers PONG 12ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, within its timeout, when clamd accepts and never answers 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false on any answer but PONG 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when nothing listens, and when CLAMAV_HOST is unset 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is true when clamd answers PONG
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/utils/__tests__/virusScan.test.ts:235:40
+    233|
+    234|   it('is true when clamd answers PONG', async () => {
+    235|     expect(typeof virusScan.pingClamd).toBe('function');
+       |                                        ^
+    236|     const server = await startPingServer('PONG\0');
+    237|     process.env.CLAMAV_HOST = '127.0.0.1';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, within its timeout, when clamd accepts and never answers
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/utils/__tests__/virusScan.test.ts:247:40
+    245|
+    246|   it('is false, within its timeout, when clamd accepts and never answe…
+    247|     expect(typeof virusScan.pingClamd).toBe('function');
+       |                                        ^
+    248|     const server = await startPingServer(null);
+    249|     process.env.CLAMAV_HOST = '127.0.0.1';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false on any answer but PONG
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/utils/__tests__/virusScan.test.ts:261:40
+    259|
+    260|   it('is false on any answer but PONG', async () => {
+    261|     expect(typeof virusScan.pingClamd).toBe('function');
+       |                                        ^
+    262|     const server = await startPingServer('UNKNOWN COMMAND\0');
+    263|     process.env.CLAMAV_HOST = '127.0.0.1';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when nothing listens, and when CLAMAV_HOST is unset
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/utils/__tests__/virusScan.test.ts:273:40
+    271|
+    272|   it('is false when nothing listens, and when CLAMAV_HOST is unset', a…
+    273|     expect(typeof virusScan.pingClamd).toBe('function');
+       |                                        ^
+    274|     process.env.CLAMAV_HOST = '127.0.0.1';
+    275|     process.env.CLAMAV_PORT = '1';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/utils/__tests__/virusScan.test.ts:282:46
+    280|
+    281|   it('pingClamdCached reuses a result for at most 30 s', async () => {
+    282|     expect(typeof virusScan.pingClamdCached).toBe('function');
+       |                                              ^
+    283|     const server = await startPingServer('PONG\0');
+    284|     process.env.CLAMAV_HOST = '127.0.0.1';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 8 passed (13)
+   Start at  18:54:47
+   Duration  734ms (transform 202ms, setup 151ms, import 93ms, tests 63ms, environment 0ms)
+
+exit=1

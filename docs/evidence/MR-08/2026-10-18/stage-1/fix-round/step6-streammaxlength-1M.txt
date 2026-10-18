@@ -1,0 +1,47 @@
+# STEP 6 (work order) — StreamMaxLength=1M override. 2026-10-18T20:00:21Z
+# Standalone scanner from the pinned digest (the compose 'up' could not run here: compose-build-blocked.txt), configured as the throwaway override would configure it,
+# and the production bundle of this working tree (node scripts/build-server.mjs → dist/index.js) booted NODE_ENV=production with ci.yml production-boot-smoke's env
+# against a throwaway Postgres 16 + pgvector over TLS (127.0.0.1:5544, provisioned by install-fresh.mjs + deploy-migrate.mjs, app_service NOSUPERUSER NOBYPASSRLS),
+# exactly as ../upload-after-with-scanner.txt did; only CLAMAV_PORT differs.
+
+$ docker run -d --name c2c-clamav-1m -p 127.0.0.1:3311:3310 -e CLAMD_CONF_StreamMaxLength=1M -e CLAMD_CONF_AlertExceedsMax=yes clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23
+$ docker inspect -f '{{.Image}} {{.State.Health.Status}}' c2c-clamav-1m
+sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23 healthy
+$ docker exec c2c-clamav-1m grep -E 'StreamMaxLength|AlertExceedsMax' /etc/clamav/clamd.conf
+StreamMaxLength 1M
+# When AlertExceedsMax is set, files exceeding the MaxFileSize, MaxScanSize, or
+AlertExceedsMax yes
+
+$ boot dist/index.js with CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3311
+pid=20041
+/readyz=200 after 8s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot log: clamav_connectivity=pass audit_chain_integrity=pass audit_i (boot self-test scanned EICAR through this clamd: a tiny file, under 1M)
+
+$ DATABASE_URL=… BASE_URL=http://127.0.0.1:5199 SIGNIN_ORIGIN=https://image-boot.invalid MFA_ENCRYPTION_KEY=… UPLOAD_MB=2 node docs/evidence/MR-08/2026-10-18/stage-1/fix-round/upload-sizes.mjs
+enrolled user 1 in organisation 3, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project e907cb13-aadc-4569-bcf2-5544c7aadcc9
+POST /api/vault/ingest mr08-step6-2mb.pdf (2097152 bytes, %PDF-1.4 … %%EOF, sha256 770ed0aaddb9e3a2…) → 503 FILE_SCAN_UNAVAILABLE in 219 ms
+    body: {"error":{"code":"FILE_SCAN_UNAVAILABLE","message":"File scanning is temporarily unavailable; upload rejected"}}
+
+# Control, same server and scanner: a 0.5 MiB PDF, under the 1M limit, is scanned and filed. So the 503 above is the size limit, not an outage.
+$ … UPLOAD_MB=0.5 node docs/evidence/MR-08/2026-10-18/stage-1/fix-round/upload-sizes.mjs   (sign-in lines omitted)
+POST /api/vault/ingest mr08-step6-0.5mb.pdf (524288 bytes, %PDF-1.4 … %%EOF, sha256 f16b830d6a5be4c1…) → 201 success, document 4ef48406-b601-4310-bdec-e95df793a801 in 1287 ms
+
+# Why 503 FILE_SCAN_UNAVAILABLE, as the work order predicts: clamd stops at StreamMaxLength ("INSTREAM: Size limit reached" in its log below) and
+# closes the connection with no verdict, neither 'stream: OK' nor '… FOUND'. Here the client (server/utils/virusScan.ts) saw the close with an
+# empty reply and reported scanned:false, reason clamav_unparseable (a raw probe of the same clamd, 2 MiB over INSTREAM, got EPIPE and an
+# empty reply, which the client would report as clamav_unreachable). Either way production refuses an unscanned upload
+# (server/middleware/uploadSafety.ts). The client cannot tell this from an outage. Note it is NOT 422
+# FILE_SCAN_INCOMPLETE: AlertExceedsMax covers MaxFileSize/MaxScanSize (Heuristics.Limits.Exceeded), not the INSTREAM transport limit.
+server log:
+{"level":50,"time":"2026-10-18T19:59:54.267Z","pid":20041,"hostname":"vm","context":{"filename":"mr08-step6-2mb.pdf","declaredMime":"application/pdf","reason":"clamav_unparseable"},"msg":"[upload-safety] Upload rejected: virus scanner unavailable in production"}
+clamd log (docker logs c2c-clamav-1m):
+Sun Oct 18 19:59:46 2026 -> instream(172.17.0.1@58308): Eicar-Test-Signature FOUND
+Sun Oct 18 19:59:47 2026 -> instream(172.17.0.1@58312): Eicar-Test-Signature FOUND
+WARNING: Sun Oct 18 19:59:54 2026 -> INSTREAM: Size limit reached, (requested: 65536, max: 0)
