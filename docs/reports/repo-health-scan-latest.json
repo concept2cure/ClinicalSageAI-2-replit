@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T15:53:11.658Z",
+  "generatedAt": "2026-10-18T17:31:57.053Z",
   "git": {
-    "sha": "baeab7daad25c8e0c2f1e0169c63314ef4c525a9",
+    "sha": "a59d6abc9a6fa30f98f378dee86b041ef0ab30fc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2794,6 +2794,10 @@
         "lines": 1836
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1828
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
@@ -2834,12 +2838,12 @@
         "lines": 1712
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1698
+        "file": "shared/navigation/surface-actions.ts",
+        "lines": 1701
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1666
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1698
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2860,10 +2864,6 @@
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "shared/navigation/surface-actions.ts",
-        "lines": 1615
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
