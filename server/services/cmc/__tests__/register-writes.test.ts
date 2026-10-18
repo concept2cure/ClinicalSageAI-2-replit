@@ -71,7 +71,7 @@ import {
   createFormulationRecord,
   createManufacturingProcess,
   ungovernedQualificationRefusal,
-  PROCESS_VOCAB,
+  vocabFor,
 } from '../register-writes';
 
 const ORG = 101;
@@ -156,13 +156,26 @@ describe('createDrugSubstance — a table with no project column', () => {
   });
 });
 
-describe('ungovernedQualificationRefusal — the one rule, two vocabularies', () => {
+describe('ungovernedQualificationRefusal — one rule, three vocabularies', () => {
   it('refuses the transition into the signed state, allows a round-trip, refuses an unsigned reversal, allows retiring', () => {
     expect(ungovernedQualificationRefusal('qualified', 'reference-standards')).toMatch(/\/qualify/);
     expect(ungovernedQualificationRefusal('qualified', 'reference-standards', 'qualified')).toBeNull();
     expect(ungovernedQualificationRefusal('draft', 'reference-standards', 'qualified')).toMatch(/cannot be returned to "draft"/);
     expect(ungovernedQualificationRefusal('retired', 'reference-standards', 'qualified')).toBeNull();
-    expect(ungovernedQualificationRefusal('validated', 'manufacturing-processes', undefined, PROCESS_VOCAB)).toMatch(/\/validate/);
+    /* The vocabulary is the register's own, read from the one descriptor table
+       rather than passed in at the call site: a process is `validated` at
+       /validate, a method is `validated` at /validate, and an approval is at
+       /approve. A register nobody registered throws instead of defaulting to
+       `qualified`, so a refusal can never name an endpoint that does not
+       exist. */
+    expect(ungovernedQualificationRefusal('validated', 'manufacturing-processes')).toMatch(/\/validate/);
     expect(ungovernedQualificationRefusal('draft', 'manufacturing-processes')).toBeNull();
+    expect(ungovernedQualificationRefusal('validated', 'analytical-methods')).toMatch(/analytical-methods\/:id\/validate/);
+    expect(ungovernedQualificationRefusal('approved', 'process-validation')).toMatch(/process-validation\/:id\/approve/);
+    expect(ungovernedQualificationRefusal('approved', 'comparability-studies')).toMatch(/comparability-studies\/:id\/approve/);
+    /* ...and the words themselves, so a message cannot drift from the column
+       the ceremony writes. */
+    expect(vocabFor('analytical-methods')).toEqual({ signedValue: 'validated', verb: 'Method validation (ICH Q2)', path: 'validate' });
+    expect(() => vocabFor('qc-testing')).toThrow(/no signed register is registered/);
   });
 });

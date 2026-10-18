@@ -54,6 +54,7 @@ import { linkToModule3, type Module3Linkage, type ProjectSource } from './link-t
 /* The row and the record of WHO recorded it, in one transaction (§11.10(e)).
    Shared with the registers whose create lives in its route. */
 import { insertRegisterRow, type RegisterActor } from './register-audit';
+import { SIGNED_REGISTERS, signedRegisterByPath, withoutSignatureFields } from './signed-record';
 import { projectBelongsToTenant } from './project-membership';
 
 /* ─── Body primitives, shared with the routes ─────────────────────────────── */
@@ -73,27 +74,6 @@ export const optionalDate = z.preprocess(
  *  The canonical pair lives in server/utils/authedOrgId.ts; re-exported here
  *  for the CMC routers that import it from this module. */
 export { withoutTenantKey, withoutOrgId };
-
-/**
- * Strip the tenant key AND the signature columns. Who qualified a record, and
- * when, is written only by the governed /qualify path under a verified
- * signature — never by a create or an ordinary edit.
- */
-export function withoutGovernedFields<T extends Record<string, unknown>>(
-  data: T,
-): Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'> {
-  const {
-    organizationId: _org,
-    qualifiedBy: _by,
-    qualificationDate: _on,
-    ...rest
-  } = data as {
-    organizationId?: unknown;
-    qualifiedBy?: unknown;
-    qualificationDate?: unknown;
-  } & T;
-  return rest as Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'>;
-}
 
 /* ─── The register bodies ─────────────────────────────────────────────────── */
 
@@ -232,19 +212,27 @@ export interface QualificationVocab {
   path: string;
 }
 
-/** A reference standard, container closure or study is `qualified`, signed at /qualify. */
-export const QUALIFICATION_VOCAB: QualificationVocab = {
-  signedValue: 'qualified',
-  verb: 'Qualification',
-  path: 'qualify',
-};
-
-/** A manufacturing process is `validated`, signed at /validate. Same rule, other words. */
-export const PROCESS_VOCAB: QualificationVocab = {
-  signedValue: 'validated',
-  verb: 'Process validation',
-  path: 'validate',
-};
+/**
+ * A register's signing words, read from the one descriptor table
+ * (services/cmc/signed-record.ts `SIGNED_REGISTERS`). Until 2026-10-18 these
+ * were two exported constants that every call site chose between, so adding a
+ * register meant adding a third constant and remembering to pass it — and the
+ * eight registers that had no constant simply had no rule.
+ *
+ * An unknown path throws rather than defaulting to `qualified`: a refusal
+ * naming the wrong endpoint is worse than a crash in the one test that would
+ * see it.
+ */
+export function vocabFor(registerPath: string): QualificationVocab {
+  const register = signedRegisterByPath(registerPath);
+  if (!register) {
+    throw new Error(
+      `[cmc] no signed register is registered for "${registerPath}". ` +
+        'Add it to SIGNED_REGISTERS (services/cmc/signed-record.ts) before guarding its status.',
+    );
+  }
+  return { signedValue: register.signedValue, verb: register.verb, path: register.signPath };
+}
 
 /**
  * Why a self-declared qualification is refused, or null when the write is an
@@ -261,8 +249,8 @@ export function ungovernedQualificationRefusal(
   status: unknown,
   registerPath: string,
   storedStatus?: unknown,
-  vocab: QualificationVocab = QUALIFICATION_VOCAB,
 ): string | null {
+  const vocab = vocabFor(registerPath);
   const signed = vocab.signedValue;
   const incoming = String(status ?? '').trim().toLowerCase();
   const stored = String(storedStatus ?? '').trim().toLowerCase();
@@ -375,7 +363,7 @@ export async function createContainerClosure(
   const refusal = ungovernedQualificationRefusal(validated.status, 'container-closures');
   if (refusal) throw new RegisterWriteRefusal(refusal);
   const row = await insertRegisterRow(orgId, actor, 'container_closure', cmcContainerClosures, {
-    ...withoutGovernedFields(validated),
+    ...withoutSignatureFields(SIGNED_REGISTERS.containerClosures, validated),
     organizationId: orgId,
   } as typeof cmcContainerClosures.$inferInsert);
   const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, link);
@@ -421,7 +409,7 @@ export async function createManufacturingProcess(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof manufacturingProcesses.$inferSelect>> {
   const validated = manufacturingProcessBody.parse(body);
-  const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes', undefined, PROCESS_VOCAB);
+  const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes');
   if (refusal) throw new RegisterWriteRefusal(refusal);
   const row = await insertRegisterRow(orgId, actor, 'manufacturing_process', manufacturingProcesses, {
     ...validated,
@@ -441,7 +429,7 @@ export async function createCharacterizationStudy(
   const refusal = ungovernedQualificationRefusal(validated.status, 'characterization-studies');
   if (refusal) throw new RegisterWriteRefusal(refusal);
   const row = await insertRegisterRow(orgId, actor, 'characterization_study', cmcCharacterizationStudies, {
-    ...withoutGovernedFields(validated),
+    ...withoutSignatureFields(SIGNED_REGISTERS.characterizationStudies, validated),
     organizationId: orgId,
   } as typeof cmcCharacterizationStudies.$inferInsert);
   const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, link);
