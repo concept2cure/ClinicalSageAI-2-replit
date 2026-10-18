@@ -28,17 +28,47 @@ Now the existing trusted signal is honoured at each of those boundaries:
   happened. Its tool-test read assertion counted catalog reads (the loader does
   3 per document, not the 2 assumed). Before implementation, it was replaced by
   an identity assertion: the second section's document ID is never read.
-- `final-green.txt`: same test bytes (`frozen-tests.sha256`, verified with
-  `sha256sum -c`) plus the existing batch concurrency, per-section settlement,
-  termination receipt/tool, recorded submission context (PGlite), source
-  checkpoint, blueprint, submission-context and four `ana-intelligence` route
-  suites: **241 tests / 15 suites pass**. Command: `test-command.json` (repo
-  config, one worker, 4 GiB heap). No provider, live database or agency call.
+  The red run used the original test bytes: SHA256 `0163c437…45f8`
+  (service) and `6ec11f28…8588` (tool). The review round below then changed
+  both files.
+- `final-green.txt`: the final test bytes (`frozen-tests.sha256`) plus the
+  existing batch concurrency, per-section settlement, termination
+  receipt/tool, recorded submission context (PGlite), source checkpoint,
+  blueprint, submission-context and four `ana-intelligence` route suites:
+  **244 tests / 15 suites pass** (17 of them new). Command:
+  `test-command.json` (repo config, one worker, 4 GiB heap). No provider, live
+  database or agency call.
 - `lint.json` / `lint-baseline.txt`: zero errors. Warning counts equal baseline
   per file (6 / 95 / 1 / 0); new tests have none. Two warnings introduced
   during implementation (complexity, max-params) were removed by extracting
   `prepareBatchSections` and `batchDraftInstruction`, not by suppression.
-- `typecheck.txt`: whole-project typecheck gate result.
+- `typecheck.txt`: `ci:typecheck:no-regression`, **0 errors against a baseline
+  of 0**, run at a 13 GiB heap because the container has 15 GiB. That run began
+  before the review fixes below. The normal pre-push gate re-checks the final bytes.
+
+## Independent review
+
+A read-only reviewer found no blocker and five notes. Four led to changes in
+`2610ebf1`, after implementation `f144f22d`:
+
+1. A source recheck could start for a draft that settled after Stop. Stop is
+   now checked before the recheck.
+2. Any abort-shaped rejection became `DRAFT_CANCELLED`, even with no Stop. It
+   is now cancelled only when the signal actually fired.
+3. A genuine source refusal during Stop was relabelled cancelled. It now keeps
+   its `DRAFT_FAILED` classification (contract item 3).
+4. The wave test's mock let wave one settle after Stop, which the real
+   `draftDocument` would refuse. The test now models that refusal: wave one
+   finishes before Stop, wave two is in flight and refused late, and wave three
+   is never dispatched. The handler's post-Stop catch path gained a test.
+
+`review-red.txt`: against `f144f22d` production bytes, 4 of the new assertions
+fail (the recheck count, the abort-shaped failure without Stop, and the source
+refusal during Stop). The rewritten wave test and the catch-path test pass
+there too; they add coverage, not fail-first proof. Not changed: a receipt
+with any cancelled slot reports `status: 'cancelled'` even if other slots
+failed. The contract specifies this, and `failed` / `retryIndices` still
+report the failures.
 
 ## Limits
 

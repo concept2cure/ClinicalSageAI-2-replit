@@ -1,2 +1,2 @@
-6ec11f285be25d9f868340580705f5e575939a19f7c4dfb14190e346fc418588  server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
-0163c4376f241fa98081fd8773b676af86f61bf8a7bb1d42bab0c136864945f8  server/services/ana/__tests__/batch-draft-cancellation.test.ts
+78209601daf9b5fbd9d34fefb1848487f97f3f10a0c24cf00ce0d5fb74b3b377  server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
+5ef443fe23f3c60e512a1343663e044f20ad82009927bfa88a043779cfe9fdb5  server/services/ana/__tests__/batch-draft-cancellation.test.ts
