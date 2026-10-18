@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > does not acquire a connection when deterministic generation fails 3ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > propagates connection acquisition failure without a pool write 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > commits after its response reads and releases a healthy connection 5ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rolls back a response-load failure and preserves the original error 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts the connection if BEGIN cannot be confirmed 2ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > evicts on rollback failure without masking the write failure 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts > schedule generation transaction lifecycle > rejects and evicts an uncertain COMMIT even if cleanup succeeds 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > matches canonical requirements while dates and generated rationale change, without mutating input 4ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key () 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key ( kickoff) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key (null) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses an invalid proposed key (undefined) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses duplicate proposal keys even on first creation 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata (null) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata (invalid json) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata ([]) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses unidentifiable existing metadata (undefined) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > accepts JSON-string metadata and compares dependency sets regardless of order or repetition 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses malformed dependency information (unknown) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > refuses malformed dependency information (null) 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > preservation identity guard > keeps new requirements separate from preserved identities 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status completed and metadata status not_started 1ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status pending and metadata status completed 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status blocked and metadata status in_progress 0ms
+ ✓ server/services/projects/schedule-of-events/__tests__/preservation.test.ts > completed actuals classification > respects independent row status pending and metadata status not_started 0ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  23:57:07
+   Duration  951ms (transform 303ms, setup 165ms, import 224ms, tests 33ms, environment 0ms)
+

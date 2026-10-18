@@ -1,0 +1,137 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-17T23:57:01.043Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:57:01.044Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-17T23:57:01.044Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/schedule-generation-reason.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/schedule-generation-reason.test.ts
+{
+  "timestamp": "2026-10-17T23:57:01.510Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > offers an optional string reason in the actual tool definition 10ms
+   → expected undefined to match object { type: 'string' }
+ × server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > passes the stated reason trimmed and keeps trusted project context 15ms
+   → expected "vi.fn()" to be called once with arguments: [ { orgId: 3, projectId: 12, …(7) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -4,10 +4,9 @@
+      "createdByAna": true,
+      "goals": undefined,
+      "orgId": 3,
+      "projectId": 12,
+      "projectType": "IND",
+-     "reason": "Sponsor requested a revised target.",
+      "targetDate": null,
+      "triggeredBy": "ana_user",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from undefined 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from null 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from "" 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from "   " 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from 42 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not synthesize a reason from {"approved":true} 0ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > retains the useful no-change message from a preservation conflict 2ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > a supplied reason does not replace the existing human confirmation gate 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > a supplied reason does not replace the current editor role 1ms
+ ✓ server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > does not generate when no project is open 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > offers an optional string reason in the actual tool definition
+AssertionError: expected undefined to match object { type: 'string' }
+
+- Expected:
+{
+  "type": "string",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/schedule-generation-reason.test.ts:31:73
+     29| describe('schedule generation caller reason', () => {
+     30|   it('offers an optional string reason in the actual tool definition',…
+     31|     expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.properties?.reason…
+       |                                                                         ^
+     32|     expect(GENERATE_SCHEDULE_OF_EVENTS.input_schema.required ?? []).no…
+     33|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/schedule-generation-reason.test.ts > schedule generation caller reason > passes the stated reason trimmed and keeps trusted project context
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { orgId: 3, projectId: 12, …(7) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -4,10 +4,9 @@
+      "createdByAna": true,
+      "goals": undefined,
+      "orgId": 3,
+      "projectId": 12,
+      "projectType": "IND",
+-     "reason": "Sponsor requested a revised target.",
+      "targetDate": null,
+      "triggeredBy": "ana_user",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/schedule-generation-reason.test.ts:39:24
+     37|     expect(result).toEqual({ source: 'AnA Schedule of Events', ...view…
+     38|     expect(H.resolveSignerOrgRole).toHaveBeenCalledWith(7, 3);
+     39|     expect(H.generate).toHaveBeenCalledExactlyOnceWith({
+       |                        ^
+     40|       orgId: 3, projectId: 12, projectType: 'IND', baselineDate: null,…
+     41|       goals: undefined, reason: 'Sponsor requested a revised target.',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  23:56:58
+   Duration  12.68s (transform 8.85s, setup 230ms, import 11.99s, tests 36ms, environment 0ms)
+

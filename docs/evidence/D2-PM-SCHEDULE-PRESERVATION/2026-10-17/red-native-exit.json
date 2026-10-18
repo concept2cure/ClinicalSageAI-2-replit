@@ -1,0 +1,7 @@
+{
+  "exitCode": 1,
+  "baselineServiceSha256": "973374430ec7808c7361290fa0a4a3b340fc3a9f4fbc2e3007710017b92eeda2",
+  "testSha256": "ca07965c00edc1e8042ea9353a22eb884bc009e1cb3d37fa911630eca3d88597",
+  "restoredCandidateServiceSha256": "b17701175681ee0e78df4ece851a554face0ef33155dcf91cc96747a9f50b751",
+  "restoredExactly": true
+}
