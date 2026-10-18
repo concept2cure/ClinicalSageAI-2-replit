@@ -60,9 +60,7 @@ import { checkSigningAuthority } from '../../services/part11/signing-authority-g
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
-  SeparationOfDutiesAuthorUnresolvedError,
-  SeparationOfDutiesError,
-  SeparationOfDutiesUnverifiedError,
+  separationOfDutiesRefusal,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
 import {
@@ -592,41 +590,11 @@ export async function writeMutation(
   }
 }
 
-/**
- * The answer to a separation-of-duties refusal, or null for any other error.
- * One mapping for every route that runs the check (this handler, and
- * POST /api/c2c/documents/:id/lock), so they cannot answer it differently.
- */
-export function separationOfDutiesRefusal(
-  err: unknown,
-  label: string,
-): { status: number; body: { error: string; detail: string } } | null {
-  if (err instanceof SeparationOfDutiesError) {
-    return { status: 403, body: { error: err.code, detail: err.message } };
-  }
-  if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
-    // The check ran, but the record has no recorded author (or its type has
-    // none modelled), so independence cannot be shown. A retry will not fix it.
-    return { status: 409, body: { error: err.code, detail: err.message } };
-  }
-  if (err instanceof SeparationOfDutiesUnverifiedError) {
-    // The check did not run, which is not the same as the check refusing.
-    // 503, not 403: the user is not the problem, and a retry may succeed.
-    // The error's own message carries the failed lookup's cause, which is
-    // internal; it goes to the log, and the caller gets an authored
-    // sentence (ci:server-error-leaks, 2026-09-23).
-    console.error(`[${label}]`, err.message);
-    return {
-      status: 503,
-      body: {
-        error: err.code,
-        detail:
-          'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
-      },
-    };
-  }
-  return null;
-}
+/* The separation-of-duties refusal mapping moved to the governance module
+   beside the three errors it maps (2026-10-18), so a route is not what another
+   route must import to answer the same refusal the same way. Re-exported here
+   because routes/c2c/documents.ts imports it from this module. */
+export { separationOfDutiesRefusal };
 
 // ── Request handler factory ───────────────────────────────────────────────────
 

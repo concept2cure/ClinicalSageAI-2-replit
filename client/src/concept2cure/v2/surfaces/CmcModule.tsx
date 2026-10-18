@@ -394,11 +394,20 @@ function signForm(target: string): C2CFormConfig {
       /* The values are the tokens the approve endpoints record, not display
          strings: the meaning is part of the signed record, so what the signer
          chooses and what an inspector later reads must be the same word. */
+      /* Authorship is NOT offered. This form signs an approval — of a Module 3
+         section or of a specification — and §11.50(a)(3)'s "authorship" meaning
+         is what switches the four-eyes check off (`requiresIndependence`). The
+         platform closed the same hole on freeze/dispatch, where a release
+         signer could be the sequence's creator by choosing it (2026-10-05);
+         the section-approve route now refuses it, and there is no authoring
+         act at either endpoint for that meaning to describe, so offering it
+         could only produce a refusal the signer could not have predicted.
+         (The specification approval's own four-eyes check is not in this
+         change; it simply never needed an authorship meaning either.) */
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: [
         { value: 'approval', label: 'Approval' },
         { value: 'review', label: 'Review' },
         { value: 'responsibility', label: 'Responsibility' },
-        { value: 'authorship', label: 'Authorship' },
       ], default: 'approval', required: true },
       { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Reason for this approval...', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. It is recorded with the signature exactly as written.` },
       { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
