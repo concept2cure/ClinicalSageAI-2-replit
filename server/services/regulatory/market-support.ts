@@ -520,6 +520,24 @@ function summaryFor(outline: MarketSupport['outline'], shape: Module1Shape, ch: 
   return outline.state === 'outline' ? `${MODULE1_LABEL[shape]}${noChannel}` : `No outline${noChannel}`;
 }
 
+/** The statement for a filing document class: its outline, no Module 1, no package, no channel of its own. */
+function classStatement(
+  shared: Omit<MarketSupport, 'outline' | 'summary' | 'line' | 'buildable' | 'offered' | 'offer'>,
+  outline: MarketSupport['outline'],
+): Omit<MarketSupport, 'offer'> {
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  return {
+    ...shared,
+    outline,
+    module1: { state: null, detail: 'a document, not an application, so this platform builds no Module 1 for it' },
+    channel: { state: 'none', detail: 'this platform sends nothing for it on its own' },
+    summary: `${lead}, no package`,
+    line: `${lead}: authored here; this platform builds and sends no sequence for it`,
+    buildable: false,
+    offered: true,
+  };
+}
+
 /**
  * ICH as the market: the catalog files its harmonised documents (the CSR, the
  * protocol, the IB, the SAP, the ICF, the DSUR) under 'ICH / Global'. ICH is no
@@ -600,6 +618,15 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
   }
 
   const outline = outlineFor(docType, agencyCode, applicationType, packs);
+  // A filing document class at an agency (a PAS, a meeting package, a REMS, the
+  // EU PSUR) is authored, not built: it read "Module 1 to the agency's
+  // headings. Transmit not proven…" and buildable, beside an offer saying
+  // nothing is built or sent (review finding, 2026-10-18). Stated as the
+  // harmonised documents are: its outline, and nothing more claimed.
+  if (filingDocumentClassOf(applicationType)) {
+    const authored = classStatement(shared, outline);
+    return { ...authored, offer: filingOfferFor(authored, entry, false, continuing) };
+  }
   if (workstreamForFilingType(applicationType) === 'MDX') {
     // A device filing is not eCTD, so PMDA's eCTD v4.0 rule does not block it.
     const device = deviceStatement(shared, outline);

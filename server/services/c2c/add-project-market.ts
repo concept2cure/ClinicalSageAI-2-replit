@@ -81,12 +81,12 @@ export interface AddMarketResult {
 
 interface ProgramRow {
   name: string; product_name: string | null; product_type: string | null; primary_agency: string | null;
-  target_agencies: unknown;
+  target_agencies: unknown; program_type: string | null;
 }
 
 async function readProgram(client: PoolClient, programId: string, orgId: number): Promise<ProgramRow> {
   const { rows } = await client.query(
-    `SELECT name, product_name, product_type, primary_agency, target_agencies
+    `SELECT name, product_name, product_type, primary_agency, target_agencies, program_type
        FROM regulatory_programs
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
       FOR UPDATE`,
@@ -103,12 +103,15 @@ async function resolveMarket(client: PoolClient, input: AddMarketInput, program:
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');
   }
   // A filing document class (a supplement, a CSR, a meeting package) is
-  // authored, never sequenced here: adding its "market" would write the
-  // submission spine its creation deliberately does not (2026-10-18).
-  const documentClass = filingDocumentClassOf(input.applicationType);
+  // authored, never sequenced here: adding a "market" to one, or an
+  // application market to a project that is one, would write the submission
+  // spine its creation deliberately does not (2026-10-18). The project's own
+  // class is read too: a PAS project asked for an NDA market was given an NDA
+  // document and an NDA submission (review finding, 2026-10-18).
+  const documentClass = filingDocumentClassOf(input.applicationType) ?? filingDocumentClassOf(program.program_type);
   if (documentClass) {
     throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
-      `A ${documentClass.label} is a document, not an application, so it has no market or submission of its own. Nothing was added.`);
+      `This project's filing is a document (${documentClass.label}), not an application, so no market or submission is added to it. Nothing was added.`);
   }
   const marketInput = { applicationType: input.applicationType, market: input.agency };
   const [statement] = await readMarketSupport(client, [marketInput]);
