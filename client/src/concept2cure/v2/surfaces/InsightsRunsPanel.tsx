@@ -31,6 +31,7 @@ import {
   PanelHead,
   StatusTag,
   isRowList,
+  pageMetaOf,
   readFailureOf,
   rowsOf,
   type LibraryReportType,
@@ -157,16 +158,20 @@ export function RunsPanel({
     ...(search.trim() ? { search } : {}),
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    // The widest window the route serves: it filters and sorts in memory after
-    // the SQL limit, so the window IS the search's reach (see RUNS_WINDOW).
+    /* The largest page the route serves. Since review C-1 the route searches
+       and sorts in SQL before this limit and returns `meta.matched`, so this
+       is a page size and no longer the search's reach — asking for the maximum
+       now just means the fewest pages, not the widest search. */
     limit: RUNS_WINDOW,
   });
   const runs = useLiveData<unknown>(url, [url, attempt], isRowList);
   const rows = useMemo(() => rowsOf<ReportRunRow>(runs.data), [runs.data]);
+  const meta = useMemo(() => pageMetaOf(runs.meta), [runs.meta]);
   const filtered = Boolean(status || typeId || search.trim());
-  /* A truncated search presented as a complete one is a silent cap, so the
-     panel says what the answer covered whenever it could be partial. */
-  const caveat = runsSearchCaveat(rows.length, { searching: Boolean(search.trim()), sorted: false });
+  /* A page presented as the whole answer is a silent cap, so the panel states
+     the total whenever more matched than this page holds — and says nothing
+     when the page IS the whole answer, which is the common case now. */
+  const caveat = runsSearchCaveat(meta, { searching: Boolean(search.trim()) });
 
   const toggle = (id: number) =>
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));

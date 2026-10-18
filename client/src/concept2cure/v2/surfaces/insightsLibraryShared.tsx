@@ -136,6 +136,36 @@ export function rowsOf<T>(data: unknown): T[] {
 }
 
 /**
+ * A paged list read's `matched`/`returned`/`limit`, or null when the route did
+ * not send them.
+ *
+ * Takes `DataState.meta` — the envelope `meta` `liveGetOrNull` already
+ * extracts (dataConnect.tsx: `envelopeMeta`) — rather than digging into the
+ * payload a second time. One extractor for the envelope, one validator for
+ * this particular meta's shape.
+ *
+ * VALIDATED, not cast. This meta decides whether a panel tells the reader
+ * their page is the whole answer, so a malformed one must read as "not
+ * stated" rather than as a number: `{matched: "many"}` cast to a number would
+ * compare false against `returned` and silently claim completeness. Every
+ * field has to be a non-negative integer or the whole object is refused.
+ *
+ * Returning null for a missing `meta` is the point of the type — an older
+ * server, or a page whose count query failed, is distinguishable from a page
+ * where nothing matched. Callers must not read null as zero.
+ */
+export function pageMetaOf(meta: unknown): { matched: number; returned: number; limit: number } | null {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  const whole = (v: unknown): number | null =>
+    typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null;
+  const matched = whole((meta as Record<string, unknown>).matched);
+  const returned = whole((meta as Record<string, unknown>).returned);
+  const limit = whole((meta as Record<string, unknown>).limit);
+  if (matched == null || returned == null || limit == null) return null;
+  return { matched, returned, limit };
+}
+
+/**
  * `useLiveData` guard for a list read: the payload must be an array, or the
  * envelope's `data` must be. Anything else is a shape mismatch, which the hook
  * reports as an error rather than handing over a payload a panel would show as

@@ -33,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { InsightsCanvas } from '../surfaces/Insights';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import { RUNS_WINDOW, runsSearchCaveat } from '../surfaces/insightsLibraryModel';
-import { readFailureOf } from '../surfaces/insightsLibraryShared';
+import { pageMetaOf, readFailureOf } from '../surfaces/insightsLibraryShared';
 import { RunsPanel } from '../surfaces/InsightsRunsPanel';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
@@ -412,7 +412,7 @@ describe('the run search does not present a truncated answer as a complete one',
      maximum window and, when that window is full, says what the answer
      covered — CLAUDE.md: no silent caps. */
 
-  it('asks for the widest window the route serves, so the search reaches as far as it can', async () => {
+  it('asks for the largest page the route serves, so a search needs the fewest pages', async () => {
     await renderCanvas();
     await openTab(/Run history/);
     await waitFor(() =>
@@ -420,12 +420,14 @@ describe('the run search does not present a truncated answer as a complete one',
     );
   });
 
-  /* THE CASE THE FIRST VERSION OF THIS MITIGATION MISSED. The route filters in
-     memory after the SQL limit and returns only the matches, so a search that
-     matched 2 of the newest 500 runs returns 2 rows. Gating the caveat on
-     `loaded < RUNS_WINDOW` therefore suppressed it exactly when the reader most
-     needed it: two results, and no hint that nothing older had been looked at. */
-  it('still says what the search reached when only a few rows matched', async () => {
+  /* A ROUTE THAT SENT NO COUNT. Until review C-1 the route filtered in memory
+     after the SQL limit and sent no `meta`, so a search returning 2 rows told
+     the reader nothing about whether anything older matched. The route now
+     sends `meta.matched`; a reply WITHOUT it — an older server, or a page whose
+     count query failed — still cannot support a claim of completeness, so the
+     caveat is still owed. The fixture here answers without `meta` on purpose,
+     which is what keeps that path covered now that it is the uncommon one. */
+  it('owes the reader a caveat when the route sent no match count', async () => {
     await renderCanvas();
     await openTab(/Run history/);
     await screen.findByRole('table');
@@ -433,11 +435,15 @@ describe('the run search does not present a truncated answer as a complete one',
     await waitFor(() =>
       expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes('search=etmf'))).toBe(true),
     );
+    /* This fixture answers without `meta`, which is exactly the state where
+       completeness cannot be claimed — so the conservative sentence is the
+       correct one, and it must not read as "0 match". */
     const caveat = await screen.findByTestId('rl-runs-caveat');
-    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
+    expect(caveat.textContent ?? '').toMatch(/did not say how many runs match in total/);
+    expect(caveat.textContent ?? '').not.toMatch(/0 runs match/);
   });
 
-  it('says nothing at all when no search or ordering is in play', async () => {
+  it('says nothing at all when no search is in play', async () => {
     await renderCanvas();
     await openTab(/Run history/);
     await screen.findByRole('table');
@@ -450,28 +456,77 @@ describe('the run search does not present a truncated answer as a complete one',
      worth not leaving behind. The panel alone is the cheapest render that
      still proves the sentence reaches the DOM; runsSearchCaveat's own test
      below covers the boundary logic. */
-  it('says what the search reached when the window came back full', async () => {
+  it('states the total when a full page is only a prefix of the matches', async () => {
     const many = Array.from({ length: RUNS_WINDOW }, (_, i) => ({ ...RUNS[0], id: 1000 + i }));
-    apiRequest.mockImplementation(async () => ok({ data: many }));
+    apiRequest.mockImplementation(async () =>
+      ok({ data: many, meta: { matched: 847, returned: RUNS_WINDOW, limit: RUNS_WINDOW } }),
+    );
     render(
       <RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />,
     );
     fireEvent.change(await screen.findByLabelText('Search'), { target: { value: 'readiness' } });
     const caveat = await screen.findByTestId('rl-runs-caveat');
-    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
-    expect(caveat.textContent ?? '').toMatch(/an older run that matches is not shown/);
+    expect(caveat.textContent ?? '').toMatch(/847 runs match/);
+    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent are shown`));
   });
 
-  it('runsSearchCaveat speaks whenever a search is bounded, and only then', () => {
-    // No search and no ordering: nothing to qualify.
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: false })).toBeNull();
-    // THE REGRESSION GUARD: a search matching few rows is still window-bounded.
-    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(0, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: true })).toMatch(/This ordering reaches/);
-    // It reports how many matched inside the window, without implying a total.
-    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/3 matched inside it/);
+  it('says nothing when the page IS every match — the sentence it used to show anyway', async () => {
+    /* THE REGRESSION THIS REPLACES. While the route searched in memory after
+       the SQL limit, a search matching 3 rows was still window-bounded and the
+       caveat had to fire. Now `matched === returned` means the reader is
+       looking at the complete answer, and a caveat there would describe a
+       limitation that no longer exists. */
+    apiRequest.mockImplementation(async () =>
+      ok({ data: RUNS.slice(0, 1), meta: { matched: 1, returned: 1, limit: RUNS_WINDOW } }),
+    );
+    render(
+      <RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />,
+    );
+    fireEvent.change(await screen.findByLabelText('Search'), { target: { value: 'readiness' } });
+    await waitFor(() =>
+      expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes('search=readiness'))).toBe(true),
+    );
+    await screen.findByRole('table');
+    expect(screen.queryByTestId('rl-runs-caveat')).toBeNull();
+  });
+
+  it('runsSearchCaveat speaks only when the page is a prefix, or the total is unstated', () => {
+    const full = { matched: 7, returned: 7, limit: RUNS_WINDOW };
+    // Not searching: nothing to qualify, whatever the meta says.
+    expect(runsSearchCaveat(full, { searching: false })).toBeNull();
+    // The page is every match: the complete answer needs no caveat.
+    expect(runsSearchCaveat(full, { searching: true })).toBeNull();
+    expect(runsSearchCaveat({ matched: 0, returned: 0, limit: 500 }, { searching: true })).toBeNull();
+    // A prefix: state the total, which is the fact the page alone cannot carry.
+    expect(runsSearchCaveat({ matched: 847, returned: 500, limit: 500 }, { searching: true }))
+      .toMatch(/847 runs match/);
+    // ABSENT IS NOT ZERO. No meta means the total is unknown, so completeness
+    // cannot be claimed — and the sentence must not invent a count.
+    for (const missing of [null, undefined]) {
+      const said = runsSearchCaveat(missing, { searching: true });
+      expect(said).toMatch(/did not say how many runs match in total/);
+      expect(said).not.toMatch(/\d+ runs match/);
+    }
+  });
+
+  it('pageMetaOf refuses a malformed meta rather than casting it to a number', () => {
+    /* A cast would make `matched: "many"` compare false against `returned` and
+       silently claim the page was complete — the exact silent cap this whole
+       change is about. */
+    expect(pageMetaOf({ matched: 5, returned: 2, limit: 500 }))
+      .toEqual({ matched: 5, returned: 2, limit: 500 });
+    for (const bad of [
+      { matched: 'many', returned: 2, limit: 500 },
+      { matched: 5.5, returned: 2, limit: 500 },
+      { matched: -1, returned: 2, limit: 500 },
+      { matched: 5, returned: 2 },
+      [1, 2, 3],
+      {},
+      null,
+      undefined,
+    ]) {
+      expect(pageMetaOf(bad), JSON.stringify(bad)).toBeNull();
+    }
   });
 });
 

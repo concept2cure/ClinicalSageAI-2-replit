@@ -117,52 +117,70 @@ export interface RunQuery {
 }
 
 /**
- * The largest window `GET /runs` will serve (`listRunsSchema`: limit max 500).
+ * The largest page `GET /runs` will serve (`listRunsSchema`: limit max 500).
  *
- * This is not a display preference, it is the honest bound on search. The
- * route applies `search` and `sortBy` IN MEMORY, AFTER the SQL `LIMIT`
- * (report-os.ts: `.limit(limit)` then `.filter(...)` then `.sort(...)`), so a
- * search only ever matches within the rows already fetched and a sort only
- * orders those rows. Asking for the maximum makes that window as wide as the
- * route allows; {@link runsSearchCaveat} is how the UI says so instead of
- * presenting a partial search as a complete one. The proper fix is server-side
- * — filter and sort in SQL before the limit — and is not a client's to make.
+ * ── What this constant means changed on 2026-10-18 (review C-1) ─────────────
+ * It used to be the honest bound on SEARCH, not a page size. The route applied
+ * `search` and `sortBy` in memory AFTER the SQL `LIMIT`, so a search only ever
+ * matched within the rows already fetched and a sort only reordered them — and
+ * asking for the maximum was the client making that window as wide as it could.
+ *
+ * The route now does both in SQL, before the limit, and returns `meta.matched`:
+ * the total number of rows that matched, whatever the page size. So this is a
+ * page size again, the search reaches the whole organisation, and
+ * {@link runsSearchCaveat} speaks only when a page genuinely holds fewer rows
+ * than matched — rather than on every search, as it had to while the window
+ * was the reach.
  */
 export const RUNS_WINDOW = 500;
 
+/** `meta` as `GET /runs` returns it alongside a searched page. */
+export interface RunsPageMeta {
+  matched: number;
+  returned: number;
+  limit: number;
+}
+
 /**
- * What a reader must be told whenever a search is in play.
+ * What a reader must be told about a searched page, or null when the page is
+ * the whole answer and there is nothing to qualify.
  *
- * ── WHY THIS IS UNCONDITIONAL, after a first version that was not ───────────
- * The first version compared the ROWS RETURNED against the window and said
- * nothing when fewer came back, reasoning that the route had returned
- * everything it had. That is wrong for this route, and it made the caveat fire
- * only in the one case where it barely mattered.
+ * ── Three states, and why the middle one needs saying ───────────────────────
+ * - `meta` present and `matched <= returned`: the page holds every match. The
+ *   reader is looking at a complete answer, so the panel says nothing. This is
+ *   the case that used to carry a caveat it had not earned.
+ * - `meta` present and `matched > returned`: the page is a prefix of the
+ *   matches. Stating the total is the whole point — "12 of 847" is a different
+ *   fact from "12", and the earlier version could not tell the reader which
+ *   one they had.
+ * - `meta` ABSENT while searching: the server did not say how many matched, so
+ *   completeness cannot be claimed. A client built against the pre-C-1 route
+ *   is in this state, and so is a page whose count query failed. It gets the
+ *   conservative sentence — the page may be a prefix — because an unknown
+ *   total presented as a complete answer is the silent cap this function
+ *   exists to prevent. Not "0 matched": absent is not zero.
  *
- * `GET /runs` fetches `limit` rows in SQL and THEN filters them in memory, so
- * it returns only the matches. A search that matched 3 of the newest 500 runs
- * returns 3 rows — below the window — and the old test `loaded < RUNS_WINDOW`
- * suppressed the caveat exactly then. The reader saw three results and no
- * indication that nothing older than the 500th run had been looked at.
- *
- * The row count carries no information about the window, so it cannot gate the
- * sentence. A search is bounded by the window whether it matched three rows or
- * none, so the sentence is shown whenever a search is active. `loaded` is kept
- * only to say how many matched inside it.
+ * The `sorted` flag the earlier signature carried is gone. It existed because
+ * `sortBy` reordered only the window, so an ordering could be partial on its
+ * own; ordering now happens in SQL over every matching row, so there is no
+ * such state left to describe and a sentence about it would be false.
  */
 export function runsSearchCaveat(
-  loaded: number,
-  opts: { searching: boolean; sorted: boolean },
+  meta: RunsPageMeta | null | undefined,
+  opts: { searching: boolean },
 ): string | null {
-  if (!opts.searching && !opts.sorted) return null;
-  const what = opts.searching && opts.sorted
-    ? 'This search and ordering reach'
-    : opts.searching ? 'This search reaches' : 'This ordering reaches';
-  const found = opts.searching ? ` ${loaded} matched inside it.` : '';
+  if (!opts.searching) return null;
+  if (!meta) {
+    return (
+      'This search covers the runs on this page. The report engine did not say how many runs ' +
+      'match in total, so there may be more than are shown here. Narrow by status or report ' +
+      'type to be sure of seeing every match.'
+    );
+  }
+  if (meta.matched <= meta.returned) return null;
   return (
-    `${what} the ${RUNS_WINDOW} most recent runs only — the report engine filters and orders within that ` +
-    `window, so an older run that matches is not shown.${found} Narrow by status or report type to bring ` +
-    'older runs inside the window.'
+    `${meta.matched} runs match. The ${meta.returned} most recent are shown — narrow by status or ` +
+    'report type, or add to the search, to bring the rest into view.'
   );
 }
 

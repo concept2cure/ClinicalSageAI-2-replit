@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, or, sql, type SQLWrapper } from 'drizzle-orm';
 import { db, getPool } from '../db';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import {
@@ -2107,70 +2107,114 @@ router.get('/runs', async (req: Request, res: Response) => {
     if (status) filters.push(eq(reportRuns.status, status));
     if (reportTypeId) filters.push(eq(reportRuns.reportTypeId, reportTypeId));
 
-    const rows = await db
-      .select()
-      .from(reportRuns)
-      .where(and(...filters))
-      .orderBy(desc(reportRuns.createdAt))
-      .limit(limit);
+    /* ── SEARCH AND SORT GO TO SQL, BEFORE THE LIMIT (coverage review C-1) ────
+       This used to SELECT the newest `limit` rows, then filter by `search` and
+       re-sort in JavaScript. So a search could only ever match inside the newest
+       500 rows that passed the equality filters: an operator searching for a run
+       that is the 900th newest got `{"data": []}` — an honest-looking empty
+       table for a run that exists, with no offset or cursor to reach past the
+       window. And `sortBy` only reordered those same rows, so
+       `?sortBy=confidence&limit=10` returned the ten highest-confidence runs
+       AMONG the newest 500, never the org's true top ten.
+       The label and the three regional fields are selected here too, so the
+       response shape is byte-for-byte what the client already parses and the
+       second `getReportTypeLabelMap` query leaves this path. */
+    const typeLabel = sql<string>`COALESCE(${reportTypeRegistry.label}, ${reportRuns.reportTypeId})`;
+    const regional = (key: string) =>
+      sql<string | null>`${reportRuns.dependencySummary} -> 'summary' -> 'regulatory' ->> ${key}`;
+    const regionCodeExpr = regional('regionCode');
+    const registryIdExpr = regional('registryId');
+    const agencyExpr = regional('agency');
 
-    const typeMap = await getReportTypeLabelMap(rows.map(row => row.reportTypeId));
-    let enriched = rows.map(row => {
-      const summary = (row.dependencySummary as any)?.summary as
-        | {
-            regulatory?: {
-              regionCode?: string;
-              registryId?: string;
-              agency?: string;
-            };
-          }
-        | undefined;
-      const regionCode = summary?.regulatory?.regionCode;
-      const registryId = summary?.regulatory?.registryId;
-      const agency = summary?.regulatory?.agency;
-      return {
-        ...row,
-        reportTypeLabel: typeMap.get(row.reportTypeId) || row.reportTypeId,
-        regionCode,
-        registryId,
-        agency,
-      };
-    });
-
-    if (search && search.trim()) {
-      const q = search.trim().toLowerCase();
-      enriched = enriched.filter(row =>
-        [
-          row.runUuid,
-          row.scopeType,
-          row.scopeId,
-          row.status,
-          row.reportTypeId,
-          row.reportTypeLabel,
-          row.regionCode,
-          row.registryId,
-          row.agency,
-        ]
-          .filter(Boolean)
-          .some(value => String(value).toLowerCase().includes(q))
+    const searchTerm = search?.trim() ?? '';
+    if (searchTerm) {
+      /* `strpos(lower(x), lower(term)) > 0`, NOT `ILIKE '%'||term||'%'`: a term
+         containing % or _ would become a wildcard there, so searching for
+         "100%" would match everything. And nine separate predicates, NOT one
+         concatenated haystack — a haystack lets a term match ACROSS a field
+         boundary, which the JS `.some()` it replaces never did. */
+      const has = (expr: SQLWrapper) =>
+        sql`strpos(lower(${expr}), lower(${searchTerm})) > 0`;
+      filters.push(
+        or(
+          has(sql`${reportRuns.runUuid}::text`),
+          has(reportRuns.scopeType),
+          has(reportRuns.scopeId),
+          has(reportRuns.status),
+          has(reportRuns.reportTypeId),
+          has(typeLabel),
+          has(sql`COALESCE(${regionCodeExpr}, '')`),
+          has(sql`COALESCE(${registryIdExpr}, '')`),
+          has(sql`COALESCE(${agencyExpr}, '')`),
+        )!,
       );
     }
 
-    const direction = sortOrder === 'asc' ? 1 : -1;
-    enriched.sort((a, b) => {
-      let compare = 0;
-      if (sortBy === 'confidence') compare = (a.confidence ?? -1) - (b.confidence ?? -1);
-      else if (sortBy === 'completedAt')
-        compare = new Date(a.completedAt || 0).getTime() - new Date(b.completedAt || 0).getTime();
-      else if (sortBy === 'status') compare = String(a.status).localeCompare(String(b.status));
-      else if (sortBy === 'reportType')
-        compare = String(a.reportTypeLabel).localeCompare(String(b.reportTypeLabel));
-      else if (sortBy === 'scopeType') compare = String(a.scopeType).localeCompare(String(b.scopeType));
-      else compare = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return compare * direction;
-    });
+    /* The NULL semantics reproduce the JS sentinels this replaces exactly: a
+       null confidence sorted as -1 (below every real score) and a null
+       completedAt as the epoch (before every real time), so adding ORDER BY did
+       not change which row comes first. `reportType` sorts on the COALESCEd
+       label, which is what the old `localeCompare` compared. */
+    const sortExpr =
+      sortBy === 'confidence' ? sql`COALESCE(${reportRuns.confidence}, -1)`
+      : sortBy === 'completedAt' ? sql`COALESCE(${reportRuns.completedAt}, 'epoch'::timestamp)`
+      : sortBy === 'status' ? sql`${reportRuns.status}`
+      : sortBy === 'reportType' ? typeLabel
+      : sortBy === 'scopeType' ? sql`${reportRuns.scopeType}`
+      : sql`${reportRuns.createdAt}`;
+    const dir = sortOrder === 'asc' ? asc : desc;
 
-    return res.json({ data: enriched });
+    const rows = await db
+      .select({
+        id: reportRuns.id,
+        runUuid: reportRuns.runUuid,
+        organizationId: reportRuns.organizationId,
+        clientWorkspaceId: reportRuns.clientWorkspaceId,
+        scopeType: reportRuns.scopeType,
+        scopeId: reportRuns.scopeId,
+        reportTypeId: reportRuns.reportTypeId,
+        requestedBy: reportRuns.requestedBy,
+        status: reportRuns.status,
+        dependencySummary: reportRuns.dependencySummary,
+        blockers: reportRuns.blockers,
+        confidence: reportRuns.confidence,
+        freshness: reportRuns.freshness,
+        createdAt: reportRuns.createdAt,
+        completedAt: reportRuns.completedAt,
+        reportTypeLabel: typeLabel,
+        regionCode: regionCodeExpr,
+        registryId: registryIdExpr,
+        agency: agencyExpr,
+      })
+      .from(reportRuns)
+      .leftJoin(reportTypeRegistry, eq(reportTypeRegistry.typeId, reportRuns.reportTypeId))
+      .where(and(...filters))
+      /* `id` is the tiebreaker, and it was missing: runs sharing a createdAt
+         (a batch generate stamps several in the same millisecond) came back in
+         an arbitrary order that could differ between identical requests, so
+         `limit=1` returned a different row each time. */
+      .orderBy(dir(sortExpr), desc(reportRuns.id))
+      .limit(limit);
+
+    /* How many rows MATCHED, so the client can say what its window covered
+       instead of stating the caveat unconditionally. Only computed when a
+       search is active — the one case where the window can hide a match the
+       reader asked for. `rowsOf`/`isRowList` accept an envelope with sibling
+       keys, so `meta` is backward compatible with an older client. */
+    let matched: number | null = null;
+    if (searchTerm) {
+      const [counted] = await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(reportRuns)
+        .leftJoin(reportTypeRegistry, eq(reportTypeRegistry.typeId, reportRuns.reportTypeId))
+        .where(and(...filters));
+      matched = counted?.n ?? null;
+    }
+
+    return res.json({
+      data: rows,
+      ...(matched == null ? {} : { meta: { matched, returned: rows.length, limit } }),
+    });
   } catch (error: any) {
     return serverError(res, logger, 'loading runs', error);
   }
