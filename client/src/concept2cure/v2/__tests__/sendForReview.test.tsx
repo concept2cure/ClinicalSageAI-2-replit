@@ -161,13 +161,16 @@ function fill(dlg: HTMLElement, reviewers: string[], reason = REASON) {
   fireEvent.change(within(dlg).getByTestId('sfr-reason'), { target: { value: reason } });
 }
 
+async function openPreparedReviewDialog() {
+  const { dlg: dialog } = await openOwnDialog({ docTitle: 'Synthetic overview', sectionCode: null, onCheckTasks: undefined, onOpenBoard: undefined });
+  await within(dialog).findByTestId('sfr-reviewer-42');
+  fill(dialog, ['42']);
+  return dialog;
+}
+
 describe('a current partial canvas preserves a sent review request', () => {
   it('checks the canonical session again before a prepared confirmation can write', async () => {
-    render(<SendForReviewDialog docId={DOC} docTitle="Synthetic overview" programId={PID} sectionCode={null}
-      fireToast={vi.fn()} onClose={vi.fn()} />);
-    const dialog = await screen.findByTestId('send-for-review-dialog');
-    await within(dialog).findByTestId('sfr-reviewer-42');
-    fill(dialog, ['42']);
+    const dialog = await openPreparedReviewDialog();
     authService.endSession(null);
     fireEvent.click(within(dialog).getByTestId('sfr-submit'));
     expect((await within(dialog).findByTestId('sfr-error')).textContent).toContain('Your session changed');
@@ -178,11 +181,8 @@ describe('a current partial canvas preserves a sent review request', () => {
     let release!: (response: Response) => void;
     const pending = new Promise<Response>(resolve => { release = resolve; });
     answerRequest = () => pending;
-    render(<SendForReviewDialog docId={DOC} docTitle="Synthetic overview" programId={PID} sectionCode={null}
-      fireToast={vi.fn()} onClose={vi.fn()} />);
-    const dialog = await screen.findByTestId('send-for-review-dialog');
-    await within(dialog).findByTestId('sfr-reviewer-42');
-    fill(dialog, ['42']); fireEvent.click(within(dialog).getByTestId('sfr-submit'));
+    const dialog = await openPreparedReviewDialog();
+    fireEvent.click(within(dialog).getByTestId('sfr-submit'));
     await waitFor(() => expect(calls('POST', REQUEST_URL)).toHaveLength(1));
     authService.endSession(null);
     await act(async () => { release(recorded({ reviewers: [{ id: '42', name: 'OQ Signer' }] })); await pending; });
@@ -395,11 +395,11 @@ const standingRow = (reviewerId: string, name: string, status: string) => ({
 });
 
 /** The dialog on its own, with the toast it fires. */
-async function openOwnDialog() {
+async function openOwnDialog(overrides: Partial<React.ComponentProps<typeof SendForReviewDialog>> = {}) {
   const fireToast = vi.fn();
   const onCheckTasks = vi.fn();
   render(<SendForReviewDialog docId={DOC} docTitle="Module 2.5 Clinical Overview" programId={PID} sectionCode="2.5.1"
-    onClose={vi.fn()} fireToast={fireToast} onCheckTasks={onCheckTasks} onOpenBoard={vi.fn()} />);
+    onClose={vi.fn()} fireToast={fireToast} onCheckTasks={onCheckTasks} onOpenBoard={vi.fn()} {...overrides} />);
   const dlg = await screen.findByTestId('send-for-review-dialog');
   return { dlg, fireToast, onCheckTasks };
 }

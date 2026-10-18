@@ -539,8 +539,15 @@ async function retakeAliasedCopy(
  * when the copy is created (or re-created) and when the copy has none, and is
  * otherwise left as it is — the leaf records where each placement goes.
  */
+interface SnapshotCopySource {
+  sourceId: string;
+  admission: SourceAdmission;
+  source: FiledSource;
+}
+
 async function writeSnapshotCopy(tx: SnapshotTx, q: DrizzleQueryable, args: SnapshotArguments,
-  sourceId: string, admission: SourceAdmission, source: FiledSource): Promise<SnapshotOutcome> {
+  input: SnapshotCopySource): Promise<SnapshotOutcome> {
+  const { sourceId, admission, source } = input;
   const actor = admission.actor;
   const { organizationId, moduleNumber, templateId, reason } = args;
   const createdBy = String(actor.userId);
@@ -640,7 +647,7 @@ export async function takeAuthoringSnapshot(args: SnapshotArguments): Promise<Sn
       const source = await readSourceForFiling(q, { sourceId, organizationId: args.organizationId,
         readState: admission.readState, status: snapshotStatusFor(admission.readState), admission });
       if (!source.ok) return source;
-      const outcome = await writeSnapshotCopy(tx, q, args, sourceId, admission, source);
+      const outcome = await writeSnapshotCopy(tx, q, args, { sourceId, admission, source });
       if (!outcome.ok) return outcome;
       await requireSnapshotSourceStillCurrent(q, sourceId, admission);
       const actor = { id: String(admission.actor.userId), email: admission.actor.email };

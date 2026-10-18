@@ -76,7 +76,7 @@ import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
 import { originForSavedSection } from './authoringConversationOrigin';
 import { sourceMetadataUnavailable } from './savedTemplateContext';
-import { captureAuthoringSession, readCanvasDocumentRecord, useAuthoringReadSession,
+import { captureAuthoringSession, changedSectionCodes, readCanvasDocumentRecord, useAuthoringReadSession,
   type CanvasDocumentRow as DocRow, type CanvasSectionRow as SectionRow } from './authoringCurrentRead';
 
 export interface DocumentCanvasProps {
@@ -149,11 +149,7 @@ export function documentTypeLabel(code: string | null | undefined): string | nul
   return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
 }
 
-/** The codes of sections that are new, or whose stored text changed, between two reads. */
-export function changedSectionCodes(before: readonly SectionRow[], next: readonly SectionRow[]): string[] {
-  const was = new Map(before.map(x => [x.id, x.content ?? '']));
-  return next.filter(x => !was.has(x.id) || was.get(x.id) !== (x.content ?? '')).map(x => x.code);
-}
+export { changedSectionCodes };
 
 /** A section counts as drafted when its stored text has any visible content. */
 function isDrafted(content: string | null): boolean {

@@ -68,8 +68,8 @@ vi.mock('../../db', async () => {
   const result = (rows: Record<string, unknown>[]) => ({ rows, rowCount: rows.length });
   const exactSource = (params: unknown[]) =>
     state.sourceRows.length > 0 && params.includes(state.documentId) && params.includes(1);
-  const answer = (text: string, params: unknown[] = []): { rows: Record<string, unknown>[]; rowCount: number } => {
-    // Truthful current actor fixtures. JWT role/email do not answer these queries.
+  // Truthful current actor fixtures. JWT role/email do not answer these queries.
+  const currentActorAnswer = (text: string, params: unknown[]): { rows: Record<string, unknown>[]; rowCount: number } | undefined => {
     if (/FROM organization_users\b/i.test(text)) {
       return result(params.includes(5) && params.includes(1)
         ? [{ role: 'member', email: 'a@example.test', name: 'Unit filing author', user_id: 5 }] : []);
@@ -77,6 +77,11 @@ vi.mock('../../db', async () => {
     if (/FROM users\b/i.test(text)) {
       return result(params.includes(5) && params.includes(1) ? [{ email: 'a@example.test' }] : []);
     }
+    return undefined;
+  };
+  const answer = (text: string, params: unknown[] = []): { rows: Record<string, unknown>[]; rowCount: number } => {
+    const actorAnswer = currentActorAnswer(text, params);
+    if (actorAnswer) return actorAnswer;
     if (/FROM doc_permissions\b/i.test(text)) {
       return result(exactSource(params) && params.includes('5') && /p\.section_id IS NULL/i.test(text)
         ? [{ role: 'VIEWER' }] : []);

@@ -1,0 +1,12 @@
+{
+  "baseCommit": "9197e92c079a6c8ee79322d921ef70ef64703c5e",
+  "head": {
+    "errors": 0,
+    "warnings": 6
+  },
+  "current": {
+    "errors": 0,
+    "warnings": 2
+  },
+  "removedWarnings": 4
+}

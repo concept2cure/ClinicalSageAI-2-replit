@@ -1,5 +1,7 @@
 # Merged Authoring access backend qualification
 
+**2026-10-18 successor:** the two snapshot lint warnings were removed by typed argument grouping and a current-actor fixture helper. The [107-case snapshot successor](2026-10-18-snapshot-refactor-addendum.md) has new pins; earlier results below retain their original source phases.
+
 Base: `990a687c6eb31adb1becfa58d91fc9d2932f23ed` on `concept2cure-v2`.
 Sources remain uncommitted pending root integration and release gates.
 

@@ -1,0 +1,8 @@
+{
+  "archive": "normal-push-warning-red.txt.gz",
+  "encodedSha256": "91b57213bacb72e1701d5f87f876fd5f595982d0edb7533640ecc961b83c9003",
+  "decodedSha256": "213f5af2e787ac4ab0ce9256bafe3f5c628c46a21f81451cd546ff052a3f2ff7",
+  "decodedBytes": 12540,
+  "observedExitCode": 1,
+  "finding": "Normal pre-push warning-growth gate rejected net+7; compiler not reached; no publication occurred."
+}

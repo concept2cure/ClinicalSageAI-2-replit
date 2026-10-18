@@ -1,0 +1,8 @@
+[
+  "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx",
+  "client/src/concept2cure/v2/__tests__/sendForReview.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+  "client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx",
+  "client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx",
+  "client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx"
+]

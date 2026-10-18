@@ -23,6 +23,7 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import { useShellProject } from './shellProject';
 import { useActiveSurfaceContext } from './surfaceContext';
+
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
@@ -44,6 +45,12 @@ import { OrganizationAccess } from './OrganizationAccess';
 import { applySurfaceAction } from './surfaceActions';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+
+function currentRailItem(activeId: string, target: string, sectionId: string, myWork: boolean): boolean {
+  if (activeId !== target) return false;
+  if (target !== 'tasks') return true;
+  return sectionId === (myWork ? 'tasks' : 'tasking');
+}
 
 export interface ShellSurfaceRef {
   id: string;
@@ -159,8 +166,7 @@ export function Rail({
        looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
-    const current = activeId === target && (target !== 'tasks' ||
-      s.id === (taskView?.facts?.mine === true ? 'tasks' : 'tasking'));
+    const current = currentRailItem(activeId, target, s.id, taskView?.facts?.mine === true);
     return (
       <button
         key={s.id}

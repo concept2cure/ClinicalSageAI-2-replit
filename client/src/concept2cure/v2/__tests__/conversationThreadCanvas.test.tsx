@@ -79,6 +79,7 @@ let projectBeforeTest: typeof window.C2C_PROJECT;
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
 
 const USER: AnaChatMessage = { id: 'm1', role: 'user', text: 'Draft the **Module 2.5** excerpt.' } as AnaChatMessage;
+const RECORDED_EXPOSURE_FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
 
 const DRAFTED: AnaChatMessage = {
   id: 'm2',
@@ -424,13 +425,12 @@ describe('ConversationThread — AnA knows the document open beside the conversa
 describe('ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01)', () => {
   it('names the frozen document on the turn and explains its disabled insertion without changing content', async () => {
     chatSend.mockReset();
-    const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
       return base(method, url, body);
     });
-    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    chatMessages.current = [USER, DRAFTED, RECORDED_EXPOSURE_FOLLOWUP];
     render(<ConversationThread {...OWNED_PROPS} />);
     const open = await screen.findByTestId('dc-open-editor');
     await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
@@ -468,8 +468,7 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
         ] });
       return base(method, url, body);
     });
-    const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
-    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    chatMessages.current = [USER, DRAFTED, RECORDED_EXPOSURE_FOLLOWUP];
     render(<ConversationThread {...OWNED_PROPS} />);
 
     (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();

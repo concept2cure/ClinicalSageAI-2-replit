@@ -52,7 +52,7 @@ function baseRead(url: string) {
   return ok({ success: true, sections: [], revisions: [], comments: [], sources: [], citations: [] });
 }
 
-describe('current authoring reads restrict whole-document ceremonies', () => {
+describe('current authoring reads retain the server edit decision', () => {
   it.each(['document', 'sections'])('retains the current server edit refusal for a %s projection', async readScope => {
     const reason = 'Your current organization access is read-only.';
     apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => {
@@ -68,6 +68,9 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     expect((screen.getByTestId('ai-draft-open') as HTMLButtonElement).disabled).toBe(true);
     expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
+});
+
+describe('current authoring lists retain their canonical session owner', () => {
   it('rejects an old deferred list body after the same actor replaces the canonical session', async () => {
     authService.setToken('synthetic-owner-before',AUTHOR,'synthetic-refresh-before');
     window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
@@ -111,6 +114,9 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     await screen.findAllByText('Current-refresh document list');
     expect(reads).toBe(1);
   });
+});
+
+describe('current authoring reads restrict whole-document ceremonies', () => {
   it('withdraws metadata and whole-source controls when a sections refresh confirms an access change', async () => {
     let denied = false;
     apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => {
@@ -158,6 +164,9 @@ describe('current authoring reads restrict whole-document ceremonies', () => {
     expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 
+});
+
+describe('current authoring bodies retain their project and session owner', () => {
   it('refuses deferred old bodies for the same document after changing programme', async () => {
     let releaseBody!: (body: unknown) => void;
     const oldBody = new Promise<unknown>(resolve => { releaseBody = resolve; });

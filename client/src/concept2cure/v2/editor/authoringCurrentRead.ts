@@ -30,6 +30,12 @@ export interface CanvasSectionRow {
   updated_at?: string | null;
 }
 
+/** The codes of sections that are new, or whose stored text changed, between two reads. */
+export function changedSectionCodes(before: readonly CanvasSectionRow[], next: readonly CanvasSectionRow[]): string[] {
+  const was = new Map(before.map(x => [x.id, x.content ?? '']));
+  return next.filter(x => !was.has(x.id) || was.get(x.id) !== (x.content ?? '')).map(x => x.code);
+}
+
 /** Keep one account/session owner across ordinary bearer refreshes. */
 export function captureAuthoringSession() {
   const account = authService.getUser();
