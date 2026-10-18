@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T20:13:35.333Z",
+  "generatedAt": "2026-10-18T20:25:01.881Z",
   "git": {
-    "sha": "18c7bc16fade2e086538fb6ab465ad7d3de27fe8",
+    "sha": "a9c18bd0bef163fd8717c0415aa1a7e17a488e54",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
-    "largeFilesByLines": 111
+    "largeFilesByLines": 112
   },
   "findings": {
     "duplicateBasenames": [
@@ -2229,7 +2229,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 410438
+        "bytes": 415981
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2455,7 +2455,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8732
+        "lines": 8821
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2878,6 +2878,10 @@
         "lines": 1602
       },
       {
+        "file": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+        "lines": 1581
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1560
       },
@@ -2903,7 +2907,7 @@
       "owner": "Unassigned (TBD)",
       "duplicateGroups": 166,
       "largeByBytes": 0,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
