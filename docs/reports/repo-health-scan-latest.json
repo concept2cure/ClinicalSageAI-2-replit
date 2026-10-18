@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T23:57:05.099Z",
+  "generatedAt": "2026-10-18T00:24:07.944Z",
   "git": {
-    "sha": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+    "sha": "e62320e0a9555188a08ce426d7c16c72d372d824",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 236,
+    "duplicateBasenames": 237,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -276,7 +276,7 @@
       },
       {
         "basename": "probe",
-        "count": 8,
+        "count": 9,
         "paths": [
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
@@ -285,6 +285,7 @@
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
         ]
       },
@@ -1347,6 +1348,14 @@
         ]
       },
       {
+        "basename": "finish-reason",
+        "count": 2,
+        "paths": [
+          "server/services/ai-gateway/finish-reason.ts",
+          "shared/ai/finish-reason.ts"
+        ]
+      },
+      {
         "basename": "gateway-accounts",
         "count": 2,
         "paths": [
@@ -2219,7 +2228,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 401312
+        "bytes": 406344
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2227,7 +2236,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 308491
+        "bytes": 312039
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2415,11 +2424,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 102514
+        "bytes": 103264
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 101428
+        "bytes": 102484
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2445,11 +2454,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8593
+        "lines": 8662
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6265
+        "lines": 6314
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2632,12 +2641,12 @@
         "lines": 2162
       },
       {
-        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
-        "lines": 2155
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2156
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2147
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
@@ -2688,6 +2697,10 @@
         "lines": 2029
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2021
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 2020
       },
@@ -2698,10 +2711,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2008
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2007
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2881,19 +2890,19 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 440,
+      "duplicateGroups": 441,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 164,
+      "duplicateGroups": 165,
       "largeByBytes": 0,
       "largeByLines": 4
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 89,
+      "duplicateGroups": 90,
       "largeByBytes": 3,
       "largeByLines": 2
     },
