@@ -6,7 +6,7 @@
  * manufacturing_processes, cmc_source_objects, cmc_module3_sections) and
  * delegates to the pure rules module for per-guideline evaluation.
  *
- * Covers Q1A(R2), Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
+ * Covers Q1A(R2), Q1E, Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
  * Q9(R1), Q10 — i.e. the guidelines most commonly cited at FDA RTF — at the
  * revisions the CMC regulatory record holds as current. Analytical validation
  * is judged at the program's stage (program-stage.ts, ich-compliance-q2.ts).
@@ -27,6 +27,7 @@ import {
   type ProjectInputs, type ProjectInputKey,
 } from './ich-compliance-rules';
 import { checkQ2 } from './ich-compliance-q2';
+import { checkQ1E } from './ich-compliance-q1e';
 import { readProgramStage, type ProgramStage } from './program-stage';
 
 export type {
@@ -75,6 +76,10 @@ export async function runIchComplianceCheck(
 
   const findings: IchCheckFinding[] = [
     ...checkQ1A(inputs),
+    /* Q1E judges the shelf-life CLAIM against the data the studies cover;
+       Q1A(R2) above judges whether the studies themselves are there. Both read
+       the same input and neither repeats the other's finding. */
+    ...checkQ1E(inputs),
     ...checkQ2(inputs),
     ...checkQ3AandQ3B(inputs),
     ...checkQ3D(inputs),
