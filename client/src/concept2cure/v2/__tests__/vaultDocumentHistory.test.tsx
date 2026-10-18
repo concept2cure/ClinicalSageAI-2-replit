@@ -86,3 +86,38 @@ describe('Vault document history', () => {
     expect(panel.textContent).not.toMatch(/audit chain verified|check failed/i);
   });
 });
+
+describe('Vault history — current-access read limits', () => {
+  it('a valid generic relationship description retains its recorded hash, row and actual chain verdict', async () => {
+    mockApi(() => ok({ success: true, data: { entries: [{ ...entries[0], event: 'Document relationship recorded', reason: null }], chain: verified } }));
+    render(<Vault {...props()} />);
+    await screen.findByText('Document relationship recorded');
+    const panel = screen.getByTestId('vault-document-history');
+    expect(panel.querySelector('.mono')?.getAttribute('title')).toBe(entries[0].hash);
+    expect(panel.querySelectorAll('.vd-ver')).toHaveLength(1);
+    expect(panel.textContent).toContain('Audit chain verified — 40 rows checked');
+    expect(panel.querySelector('[data-testid="vault-history-reason"]')).toBeNull();
+  });
+
+  it('an empty history does not claim that the document has no recorded events', async () => {
+    mockApi(() => ok({ success: true, data: { entries: [], chain: verified } }));
+    render(<Vault {...props()} />);
+    await screen.findByText('No history events are available to you for this document.');
+    expect(screen.queryByText('No recorded events for this document.')).toBeNull();
+  });
+
+  it('a truncated history labels its returned accessible window without claiming a global history count', async () => {
+    mockApi(() => ok({ success: true, data: { entries, chain: verified, truncated: true } }));
+    render(<Vault {...props()} />);
+    await screen.findByText('Only the newest 2 accessible entries are shown. This is a limited history window.');
+    expect(screen.queryByText(/Older entries exist/)).toBeNull();
+  });
+
+  it('a malformed history row is a failed read, not an empty history or a render crash', async () => {
+    mockApi(() => ok({ success: true, data: { entries: [{ ...entries[0], hash: 42 }], chain: verified } }));
+    render(<Vault {...props()} />);
+    await screen.findByText(/history could not be read/i);
+    expect(screen.queryByText(/No history events are available/)).toBeNull();
+    expect(screen.queryByText(/Audit chain verified/)).toBeNull();
+  });
+});

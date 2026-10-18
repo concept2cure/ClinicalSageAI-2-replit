@@ -1,0 +1,7 @@
+# Test fixture duplicate-key correction
+
+The whole-tree TypeScript check identified TS2783 in `seedWithdrawalSource`: the helper returned `{ documentId, contentHash, ...sourceRef(documentId, hashCharacter) }`, while `sourceRef` already creates both keys. The only source change is to return `sourceRef(documentId, hashCharacter)` directly. The fixture retains the same source seeding SQL, actual V2 identity factory and test assertions. No production file changed.
+
+`merge-typecheck-fix.before.ts.txt` preserves the complete original test fixture. The before/after JSON files record its source hashes. `merge-typecheck-fix.equivalence.json` records checks of the actual transpiled helper bodies with four identical sets of deterministic inputs. Both versions produced identical values, key order, data-property descriptors, ordinary-object prototypes, two seeding SQL calls and parameters, and one V2 identity-factory invocation. Transpiling the entire fixture showed that the emitted JavaScript differs only at the same return expression. This establishes runtime equivalence for those controls; emitted files are not byte-identical.
+
+The focused registered-tool PGlite result and fixture ESLint result are preserved separately as `merge-typecheck-fix.focused.txt` and `merge-typecheck-fix.lint.json`. Earlier merge and combined-run evidence remains unchanged and retains its original source bindings. The lead owns the fresh whole-tree TypeScript result and final publication.

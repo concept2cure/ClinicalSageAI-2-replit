@@ -7,7 +7,7 @@
    Mirrors the conventions of client/src/concept2cure/intelligence/app.css. */
 
 .qms-shell, .qms-shell * { box-sizing: border-box; }
-.qms-shell button { font-family: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; padding: 0; }
+.qms-shell :where(button):not(:where(.qms-workbench *)) { font-family: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; padding: 0; }
 .qms-shell svg { flex: 0 0 auto; }
 
 /* `min-width:0` is load-bearing, not tidiness. A flex item's automatic minimum
@@ -49,6 +49,23 @@
 /* ─── Page ─────────────────────────────────────────────────────── */
 .qms-page { flex: 1; overflow-y: auto; min-height: 0; padding: 22px 28px 60px; }
 .qms-page-inner { max-width: 1240px; margin: 0 auto; min-width: 0; }
+.qms-shell[data-editing] .qms-page { padding: 0; overflow: hidden; }
+.qms-shell[data-editing] .qms-page-inner { max-width: none; height: 100%; }
+.qms-workbench { height: 100%; min-height: 0; min-width: 0; }
+.qms-dialog-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / 45%); }
+.qms-dialog { width: min(540px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; background: var(--background); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 24px; box-shadow: 0 12px 48px rgb(0 0 0 / 20%); }
+.qms-dialog h2 { margin: 0 0 12px; font-size: 19px; }
+.qms-dialog p { color: var(--text-300); margin: 8px 0 16px; }
+.qms-dialog label { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; font-weight: 600; }
+.qms-dialog input, .qms-dialog select, .qms-dialog textarea { width: 100%; font: inherit; color: var(--text-100); background: var(--bg-050); border: 1px solid var(--bg-200); border-radius: 6px; padding: 9px; }
+.qms-dialog textarea { min-height: 82px; resize: vertical; }
+.qms-dialog .qms-dialog-hint { font-size: 11.5px; margin-top: 6px; }
+.qms-dialog [role="alert"] { margin: 12px 0; color: var(--error); }
+.qms-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.qms-signed-version { border-top: 1px solid var(--border-subtle); padding: 12px 0; }
+.qms-signed-version summary { cursor: pointer; font-weight: 600; }
+.qms-signed-version h3 { font-size: 14px; margin: 16px 0 8px; }
+.qms-shell button:disabled { cursor: not-allowed; opacity: .55; }
 
 /* ─── Header ───────────────────────────────────────────────────── */
 .qms-head { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 22px; }
@@ -131,7 +148,7 @@
 .qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-300); }
 
 /* row actions — AnA-first */
-.qms-rowacts { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.qms-rowacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
 .qms-chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-md);
@@ -165,7 +182,52 @@
 .qms-empty { padding: 18px 14px; font-size: 12px; color: var(--text-400); text-align: center; }
 
 .qms-train { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
-.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 52px 84px; gap: 10px; align-items: center; font-size: 12px; }
+.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 44px; gap: var(--space-2); align-items: center; font-size: inherit; }
+.qms-train-row .qms-train-when { grid-column: 1 / -1; justify-self: start; }
+.qms-train-row .qms-link { grid-column: 1 / -1; justify-self: start; }
+.qms-train-unavailable { grid-column: 2 / -1; color: var(--text-300); text-align: right; }
+.qms-training-summary { color: var(--text-300); margin: 0 0 var(--space-4); }
+.qms-shell button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* Native controlled-text reader; shared dialog behaviour owns focus/Escape. */
+.qms-training-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: var(--space-5); background: var(--bg-200); }
+.qms-training-dialog { width: min(100%, 56rem); max-height: calc(100dvh - var(--space-10)); overflow-y: auto; background: var(--background); color: var(--text-100); border: 1px solid var(--border-200); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: var(--space-6); outline: none; }
+.qms-training-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-5); }
+.qms-training-head h2 { font-size: inherit; margin: 0 0 var(--space-2); }
+.qms-training-head p { color: var(--text-300); margin: 0; }
+.qms-training-content section + section { margin-top: var(--space-6); }
+.qms-training-content h3, .qms-training-receipt h3 { font-size: inherit; margin: 0 0 var(--space-2); }
+.qms-training-content p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; margin: 0; }
+.qms-training-error { color: var(--error); border: 1px solid var(--error); padding: var(--space-3); border-radius: var(--radius-md); }
+.qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
+.qms-training-receipt { margin-top: var(--space-6); }
+.qms-training-receipt p { color: var(--text-200); }
+.qms-training-receipt dl { margin-bottom: 0; display: grid; gap: var(--space-3); }
+.qms-training-receipt dl > div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-3); }
+.qms-training-receipt dt { color: var(--text-300); }
+.qms-training-receipt dd { margin: 0; overflow-wrap: anywhere; }
+.qms-training-declaration { border-top: 1px solid var(--border-100); margin-top: var(--space-6); padding-top: var(--space-5); }
+.qms-training-declaration label { display: flex; align-items: flex-start; gap: var(--space-3); }
+.qms-training-declaration input { accent-color: var(--accent-main-100); margin: var(--space-1) 0 0; }
+.qms-training-declaration p { color: var(--text-300); }
+.qms-training-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--border-100); margin-top: var(--space-6); padding-top: var(--space-4); }
+.qms-shell .qms-training-dialog .qms-btn { padding: var(--space-2) var(--space-3); border: 1px solid var(--border-100); border-radius: var(--radius-lg); }
+.qms-shell .qms-training-dialog .qms-btn.primary { color: var(--accent-on-strong); background: var(--accent-strong); }
+.qms-shell .qms-training-dialog button:focus-visible, .qms-shell .qms-training-dialog input:focus-visible { outline: 2px solid var(--accent-main-100); outline-offset: var(--space-1); }
+.qms-controlled-editor { display: flex; flex-direction: column; gap: var(--space-4); }
+.qms-controlled-note { color: var(--text-300); margin: 0; }
+.qms-controlled-reason { display: flex; flex-direction: column; gap: var(--space-2); }
+.qms-controlled-reason textarea { min-height: var(--space-20); padding: var(--space-3); background: var(--background); color: var(--text-100); border: 1px solid var(--border-200); border-radius: var(--radius-md); font: inherit; resize: vertical; }
+.qms-controlled-section { border: 1px solid var(--border-100); border-radius: var(--radius-md); padding: var(--space-3); }
+.qms-controlled-section > summary { cursor: pointer; color: var(--text-200); padding-bottom: var(--space-2); }
+.qms-controlled-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.qms-controlled-discard { position: sticky; bottom: 0; padding: var(--space-4); background: var(--background); border: 1px solid var(--border-200); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.qms-controlled-discard button + button { margin-left: var(--space-3); }
+@media (max-width: 600px) {
+  .qms-training-overlay { padding: var(--space-2); }
+  .qms-training-dialog { padding: var(--space-4); max-height: calc(100dvh - var(--space-4)); }
+  .qms-training-receipt dl > div { grid-template-columns: 1fr; gap: var(--space-1); }
+}
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
 .qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms var(--ease); }

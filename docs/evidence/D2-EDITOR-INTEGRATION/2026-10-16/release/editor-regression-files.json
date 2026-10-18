@@ -1,0 +1,10 @@
+[
+  "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+  "client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+  "client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx"
+]

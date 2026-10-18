@@ -1,0 +1,40 @@
+HTTP/1.1 200 OK
+date: Wed, 14 Oct 2026 06:00:10 GMT
+server: envoy
+
+HTTP/2 301 
+content-type: text/html; charset=utf-8
+server: envoy
+x-redirect-id: 47682
+content-language: en
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+location: http://www.fda.gov/medical-devices/division-standards-and-conformity-assessment/federal-register-documents
+last-modified: Wed, 14 Oct 2026 05:34:53 GMT
+etag: "1791956093"
+x-cache-status: MISS
+x-akamai-transformed: 0 - 0 -
+cache-control: public, max-age=84882
+expires: Thu, 15 Oct 2026 05:34:53 GMT
+date: Wed, 14 Oct 2026 06:00:11 GMT
+alt-svc: h3=":443"; ma=93600
+strict-transport-security: max-age=31536000 ; includeSubDomains ; preload
+x-envoy-upstream-service-time: 1355
+
+HTTP/2 200 
+content-type: text/html; charset=UTF-8
+server: envoy
+content-language: en
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+last-modified: Wed, 14 Oct 2026 03:06:10 GMT
+etag: "1791947170"
+x-cache-status: MISS
+x-akamai-transformed: 0 - 0 -
+cache-control: public, max-age=75958
+expires: Thu, 15 Oct 2026 03:06:11 GMT
+date: Wed, 14 Oct 2026 06:00:13 GMT
+alt-svc: h3=":443"; ma=93600
+strict-transport-security: max-age=31536000 ; includeSubDomains ; preload
+x-envoy-upstream-service-time: 1551
+

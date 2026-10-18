@@ -1,0 +1,419 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots 160ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots 119ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots 103ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling 46ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > automatically recovers an exact captured workspace that differs from the project row identifier 88ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID 71ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an ambiguous anchor before extraction 78ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an deleted anchor before extraction 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > rechecks the exact program workspace after extraction before storing derived text 28ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an anchor swap after extraction even if the new anchor has the same workspace 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > a copied claim cannot self-attest the attempt-local workspace admission 56ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 25ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 35ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 35ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"fileName":"Renamed.csv"} 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"mimeType":"text/csv"} 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 49ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 74ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 74ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 85ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > dry-run is read-only and strict invalid options refuse before I/O 54ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy readable text is already complete without fabricated stage history 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > diagnostic malformed rows do not starve runnable slots 61ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " " 87ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable "﻿" 88ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " \n\t" 91ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > exact already-readable dryrun observes completion without claiming a processed count 28ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final-write outage records bounded due retry and never marks readable completion 106ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final and failure-journal outage leaves the durable running lease reclaimable 85ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > automatic attempt budget is bounded; explicit expired-claim retry never resets it 161ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":58,"status":"extracted","text":null,"report":{"examined":1,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[{"sourceId":58,"status":"candidate"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > busy and not-due diagnostics cannot consume runnable slots 113ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > a lost completion COMMIT reply is resolved by durable readable state on retry 71ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 207ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 62ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":63,"done":{"ok":false,"processed":false,"status":"blocked","reasonCode":"SOURCE_BYTES_MISMATCH"},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":64,"committed":false,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":0,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":0,"unreadable":[{"sourceId":66,"reason":"EXTRACTION_FAILED"}],"dryRun":false,"completed":0,"failed":1,"blocked":0,"skipped":0,"items":[{"sourceId":66,"status":"extraction_failed","reasonCode":"EXTRACTION_FAILED"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 57ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 89ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:32.368Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:29:32.369Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:32.370Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:35.295Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 81e2f22d-61d5-43a3-a75a-6f0304420122 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:35.310Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 81e2f22d-61d5-43a3-a75a-6f0304420122 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:35.320Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 81e2f22d-61d5-43a3-a75a-6f0304420122 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:29:35.417Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "81e2f22d-61d5-43a3-a75a-6f0304420122",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:29:35.418Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "81e2f22d-61d5-43a3-a75a-6f0304420122",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:29:35.418Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "review",
+    "docId": "81e2f22d-61d5-43a3-a75a-6f0304420122",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-14T22:29:35.420Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "81e2f22d-61d5-43a3-a75a-6f0304420122",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 21ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 16ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 25ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 13ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 14ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-14T22:29:35.443Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/81e2f22d-61d5-43a3-a75a-6f0304420122/request-review",
+    "action": "edit",
+    "docId": "81e2f22d-61d5-43a3-a75a-6f0304420122",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-14T22:29:35.500Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 81e2f22d-61d5-43a3-a75a-6f0304420122 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 22ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 19ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 48ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds the live matching row using the supplied transaction executor and bound identity 4ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > refuses a missing, foreign or deleted row in held live mode 3ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds a deleted row only with the explicit retained-record option 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > preserves ordinary behavior when holding is absent or explicitly false 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=false) 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=true) 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses revoked private-project admission and uses the transaction client 5ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > preserves a private input snapshot while connection acquisition yields 4ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a program removed at canonical held ownership before catalog metadata or DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves legacy review semantics without inventing extraction or context acceptance 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > returns no catalog data for a document with conflicting recorded tenant ownership 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:41.284Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:29:41.285Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:29:41.285Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:29:42.232Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:29:42.261Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:29:42.278Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:29:42.296Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants 51ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants 19ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants 18ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked
+{
+  "timestamp": "2026-10-14T22:29:42.327Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save
+{
+  "timestamp": "2026-10-14T22:29:42.381Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants 13ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT 8ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT 6ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked 12ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps foreign-tenant records unavailable even to an administrator 7ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps sealed records immutable for a current administrator 8ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save 45ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization 2ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > preserves existing claims for a legacy principal with no membership role 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > retains current viewer reads through the existing object ACL 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > preserves the narrower ACL for writing and unknown custom organization roles 1ms
+
+ Test Files  6 passed (6)
+      Tests  145 passed (145)
+   Start at  22:29:22
+   Duration  20.18s (transform 3.50s, setup 125ms, import 3.02s, tests 16.28s, environment 0ms)
+

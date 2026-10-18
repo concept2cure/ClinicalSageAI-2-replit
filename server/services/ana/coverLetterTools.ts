@@ -13,6 +13,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { DEVICE_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 export const COMPOSE_CORRESPONDENCE_COVER_LETTER: AnaTool = {
   name: 'compose_correspondence_cover_letter',
@@ -55,7 +56,7 @@ export const COMPOSE_510K_SUMMARY: AnaTool = {
       documentId: { type: 'number', description: 'eSTAR document id.' },
       sponsorName: { type: 'string' },
       deviceTradeName: { type: 'string' },
-      deviceClass: { type: 'string', enum: ['I', 'II', 'III'] },
+      deviceClass: { type: 'string', enum: [...DEVICE_CLASSES] },
       submissionTrackingNumber: { type: 'string', description: 'FDA tracking number (optional).' },
       commonName: { type: 'string' },
       productCode: { type: 'string' },

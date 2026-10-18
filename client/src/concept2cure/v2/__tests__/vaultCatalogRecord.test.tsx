@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -91,4 +91,147 @@ describe('Catalog record', () => {
     renderPane({ ...RECORD, state: null, documentKind: null, purpose: null, summary: null, keyData: null });
     expect((await screen.findByTestId('vault-catalog-empty')).textContent).toMatch(/No description is recorded/);
   });
+});
+
+describe('Catalog check coverage and review receipts', () => {
+  it('keeps legacy human attribution while disclosing the limits of key data checks', async () => {
+    renderPane({
+      ...RECORD, state: 'confirmed', confirmedBy: { id: 41, name: 'Dr. Mei Chen' },
+      confirmedAt: '2026-10-09T12:00:00.000Z',
+      checkScope: { kind: 'legacy_value_presence', context: 'not_recorded', scientificQualification: 'unassessed' },
+    });
+    const provenance = await screen.findByTestId('vault-catalog-provenance');
+    expect(provenance.textContent).toContain('Confirmed as written by Dr. Mei Chen on 2026-10-09 12:00 UTC');
+    const scope = screen.getByTestId('vault-catalog-check-scope');
+    expect(scope.textContent).toMatch(/value presence/i);
+    expect(scope.textContent).toMatch(/label and context verification is not recorded/i);
+    expect(scope.textContent).toMatch(/scientific qualification is unassessed/i);
+    expect(screen.getByTestId('vault-catalog-record').textContent).not.toMatch(/scientifically verified|facts accepted/i);
+  });
+
+  it('does not invent a past context check when an older record has no scope fields', async () => {
+    renderPane();
+    expect((await screen.findByTestId('vault-catalog-check-scope')).textContent)
+      .toMatch(/label and context verification is not recorded/i);
+  });
+
+  it('binds confirmation to the exact extraction shown when its digest is available', async () => {
+    const extractedTextSha256 = 'b'.repeat(64);
+    const { onSaved } = renderPane({ ...RECORD, extractedTextSha256 });
+    const confirm = await screen.findByTestId('vault-catalog-confirm');
+    apiRequest.mockResolvedValueOnce(reply(200, { success: true, state: 'confirmed', changes: [] }));
+    apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, state: 'confirmed', extractedTextSha256 } }));
+    fireEvent.click(confirm);
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(apiRequest.mock.calls[1][2]).toEqual({
+      contentHash: RECORD.contentHash, revision: RECORD.revision, expectedExtractedTextSha256: extractedTextSha256,
+    });
+  });
+
+  it('shows a changed-extraction refusal without claiming that confirmation was recorded', async () => {
+    const { onSaved } = renderPane({ ...RECORD, extractedTextSha256: 'b'.repeat(64) });
+    const confirm = await screen.findByTestId('vault-catalog-confirm');
+    apiRequest.mockResolvedValueOnce(reply(409, { success: false, message: 'The extracted text has changed. Reload the catalog record before deciding.' }));
+    fireEvent.click(confirm);
+    const note = await screen.findByTestId('vault-catalog-note');
+    expect(note.textContent).toMatch(/record was not confirmed/i);
+    expect(note.textContent).toMatch(/extracted text has changed/i);
+    expect(note.textContent).not.toMatch(/Your confirmation is recorded/);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('treats a failure envelope as a refusal even if its HTTP status is successful', async () => {
+    const { onSaved } = renderPane();
+    const confirm = await screen.findByTestId('vault-catalog-confirm');
+    apiRequest.mockResolvedValueOnce(reply(200, { success: false, message: 'The source is no longer eligible for catalog review.' }));
+    fireEvent.click(confirm);
+    expect((await screen.findByTestId('vault-catalog-note')).textContent).toMatch(/source is no longer eligible/i);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('does not claim a decision when the server gives no matching recorded-state receipt', async () => {
+    const { onSaved } = renderPane();
+    const confirm = await screen.findByTestId('vault-catalog-confirm');
+    apiRequest.mockResolvedValueOnce(reply(200, { success: true }));
+    fireEvent.click(confirm);
+    expect((await screen.findByTestId('vault-catalog-note')).textContent).toMatch(/not known whether the record was confirmed/i);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});
+
+describe('Catalog current use and retained history', () => {
+  it('keeps a corrected historical record visible while explaining withdrawal and withholding actions', async () => {
+    renderPane({
+      ...RECORD, state: 'corrected', canWrite: false, confirmedBy: { id: 42, name: 'Dr. Ana Ruiz' },
+      confirmedAt: '2026-10-10T09:00:00.000Z', correctionReason: REASON,
+      currentUse: { eligible: false, reasonCode: 'SOURCE_DATA_WITHDRAWN', originalFileAvailable: false },
+    });
+    expect((await screen.findByTestId('vault-catalog-provenance')).textContent).toContain('Corrected by Dr. Ana Ruiz');
+    expect(screen.getByTestId('vault-catalog-current-use').textContent).toMatch(/withdrawn from data use/i);
+    expect(screen.getByTestId('vault-catalog-record').textContent).toContain(REASON);
+    expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+    expect(screen.queryByTestId('vault-catalog-correct')).toBeNull();
+    expect(screen.getByTestId('vault-catalog-readonly').textContent).not.toMatch(/Your role/);
+  });
+
+  it('does not invite cataloging an unavailable source with no historical description', async () => {
+    renderPane({
+      ...RECORD, state: null, canWrite: false,
+      currentUse: { eligible: false, reasonCode: 'SOURCE_SUPERSEDED', originalFileAvailable: true },
+    });
+    expect((await screen.findByTestId('vault-catalog-current-use')).textContent).toMatch(/superseded/i);
+    expect(screen.getByTestId('vault-catalog-empty').textContent).toMatch(/No description is recorded/);
+    expect(screen.getByTestId('vault-catalog-empty').textContent).not.toMatch(/ask AnA to catalog/i);
+  });
+
+  it('binds corrections to the extraction shown and preserves the whole-record reason', async () => {
+    const extractedTextSha256 = 'c'.repeat(64);
+    const { onSaved } = renderPane({ ...RECORD, extractedTextSha256 });
+    fireEvent.click(await screen.findByTestId('vault-catalog-correct'));
+    fireEvent.change(screen.getByTestId('vault-catalog-kind'), { target: { value: 'batch_record' } });
+    fireEvent.change(screen.getByTestId('vault-catalog-reason'), { target: { value: REASON } });
+    apiRequest.mockResolvedValueOnce(reply(200, { success: true, state: 'corrected', changes: ['document_kind'] }));
+    apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, state: 'corrected', extractedTextSha256 } }));
+    fireEvent.click(screen.getByTestId('vault-catalog-correct-save'));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(apiRequest.mock.calls[1][2]).toEqual({
+      contentHash: RECORD.contentHash, revision: RECORD.revision, expectedExtractedTextSha256: extractedTextSha256,
+      documentKind: 'batch_record', reason: REASON,
+    });
+  });
+});
+
+it('requires a successful scoped readback before retrying an unconfirmed decision', async () => {
+  renderPane();
+  const confirm = await screen.findByTestId('vault-catalog-confirm') as HTMLButtonElement;
+  apiRequest.mockRejectedValueOnce(new Error('connection closed after request'));
+  fireEvent.click(confirm);
+  expect((await screen.findByTestId('vault-catalog-note')).textContent).toMatch(/not known whether the record was confirmed/i);
+  expect(confirm.disabled).toBe(true);
+  apiRequest.mockResolvedValueOnce(reply(503, { success: false, message: 'Catalog read unavailable' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reload catalog record' }));
+  await screen.findByTestId('vault-catalog-error');
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: {} }));
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  await screen.findByTestId('vault-catalog-error');
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, state: 'confirmed' } }));
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  expect((await screen.findByTestId('vault-catalog-provenance')).textContent).toMatch(/Confirmed as written/);
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+});
+
+it('does not adopt a late catalog response from a different programme and document scope', async () => {
+  let resolveOld!: (value: Response) => void;
+  apiRequest.mockReturnValueOnce(new Promise<Response>(resolve => { resolveOld = resolve; }));
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, purpose: 'Current programme record' } }));
+  const onSaved = vi.fn();
+  const view = render(<VaultCatalogRecord projectId={PROJECT} documentId={DOC} onSaved={onSaved} />);
+  view.rerender(<VaultCatalogRecord projectId="33333333-3333-4333-8333-333333333333" documentId="44444444-4444-4444-8444-444444444444" onSaved={onSaved} />);
+  await screen.findByText('Current programme record');
+  await act(async () => resolveOld(reply(200, { success: true, data: { ...RECORD, purpose: 'Prior programme record' } })));
+  expect(screen.queryByText('Prior programme record')).toBeNull();
+  expect(screen.getByText('Current programme record')).toBeTruthy();
 });

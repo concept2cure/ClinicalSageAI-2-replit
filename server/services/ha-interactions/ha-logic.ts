@@ -89,35 +89,52 @@ export interface ReadinessFinding {
   basis: string;
 }
 
+export interface MeetingReadiness {
+  /** null when there is no scheduled or held meeting to assess; `note` says why. */
+  ready: boolean | null;
+  findings: ReadinessFinding[];
+  note?: string;
+}
+
 /**
  * Readiness gate for a formal FDA meeting: by the time a meeting is `scheduled`
  * or `held`, a briefing package and a specific question list are expected
  * (FDA Formal Meetings guidance / PDUFA; the briefing book is due ~30 days
  * before the meeting). Pure — returns cited findings + a ready flag.
+ *
+ * Until 2026-10-15 a planned, requested, closed or cancelled interaction was
+ * `ready: true` with nothing assessed, and a meeting with no question list (a
+ * major finding) was still ready; AnA then said "Interaction N is
+ * meeting-ready." Now: not assessed (null, with the reason) until the meeting
+ * is scheduled, and not ready while a critical or major gap is open.
  */
-export function evaluateMeetingReadiness(m: MeetingReadinessInput): { ready: boolean; findings: ReadinessFinding[] } {
+export function evaluateMeetingReadiness(m: MeetingReadinessInput): MeetingReadiness {
+  if (m.status === 'planned' || m.status === 'requested') {
+    return { ready: null, findings: [], note: `Readiness is assessed once the meeting is scheduled; this one is ${m.status}.` };
+  }
+  if (m.status === 'closed' || m.status === 'cancelled') {
+    return { ready: null, findings: [], note: `The interaction is ${m.status}; there is no meeting to be ready for.` };
+  }
+  // scheduled, held or minutes_received: the package is expected by now.
   const findings: ReadinessFinding[] = [];
-  const expectsPackage = m.status === 'scheduled' || m.status === 'held' || m.status === 'minutes_received';
-  if (expectsPackage) {
-    if (!m.hasBriefingBook) {
-      findings.push({
-        severity: 'critical',
-        message: 'No briefing book is attached; the briefing package is due ~30 days before a formal meeting.',
-        basis: 'FDA Formal Meetings guidance (PDUFA); briefing document timing',
-      });
-    }
-    if (m.questionCount === 0) {
-      findings.push({
-        severity: 'major',
-        message: 'No questions are recorded; a formal meeting should carry a specific, prioritized question list.',
-        basis: 'FDA Formal Meetings guidance',
-      });
-    }
+  if (!m.hasBriefingBook) {
+    findings.push({
+      severity: 'critical',
+      message: 'No briefing book is attached; the briefing package is due ~30 days before a formal meeting.',
+      basis: 'FDA Formal Meetings guidance (PDUFA); briefing document timing',
+    });
+  }
+  if (m.questionCount === 0) {
+    findings.push({
+      severity: 'major',
+      message: 'No questions are recorded; a formal meeting should carry a specific, prioritized question list.',
+      basis: 'FDA Formal Meetings guidance',
+    });
   }
   if ((m.status === 'scheduled') && !m.scheduledDate) {
     findings.push({ severity: 'minor', message: 'Meeting is scheduled but no date is set.', basis: 'meeting logistics' });
   }
-  const ready = !findings.some((f) => f.severity === 'critical');
+  const ready = !findings.some((f) => f.severity === 'critical' || f.severity === 'major');
   return { ready, findings };
 }
 
@@ -126,7 +143,9 @@ export function evaluateMeetingReadiness(m: MeetingReadinessInput): { ready: boo
 export interface MeetingQuestionView { questionNumber?: number | null; questionText: string; agreementReached?: boolean | null }
 
 export interface MeetingPackage {
-  ready: boolean;
+  /** null when there is no scheduled or held meeting to assess; `readinessNote` says why. */
+  ready: boolean | null;
+  readinessNote?: string;
   findings: ReadinessFinding[];
   questionCount: number;
   openQuestions: MeetingQuestionView[];
@@ -148,7 +167,7 @@ export function assembleMeetingPackage(
   commitments: CommitmentView[],
   today: string,
 ): MeetingPackage {
-  const { ready, findings } = evaluateMeetingReadiness(readiness);
+  const { ready, findings, note } = evaluateMeetingReadiness(readiness);
   const openQuestions = questions.filter((q) => q.agreementReached !== true);
   const outstanding = commitments.filter((c) => deriveCommitmentStatus(c, today) !== 'fulfilled' && deriveCommitmentStatus(c, today) !== 'waived' && deriveCommitmentStatus(c, today) !== 'released');
   const overdue = commitments.filter((c) => deriveCommitmentStatus(c, today) === 'overdue').length;
@@ -159,5 +178,5 @@ export function assembleMeetingPackage(
   if (expectsPrep && openQuestions.length > 0) actions.push(`Resolve or finalize ${openQuestions.length} open question(s) before the meeting.`);
   if (overdue > 0) actions.push(`${overdue} commitment(s) from this interaction are overdue — address before the next engagement.`);
 
-  return { ready, findings, questionCount: questions.length, openQuestions, outstandingCommitments: outstanding.length, overdueCommitments: overdue, actions };
+  return { ready, readinessNote: note, findings, questionCount: questions.length, openQuestions, outstandingCommitments: outstanding.length, overdueCommitments: overdue, actions };
 }

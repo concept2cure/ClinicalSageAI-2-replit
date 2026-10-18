@@ -1,0 +1,11 @@
+{
+  "runtime": "Node22.23.3",
+  "command": "node node_modules/vitest/vitest.mjs run --config docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/independent-adversaries.config.mts",
+  "result": "16/16 desired-contract groups red; 2.58s; several fail at absent claimed stage/status before deeper assertion",
+  "scope": "PGlite actual service SQL and selected migrations, mocked extractor/loader; no independent DB-session race/RLS/OCR/filesystem proof",
+  "files": {
+    "independent-adversaries-baseline-source.mts": "fafb12229b5217893faa99be9eac5e324dd0c956f053ed3612322248d4e1f314",
+    "independent-adversaries.config.mts": "15d173570f49c260955242a12c9459ee5249e4c81d47c1825fa53f23a734be33",
+    "independent-adversaries-baseline.log": "d5926f3980faaadc2387da32eaf0346802b2b00058adbc112ed86dd9c4cfce72"
+  }
+}

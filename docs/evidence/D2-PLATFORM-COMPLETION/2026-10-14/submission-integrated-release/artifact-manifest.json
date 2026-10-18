@@ -1,0 +1,159 @@
+{
+  "qualification": "Exact raw phase bytes, separate failed and corrected source phases; current working tree is not yet a published commit. No compiler, lint or governed gate baseline changed. These full green gates precede three subsequent boundary audit repairs and the regional-template merge; they are preserved prior-source evidence, not final-source qualification. ESLint embedded source text is omitted in a labelled derived report; its complete original bytes remain private with their original hash. Browser/native evidence have their own scoped manifests.",
+  "records": [
+    {
+      "path": "typecheck-result.json.gz",
+      "phase": "first compiler; five errors atd6d8c19f4, before three narrow fixes and incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 500,
+      "decodedHexDigest": "4487184a11903222b23e9231f25ce93fba8ff2578abb119c033969c5b0fac687",
+      "archivedBytes": 349,
+      "archivedHexDigest": "81ff93e9eb1fb7a10dc9f1fa93b31cb3a7729006ba98866af3e385c915ca6a57"
+    },
+    {
+      "path": "typecheck-source-inputs-after.json.gz",
+      "phase": "first compiler; five errors atd6d8c19f4, before three narrow fixes and incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 1678108,
+      "decodedHexDigest": "1ed1ef2f03241c1813e5c039d05b5bcec5940d9de7f97f80823f22cb2a077f31",
+      "archivedBytes": 535514,
+      "archivedHexDigest": "303403bd1f1c688b2c11c5262168557fcb78f6461669f9e9a98679c989e73e15"
+    },
+    {
+      "path": "typecheck-source-inputs-before.json.gz",
+      "phase": "first compiler; five errors atd6d8c19f4, before three narrow fixes and incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 1678108,
+      "decodedHexDigest": "1ed1ef2f03241c1813e5c039d05b5bcec5940d9de7f97f80823f22cb2a077f31",
+      "archivedBytes": 535514,
+      "archivedHexDigest": "303403bd1f1c688b2c11c5262168557fcb78f6461669f9e9a98679c989e73e15"
+    },
+    {
+      "path": "typecheck-typecheck.txt.gz",
+      "phase": "first compiler; five errors atd6d8c19f4, before three narrow fixes and incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 1092,
+      "decodedHexDigest": "6b3f5296f31512edf8521bf5b0cbc2e9c4cf6d77fc2eab0a9cfffbf562cdc524",
+      "archivedBytes": 457,
+      "archivedHexDigest": "ee2a864aabd50e6e1a705fe50f6c8582ce7f9fed75faa6add7793b0cd5f4ea85"
+    },
+    {
+      "path": "type-followup-lint.json.gz",
+      "phase": "73 affected tests and lint after the three narrow fixes, before incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 17842,
+      "decodedHexDigest": "b92f845e5a45a29b114ee596986208854599c330559f42ff6d060a9e43fdd59c",
+      "archivedBytes": 5817,
+      "archivedHexDigest": "0152fea35518ec525a480e9e1d0ee4b84e1258f74b35e2fda2ee25d67878cd98"
+    },
+    {
+      "path": "type-followup-units.txt.gz",
+      "phase": "73 affected tests and lint after the three narrow fixes, before incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 19978,
+      "decodedHexDigest": "55d8922f1a941cdc4c5a72cae78a0f06cbc8adaaa0b43bf0a5ca3e838dca5303",
+      "archivedBytes": 3189,
+      "archivedHexDigest": "61835075d0b6a900e15db3bb5313a0b62665aafe9cb014b34fbc33af48db8d7d"
+    },
+    {
+      "path": "typecheck-corrected-after-claude-review-result.json.gz",
+      "phase": "full corrected compiler at9ba70078f after incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 500,
+      "decodedHexDigest": "293668f4e9d33af805e72658a7ec2e67b1f2f2b662fab86211f0df68ab3c788b",
+      "archivedBytes": 356,
+      "archivedHexDigest": "44b296883cfc5e2abfae480a109f1358f7b8c2c21c36d307b166dec125d6dbe3"
+    },
+    {
+      "path": "typecheck-corrected-after-claude-review-source-inputs-after.json.gz",
+      "phase": "full corrected compiler at9ba70078f after incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 1681017,
+      "decodedHexDigest": "e5bbc2f9dcdca9e5ec5ee78064c92f0c81b9ca14631091ea0a757e8f4db9ef5c",
+      "archivedBytes": 536347,
+      "archivedHexDigest": "e41160cf611669710bde7fb0e1d5d260e6204511639acaf09e152638cb653c5f"
+    },
+    {
+      "path": "typecheck-corrected-after-claude-review-source-inputs-before.json.gz",
+      "phase": "full corrected compiler at9ba70078f after incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 1681017,
+      "decodedHexDigest": "e5bbc2f9dcdca9e5ec5ee78064c92f0c81b9ca14631091ea0a757e8f4db9ef5c",
+      "archivedBytes": 536347,
+      "archivedHexDigest": "e41160cf611669710bde7fb0e1d5d260e6204511639acaf09e152638cb653c5f"
+    },
+    {
+      "path": "typecheck-corrected-after-claude-review-typecheck.txt.gz",
+      "phase": "full corrected compiler at9ba70078f after incoming review merge",
+      "encoding": "gzip",
+      "decodedBytes": 190,
+      "decodedHexDigest": "88280664dabf1fafb5def9e258b8903e421f6bff2b3c98305e66864d3f4053c7",
+      "archivedBytes": 137,
+      "archivedHexDigest": "fc152290c17258808e4a8a4633d4e0632649e762aee3071dcf3755af7197dc0c"
+    },
+    {
+      "path": "build-raw.txt.gz",
+      "phase": "actual production build at9ba70078f with corrected sources",
+      "encoding": "gzip",
+      "decodedBytes": 14493,
+      "decodedHexDigest": "0d30d696b919042c2644d9eae05efa5e891dac4ca77f4e8b5bf1e1160214e181",
+      "archivedBytes": 4183,
+      "archivedHexDigest": "1fbb5e097239444681b75932eeca86ac34656d22e4607f26a098fc2cf0ac61de"
+    },
+    {
+      "path": "build-result.json.gz",
+      "phase": "actual production build at9ba70078f with corrected sources",
+      "encoding": "gzip",
+      "decodedBytes": 275,
+      "decodedHexDigest": "7ab25f54c5688d9e18cc90ca037e8f61f1fd0a7fe1f3ae358c815861b00c292e",
+      "archivedBytes": 213,
+      "archivedHexDigest": "d337fc6fe1d1a68c6973118ec7f76cf749b1a54c1d3befdc3eb340ddb2da4d43"
+    },
+    {
+      "path": "lint-ratchet.txt.gz",
+      "phase": "global actual ESLint and unchanged warning ratchet at9ba70078f",
+      "encoding": "gzip",
+      "decodedBytes": 352,
+      "decodedHexDigest": "4f87fb9fad6e6cfb02f0d2b9e31c553c1fec3630a14e9e1231c58d3a195a1aa1",
+      "archivedBytes": 230,
+      "archivedHexDigest": "1b862caaf719f8344bc4dbed8f95a1d320b0dfb610ffe89f47e72f0d5b8b79a7"
+    },
+    {
+      "path": "lint-raw.txt.gz",
+      "phase": "global actual ESLint and unchanged warning ratchet at9ba70078f",
+      "encoding": "gzip",
+      "decodedBytes": 0,
+      "decodedHexDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedBytes": 20,
+      "archivedHexDigest": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "lint-report-derivation.json.gz",
+      "phase": "global actual ESLint and unchanged warning ratchet at9ba70078f",
+      "encoding": "gzip",
+      "decodedBytes": 635,
+      "decodedHexDigest": "7de2df7ab4dfa62fbdae6bdf0b1ba1566e99d5229b027ab11e9ca8a93345d33d",
+      "archivedBytes": 420,
+      "archivedHexDigest": "a262e66656996e6bbcb1d7be7aa8b2a21fc2a98f7e695617fd99f8a0d748f926"
+    },
+    {
+      "path": "lint-report-without-embedded-source.json.gz",
+      "phase": "global actual ESLint and unchanged warning ratchet at9ba70078f",
+      "encoding": "gzip",
+      "decodedBytes": 5134987,
+      "decodedHexDigest": "d8bb6d0ca794856dc98fdc1e4f34c1c38765b2a34a3fb4ca7ea416eef9af0c95",
+      "archivedBytes": 275950,
+      "archivedHexDigest": "6b7cf854115fcaa2c30864653c51a69f19183097f2c4c3049204cc9976b1afb1"
+    },
+    {
+      "path": "lint-result.json.gz",
+      "phase": "global actual ESLint and unchanged warning ratchet at9ba70078f",
+      "encoding": "gzip",
+      "decodedBytes": 1214,
+      "decodedHexDigest": "5f8b3ccc67ddceb8674d6d9a613868131104cf6458770dc28c41f9c26b3063e7",
+      "archivedBytes": 655,
+      "archivedHexDigest": "ebf4919c5cbde85628dbfbe7f25cd80108b329f1075756dd1dbcc49d0f656b0c"
+    }
+  ],
+  "packagingHead": "31ec977a619ebb380f8e06737b8692ab852e7d15"
+}

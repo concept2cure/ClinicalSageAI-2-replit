@@ -1,0 +1,29 @@
+# MUTATIONS C+D (reverted): checkedSource calls unavailable() (503) again; writeCatalogSuggestion no longer maps SOURCE_VERSION_CHANGED. npx vitest run server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts -t 'source-version truth'
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+AssertionError: expected { ok: false, …(3) } to match object { ok: false, …(1) }
+(2 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "code": "SOURCE_VERSION_CHANGED",
++   "code": "ANA_SOURCE_IDENTITY_UNAVAILABLE",
+    "ok": false,
+  }
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:245:20
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, …(1) }
+(5 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "ok": false,
+-   "refusal": StringContaining "has a newer version than the one you read",
++   "refusal": "This source is no longer eligible for catalog changes. Review its current source status. Nothing was saved.",
+  }
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:280:23
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 skipped (22)

@@ -11,6 +11,7 @@
  */
 import React, { useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 
 /** The server's answer for one source (server/services/vault/vault-data-room-filing.ts). */
 export type DataRoomFileItem =
@@ -182,7 +183,9 @@ export function useDataRoomFiling(projectId: string | null, onFiled: () => void)
 
 /** A source's checkbox. A filed source has nothing to file, so it has none. */
 export function RoomPick({ id, title, filed, filing }: { id: number; title: string; filed: boolean; filing: DataRoomFiling }) {
-  if (filed) return <span className="vd-dr-pick" aria-hidden="true" />;
+  // A role the filing route refuses selects nothing: there is nothing it could do with the selection.
+  const canWrite = useVaultCanWrite();
+  if (filed || !canWrite) return <span className="vd-dr-pick" aria-hidden="true" />;
   return (
     <input
       type="checkbox"
@@ -208,6 +211,8 @@ export function DataRoomFileBar({
 }) {
   const count = filing.selected.size;
   const over = count > DATA_ROOM_FILE_LIMIT;
+  const canWrite = useVaultCanWrite();
+  if (!canWrite) return <VaultViewOnly act="file Data Room sources into the Vault" testId="vault-data-room-file-view-only" />;
   return (
     <div className="vd-dr-file" data-testid="vault-data-room-file">
       <div className="vd-dr-file-acts">

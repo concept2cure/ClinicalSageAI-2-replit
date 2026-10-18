@@ -14,4 +14,3 @@
 
    It logs the detail against the request id and answers with a code, a sentence
    and that id — so the operator can still find the real error.
-

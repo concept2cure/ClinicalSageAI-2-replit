@@ -1,0 +1,37 @@
+# Reopen on revocation + one harness Shadow Review DDL — green, 2026-10-15T06:58:32Z, base a26e23e9b + this change
+
+ ✓ server/db/__tests__/shadow-review-pglite-ddl.contract.test.ts > SHADOW_REVIEW_PGLITE_DDL > names the deploy path’s Shadow Review migrations: the creator and both 2026-10-15 files
+ ✓ server/db/__tests__/shadow-review-pglite-ddl.contract.test.ts > SHADOW_REVIEW_PGLITE_DDL > has exactly the columns and types the deploy path builds
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > the migration > replays as a no-op (RULE 1: every deploy re-runs it)
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > the count this suite reads is the assessor's > the assessor counts through criticalsStandingOpen, and keeps no count of its own beside it
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > clears it from the count and from the dispatch verdict, with all else clear, and records who, when, how and why
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a later review never closes an earlier critical by itself > a later clean, completed run leaves the earlier critical open and the dispatch blocked
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties)
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > the same signature cannot disposition again, and the attempt does not void it
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > cannot freeze or waive, and a freeze or waiver signature cannot disposition
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a closure with no signature on record, or a status nothing signed, does not hold a critical closed
+ ✓ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > the act changes only the row it judged: a finding re-closed since is zero rows
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with no later review: "Accept risk" only, and the screen says when "Mark fixed" comes
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with a later completed review: both, and "Mark fixed" names that review
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a closed critical reads who closed it, how, when and why — and offers nothing
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a critical closed under a signature since revoked reads as open again, says why, and is offered as the server says
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > nothing is offered to the sequence author, and the screen says why
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an older server that sends no offer: nothing is offered and nothing is claimed
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > asks the precheck before the signature, signs the finding and the disposition, then closes that finding
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a refused precheck opens no signature and says the server's words
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a 409 SHADOW_FINDING_NOT_DISPOSABLE shows the server's words and no success
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > a 403 GOVERNED_REQUIRED shows the server's words and no success
+ ✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > an unconfirmed act says so and claims nothing
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+
+## Regression: every test file that reaches the dispatch assessor, a governed step, the disposition act or signature revocation (69 files)
+ Test Files  68 passed | 1 skipped (69)
+      Tests  909 passed | 2 skipped (911)

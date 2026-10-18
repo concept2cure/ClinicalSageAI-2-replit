@@ -1,0 +1,201 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-14T06:59:39.770Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:59:39.771Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-14T06:59:39.771Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ GCC Platform API routes mounted (eCTD, Vault, Signing, Site Intel, Labeling)
+✅ eCTD Co-Author (auth-gated) routes mounted successfully
+✅ eCTD Documents (auth-gated) routes mounted successfully
+✅ eCTD Compile (auth-gated) routes mounted successfully
+✅ eCTD Export (auth-gated) routes mounted successfully
+✅ CSR Jobs (auth-gated) routes mounted successfully
+✅ Project Charters (auth-gated) routes mounted successfully
+✅ eCTD Submission Agent (auth-gated) routes mounted successfully
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ eCTD Leaf Preflight route mounted (auth-gated): /api/ectd/validate/preflight
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ eCTD v4.0 + controlled-vocabulary API mounted (auth-gated): /api/ectd/v4/*, /api/ectd/controlled-vocab
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biotech Artifact Generator routes mounted (10 document types, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Submission Release Signing route mounted (Path-to-GA §C.11, auth-gated)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Project Sections API routes loaded
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Document Data Center API routes mounted (AI-powered 3-axis tagging)
+✅ Evidence routes mounted successfully
+✅ Evidence Search routes mounted successfully
+✅ Evidence Management routes mounted successfully
+✅ Evidence Fabric BFF routes mounted successfully
+✅ DOCX Factory BFF routes mounted successfully
+✅ Knowledge Base BFF routes mounted successfully
+✅ Predicate Intelligence BFF routes mounted successfully
+✅ Regulatory Graph routes mounted successfully
+✅ Change Propagation (governed fact change) routes mounted successfully
+✅ Standards Catalog routes mounted successfully
+✅ AI/ML PCCP routes mounted successfully
+✅ GSPR Catalog + Mappings routes mounted successfully
+✅ Post-Market Documents routes mounted successfully
+✅ Evidence Sufficiency routes mounted successfully
+✅ Q-Submissions (Pre-Sub / SIR / SRD) routes mounted successfully
+✅ CAPA + complaint + MDR / vigilance triage routes mounted successfully
+✅ IVD lifecycle calculators (analytical, software, change, registration) routes mounted successfully
+✅ IVD knowledge base (scientific / legal / regulatory intelligence corpus) routes mounted successfully
+✅ IVD assessment persistence (saved calculator results + generated documents) routes mounted successfully
+✅ Predicate Intelligence — ops probes routes mounted successfully
+✅ Tenant data export + attestation routes mounted successfully
+✅ AnA tool policy (per-tenant allow/deny) routes mounted successfully
+✅ AI placement policy (per-tenant residency / ZDR / substrate and vendor allow-lists) routes mounted successfully
+✅ Agency gateway accounts (platform or the organisation's own, per agency and environment) routes mounted successfully
+✅ AnA MDX context snapshot (UI consumption) routes mounted successfully
+✅ 510(k) live document preview (assembled view + Markdown) routes mounted successfully
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Programs gateway routes mounted (SE Matrix + Defense Packet)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CERV2 Sections API routes mounted (510(k) section tree navigation)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CERV2 Versions API routes mounted (version history & sessions)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biostatistics Platform routes mounted (7 capabilities)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ AnA Biostats Governed Documents route mounted (/api/ana-biostats/governed-documents)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ AnA Biostats Operating Function routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Trial Corpus routes mounted (benchmark, extract, ingest)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Workflow API routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ API Key Management routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Biologics Intelligence & Combination Product routes mounted
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Unified Cortex Query API initialized
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Cortex Unified API gateway mounted at /api/cortex
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:59:51.674Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:59:51.673Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:59:51.674Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+{
+  "timestamp": "2026-10-14T06:59:51.756Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Cortex Management API routes mounted (graph ops, quality, versioning)
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+✅ Folder management routes mounted
+✅ Document + Knowledge route family registered
+
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition 5583ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot supersede an effective document through POST /api/qms/documents/11/transition 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot revoke a supplier through POST /api/qms/suppliers/12/approval 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot disposition nonconforming product through POST /api/qms/nonconformances/13/disposition 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > an editor cannot either: the door is gone, not narrowed 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > none of its reads answer either 7ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14 1ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews 1ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot retire a document (already gated by 6582e3a3) through POST /api/mdx/qms/documents/11/retire 1ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review 5ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change 2ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  06:59:37
+   Duration  13.93s (transform 9.46s, setup 76ms, import 7.98s, tests 5.63s, environment 0ms)
+

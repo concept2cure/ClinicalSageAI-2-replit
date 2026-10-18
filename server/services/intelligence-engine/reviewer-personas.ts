@@ -517,7 +517,9 @@ const preclinicalToxicologist: ReviewerPersona = {
           'Nonclinical study data has not been loaded for this program. The preclinical reviewer cannot assess Module 4 adequacy until ctd_nonclinical_studies is populated for the program.',
           'nonclinical_intel_missing',
           'ICH M3(R2)',
-          'Ingest the preclinical study reports via /api/preclinical/ingest, or attach nonclinical facts to the simulator request.'
+          // 2026-10-15: also offered "attach nonclinical facts to the simulator
+          // request", which the simulator now sets aside.
+          'Ingest the preclinical study reports via /api/preclinical/ingest and run the simulation with ctdProgramId.'
         )
       );
       return out;

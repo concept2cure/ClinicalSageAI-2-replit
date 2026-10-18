@@ -41,10 +41,17 @@ export interface RiskInput {
 
 export async function addRiskTx(client: Queryable, orgId: number, userId: number, input: RiskInput): Promise<{ id: number; level: string }> {
   if (input.category && !CATEGORIES.includes(input.category)) throw new ProtocolRiskError('BAD_INPUT', `Invalid category "${input.category}".`);
-  if (input.likelihood && !LIKELIHOOD.includes(input.likelihood)) throw new ProtocolRiskError('BAD_INPUT', `Invalid likelihood "${input.likelihood}".`);
-  if (input.impact && !IMPACT.includes(input.impact)) throw new ProtocolRiskError('BAD_INPUT', `Invalid impact "${input.impact}".`);
-  const likelihood = (input.likelihood ?? 'possible') as RiskLikelihood;
-  const impact = (input.impact ?? 'moderate') as RiskImpact;
+  /* Both ratings are the assessor's (2026-10-15). A missing one was recorded
+     as 'possible' / 'moderate' — 3 × 3 = 9, banded 'high' — a risk level
+     nobody assessed, written into the register and its open-high count. */
+  if (!input.likelihood || !LIKELIHOOD.includes(input.likelihood)) {
+    throw new ProtocolRiskError('BAD_INPUT', input.likelihood ? `Invalid likelihood "${input.likelihood}".` : 'likelihood is required: the assessed likelihood of the risk.');
+  }
+  if (!input.impact || !IMPACT.includes(input.impact)) {
+    throw new ProtocolRiskError('BAD_INPUT', input.impact ? `Invalid impact "${input.impact}".` : 'impact is required: the assessed impact of the risk.');
+  }
+  const likelihood = input.likelihood as RiskLikelihood;
+  const impact = input.impact as RiskImpact;
   await requireProtocolForWriteTx(client, orgId, input.protocolDocumentId, { signedContent: false });
   const { rows } = await client.query(
     `INSERT INTO protocol_risks (organization_id, protocol_document_id, category, description, likelihood, impact, mitigation, owner, status, created_by)

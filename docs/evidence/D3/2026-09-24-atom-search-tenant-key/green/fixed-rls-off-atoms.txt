@@ -90,4 +90,3 @@ stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under t
       Tests  18 passed (18)
    Start at  21:18:42
    Duration  12.93s (transform 5.82s, setup 192ms, import 10.40s, tests 1.57s, environment 0ms)
-

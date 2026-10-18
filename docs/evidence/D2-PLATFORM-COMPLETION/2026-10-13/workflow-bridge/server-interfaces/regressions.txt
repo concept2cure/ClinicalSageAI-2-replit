@@ -1,0 +1,624 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:14:40.043Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > retains recorded machine composition identities without relabeling attribution or changing the partition 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > partitions the document by character, and the parts sum exactly 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts characters, not spans — the figure span counts would get wrong 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts overlapping citations once rather than over-crediting the document 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports the WEAKER claim where two kinds cover the same characters 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports stale citations as stale AND still sourced, never as unattributed 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > clips a span that reaches past the end of the current text 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports a document with no lineage as fully unattributed, not as covered 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > projects the spans for painting — clipped, ordered, and without the checksum 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > marks a span whose source moved as stale for the painter too 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports empty content as empty rather than dividing by zero 1ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:15:03.202Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:15:03.204Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:15:03.204Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 105ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:15:14.299Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 71a7c161-adf1-4100-87a8-d57c84a08230 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:15:14.316Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 71a7c161-adf1-4100-87a8-d57c84a08230 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 2054ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 179ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > admits an explicitly assigned private-project member and refuses revoked access to their saved import 81ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > uses the current membership role rather than a previously issued member token 9ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T22:15:14.924Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "e35e9a19-1f2e-4ca0-918a-cc8623914218",
+    "recorded": "869cac61b107",
+    "actual": "9375701c5719"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > keeps document ownership separate from current saved-binary source access after project revocation 157ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > rechecks a sharing revocation during conversion inside the real canonical creation transaction 82ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses source/project mismatches and foreign tenants without creating anything 16ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:15:15.065Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b2914ad9-4faf-4355-a0a2-83f56e9a0488 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:15:15.080Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b2914ad9-4faf-4355-a0a2-83f56e9a0488 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 22ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > requires a stated reason and an editor role 7ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '7516de8f-f41a-4386-84df-ea81863626ab',
+    '4c528d7e-8438-4916-bf87-c6aeeed07a7b',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'a81b1e65-9b81-4c4e-8cb8-dc1bedc3787a',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T22:15:15.203Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader 155ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 156ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 21ms
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T22:15:16.397Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:15:16.398Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T22:15:16.398Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T22:15:16.533Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a copy when a current fingerprint and unknown/template metadata are its only evidence 77ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a review verdict and an unchecked REVIEWER signature are not explicit adoption 63ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows unknown source after a current full-hash signed assigned adoption 48ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows template source after a current full-hash signed assigned adoption 33ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a signature and editable audit-shaped metadata without the chained act do not release 30ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > rejects the author adopting their own copy and an unassigned reviewer 27ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model null even after explicit adoption 176ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model a-model-name even after explicit adoption 24ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > immutable genesis and current source facts win over relabeling the displayed origin 13ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > moving copied machine prose to another section cannot launder it as a local human save 36ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > formatting and whitespace changes are not replacement by human words 22ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > punctuation-only edits do not clear a positive machine source hold 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption 57ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > fails closed when source access or fingerprint verification fails, including a previously adopted copy 19ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a title change invalidates adoption even when signature prose hash is unchanged 23ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a reopened review assignment invalidates its earlier signed adoption 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a signature with an invalid recomputable digest is not adoption 26ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > refuses a write whose present text no longer matches its live lineage 11ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > uncontrolled review copies retain the real qualification hold > renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses 581ms
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+{
+  "timestamp": "2026-10-13T22:15:27.955Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 95ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 40ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 17ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > refuses a same-organization saved import before assembling private text or creating a filing copy 19ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > allows the exact saved source for a currently assigned project member 29ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > refuses a revoked project member before reading the previously accessible body 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > refuses an assigned member whose original binary source version changed 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > refuses an assigned member whose organization membership was removed 17ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a saved binary import retains current source access when copied into coauthor filing > leaves an existing filing copy and its trail unchanged after source-project access is revoked 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 41ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 42ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 35ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 102ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 67ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 56ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 22ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 18ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 38ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 32ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 198ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a filing copy is written by an author, for a stated reason > without a reason it is refused, and nothing is taken or re-taken 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a filing copy is written by an author, for a stated reason > a viewer is refused, and nothing is taken 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a filing copy is written by an author, for a stated reason > a document with no source is not this write: no reason or author role is asked of it here 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 80ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 100ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused 25ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201) 18ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written) 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written) 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a section created later but placed first files where the seal placed it (order_index before created_at) 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 3ms
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts
+{
+  "timestamp": "2026-10-13T22:15:37.688Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > atomically captures upload + exact document/program source + both real chained audit records 285ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document undefined before bytes 17ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document bad-id before bytes 11ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document a3a0c2d3-acac-4f39-82d9-fe1c9de06808 before bytes 13ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > ignores browser admin claims and rejects an unassigned private-project member 18ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects readonly upload and immutable document despite project membership 15ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rechecks revocation after preflight on the actual capture transaction before filesystem writes 26ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rolls back all rows and compensates only the new bytes when the final chained audit INSERT fails 44ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > retains document-object permission as well as project access on every captured-image read 104ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > selected source IDs also retain the captured document object permission 69ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rechecks revoked authoring grants on the actual transaction, without trusting request roles/email 21ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > fails closed when document/project permission cannot be read before capture 7ms
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied
+{
+  "timestamp": "2026-10-13T22:15:44.791Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1791929744220_syce83",
+    "reason": "You do not have current access to the selected source."
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied
+{
+  "timestamp": "2026-10-13T22:15:44.803Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1791929744220_syce83",
+    "reason": "You do not have current access to this project."
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > refuses creator bytes after project revocation or actor suspension; ownership cannot override captured scope 61ms
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > permits an authorized current reviewer only after a real immutable insertion and audit-chain verification
+{
+  "timestamp": "2026-10-13T22:15:44.816Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 5841edb8-d970-4b9c-a410-d00321d20730 by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > a mutable/new reference inserted by another editor never grants access to someone else’s unbound image
+{
+  "timestamp": "2026-10-13T22:15:44.882Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 22b94cc3-a813-40bf-8c10-0b9ac21affc3 by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses tampered chain details, even if the mutable current document would display the image
+{
+  "timestamp": "2026-10-13T22:15:45.007Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 82db7038-a0ad-4475-98b0-8fbeb8cfe3b5 by a***@example.test",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied 599ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > permits an authorized current reviewer only after a real immutable insertion and audit-chain verification 68ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > a mutable/new reference inserted by another editor never grants access to someone else’s unbound image 15ms
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained sha256_chain proof, rather than trusting trail content alone
+{
+  "timestamp": "2026-10-13T22:15:45.053Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc ba588ded-9b5c-44b5-9ba2-503f47228ef7 by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained hmac_seal proof, rather than trusting trail content alone
+{
+  "timestamp": "2026-10-13T22:15:45.079Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc ead4c10a-3697-4852-ad7a-954523b2135b by a***@example.test",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses a retained uploader insertion whose chained proof is missing, while the uploader can repair through existing upload 106ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses tampered chain details, even if the mutable current document would display the image 49ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained sha256_chain proof, rather than trusting trail content alone 29ms
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > cannot use a valid legacy insertion to bypass another original historical source parent
+{
+  "timestamp": "2026-10-13T22:15:45.110Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc fcf97513-caf0-43de-a17e-d611f98c29eb by a***@example.test",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained hmac_seal proof, rather than trusting trail content alone 29ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > cannot use a valid legacy insertion to bypass another original historical source parent 16ms
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:15:52.271Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:15:52.273Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:15:52.273Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-10-13T22:15:55.881Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 2ec510c5-b4a3-4a90-bb3a-04590754b5b6 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+{
+  "timestamp": "2026-10-13T22:15:56.041Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a988e943-c8c7-401f-9ce3-2fbc0d36794c by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict 294ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+{
+  "timestamp": "2026-10-13T22:15:56.127Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc fe9dbf07-e869-4d98-b1a2-d98917120464 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each 158ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+{
+  "timestamp": "2026-10-13T22:15:56.209Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc c240a339-c31f-4c0b-8abe-0b1e129049ee by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before
+{
+  "timestamp": "2026-10-13T22:15:56.253Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a3edf31f-da25-4099-8218-60bdfb554295 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves 95ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not 59ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before 37ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-10-13T22:15:56.337Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc b3fab3e0-0c85-4ffa-8ce3-6ef3f4e0f438 by r***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-10-13T22:15:56.345Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-ATOMIC",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_1aa1b12c842c4642955757e1acc88a07,1,tasking,tasking-api,task.transition,task:TASK-ATOMIC,low,{\"from\":\"in-progress\",\"to\":\"completed\",\"cause\":\"review-verdict\",\"verdict\":\"changes_requested\",\"reviewId\":\"9cc84238-ac8c-49d1-9d68-e3cdc9eede43\",\"docId\":\"b3fab3e0-0c85-4ffa-8ce3-6ef3f4e0f438\",\"summary\":\"Completed by the reviewer’s verdict on the document\"},suggest,executed,2026-10-13T22:15:56.341Z,21,2026-10-13T22:15:56.341Z,21,Section 2.5.4 cites the wrong SAP version.,2026-10-13T22:15:56.341Z,583d9f29-262a-4436-b184-7f63c95bec1a,"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+Error submitting review: TaskAuditNotRecordedError: Task lineage was not recorded (WRITE_FAILED).
+    at auditTaskActionInTx (/workspace/ClinicalSageAI-2-replit/server/services/tasking/task-audit.ts:261:11)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.closure.record (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3519:33)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3610:7
+    at inTransaction (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:739:17)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3550:25 {
+  reason: 'WRITE_FAILED',
+  code: 'AUDIT_WRITE_FAILED'
+}
+{
+  "timestamp": "2026-10-13T22:15:56.371Z",
+  "level": "error",
+  "message": "[authoring-router] saving review failed",
+  "context": {
+    "err": "Task lineage was not recorded (WRITE_FAILED).",
+    "correlationId": null,
+    "code": "AUDIT_WRITE_FAILED"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-13T22:15:56.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a823de4a-52f0-4405-8b07-f5c8f5dd00c7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-13T22:15:56.431Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a823de4a-52f0-4405-8b07-f5c8f5dd00c7 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded 113ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-13T22:15:56.496Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a823de4a-52f0-4405-8b07-f5c8f5dd00c7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-13T22:15:56.530Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc aa94cb70-15d3-4eae-a3c2-fdcfa45c41c4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-13T22:15:56.573Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc aa94cb70-15d3-4eae-a3c2-fdcfa45c41c4 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-13T22:15:56.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc aa94cb70-15d3-4eae-a3c2-fdcfa45c41c4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments 134ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-13T22:15:56.635Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc dc9e0826-5685-4142-a2c6-8c8445dd1136 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-13T22:15:56.680Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc dc9e0826-5685-4142-a2c6-8c8445dd1136 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it 100ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-13T22:15:56.732Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc dc9e0826-5685-4142-a2c6-8c8445dd1136 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-13T22:15:56.773Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc dc9e0826-5685-4142-a2c6-8c8445dd1136 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second 176ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically 7ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document 10ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation 19ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > does not let a permission on one section authorize a different section 5ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary 7ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > blocks edits after the document becomes immutable 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > prevents revocation of the final active owner 4ms
+
+ Test Files  7 passed (7)
+      Tests  135 passed (135)
+   Start at  22:14:37
+   Duration  84.21s (transform 15.74s, setup 481ms, import 14.27s, tests 67.51s, environment 1ms)

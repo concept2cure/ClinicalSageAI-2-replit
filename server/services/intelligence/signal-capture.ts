@@ -31,6 +31,9 @@ import type { PatternMatch } from './pattern-registry.js';
 
 export type SignalType =
   | 'judgment' // From judgment framework evaluation
+  // A chat turn's supported-claim rate from the deterministic citation check.
+  // 2026-10-15: filed as 'judgment', so it entered the judgment trends.
+  | 'claim_check'
   | 'pattern_match' // From pattern registry scan
   | 'recommendation' // From recommendation engine
   | 'feedback' // From user feedback on AnA output
@@ -63,8 +66,17 @@ export interface IntelligenceSignal {
   readonly riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
   readonly reviewerSensitivity: 'likely_question' | 'possible_question' | 'unlikely_question';
   readonly defensibilityVerdict: JudgmentVerdict;
-  readonly score: number; // 0-100
-  readonly confidence: number; // 0-100
+  /**
+   * 0-100: a judgment model's score, a chat turn's supported-claim rate, a
+   * compliance scan's rule-count score, or — for a pattern match or a single
+   * compliance error — severityScore(), a severity convention, not a measurement.
+   */
+  readonly score: number;
+  /**
+   * 0-100, or null when nothing computed one. 2026-10-15: every source used to
+   * stamp a constant here (95, 90, 80, 70, 60, or a pattern's seed value).
+   */
+  readonly confidence: number | null;
   readonly action: string; // recommended action
   readonly patternIds: readonly string[]; // matched pattern IDs
   readonly metadata: Record<string, unknown>;
@@ -78,14 +90,17 @@ export interface SignalSummary {
   readonly totalSignals: number;
   readonly byType: Record<SignalType, number>;
   readonly byRiskLevel: Record<string, number>;
-  readonly averageScore: number;
-  readonly averageConfidence: number;
+  /** Mean score of the signals held (see IntelligenceSignal.score); null when none. */
+  readonly averageScore: number | null;
+  /** Mean over the signals that carry a computed confidence; null when none does. */
+  readonly averageConfidence: number | null;
   readonly topPatternIds: string[];
-  readonly overallTrend: 'improving' | 'stable' | 'declining';
+  /** Null when there are too few comparable judgment signals to tell. */
+  readonly overallTrend: 'improving' | 'stable' | 'declining' | null;
   readonly trendConfidence: TrendConfidence;
   readonly trendSampleSize: number;
-  readonly periodStart: string;
-  readonly periodEnd: string;
+  readonly periodStart: string | null;
+  readonly periodEnd: string | null;
 }
 
 export interface SignalQuery {
@@ -156,6 +171,8 @@ export function captureJudgmentSignals(
   const signals: IntelligenceSignal[] = [];
 
   for (const score of report.scores) {
+    // A model that gave no verdict files no signal: it has no score to file.
+    if (score.verdict === 'not_assessed' || score.score === null) continue;
     const signal = captureSignal({
       type: 'judgment',
       provenance,
@@ -170,8 +187,14 @@ export function captureJudgmentSignals(
       defensibilityVerdict: score.verdict,
       score: score.score,
       confidence: score.confidence,
+      // 2026-10-15: a failing model with no finding used to say "No immediate
+      // action required".
       action:
-        score.findings.length > 0 ? score.findings[0].remediation : 'No immediate action required',
+        score.findings.length > 0
+          ? score.findings[0].remediation
+          : score.verdict === 'pass'
+          ? 'No immediate action required'
+          : `${score.model} ${score.verdict} (score ${score.score}); no specific finding recorded`,
       patternIds: [],
       metadata: {
         model: score.model,
@@ -218,16 +241,9 @@ export function capturePatternSignals(
           ? 'likely_question'
           : 'possible_question',
       defensibilityVerdict: severityToVerdict(match.pattern.severity),
-      score:
-        100 -
-        (match.pattern.severity === 'critical'
-          ? 80
-          : match.pattern.severity === 'high'
-          ? 60
-          : match.pattern.severity === 'medium'
-          ? 30
-          : 10),
-      confidence: match.matchConfidence,
+      score: severityScore(match.pattern.severity),
+      // 2026-10-15: was match.matchConfidence, the pattern's seed value.
+      confidence: null,
       action: match.pattern.remediation,
       patternIds: [match.patternId],
       metadata: {
@@ -384,12 +400,16 @@ export function getSignalSummary(organizationId: number, projectId: number): Sig
   const patternCounts: Record<string, number> = {};
   let totalScore = 0;
   let totalConfidence = 0;
+  let confidenceCount = 0;
 
   for (const signal of signals) {
     byType[signal.type] = (byType[signal.type] ?? 0) + 1;
     byRiskLevel[signal.riskLevel] = (byRiskLevel[signal.riskLevel] ?? 0) + 1;
     totalScore += signal.score;
-    totalConfidence += signal.confidence;
+    if (signal.confidence !== null) {
+      totalConfidence += signal.confidence;
+      confidenceCount++;
+    }
 
     for (const pid of signal.patternIds) {
       patternCounts[pid] = (patternCounts[pid] ?? 0) + 1;
@@ -407,19 +427,20 @@ export function getSignalSummary(organizationId: number, projectId: number): Sig
   const judgmentSignals = signals.filter(s => s.type === 'judgment');
   const { trend, trendConfidence, sampleSize } = computeTrend(judgmentSignals);
 
+  // 2026-10-15: an empty store used to average to 0 over the period "now", and
+  // confidences nobody computed were averaged in. Absent is null.
   return {
     totalSignals: signals.length,
     byType: byType as Record<SignalType, number>,
     byRiskLevel,
-    averageScore: signals.length > 0 ? Math.round(totalScore / signals.length) : 0,
-    averageConfidence: signals.length > 0 ? Math.round(totalConfidence / signals.length) : 0,
+    averageScore: signals.length > 0 ? Math.round(totalScore / signals.length) : null,
+    averageConfidence: confidenceCount > 0 ? Math.round(totalConfidence / confidenceCount) : null,
     topPatternIds,
     overallTrend: trend,
     trendConfidence,
     trendSampleSize: sampleSize,
-    periodStart: signals.length > 0 ? signals[0].createdAt : new Date().toISOString(),
-    periodEnd:
-      signals.length > 0 ? signals[signals.length - 1].createdAt : new Date().toISOString(),
+    periodStart: signals.length > 0 ? signals[0].createdAt : null,
+    periodEnd: signals.length > 0 ? signals[signals.length - 1].createdAt : null,
   };
 }
 
@@ -517,8 +538,10 @@ export async function persistSignals(
       }),
       sourceDocumentName: runId,
       sourceDocumentType: 'system',
-      confidenceScore: 0.95,
-      importanceLevel: summary.averageScore < 50 ? 'high' : 'medium',
+      // 2026-10-15: was 0.95, a confidence no step computed for this summary.
+      confidenceScore: null,
+      importanceLevel:
+        summary.averageScore !== null && summary.averageScore < 50 ? 'high' : 'medium',
       extractedBy: 'system',
     });
 
@@ -544,8 +567,10 @@ export async function persistSignals(
 // TREND COMPUTATION — Grounded, disciplined
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 2026-10-15: every "cannot tell" branch below used to answer trend 'stable'.
+// Stable is a finding (two halves within the threshold); too little data is not.
 function computeTrend(signals: IntelligenceSignal[]): {
-  trend: 'improving' | 'stable' | 'declining';
+  trend: 'improving' | 'stable' | 'declining' | null;
   trendConfidence: TrendConfidence;
   sampleSize: number;
 } {
@@ -553,7 +578,7 @@ function computeTrend(signals: IntelligenceSignal[]): {
 
   // Not enough data — don't pretend to know
   if (sampleSize < MIN_TREND_SAMPLE_SIZE) {
-    return { trend: 'stable', trendConfidence: 'insufficient', sampleSize };
+    return { trend: null, trendConfidence: 'insufficient', sampleSize };
   }
 
   // Split into recent half and older half
@@ -566,7 +591,7 @@ function computeTrend(signals: IntelligenceSignal[]): {
     olderHalf.length < MIN_TREND_COMPARISON_SIZE ||
     recentHalf.length < MIN_TREND_COMPARISON_SIZE
   ) {
-    return { trend: 'stable', trendConfidence: 'insufficient', sampleSize };
+    return { trend: null, trendConfidence: 'insufficient', sampleSize };
   }
 
   // Only compare signals produced by the same framework version (like-for-like)
@@ -593,7 +618,7 @@ function computeTrend(signals: IntelligenceSignal[]): {
 
   // Can't compute if either side is empty after version filtering
   if (recentAvg === null || olderAvg === null) {
-    return { trend: 'stable', trendConfidence: 'low', sampleSize };
+    return { trend: null, trendConfidence: 'insufficient', sampleSize };
   }
 
   const delta = recentAvg - olderAvg;
@@ -618,7 +643,9 @@ function computeTrend(signals: IntelligenceSignal[]): {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function verdictToRisk(verdict: JudgmentVerdict): IntelligenceSignal['riskLevel'] {
+function verdictToRisk(
+  verdict: Exclude<JudgmentVerdict, 'not_assessed'>,
+): IntelligenceSignal['riskLevel'] {
   switch (verdict) {
     case 'fail':
       return 'critical';
@@ -633,13 +660,25 @@ function verdictToRisk(verdict: JudgmentVerdict): IntelligenceSignal['riskLevel'
   }
 }
 
+/**
+ * The score a pattern match or a single compliance error is filed under: its
+ * severity restated on the 0-100 scale (critical 20, high 40, medium 70,
+ * low 90). A convention so such signals sort with scored ones — not a measurement.
+ */
+export function severityScore(severity: 'critical' | 'high' | 'medium' | 'low'): number {
+  const penalty = { critical: 80, high: 60, medium: 30, low: 10 }[severity];
+  return 100 - penalty;
+}
+
 function scoreToSensitivity(score: number): IntelligenceSignal['reviewerSensitivity'] {
   if (score < 40) return 'likely_question';
   if (score < 70) return 'possible_question';
   return 'unlikely_question';
 }
 
-function severityToVerdict(severity: 'critical' | 'high' | 'medium' | 'low'): JudgmentVerdict {
+function severityToVerdict(
+  severity: 'critical' | 'high' | 'medium' | 'low',
+): Exclude<JudgmentVerdict, 'not_assessed'> {
   switch (severity) {
     case 'critical':
       return 'fail';

@@ -14,17 +14,21 @@ describe('assessDesignationEligibility — FDA orphan', () => {
     expect(r.designations).toContain('FDA Orphan Drug Designation (ODD)');
   });
 
-  it('usPrevalence 500000 → not eligible', () => {
+  // Until 2026-10-15 these two pinned eligible:false on the prevalence prong alone;
+  // the alternative cost-recovery prong is not assessed, so the screen is not either.
+  it('usPrevalence 500000 → prevalence prong not met; not assessed (cost-recovery prong)', () => {
     const r = assessDesignationEligibility({ market: 'FDA', usPrevalence: 500000 });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
+    expect(r.orphan.notAssessedCriteria).toHaveLength(1);
     expect(r.designations).not.toContain('FDA Orphan Drug Designation (ODD)');
     // cost-recovery prong surfaced as a note
     expect(r.notes.some((n) => /cost-recovery/i.test(n))).toBe(true);
   });
 
-  it('boundary: exactly 200000 → not eligible (must be fewer than)', () => {
+  it('boundary: exactly 200000 → prevalence prong not met (must be fewer than); not assessed', () => {
     const r = assessDesignationEligibility({ market: 'FDA', usPrevalence: 200000 });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
+    expect(r.orphan.rationale).toMatch(/not fewer than 200,000/);
   });
 });
 
@@ -50,25 +54,27 @@ describe('assessDesignationEligibility — EMA orphan', () => {
     expect(r.orphan.eligible).toBe(true);
   });
 
-  it('euPrevalencePer10k 4 but not serious → not eligible', () => {
+  // Until 2026-10-15 these two pinned eligible:false on the prevalence limb alone;
+  // Art 3(1)(a)'s insufficient-return limb is not assessed, so the screen is not either.
+  it('euPrevalencePer10k 4 but not serious → prevalence limb not met; not assessed', () => {
     const r = assessDesignationEligibility({
       market: 'EMA',
       euPrevalencePer10k: 4,
       seriousOrLifeThreatening: false,
       noSatisfactoryTreatment: true,
     });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/not life-threatening/i);
   });
 
-  it('euPrevalencePer10k 6 (over threshold) → not eligible', () => {
+  it('euPrevalencePer10k 6 (over threshold) → prevalence limb not met; not assessed', () => {
     const r = assessDesignationEligibility({
       market: 'EMA',
       euPrevalencePer10k: 6,
       seriousOrLifeThreatening: true,
       noSatisfactoryTreatment: true,
     });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/exceeds 5/i);
   });
 
@@ -84,11 +90,13 @@ describe('assessDesignationEligibility — EMA orphan', () => {
 });
 
 describe('assessDesignationEligibility — PMDA orphan', () => {
-  it('jpPrevalence 40000 → eligible', () => {
+  // Until 2026-10-15 this pinned eligible:true on prevalence alone, with a note to
+  // confirm the medical-need criterion "qualitatively"; the record's other criteria have no input.
+  it('jpPrevalence 40000 → prevalence criterion met; not assessed (medical need, development plan)', () => {
     const r = assessDesignationEligibility({ market: 'PMDA', jpPrevalence: 40000 });
-    expect(r.orphan.eligible).toBe(true);
-    expect(r.designations).toContain('PMDA / MHLW Orphan Drug Designation');
-    expect(r.notes.some((n) => /high medical need/i.test(n))).toBe(true);
+    expect(r.orphan.eligible).toBe('not_assessed');
+    expect(r.designations).not.toContain('PMDA / MHLW Orphan Drug Designation');
+    expect(r.orphan.notAssessedCriteria.some((c) => /high medical need/i.test(c))).toBe(true);
   });
 
   it('jpPrevalence 60000 → not eligible', () => {
@@ -118,22 +126,24 @@ describe('assessDesignationEligibility — pediatric', () => {
   });
 });
 
+// Until 2026-10-15 these pinned eligible:false: a "no" for a screen that was never run.
 describe('assessDesignationEligibility — insufficient inputs', () => {
-  it('FDA missing usPrevalence → orphan.eligible false with "not supplied" rationale', () => {
+  it('FDA missing usPrevalence → orphan.eligible not_assessed with "not supplied" rationale', () => {
     const r = assessDesignationEligibility({ market: 'FDA' });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/not supplied/i);
   });
 
-  it('EMA missing euPrevalencePer10k → orphan.eligible false with "not supplied" rationale', () => {
+  it('EMA missing euPrevalencePer10k → orphan.eligible not_assessed with "not supplied" rationale', () => {
     const r = assessDesignationEligibility({ market: 'EMA', seriousOrLifeThreatening: true });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/not supplied/i);
+    expect(r.orphan.missing).toContain('euPrevalencePer10k');
   });
 
-  it('PMDA missing jpPrevalence → orphan.eligible false with "not supplied" rationale', () => {
+  it('PMDA missing jpPrevalence → orphan.eligible not_assessed with "not supplied" rationale', () => {
     const r = assessDesignationEligibility({ market: 'PMDA' });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/not supplied/i);
   });
 });

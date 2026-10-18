@@ -181,6 +181,10 @@
 .rl-tab:hover{ border-color:var(--accent-200); color:var(--accent-200); }
 .rl-tab.on{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
 .rl-tab svg{ width:13px; height:13px; }
+.rl-tab:focus-visible, .ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.ro-port-open{ text-align:left; font:inherit; cursor:pointer; }
+.ro-port-open:hover{ border-color:var(--accent-200); }
+.rl-pagination{ display:flex; gap:12px; align-items:center; margin-top:16px; font-size:12px; color:var(--text-300); }
 
 .rl{ max-width:980px; }
 .rl-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin:0 0 16px; }

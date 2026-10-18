@@ -38,7 +38,10 @@ export const DESIGN_ADME_PROGRAM: AnaTool = {
     'Assemble the overall NONCLINICAL ADME study package (absorption, distribution, ' +
     'metabolism, excretion) appropriate to a drug modality, development stage, and route ' +
     'of administration, with each study annotated by necessity and timing relative to ' +
-    'first-in-human (FIH) dosing. Returns the study list (in-vitro permeability, metabolic ' +
+    'first-in-human (FIH) dosing. Nothing unstated is assumed: without modality, ' +
+    'developmentStage and route it asks for them; a study whose grade turns on an unstated ' +
+    'input is "conditional" and its conditionalOn names that input — report it so, never as ' +
+    'required or recommended. Returns the study list (in-vitro permeability, metabolic ' +
     'stability, metabolite ID, reaction phenotyping, CYP inhibition/induction, transporter ' +
     'substrate/inhibition, protein binding, blood-to-plasma, QWBA tissue distribution, animal ' +
     'and human mass balance, toxicokinetics), an FIH readiness checklist, modality-specific ' +
@@ -100,8 +103,10 @@ export const DESIGN_ADME_PROGRAM: AnaTool = {
       isNewChemicalEntity: {
         type: 'boolean',
         description:
-          'Whether the program is for a new chemical entity (NCE). Defaults to true for ' +
-          'small_molecule. NCEs require the full in-vitro metabolism and DDI package before FIH.',
+          'Whether the program is for a new chemical entity (NCE). Not assumed when unstated: the ' +
+          'FIH checklist then says NCE status was not stated. NCEs require the full in-vitro ' +
+          'metabolism and DDI package before FIH. The human mass-balance study is required of an ' +
+          'NCE only: unstated or false, it is graded "conditional" and its conditionalOn says what decides it.',
       },
       halfLife_hours: {
         type: 'number',
@@ -110,16 +115,17 @@ export const DESIGN_ADME_PROGRAM: AnaTool = {
       metabolicClearanceExpected: {
         type: 'boolean',
         description:
-          'Whether metabolism is expected to be the major clearance route. Defaults to true ' +
-          'for small molecules. When false, reaction-phenotyping depth is reduced and ' +
-          'excretion/transporter studies gain importance.',
+          'Whether metabolism is expected to be the major clearance route. Not assumed when ' +
+          'unstated: reaction phenotyping is then graded "conditional". When false, ' +
+          'reaction-phenotyping depth is reduced and excretion/transporter studies gain importance.',
       },
       ddiPotentialExpected: {
         type: 'boolean',
         description:
           'Whether the molecule is expected to be a CYP/transporter victim or perpetrator. ' +
           'When true, the in-vitro DDI package (inhibition/induction/transporter inhibition) ' +
-          'is elevated to required and front-loaded.',
+          'is elevated to required and front-loaded. Not assumed when unstated: transporter ' +
+          'inhibition is then graded "conditional".',
       },
       chronicDosing: {
         type: 'boolean',
@@ -184,7 +190,9 @@ export const DESIGN_MASS_BALANCE_STUDY: AnaTool = {
           'intrathecal',
           'other',
         ],
-        description: 'Route of administration for the radiolabeled dose. Default oral.',
+        description:
+          'Route of administration for the radiolabeled dose. Not assumed when unstated: the ' +
+          'design says the route was not stated (the dose normally follows the intended clinical route).',
       },
       halfLife_hours: {
         type: 'number',
@@ -225,12 +233,15 @@ export const ASSESS_METABOLITE_SAFETY: AnaTool = {
   name: 'assess_metabolite_safety',
   description:
     'Perform a Metabolites-in-Safety-Testing (MIST) assessment per ICH M3(R2) and the FDA ' +
-    'Safety Testing of Drug Metabolites guidance (2020). For each human metabolite, the ' +
+    'Safety Testing of Drug Metabolites guidance (2020). A metabolite whose exposure share is not ' +
+    'stated is not_assessed (exceedsThreshold null), and qualificationTriggered is null when none ' +
+    'triggers it but one was not assessed or none were given: report that as not assessed, never ' +
+    'as below the threshold. For each human metabolite, the ' +
     'engine determines whether it exceeds 10% of total drug-related exposure, whether animal ' +
     '(tox-species) exposure covers human exposure, and whether the metabolite is ' +
     'disproportionate (major in humans but not covered by animals) or human-unique. Returns ' +
     'a per-metabolite verdict (no_action / monitor / qualification_needed / ' +
-    'human_unique_qualification), the lists of disproportionate-or-major and human-unique ' +
+    'human_unique_qualification / not_assessed), the lists of disproportionate-or-major and human-unique ' +
     'metabolites, an overall qualification-triggered flag, and recommended actions ' +
     '(synthesize and dose the metabolite, select an alternate tox species, etc.). Flags ' +
     'structural alerts and pharmacologically active metabolites. Citations: FDA MIST (2020), ' +
@@ -374,7 +385,8 @@ export const DESIGN_TOXICOKINETICS: AnaTool = {
         type: 'boolean',
         description:
           'Whether a satellite (TK) group is used so that TK blood sampling does not ' +
-          'compromise main-study toxicology endpoints. Common in rodents.',
+          'compromise main-study toxicology endpoints. Common in rodents. Unstated, the design ' +
+          'says so rather than assuming main-study sampling.',
       },
       anticipatedHumanAUC: {
         type: 'number',
@@ -468,8 +480,8 @@ export const DESIGN_REACTION_PHENOTYPING: AnaTool = {
       metabolismMajorClearance: {
         type: 'boolean',
         description:
-          'Whether metabolism is the major clearance route. Default true. When false, ' +
-          'phenotyping is limited in scope.',
+          'Whether metabolism is the major clearance route; when true, phenotyping is warranted. ' +
+          'Not assumed when unstated: a stated fractionMetabolic below 0.25 then limits phenotyping in scope.',
       },
       fractionMetabolic: {
         type: 'number',
@@ -579,8 +591,9 @@ export const ASSESS_PROTEIN_BINDING: AnaTool = {
         type: 'string',
         enum: ['equilibrium_dialysis', 'ultrafiltration', 'ultracentrifugation', 'other'],
         description:
-          'Method used / planned. Default equilibrium_dialysis (the reference method). Other ' +
-          'methods trigger non-specific-binding correction guidance.',
+          'Method used / planned. Unstated, the result says the method was not stated (method null) ' +
+          'rather than assuming equilibrium dialysis, the reference method. Other methods trigger ' +
+          'non-specific-binding correction guidance.',
       },
       concentrationDependentSuspected: {
         type: 'boolean',

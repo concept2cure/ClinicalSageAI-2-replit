@@ -621,8 +621,7 @@ const RECORD_HISTORY_SQL = `
     ) prev ON TRUE
     LEFT JOIN LATERAL public.actor_name(a.actor_id) u ON TRUE
    WHERE a.tenant_id = $1
-     AND a.table_name = $2
-     AND a.record_id = ANY($3::text[])
+     AND (a.table_name, a.record_id) IN (SELECT t, r FROM unnest($2::text[], $3::text[]) AS k(t, r))
      AND a.sha256_chain IS NOT NULL
    ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
    LIMIT $4`;
@@ -635,13 +634,16 @@ export interface RecordAuditHistory {
 export async function readRecordAuditHistory(
   client: Pick<PoolClient, 'query'>,
   orgId: number,
-  /** One record, or several read as one history: a Vault document's versions (VR-09). */
-  record: { tableName: string; recordId: string | string[]; limit?: number },
+  /** One record, or several read as one history: a Vault document's versions (VR-09).
+   *  `also` adds records of other kinds to the same history, ordered and cut in
+   *  the one query: a submission with every leaf placed in it (2026-10-15). */
+  record: { tableName: string; recordId: string | string[]; limit?: number; also?: Array<{ tableName: string; recordId: string[] }> },
   verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
 ): Promise<RecordAuditHistory> {
   const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
-  const ids = Array.isArray(record.recordId) ? record.recordId : [record.recordId];
-  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, ids, limit]);
+  const keys = [{ tableName: record.tableName, recordId: Array.isArray(record.recordId) ? record.recordId : [record.recordId] }, ...(record.also ?? [])]
+    .flatMap((k) => k.recordId.map((id) => [k.tableName, id] as const));
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, keys.map((k) => k[0]), keys.map((k) => k[1]), limit]);
   const signatures = await linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]);
   const data = rows.rows.map((r: Record<string, unknown>) => ({
     ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),

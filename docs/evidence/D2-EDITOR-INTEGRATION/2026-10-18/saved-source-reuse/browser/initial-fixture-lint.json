@@ -1,0 +1,13 @@
+{
+  "status": "fixture-error",
+  "command": "eslint probe.tsx server.mjs mock-api.mjs browser.mjs baseline-entry.mjs --max-warnings 0",
+  "errors": [
+    "react-hooks/rules-of-hooks: helper named useSaved was treated as a React Hook"
+  ],
+  "warnings": [
+    "browser.mjs unused DOC and PROGRAM imports",
+    "browser.mjs runCase exceeded max-lines-per-function118/100",
+    "mock-api.mjs documentRead complexity16/15"
+  ],
+  "resolution": "Rename the non-hook interaction helper, extract review and synthetic saved-read helpers, and assert exact GET scope using the imports. Fixture changes only; rerun strict lint."
+}

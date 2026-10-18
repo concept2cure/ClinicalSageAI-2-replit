@@ -1,0 +1,176 @@
+{
+  "recordedAt": "2026-10-17T22:25:43.496573+00:00",
+  "freezeCommit": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+  "pgliteActualLifecycleCasesPassed": 10,
+  "pgliteSourceBindings": 19,
+  "postgresReservationCasesPassed": 6,
+  "postgresSourceBindings": 10,
+  "postgresIndependentBlockingBarriers": 6,
+  "finalBothSourcesUnchangedDuringRuns": true,
+  "currentSourceHashes": {
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts": "de77a1df3d92b2a7133042033f1848f37c2bfbc47a3dc91333b80c4e55eae84c",
+    "server/routes/authoring.router.ts": "a607033c88abb69467e795c1fc15a57fab2e459619306be2f61271616eef0064",
+    "server/services/authoring/authoring-documents.ts": "9628d04e3f1cba9e4f1f8a72e4258d41a2deca24a49a3ed62f4776fb10557354",
+    "server/services/authoring/authoring-evidence.ts": "ad6d667a5e6713eb7928f14b96c389fcf3d7582383d5827b1a319e5aa22892c2",
+    "server/services/authoring/authoring-export.ts": "6147431f4647f7f11f12b8059e4511a030bec00e4140dd2b4507cf652bca48d8",
+    "server/services/vault/document-catalog.service.ts": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+    "server/services/vault/document-catalog-document.ts": "c04a8b14a406550c8ca9083d75a66c80bd54c18367973e95470b7e049405828b",
+    "server/services/vault/document-catalog-actor-access.ts": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d",
+    "server/services/vault/document-catalog-admission.ts": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60",
+    "server/services/authoring/authoring-program-access.ts": "59bbc899748879e16ce2993d244e681e6a75217f8d6eee375c34059bf6ffa452",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "server/services/document-data-disposition/types.ts": "11a42a71e746d697f24abcc27e134c2b1be3c6392caebf091ca1ca80e7fcc6a4",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts": "200a29b5df74bec96a62643b375bd674e6bebca4372262a5bd9ff3db4bac8e18",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts": "e586dc552fd5f77ab78da2515d8ee6ac90dad3c3d6d47e65b9b0cb7ea88b8816",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2"
+  },
+  "currentSourcesMatchBindings": true,
+  "runtimeRole": "app_service NOSUPERUSER NOBYPASSRLS NOCREATEROLE",
+  "ownedContainerCleanupVerified": true,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "historicalCounterfactual": {
+    "expectedFailures": 5,
+    "passingControl": 1,
+    "bindingsStillCurrent": 9,
+    "bindingsChangedByMerge": {
+      "server/services/authoring/authoring-from-draft.ts": {
+        "historical": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+        "current": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0"
+      }
+    },
+    "interpretation": "The historical lock-omission control remains evidence against the same unchanged helper and native fixture; the merged authoring changeReason option is outside that fixture invocation. Final positive run is freshly bound to all ten current sources."
+  },
+  "limits": "PGlite actual HTTP save/export lifecycle and native independently observed helper reservations are separate scopes. Counts overlap other combined runs. No deployed RLS, production capacity, provider delivery, scientific approval, audit-HMAC qualification or agency acceptance claim.",
+  "files": {
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-counterfactual-fixture-state.json": {
+      "sha256": "df473be3df5cff580f50374e3e6f14d0a3fbde3144316b1d06886a5139d807ed",
+      "bytes": 1411
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-counterfactual-postgres-observations.json": {
+      "sha256": "eaf6ab62134e26b12320b996a48bc09b05c1ab2b61cebc8b24521dad561a454a",
+      "bytes": 4039
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-fixture-state.json": {
+      "sha256": "b57580a50f2d0517897f3aa7905a17055be9f57921f6fe4e9f7a46b32ce9019a",
+      "bytes": 1412
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-lint-final.json": {
+      "sha256": "ac0997672c6ec95fbeea6c46c747d5a229dc80a51df4bcb634c1043b384c0c4a",
+      "bytes": 570
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-lint.json": {
+      "sha256": "b50ea7c4e0b10448eae6ce12c96396d92ec8274ed1452bd192d79347c2b2de33",
+      "bytes": 16575
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-manifest.json": {
+      "sha256": "715738fc1093b8f2fa6dd8d44f7edc98e884cf89f9afdd5a10c9f0e395924813",
+      "bytes": 6086
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-source-after.json": {
+      "sha256": "6999e404e33be61b55d3fa8091a39251aef735af048c07482fc37d0e5846be63",
+      "bytes": 2281
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final-source-before.json": {
+      "sha256": "6999e404e33be61b55d3fa8091a39251aef735af048c07482fc37d0e5846be63",
+      "bytes": 2281
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-final.txt": {
+      "sha256": "50c9df977436c7cd30a4aa989f66c334f1aac2292982d6f7e1e19f0b3db3bdcc",
+      "bytes": 10371
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-first-frozen-run.txt": {
+      "sha256": "7fa6ff695d89fb6f2f2edbbf2462134477c06a5e155f591bd04b20aa5cb16dcf",
+      "bytes": 10373
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-first-incomplete-owner-edit.txt": {
+      "sha256": "11c00ce3c1a07347a5fab4ef8dcd879bb9b9977e596f3a534d17307a90cb8fe6",
+      "bytes": 9997
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-manifest.json": {
+      "sha256": "e31f98d91211455f0a4d1c38fee938fb6ebe9a9a26ea02572bce14b2330231b6",
+      "bytes": 532
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-source-after.json": {
+      "sha256": "6999e404e33be61b55d3fa8091a39251aef735af048c07482fc37d0e5846be63",
+      "bytes": 2281
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress-source-before.json": {
+      "sha256": "f80fd527cf9a29235779afbd7eb74547dcd0e682bb7695d981ec1d40f4371a18",
+      "bytes": 2281
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-merge-in-progress.txt": {
+      "sha256": "b8493759324fb5537aa05468639b2d42e76066faa52ae76900c2cdb645d68c8c",
+      "bytes": 10370
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-refactor-equivalence.json": {
+      "sha256": "395d8016e9f1676c8df278e86adfe28c1bcf19cf49eee1a0d40ee097aeb5352a",
+      "bytes": 381
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-refactor-unbound-run.txt": {
+      "sha256": "0f18a7627dc0a04899d52e23daf956a13dec2a9d0902063736427c4615ff2eee",
+      "bytes": 10370
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-reuse-check.json": {
+      "sha256": "4b7caad22104cb95d6f1bfd48a91dc99aa792e165af74541ffc453b2b61da4f2",
+      "bytes": 2042
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-source-after.json": {
+      "sha256": "4b0067cf11bb55fc85d188fe738fd2b5a2720ea7e17d7f9a4ef339fac6802349",
+      "bytes": 1871
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-pglite-source-before.json": {
+      "sha256": "4b0067cf11bb55fc85d188fe738fd2b5a2720ea7e17d7f9a4ef339fac6802349",
+      "bytes": 1871
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-counterfactual.txt": {
+      "sha256": "669ec1589f792db045ecbc434c8bd317c2dd32b0863dffe4b784a241cae0d7d5",
+      "bytes": 7158
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-final.txt": {
+      "sha256": "2315e3adbe4cd23aa84cc955975e07bc55dc96596003eebb99c103c389c56263",
+      "bytes": 2644
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-observations.json": {
+      "sha256": "1f5b1dd4d376e3568c9586e1c6235facc83f404698d18303346864aeeb737ecc",
+      "bytes": 8683
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres-premerge.txt": {
+      "sha256": "3071bf6ba4f9172aa3cd8fa8a7d29ba53f12b60ca3c8c10e0b8c7c54ec55b697",
+      "bytes": 2644
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts": {
+      "sha256": "e586dc552fd5f77ab78da2515d8ee6ac90dad3c3d6d47e65b9b0cb7ea88b8816",
+      "bytes": 506
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts": {
+      "sha256": "200a29b5df74bec96a62643b375bd674e6bebca4372262a5bd9ff3db4bac8e18",
+      "bytes": 12912
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-premerge-fixture-state.json": {
+      "sha256": "4bf52afac1dbb820e68e9372461f735f8f2b82e39425b7d99435619e1783b2c4",
+      "bytes": 1412
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-premerge-postgres-observations.json": {
+      "sha256": "08d20d5bc5aaa36c9ad5199dc584f9fe9228a5a745eacd4e387a0e95431e89fb",
+      "bytes": 8683
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-qualification.md": {
+      "sha256": "87b866bc703e2d8b6ec0ebfcbff4655a48c6e0e78c113861c2af903344b6df54",
+      "bytes": 5800
+    },
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": {
+      "sha256": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2",
+      "bytes": 7094
+    }
+  }
+}

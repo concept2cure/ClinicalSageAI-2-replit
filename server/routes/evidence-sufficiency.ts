@@ -59,9 +59,13 @@ router.post(
     if (!body.profile || typeof body.profile !== 'object') {
       return res.status(422).json({ error: 'profile (DeviceProfileFlags) is required' });
     }
+    // 2026-10-15: an assessment with no user was recorded as triggered by
+    // 'system'; who ran it is now the signed-in user, or it is refused.
     const userIdRaw = (req as any).user?.id;
-    const triggeredBy =
-      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
+    if (userIdRaw == null || userIdRaw === '') {
+      return res.status(401).json({ error: 'A signed-in user is required to record an assessment' });
+    }
+    const triggeredBy = String(userIdRaw);
     try {
       const result = await assessSufficiency({
         organizationId: orgId,

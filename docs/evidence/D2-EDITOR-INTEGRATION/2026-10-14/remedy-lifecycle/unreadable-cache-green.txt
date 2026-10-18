@@ -1,0 +1,19 @@
+✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > reopens a completely rejected application and gives the explicit retry another receipt 238ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps a partial rejection pending until every application mark is gone 100ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps any accepted part settled after the remaining part is rejected 83ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > retains acceptance after all proposal marks disappear 71ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > does not treat a command capability check as an actual acceptance 76ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after accept 67ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after reject 73ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > notifies content and decision subscribers and honors unsubscribe 84ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > does not infer absence before hydration, then notifies readiness on the clean baseline 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > observes a known application when the device cache cannot be read 80ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > waits for explicit Discard before an older-instance receipt becomes absent 193ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > cannot infer rejection from a restored modified draft without its marks 158ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads restored application marks as pending and complete rejection as absent 159ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads application marks from a saved redline after remount without enabling a duplicate 95ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > keeps source-mode and destroyed editor receipts unavailable 72ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  06:40:38
+   Duration  3.35s (transform 602ms, setup 154ms, import 902ms, tests 1.61s, environment 511ms)

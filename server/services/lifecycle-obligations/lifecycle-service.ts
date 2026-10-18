@@ -70,13 +70,23 @@ export async function createObligationTx(client: Queryable, orgId: number, userI
   return { id, occurrencesCreated };
 }
 
+// 2026-10-15: marking an obligation or occurrence submitted without a date bound
+// today's date as submitted_date — the agency submission date, which nobody stated
+// and which would read a late filing as on time. The caller now states it.
+function requireSubmittedDate(status: string, submittedDate?: string | null): void {
+  if (status === 'submitted' && !submittedDate) {
+    throw new LifecycleError('BAD_INPUT', 'submittedDate (YYYY-MM-DD) is required to mark it submitted: the date it went to the agency.');
+  }
+}
+
 const OBLIGATION_STATUSES = ['planned', 'in_preparation', 'submitted', 'approved', 'rejected', 'overdue', 'closed'];
 export async function setObligationStatusTx(client: Queryable, orgId: number, id: number, status: string, submittedDate?: string | null): Promise<void> {
   if (!OBLIGATION_STATUSES.includes(status)) throw new LifecycleError('BAD_INPUT', `Invalid status "${status}".`);
+  requireSubmittedDate(status, submittedDate);
   const r = await client.query(
     `UPDATE lifecycle_obligations SET status = $3, submitted_date = COALESCE($4, submitted_date), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [id, orgId, status, status === 'submitted' ? (submittedDate ?? new Date().toISOString().slice(0, 10)) : submittedDate ?? null],
+    [id, orgId, status, submittedDate || null],
   );
   if ((r as any).rowCount === 0) throw new LifecycleError('NOT_FOUND', 'Obligation not found for this organization.');
 }
@@ -84,10 +94,11 @@ export async function setObligationStatusTx(client: Queryable, orgId: number, id
 const EVENT_STATUSES = ['pending', 'in_preparation', 'submitted', 'approved', 'overdue'];
 export async function setEventStatusTx(client: Queryable, orgId: number, eventId: number, status: string, submittedDate?: string | null): Promise<void> {
   if (!EVENT_STATUSES.includes(status)) throw new LifecycleError('BAD_INPUT', `Invalid status "${status}".`);
+  requireSubmittedDate(status, submittedDate);
   const r = await client.query(
     `UPDATE lifecycle_obligation_events SET status = $3, submitted_date = COALESCE($4, submitted_date), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [eventId, orgId, status, status === 'submitted' ? (submittedDate ?? new Date().toISOString().slice(0, 10)) : submittedDate ?? null],
+    [eventId, orgId, status, submittedDate || null],
   );
   if ((r as any).rowCount === 0) throw new LifecycleError('NOT_FOUND', 'Event not found for this organization.');
 }

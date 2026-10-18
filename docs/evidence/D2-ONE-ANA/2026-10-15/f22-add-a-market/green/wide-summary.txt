@@ -1,0 +1,6 @@
+ Test Files  2 failed | 140 passed (142)
+      Tests  4 failed | 1297 passed (1301)
+      2 server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts
+      2 server/routes/__tests__/submissions-program-anchor.test.ts
+
+[exited with code 0]

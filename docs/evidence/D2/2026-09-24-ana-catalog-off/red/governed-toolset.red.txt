@@ -60,4 +60,3 @@ AssertionError: expected [ 'search_guidance', …(7) ] to not include 'catalog_p
       Tests  3 failed | 8 passed (11)
    Start at  00:53:28
    Duration  513ms (transform 225ms, setup 150ms, import 175ms, tests 33ms, environment 0ms)
-

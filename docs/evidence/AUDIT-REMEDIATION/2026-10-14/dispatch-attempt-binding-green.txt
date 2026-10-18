@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 2ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a number the identifier rule cannot carry, as the eCTD export does (P-23) 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > configured FDA credentials plus implemented offline transport never establish agency acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > regional generic protocol adapters remain unverified rather than becoming qualified by discovery 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > a missing runtime implementation is reported unavailable even if the same account has credentials 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"organizationId":8} 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"signatureActionId":"another-signature"} 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"bundleSha256":"another-bundle"} 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced uk adapter before package/database/wire work and makes the claim releasable 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced cn adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced au adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced ch adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced br adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced in adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced kr adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced sg adapter before package/database/wire work and makes the claim releasable 0ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  04:05:56
+   Duration  2.70s (transform 1.49s, setup 66ms, import 2.29s, tests 20ms, environment 0ms)
+

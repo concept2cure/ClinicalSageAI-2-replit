@@ -18,6 +18,8 @@ export {
 
 export {
   computeReadinessScore,
+  readinessFigure,
+  describeReadiness,
   type ReadinessScore,
   type ReadinessDimensions,
   type ModuleScore,

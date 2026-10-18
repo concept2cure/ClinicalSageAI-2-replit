@@ -32,6 +32,7 @@ import organizationsRoutes from '../routes/organizations-routes.js';
 import clientsRoutes from '../routes/clients-routes.js';
 import clientPortal from '../routes/client-portal.js';
 import onboardingProposals from '../routes/onboarding-proposals.js';
+import onboardingDiscovery from '../routes/onboarding-discovery-routes.js';
 import tenantUsers from '../routes/tenant-users.js';
 import tenantSectionGating from '../routes/tenant-section-gating.js';
 import tenantConfig from '../routes/tenant-config.js';
@@ -52,7 +53,9 @@ export async function registerTenantRoutes({ app, pool: _pool }: TenantBootstrap
     { path: '/api/organizations', router: organizationsRoutes, name: 'Organizations' },
     { path: '/api/clients', router: clientsRoutes, name: 'Clients' },
     { path: '/api/client-portal', router: clientPortal, name: 'Client Portal' },
-    // AnA onboarding proposal ingest — read-only, writes nothing (P2).
+    // Organization discovery uses the governed settings writer and its audit.
+    { path: '/api/onboarding/discovery', router: onboardingDiscovery, name: 'Onboarding Discovery' },
+    // AnA proposal extraction and human-approved profile updates (P2/P3).
     { path: '/api/onboarding', router: onboardingProposals, name: 'Onboarding Proposals' },
     { path: '/api/tenant-users', router: tenantUsers, name: 'Tenant Users' },
   ]);

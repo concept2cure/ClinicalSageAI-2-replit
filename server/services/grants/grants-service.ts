@@ -278,14 +278,23 @@ export async function createSubawardTx(client: Queryable, orgId: number, userId:
   return { id: Number(rows[0].id) };
 }
 
-/** Record a restricted-party screening result against SAM.gov exclusions. */
+/**
+ * Record a restricted-party screening result, with the source it was run
+ * against as the person states it. The source defaulted to 'sam_exclusions'
+ * and kept an earlier screen's source under a new result (COALESCE), so a
+ * "cleared" read as screened against SAM.gov exclusions whether or not any
+ * lookup ran — a 2 CFR 200.214 attestation with invented provenance
+ * (2026-10-15).
+ */
 export async function screenSubawardTx(client: Queryable, orgId: number, id: number, input: { screenStatus: 'cleared' | 'excluded'; screenSource?: string | null; riskLevel?: SubawardRiskLevel | null }): Promise<void> {
   if (!['cleared', 'excluded'].includes(input.screenStatus)) throw new GrantsError('BAD_INPUT', `Invalid screen status "${input.screenStatus}".`);
+  const source = typeof input.screenSource === 'string' ? input.screenSource.trim() : '';
+  if (!source) throw new GrantsError('BAD_INPUT', 'Name the source this screen was run against (for example the SAM.gov exclusions lookup and its receipt).');
   const r = await client.query(
-    `UPDATE grant_subawards SET screen_status = $3, screen_date = CURRENT_DATE, screen_source = COALESCE($4, screen_source),
+    `UPDATE grant_subawards SET screen_status = $3, screen_date = CURRENT_DATE, screen_source = $4,
         risk_level = COALESCE($5, risk_level), status = CASE WHEN status = 'draft' THEN 'screened' ELSE status END, updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [id, orgId, input.screenStatus, input.screenSource ?? 'sam_exclusions', input.riskLevel ?? null],
+    [id, orgId, input.screenStatus, source, input.riskLevel ?? null],
   );
   if ((r as any).rowCount === 0) throw new GrantsError('NOT_FOUND', 'Subaward not found for this organization.');
 }

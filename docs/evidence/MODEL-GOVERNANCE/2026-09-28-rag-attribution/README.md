@@ -1,5 +1,22 @@
 # RAG runs are attributable to a named model — the PQ's `rag` component
 
+> **Correction, 2026-10-13 (same session).** This record overstated what it
+> proved. Pinning `--model` and checking that the pin *reached the call* shows
+> which model was **requested and routed to** — the router's `model` field is
+> the gateway's registry entry (`GatewayResponse.model`), not the snapshot the
+> provider reports having served (`GatewayResponse.resolvedModel`), which the
+> router does not carry. So no run of `run-eval.ts` could prove which model
+> answered or graded, and the line it printed — "Attributable to <model> …
+> usable as PQ evidence" — was not true. Another session found this and fixed it
+> properly on 2026-10-06 (`0e0bb7ec4`, `2c2417d7a`): `run-eval.ts` is now a
+> regression evaluator that states `usableAsPqEvidence: false`, and
+> qualification runs in the controlled PQ runner's RAG phase
+> (`server/eval/pq/rag-phase.ts`), which asks the pinned model directly, reads
+> `resolvedModel`, and verifies it with `servedModelMatches` and the provider,
+> with an independent judge (`sameServingIdentity`). The router's comment that
+> invited the misreading is corrected in the same change as this note.
+> Everything below is kept as filed.
+
 **Launch row:** D4 (validation package), the clause *"a PQ-passed provider for
 the model step"*.
 **Date:** 2026-09-28.

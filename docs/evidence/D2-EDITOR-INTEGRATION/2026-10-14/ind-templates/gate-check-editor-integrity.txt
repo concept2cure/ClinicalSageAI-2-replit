@@ -1,0 +1,25 @@
+
+> concept2cure-riai@1.0.0 ci:check-editor-integrity
+> node scripts/ci/check-editor-extension-integrity.mjs
+
+Found 30 @tiptap/* packages in package.json
+Found 14 unique @tiptap/* imports in client/src/
+
+✓ All @tiptap/* imports are satisfied by package.json
+
+  @tiptap/core (48 file(s))
+  @tiptap/extension-collaboration (1 file(s))
+  @tiptap/extension-document (1 file(s))
+  @tiptap/extension-highlight (1 file(s))
+  @tiptap/extension-paragraph (1 file(s))
+  @tiptap/extension-placeholder (1 file(s))
+  @tiptap/extension-subscript (2 file(s))
+  @tiptap/extension-superscript (2 file(s))
+  @tiptap/extension-table (11 file(s))
+  @tiptap/extension-text (1 file(s))
+  @tiptap/extension-text-align (1 file(s))
+  @tiptap/pm (14 file(s))
+  @tiptap/react (1 file(s))
+  @tiptap/starter-kit (16 file(s))
+
+Editor extension integrity check PASSED.

@@ -1,0 +1,666 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T20:46:20.418Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T20:46:20.674Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T20:46:20.674Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T20:46:20.688Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T20:46:20.688Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T20:46:20.689Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T20:46:20.696Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T20:46:20.697Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T20:46:20.697Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-13T20:46:20.698Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-13T20:46:20.699Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791924380699_xty4bt",
+    "bytes": 5
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original 766ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > persists lineage but explicitly does not capture a conversation-only edit 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses a requested foreign/missing project before storing bytes or rows 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses if the source bytes no longer match the bytes that were edited 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rechecks source eligibility on the transaction before an edited copy is written 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111) 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits () 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if capture fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if audit fails and removes only the newly written bytes 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > requires an identified tenant and actor for a derivation receipt 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > never removes source or derived bytes after an ambiguous COMMIT failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact 1ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+{
+  "timestamp": "2026-10-13T20:46:27.244Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 696ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 74ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 252ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 38ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-13T20:46:27.840Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "2f11ddb0-9ddd-4761-b14a-f27bdacaa213",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 149ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 35ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 28ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 36ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 253ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 55ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 40ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 19ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 24ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 18ms
+stdout | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+{
+  "timestamp": "2026-10-13T20:46:32.201Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T20:46:32.202Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+{
+  "timestamp": "2026-10-13T20:46:32.203Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > passes the actual source hash, normalized edits, created sheets and active actor/project, never input overrides 56ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (undefined) 2ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (  report.csv  ) 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (  report.XLSX  ) 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > relays conversation-only status with no project, despite a model-supplied project override 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > returns an error, not a successful capture, if the canonical save refuses or fails 2ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > does not edit or save when canonical source access refuses 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > does not save if the canonical workbook edit fails 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > keeps confirmation in active context: an input flag cannot authorize an unconfirmed edit 1ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T20:47:09.870Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T20:47:09.898Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T20:47:09.899Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 2,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction 787ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the capture seam fails 107ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the audit seam fails 84ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > refuses a withdrawn source using the real disposition eligibility SQL 144ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rejects another tenant’s project using the canonical ownership query before writes 57ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T20:47:10.626Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T20:47:10.626Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T20:47:10.627Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 12,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed 174ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data 151ms
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known
+{
+  "timestamp": "2026-10-13T20:47:13.359Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-13T20:47:13.361Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-13T20:47:13.362Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload
+{
+  "timestamp": "2026-10-13T20:47:13.362Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads
+{
+  "timestamp": "2026-10-13T20:47:13.365Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned
+{
+  "timestamp": "2026-10-13T20:47:13.365Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column
+{
+  "timestamp": "2026-10-13T20:47:13.367Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch
+{
+  "timestamp": "2026-10-13T20:47:13.368Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 2,
+    "denied": 1
+  }
+}
+
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns a file the caller's organization owns, with the checksum recorded at upload 2231ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known 3ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > never queries for an empty or non-string id list 1ms
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.912Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../unscoped/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.918Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../../outside for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.919Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-70/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.920Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/. for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.921Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.921Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../org-7/file_1 for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.922Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../file_legacy for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.923Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../../outside for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.926Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/. for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T20:47:15.929Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.936Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../unscoped/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.937Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../../outside for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.938Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-70/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.938Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/. for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.939Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.939Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../org-7/file_1 for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.940Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../file_legacy for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.941Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../../outside for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.941Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/. for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T20:47:15.942Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the digest-mismatch refusal for an otherwise contained path
+{
+  "timestamp": "2026-10-13T20:47:15.952Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_1",
+    "recordedSha256": "0cf2b41e3f24e0a4a61aa8ba7a2846062fdd2e563ce7b69721bc541968b13566",
+    "actualSha256": "a0bc30835b2409ff84d7ddc1a4fbca79b5d553fdd20dcb2a3fa5cffecabc95da",
+    "recordedSize": 25,
+    "actualSize": 23
+  }
+}
+
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows 13ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../unscoped/file_1 for caller 7, including pre-migration rows 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../../outside for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-70/file_1 for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/. for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../org-7/file_1 for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../file_legacy for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../../outside for caller null, including pre-migration rows 5ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/. for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/file_1 for caller 7 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/nested/../file_1 for caller 7 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/file_1 for caller 7 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/unscoped/file_1 for caller null 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/file_legacy for caller null 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload 3ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../unscoped/file_1 for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../../outside for caller 7 as an indistinguishable missing upload 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-70/file_1 for caller 7 as an indistinguishable missing upload 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/. for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../org-7/file_1 for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../file_legacy for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../../outside for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/. for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/file_1 for caller 7 and verifies actual loaded bytes 5ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/nested/../file_1 for caller 7 and verifies actual loaded bytes 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/file_1 for caller 7 and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/unscoped/file_1 for caller null and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/file_legacy for caller null and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the digest-mismatch refusal for an otherwise contained path 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the missing-byte refusal for an otherwise contained path 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves honest unverifiable status when the legacy upload has no recorded checksum 1ms
+
+ Test Files  6 passed (6)
+      Tests  86 passed (86)
+   Start at  20:46:18
+   Duration  57.18s (transform 25.74s, setup 224ms, import 35.02s, tests 19.89s, environment 1ms)

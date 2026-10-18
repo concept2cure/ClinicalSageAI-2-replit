@@ -7,8 +7,9 @@
  *
  *   - every node carries a well-formed basis, roles where it has a role, and an
  *     applicability; regulator-text only where a regulator text was read
- *     (US: the FDA controlled vocabulary vendored in cv-v4-data.ts; EU: the EU
- *     M1 eCTD Specification v3.1; JP: the MHLW/PMDA notices) — recall elsewhere;
+ *     (US: the FDA controlled vocabulary vendored in cv-v4-data.ts) — recall
+ *     elsewhere, with a search-extract note where the EU M1 eCTD Specification
+ *     v3.1 or the MHLW/PMDA notices were seen only in search results;
  *   - the EU tree has 1.3.5, 1.3.6 and 1.5.3, and 1.1 is not an eCTD item;
  *   - every DocumentRole is used by a node, and placement / equivalence are
  *     derived from those roles, not kept beside them;
@@ -32,7 +33,7 @@ import {
   type CTDSection,
 } from '../../server/services/regional-ctd-templates';
 import { requiredModule1CodesForRegion } from '../../server/services/region-profiles/region-profile-service';
-import { basisProblems } from '../../shared/regulatory/regulatory-basis';
+import { basisProblems, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
 import { compareSectionCode } from '../../shared/regulatory/section-code';
 
 type Record_ = typeof import('../../shared/regulatory/regional-module1');
@@ -133,25 +134,32 @@ describe('every Module 1 node is cited', () => {
   });
 
   it('EU 1.3.1–1.3.3, 1.8.2 and 1.10 cite the EU M1 eCTD Specification v3.1; JP 1.8, 1.11, 1.12 and 1.13 cite MHLW/PMDA text', async () => {
+    // Those documents were seen only in search extracts, so their bases are recall with a
+    // note saying so (pinned as regulator-text until 2026-10-15).
+    const seenInExtract = (b: RegulatoryBasis) => b.confidence === 'recall' && /search extract/i.test(b.note ?? '');
     const { module1Heading } = await loadRecord();
     for (const code of ['1.3.1', '1.3.2', '1.3.3', '1.8.2', '1.10']) {
       const n = module1Heading('EU', code)!;
       expect(n, `EU ${code}`).not.toBeNull();
-      expect(n.basis.some((b) => b.confidence === 'regulator-text' && b.url === EU_M1_V31), `EU ${code}`).toBe(true);
+      expect(n.basis.some((b) => seenInExtract(b) && b.url === EU_M1_V31), `EU ${code}`).toBe(true);
     }
     for (const code of ['1.8', '1.11', '1.12', '1.13']) {
       const n = module1Heading('JP', code)!;
       expect(
-        n.basis.some((b) => b.confidence === 'regulator-text' && /(^|\.)(pmda|mhlw)\.go\.jp$/.test(new URL(b.url!).hostname)),
+        n.basis.some((b) => seenInExtract(b) && /(^|\.)(pmda|mhlw)\.go\.jp$/.test(new URL(b.url!).hostname)),
         `JP ${code}`,
       ).toBe(true);
     }
-    // Everything else in EU and JP is recall until its text is read.
+    // No EU or JP node is regulator-text; only these rest on a search extract of the regulator's
+    // document, and everything else is recalled.
     const { flattenModule1 } = await loadRecord();
-    const euRegulator = flattenModule1('EU').filter((n) => n.basis.some((b) => b.confidence === 'regulator-text')).map((n) => n.number);
-    expect(euRegulator.sort(compareSectionCode)).toEqual(['1.3.1', '1.3.2', '1.3.3', '1.3.5', '1.3.6', '1.8.2', '1.10']);
-    const jpRegulator = flattenModule1('JP').filter((n) => n.basis.some((b) => b.confidence === 'regulator-text')).map((n) => n.number);
-    expect(jpRegulator.sort(compareSectionCode)).toEqual(['1.8', '1.11', '1.12', '1.13']);
+    for (const j of ['EU', 'JP'] as const) {
+      expect(flattenModule1(j).filter((n) => n.basis.some((b) => b.confidence === 'regulator-text')).map((n) => n.number), j).toEqual([]);
+    }
+    const euSeen = flattenModule1('EU').filter((n) => n.basis.some(seenInExtract)).map((n) => n.number);
+    expect(euSeen.sort(compareSectionCode)).toEqual(['1.3.1', '1.3.2', '1.3.3', '1.3.5', '1.3.6', '1.8.2', '1.10']);
+    const jpSeen = flattenModule1('JP').filter((n) => n.basis.some(seenInExtract)).map((n) => n.number);
+    expect(jpSeen.sort(compareSectionCode)).toEqual(['1.8', '1.11', '1.12', '1.13']);
   });
 });
 
@@ -276,5 +284,38 @@ describe('requiredModule1: an unknown fact is a gap', () => {
     expect(rows.find((r) => r.code === '1.8.2')).toMatchObject({ title: 'Risk Management System', required: true });
     expect(rows.find((r) => r.code === '1.10')).toMatchObject({ required: false, undetermined: 'paediatric_obligation' });
     expect(module1Rows('US', 'nda').map((r) => r.code)).not.toContain('1.20');
+  });
+});
+
+/**
+ * `soleModule1Placement` — the record's answer in the shape a caller needs: one code, one title,
+ * the node's basis, or null. Added 2026-10-12 with the Module 1 placement migration; before it,
+ * `placementFor` had no production caller and five copies of Module 1 were hand-kept instead.
+ */
+describe('soleModule1Placement', () => {
+  it('answers the IND documents from the record, with their basis', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    const ib = soleModule1Placement('investigators_brochure', 'US', 'ind');
+    expect(ib?.code).toBe('1.14.4.1');
+    expect(ib?.title).toBe("Investigator's Brochure");
+    expect(ib?.basis.length).toBeGreaterThan(0);
+    expect(soleModule1Placement('cover_letter', 'US', 'ind')?.code).toBe('1.2');
+    expect(soleModule1Placement('application_form', 'US', 'ind')?.code).toBe('1.1');
+  });
+
+  it('answers a marketing application from its own nodes, not the IND ones', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    expect(soleModule1Placement('patent', 'US', 'nda')?.code).toBe('1.3.5');
+    expect(soleModule1Placement('debarment', 'US', 'nda')?.code).toBe('1.3.3');
+    // 1.14.4.1 applies to an IND only, so the kind filter must exclude it here.
+    expect(soleModule1Placement('investigators_brochure', 'US', 'nda')).toBeNull();
+  });
+
+  it('returns null where the record holds no node, and that null is the answer', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    // FDA has REMS (1.16) and risk management that is not a REMS. There is no US "RMP" node, and
+    // the EU's answer must not be carried over. A caller gets null and asks.
+    expect(soleModule1Placement('rmp', 'US', 'ind')).toBeNull();
+    expect(soleModule1Placement('rems', 'US', 'nda')?.code).toBe('1.16');
   });
 });

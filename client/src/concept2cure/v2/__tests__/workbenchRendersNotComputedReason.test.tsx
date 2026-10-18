@@ -32,6 +32,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { CALCULATORS } from '../surfaces/biostatCalculators';
 
 const props = () => ({ surface: { id: 'biostat-workbench', label: 'Biostat' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
@@ -81,7 +82,10 @@ afterEach(() => cleanup());
 /** Open the interim calculator and compute it with its defaults filled in. */
 async function computeInterim() {
   render(<BiostatWorkbench {...props()} />);
-  fireEvent.click(await screen.findByText(/Interim look/));
+  // The stored monitoring panel also mentions interim looks. Open the
+  // stateless calculator by the exact button title declared in the registry.
+  const interim = CALCULATORS.find((calculator) => calculator.id === 'interim-look')!;
+  fireEvent.click(await screen.findByRole('button', { name: interim.title }));
 
   const fill = (label: RegExp, value: string) => {
     const input = screen.getByText(label).closest('label')!.querySelector('input, select') as HTMLElement;

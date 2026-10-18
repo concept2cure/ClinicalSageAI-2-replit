@@ -1,0 +1,52 @@
+{
+  "capturedAtUtc": "2026-10-17T23:53:43.332534+00:00",
+  "branch": "concept2cure-v2",
+  "baseHead": "ff5e065a79a99082a0fa156bdb225f87ec22784b",
+  "testNode": "v22.23.3",
+  "runtimeVerification": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node --version; test and lint commands used the same PATH prefix.",
+  "newCases": {
+    "files": 1,
+    "passed": 21,
+    "failed": 0
+  },
+  "existingRegression": {
+    "files": 13,
+    "passed": 120,
+    "failed": 0,
+    "qualification": "Twelve initial green files (114 cases), plus six fixture-corrected cases replayed in the remaining file; this is not a claim of one all-green 120-case invocation."
+  },
+  "strictLint": {
+    "focusedFiles": 7,
+    "errors": 0,
+    "warnings": 0
+  },
+  "existingWarnings": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "baseline": 7,
+      "current": 7,
+      "errors": 0
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "baseline": 4,
+      "current": 4,
+      "errors": 0
+    }
+  ],
+  "pinQualification": "Source hashes captured after the final targeted replays, not a before/after pinned run. Final release-wide pins are owned by root. The original baseline RED test file later expanded; the raw original failure is preserved.",
+  "sourcePins": {
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/v2/editorTarget.ts": "b72ac4cb56a1eb8603e8674529c8f01ed927d6906d039f96631ecb5fccdf072b",
+    "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": "72795c57c0eaa9b80392944d8837f43a872ce71f6f184f79e7d8696ee80e1cc3",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "cb9d9aaf4870029717c5563c1f8ac66a7215738ef6fda556bdb9723c7f7c88fd",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "7cbf28345be0a023b42af834619edcac4ba46a9a3cd40e7d1db3b0560672f21f",
+    "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx": "dc6d00957f0e2ecbf654fae6b1b25bb91b0ecc312e9210ad93bac836ce073958",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "docs/design/CATALOGUE_SOURCE_ASSEMBLY_2026-10-17.md": "06aacb571e4ff5dedafc7589076a4a340d50f429123b457462f05dae49d7c196"
+  },
+  "mutations": "No source writes, generation or new working-document creation in entry/chooser actions; synthetic HTTP tests only. No Git mutations or live provider/database/browser work by this delegate."
+}

@@ -63,13 +63,21 @@ export interface ProtocolCompletenessInput {
   plannedAnimalTotal: number;
 }
 
+/** What the gate checks: the presence of text and counts, not their adequacy. */
+const IACUC_GATE_CHECKS = [
+  'text recorded for each of Replacement, Reduction and Refinement (AWA 9 CFR 2.31(d))',
+  'category D: an analgesia/anesthesia plan; category E: a written scientific justification (9 CFR 2.31(e))',
+  'animal cohorts and planned numbers recorded (PHS Policy IV.D.1)',
+];
+
 /**
  * Deterministic completeness gate. The 3 Rs (Replacement, Reduction, Refinement)
  * must be addressed; category D/E require a refinement (analgesia) plan; category
  * E additionally requires scientific justification for withholding relief; an
- * animal-number justification (reduction) is expected. Pure — cited findings + risk.
+ * animal-number justification (reduction) is expected. Pure — cited findings, the
+ * checks run, risk.
  */
-export function evaluateProtocolCompleteness(p: ProtocolCompletenessInput): { findings: IacucFinding[]; riskLevel: IacucRiskLevel } {
+export function evaluateProtocolCompleteness(p: ProtocolCompletenessInput): { findings: IacucFinding[]; riskLevel: IacucRiskLevel; checksRun: string[] } {
   const findings: IacucFinding[] = [];
   const has = (s?: string | null) => !!s && s.trim().length > 0;
 
@@ -93,7 +101,7 @@ export function evaluateProtocolCompleteness(p: ProtocolCompletenessInput): { fi
     : findings.some((f) => f.severity === 'major')
       ? 'medium'
       : 'low';
-  return { findings, riskLevel };
+  return { findings, riskLevel, checksRun: [...IACUC_GATE_CHECKS] };
 }
 
 /** Add N years to an ISO date (YYYY-MM-DD). Pure. */
@@ -104,22 +112,42 @@ export function addYears(iso: string, years: number): string {
   return `${y.toString().padStart(4, '0')}-${m[2]}-${m[3]}`;
 }
 
+/** True for an ISO calendar-date string (YYYY-MM-DD). */
+export function isIsoDate(v: unknown): v is string {
+  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
+export type ApprovalReviewStatus =
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null }
+  | { undetermined: true; reason: string; expirationDate: null; expirationSource: 'none'; expired: null; annualReviewDue: null };
+
 /**
  * Continuing-review / expiration status. An approved protocol requires de novo
- * review every 3 years (PHS Policy IV.C.5) and annual continuing review. Pure —
- * `today` injected for testability.
+ * review at least every 3 years (PHS Policy IV.C.5) and annual continuing
+ * review. The expiration on record (the committee's) is the fact; approval + 3
+ * years is the fallback, labelled 'computed'. Pure — `today` injected for
+ * testability. With neither date recorded the status is undetermined, never
+ * "not expired, no review due"; annual review needs the approval date.
+ *
+ * 2026-10-15: the committee's own date was not an input, so a protocol it
+ * approved for one year read as current until approval + 3 years.
  */
-export function reviewStatus(approvalDate: string | null, today: string): {
-  expirationDate: string | null;
-  expired: boolean;
-  annualReviewDue: boolean;
-} {
-  if (!approvalDate) return { expirationDate: null, expired: false, annualReviewDue: false };
-  const expiration = addYears(approvalDate, 3);
-  const annual = addYears(approvalDate, 1);
+export function approvalReviewStatus(approvalDate: string | null, today: string, recordedExpiration?: string | null): ApprovalReviewStatus {
+  const recorded = isIsoDate(recordedExpiration) ? recordedExpiration : null;
+  const expiration = recorded ?? (approvalDate ? addYears(approvalDate, 3) : null);
+  if (!expiration) {
+    return {
+      undetermined: true,
+      reason: 'No approval date or expiration is recorded, so expiry and annual review cannot be determined.',
+      expirationDate: null, expirationSource: 'none', expired: null, annualReviewDue: null,
+    };
+  }
+  const expired = today >= expiration;
   return {
+    undetermined: false,
     expirationDate: expiration,
-    expired: today >= expiration,
-    annualReviewDue: today >= annual && today < expiration,
+    expirationSource: recorded ? 'recorded' : 'computed',
+    expired,
+    annualReviewDue: approvalDate ? !expired && today >= addYears(approvalDate, 1) : null,
   };
 }

@@ -1,0 +1,16 @@
+[
+  {
+    "kind": "attribute",
+    "tag": "IMG",
+    "name": "src",
+    "live": false,
+    "stack": "Error\n    at Element.setAttribute (<anonymous>:2:290)\n    at renderSpec (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3313:15)\n    at _DOMSerializer.serializeNodeInner (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3182:31)\n    at http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3172:28\n    at _Fragment.forEach (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:372:7)\n    at _DOMSerializer.serializeFragment (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3146:14)\n    at serializeHtmlDocument (http://127.0.0.1:5000/src/concept2cure/v2/editor/roundTrip.ts?t=1791930085835:10:67)\n    at serializeHeldHtml (http://127.0.0.1:5000/src/concept2cure/v2/editor/roundTrip.ts?t=1791930085835:14:10)\n    at http://127.0.0.1:5000/src/concept2cure/v2/editor/RichSectionEditor.tsx?t=1791932023074:428:59\n    at mountMemo (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0:6527:25)"
+  },
+  {
+    "kind": "attribute",
+    "tag": "IMG",
+    "name": "src",
+    "live": false,
+    "stack": "Error\n    at Element.setAttribute (<anonymous>:2:290)\n    at renderSpec (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3313:15)\n    at _DOMSerializer.serializeNodeInner (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3182:31)\n    at http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3172:28\n    at _Fragment.forEach (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:372:7)\n    at _DOMSerializer.serializeFragment (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OZJGUUXV.js?v=08f732e0:3146:14)\n    at serializeHtmlDocument (http://127.0.0.1:5000/src/concept2cure/v2/editor/roundTrip.ts?t=1791930085835:10:67)\n    at serializeHeldHtml (http://127.0.0.1:5000/src/concept2cure/v2/editor/roundTrip.ts?t=1791930085835:14:10)\n    at http://127.0.0.1:5000/src/concept2cure/v2/editor/RichSectionEditor.tsx?t=1791932023074:428:59\n    at mountMemo (http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0:6531:13)"
+  }
+]

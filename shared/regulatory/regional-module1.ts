@@ -100,6 +100,7 @@ export const DOCUMENT_ROLES = Object.freeze([
   'letter_of_authorization',
   'expert_information',
   'meeting_information',
+  'general_investigational_plan',
 ] as const);
 export type DocumentRole = (typeof DOCUMENT_ROLES)[number];
 
@@ -141,7 +142,9 @@ export interface RegionalModule1 {
 
 const CHECKED = '2026-10-05';
 const CV_VENDORED = 'server/services/ectd/controlled-vocab/cv-v4-data.ts';
-const SEARCH_NOTE = 'search extract of the regulator-hosted document; verbatim re-read owed';
+// 2026-10-15: the EU and JP bases carrying this note were `regulator-text`; a search
+// extract is recall. Only the vendored FDA controlled vocabulary was read.
+const SEARCH_NOTE = 'search extract of the regulator-hosted document on 2026-10-05; the document itself was not read. Verbatim re-read owed';
 
 /** A heading FDA publishes in its Module 1 controlled vocabulary (vendored, read). */
 function fdaCv(code: string): RegulatoryBasis {
@@ -168,9 +171,8 @@ const US_PARENT = usRecall('the number is implied by the controlled-vocabulary c
 
 const EU_M1_V31: RegulatoryBasis = {
   ref: 'EU Module 1 eCTD Specification v3.1 (June 2024)',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://esubmission.ema.europa.eu/eumodule1/EU%20M1%20eCTD%20Spec%20v3.1%20-%20June%202024%20-%20final%20version.pdf',
-  checked: CHECKED,
   note: `${SEARCH_NOTE}. v3.1.1 is the version EMA accepts from 1 December 2025 (secondary source, recall); headings cited from v3.1`,
 };
 const EU_RECALL: RegulatoryBasis = {
@@ -179,31 +181,27 @@ const EU_RECALL: RegulatoryBasis = {
 };
 const EU_ECTD_GUIDANCE_NO_TOC: RegulatoryBasis = {
   ref: 'EMA eCTD Guidance v4.0 (22 April 2016): no table of contents in eCTD; the XML backbone acts as one',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://esubmission.ema.europa.eu/tiges/docs/eCTD%20Guidance%20v4%200-20160422-final.pdf',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 
 const JP_SAKUSEI_YORYO: RegulatoryBasis = {
   ref: 'MHLW 薬生薬審発0705第4号 (2017-07-05) amending 「新医薬品の製造販売の承認申請に際し承認申請書に添付すべき資料の作成要領について」',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.mhlw.go.jp/web/t_doc?dataId=00tc2799&dataType=1&pageNo=1',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 const JP_RMP_GUIDANCE: RegulatoryBasis = {
   ref: '薬食審査発0426第2号 / 薬食安発0426第1号 (2012-04-26; amended 2013-03-04): 医薬品リスク管理計画の策定について',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.pmda.go.jp/files/000143712.pdf',
-  checked: CHECKED,
   note: `${SEARCH_NOTE}; the draft RMP (医薬品リスク管理計画書（案）) is filed at CTD M1.11`,
 };
 const JP_RMP_EXAMPLE: RegulatoryBasis = {
   ref: 'PMDA 医薬品リスク管理計画書記載事例 (draft RMP filed with the application as CTD M1.11)',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.pmda.go.jp/files/000221872.pdf',
-  checked: CHECKED,
   note: SEARCH_NOTE,
 };
 const JP_RECALL: RegulatoryBasis = {
@@ -304,7 +302,7 @@ const US_TREE: RegionalHeading[] = [
   },
   { number: '1.15', title: 'Promotional Material', basis: [US_PARENT], applies: [whenApplicable('promotional labeling or advertising is submitted')], description: 'Promotional labeling and advertising submissions (Form 2253 travels under 1.1)' },
   { number: '1.16', title: 'Risk Management Plan / REMS', roles: ['rems'], basis: [US_PARENT], applies: [{ kinds: ['nda', 'bla', 'anda'], necessity: 'authority-dependent' }], description: 'Risk management (non-REMS) and REMS documents' },
-  { number: '1.20', title: 'General Investigational Plan for Initial IND', applies: [always(['ind'])], basis: [fdaCv('1.20')], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
+  { number: '1.20', title: 'General Investigational Plan for Initial IND', applies: [always(['ind'])], roles: ['general_investigational_plan'], basis: [fdaCv('1.20')], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -522,6 +520,43 @@ export function module1Rows(
 /** The headings of one tree that hold a document with this role (for `kind`, when given). */
 export function placementFor(role: DocumentRole, j: ModeledJurisdiction, kind?: ApplicationKind): RegionalHeading[] {
   return flattenModule1(j, kind).filter((n) => n.roles?.includes(role));
+}
+
+/** One heading's code, title and basis — what a caller needs to state a placement and cite it. */
+export interface SolePlacement {
+  code: string;
+  title: string;
+  basis: RegulatoryBasis[];
+}
+
+/**
+ * The ONE heading this jurisdiction files `role` under, or null.
+ *
+ * `placementFor` returns every matching heading, which is the right shape for a reader and the
+ * wrong shape for a caller that must put a single number on a document. This narrows it: null when
+ * the record holds no node for the role in that tree, and null when it holds more than one, because
+ * a caller that has to pick cannot be given a number as though the record settled it.
+ *
+ * **A null is an answer, not a gap.** `soleModule1Placement('rmp', 'US')` is null because FDA has
+ * REMS (1.16) and risk management that is not a REMS; there is no US node called an RMP, and the
+ * EU's answer must not be carried over. A caller that gets null asks what the document is — it does
+ * not fall back to a nearest match. Filing a sponsor's risk-management document under 1.5.1 because
+ * the number looked close is how the platform came to propose the heading whose controlled meaning
+ * is "withdrawal of an IND".
+ *
+ * `kind` filters by applicability, so the answer can differ between an IND and a marketing
+ * application: 1.14.4.1 (Investigator's Brochure) applies to an IND only, and 1.3.3 (Debarment
+ * Certification) to a marketing application only.
+ */
+export function soleModule1Placement(
+  role: DocumentRole,
+  j: ModeledJurisdiction,
+  kind?: ApplicationKind,
+): SolePlacement | null {
+  const hits = placementFor(role, j, kind);
+  if (hits.length !== 1) return null;
+  const n = hits[0];
+  return { code: n.number, title: n.title, basis: n.basis };
 }
 
 /**

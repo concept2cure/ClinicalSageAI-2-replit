@@ -22,22 +22,31 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  allPathwayPositions,
   cautionFor,
+  cautionRuleIds,
   cautionablePositionIds,
-  pathwayOptions,
-  positionFor,
   type ProgrammeFacts,
-} from '../pathway-positions.js';
+} from '../pathway-cautions.js';
+import { allPathwayPositions, pathwayOptions, positionFor } from '../pathway-positions.js';
 
 /** Every fact a flow can state today, one at a time. */
 const FACT_SETS: ProgrammeFacts[] = [
   { regions: ['US'] },
   { regions: ['EU'] },
-  { predicateNamed: 'K123456 — Acme Stent' },
+  { modality: 'biosimilar' },
+  { modality: 'small_molecule' },
+  { modality: 'mab' },
+  { modality: 'combination' },
+  { predicateNamed: 'K123456 — Acme Stent', predicate: 'named' },
+  { predicate: 'none' },
+  { predicate: 'nse' },
   { deviceClass: 'I' },
   { deviceClass: 'II' },
   { deviceClass: 'III' },
+  { ivdrClass: 'A' },
+  { ivdrClass: 'B' },
+  { ivdrClass: 'C' },
+  { ivdrClass: 'D' },
   { euMdrClass: 'I' },
   { euMdrClass: 'IIa' },
   { euMdrClass: 'IIb' },
@@ -62,7 +71,14 @@ describe('the agency the sponsor named', () => {
     const caution = cautionFor('EU_MDR_CLASS_III', { regions: ['US'] })!;
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/You have named FDA/);
+    /* And it names the filing in words true of it: an MDR class route is a
+       notified body's conformity assessment, not a filing to EMA. */
+    expect(caution.reason).toMatch(/an EU conformity assessment under the MDR/);
     expect(caution.reason, 'the way out must be actionable').toMatch(/name EMA among the agencies/);
+    expect(cautionFor('EU_IVDR_CLASS_B', { regions: ['US'] })!.reason).toMatch(/under the IVDR/);
+    expect(cautionFor('EU_MAA', { regions: ['US'] })!.reason, 'a medicine IS filed to EMA').toMatch(
+      /a filing to EMA/,
+    );
     /* The authority is the statute behind the position itself: what makes an
        MDR route the EU's is the MDR, and that is the position's own citation. */
     expect(caution.authority).toBe(positionFor('EU_MDR_CLASS_III')!.authority);
@@ -94,6 +110,35 @@ describe('the agency the sponsor named', () => {
   it('says nothing where no agency has been named', () => {
     expect(cautionFor('EU_MAA', {})).toBeNull();
     expect(cautionFor('EU_MAA', { regions: [] }), 'an empty list is not a statement').toBeNull();
+  });
+});
+
+describe('a programme with nothing to compare to', () => {
+  it('closes the 510(k), which is the stronger half of the De Novo pair', () => {
+    const caution = cautionFor('US_510K', { predicate: 'none' })!;
+    expect(caution.availability).toBe('inapplicable');
+    expect(caution.reason).toMatch(/no legally marketed device to compare to/);
+    expect(caution.reason).toMatch(/first condition for a De Novo/);
+    /* The regulation is cited at subpart level: 860.220 is the De Novo
+       request's content and format, not who may make one, and this module
+       does not state a section it has not verified. */
+    expect(caution.authority).toMatch(/860 Subpart D/);
+    expect(cautionFor('US_510K_IVD', { predicate: 'none' })!.availability).toBe('inapplicable');
+  });
+
+  it('says the other thing when FDA has already found the device not equivalent', () => {
+    const caution = cautionFor('US_CDX_510K', { predicate: 'nse' })!;
+    expect(caution.reason).toMatch(/already found this device not substantially equivalent/);
+    expect(caution.reason).toMatch(/second of the two conditions|one of the two conditions/);
+  });
+
+  it('leaves the De Novo alone, which is the route it points at', () => {
+    expect(cautionFor('US_DE_NOVO', { predicate: 'none' })).toBeNull();
+    expect(cautionFor('US_DE_NOVO_IVD', { predicate: 'nse' })).toBeNull();
+  });
+
+  it('says nothing where no predicate has been named and none has been ruled out', () => {
+    expect(cautionFor('US_510K', {}), 'an empty predicate box is an unanswered question').toBeNull();
   });
 });
 
@@ -143,6 +188,92 @@ describe('the class the sponsor states', () => {
   });
 });
 
+describe('which statute governs the product', () => {
+  it('closes a 505 route to a biological product, and says why by date', () => {
+    const caution = cautionFor('US_ANDA', { modality: 'mab' })!;
+    expect(caution.availability).toBe('inapplicable');
+    expect(caution.reason).toMatch(/monoclonal antibody/i);
+    expect(caution.reason).toMatch(/section 351 of the PHS Act/);
+    expect(caution.authority).toMatch(/BPCIA/);
+    expect(cautionFor('US_NDA', { modality: 'gene_therapy' })!.availability).toBe('inapplicable');
+  });
+
+  it('closes a biologics licence to a chemical product', () => {
+    expect(cautionFor('US_351K', { modality: 'small_molecule' })!.availability).toBe('inapplicable');
+    expect(cautionFor('EU_BIOSIMILAR_MAA', { modality: 'peptide' })!.reason).toMatch(/section 505/);
+    expect(cautionFor('US_BLA', { modality: 'oligonucleotide' })!.availability).toBe('inapplicable');
+  });
+
+  it('leaves each statute’s own routes alone', () => {
+    expect(cautionFor('US_BLA', { modality: 'mab' })).toBeNull();
+    expect(cautionFor('US_351K', { modality: 'biosimilar' })).toBeNull();
+    expect(cautionFor('US_NDA', { modality: 'small_molecule' })).toBeNull();
+    expect(cautionFor('US_ANDA', { modality: 'small_molecule' })).toBeNull();
+  });
+
+  it('asks a biosimilar programme to say so when it takes a standalone licence', () => {
+    const bla = cautionFor('US_BLA', { modality: 'biosimilar' })!;
+    expect(bla.availability, 'a sponsor may take it deliberately').toBe('needs_basis');
+    expect(bla.reason).toMatch(/NOT claiming biosimilarity/);
+    expect(cautionFor('EU_MAA', { modality: 'biosimilar' })!.reason).toMatch(/Article 8\(3\)/);
+    expect(cautionFor('EU_GENERIC_DCP', { modality: 'mab' })!.availability).toBe('inapplicable');
+  });
+});
+
+describe('a drug-device combination product', () => {
+  it('is told the lead centre decides, in the frame\u2019s own words', () => {
+    /* The US side offers it no route at all and says why; the EU side offers
+       all four medicines routes, because the frame holds no European
+       equivalent to narrow them — so each is marked instead. */
+    const caution = cautionFor('EU_MAA', { modality: 'combination' })!;
+    expect(caution.availability).toBe('needs_basis');
+    expect(caution.reason).toMatch(/drug-device combination/);
+    expect(caution.reason, 'the frame says why in its own words').toMatch(/primary mode of action under 21 CFR Part 3/);
+    expect(caution.authority).toMatch(/21 CFR Part 3/);
+    for (const id of ['EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']) {
+      expect(cautionFor(id, { modality: 'combination' })!.availability, id).toBe('needs_basis');
+    }
+  });
+
+  it('leaves a device or an IVD route alone, which is the other half of the question', () => {
+    expect(cautionFor('US_510K', { modality: 'combination' })).toBeNull();
+    expect(cautionFor('EU_MDR_CLASS_IIB', { modality: 'combination' })).toBeNull();
+  });
+});
+
+describe('the IVDR class routes', () => {
+  it('close the routes the stated class is not the route for', () => {
+    const caution = cautionFor('EU_IVDR_CLASS_B', { ivdrClass: 'D' })!;
+    expect(caution.availability, 'the class decides the route under Art 48').toBe('inapplicable');
+    expect(caution.reason).toMatch(/Class D under the IVDR/);
+    expect(caution.reason).toMatch(/applies to Class B/);
+    expect(caution.authority).toMatch(/Art 47, Art 48, Annex VIII/);
+  });
+
+  it('keep Class C and Class D on the one entry the registry holds for them', () => {
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'C' })).toBeNull();
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'D' })).toBeNull();
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'A' })!.availability).toBe('inapplicable');
+  });
+
+  it('close the companion-diagnostic route to a Class A or B assay', () => {
+    /* A companion diagnostic is Class C or D (Annex VIII Rule 3(f)). */
+    expect(cautionFor('EU_CDX_IVDR_D', { ivdrClass: 'B' })!.availability).toBe('inapplicable');
+    expect(cautionFor('EU_CDX_IVDR_D', { ivdrClass: 'C' })).toBeNull();
+  });
+
+  it('close the reference-laboratory step to anything but Class D', () => {
+    /* An EU reference laboratory is designated for Class D devices. */
+    expect(cautionFor('EU_REF_LAB', { ivdrClass: 'C' })!.availability).toBe('inapplicable');
+    expect(cautionFor('EU_REF_LAB', { ivdrClass: 'D' })).toBeNull();
+  });
+
+  it('say nothing about a device route, which is a different regulation', () => {
+    expect(cautionFor('EU_MDR_CLASS_IIB', { ivdrClass: 'D' })).toBeNull();
+    expect(cautionFor('US_510K_IVD', { ivdrClass: 'D' })).toBeNull();
+  });
+});
+
 describe('the EU class routes', () => {
   it('close a route the stated class is not the route for', () => {
     const caution = cautionFor('EU_MDR_CLASS_IIA', { euMdrClass: 'IIb' })!;
@@ -176,6 +307,20 @@ describe('what every rule must satisfy', () => {
     }
   });
 
+  it('can fire: every RULE fires on some fact a flow can state', () => {
+    /* Per-position reachability is not enough: a new rule whose positions
+       another rule already marks would pass without ever running. */
+    const fired = new Set(everyCaution().map(row => row.caution!.ruleId));
+    const dead = cautionRuleIds().filter(id => !fired.has(id));
+    expect(dead, 'a rule nothing can reach: a check that only passes').toEqual([]);
+  });
+
+  it('names the rule that marked a position, so the record says what judged it', () => {
+    expect(cautionFor('US_DE_NOVO', { predicateNamed: 'K123456' })!.ruleId).toBe('de_novo_with_named_predicate');
+    expect(cautionFor('US_ANDA', { modality: 'mab' })!.ruleId).toBe('biological_under_505');
+    expect(new Set(cautionRuleIds()).size, 'two rules with one name').toBe(cautionRuleIds().length);
+  });
+
   it('can fire: every position a rule names is reachable, and is one the catalogue offers', () => {
     const offered = new Set(allPathwayPositions().map(p => p.value));
     const unoffered = cautionablePositionIds().filter(id => !offered.has(id));
@@ -188,20 +333,25 @@ describe('what every rule must satisfy', () => {
 });
 
 describe('marking is not hiding', () => {
+  /* The catalogue lists and the rules mark; this composes them exactly as the
+     engine does (`withCautions` over `pathwayOptions`). */
+  const marked = (facts: ProgrammeFacts) =>
+    pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(option => ({
+      ...option,
+      caution: cautionFor(option.value, facts),
+    }));
+
   it('offers the same positions, in the same order, with and without the facts', () => {
     const facts: ProgrammeFacts = { deviceClass: 'III', predicateNamed: 'K123456' };
     const flat = pathwayOptions({ domain: 'medical_devices', region: 'US' });
-    const marked = pathwayOptions({ domain: 'medical_devices', region: 'US', facts });
-    expect(marked.map(o => o.value)).toEqual(flat.map(o => o.value));
-    expect(marked.map(o => o.label)).toEqual(flat.map(o => o.label));
-    const deNovo = marked.find(o => o.value === 'US_DE_NOVO')!;
-    expect(deNovo.caution!.availability).toBe('needs_basis');
-    expect(flat.find(o => o.value === 'US_DE_NOVO')!.caution, 'no facts, no mark').toBeUndefined();
+    expect(marked(facts).map(o => o.value)).toEqual(flat.map(o => o.value));
+    expect(marked(facts).map(o => o.label)).toEqual(flat.map(o => o.label));
+    expect(marked(facts).find(o => o.value === 'US_DE_NOVO')!.caution!.availability).toBe('needs_basis');
+    expect(marked({}).find(o => o.value === 'US_DE_NOVO')!.caution, 'no facts, no mark').toBeNull();
   });
 
   it('leaves the positions nothing speaks against unmarked', () => {
-    const marked = pathwayOptions({ domain: 'medical_devices', region: 'US', facts: { deviceClass: 'II' } });
-    expect(marked.find(o => o.value === 'US_510K')!.caution).toBeUndefined();
-    expect(marked.find(o => o.value === 'US_PMA')!.caution!.availability).toBe('needs_basis');
+    expect(marked({ deviceClass: 'II' }).find(o => o.value === 'US_510K')!.caution).toBeNull();
+    expect(marked({ deviceClass: 'II' }).find(o => o.value === 'US_PMA')!.caution!.availability).toBe('needs_basis');
   });
 });

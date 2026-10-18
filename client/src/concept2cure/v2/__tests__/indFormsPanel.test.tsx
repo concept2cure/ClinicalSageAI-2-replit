@@ -627,12 +627,14 @@ describe('IndFormsPanel — filing the sponsor’s completed form', () => {
   it('shows a form already filed in each sequence, with the digest of the bytes the sponsor signed', async () => {
     mockProgramListing({
       placements: [
-        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048, requiredFieldsMissing: [] },
-        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048, requiredFieldsMissing: [] },
+        { formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceId: 61, sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048, requiredFieldsMissing: [], attestedAt: '2026-10-15T09:00:00.000Z' },
+        { formId: 'FDA_1571', leafId: 14, sectionCode: 'm1.1', sequenceId: 62, sequenceNumber: '0001', fileName: 'form-fda-1571.pdf', sha256: '0123456789abcdef'.repeat(4), byteSize: 2048, requiredFieldsMissing: [], attestedAt: '2026-10-15T09:05:00.000Z' },
       ],
     } as never);
     render(<IndFormsPanel note={vi.fn()} />);
-    // One verdict per placement: both were checked complete.
+    // One verdict per placement: both were checked complete and attested by
+    // their uploader (2026-10-15: a clean check alone no longer reads as the
+    // completed form — indChecklistFormAttestation.test.tsx).
     expect(await screen.findAllByText('completed form filed')).toHaveLength(2);
     expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
     expect(screen.getByText(/m1\.1 · sequence 0001 · 2 KB · SHA-256 0123456789ab…/)).toBeTruthy();

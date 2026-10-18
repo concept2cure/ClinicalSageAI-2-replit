@@ -37,6 +37,8 @@
  */
 
 import type { DocxSection, DocxMetadata, DocxInput } from './docxFactory';
+import { e3Children, e3SectionSummary, e3TopLevel } from '../ind/ctd/csr-e3-guidance';
+import type { E3Section } from '../ind/ctd/types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -396,8 +398,29 @@ const fda510kTemplate: DocxTemplateBlueprint = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CSR TEMPLATE — ICH E3
+// CSR TEMPLATE — ICH E3, read from the E3 tree
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/*
+ * 2026-10-05 (g-csr-copies-onto-e3): this blueprint was a hand-written list
+ * numbered 1–10 — Introduction 3 (E3: 7), References 10 (E3: 15), no §3–§6,
+ * §14 or §16 — and it offered "No deaths occurred during the study." as the
+ * default for its Deaths section. Every heading, its number, title and whether
+ * it is expected now come from the canonical E3 tree
+ * (server/services/ind/ctd/csr-e3-guidance.ts), to the depth E3 numbers it; the
+ * instruction is the tree's own one-line summary. No section has a default: an
+ * unwritten section is bracketed as owed, never stated.
+ */
+function e3Blueprint(s: E3Section): TemplateSectionBlueprint {
+  const children = e3Children(s.number);
+  return {
+    title: s.title,
+    sectionCode: s.number,
+    required: s.applies === 'always',
+    instruction: e3SectionSummary(s),
+    ...(children.length ? { subsections: children.map(e3Blueprint) } : {}),
+  };
+}
 
 const csrTemplate: DocxTemplateBlueprint = {
   id: 'csr-ich-e3',
@@ -406,223 +429,7 @@ const csrTemplate: DocxTemplateBlueprint = {
   region: 'ICH',
   standard: 'ICH E3: Structure and Content of Clinical Study Reports',
   requiredMetadata: ['product', 'sponsor'],
-  sections: [
-    {
-      title: 'Title Page',
-      sectionCode: '1',
-      required: true,
-      instruction:
-        'Study title, protocol number, phase, sponsor, investigational product, therapeutic area, study dates, report date.',
-    },
-    {
-      title: 'Synopsis',
-      sectionCode: '2',
-      required: true,
-      instruction:
-        'Structured synopsis: study design, objectives, endpoints, sample size, treatment duration, key results, conclusions. Typically 3-5 pages.',
-      expectedTables: [
-        {
-          caption: 'Table 1 — Study Synopsis',
-          suggestedHeaders: ['Item', 'Description'],
-        },
-      ],
-    },
-    {
-      title: 'Introduction',
-      sectionCode: '3',
-      required: true,
-      instruction:
-        'Disease background, rationale for the study, summary of relevant nonclinical and clinical findings.',
-    },
-    {
-      title: 'Study Objectives',
-      sectionCode: '4',
-      required: true,
-      instruction: 'Primary and secondary objectives. Exploratory objectives if applicable.',
-    },
-    {
-      title: 'Investigational Plan',
-      sectionCode: '5',
-      required: true,
-      instruction:
-        'Study design, selection of study population, treatments, efficacy/safety measures, statistical methods.',
-      subsections: [
-        {
-          title: 'Study Design',
-          sectionCode: '5.1',
-          required: true,
-          instruction:
-            'Design type (parallel, crossover, etc.), randomization, blinding, stratification, study periods.',
-        },
-        {
-          title: 'Study Population',
-          sectionCode: '5.2',
-          required: true,
-          instruction: 'Inclusion/exclusion criteria, planned and actual enrollment, demographics.',
-          expectedTables: [
-            {
-              caption: 'Table 2 — Key Inclusion/Exclusion Criteria',
-              suggestedHeaders: ['Criterion', 'Type', 'Description'],
-            },
-          ],
-        },
-        {
-          title: 'Treatments',
-          sectionCode: '5.3',
-          required: true,
-          instruction:
-            'Description of investigational and comparator treatments. Dose, route, regimen, duration.',
-        },
-        {
-          title: 'Efficacy Assessments',
-          sectionCode: '5.4',
-          required: true,
-          instruction:
-            'Primary and secondary efficacy endpoints. Measurement methods, assessment schedule.',
-        },
-        {
-          title: 'Safety Assessments',
-          sectionCode: '5.5',
-          required: true,
-          instruction:
-            'Safety endpoints, adverse event collection, laboratory assessments, vital signs, ECG.',
-        },
-        {
-          title: 'Statistical Methods',
-          sectionCode: '5.6',
-          required: true,
-          instruction:
-            'Analysis populations (ITT, PP, safety), sample size calculation, hypothesis testing, pre-specified analyses.',
-        },
-      ],
-    },
-    {
-      title: 'Study Patients',
-      sectionCode: '6',
-      required: true,
-      instruction: 'Disposition, protocol deviations, demographics, baseline characteristics.',
-      subsections: [
-        {
-          title: 'Patient Disposition',
-          sectionCode: '6.1',
-          required: true,
-          instruction:
-            'CONSORT flow: screened, enrolled, randomized, completed, discontinued (reasons).',
-          expectedTables: [
-            {
-              caption: 'Table 3 — Patient Disposition',
-              suggestedHeaders: ['Category', 'Treatment Arm', 'Control Arm', 'Total'],
-            },
-          ],
-        },
-        {
-          title: 'Demographics and Baseline Characteristics',
-          sectionCode: '6.2',
-          required: true,
-          instruction: 'Age, sex, race, weight, disease severity, relevant medical history.',
-          expectedTables: [
-            {
-              caption: 'Table 4 — Demographics',
-              suggestedHeaders: ['Characteristic', 'Treatment (N=)', 'Control (N=)', 'p-value'],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: 'Efficacy Results',
-      sectionCode: '7',
-      required: true,
-      instruction:
-        'Analysis of primary and secondary endpoints. Statistical results, clinical significance.',
-      subsections: [
-        {
-          title: 'Primary Endpoint',
-          sectionCode: '7.1',
-          required: true,
-          instruction: 'Primary efficacy analysis with confidence intervals and p-values.',
-          expectedTables: [
-            {
-              caption: 'Table 5 — Primary Efficacy Endpoint',
-              suggestedHeaders: [
-                'Endpoint',
-                'Treatment',
-                'Control',
-                'Difference',
-                '95% CI',
-                'p-value',
-              ],
-            },
-          ],
-        },
-        {
-          title: 'Secondary Endpoints',
-          sectionCode: '7.2',
-          required: true,
-          instruction: 'Analysis of secondary endpoints. Multiplicity adjustment if applicable.',
-        },
-      ],
-    },
-    {
-      title: 'Safety Results',
-      sectionCode: '8',
-      required: true,
-      instruction:
-        'Adverse events, serious adverse events, deaths, laboratory findings, vital signs.',
-      subsections: [
-        {
-          title: 'Adverse Events',
-          sectionCode: '8.1',
-          required: true,
-          instruction:
-            'Overall AE incidence, treatment-emergent AEs by SOC/PT, severity, relationship to treatment.',
-          expectedTables: [
-            {
-              caption: 'Table 6 — Treatment-Emergent Adverse Events',
-              suggestedHeaders: [
-                'SOC / Preferred Term',
-                'Treatment N (%)',
-                'Control N (%)',
-                'p-value',
-              ],
-            },
-          ],
-        },
-        {
-          title: 'Serious Adverse Events',
-          sectionCode: '8.2',
-          required: true,
-          instruction: 'Listing and narratives of all SAEs. Relationship assessment, outcome.',
-        },
-        {
-          title: 'Deaths',
-          sectionCode: '8.3',
-          required: true,
-          instruction: 'Description of all deaths during the study. Cause, relationship, timing.',
-          defaultText: 'No deaths occurred during the study.',
-        },
-        {
-          title: 'Laboratory Findings',
-          sectionCode: '8.4',
-          required: true,
-          instruction: 'Clinically significant laboratory changes, shift tables.',
-        },
-      ],
-    },
-    {
-      title: 'Discussion and Conclusions',
-      sectionCode: '9',
-      required: true,
-      instruction:
-        'Interpretation of efficacy and safety results. Comparison with existing literature. Risk-benefit assessment. Conclusions regarding study objectives.',
-    },
-    {
-      title: 'References',
-      sectionCode: '10',
-      required: true,
-      instruction: 'All references cited in the report.',
-    },
-  ],
+  sections: e3TopLevel().map(e3Blueprint),
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -640,11 +447,14 @@ const indTemplate: DocxTemplateBlueprint = {
   requiredMetadata: ['product', 'sponsor', 'region'],
   sections: [
     // Module 1
-    { sectionCode: '1.1', title: 'Cover Letter', required: true, instruction: 'Draft an FDA IND cover letter including applicant information, IND number, and submission description.' },
-    { sectionCode: '1.2', title: 'FDA Form 1571', required: true, instruction: 'Complete FDA Form 1571 with sponsor details, drug information, and regulatory classification.' },
-    { sectionCode: '1.3', title: 'FDA Form 1572', required: true, instruction: 'Complete investigator statement with qualifications, facilities, and commitments.' },
-    { sectionCode: '1.4', title: 'FDA Form 3674', required: true, instruction: 'Certify compliance with ClinicalTrials.gov registration requirements.' },
-    { sectionCode: '1.5', title: 'Table of Contents', required: true, instruction: 'Generate comprehensive table of contents for all modules.' },
+    /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+    (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+    The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+    of contents — so the row for it is gone rather than renumbered. */
+    { sectionCode: '1.2', title: 'Cover Letter', required: true, instruction: 'Draft an FDA IND cover letter including applicant information, IND number, and submission description.' },
+    { sectionCode: '1.1', title: 'FDA Form 1571', required: true, instruction: 'Complete FDA Form 1571 with sponsor details, drug information, and regulatory classification.' },
+    { sectionCode: '1.1', title: 'FDA Form 1572', required: true, instruction: 'Complete investigator statement with qualifications, facilities, and commitments.' },
+    { sectionCode: '1.1', title: 'FDA Form 3674', required: true, instruction: 'Certify compliance with ClinicalTrials.gov registration requirements.' },
     // Module 2
     { sectionCode: '2.2', title: 'Introduction', required: true, instruction: 'Introduce the drug, its pharmacological class, mechanism of action, and proposed indication.' },
     { sectionCode: '2.3', title: 'Quality Overall Summary', required: true, instruction: 'Summarize drug substance manufacturing, characterization, controls, and drug product formulation.' },
@@ -713,7 +523,10 @@ export function templateIds(): string[] {
  *              7    "Clinical data is not required for this submission…"
  *   cer-eu-mdr 3.3  "No clinical investigations were conducted for this device."
  *              6    "The clinical evaluation was performed by qualified personnel…"
- *   csr-ich-e3 8.3  "No deaths occurred during the study."
+ *
+ * (csr-ich-e3 offered "No deaths occurred during the study." under a Deaths
+ * section it numbered 8.3; that blueprint is now read from the E3 tree and has
+ * no defaults — 2026-10-05, g-csr-copies-onto-e3.)
  *
  * Nothing in this product ever asked whether the device contains software, is
  * mains-powered or ships sterile, whether clinical data are required, or who
@@ -766,8 +579,26 @@ export function mergeWithTemplate(
     byTitle.set(s.title.toLowerCase().trim(), s);
   }
 
+  // A blueprint may carry the same title at two codes — ICH E3 has "Protocol
+  // Deviations" at §10.2 (the narrative) and §16.2.2 (the patient-data
+  // listing), and "Demographic Data" at §14.1 and §16.2.4. A title-only match
+  // there is ambiguous, and matching both would write one caller's prose under
+  // both numbers, so an ambiguous title is matched by sectionCode alone.
+  // (2026-10-05, g-csr-copies-onto-e3: the hand-written ten-heading blueprint
+  // could not collide; reading the full E3 tree made it possible.)
+  const blueprintTitleCount = new Map<string, number>();
+  const countTitle = (bp: TemplateSectionBlueprint): void => {
+    const key = bp.title.toLowerCase().trim();
+    blueprintTitleCount.set(key, (blueprintTitleCount.get(key) ?? 0) + 1);
+    bp.subsections?.forEach(countTitle);
+  };
+  tpl.sections.forEach(countTitle);
+
   function findLlmSection(bp: TemplateSectionBlueprint): DocxSection | undefined {
-    return byCode.get(bp.sectionCode) ?? byTitle.get(bp.title.toLowerCase().trim());
+    const byItsCode = byCode.get(bp.sectionCode);
+    if (byItsCode) return byItsCode;
+    const key = bp.title.toLowerCase().trim();
+    return (blueprintTitleCount.get(key) ?? 0) > 1 ? undefined : byTitle.get(key);
   }
 
   // Flatten blueprint (with subsections in order)

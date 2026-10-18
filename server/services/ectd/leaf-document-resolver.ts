@@ -71,6 +71,8 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { documentTableKeyKind, isPlaceableDocumentTable } from './leaf-document-tables';
 import { notFinalizedStatus } from './leaf-source-resolver';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
+import type { LegalDocumentContext } from '../../../shared/company-documents';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import {
   hasCompleteDocumentPointer,
   type LeafDocumentPinVerdict,
@@ -114,16 +116,16 @@ interface StoreLookup {
  * is a refusal that says so, never an approval, and never a missing document
  * (the existence check above already answered).
  */
-async function vaultApprovalVerdict(documentUuid: string, organizationId: number, contentHash: string | null): Promise<string | null> {
+async function vaultApprovalVerdict(documentUuid: string, organizationId: number, contentHash: string | null, legalTarget: LegalDocumentContext): Promise<string | null> {
   try {
-    return await vaultVersionNotTransmittable(queryableFromDrizzle(db), organizationId, documentUuid, contentHash ?? '');
+    return await vaultVersionNotTransmittable(queryableFromDrizzle(db), organizationId, documentUuid, contentHash ?? '', legalTarget);
   } catch {
     return 'of unknown approval (its lifecycle record could not be read)';
   }
 }
 
 type IntegerLookup = (documentId: number, organizationId: number) => Promise<StoreLookup>;
-type UuidLookup = (documentUuid: string, organizationId: number) => Promise<StoreLookup>;
+type UuidLookup = (documentUuid: string, organizationId: number, legalTarget: LegalDocumentContext) => Promise<StoreLookup>;
 
 const NOT_FOUND = (table: string): StoreLookup => ({
   found: false,
@@ -244,15 +246,22 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
 };
 
 const UUID_LOOKUPS: Record<string, UuidLookup> = {
-  vault_documents: async (documentUuid, organizationId) => {
+  vault_documents: async (documentUuid, organizationId, legalTarget) => {
     if (!UUID_RE.test(documentUuid)) {
       return { found: false, storedSha256: null, reason: 'document_uuid is not a uuid' };
     }
     // Scoped THROUGH THE PROGRAMME, the authoritative owner of a vault document
     // (vault.documents.organization_id is nullable attribution, not a scope) —
     // the same predicate the write-side verifier and the assembler use.
+    // What the assembler (leaf-source-resolver.ts, vault branch) refuses before
+    // it reads a byte, read here too, so the Validation and Dispatch tabs do not
+    // say clear for a leaf freeze will refuse (placement parity test,
+    // 2026-10-17): bytes withdrawn by a data disposition, bytes not on the
+    // storage provider, and a file that is not a PDF. The %PDF- header and the
+    // content hash need the bytes; the assembler alone reads them.
     const res = await queryableFromDrizzle(db).query(
-      `SELECT d.content_hash
+      `SELECT d.content_hash, d.storage_version_id, d.mime_type, d.file_name,
+              ${vaultBinaryAvailableSql('d')} AS binary_available
          FROM vault.documents d
         WHERE d.id = $1::uuid
           AND d.deleted_at IS NULL
@@ -265,13 +274,25 @@ const UUID_LOOKUPS: Record<string, UuidLookup> = {
         LIMIT 1`,
       [documentUuid, organizationId],
     );
-    const row = res.rows[0] as { content_hash: string | null } | undefined;
+    const row = res.rows[0] as
+      | { content_hash: string | null; storage_version_id: string | null; mime_type: string | null; file_name: string | null; binary_available: boolean }
+      | undefined;
     if (!row) return { found: false, storedSha256: null, reason: 'vault document not found in this organization' };
+    if (!row.binary_available) {
+      return { found: false, storedSha256: null, reason: 'vault document bytes were withdrawn by a data disposition' };
+    }
+    if (!row.storage_version_id) {
+      return { found: false, storedSha256: null, reason: 'vault document bytes are not on the storage provider yet (storage_version_id is null)' };
+    }
+    const isPdf = row.mime_type === 'application/pdf' || /\.pdf$/i.test(row.file_name ?? '');
+    if (!isPdf) {
+      return { found: false, storedSha256: null, reason: 'vault document is not a PDF, so it cannot be staged as an eCTD leaf' };
+    }
     return {
       found: true,
       storedSha256: row.content_hash ?? null,
       reason: row.content_hash ? null : 'the vault record carries no content hash',
-      notTransmittable: await vaultApprovalVerdict(documentUuid, organizationId, row.content_hash ?? null),
+      notTransmittable: await vaultApprovalVerdict(documentUuid, organizationId, row.content_hash ?? null, legalTarget),
     };
   },
 };
@@ -356,11 +377,11 @@ function classifyUnlookupablePointer(base: LeafResolutionBase): LeafDocumentReso
  * key space and turns a store that cannot be read into a stated not-found,
  * because the caller is a gate and a gate that throws reports nothing.
  */
-async function lookupDocumentInStore(base: LeafResolutionBase, organizationId: number): Promise<StoreLookup> {
+async function lookupDocumentInStore(base: LeafResolutionBase, organizationId: number, legalTarget: LegalDocumentContext): Promise<StoreLookup> {
   const table = base.documentTable as string;
   try {
     return base.keyKind === 'uuid'
-      ? await UUID_LOOKUPS[table](base.documentUuid as string, organizationId)
+      ? await UUID_LOOKUPS[table](base.documentUuid as string, organizationId, legalTarget)
       : await INTEGER_LOOKUPS[table](base.documentId as number, organizationId);
   } catch (err) {
     // A store that cannot be read is not a document that exists. Say so.
@@ -431,12 +452,13 @@ function resolutionBase(pointer: LeafDocumentPointer): LeafResolutionBase {
 export async function resolveLeafDocument(
   pointer: LeafDocumentPointer,
   organizationId: number,
+  legalTarget: LegalDocumentContext = {},
 ): Promise<LeafDocumentResolution> {
   const base = resolutionBase(pointer);
   const unlookupable = classifyUnlookupablePointer(base);
   if (unlookupable) return unlookupable;
 
-  return resolutionFromStoreLookup(base, await lookupDocumentInStore(base, organizationId));
+  return resolutionFromStoreLookup(base, await lookupDocumentInStore(base, organizationId, legalTarget));
 }
 
 /**
@@ -455,6 +477,7 @@ export async function resolveLeafDocument(
 export async function resolveLeafDocuments(
   leaves: readonly LeafDocumentPointer[],
   organizationId: number,
+  legalTarget: LegalDocumentContext = {},
 ): Promise<LeafDocumentResolution[]> {
   const reads = new Map<string, Promise<StoreLookup>>();
   return Promise.all(
@@ -465,7 +488,7 @@ export async function resolveLeafDocuments(
       const key = lookupKey(leaf);
       let read = reads.get(key);
       if (!read) {
-        read = lookupDocumentInStore(base, organizationId);
+        read = lookupDocumentInStore(base, organizationId, legalTarget);
         reads.set(key, read);
       }
       return resolutionFromStoreLookup(base, await read);

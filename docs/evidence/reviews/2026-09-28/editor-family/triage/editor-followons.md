@@ -185,7 +185,7 @@ Prototypes in scratch (`scratchpad/triage/secb3/`):
 
 ### files
 
-- `server/services/authoring/comment-anchor-save.ts (new)` — held: False — n/a (new file) — 
+- `server/services/authoring/comment-anchor-save.ts (new)` — held: False — n/a (new file) —
 - `server/services/authoring/authoring-html-sanitizer.ts` — held: False — ce56754d 2026-09-28T04:50Z (this lane); read for its parser() pattern only — 01TTTQ1hpdMr1yAMVYH4nYdE
 - `server/routes/authoring.router.ts` — held: True — f0147f45 2026-09-28T17:05Z (also d4176395 by 01KiDof7 at 16:48Z); held until 2026-09-29T17:05Z — 01PwLFr89hq8E7ZHUcAH96HK
 - `client/src/concept2cure/v2/editor/DocumentWorkbench.tsx` — held: True — merge 1de78ea8 2026-09-28T11:53Z; board item 6 → 01KZK3jg — 01PwLFr89hq8E7ZHUcAH96HK

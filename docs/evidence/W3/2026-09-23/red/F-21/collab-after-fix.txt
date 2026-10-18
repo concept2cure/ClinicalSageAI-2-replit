@@ -271,4 +271,3 @@ stderr | server/services/collab/__tests__/collab-governance.pglite.integration.t
       Tests  36 passed (36)
    Start at  04:05:55
    Duration  12.85s (transform 327ms, setup 108ms, import 527ms, tests 11.91s, environment 0ms)
-

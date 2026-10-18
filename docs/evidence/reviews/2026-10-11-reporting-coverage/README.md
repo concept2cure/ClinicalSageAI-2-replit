@@ -181,7 +181,7 @@ the bootstrap already listed.
 | C-4 | `insights-canvas-routes.ts:331` computes `runnable` as `reportEngineFor(typeId, 'project')`, hardcoding project scope. `provenance.evidence_trace_report` is computable at `document` scope and is therefore reported as un-runnable. A working report is hidden by a literal. | Open — one line, plus a document picker for the scope. |
 | C-5 | The compliance reports serve `json` and `csv` only. An inspector who asks for the access review is handed `application/json`. | Open — `ReportFormat` + `readFormat`. |
 | C-6 | The RBM attention feed is silently capped at 8 items — a severity-ranked regulatory attention list that hides item 9 without saying so. | Open. |
-| C-7 | The expedited-SAE clock fetches `unassessedInputs` and **discards it**, so a case nobody assessed and a case assessed as not-reportable both render "No expedited report required". That is precisely the defect the field was added to close. | Open — `SafetyNarrative.tsx:438-468`. |
+| C-7 | The expedited-SAE clock fetches `unassessedInputs` and **discards it**. *(Wording correction: the copy was never "No expedited report required" and the `basis` sentence was always rendered and always honest. What was identical between an unassessed case and one found non-reportable was the headline, the border and the background.)* | **Fixed**, and then fixed again. The first fix inferred "no verdict" as `unassessedInputs.length > 0`, which is the wrong boundary: P-20's follow-up and `classifyIndSafetyReport`'s Gate 0 both hold that an event recorded non-serious, or not suspected, IS determined on those stated facts. So a decided case was headed "Reportability not determined". `reportabilityDetermined` is now computed once in the clock service and read by all four readers (the box, the queue labels, the save toast, the AnA context). Three further residuals closed with it: C-7a (the labels beside the box), C-7b (the narrator was handed the sort sentinel 9999 as a day count), C-7c (the boundary). |
 | C-8 | Task-board analytics recompute in the browser from filtered rows while a deterministic org-scoped engine (`loadTaskAnalytics`) goes uncalled — a client-side duplicate of a server engine. | Open. |
 | C-9 | `attestation-report.service.ts`'s header says every row will report `UNVERIFIABLE` because the hash-chain migration is not in the set. **Stale:** it is in the set (`migration-set.mjs:1590`), so the chain does start. The permanent split it describes still holds for pre-cutover history. | Comment only. |
 | C-11 | `GET /api/report-os/portfolio/org` is **refused in production**. The prefix `/api/report-os/portfolio` is claimed by one surface only (registry line 37, the AnA Command / Orchestration row), and that surface is not in `launch-scope.ts` — nor is `Orchestration.tsx`'s. So both of its callers sit on surfaces hidden in production *and* the route is out-of-scope there. The reporting surface reaches the rollup only through the reduced `/api/insights-canvas/overview` projection. | Open. Correction to this session's own earlier note, which recorded the callers but read them as reachable. |
@@ -202,7 +202,7 @@ the bootstrap already listed.
 | C-27 | Five reads used fixed "could not be read" copy and never consulted `useLiveData`'s `status`, so a 403 from the tenant guard and an expired session both rendered as an outage with a Try again that cannot succeed. | **Fixed.** `readFailureOf` classifies the status: 401 says to sign in, 403 says the records are role-scoped and that retrying will not change the answer, 404 says there is no such record — none of them offers a retry. Only an unreached server (`status: 0`) or a 5xx keeps one, which is the case a retry is actually for. Four tests; three fail on the old behaviour. |
 
 | C-13 | `insightsReportsRunWhatTheyName.test.tsx` ("a pack lists only the types an engine computes") fails intermittently **under CPU contention**, not on its own: it passed 3/3 run alone and 195/195 in a clean batch, and failed roughly 1 in 3 full-batch runs on this 4-core container. Its `waitFor(.ro-pack-grid)` is bounded by the global `asyncUtilTimeout: 5000` (`tests/setup.ts:52`) and the canvas render exceeds it when workers compete. Pre-existing fragility rather than a correctness defect; adding suites raises its failure rate, which is how it was noticed. Not "fixed" by inflating a timeout in a test this work does not own. | Open — needs either a cheaper canvas mount in that suite or a per-assertion budget. |
-| C-10 | **37 of 43** `*-metrics.ts` services are dead code — no endpoint and no caller. The apparent "40 metrics services with no UI" is largely not a UI gap. | Open — deletion needs the Working-agreement history search. |
+| C-10 | ~~**37 of 43** `*-metrics.ts` services are dead code — no endpoint and no caller.~~ **WRONG, and closed as a false positive (DECISIONS-2026-10-12.md, D-1).** There are 44, and **zero** are dead. Each sits on a two-ended chain, verified for all 40 under `server/services/`: a mounted route statically imports and calls its `record*()` counters, and the single aggregate `/api/metrics` handler (`startup/inline-endpoints.ts:264`) **dynamically** imports and calls its `render*Metrics()`. The trap, which is what will recur: there is no per-service endpoint, so a search shaped "does this service have an endpoint?" correctly returns nothing and the inference to "dead" does not follow. A first pass then recommended deleting `server/metrics.js` as "the one genuinely unreachable module" — it has three production importers, two in CMC / Module 3, inside the launch catalog under P-28. What the investigation DID surface, as a separate and real question: `/api/metrics` has no scrape configuration in this repository, so the 40 `render*` functions are built and not wired to a reader. | **Closed — false positive.** Nothing deleted. The open question is operational, not a cleanup. |
 
 **Duplication (Rule: zero duplication).** `intelligent-report-engine.ts` is a **second
 sealed/immutable Part 11 report stack**, 16 endpoints, 11 with no UI, and
@@ -287,8 +287,40 @@ baseline-with-a-written-reason rule.
 
 ---
 
+## 7. What was built on this review's findings
+
+**`REGIONAL-ENGINE.md`** (2026-10-12) answers the half of the founder's note this
+review left open: not "is what we show truthful" but "is there a market-specific
+computation we already hold and do not run". There is exactly one —
+`shared/regulatory/regional-module1.ts`, the FDA/EMA/PMDA Module 1 record with a
+basis per heading — and it computes **four** of the 35 market-named report types.
+The other 31 stay not computed, each for a reason the market itself states, and
+widening that set means adding a regulator's Module 1 tree rather than a case in
+an engine.
+
+That document also records three things worth reading before touching this area:
+the `requireConfidence` question decided on the shipped precedent rather than by
+amending four governed type definitions; the j8 defect found in the **renderer**
+(a market assessment's executive summary read "Submission readiness not
+computed"); and `computedScopes`, which stopped the catalog card claiming a run
+at a scope the engine refuses.
+
+## 8. Decided, 2026-10-12
+
+The parked product calls were delegated to the session and are decided in
+**`DECISIONS-2026-10-12.md`** beside this file. In short:
+
+| | Decision |
+|---|---|
+| **D-1** C-10's 37 dead metrics services | **Delete nothing.** False positive — zero are dead; the trap is a dynamic import inside one aggregate handler. A near-deletion of `server/metrics.js` (3 production importers, 2 in CMC/Module 3) was caught by the adversarial pass. Separate real finding: `/api/metrics` has no scrape config, so the telemetry has no reader. |
+| **D-2** QMS + inspection migrations | **Safe, but not now.** All 43 statements are IF NOT EXISTS-guarded and all ten tables are public + `organization_id integer NOT NULL`, so Rule 1 passes cleanly. Held because it is a new capability while the launch rows are red, and because the PLACEMENT is load-bearing in a way `ci:migration-set-order` does not catch — misplaced, it opens a Part 11 signature-bypass window between two deploys. The analysis is recorded so it is not redone. |
+| **D-3** The attestation's stronger claim | **Narrow the claim, not the chain.** Shipped: the report declares its own method inside its HMAC-signed body. Re-deriving would report the whole pre-cutover span as BROKEN, which an inspector reads as a compromised trail. |
+| **D-4** Collapsing the 61-type catalog | **Don't.** Build engines under it, as the `regional` engine did. The canvas is already honest about the uncomputed types, so there is no user harm to fix, and collapsing means deleting governed definitions from a deployed seed for zero launch benefit. |
+
 ## Rows informed
 
 D2 (the Reporting app), D5 (governed path), D6 (audit). None turns green from this review
 alone: §2 and the Rule 2 catalog-shape decision are founder calls, and C-1, C-3 to C-8
-remain open.
+remain open. `REGIONAL-ENGINE.md` moves D2 from 43 uncomputed types to 39, with a
+market-specific computation behind each of the four, and does not turn it green
+either.

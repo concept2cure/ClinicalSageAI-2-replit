@@ -67,8 +67,8 @@ import type {
  *                     or the filing's channel is one the platform has no
  *                     connector for (`submissionChannelFor` → `unconnected`,
  *                     e.g. a centralised MAA and the EMA eSubmission Gateway,
- *                     an orphan designation and EMA IRIS, or an EMA filing
- *                     whose channel is not modelled at all).
+ *                     an orphan designation and EMA IRIS, an EMA filing whose
+ *                     channel is not modelled at all, or a Notified Body file).
  */
 export type SubmittabilityTier =
   | 'submittable'
@@ -208,6 +208,21 @@ const EMA_UNMODELLED_REASON =
 const EMA_UNMODELLED_STEP =
   'The platform prepares the content; the applicant submits it through the channel EMA specifies.';
 
+/**
+ * A Notified Body file (agency 'Notified_Body': EU MDR/IVDR technical
+ * documentation, CER, SSCP, a Notified Body opinion or consultation, …) goes to
+ * the Notified Body that assesses it. Until 2026-10-15 these entries fell through
+ * to the EU region default and were reported submittable through CESP, EMA's
+ * medicines-dossier gateway. No Notified Body's channel is modelled, and none is
+ * invented.
+ */
+const NOTIFIED_BODY_CHANNEL = 'Notified Body — channel not modelled';
+const NOTIFIED_BODY_REASON =
+  'A Notified Body file goes to the Notified Body that assesses it, not to EMA; no Notified Body submission ' +
+  'channel is modelled on the platform. The EU region default (CESP) is not assumed';
+const NOTIFIED_BODY_STEP =
+  'The platform prepares the content; the applicant submits it to the Notified Body through the channel that Notified Body specifies.';
+
 const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
 
 export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
@@ -215,6 +230,15 @@ export function submissionChannelFor(entry: RegulatoryApplicationType): Submissi
   // is not a channel for a filing whose entry says it goes to a portal.
   const portal = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));
   if (portal) return { kind: 'portal', channel: portal };
+
+  if (entry.agency === 'Notified_Body') {
+    return {
+      kind: 'unconnected',
+      channel: NOTIFIED_BODY_CHANNEL,
+      reason: NOTIFIED_BODY_REASON,
+      applicantStep: NOTIFIED_BODY_STEP,
+    };
+  }
 
   if (entry.region === 'EU' && entry.agency === 'EMA') {
     if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {

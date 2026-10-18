@@ -56,14 +56,5 @@ export const apiKeys = pgTable('api_keys', {
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type InsertApiKey = InferInsertModel<typeof apiKeys>;
 
-// Valid scopes for API key access
-export const API_KEY_SCOPES = [
-  'csr:read',
-  'regulatory:read',
-  'endpoints:read',
-  'precedent:read',
-  'trial-design:read',
-  'documents:read',
-] as const;
-
-export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
+// Re-export for existing schema callers; the UI uses the pure constants module.
+export { API_KEY_SCOPES, type ApiKeyScope } from '../constants/api-key-scopes';

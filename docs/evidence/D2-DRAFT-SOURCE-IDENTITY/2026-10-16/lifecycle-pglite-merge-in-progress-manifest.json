@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-17T22:23:43.773953+00:00",
+  "testsPassed": 10,
+  "testExitCode": 0,
+  "sourcesUnchangedDuringRun": false,
+  "changedSources": {
+    "server/services/authoring/authoring-from-draft.ts": {
+      "before": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+      "after": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0"
+    }
+  },
+  "qualification": "Historical passing test run during canonical merge; source stability failed. Not the final qualification checkpoint."
+}

@@ -51,7 +51,7 @@ beforeEach(async () => {
 
   clientQuery.mockImplementation(async (sql: string) => {
     if (/^\s*BEGIN/i.test(sql) || /SET\s+LOCAL/i.test(sql)) return { rows: [] };
-    if (/SELECT\s+id\s+FROM\s+c2c_document_sections/i.test(sql)) return { rows: [{ id: 5 }] }; // exists → UPDATE
+    if (/SELECT\s+id(?:,\s*status)?\s+FROM\s+c2c_document_sections/i.test(sql)) return { rows: [{ id: 5, status: 'drafted' }] }; // exists → UPDATE
     if (/UPDATE\s+c2c_document_sections/i.test(sql)) {
       order.push('update');
       return { rows: [{ id: 5, section_key: 'm2', status: 'review' }] };

@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * PMA (FDA Premarket Approval) readiness mapper — Class III device pathway.
  *
@@ -95,7 +96,7 @@ export function isPmaSupplement(type: PmaSubmissionType): boolean {
   return type !== 'original';
 }
 
-export interface PmaInputLeaf {
+export interface PmaInputLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -121,7 +122,7 @@ export interface PmaSlot {
   required: boolean;
 }
 
-export interface PmaSlotStatus extends PmaSlot {
+export interface PmaSlotStatus extends PmaSlot, PathwayEvidenceSlot  {
   present: boolean;
   sources: string[];
 }
@@ -129,7 +130,7 @@ export interface PmaSlotStatus extends PmaSlot {
 export interface PmaResult {
   submissionType: PmaSubmissionType;
   sections: PmaSlotStatus[];
-  summary: { missingRequired: string[]; ready: boolean; completeness: number };
+  summary: { missingRequired: string[]; ready: boolean; completeness: number; undetermined?: string[] };
 }
 
 type Matcher = (l: PmaInputLeaf) => boolean;
@@ -200,18 +201,21 @@ const REQUIRED_BY_TYPE: Record<PmaSubmissionType, readonly string[]> = {
   '135_day_supplement': ['admin-regulatory', 'manufacturing', 'nonclinical'],
 };
 
-function evalSlot(slot: PmaSlot & { match: Matcher }, leaves: PmaInputLeaf[]): PmaSlotStatus {
+function evalSlot(slot: PmaSlot & { match: Matcher }, leaves: PmaInputLeaf[], sourceAware?: boolean): PmaSlotStatus {
   // A matched-but-non-substantive leaf (a draft/placeholder stub whose title
   // merely matches) never marks a required module present — only a matched leaf
   // that is ALSO substantive counts.
   const matched = leaves.filter((l) => slot.match(l));
-  const present = matched.some((l) => l.substantive);
+  const proof = matchedSourceEvidence(matched, sourceAware, matched.some((l) => l.substantive));
+  const { present } = proof;
   const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
   const { match, ...rest } = slot;
-  return { ...rest, present, sources };
+  return { ...rest, ...proof, present, sources };
 }
 
 export interface MapToPmaInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: PmaInputLeaf[];
   submissionType?: PmaSubmissionType;
 }
@@ -223,15 +227,16 @@ export function mapToPma(input: MapToPmaInput): PmaResult {
   // Required-ness is per submission type (814.20 original vs 814.39 supplements);
   // override each slot's default flag with the type-specific profile.
   const requiredIds = new Set(REQUIRED_BY_TYPE[submissionType] ?? REQUIRED_BY_TYPE.original);
-  const sections = PMA_SLOTS.map((s) => ({ ...evalSlot(s, leaves), required: requiredIds.has(s.id) }));
+  const sections = PMA_SLOTS.map((s) => ({ ...evalSlot(s, leaves, input.sourceAware), required: requiredIds.has(s.id) }));
   const requiredSections = sections.filter((s) => s.required);
-  const missingRequired = requiredSections.filter((s) => !s.present).map((s) => s.id);
-  const presentRequired = requiredSections.length - missingRequired.length;
+  const missingRequired = requiredSections.filter((s) => !s.present && !s.contentUndetermined).map((s) => s.id);
+  const undetermined = requiredSections.filter(s => s.contentUndetermined).map(s => s.id);
+  const presentRequired = requiredSections.filter(s => s.present).length;
   const completeness = requiredSections.length === 0 ? 0 : Math.round((presentRequired / requiredSections.length) * 100);
   return {
     submissionType,
     sections,
-    summary: { missingRequired, ready: missingRequired.length === 0, completeness },
+    summary: { missingRequired, ready: missingRequired.length === 0 && undetermined.length === 0, completeness, ...(input.sourceAware ? { undetermined } : {}) },
   };
 }
 

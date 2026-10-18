@@ -29,7 +29,10 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
-import auditService from './auditService';
+import { recordAuditRow, type AuditRowOutcome } from './audit/audit-write-outcome';
+
+export type AuditedCerReport = CerReport & { meta: { auditTrail: AuditRowOutcome } };
+import { MDR_RULE_CLASSES } from '../../shared/regulatory/device-class.js';
 
 interface CerGenerationOptions {
   deviceId: number;
@@ -204,13 +207,13 @@ class CerGenerationService {
   /**
    * Generate a new CER report
    */
-  async generateCER(options: CerGenerationOptions): Promise<CerReport> {
+  async generateCER(options: CerGenerationOptions): Promise<AuditedCerReport> {
     try {
       // Get device information
       const [device] = await db
         .select()
         .from(deviceProfiles)
-        .where(eq(deviceProfiles.id, options.deviceId))
+        .where(and(eq(deviceProfiles.id, options.deviceId), eq(deviceProfiles.organizationId, options.organizationId)))
         .limit(1);
 
       if (!device) {
@@ -219,9 +222,10 @@ class CerGenerationService {
 
       // Get or create template
       const template = await this.getOrCreateTemplate(
-        options.templateId || 'default_cer_template',
+        options.templateId || `default_cer_template_org_${options.organizationId}`,
         options.organizationId,
-        options.userId
+        options.userId,
+        !options.templateId
       );
 
       // Generate CER number
@@ -235,7 +239,7 @@ class CerGenerationService {
         .insert(cerReports)
         .values({
           organizationId: options.organizationId,
-          reportId: cerNumber,
+          reportId: `CER-${crypto.randomUUID()}`,
           deviceId: options.deviceId,
           deviceName: device.deviceName ?? '',
           deviceClass: device.classification,
@@ -267,7 +271,7 @@ class CerGenerationService {
         .returning();
 
       // Log audit trail
-      await auditService.logAction({
+      const auditTrail = await recordAuditRow({
         organizationId: options.organizationId,
         userId: options.userId,
         action: 'CREATE',
@@ -280,7 +284,7 @@ class CerGenerationService {
         }
       });
 
-      return newCer;
+      return { ...newCer, meta: { auditTrail } };
     } catch (error) {
       console.error('Error generating CER:', error);
       throw error;
@@ -350,64 +354,39 @@ class CerGenerationService {
     userId: number,
     changeSummary: string,
     organizationId: number
-  ): Promise<CerReport> {
+  ): Promise<AuditedCerReport> {
+    const allowedSections = new Set(['executiveSummary', 'deviceDescription', 'essentialRequirements',
+      'clinicalBackground', 'clinicalEvidence', 'literatureReview', 'riskBenefitAnalysis', 'conclusions']);
+    if (!Object.keys(changes).length || Object.keys(changes).some(key => !allowedSections.has(key))) {
+      throw new Error('Only CER draft section content may be changed through this operation');
+    }
+    let commitMayHaveStarted = false;
     try {
-      // Get current CER and verify organization
-      const [currentCer] = await db
-        .select()
-        .from(cerReports)
-        .where(and(
-          eq(cerReports.id, cerReportId),
-          eq(cerReports.organizationId, organizationId)
-        ))
-        .limit(1);
-
-      if (!currentCer) {
-        throw new Error('CER report not found or access denied');
-      }
-
-      // Create version history entry
-      const currentVersion = currentCer.cerVersion ?? '1.0';
-      const newVersion = this.incrementVersion(currentVersion);
-
-      await db.insert(cerVersionHistory).values({
-        cerReportId,
-        version: currentVersion,
-        changeLog: {
-          versionType: this.getVersionType(currentVersion, newVersion),
-          changeSummary,
-          changedSections: Object.keys(changes),
-          reportSnapshot: currentCer,
-          reviewStatus: 'pending',
-        },
-        createdBy: userId,
+      const { updatedCer, newVersion } = await db.transaction(async tx => {
+        const [currentCer] = await tx.select().from(cerReports).where(and(
+          eq(cerReports.id, cerReportId), eq(cerReports.organizationId, organizationId)
+        )).limit(1).for('update');
+        if (!currentCer) throw new Error('CER report not found or access denied');
+        if (currentCer.status !== 'draft' || ![null, 'draft'].includes(currentCer.cerStatus)) {
+          throw new Error('Only a draft CER can be changed through this operation');
+        }
+        const currentVersion = currentCer.cerVersion ?? '1.0';
+        const newVersion = this.incrementVersion(currentVersion);
+        await tx.insert(cerVersionHistory).values({ cerReportId, version: currentVersion,
+          changeLog: { versionType: this.getVersionType(currentVersion, newVersion), changeSummary,
+            changedSections: Object.keys(changes), reportSnapshot: currentCer, reviewStatus: 'pending' }, createdBy: userId });
+        const [updatedCer] = await tx.update(cerReports).set({ ...changes, cerVersion: newVersion,
+          updatedBy: userId, updatedAt: new Date(), changeLog: [
+            ...(Array.isArray(currentCer.changeLog) ? currentCer.changeLog : []),
+            { version: newVersion, date: new Date().toISOString(), author: userId, changes: changeSummary }
+          ] }).where(and(eq(cerReports.id, cerReportId), eq(cerReports.organizationId, organizationId))).returning();
+        if (!updatedCer) throw new Error('CER report not found or access denied');
+        commitMayHaveStarted = true;
+        return { updatedCer, newVersion };
       });
 
-      // Update CER with new version
-      const updatedChanges = {
-        ...changes,
-        cerVersion: newVersion,
-        updatedBy: userId,
-        updatedAt: new Date(),
-        changeLog: [
-          ...(currentCer.changeLog as any[] || []),
-          {
-            version: newVersion,
-            date: new Date().toISOString(),
-            author: userId,
-            changes: changeSummary
-          }
-        ]
-      };
-
-      const [updatedCer] = await db
-        .update(cerReports)
-        .set(updatedChanges)
-        .where(eq(cerReports.id, cerReportId))
-        .returning();
-
       // Log audit trail
-      await auditService.logAction({
+      const auditTrail = await recordAuditRow({
         organizationId: updatedCer.organizationId,
         userId,
         action: 'UPDATE',
@@ -420,9 +399,13 @@ class CerGenerationService {
         }
       });
 
-      return updatedCer;
+      return { ...updatedCer, meta: { auditTrail } };
     } catch (error) {
       console.error('Error updating CER version:', error);
+      if (commitMayHaveStarted) {
+        throw Object.assign(new Error('The CER version save could not be confirmed. Inspect the report and version history before retrying.'),
+          { code:'CER_VERSION_COMMIT_UNCONFIRMED', status:503, cerReportId });
+      }
       throw error;
     }
   }
@@ -457,7 +440,8 @@ class CerGenerationService {
   private async getOrCreateTemplate(
     templateId: string,
     organizationId: number,
-    createdBy: number
+    createdBy: number,
+    createDefault = false
   ): Promise<CerTemplate> {
     const [existing] = await db
       .select()
@@ -471,8 +455,9 @@ class CerGenerationService {
       .limit(1);
 
     if (existing) return existing;
+    if (!createDefault) throw new Error('CER template not found for this organization');
 
-    // Create default template
+    // Create the organization-qualified default template
     const [newTemplate] = await db
       .insert(cerTemplates)
       .values({
@@ -485,7 +470,7 @@ class CerGenerationService {
           templateType: 'full_cer',
           status: 'active',
           requiredFields: this.getRequiredFields(),
-          deviceClasses: ['I', 'IIa', 'IIb', 'III'],
+          deviceClasses: [...MDR_RULE_CLASSES],
           regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
           createdBy,
           templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure()),

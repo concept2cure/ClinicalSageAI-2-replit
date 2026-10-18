@@ -135,6 +135,26 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
   echo ""
   exit 1
 fi
+
+# A table's CREATE must precede the file that attaches a guard to it. A guard on
+# an absent table self-guards and NO-OPS, so ordered first it arrives only on the
+# deploy AFTER the one that creates the table — and in between the table exists
+# and the guard does not. For qms_documents that window is a controlled document
+# reaching 'effective' with no electronic signature (21 CFR Part 11 §11.50).
+# The set has made this mistake twice and the order gate above is blind to it:
+# verified 2026-10-12 by misplacing the two QMS files, which ci:migration-set-order,
+# ci:migration-drop-safety and ci:migration-deploy-path all passed.
+echo "   Validating that guarded tables are created before they are guarded..."
+if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm run --silent ci:migration-guard-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration guard-order check FAILED."
+  echo "   A trigger, constraint, RLS enable or policy is attached to a table that"
+  echo "   C2C_MIGRATION_FILES creates LATER, so the guard no-ops on the deploy that"
+  echo "   creates the table and only arms on the next one."
+  echo "   Move the creator above the guard in scripts/db/migration-set.mjs."
+  echo ""
+  exit 1
+fi
 echo "   ✅ Migration apply-order passed."
 
 # The sibling hazard to apply-order, and the same shape of invisible: the
@@ -154,6 +174,25 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
   exit 1
 fi
 echo "   ✅ Replay-safe DROPs passed."
+
+# One vocabulary per class. The US class was enumerated at least fifteen times
+# across the repository (three with a different value set), the MDR class in two
+# irreconcilable shapes, the IVDR class in eight places — and two interviews had
+# drifted out of the fact reader's vocabulary with no test noticing. Promoting
+# one module did not stop the next session writing a ninth list, so this refuses
+# one. It is name-aware, because 'A' | 'B' | 'C' | 'D' is also a cleanroom grade
+# and an FDA meeting type. Cheap: it reads the files.
+echo "   Validating no class vocabulary is restated..."
+if ! npm run --silent ci:class-vocabulary 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A governed class vocabulary is restated."
+  echo "   Import it from shared/regulatory/device-class.ts — DEVICE_CLASSES,"
+  echo "   MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES — rather than"
+  echo "   writing the values again."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One class vocabulary passed."
 
 # A new migrations/*.sql must be on a deploy path. install-fresh applies the
 # whole tree to a NEW database; deploy-migrate applies only C2C_MIGRATION_FILES,
@@ -375,8 +414,9 @@ echo "   Checking for fixture fallback in client surfaces..."
 if ! npm run --silent ci:fixture-fallback 2>&1; then
   echo ""
   echo "🚫 ERROR: Ungated fixture fallback FAILED."
-  echo "   A surface falls back to example rows when its read fails. Use"
-  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo "   A surface shows example rows where the tenant's own belong — on a"
+  echo "   failed read, or through the sample mode removed on 2026-10-14."
+  echo "   Render the read's own loading / error / empty state instead."
   echo ""
   exit 1
 fi

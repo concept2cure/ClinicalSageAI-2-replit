@@ -268,15 +268,21 @@ export interface CoverageSuggestion {
   suggestedClassification: ItemClassificationResult['classification'];
   suggestedBillingDesignation: ItemClassificationResult['billingDesignation'];
   rationale: string;
-  candidateCitations: { documentId: string; title: string; url: string }[];
+  /**
+   * Candidate NCD citations from the CMS Coverage database. [] = the search ran
+   * and matched nothing; null = it did not complete (see citationSearchError).
+   */
+  candidateCitations: { documentId: string; title: string; url: string }[] | null;
+  /** Why candidateCitations is null. */
+  citationSearchError?: string;
 }
 
 /**
  * Advisory: for each still-unclear item, compute the deterministic designation
  * (from current flags + the parent determination) and attach candidate NCD/LCD
  * citations from the CMS Coverage database. Does NOT persist final designations —
- * a governed classifyItemTx call commits them. Network failures degrade softly
- * (no citations attached). Read-only.
+ * a governed classifyItemTx call commits them. A failed citation search is
+ * reported on the item, never as zero citations. Read-only.
  */
 export async function suggestItemClassifications(orgId: number, analysisId: number): Promise<{ analysisId: number; suggestions: CoverageSuggestion[] }> {
   const a = await pool.query(`SELECT qualifying_determination FROM coverage_analyses WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [analysisId, orgId]);
@@ -295,16 +301,20 @@ export async function suggestItemClassifications(orgId: number, analysisId: numb
     searchMedicareCoverage = null;
   }
 
+  // 2026-10-15: a failed search (or an unloadable client) set candidateCitations
+  // to [], the answer for a search that found no NCD. It is now null, with why.
   const suggestions: CoverageSuggestion[] = [];
   for (const row of items.rows) {
     const det = classifyCoverageItem({ trialQualifies, isStandardOfCare: row.is_standard_of_care, sponsorPaidInBudget: row.sponsor_paid_in_budget });
-    let candidateCitations: CoverageSuggestion['candidateCitations'] = [];
+    let candidateCitations: CoverageSuggestion['candidateCitations'] = null;
+    let citationSearchError: string | undefined = 'The CMS Coverage database client could not be loaded.';
     if (searchMedicareCoverage) {
       try {
         const res = await searchMedicareCoverage({ keyword: row.item_description, type: 'ncd', limit: 3 });
         candidateCitations = (res?.documents ?? []).map((d: any) => ({ documentId: d.documentId, title: d.title, url: d.url }));
-      } catch {
-        candidateCitations = [];
+        citationSearchError = undefined;
+      } catch (err) {
+        citationSearchError = `The CMS Coverage database search failed: ${err instanceof Error ? err.message : 'unknown error'}`;
       }
     }
     suggestions.push({
@@ -314,6 +324,7 @@ export async function suggestItemClassifications(orgId: number, analysisId: numb
       suggestedBillingDesignation: det.billingDesignation,
       rationale: det.rationale,
       candidateCitations,
+      ...(citationSearchError ? { citationSearchError } : {}),
     });
   }
   return { analysisId, suggestions };

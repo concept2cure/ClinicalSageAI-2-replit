@@ -1,0 +1,50 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-routes-communication-final.json",
+    "sha256": "e6afc672940a582ebf20bf71d65a883a1a39b804bcd71b43c1fac4e507d74ad8",
+    "bytes": 30480
+  },
+  "success": true,
+  "passedCases": 75,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 3,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts",
+      "status": "passed",
+      "cases": 53,
+      "counts": {
+        "passed": 53,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-advance.pglite.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

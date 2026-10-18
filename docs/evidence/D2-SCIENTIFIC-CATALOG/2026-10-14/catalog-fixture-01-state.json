@@ -1,0 +1,23 @@
+{
+  "name": "c2c-catalog-race-9d0556ea-42c",
+  "database": "scientific_catalog_fixture",
+  "ownerRole": "catalog_fixture_owner",
+  "host": "127.0.0.1",
+  "phase": "failed",
+  "startedAt": "2026-10-14T06:29:21.943Z",
+  "limitations": "Synthetic local fixture; deployed database roles, workload and regulatory qualification are not established.",
+  "dockerServerVersion": "28.4.0",
+  "image": [
+    "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+  ],
+  "containerId": "ea4f34fbaa0be5cbd1fb6b63b213eb0a5420e37ca862dd07e5af67ec1bc9baba",
+  "port": 32770,
+  "bootstrapRole": {
+    "rolsuper": true,
+    "rolbypassrls": true
+  },
+  "failure": "permission denied to alter role",
+  "cleanup": "exact owned container removed",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-14T06:29:39.008Z"
+}

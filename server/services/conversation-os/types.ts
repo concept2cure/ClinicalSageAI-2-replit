@@ -44,7 +44,7 @@ export interface ScoutFinding {
 export interface PlanStep {
   id: string;
   label: string;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'completed' | 'skipped';
 }
 
 export interface PlanTrace {

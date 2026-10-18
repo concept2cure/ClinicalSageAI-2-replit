@@ -117,7 +117,7 @@ describe('direct intelligence answers avoid unused model-turn reads', () => {
   const prefix = '[INTELLIGENCE_ANSWER]';
   const payload = { session_id: 'interview-1', answer: 'Recorded evidence.' };
   const direct = (message = prefix + JSON.stringify(payload)) => turn(app, {
-    message, project_id: 'program-uuid', live_drive: true, drive_mode: 'demo',
+    message, project_id: '11111111-2222-4333-8444-555555555555', live_drive: true, drive_mode: 'demo',
   });
 
   function expectDirectCleanup(outcome: string) {
@@ -141,7 +141,8 @@ describe('direct intelligence answers avoid unused model-turn reads', () => {
     }));
     const events = await direct();
     expect(io.answer).toHaveBeenCalledExactlyOnceWith(payload, {
-      organizationId: 7, userId: 3, projectId: null, projectRef: 'program-uuid',
+      sqlClient: expect.objectContaining({ query: expect.any(Function) }),
+      organizationId: 7, userId: 3, projectId: 42, projectRef: '11111111-2222-4333-8444-555555555555',
     });
     expect(events.find(e => e.type === 'intelligence_question')).toMatchObject({ sessionId: 'interview-1', flowState: { node: 2 } });
     expect(events.find(e => e.type === 'text')?.content).toBe('**Which evidence?**\n\nUse the recorded source.');

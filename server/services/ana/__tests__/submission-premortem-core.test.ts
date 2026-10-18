@@ -18,7 +18,8 @@ const finding = (over: Partial<PremortemFinding>): PremortemFinding => ({
   category: 'deficiency',
   severity: 'medium',
   matchedText: '…',
-  matchConfidence: 80,
+  matchConfidence: null,
+  matchConfidenceBasis: 'not_computed',
   reviewerQuestion: 'Why?',
   regulatoryBasis: 'ICH',
   remediation: 'Fix it.',
@@ -47,13 +48,15 @@ describe('overallRiskFromFindings', () => {
 });
 
 describe('rankFindings', () => {
-  it('orders by severity then match confidence', () => {
+  // 2026-10-15: this pinned critB before critA on matchConfidence 90 vs 50 — the
+  // pattern's seed value, not a measurement. Ties now break on patternId.
+  it('orders by severity then patternId, ignoring any match confidence', () => {
     const ranked = rankFindings([
       finding({ patternId: 'lowsev', severity: 'low', matchConfidence: 99 }),
-      finding({ patternId: 'critA', severity: 'critical', matchConfidence: 50 }),
       finding({ patternId: 'critB', severity: 'critical', matchConfidence: 90 }),
+      finding({ patternId: 'critA', severity: 'critical', matchConfidence: 50 }),
     ]);
-    expect(ranked.map(f => f.patternId)).toEqual(['critB', 'critA', 'lowsev']);
+    expect(ranked.map(f => f.patternId)).toEqual(['critA', 'critB', 'lowsev']);
   });
 });
 

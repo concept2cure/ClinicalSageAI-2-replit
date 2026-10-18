@@ -77,4 +77,3 @@ AssertionError: expected [ { id: 3, program_id: null }, …(1) ] to deeply equal
       Tests  1 failed | 2 passed (3)
    Start at  23:27:32
    Duration  9.90s (transform 125ms, setup 125ms, import 64ms, tests 9.23s, environment 0ms)
-

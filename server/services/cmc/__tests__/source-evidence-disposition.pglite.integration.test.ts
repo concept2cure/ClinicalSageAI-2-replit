@@ -47,7 +47,7 @@ beforeAll(async () => {
   await harness.pg.exec(`
     ALTER TABLE vault.documents ADD COLUMN title text, ADD COLUMN file_name text,
       ADD COLUMN filename text, ADD COLUMN version text DEFAULT '1.0',
-      ADD COLUMN document_code text DEFAULT 'COA-01', ADD COLUMN ctd_section text,
+      ALTER COLUMN document_code SET DEFAULT 'COA-01', ADD COLUMN ctd_section text,
       ADD COLUMN document_type text, ADD COLUMN created_at timestamptz DEFAULT now(),
       ADD COLUMN created_by integer DEFAULT 42, ADD COLUMN file_size integer;
     ALTER TABLE vault.document_catalog ADD COLUMN document_kind text;

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "test:db",
+    "--",
+    "tests/db/project-schedule-atomic.dbtest.ts"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 5.97,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings.json"
+}

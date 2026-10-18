@@ -73,6 +73,7 @@ import {
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
+import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
 /* The one path from a register save to the Module 3 canonical layer, shared
    with the batch record and specification routes: it awaits the write,
    reports { module3Linked, module3Warning } and meters a failure. */
@@ -1927,6 +1928,9 @@ router.post('/ich-compliance', async (req, res) => {
 router.post('/variations/classify', async (req, res) => {
   try {
     getOrgId(req); // tenant scope enforcement
+    if (launchScopeEnforced()) {
+      return res.status(409).json({ success: false, error: 'CMC_VARIATIONS_OUT_OF_SCOPE', message: 'Postapproval variation assessment is outside this release. This release composes small-molecule Module 3 for a US IND; a PAS, CBE or international marketing variation does not classify an IND change.' });
+    }
     const { classifyVariation } = await import('../../services/cmc/supac-classifier');
     const input = req.body ?? {};
     if (!input.dosageFormFamily || !input.changeCategory) {

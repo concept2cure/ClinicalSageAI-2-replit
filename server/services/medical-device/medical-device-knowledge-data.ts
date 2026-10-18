@@ -141,14 +141,9 @@ export const CFR: Record<string, CfrRef> = {
 // Per-function citation lists — one list per engine entry point.
 // ────────────────────────────────────────────────────────────────────────────
 
-/** Citations backing `classifyDevice`. */
-export const CLASSIFY_CITATIONS: Citation[] = [
-  { source: '21 CFR 860.3', note: 'Defines Class I (general controls), Class II (special controls), Class III (premarket approval).' },
-  { source: '21 CFR 860.7', note: 'Determination of safety and effectiveness; reasonable assurance standard.' },
-  { source: 'EU MDR 2017/745 Annex VIII', note: 'Classification rules 1-22 for medical devices (Class I/IIa/IIb/III).' },
-  { source: 'EU IVDR 2017/746 Annex VIII', note: 'Classification rules 1-7 for IVDs (Class A/B/C/D).' },
-  { source: 'IMDRF N9 / Essential Principles', note: 'Globally harmonized risk-based classification framework.' },
-];
+/* 2026-10-15: CLASSIFY_CITATIONS backed classifyDevice, which is deleted (see
+   medical-device-knowledge.ts); classification cites its rules per row in
+   market-specs/device-classification.ts. */
 
 /** Citations backing `selectDevicePathway`. */
 export const PATHWAY_CITATIONS: Citation[] = [

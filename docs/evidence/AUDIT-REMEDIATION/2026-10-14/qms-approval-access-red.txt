@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:53:23.163Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:53:23.164Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:53:23.164Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:53:23.284Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > creates a numbered QMS entry and canonical editable template sections on one transaction 42ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a foreign project and never creates a register entry or editing copy 4ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a same-organization private project to an unshared member, regardless of a claimed admin role 6ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > recovers a legacy registry-only effective document through an explicit authored revision and preserves honest prior history 28ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > replays the additive migration and leaves unrelated document mutation and deletion functional 7ms
+ × server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy 22ms
+   → promise resolved "{ document: { id: 1, …(17) }, …(1) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy
+AssertionError: promise resolved "{ document: { id: 1, …(17) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "document": {
++     "approved_at": 2026-10-14T02:53:26.107Z,
++     "approver_id": 8,
++     "artifact_id": null,
++     "author_id": 3,
++     "authoring_document_id": "5cd010c8-4db0-4299-ab23-e35ef27a44dd",
++     "category": "production",
++     "deleted_at": null,
++     "doc_number": "SOP-001",
++     "doc_type": "sop",
++     "effective_date": 2026-10-14T00:00:00.000Z,
++     "id": 1,
++     "metadata": {
++       "approval": {
++         "at": "2026-10-14T02:53:26.107+00:00",
++         "bindingBasis": "qms-document-version-content-sha256",
++         "by": 8,
++         "contentDigest": "025d6d5dedbaf5530b80e8be97d2c21233ca72851c09172453f167545bf8b440",
++         "meaning": "APPROVED",
++         "reason": "Project use does not grant document approval",
++         "twoPersonRule": "enforced",
++       },
++       "authoringContent": {
++         "documentId": "5cd010c8-4db0-4299-ab23-e35ef27a44dd",
++         "programId": "00000000-0000-4000-8000-000000000012",
++         "sections": [
++           {
++             "code": "qms-purpose",
++             "content": "<p>Use verified document numbers.</p>",
++             "id": "1d9ee68a-8d83-4bb2-91a9-b0bc39165d65",
++             "orderIndex": 1,
++             "title": "Purpose",
++           },
++           {
++             "code": "qms-scope",
++             "content": "",
++             "id": "5a861fd6-b39d-4f54-be1c-48f6c128ce7e",
++             "orderIndex": 2,
++             "title": "Scope",
++           },
++           {
++             "code": "qms-responsibilities",
++             "content": "",
++             "id": "34e1c12d-a7fa-43dd-b93b-0b6769f83948",
++             "orderIndex": 3,
++             "title": "Responsibilities",
++           },
++           {
++             "code": "qms-definitions",
++             "content": "",
++             "id": "64ed0671-efb4-4995-b2f2-0a454dd7cfc0",
++             "orderIndex": 4,
++             "title": "Definitions",
++           },
++           {
++             "code": "qms-procedure",
++             "content": "",
++             "id": "21dcc2be-3099-468b-a933-6f4b17e1ef1b",
++             "orderIndex": 5,
++             "title": "Procedure",
++           },
++           {
++             "code": "qms-references",
++             "content": "",
++             "id": "8c4ed768-2c13-442c-90a5-672ed1de02cf",
++             "orderIndex": 6,
++             "title": "References",
++           },
++           {
++             "code": "qms-attachments",
++             "content": "",
++             "id": "2cae8994-50c4-4288-8626-8cebfb7794f2",
++             "orderIndex": 7,
++             "title": "Attachments",
++           },
++           {
++             "code": "qms-revision_history",
++             "content": "",
++             "id": "13cb0f11-66c6-45fa-a9c7-ae527689ee9c",
++             "orderIndex": 8,
++             "title": "Revision history",
++           },
++           {
++             "code": "qms-approval",
++             "content": "",
++             "id": "fedbd18a-ba09-49dd-af91-a28a8f820876",
++             "orderIndex": 9,
++             "title": "Approval",
++           },
++         ],
++         "title": "Control documents",
++       },
++       "programId": "00000000-0000-4000-8000-000000000012",
++       "sections": [
++         {
++           "hint": "Why this document exists and what it governs.",
++           "key": "purpose",
++           "label": "Purpose",
++           "order": 1,
++         },
++         {
++           "hint": "What and who it applies to, with explicit exclusions.",
++           "key": "scope",
++           "label": "Scope",
++           "order": 2,
++         },
++         {
++           "hint": "Roles accountable for each step.",
++           "key": "responsibilities",
++           "label": "Responsibilities",
++           "order": 3,
++         },
++         {
++           "hint": "Terms, abbreviations, and acronyms used.",
++           "key": "definitions",
++           "label": "Definitions",
++           "order": 4,
++         },
++         {
++           "hint": "The step-by-step controlled process.",
++           "key": "procedure",
++           "label": "Procedure",
++           "order": 5,
++         },
++         {
++           "hint": "Regulations, standards, and linked documents.",
++           "key": "references",
++           "label": "References",
++           "order": 6,
++         },
++         {
++           "hint": "Forms, templates, and records this document produces.",
++           "key": "attachments",
++           "label": "Attachments",
++           "order": 7,
++         },
++         {
++           "hint": "Version, date, author, and a summary of each change.",
++           "key": "revision_history",
++           "label": "Revision history",
++           "order": 8,
++         },
++         {
++           "hint": "Author, reviewer, and approver signatures.",
++           "key": "approval",
++           "label": "Approval",
++           "order": 9,
++         },
++       ],
++       "templateKey": "sop",
++     },
++     "next_review_date": null,
++     "organization_id": 9,
++     "status": "effective",
++     "title": "Control documents",
++     "updated_at": 2026-10-14T02:53:26.104Z,
++     "version": "1.0",
++   },
++   "signature": {
++     "actionId": "action",
++     "auditId": "audit",
++     "authenticationMethod": "password",
++     "bindingBasis": "qms-document-version-content-sha256",
++     "boundPayloadDigest": "025d6d5dedbaf5530b80e8be97d2c21233ca72851c09172453f167545bf8b440",
++     "id": 51,
++     "meaning": "APPROVED",
++     "secondFactorVerified": false,
++     "sha256Chain": "chain",
++     "signedAt": "2026-10-14T12:00:00.000Z",
++   },
+  }
+
+ ❯ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts:110:210
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  02:53:21
+   Duration  4.35s (transform 1.14s, setup 59ms, import 2.33s, tests 1.75s, environment 0ms)
+

@@ -1,0 +1,9 @@
+{
+  "scope": "catalog_core frozen owned files; local uncommitted canonical concept2cure-v2",
+  "sha256": {
+    "shared/ana/catalog-facts.ts": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177",
+    "server/services/vault/document-catalog-core.ts": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e",
+    "server/services/vault/catalog-fact-verification.ts": "8aa8254c8c12f9116d8aa0b37cfdb74386e6f67e8ee9e587a00a970cf059afa5",
+    "server/services/vault/__tests__/catalog-fact-verification.test.ts": "4d9587b138e93eb189174cd5ffcb32488f2ad8d078dd7c5316be1ba28fcfc670"
+  }
+}

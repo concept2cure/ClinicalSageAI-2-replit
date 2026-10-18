@@ -146,7 +146,7 @@ describe('CsrWorkflow — real board renders (no fixture)', () => {
 
     // Program header came from the response (fixture title was BX204-201).
     await screen.findByText(/ZX-9 First-in-Human CSR \(live\)/);
-    expect(document.body.textContent).toContain('63% ready');
+    expect(document.body.textContent).toContain('build progress 63%');
 
     // All three real sections rendered as board rows, blocker flag adopted.
     expect(document.querySelectorAll('.ct-row').length).toBe(3);

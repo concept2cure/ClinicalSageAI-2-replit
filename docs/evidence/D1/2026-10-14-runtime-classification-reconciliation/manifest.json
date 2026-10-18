@@ -1,0 +1,99 @@
+{
+  "recordedAt": "2026-10-14T09:06:31.842570+00:00",
+  "status": "applied; actual gate and existing self-test await designated runner slot",
+  "change": {
+    "path": "scripts/ci/check-image-runtime-assets.mjs",
+    "removeOnlyStaleClassificationKeys": [
+      "logs",
+      "output"
+    ],
+    "beforeSha256": "b9fdfe7e06d739a68127499f2cc4d011ebc48dbaf4a0a214b382d61774f0cadf",
+    "afterSha256": "e53508cc45f40dc32bf459b1eff96b51f9788ab089a8677b6bf6695c06e3b5cf",
+    "patchSha256": "1def20f4582e76c2353df2198912a5b59f1de51bff96d08379980cea20e973f7",
+    "scannerDetectionUnchanged": true,
+    "runtimeSourceDockerAndIgnoreUnchanged": true
+  },
+  "sourceInputs": [
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "bytes": 35026,
+      "sha256": "e53508cc45f40dc32bf459b1eff96b51f9788ab089a8677b6bf6695c06e3b5cf"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.selftest.mjs",
+      "bytes": 10230,
+      "sha256": "9242ffc0c59fec4eae156206b8e45043e919111f8251a16358d8a55a4f5fe272"
+    },
+    {
+      "path": "Dockerfile.optimized",
+      "bytes": 12444,
+      "sha256": "373f1c78b5d7172e9623452deaacc4c5e3646f335c7f191972a3f9f2918b8e67"
+    },
+    {
+      "path": ".dockerignore",
+      "bytes": 421,
+      "sha256": "3890b52d57f6daddf27748502dd455896ef29a99ca2e3c0db0b6e640c6c31c7a"
+    },
+    {
+      "path": "server/index.ts",
+      "bytes": 13501,
+      "sha256": "fd159bc0eeebe051a0345b46f321885deccb1a45787e06ac645ebb037b658fe3"
+    },
+    {
+      "path": "server/startup/shutdown.ts",
+      "bytes": 5995,
+      "sha256": "f90f38ad0debf0ff76aa744ab3a15f2e4ce6bae5024b70b62a6cd6e2702babbb"
+    },
+    {
+      "path": "server/utils/logger.ts",
+      "bytes": 8520,
+      "sha256": "90ab6f3128eb14f47f07e7a4fd84d9d66471412eccc4fb1b5888e720727f6571"
+    },
+    {
+      "path": "server/utils/globalErrorHandler.ts",
+      "bytes": 3384,
+      "sha256": "825fd5b82bbead8035f2ca449c58074611a5ab9263e86b62544f63097830471c"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "bytes": 1134810,
+      "sha256": "8e7f682a8bd9b56111587435b2da7646c50f1bb6b7d7b163241548866538a622"
+    },
+    {
+      "path": "server/services/ana/document-workspace.ts",
+      "bytes": 9614,
+      "sha256": "0b0734a6c1a80df5228ec918d6f737a227c085e103095ec1b176221fbb71102c"
+    },
+    {
+      "path": "scripts/setup-protection.js",
+      "bytes": 3950,
+      "sha256": "8d12a2c8d993bb7db26a0431fea92d029a3916721e428c61b8e8bb773e955304"
+    }
+  ],
+  "frozenValidatorSources": {
+    "Dockerfile.optimized": "373f1c78b5d7172e9623452deaacc4c5e3646f335c7f191972a3f9f2918b8e67",
+    ".github/workflows/ci.yml": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a",
+    "docs/operations/DEPLOYMENT.md": "f84e8f040c7a0ec39e71237ffd50551e68ed02f765c147c796ad3a3d80051eee",
+    "scripts/ops/fetch-verapdf.sh": "f6e577b7035222fe2e1d9fa6f6112b263339e4317c4edf90f7ffbbeb7c91fb1e",
+    "scripts/ci/__tests__/verapdf-download.test.mjs": "5fa92c7538360a9b6b43d0c731c2a5992f98a875d9282e222dcd8a44f3d34bca"
+  },
+  "artifacts": [
+    {
+      "path": "read-only-source-assessment.txt",
+      "bytes": 3894,
+      "sha256": "5fea569f8bd0a891eea307168216546a608ed04c1c5bae5dd4678913ca99e081",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-image-runtime-classification-prep/README.md"
+    },
+    {
+      "path": "approved-two-line-reconciliation.patch",
+      "bytes": 801,
+      "sha256": "1def20f4582e76c2353df2198912a5b59f1de51bff96d08379980cea20e973f7",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-image-runtime-classification-prep/classification-reconciliation.patch"
+    }
+  ],
+  "runtimeSourceDockerIgnoreOrDetectionAlgorithmChanged": false,
+  "newCompilerBuildNativeOrDockerExecution": false,
+  "earlierSealedEvidencePreserved": true
+}

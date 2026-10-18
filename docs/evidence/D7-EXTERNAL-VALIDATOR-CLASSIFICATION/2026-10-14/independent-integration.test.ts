@@ -1,0 +1,58 @@
+import { describe, expect, it, vi } from 'vitest';
+vi.mock('../../../../server/db', () => ({ db: null, pool: {} }));
+import { assessExternalValidationReport, dispatchGateViews, externalNotAssessed } from '../../../../server/services/ectd/assess-dispatch-readiness';
+
+const report = {
+  validator: 'lorenz-evalidator', profile: 'FDA eCTD 3.2.2', ran: true,
+  passed: true, errorCount: 0, warningCount: 0, findings: [],
+  ranAt: new Date('2026-10-14T00:00:00Z'),
+};
+const external = { name: 'lorenz-evalidator', kind: 'external_engine', isConfigured: async () => true };
+const subset = { name: 'fda-criteria-subset', kind: 'internal_subset', isConfigured: async () => true };
+
+describe('independent compound external-assessment review', () => {
+  it('keeps malformed unrun diagnostics from crashing the assessor', async () => {
+    const result = await assessExternalValidationReport(external as any,
+      { ...report, ran: false, passed: false, findings: [null, { severity: 'error', ruleId: 'EVALIDATOR-RUN-FAILED', message: 'Synthetic execution did not complete.' }] } as any,
+      false, 'production');
+    expect(result.cleared).toBe(true);
+    expect(result.qualifyingRun).toBe(false);
+    expect(result.assessmentNote).toContain('Synthetic execution did not complete.');
+  });
+
+  it('does not attribute another reported engine execution to the selected subset', async () => {
+    const result = await assessExternalValidationReport(subset as any, report, false, 'production');
+    expect(result.cleared).toBe(true);
+    expect(result.qualifyingRun).toBe(false);
+    expect(result.assessmentNote).not.toMatch(/internal FDA criteria subset ran and reported/i);
+    expect(result.assessmentNote).toMatch(/lorenz-evalidator|different|mismatch|supplied report/i);
+  });
+
+  it('keeps a malformed count unknown through gate-view construction', async () => {
+    const result = await assessExternalValidationReport(external as any, { ...report, errorCount: -1 } as any, false, 'production');
+    expect(result.assessmentStatus).toBe('invalid');
+    expect((result as any).errorCountKnown).toBe(false);
+    const clear = { cleared: true, blockers: [] };
+    const views = dispatchGateViews({ structural: clear, external: result, shadowPresence: clear, releaseSignature: clear },
+      { external: externalNotAssessed(result) }, { assessmentStatus: result.assessmentStatus, assessmentNote: result.assessmentNote });
+    const view = views.find(v => v.key === 'external')!;
+    expect(view.assessmentStatus).toBe('invalid');
+    expect(view.notAssessed).toBeUndefined();
+    expect(view.assessmentNote).not.toMatch(/no error-severity findings|0 error-severity finding/);
+  });
+
+  it('preserves failed advisory assessment across policy and legacy gate metadata', async () => {
+    const result = await assessExternalValidationReport(external as any, { ...report, passed: false, errorCount: 1,
+      findings: [{ severity: 'error', ruleId: 'X', message: 'x' }] }, false, 'production');
+    expect(result.cleared).toBe(true);
+    expect(result.qualifyingRun).toBe(true);
+    expect(result.assessmentStatus).toBe('failed');
+    expect(externalNotAssessed(result)).toBeUndefined();
+    const clear = { cleared: true, blockers: [] };
+    const views = dispatchGateViews({ structural: clear, external: result, shadowPresence: clear, releaseSignature: clear }, {},
+      { assessmentStatus: result.assessmentStatus, assessmentNote: result.assessmentNote });
+    expect(views.find(v => v.key === 'external')).toMatchObject({ cleared: true, assessmentStatus: 'failed' });
+    const legacy = dispatchGateViews({ structural: clear, external: clear, shadowPresence: clear, releaseSignature: clear });
+    expect(legacy.find(v => v.key === 'external')).not.toHaveProperty('assessmentStatus');
+  });
+});

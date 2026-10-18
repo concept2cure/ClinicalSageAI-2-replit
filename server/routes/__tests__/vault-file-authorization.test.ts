@@ -36,7 +36,18 @@ vi.mock('../../db.js', () => ({ pool: { query, connect } }));
 const { placeVaultDocument } = vi.hoisted(() => ({ placeVaultDocument: vi.fn() }));
 vi.mock('../../services/vault/vault-placement.service.js', () => ({ placeVaultDocument }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization and, for a write, on
+   that membership's role (GOVERNED_WRITE_ROLES), read on the request's own
+   connection. Its reads are answered from seats (support/current-member.ts);
+   an unseated caller is refused exactly as the real gate refuses. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOCUMENT = '22222222-2222-4222-8222-222222222222';
@@ -46,16 +57,24 @@ function app(user: Record<string, unknown> | null) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (user) (req as unknown as { user: unknown }).user = user;
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
   return a;
 }
 
-const post = (user: Record<string, unknown> | null) =>
-  request(app(user))
+/** The caller's current membership carries the role their session does; a
+ *  caller with no role holds no current membership at all. */
+const post = (user: Record<string, unknown> | null) => {
+  clearSeats();
+  seatProgram(7, PROGRAM);
+  if (user && typeof user.role === 'string') seatMember(7, Number(user.id), user.role);
+  return request(app(user))
     .post(`/api/c2c/project-vault/${PROGRAM}/file`)
     .send({ documentId: DOCUMENT, confirm: true });
+};
 
 beforeEach(() => {
   vi.clearAllMocks();

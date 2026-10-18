@@ -166,6 +166,8 @@ export function verifyLedger(rowsOldestFirst: LedgerRow[]): LedgerVerdict {
  * of a governed record.
  */
 export const ANA_MACHINE_AUTHOR_ID = 'ana';
+/** The deterministic compositor of a working copy, not its original author/model. */
+export const WORKFLOW_IMPORT_AUTHOR_ID = 'workflow_import';
 
 /**
  * A null-prototype object: every ordinary object inherits "constructor",
@@ -178,6 +180,7 @@ export const ANA_MACHINE_AUTHOR_ID = 'ana';
 export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze(
   Object.assign(Object.create(null) as Record<string, string>, {
     [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
+    [WORKFLOW_IMPORT_AUTHOR_ID]: 'Workflow import (deterministic copy; original authorship retained)',
   }),
 );
 

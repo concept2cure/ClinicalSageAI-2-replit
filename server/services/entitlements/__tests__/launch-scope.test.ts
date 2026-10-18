@@ -66,8 +66,8 @@ describe('readLaunchScopeMode', () => {
 });
 
 describe('the scope list itself', () => {
-  it('has eight apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(8);
+  it('has seven apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(7);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
   });
   it('CMC / Module 3 is a launch app — decision P-28, 2026-10-12', () => {
@@ -168,6 +168,51 @@ describe('the scope list itself', () => {
   });
 });
 
+describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
+  it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).toContain('ind-checklist');
+    expect(isLaunchSurface('ind-checklist')).toBe(true);
+    /* It was refused to every organisation before this entry, entitled or
+       not; a subscribed verdict now survives. */
+    const [out] = applyLaunchScope([v('ind-checklist', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(true);
+    expect(out.source).toBe('subscribed');
+  });
+  it('agency questions stay locked until approval is a signed act', () => {
+    /* Coordinator decision on P-32 (2026-10-15): the approve route records a
+       status with no Part 11 signature, reason or role check, and the FDA
+       response package is assembled from those approvals. A bought row is
+       still not in this release. */
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).not.toContain('haq-manager');
+    expect(LAUNCH_SURFACE_IDS.has('haq-manager')).toBe(false);
+    const [out] = applyLaunchScope([v('haq-manager', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('launch-scope');
+  });
+  it('P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides', () => {
+    /* As in P-28: provisionLaunchModules writes an explicit grant for every
+       module listed, and a grant outranks tier permanently. The surface is
+       listed; its module is not. */
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.modules).toEqual(['submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness']);
+    expect(LAUNCH_MODULE_IDS).not.toContain('ind-checklist');
+    expect(LAUNCH_MODULE_IDS).not.toContain('haq-manager');
+    const [out] = applyLaunchScope([v('ind-checklist', { entitled: false, source: 'tier', requiredTier: 'standard' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('tier');
+    expect(out.requiredTier).toBe('standard');
+  });
+  it('pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)', () => {
+    for (const id of ['pharmacovigilance', 'pv-cockpit', 'safety-narrative']) {
+      expect(isLaunchSurface(id), id).toBe(false);
+      const [out] = applyLaunchScope([v(id, { source: 'subscribed' })]);
+      expect(out.source, id).toBe('launch-scope');
+    }
+  });
+});
+
 describe('applyLaunchScope', () => {
   it('leaves a launch surface verdict untouched, whatever it said', () => {
     const locked = v('vault', { entitled: false, source: 'tier', requiredTier: 'standard' });
@@ -196,5 +241,25 @@ describe('applyLaunchScope', () => {
   it('never emits a launch-scope verdict for a launch surface', () => {
     const out = applyLaunchScope([]);
     for (const id of LAUNCH_SURFACE_IDS) expect(out.find((x) => x.id === id)).toBeUndefined();
+  });
+});
+
+describe('Submission Readiness is a Submission Center screen — founder decision, 2026-10-17', () => {
+  it('is no longer an app of its own', () => {
+    expect(LAUNCH_APPS.map((a) => a.id)).not.toContain('submission-readiness');
+  });
+  it('its surface and module moved to Submission Center, so the readiness verdict stays reachable', () => {
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).toContain('dispatch-readiness');
+    expect(sc.modules).toContain('dispatch-readiness');
+    expect(isLaunchSurface('dispatch-readiness')).toBe(true);
+  });
+  it('grants a new organisation exactly the modules it was granted before the fold', () => {
+    expect([...LAUNCH_MODULE_IDS].sort()).toEqual(
+      [
+        'projects', 'tasks', 'vault', 'artifacts-center', 'document-authoring', 'review', 'protocol-dev',
+        'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
+      ].sort(),
+    );
   });
 });

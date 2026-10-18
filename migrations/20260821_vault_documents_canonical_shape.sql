@@ -1,3 +1,18 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Reconcile vault.documents onto one canonical shape.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - AMENDED IN PLACE 2026-10-15 (D2): the s3_bucket / s3_key backfill that
+--     invented a storage locator for a row with none is removed; see the note
+--     where it stood. CLAUDE.md RULE 1 — this file re-runs on every deploy.
+-- =============================================================================
 -- W0-6 — reconcile vault.documents onto ONE shape, so ingestion can happen at all.
 --
 -- ── The defect ──────────────────────────────────────────────────────────────
@@ -111,6 +126,20 @@ BEGIN
 
   -- Attribution. INTEGER to match users.id — see the header.
   ALTER TABLE vault.documents ADD COLUMN IF NOT EXISTS created_by INTEGER;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'vault'
+       AND table_name = 'documents'
+       AND column_name = 'created_by'
+       AND data_type <> 'integer'
+  ) THEN
+    IF EXISTS (SELECT 1 FROM vault.documents WHERE created_by IS NOT NULL) THEN
+      RAISE EXCEPTION
+        'vault.documents.created_by has populated non-integer values; a reviewed data migration is required';
+    END IF;
+    ALTER TABLE vault.documents
+      ALTER COLUMN created_by TYPE INTEGER USING NULL::INTEGER;
+  END IF;
 
   -- Carry the legacy identity columns into the canonical ones so an existing
   -- GCC-era row is not left with a null file_name / document_title the product
@@ -127,8 +156,20 @@ BEGIN
   END IF;
   UPDATE vault.documents SET document_code = id::text WHERE document_code IS NULL;
   UPDATE vault.documents SET document_type = 'OTHER'  WHERE document_type IS NULL;
-  UPDATE vault.documents SET s3_bucket = 'local'      WHERE s3_bucket IS NULL;
-  UPDATE vault.documents SET s3_key = id::text        WHERE s3_key IS NULL;
+  /* AMENDED IN PLACE 2026-10-15 (D2): no storage locator is invented. Two
+     UPDATEs stood here, s3_bucket = 'local' and s3_key = id::text on every
+     row with none — a locator for bytes nobody wrote there (the old ingest
+     stored a relative path under uploads/, never the row id). A row with no
+     locator stays without one, and readers say so: NO_STORED_FILE
+     (routes/c2c/project-vault.ts, vault-fixity.ts, storage-migration.service.ts).
+
+     Locators these UPDATEs already wrote are NOT withdrawn here. From
+     migrations/20260926_vault_documents_record_immutability.sql on,
+     vault.documents_record_guard refuses clearing s3_key or s3_bucket, so a
+     withdrawal in this file would fail every deploy on a provisioned
+     database; and clearing a field of a Part 11 record is a governed
+     correction, not a migration's call. They read as NO_STORED_FILE already:
+     a bare uuid key resolves outside uploads/ and is refused. */
 
   -- The legacy identity columns stop BLOCKING the canonical ones.
   --
@@ -145,8 +186,12 @@ BEGIN
   -- and this file's job is to make writes possible, not to prune — but they
   -- stop being required, and `filename` is kept in step with `file_name` for
   -- any reader outside this repo that still expects it.
-  ALTER TABLE vault.documents ALTER COLUMN filename DROP NOT NULL;
-  UPDATE vault.documents SET filename = file_name WHERE filename IS NULL AND file_name IS NOT NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'vault' AND table_name = 'documents'
+               AND column_name = 'filename') THEN
+    ALTER TABLE vault.documents ALTER COLUMN filename DROP NOT NULL;
+    UPDATE vault.documents SET filename = file_name WHERE filename IS NULL AND file_name IS NOT NULL;
+  END IF;
 
   -- The uniqueness the route's ON CONFLICT target depends on. Without it the
   -- upsert raises "no unique or exclusion constraint matching the ON CONFLICT

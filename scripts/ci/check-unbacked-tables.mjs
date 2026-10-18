@@ -245,9 +245,15 @@ const CTE_RE = new RegExp(
   'gi',
 );
 
+// SELECT prose is not a query: "Select an appropriate ... from CYP ontogeny"
+// is a deterministic tool description, not a read of persisted storage.
+// Require a structural first projection while retaining real aliases,
+// functions, qualified columns, computed expressions and scalar literals.
+const SELECT_HEAD = String.raw`SELECT\s+(?:(?:DISTINCT\s+(?:ON\s*\([^)]*\)\s*)?)|ALL\s+)?(?:[*\d('"+-]|CASE\b|NULL\b|TRUE\b|FALSE\b|[a-zA-Z_][\w]*(?=\s*(?:[.,(+\-*/=<>!|&%]|::|AS\b|FROM\b)|\s+[a-zA-Z_][\w]*\s*(?:,|FROM\b)))`;
+
 const SQL_SMELL = new RegExp(
   '^\\s*(?:' +
-    'SELECT\\b' +
+    SELECT_HEAD +
     '|INSERT\\s+INTO\\s+[\\w.]+\\s*[({]' +
     '|UPDATE\\s+[\\w.]+\\s+SET\\b' +
     '|DELETE\\s+FROM\\s+[\\w.]+\\s*(?:$|WHERE\\b|USING\\b|RETURNING\\b|;)' +
@@ -317,6 +323,27 @@ const unbacked = [...refs.entries()]
 // ── Baseline ─────────────────────────────────────────────────────────────────
 
 if (WRITE_BASELINE) {
+  // Read the WHOLE prior file. This path used to build a fresh
+  // {$comment, generatedAt, total, entries} and write it, so a regeneration
+  // destroyed every other $-prefixed key — here, $note_on_the_2026_09_10_entries.
+  // Enforcement reads only .entries, so nothing would have reported the loss.
+  // Measured and fixed 2026-10-12 alongside the same defect in
+  // check-duplicate-table-ddl.mjs and check-unkeyed-request-tables.mjs; the
+  // other annotated baselines in scripts/ci were tested and already preserve
+  // theirs (docs/evidence/D6/2026-10-12-baseline-annotation-loss/).
+  let prior = {};
+  if (fs.existsSync(BASELINE_PATH)) {
+    try {
+      prior = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
+    } catch {
+      console.error(
+        `[ci:unbacked-tables] existing baseline unreadable at ${BASELINE_PATH} — ` +
+          'refusing to overwrite it. Fix the JSON, or move it aside deliberately.',
+      );
+      process.exit(1);
+    }
+  }
+  const OWNED = new Set(['$comment', 'generatedAt', 'total', 'entries']);
   const baseline = {
     $comment:
       'Tables referenced by server SQL that NOTHING in the repo creates — no migration, ' +
@@ -331,8 +358,16 @@ if (WRITE_BASELINE) {
     total: unbacked.length,
     entries: Object.fromEntries(unbacked.map((u) => [u.table, u.files])),
   };
+  for (const [key, value] of Object.entries(prior)) {
+    if (!OWNED.has(key)) baseline[key] = value;
+  }
+
   fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n');
   console.log(`[ci:unbacked-tables] baseline written: ${unbacked.length} unbacked tables`);
+  const carried = Object.keys(baseline).filter((k) => k.startsWith('$') && k !== '$comment');
+  if (carried.length > 0) {
+    console.log(`[ci:unbacked-tables] annotations carried over: ${carried.join(', ')}`);
+  }
   process.exit(0);
 }
 

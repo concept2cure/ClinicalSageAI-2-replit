@@ -40,7 +40,7 @@ $ npx vitest run server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 3993ms
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 13ms
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 9ms
-✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 
+✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 5ms
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 5ms
 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothin
@@ -139,7 +139,7 @@ $ npx vitest run server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__
 ✓ server/services/ana-ri/__tests__/drive-context.test.ts > live-drive prompt blocks > with Live Drive off, the moves are OFFERED and never claimed 0ms
 ✓ server/services/ana-ri/__tests__/drive-context.test.ts > live-drive prompt blocks > the assist drive budget is the chip budget — driving never moves more than offering offers 0ms
 ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not 217ms
-✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables" 
+✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables"
 ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a legacy section with no tables key becomes placeable only after a recompile AND a re-approval 181ms
 ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > module3BuildSection persists lineage for the single compiled section 11ms
 ✓ server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts > CMC Module 3 derivation lineage (AnA build paths) > a failed refresh leaves the section lineage intact (the whole refresh is one transaction) 51ms
@@ -175,7 +175,7 @@ $ npx vitest run server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Only surface if confidence > 70%" 0ms
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "lead with what's missing before addressing the user's que
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Would you like me to run an FDA War Game simulation" 0ms
-✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "mention you can \"walk through a guided questionnaire\"" 
+✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "mention you can \"walk through a guided questionnaire\""
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "**Action:** [what was done]" 0ms
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > says how to talk while working through several steps 0ms
 ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one formatting section: no second one survives in the core 0ms
@@ -513,7 +513,7 @@ $ npx vitest run server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__
 ✓ server/services/ana-ri/__tests__/pdev-command-handlers.test.ts > pdev command surface — input validation > activity.set_state requires confirm + reason (gate enforces) 0ms
 ✓ server/services/ana-ri/__tests__/pdev-command-handlers.test.ts > pdev command surface — input validation > activity.evidence_attach refuses non-UUID evidenceObjectId after gate 1ms
 ✓ server/services/ana-ri/__tests__/pdev-command-handlers.test.ts > pdev command surface — input validation > ind_assembly.compile metadata example reflects the higher reason bar 0ms
-✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says 
+✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says
 ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row 939ms
 ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so 62ms
 ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row 100ms
@@ -583,7 +583,7 @@ $ npx vitest run server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__
 ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 2ms
 ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 1ms
 ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 2ms
-✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says 
+✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says
 ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'kind'" trait 2ms
 ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm / empathetic'" trait 9ms
 ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'intellectual'" trait 0ms

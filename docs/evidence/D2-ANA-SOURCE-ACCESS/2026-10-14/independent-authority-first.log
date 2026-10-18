@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A01 grants an active viewer organization-visible reads with its persisted role 22ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A02 grants custom-role shared reads without a new role allowlist 17ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A03 uses canonical ownership for a private project 12ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A04 grants pending artifact reviewers canonical private reads 11ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A05 refuses unrelated private members and never grants organization-wide fallback 13ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A06 re-admission detects persisted role change even when source projects are unchanged 14ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A07 refuses an inactive or missing actor even without an explicit project 6ms
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A09 checks all anchors before access intersection to defeat private duplicate laundering
+{
+  "timestamp": "2026-10-14T19:35:12.391Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "63636363-1111-4111-8111-000000000001",
+    "projectIds": [
+      16301,
+      16304
+    ]
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A08 rejects contradictory explicit identifiers instead of widening 8ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A09 checks all anchors before access intersection to defeat private duplicate laundering 13ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A10 excludes unanchored programs and refuses explicit selection 14ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A11 a policy read failure is unavailable rather than empty 6ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-authority.test.mts > independent actor scope expected fixtures > A12 an authenticated evaluated empty set is explicitly actor-filtered 9ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  19:35:09
+   Duration  3.07s (transform 603ms, setup 0ms, import 1.14s, tests 1.72s, environment 0ms)
+

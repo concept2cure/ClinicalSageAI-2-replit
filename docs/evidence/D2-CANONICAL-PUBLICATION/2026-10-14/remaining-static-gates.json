@@ -1,0 +1,58 @@
+[
+  {
+    "script": "check:catalog-copy",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:fixture-fallback",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:no-mock-in-prod-routes",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:fabricated-identity",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:program-ownership-single-source:selftest",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:program-ownership-single-source",
+    "exitCode": 1
+  },
+  {
+    "script": "ci:discarded-audit-write",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:client-ip-single-source",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:sign-ceremony",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:upload-guards",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:trivyignore-hygiene",
+    "exitCode": 0
+  },
+  {
+    "script": "audit:repo-health:ceiling",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:server-error-leaks",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:untracked-imports",
+    "exitCode": 0
+  }
+]

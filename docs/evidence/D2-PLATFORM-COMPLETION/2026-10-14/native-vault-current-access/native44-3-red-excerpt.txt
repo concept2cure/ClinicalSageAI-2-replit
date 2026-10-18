@@ -1,0 +1,64 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+TypeError: Cannot read properties of undefined (reading 'userId')
+ ❯ readVaultPlacements server/services/vault/vault-where-used.ts:90:80
+     88| ): Promise<Map<string, VaultPlacement[]>> {
+     89|   const out = new Map<string, VaultPlacement[]>();
+     90|   const {identity,scope}=await currentUsesScope(q,organizationId,vault…
+       |                                                                                ^
+     91|   if (vaultIds.length === 0) return out;
+     92|   const { rows } = await q.query(
+ ❯ tests/db/vault-where-used.dbtest.ts:224:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "chapter": "/CHAPTER 1/CH1.01/",
+-     "fileName": "Cover Letter.pdf",
+-     "record": "audit",
+-     "retainedAs": {
+-       "documentCode": "eSTAR-510k-device",
+-       "documentId": "eea3960b-ffda-49b7-b5a9-f241340b3ae0",
+-       "version": "1.0",
+-     },
+-     "slot": "root.CoverLetter",
+-   },
+- ]
++ []
+
+ ❯ tests/db/vault-where-used.dbtest.ts:289:49
+    287|     const byId = new Map(res.body.data.versions.map((v: { id: string }…
+    288|     const retainedAs = { documentId: ids.other, documentCode: 'eSTAR-5…
+    289|     expect((byId.get(ids.v1) as any).estarUses).toEqual([expect.object…
+       |                                                 ^
+    290|       record: 'audit', slot: 'root.CoverLetter', chapter: '/CHAPTER 1/…
+    291|     })]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+TypeError: Cannot read properties of undefined (reading 'userId')
+ ❯ readVaultEstarUses server/services/vault/vault-where-used.ts:173:80
+    171| ): Promise<Map<string, VaultEstarUse[]>> {
+    172|   const out = new Map<string, VaultEstarUse[]>();
+    173|   const {identity,scope}=await currentUsesScope(q,organizationId,vault…
+       |                                                                                ^
+    174|   if (vaultIds.length === 0) return out;
+    175|   const { rows } = await q.query(
+ ❯ tests/db/vault-where-used.dbtest.ts:298:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  3 failed | 44 passed (47)
+   Start at  20:43:16
+   Duration  21.79s (transform 6.49s, setup 199ms, import 9.08s, tests 11.64s, environment 1ms)

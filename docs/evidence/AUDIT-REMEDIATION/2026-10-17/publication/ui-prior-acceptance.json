@@ -1,0 +1,122 @@
+{
+  "cases": 202,
+  "files": 23,
+  "rows": [
+    {
+      "file": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+      "cases": 28,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx",
+      "cases": 3,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx",
+      "cases": 15,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx",
+      "cases": 16,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx",
+      "cases": 5,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx",
+      "cases": 2,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx",
+      "cases": 12,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+      "cases": 7,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx",
+      "cases": 13,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx",
+      "cases": 6,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+      "cases": 2,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx",
+      "cases": 14,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/protocolDevPicker.test.tsx",
+      "cases": 4,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/shellProject.test.ts",
+      "cases": 12,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+      "cases": 4,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "cases": 6,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "cases": 11,
+      "proof": "oct17-ui-final-nav.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx",
+      "cases": 10,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "cases": 11,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx",
+      "cases": 3,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx",
+      "cases": 8,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/hooks/__tests__/useAnalytics.qa.test.ts",
+      "cases": 4,
+      "proof": "oct17-ui-final-tests.json"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/surfaces/__tests__/AnalyticsSurface.availability.test.tsx",
+      "cases": 6,
+      "proof": "oct17-ui-final-tests.json"
+    }
+  ],
+  "scope": "Per-file acceptance: 22 passing broad files plus current navigation 11/11. Original broad run passed 201 and failed one; no all-green broad run is claimed."
+}

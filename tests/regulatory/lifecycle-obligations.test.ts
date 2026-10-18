@@ -7,11 +7,15 @@ import {
   escalationLevel,
   annualStatusCategory,
   type FulfillmentEvidenceType,
+  type ScheduledCommitment,
 } from '../../shared/regulatory/lifecycle-obligations';
 
+// A commitment that reports on a cadence carries the real date the cadence
+// counts from (reportingAnchorDate); without it the interim date is not
+// computed (2026-10-15 — it used to be counted from an invented anchor).
 const mkCommitment = (
-  overrides: Partial<Commitment> & Pick<Commitment, 'type'>,
-): Commitment => ({
+  overrides: Partial<ScheduledCommitment> & Pick<Commitment, 'type'>,
+): ScheduledCommitment => ({
   id: 'c-1',
   productId: 'prod-1',
   market: 'fda',
@@ -91,14 +95,14 @@ describe('lifecycle obligations — deadline computation', () => {
   });
 
   it('marks a commitment due in 20 days as critical', () => {
-    const c = mkCommitment({ type: 'pmr', status: 'in_progress', dueDate: '2026-07-18' });
+    const c = mkCommitment({ type: 'pmr', status: 'in_progress', dueDate: '2026-07-18', reportingAnchorDate: '2025-08-01' });
     const dl = computeDeadline(c, '2026-06-28')!;
     expect(dl.daysRemaining).toBe(20);
     expect(dl.urgency).toBe('critical');
   });
 
   it('marks a commitment due in 60 days as approaching', () => {
-    const c = mkCommitment({ type: 'pmc', status: 'in_progress', dueDate: '2026-08-27' });
+    const c = mkCommitment({ type: 'pmc', status: 'in_progress', dueDate: '2026-08-27', reportingAnchorDate: '2025-09-15' });
     const dl = computeDeadline(c, '2026-06-28')!;
     expect(dl.daysRemaining).toBe(60);
     expect(dl.urgency).toBe('approaching');
@@ -106,9 +110,9 @@ describe('lifecycle obligations — deadline computation', () => {
 });
 
 describe('lifecycle obligations — compliance calendar', () => {
-  const commitments: Commitment[] = [
-    mkCommitment({ id: 'pmr-1', type: 'pmr', status: 'in_progress', dueDate: '2026-07-10' }),
-    mkCommitment({ id: 'pmc-1', type: 'pmc', status: 'open', dueDate: '2027-03-01' }),
+  const commitments: ScheduledCommitment[] = [
+    mkCommitment({ id: 'pmr-1', type: 'pmr', status: 'in_progress', dueDate: '2026-07-10', reportingAnchorDate: '2025-09-01' }),
+    mkCommitment({ id: 'pmc-1', type: 'pmc', status: 'open', dueDate: '2027-03-01', reportingAnchorDate: '2025-09-01' }),
     mkCommitment({ id: 'rems-1', type: 'rems', status: 'overdue', dueDate: '2026-05-01' }),
     mkCommitment({ id: 'done-1', type: 'pmr', status: 'fulfilled', dueDate: '2026-01-01' }),
   ];

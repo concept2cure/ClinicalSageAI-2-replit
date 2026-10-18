@@ -1,0 +1,4 @@
+Scope: 1 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/routes/ana-ri/stream.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4703
+Total selected-scope diagnostics: 0

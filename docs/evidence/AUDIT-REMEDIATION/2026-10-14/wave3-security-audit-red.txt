@@ -1,0 +1,178 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > carries the actual audit receipt without changing the inspected input or default enforcement
+[PromptInjection] Detected 2 issues, risk score: 12, blocked: true
+[AnaInputGuard] High-risk user input on ana — riskScore=12 blocked=true enforce=false types=[INSTRUCTION_OVERRIDE, SYSTEM_PROMPT_LEAK]
+
+stderr | tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > carries the actual audit receipt without changing the inspected input or default enforcement
+[PromptInjection] Detected 2 issues, risk score: 12, blocked: true
+[AnaInputGuard] High-risk user input on ana — riskScore=12 blocked=true enforce=false types=[INSTRUCTION_OVERRIDE, SYSTEM_PROMPT_LEAK]
+
+stderr | tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > keeps audit failure observable when the injection policy blocks the turn
+[PromptInjection] Detected 2 issues, risk score: 12, blocked: true
+[AnaInputGuard] High-risk user input on ana — riskScore=12 blocked=true enforce=true types=[INSTRUCTION_OVERRIDE, SYSTEM_PROMPT_LEAK]
+
+stderr | tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > keeps audit failure observable when the injection policy blocks the turn
+[AnaInputGuard] Audit write for prompt-injection detection failed (non-fatal): private audit outage
+
+ ❯ tests/ai-safety/ana-input-guard.test.ts (8 tests | 3 failed) 21ms
+     ✓ benign input → low risk, not blocked, text unchanged, no audit 4ms
+     ✓ injection payload → high risk, audited + warned, NOT thrown when enforce unset 2ms
+     × carries the actual audit receipt without changing the inspected input or default enforcement 7ms
+     × carries the actual audit receipt without changing the inspected input or default enforcement 1ms
+     × keeps audit failure observable when the injection policy blocks the turn 1ms
+     ✓ with PROMPT_INJECTION_ENFORCE=true → throws PromptInjectionError on the payload 1ms
+     ✓ enforce=true does NOT throw on benign input 0ms
+     ✓ with PROMPT_INJECTION_ENCAPSULATE=true → wraps benign content via the encapsulate function 0ms
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+{
+  "timestamp": "2026-10-14T20:37:15.853Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:37:15.855Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+{
+  "timestamp": "2026-10-14T20:37:15.855Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Database connection successful
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: 7,
+  path: '/api/vault/documents',
+  method: 'GET',
+  ipAddress: '203.0.113.5'
+}
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > retains the 403 and discloses an actual lost security audit without exposing its diagnostics
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: 7,
+  path: '/api/vault/documents',
+  method: 'GET',
+  ipAddress: '203.0.113.5'
+}
+
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api
+{
+  "timestamp": "2026-10-14T20:37:15.976Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+  }
+}
+
+ ❯ server/startup/__tests__/tenant-impersonation-detector.test.ts (6 tests | 1 failed) 19ms
+     ✓ refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 7ms
+     × retains the 403 and discloses an actual lost security audit without exposing its diagnostics 2ms
+     ✓ passes a header naming the session's own organisation 2ms
+     ✓ passes a request with no header 0ms
+     ✓ with no session it neither refuses nor adopts the header (the boundary already answered) 0ms
+     ✓ applyAuthBoundary mounts the boundary and then the detector on /api 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > carries the actual audit receipt without changing the inspected input or default enforcement
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ tests/ai-safety/ana-input-guard.test.ts:101:31
+     99|     const result = await guardUserInput(INJECTION, { organizationId: 4…
+    100|     expect(result.text).toBe(INJECTION);expect(result.enforced).toBe(f…
+    101|     expect(result.auditTrail).toMatchObject(outcome.persisted ? { pers…
+       |                               ^
+    102|     expect(JSON.stringify(result.auditTrail)).not.toContain('internal …
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > carries the actual audit receipt without changing the inspected input or default enforcement
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ tests/ai-safety/ana-input-guard.test.ts:101:31
+     99|     const result = await guardUserInput(INJECTION, { organizationId: 4…
+    100|     expect(result.text).toBe(INJECTION);expect(result.enforced).toBe(f…
+    101|     expect(result.auditTrail).toMatchObject(outcome.persisted ? { pers…
+       |                               ^
+    102|     expect(JSON.stringify(result.auditTrail)).not.toContain('internal …
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > keeps audit failure observable when the injection policy blocks the turn
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ tests/ai-safety/ana-input-guard.test.ts:109:30
+    107|     const error = await guardUserInput(INJECTION, { organizationId: 42…
+    108|     expect(error).toBeInstanceOf(PromptInjectionError);
+    109|     expect(error.auditTrail).toMatchObject({ persisted: false, code: '…
+       |                              ^
+    110|     expect(JSON.stringify(error.auditTrail)).not.toContain('private au…
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > retains the 403 and discloses an actual lost security audit without exposing its diagnostics
+TypeError: Cannot read properties of undefined (reading 'auditTrail')
+ ❯ server/startup/__tests__/tenant-impersonation-detector.test.ts:66:26
+     64|     const { res, next } = await call({ id: 7, organizationId: 7 }, '9'…
+     65|     expect(res.statusCode).toBe(403);expect(next).not.toHaveBeenCalled…
+     66|     expect(res.body.meta.auditTrail).toMatchObject({ persisted: false,…
+       |                          ^
+     67|     expect(JSON.stringify(res.body)).not.toContain('private database o…
+     68|     const recovered = await call({ id: 7, organizationId: 7 }, '9');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 10 passed (14)
+   Start at  20:37:13
+   Duration  2.37s (transform 935ms, setup 71ms, import 1.97s, tests 39ms, environment 0ms)
+

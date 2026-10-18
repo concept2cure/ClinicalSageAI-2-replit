@@ -1,0 +1,59 @@
+{
+  "scope": "UI owned runtime/test bytes frozen after 80-case preservation green; the final integrated replay uses these same bytes.",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "bytes": 94987,
+      "digestAlgorithm": "sha256",
+      "digest": "049f1f5c46e699155b98ebc48e5754274a191bc9c2276ac38e3ab92e8616f28d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx",
+      "bytes": 19097,
+      "digestAlgorithm": "sha256",
+      "digest": "068d6164fbe97c2d04def7cc14cd94a5fefa1e440f59cbff7b3fd295d20214c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts",
+      "bytes": 6491,
+      "digestAlgorithm": "sha256",
+      "digest": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "bytes": 98215,
+      "digestAlgorithm": "sha256",
+      "digest": "f99371adae1eb5fb22ccf2665b70e0c884bea30cb5649c424c37eb6e127c4db2"
+    },
+    {
+      "path": "shared/types/submission-ui.ts",
+      "bytes": 4673,
+      "digestAlgorithm": "sha256",
+      "digest": "a261c746a5ede4afacb320776b02acf2cf472b941a7c074c7efacf4e209fdd30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "bytes": 20058,
+      "digestAlgorithm": "sha256",
+      "digest": "2ccea2ff9b76bbbcb244d6865e9e3be7c6045fc4a64ccc675c4fd24155587a4f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "bytes": 6638,
+      "digestAlgorithm": "sha256",
+      "digest": "8462ef29e124268b91ae49a54c7ec03de58247df86a74759643ceffb8125146d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "bytes": 11983,
+      "digestAlgorithm": "sha256",
+      "digest": "5023517890b0bf9875d8987005a4f220861ffec8909f27e98ba44fb24da2be9e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx",
+      "bytes": 5661,
+      "digestAlgorithm": "sha256",
+      "digest": "8b9a8d44d40902ed0b944c3b65548c0879b23732f17efb0a8ea7ee3db99ad6ba"
+    }
+  ]
+}

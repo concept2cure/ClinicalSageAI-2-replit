@@ -1,0 +1,138 @@
+Source log: create-recovery-post-sync-ui.log
+SHA-256: 302d24efc58ab2f84cf24861e1efc6a8cea99a14df3b9d436e3e00ef5097f959
+Selected output; repetitive logs omitted.
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a document twice on synchronous double activation 780ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a section twice on synchronous double activation 285ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending document guard 307ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending section guard 367ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > ignores a confirmed old document after a project A → B → A round trip 123ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > keeps an unreadable successful receipt unknown without claiming nothing persisted 136ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during held switch, including the event path 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during shell mismatch, including the event path 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > pins the effective workbench project when a shell mismatch occurs with a drawer already open 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost document response blocks another POST until reconciliation 175ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost section response blocks another POST until reconciliation 208ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed document recovery reads never release the guard 233ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed section recovery reads never release the guard 282ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a document is unknown rather than a safe retry 109ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a section is unknown rather than a safe retry 128ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a document from a success:false read with an array 149ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a section from a success:false read with an array 311ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped document read without manufacturing a receipt 189ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped section read without manufacturing a receipt 277ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped document reconciliation reads 232ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped section reconciliation reads 205ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a document receipt explicitly marked unsuccessful 133ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a section receipt explicitly marked unsuccessful 182ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong project as unknown 181ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing project as unknown 171ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong template as unknown 149ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing title as unknown 135ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing ID as unknown 210ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with wrong document as unknown 209ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing document as unknown 185ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing code as unknown 138ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing ID as unknown 174ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned document ID without requiring UUID-shaped IDs 102ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned section ID without requiring UUID-shaped IDs 124ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx document refusal permits an explicit retry 229ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx section refusal permits an explicit retry 265ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for document 112ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for document 126ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for document 240ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for section 348ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for section 311ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for section 247ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after document switch 225ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project switch 154ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project round trip 212ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after unmount 164ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after document switch 164ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project switch 101ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project round trip 118ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after unmount 106ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after document switch 164ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project switch 235ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project round trip 180ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after unmount 218ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after document switch 198ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project switch 186ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project round trip 280ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after unmount 248ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after document switch 244ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project switch 217ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project round trip 231ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after unmount 206ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after document switch 160ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project switch 130ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project round trip 278ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after unmount 95ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after document switch 144ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project switch 159ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project round trip 202ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after unmount 358ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after document switch 208ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project switch 179ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project round trip 221ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after unmount 355ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old document completion cannot unlock a newer pending creation 469ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old section completion cannot unlock a newer pending creation 421ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check response cannot clear uncertainty or strand checking after a round trip 131ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check JSON cannot clear uncertainty or strand checking after a round trip 158ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check response cannot clear uncertainty or strand checking after a round trip 101ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check JSON cannot clear uncertainty or strand checking after a round trip 187ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > places creation notices outside the horizontally scrolling header actions 423ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project bbbbbbbb-0000-4000-8000-000000000001 and held-switch refusal to creation 154ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project null and held-switch refusal to creation 193ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a filtered host through the existing editor handoff 283ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a pinned host through the existing editor handoff 217ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created document after a clean all-status list refresh 352ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a filtered host 879ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a pinned host 566ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > consults the current dirty editor after a document-list refresh 457ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after project round trip 302ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after unmount 136ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > retains text typed while the section refresh is pending 381ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > opens the returned section after a clean refresh 285ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > ignores an older section refresh after a project round trip 182ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > does not select the created section when its refresh fails 131ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > completes the current section read when the host filter changes while the first read is pending 125ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > shows all statuses when checking documents from a narrowed list 98ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > hands a pinned document to the full editor through the dirty-work guard 314ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > refreshes the current document sections without repeating a creation or changing the selected editor 123ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a lost reply is unknown, blocks repeat export, and offers the existing history 742ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 502 does not assert that nothing was recorded 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 500 does not assert that nothing was recorded 108ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a body-read failure after success refreshes the real record without claiming delivery 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an empty body is not passed to the download primitive 94ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a typed rendering failure is retryable without an unknown-outcome claim 242ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > the server’s confirmed-record delivery failure refreshes history 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > does not overlap export requests across formats 198ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > a delayed old document export cannot download or refresh the new document 205ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after document round-trip 216ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after project switch 283ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after unmount 382ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the empty states’ New document (the event path) does not open a form that can only be refused 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > creates the document in the open project 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a document via POST /docs and adopts the server row 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > tells the user when the new document is not bound to a filing 59ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > does not cry unbound when the document IS bound 65ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a section via POST /sections in the open document 112ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports the assembled document as Word via POST /docs/:id/export 140ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports a real PDF via POST /docs/:id/export {format: pdf} 122ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > says a PDF is the plain-text rendering when the server reports one 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a download the browser blocks is never reported as exported to the device 94ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a governance refusal (409, not frozen) is not blamed on the connection 122ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > surfaces citations it could NOT re-read, with the server’s reason 1032ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > shows nothing alarming when every citation re-read cleanly 556ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > posts to the document, not the section — the question is document-wide 634ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > a refusal changes nothing and says so 393ms
+ Test Files  4 passed (4)
+      Tests  130 passed (130)
+   Start at  22:12:47
+   Duration  44.12s (transform 5.80s, setup 966ms, import 9.57s, tests 28.46s, environment 3.97s)

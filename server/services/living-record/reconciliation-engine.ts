@@ -22,6 +22,8 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import { propagateRegulatoryChange } from '../living-file/change-router.service';
+import type { PacketAuditReceipt } from '../regulatory-graph/defense-packet-staleness.service';
+import { combineAuditRowOutcomes, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import {
   canTransitionVerification,
   type ClaimVerification,
@@ -148,7 +150,8 @@ export async function reconcileClaim(params: ReconcileClaimParams): Promise<Reco
       valueType: claimValue.valueType,
       establishedByClaimId: claim.id,
       establishedBySourceId: claim.sourceId ?? null,
-      confidence: num(claim.confidence) ?? 0.5,
+      // 2026-10-15: was `?? 0.5` — a claim with no score made a fact scored 0.5.
+      confidence: num(claim.confidence),
       createdBy: params.actor ?? null,
     });
     factId = fact.id;
@@ -196,6 +199,8 @@ export interface DriftSentinelResultItem {
   expected?: string;
   observed?: string;
   cascaded?: boolean;
+  packetAuditReceipts?: PacketAuditReceipt[];
+  auditTrail?: AuditRowOutcome;
 }
 
 export interface DriftSentinelReport {
@@ -204,6 +209,7 @@ export interface DriftSentinelReport {
   driftDetected: number;
   healed: number;
   items: DriftSentinelResultItem[];
+  auditTrail?: AuditRowOutcome;
 }
 
 /**
@@ -212,6 +218,44 @@ export interface DriftSentinelReport {
  * bound claim's verification, and fan the change out through the existing
  * cascade router. For each previously-drifted binding that now agrees: heal it.
  */
+type DriftCandidate = Awaited<ReturnType<typeof getDriftCandidates>>[number];
+
+async function cascadeBindingDrift(binding: DriftCandidate['binding'], fact: DriftCandidate['fact'], programId: string, finding: ReturnType<typeof detectDrift>) {
+  let cascaded = false;
+    let packetAuditReceipts: PacketAuditReceipt[] = [];
+    const claimId = claimIdFromTarget(binding.target);
+
+    // Fan out to the existing cascade for claim-kind drift (it carries the
+    // legacy integer program id the change-router needs).
+    if (claimId !== null) {
+      try {
+        const [claim] = await db
+          .select({ programId: evidenceClaims.programId })
+          .from(evidenceClaims)
+          .where(eq(evidenceClaims.id, claimId))
+          .limit(1);
+        const result = await propagateRegulatoryChange({
+          organizationId: binding.organizationId,
+          programId,
+          legacyProgramId: claim?.programId ?? undefined,
+          event: 'claim_changed',
+          sourceId: String(claimId),
+          sourceLabel: `${fact.entity}.${fact.field}`,
+          reason: `value drift detected by drift sentinel (${finding.driftType})`,
+        });
+        packetAuditReceipts = result?.packetAuditReceipts ?? [];
+        cascaded = true;
+        await db
+          .update(evidenceClaims)
+          .set({ verification: 'drifted' })
+          .where(eq(evidenceClaims.id, claimId));
+      } catch {
+        // Cascade is best-effort; the drift row is the durable record.
+      }
+    }
+  return { cascaded, packetAuditReceipts };
+}
+
 export async function runDriftSentinel(
   programId: string,
   opts: { tolerance?: number } = {}
@@ -252,36 +296,7 @@ export async function runDriftSentinel(
     }
 
     driftDetected += 1;
-    let cascaded = false;
-    const claimId = claimIdFromTarget(binding.target);
-
-    // Fan out to the existing cascade for claim-kind drift (it carries the
-    // legacy integer program id the change-router needs).
-    if (claimId !== null) {
-      try {
-        const [claim] = await db
-          .select({ programId: evidenceClaims.programId })
-          .from(evidenceClaims)
-          .where(eq(evidenceClaims.id, claimId))
-          .limit(1);
-        await propagateRegulatoryChange({
-          organizationId: binding.organizationId,
-          programId,
-          legacyProgramId: claim?.programId ?? undefined,
-          event: 'claim_changed',
-          sourceId: String(claimId),
-          sourceLabel: `${fact.entity}.${fact.field}`,
-          reason: `value drift detected by drift sentinel (${finding.driftType})`,
-        });
-        cascaded = true;
-        await db
-          .update(evidenceClaims)
-          .set({ verification: 'drifted' })
-          .where(eq(evidenceClaims.id, claimId));
-      } catch {
-        // Cascade is best-effort; the drift row is the durable record.
-      }
-    }
+    const { cascaded, packetAuditReceipts } = await cascadeBindingDrift(binding, fact, programId, finding);
 
     await writeDrift({
       organizationId: binding.organizationId,
@@ -305,10 +320,16 @@ export async function runDriftSentinel(
       expected: finding.expected,
       observed: finding.observed,
       cascaded,
+      ...(packetAuditReceipts.length ? { packetAuditReceipts,
+        auditTrail: combineAuditRowOutcomes(packetAuditReceipts[0].auditTrail,
+          ...packetAuditReceipts.slice(1).map(receipt => receipt.auditTrail)) } : {}),
     });
   }
 
-  return { programId, scanned: candidates.length, driftDetected, healed, items };
+  const attempted = items.flatMap(item => item.packetAuditReceipts ?? []);
+  return { programId, scanned: candidates.length, driftDetected, healed, items,
+    ...(attempted.length ? { auditTrail: combineAuditRowOutcomes(attempted[0].auditTrail,
+      ...attempted.slice(1).map(receipt => receipt.auditTrail)) } : {}) };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

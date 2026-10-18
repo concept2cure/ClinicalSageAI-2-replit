@@ -145,9 +145,16 @@ export interface SealedRecord extends SealableRecord {
 
 /** Result of walking a sealed chain. `brokenAt` is the index of the first bad seal. */
 export interface ChainSealVerification {
+  /** No seal FAILED. With `verified: 0` that is not a pass — nothing was checked. */
   valid: boolean;
   /** Index (0-based) of the first record whose seal failed, or null if all valid. */
   brokenAt: number | null;
+  /**
+   * How many seals were actually verified. `valid: true` with `verified: 0`
+   * used to be the whole answer for a chain with no sealed row, and the daily
+   * Part 11 sweep reported that as "audit_events.seals: ok".
+   */
+  verified: number;
 }
 
 /**
@@ -167,10 +174,10 @@ export function verifyChainSeals(records: SealedRecord[], key?: string | Buffer)
   for (let i = 0; i < records.length; i++) {
     const r = records[i];
     if (!verifySeal({ recordHash: r.recordHash, previousHash: r.previousHash, sequenceNumber: r.sequenceNumber }, r.seal, key)) {
-      return { valid: false, brokenAt: i };
+      return { valid: false, brokenAt: i, verified: i };
     }
   }
-  return { valid: true, brokenAt: null };
+  return { valid: true, brokenAt: null, verified: records.length };
 }
 
 export default {

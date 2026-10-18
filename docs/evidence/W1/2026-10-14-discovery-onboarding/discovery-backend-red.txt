@@ -1,0 +1,19 @@
+Observed 2026-10-14 03:00:13 UTC against HEAD's original organizations-routes.ts.
+Command: node node_modules/vitest/vitest.mjs run server/routes/__tests__/organizations-profile-settings.test.ts -t 'refuses an invalid discovery snapshot'
+The implementation was held in memory and restored in a Python finally block.
+
+RUN v4.1.7 /workspace/ClinicalSageAI-2-replit
+FAIL reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section [0..7]
+Each of the eight cases failed: expected 200 to be 400 // Object.is equality
+Expected: 400
+Received: 200
+
+Test Files 1 failed (1)
+Tests 8 failed | 44 skipped (52)
+Start at 03:00:13
+Duration 635ms
+BASELINE_RED_EXIT=1
+
+Cases: null snapshot; incomplete schema; unsupported version; unknown role claim;
+overlong goals; too many markets; impossible calendar date; device comparator
+attached to a drug project. No valid request or tenant-role gate was disabled.

@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "runtime": "v22.23.3",
+  "scope": "synthetic_source_statement_preview_only",
+  "startedAt": "2026-10-14T06:37:53.397Z",
+  "finishedAt": "2026-10-14T06:37:54.932Z",
+  "expectedRequests": {
+    "primary": 47,
+    "heldOut": 23,
+    "total": 70
+  },
+  "status": "passed",
+  "exitCode": 0,
+  "sourceStableDuringRun": true,
+  "files": [
+    {
+      "path": "server/services/truth-engine/clinical-claims.ts",
+      "bytes": 5763,
+      "sha256": "57192b11b29499f365c0849b3e0ad09a2027823d01b59f6f32070867f636a07c"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/ci.ts",
+      "bytes": 15456,
+      "sha256": "822ae0cab572a95dcd03424d80bdd6fe31f094da504bec800b56c18f223a3920"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/clause.ts",
+      "bytes": 1108,
+      "sha256": "5f8197f223369904f129622c6027e2120e43c0d375648f64144cec8462fbdcff"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/compare.ts",
+      "bytes": 46084,
+      "sha256": "f767c5f031ab08c03b083971b3eb2abc33608950c90c95f0e4e19f54c285f2dc"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/context.ts",
+      "bytes": 6131,
+      "sha256": "33da9c9f0128a60dc922bd1b06a2cafe521ef6bc96a5c58acdf8fe57cd4d938d"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/doc.ts",
+      "bytes": 19451,
+      "sha256": "98e16c03727733f6767fc19a4932a278034064d7f33e0966534a26bfa209edf6"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/env.ts",
+      "bytes": 2574,
+      "sha256": "6bf7a415cd0b5194bea6b37b41f5b0135b384abbc873d170741a4979284d00e5"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/extract.ts",
+      "bytes": 17493,
+      "sha256": "1397ed47a6828fdbc2f1d254db2f4e6c4fd4831f289f1de96fe1f4a3da0345b1"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/forms-disposition.ts",
+      "bytes": 41587,
+      "sha256": "933181e99793478d01f1b6bdeb5ed469e0d274c9e45498eb47291ba6c008cbf8"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/forms-efficacy.ts",
+      "bytes": 37219,
+      "sha256": "e77abc594fc7472207662ece81274ae014200f5cefd97898c533a30a785cabd6"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/forms-misc.ts",
+      "bytes": 10807,
+      "sha256": "7c41ab4e54838a2bb694468fa68f6f3203362f4b59044528e91fca65af9e0275"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/forms-safety.ts",
+      "bytes": 65207,
+      "sha256": "62f7504ea097a4bb31b153c66db6608773451fba4ab64d69df00c00823e4b826"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/frame.ts",
+      "bytes": 13676,
+      "sha256": "bdcb4eeb62cc2962afcd76c20f7d15b60e89426fe1a18ea03dd0475ccf7fc231"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/items.ts",
+      "bytes": 30410,
+      "sha256": "c595b51f005b55e5476326d277e95c08f1f09bd52b78c6f7576714452c15b616"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/number.ts",
+      "bytes": 15151,
+      "sha256": "a7f069b6a19583add2e413269631f404dc87235ea7b2265dbdc561d6f816d61c"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/quals.ts",
+      "bytes": 25943,
+      "sha256": "9097e7b7ac4bd9778b18642bf70a39cc2cd60dc677a08cf4df5d7b1b9524b4be"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/segment.ts",
+      "bytes": 29415,
+      "sha256": "f1a7876666e58f6c109ee87e545e66eca95044a7b63e5f7331b2ddfcd32e6a24"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/tables.ts",
+      "bytes": 48061,
+      "sha256": "ea2a0a91f5e48b95c993744e55277ef8a91b93c608a2afa43a1340b8b32eb952"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/types.ts",
+      "bytes": 9836,
+      "sha256": "79b71062d4d072fffcd97b481153ffe618c100433dbf6920905b67f8dceb0001"
+    },
+    {
+      "path": "server/services/truth-engine/clinical-claims/vocabulary.ts",
+      "bytes": 47574,
+      "sha256": "aeaa4a63f52b2772bd68aa2154ab97a25401eb15a14e6a41e111eaa63c0fc2a5"
+    },
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts",
+      "bytes": 10656,
+      "sha256": "b0234fa4093a8a120131fab3bece3570cc06b116d6433df06429a79937d1d6e0"
+    },
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts.ts",
+      "bytes": 23108,
+      "sha256": "29e7107105aa72fb919f215b765e2d9e36b3fef5b128bccf0479394f69c7802d"
+    },
+    {
+      "path": "server/services/vault/__tests__/scientific-source-facts-heldout.test.ts",
+      "bytes": 1870,
+      "sha256": "e006ac6b271edc826542fb1c105874ee6d583da64fd88ec00c423f9583b381ca"
+    },
+    {
+      "path": "server/services/vault/__tests__/scientific-source-facts.test.ts",
+      "bytes": 2213,
+      "sha256": "439631559fbf2bd3f4022ef712c038ceea1e5bba909fa04f5adfcef0a50fa497"
+    },
+    {
+      "path": "server/services/vault/catalog-fact-verification.ts",
+      "bytes": 31596,
+      "sha256": "8aa8254c8c12f9116d8aa0b37cfdb74386e6f67e8ee9e587a00a970cf059afa5"
+    },
+    {
+      "path": "server/services/vault/document-catalog-core.ts",
+      "bytes": 20266,
+      "sha256": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e"
+    },
+    {
+      "path": "shared/ana/catalog-facts.ts",
+      "bytes": 13809,
+      "sha256": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177"
+    },
+    {
+      "path": "shared/ana/clinical-claims-vocabulary.ts",
+      "bytes": 10785,
+      "sha256": "4dfd61bd4ec47a78ce64f0c02934092eacda338cbb4581b87c86a5f198780d58"
+    }
+  ]
+}

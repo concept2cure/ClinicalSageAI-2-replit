@@ -1,0 +1,12 @@
+{
+  "target": "daa4300cd95eb2b71e24717032335a09b41a00d1",
+  "scannerVersion": "8.28.0",
+  "command": "gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts=\"--full-history --diff-filter=tuxdb HEAD\" .",
+  "result": {
+    "exitCode": 0,
+    "findings": 0,
+    "reportedCommits": 10200,
+    "reportedBytes": 610936784
+  },
+  "qualification": "Exact existing CI history-scan command. No scanner rule or live-history notice changed; four independently recomputed source-digest fingerprints are dispositioned."
+}

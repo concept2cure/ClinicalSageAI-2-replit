@@ -47,6 +47,8 @@ import {
   type RegulatoryChangeEvent,
 } from './change-router.service';
 import { createScopedLogger } from '../../utils/logger';
+import type { PacketAuditReceipt } from '../regulatory-graph/defense-packet-staleness.service';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('living-file-publish');
 
@@ -81,6 +83,8 @@ export interface PublishOutcome {
   channels: string[];
   /** Channels whose handler reported an error. Empty when `published`. */
   failedChannels: string[];
+  packetAuditReceipts?: PacketAuditReceipt[];
+  auditTrail?: AuditRowOutcome;
   /** Set only when the propagation could not run at all. */
   code?: 'PROPAGATION_FAILED';
   /** A caller-safe sentence. Set with `code`. */
@@ -143,5 +147,7 @@ export async function publishRegulatoryChange(args: PublishArgs): Promise<Publis
     totalAffected: result.totalAffected,
     channels,
     failedChannels,
+    ...(result.packetAuditReceipts?.length ? { packetAuditReceipts: result.packetAuditReceipts,
+      ...(result.auditTrail ? { auditTrail: result.auditTrail } : {}) } : {}),
   };
 }

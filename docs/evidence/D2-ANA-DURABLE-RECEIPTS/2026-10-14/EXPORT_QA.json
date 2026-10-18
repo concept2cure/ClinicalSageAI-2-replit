@@ -1,0 +1,41 @@
+{
+  "artifacts": [
+    {
+      "stem": "Concept2Cure-data-room-study-2026-10-14",
+      "pages": 12,
+      "selectedVisualPages": [
+        5,
+        6
+      ],
+      "mdSourceParity": true,
+      "pdfTextAndBounds": "passed",
+      "docxText": "passed",
+      "repositoryEvidenceLinks": 12,
+      "sha256": {
+        ".pdf": "e75e3d6d5a5f0ed6ef89b0dfc98d2b1b19765a374983b0fb5ee067ae0494b121",
+        ".docx": "06f99360467640353b6de451624100ef4d7bedfee7b6d614cb16a68856a1c19d",
+        ".md": "d536f83701af69b3b7e19d8676cd4c931d3a355468f3898c2a8024215872a49f"
+      },
+      "docxRepositoryEvidenceLinks": 9
+    },
+    {
+      "stem": "Concept2Cure-enhancement-delivery-plan-2026-10-14",
+      "pages": 8,
+      "selectedVisualPages": [
+        4,
+        5
+      ],
+      "mdSourceParity": true,
+      "pdfTextAndBounds": "passed",
+      "docxText": "passed",
+      "repositoryEvidenceLinks": 19,
+      "sha256": {
+        ".pdf": "640ecbe0472b5930ac4e2225f67df12234e2d82d5a7dc5f00d7b1916333ff890",
+        ".docx": "7a966a73282ab5f414d766501bedcebbf1214cf165a7cddd9592a197197ab0f0",
+        ".md": "575118601692adc24cbe12dc0491f7467f5931114bdd9f49d4b931e985d2e626"
+      },
+      "docxRepositoryEvidenceLinks": 14
+    }
+  ],
+  "visualInspection": "passed: study pages5/6 and plan pages4/5 legible; no clipped paragraphs, tables or page footer"
+}

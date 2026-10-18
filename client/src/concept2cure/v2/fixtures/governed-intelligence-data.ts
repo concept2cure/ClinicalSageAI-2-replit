@@ -1,13 +1,19 @@
 /**
- * Governed Intelligence data + pure logic (kit app/governed-intel-data.jsx).
+ * Governed Intelligence display vocabulary — labels and tones for the enums
+ * the contradiction engine records (server/services/contradiction-engine-service.ts:
+ * ContradictionType, Severity, AuthorityState, SourceClassification, LLMRole),
+ * and the board's row types. Nothing here decides anything.
  *
- * Contradiction engine metadata, overlay rules, sample findings, assumption
- * registry, decision records, and the per-segment binding. Every value is
- * verbatim from the kit data file which itself is grounded in:
- *   server/routes/assumption-decision-contradiction.ts
- *   migrations/20260524_contradiction_engine_schema.sql
- *   tests/unit/governed-intelligence.test.ts
- *   app/pharma-data.jsx
+ * REMOVED 2026-10-15: GI_OVERLAYS, giApplyOverlay, giPromotionGate and
+ * GI_META.DEFAULT_AUTHORITY. They re-scored every finding in the browser: the
+ * authority the engine had recorded was replaced by a five-entry copy of the
+ * server's default map (so a finding of any other type read "Advisory" whatever
+ * the engine said), and an FDA/EMA toggle applied two hard-coded overlay rules,
+ * one of which — "EMA treats the same conflict as requiring approval" — exists
+ * in no organisation's contradiction_overlay_rules. The gate was then counted
+ * from that re-scoring over the first page of findings. The board now carries
+ * the gate the server counts over every finding (ProjectGate) and each
+ * finding's recorded authority and overlay; the surface renders them.
  */
 
 /* ── Types ── */
@@ -25,34 +31,11 @@ export interface GiSeverityMeta {
 }
 
 export interface GiMeta {
-  DEFAULT_AUTHORITY: Record<string, string>;
   authority: Record<string, GiAuthorityMeta>;
   severity: Record<string, GiSeverityMeta>;
   source: Record<string, string>;
   llmRole: Record<string, string>;
   type: Record<string, string>;
-  reviewState: Record<string, string>;
-}
-
-export interface GiOverlay {
-  regulatorBody: string;
-  contradictionType: string;
-  severityOverride: string;
-  authorityOverride: string;
-  consequenceOverride: string;
-  priority: number;
-  active: boolean;
-  rationale: string;
-}
-
-export interface GiProgram {
-  projectId: number;
-  code: string;
-  name: string;
-  app: string;
-  filing: string;
-  stage: string;
-  indication?: string;
 }
 
 export interface GiObjectRef {
@@ -61,10 +44,12 @@ export interface GiObjectRef {
   label: string;
 }
 
+/** One finding as the board returns it (governed-intelligence-inconsistency-routes.ts). */
 export interface GiFinding {
   id: string;
   projectId: number;
   contradictionType: string;
+  /** As recorded — after any overlay rule the engine applied at detection. */
   severity: string;
   title: string;
   objectA: GiObjectRef;
@@ -76,27 +61,38 @@ export interface GiFinding {
   confidenceLevel: string;
   description: string;
   deterministicRule: string | null;
-  consequenceType: string;
+  consequenceType: string | null;
   reviewState: string;
-  detectedBy: string;
+  detectedBy: string | null;
   factId: string | null;
-  /* runtime state added by the surface */
   resolvedBy?: string | null;
   resolvedAt?: string | null;
-  /* overlay-applied effective fields */
-  authorityState?: string;
-  overlayApplied?: GiOverlay | null;
+  /** The authority the engine recorded; the one checkPromotionBlocked enforces. */
+  authorityState: string;
+  /** The regulator body the finding was detected against, as stored. */
+  regulatorBody?: string | null;
+  /** The overlay rule applied at detection, or null when none was. */
+  overlayRuleId?: string | null;
+}
+
+/** The project's submission gate, counted by the server over every finding (ProjectGate). */
+export interface GiGate {
+  total: number;
+  open: number;
+  resolved: number;
+  superseded: number;
+  blocking: number;
+  needApproval: number;
+  needEscalation: number;
+  needReview: number;
+  advisory: number;
+  unrecognized: number;
+  blocked: boolean;
 }
 
 export interface GiCheck {
   k: string;
   detail: string;
-}
-
-export interface GiSegmentBinding {
-  program: GiProgram;
-  findings: GiFinding[];
-  checks: GiCheck[];
 }
 
 export interface GiAssumption {
@@ -119,30 +115,15 @@ export interface GiDecision {
   rationale: string;
 }
 
-export interface GiPromotionGate {
-  blocked: boolean;
-  blocking: GiFinding[];
-  needApproval: GiFinding[];
-  needReview: GiFinding[];
-  effective: GiFinding[];
-  openCount: number;
-}
-
-/* ── Enum metadata (verbatim from test + schema) ── */
+/* ── Enum labels (one per value the engine records) ── */
 
 export const GI_META: GiMeta = {
-  DEFAULT_AUTHORITY: {
-    assumption_drift: 'requires_review',
-    dosage_conflict: 'blocks_promotion',
-    regulatory_discrepancy: 'requires_approval',
-    temporal_inconsistency: 'advisory_only',
-    recommendation_action_inconsistency: 'requires_approval',
-  },
   authority: {
-    advisory_only:     { label: 'Advisory',          tone: 'idle', blocks: false, rank: 0 },
-    requires_review:   { label: 'Requires review',   tone: 'warn', blocks: false, rank: 1 },
-    requires_approval: { label: 'Requires approval', tone: 'warn', blocks: false, rank: 2 },
-    blocks_promotion:  { label: 'Blocks promotion',  tone: 'bad',  blocks: true,  rank: 3 },
+    advisory_only:       { label: 'Advisory',            tone: 'idle', blocks: false, rank: 0 },
+    requires_review:     { label: 'Requires review',     tone: 'warn', blocks: false, rank: 1 },
+    requires_approval:   { label: 'Requires approval',   tone: 'warn', blocks: false, rank: 2 },
+    requires_escalation: { label: 'Requires escalation', tone: 'warn', blocks: false, rank: 2 },
+    blocks_promotion:    { label: 'Blocks promotion',    tone: 'bad',  blocks: true,  rank: 3 },
   },
   severity: {
     critical: { label: 'Critical', s: 'crit' },
@@ -164,42 +145,23 @@ export const GI_META: GiMeta = {
     primary_detection: 'LLM -- primary detection',
   },
   type: {
-    dosage_conflict: 'Dosage conflict',
     assumption_drift: 'Assumption drift',
-    regulatory_discrepancy: 'Regulatory discrepancy',
-    temporal_inconsistency: 'Temporal inconsistency',
+    summary_body_tension: 'Summary / body tension',
     recommendation_action_inconsistency: 'Recommendation / action mismatch',
-    specification_conflict: 'Specification conflict',
-    batch_record_discordance: 'Batch-record discordance',
-    nomenclature: 'Nomenclature',
-  },
-  reviewState: {
-    unresolved: 'Unresolved',
-    in_review: 'In review',
-    approved_resolution: 'Resolved',
-    superseded: 'Superseded',
+    parameter_mismatch: 'Parameter mismatch',
+    factual_contradiction: 'Factual contradiction',
+    temporal_inconsistency: 'Temporal inconsistency',
+    regulatory_discrepancy: 'Regulatory discrepancy',
+    dosage_conflict: 'Dosage conflict',
+    outcome_divergence: 'Outcome divergence',
+    procedural_conflict: 'Procedural conflict',
+    superseded_information: 'Superseded information',
+    cross_jurisdictional_divergence: 'Cross-jurisdictional divergence',
+    protocol_sap_inconsistency: 'Protocol / SAP inconsistency',
+    decision_action_inconsistency: 'Decision / action mismatch',
+    status_conflict: 'Status conflict',
   },
 };
-
-/* ── Regulator overlay rules (verbatim from test: Overlay Impact) ── */
-
-export const GI_OVERLAYS: GiOverlay[] = [
-  {
-    regulatorBody: 'FDA', contradictionType: 'dosage_conflict', severityOverride: 'critical',
-    authorityOverride: 'blocks_promotion', consequenceOverride: 'dossier_review_attachment',
-    priority: 10, active: true, rationale: 'FDA escalates administered-dose conflicts to a filing block.',
-  },
-  {
-    regulatorBody: 'EMA', contradictionType: 'dosage_conflict', severityOverride: 'high',
-    authorityOverride: 'requires_approval', consequenceOverride: 'review_thread',
-    priority: 10, active: true, rationale: 'EMA treats the same conflict as requiring approval, not a hard block.',
-  },
-];
-
-/* ── Program context (canonical: BX-204 = NDA 212345, pharma) ── */
-
-
-/* ── Sample findings — mapped to contradiction_findings columns ── */
 
 /* The per-segment binding (GI_BY_SEG / giForSeg) is deleted.
 
@@ -209,30 +171,3 @@ export const GI_OVERLAYS: GiOverlay[] = [
    importing it; nothing else referenced it, in the app or in the tests. Deleted
    rather than left dormant — a sample programme sitting in an exported const is
    one import away from being rendered again. */
-
-/* ── Decision records (test: proposed -> approved -> executed traceability) ── */
-
-/* ════ Pure logic (verbatim behavior from the test) ════ */
-
-/** Apply a regulator overlay to one finding -> effective severity/authority. */
-export function giApplyOverlay(f: GiFinding, regulator: string): GiFinding {
-  const ov = GI_OVERLAYS.find(
-    o => o.active && o.regulatorBody === regulator && o.contradictionType === f.contradictionType,
-  );
-  const baseAuth = GI_META.DEFAULT_AUTHORITY[f.contradictionType] || 'advisory_only';
-  if (ov) {
-    return { ...f, severity: ov.severityOverride, authorityState: ov.authorityOverride, consequenceType: ov.consequenceOverride, overlayApplied: ov };
-  }
-  return { ...f, authorityState: baseAuth, overlayApplied: null };
-}
-
-/** checkPromotionBlocked: drop resolved/superseded, then any blocks_promotion. */
-export function giPromotionGate(findings: GiFinding[], regulator: string): GiPromotionGate {
-  const eff = (findings || [])
-    .filter(f => f.reviewState !== 'approved_resolution' && f.reviewState !== 'superseded')
-    .map(f => giApplyOverlay(f, regulator));
-  const blocking = eff.filter(f => GI_META.authority[f.authorityState!]?.blocks);
-  const needApproval = eff.filter(f => f.authorityState === 'requires_approval');
-  const needReview = eff.filter(f => f.authorityState === 'requires_review');
-  return { blocked: blocking.length > 0, blocking, needApproval, needReview, effective: eff, openCount: eff.length };
-}

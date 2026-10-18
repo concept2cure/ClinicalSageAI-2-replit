@@ -37,7 +37,9 @@
  * tests/biostat/adaptive-and-spending-reference.test.ts.
  */
 
+import type { RequestSqlClient } from '../db/requestDb';
 import { db } from '../db';
+import { AdaptiveDecisionRefusal } from './adaptive-decision-signature';
 import {
   adaptiveTrialPlans,
   interimDataSnapshots,
@@ -97,6 +99,14 @@ export interface SpendingBoundaries {
  * fractions need not include the final analysis: when the last fraction is
  * below 1 the solve is run with t = 1 appended and the appended look dropped.
  */
+/** The adaptations this service models. One list, used by the validator and its message. */
+export const VALID_ADAPTATION_TYPES = [
+  'sample_size_reestimation', 'response_adaptive_randomization',
+  'dose_selection', 'arm_dropping', 'endpoint_modification',
+  'population_enrichment', 'seamless_phase',
+] as const;
+export type AdaptationType = (typeof VALID_ADAPTATION_TYPES)[number];
+
 export function calculateSpendingBoundaries(
   informationFractions: number[],
   alpha: number,
@@ -748,66 +758,112 @@ export class AdaptiveTrialOperationsService {
   /**
    * Record an adaptation decision with full audit trail.
    */
-  async recordDecision(
+  /**
+   * Record an interim decision, on a transaction the signature ceremony owns.
+   *
+   * This is the ceremony's `write` callback (adaptive-decision-signature.ts),
+   * not a method a route may call on its own. By the time it runs, the signer
+   * has been re-authenticated, their signing authority checked, and separation
+   * of duties verified — so `approved_by` and `approved_at` written HERE are
+   * true statements, where the same two columns written by the previous Drizzle
+   * insert were a claim nobody had checked.
+   *
+   * The `auditTrail` array it used to build by hand is gone: the ceremony
+   * writes the hash-chained, HMAC-sealed `audit_logs` row and the
+   * `electronic_signatures` manifest, which is the audit trail. A second,
+   * unsealed copy in a json column was a record that could disagree with it.
+   *
+   * Raw SQL rather than Drizzle because the ceremony hands over its scoped SQL client:
+   * the decision row and its signature must commit or roll back together.
+   */
+  async writeDecisionOnSignedTransaction(
+    client: RequestSqlClient,
     params: {
       planId: number;
-      snapshotId?: number;
+      snapshotId: number;
       adaptationType: string;
       decision: string;
       rationale: string;
-      parameters?: any;
+      parameters?: unknown;
     },
     organizationId: number,
-    userId: number
-  ) {
+    userId: number,
+  ): Promise<{ act: Record<string, unknown>; body: Record<string, unknown> }> {
     const { planId, snapshotId, adaptationType, decision, rationale, parameters } = params;
 
-    // Verify plan exists
-    const [plan] = await db
-      .select()
-      .from(adaptiveTrialPlans)
-      .where(and(eq(adaptiveTrialPlans.id, planId), eq(adaptiveTrialPlans.organizationId, organizationId)));
-
-    if (!plan) throw new Error(`Adaptive trial plan ${planId} not found`);
-
-    // Build audit trail entry
-    const auditEntry = {
-      timestamp: new Date().toISOString(),
-      userId,
-      action: `Recorded ${adaptationType} decision`,
-      decision,
-      rationale,
-      parameters,
-      snapshotId: snapshotId ?? null,
-    };
-
-    const validAdaptationTypes = [
-      'sample_size_reestimation', 'response_adaptive_randomization',
-      'dose_selection', 'arm_dropping', 'endpoint_modification',
-      'population_enrichment', 'seamless_phase',
-    ] as const;
-    type AdaptationType = typeof validAdaptationTypes[number];
-    if (!validAdaptationTypes.includes(adaptationType as AdaptationType)) {
-      throw new Error(`Invalid adaptation type: ${adaptationType}. Must be one of: ${validAdaptationTypes.join(', ')}`);
+    if (!VALID_ADAPTATION_TYPES.includes(adaptationType as AdaptationType)) {
+      throw new AdaptiveDecisionRefusal(
+        400,
+        'INVALID_ADAPTATION_TYPE',
+        `An adaptation type must be one of: ${VALID_ADAPTATION_TYPES.join(', ')}. Nothing was signed.`,
+      );
+    }
+    if (typeof decision !== 'string' || decision.trim().length === 0) {
+      throw new AdaptiveDecisionRefusal(400, 'DECISION_REQUIRED', 'State the decision. Nothing was signed.');
+    }
+    if (typeof rationale !== 'string' || rationale.trim().length < 8) {
+      throw new AdaptiveDecisionRefusal(
+        400,
+        'RATIONALE_REQUIRED',
+        'Give the rationale for this decision, of at least 8 characters. Nothing was signed.',
+      );
     }
 
-    const [record] = await db
-      .insert(adaptationDecisions)
-      .values({
-        planId,
-        snapshotId: snapshotId ?? null,
-        adaptationType: adaptationType as AdaptationType,
-        decision,
-        rationale,
-        parameters,
-        approvedBy: userId,
-        approvedAt: new Date(),
-        auditTrail: [auditEntry],
-        organizationId,
-      })
-      .returning();
+    /* The snapshot must belong to this plan AND this tenant. The signature
+       binds the snapshot, so a decision pointing at another plan's look would
+       be signed against data it is not about. */
+    const snap = await client.query(
+      `SELECT s.id, s.look_number, s.information_fraction, s.test_statistic,
+              s.conditional_power, s.predictive_power
+         FROM interim_data_snapshots s
+         JOIN adaptive_trial_plans p
+           ON p.id = s.plan_id AND p.organization_id = s.organization_id
+        WHERE s.id = $1::int AND s.plan_id = $2::int AND s.organization_id = $3
+        LIMIT 1`,
+      [snapshotId, planId, organizationId],
+    );
+    const look = snap.rows[0];
+    if (!look) {
+      throw new AdaptiveDecisionRefusal(
+        404,
+        'SNAPSHOT_NOT_FOUND',
+        'No such interim look on this plan in this organization. Nothing was signed.',
+      );
+    }
 
-    return record;
+    const { rows } = await client.query(
+      `INSERT INTO adaptation_decisions
+         (plan_id, snapshot_id, adaptation_type, decision, rationale, parameters,
+          approved_by, approved_at, organization_id)
+       VALUES ($1::int, $2::int, $3, $4, $5, $6::json, $7::int, now(), $8::int)
+       RETURNING id, plan_id, snapshot_id, adaptation_type, decision, rationale,
+                 parameters, approved_by, approved_at, created_at`,
+      [
+        planId, snapshotId, adaptationType, decision.trim(), rationale.trim(),
+        parameters === undefined ? null : JSON.stringify(parameters),
+        userId, organizationId,
+      ],
+    );
+    const record = rows[0];
+
+    return {
+      /* `act` goes into the ledger payload AND onto the signature manifest, so
+         the signature row says what it signed: the decision, at which look,
+         against the figures that look carried. */
+      act: {
+        decisionId: Number(record.id),
+        planId,
+        snapshotId,
+        lookNumber: Number(look.look_number),
+        informationFraction: look.information_fraction === null ? null : Number(look.information_fraction),
+        adaptationType,
+        decision: decision.trim(),
+        testStatistic: look.test_statistic === null ? null : Number(look.test_statistic),
+        conditionalPower: look.conditional_power === null ? null : Number(look.conditional_power),
+        predictivePower: look.predictive_power === null ? null : Number(look.predictive_power),
+      },
+      body: { decision: record },
+    };
   }
 
   /**

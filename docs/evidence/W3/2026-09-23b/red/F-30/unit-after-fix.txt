@@ -42,4 +42,3 @@ stderr | server/services/__tests__/account-lockout-read-fails-closed.test.ts > t
       Tests  3 passed (3)
    Start at  15:11:15
    Duration  1.71s (transform 820ms, setup 82ms, import 1.45s, tests 11ms, environment 0ms)
-

@@ -10,6 +10,11 @@
  * and AnA was told "not confirmed". Two screens held and never answered;
  * sixteen answered only a good read. surfaceReadySignal.test.ts pins the
  * contract on every screen's source; these mount one of each kind.
+ *
+ * The Inconsistency case is gone with the action (2026-10-15): the overlay it
+ * switched re-scored the submission gate from two hard-coded rules, and the
+ * board now shows the authority the engine recorded. Biostatistics remains
+ * the held-and-never-answered case.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +28,6 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { CroPortfolio } from '../surfaces/CroPortfolio';
-import { Inconsistency } from '../surfaces/Inconsistency';
 import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
@@ -73,20 +77,6 @@ afterEach(() => {
 });
 
 describe('a screen that held and never answered', () => {
-  it('Inconsistency: an overlay switch lands when the board arrives', async () => {
-    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: '1', code: 'C2C-101' };
-    const board = readInFlight();
-    const BOARD = '/api/governed-intelligence-inconsistency/projects/1/inconsistency';
-    serve(BOARD, board.promise);
-    const outcome = sendFromElsewhere('inconsistency.set-regulator', { regulator: 'EMA' });
-    render(<Inconsistency {...props('inconsistency')} />);
-    await heldWhileLoading(BOARD, outcome);
-
-    board.answer(ok({ program: { projectId: 1, code: 'C2C-101' }, findings: [], assumptions: [], decisions: [], checks: [] }));
-    await waitFor(() => expect(outcome).toHaveBeenCalledWith(expect.objectContaining({ status: 'applied' })));
-    expect(document.querySelector('.gi-reg-b.on')?.textContent).toBe('EMA');
-  });
-
   it('Biostatistics: a design named while the list loads is loaded when it arrives', async () => {
     const designs = readInFlight();
     serve('/api/biostat-bridge/designs', designs.promise);

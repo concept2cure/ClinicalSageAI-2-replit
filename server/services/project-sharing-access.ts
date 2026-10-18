@@ -35,6 +35,11 @@ export interface ProjectAccessEvaluationInput {
 // P-18: an approver administers what a manager does.
 const ORG_MANAGE_ROLES = new Set(withExtendingRoles(['admin', 'super_admin', 'owner', 'manager']));
 
+/** The canonical organization-wide project administration policy. */
+export function hasOrganizationProjectManagementRole(role: string | null | undefined): boolean {
+  return ORG_MANAGE_ROLES.has((role || '').toLowerCase());
+}
+
 function sanitizeMembers(raw: unknown): ProjectShareMember[] {
   if (!Array.isArray(raw)) return [];
   const valid: ProjectShareMember[] = [];

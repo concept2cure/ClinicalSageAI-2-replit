@@ -1,0 +1,5 @@
+Compiled production-mode /readyz: HTTP 200.
+Separate clean boot database: c2c_audit_oct17_boot_tls; native proof history remains on c2c_audit_oct17_final_tls.
+Synthetic credentials, local storage and deterministic AI posture only; external providers, agencies and deployment infrastructure remain unqualified.
+Ready after 7.0s.
+{"artifact": "oct17-production-boot.log", "sha256": "8087f72db2c788177c7ed1164e3a543c11821ff184377ec887cb5a4d97bc0c5b", "bytes": 588}

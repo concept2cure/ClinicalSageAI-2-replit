@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > accepts a JSON-round-tripped V2 receipt whose absolute window starts beyond 80,000 9ms
+   → [{"instancePath":"/sections/0/sourceReferences/0/span/start","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/start/const","keyword":"const","params":{"allowedValue":0},"message":"must be equal to constant"},{"instancePath":"/sections/0/sourceReferences/0/span/end","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/end/maximum","keyword":"maximum","params":{"comparison":"<=","limit":12000},"message":"must be <= 12000"}]: expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires version instead of silently accepting a downgraded receipt 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires extractedTextSha256 instead of silently accepting a downgraded receipt 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires spanSha256 instead of silently accepting a downgraded receipt 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 1 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 3 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version 2 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects unsupported or mistyped reference version null 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 contentHash 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 extractedTextSha256 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a full SHA-256 spanSha256 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > requires a UUID document identity 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start -1 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0.5 0ms
+ ✓ server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > rejects noninteger or negative absolute start 0 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-source-schema.test.ts > draft_authoring_document extraction-bound schema > accepts a JSON-round-tripped V2 receipt whose absolute window starts beyond 80,000
+AssertionError: [{"instancePath":"/sections/0/sourceReferences/0/span/start","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/start/const","keyword":"const","params":{"allowedValue":0},"message":"must be equal to constant"},{"instancePath":"/sections/0/sourceReferences/0/span/end","schemaPath":"#/properties/sections/items/properties/sourceReferences/items/properties/span/properties/end/maximum","keyword":"maximum","params":{"comparison":"<=","limit":12000},"message":"must be <= 12000"}]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/draft-authoring-source-schema.test.ts:42:71
+     40|     expect(receipt).not.toHaveProperty('text');
+     41|     expect(JSON.stringify(receipt)).not.toContain(source.text);
+     42|     expect(validate(input(receipt)), JSON.stringify(validate.errors)).…
+       |                                                                       ^
+     43|   });
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  21:30:46
+   Duration  421ms (transform 124ms, setup 66ms, import 132ms, tests 17ms, environment 0ms)
+

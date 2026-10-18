@@ -1,0 +1,20 @@
+{
+  "scope": "New independent evidence and three assigned lifecycle test reconciliations; post-focused-check snapshot. Parent final proof binds merged source before/after the final runs.",
+  "sha256": {
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.config.mts": "721edd2187f3e2fcd6d18eefcec8c69e681776d3ce9278466de4cb16c5030de5",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts": "b1e8c58a3b14daf1ed3059cdda8d39c464581ea46a07ab609ae3293536138557",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts": "a0f2e207b6ac2f1b9fbed76c62c6d7987f2b17978f0733ffe4b173816adf5c2e",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts": "d4f7f9ee6a9f5f6871820eed5cb1fb544cc7781599e4e4ab944b5638d050e161",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts": "1fc1d69ed99d151db9d41a0f349a6bcd115c64efafcbc9bb14e83d34882ee46a",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-independent-disposition-counterfactual.mjs": "2db86d3181085731b2091957609af51ca57b8a022f9f1fc68c161b82755d439b",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-independent.mjs": "724448a6bf63a6c24c19b162de29ac91d654208ee6af6a35190008fc2202bfea",
+    "server/routes/c2c/document-data-dispositions.ts": "9b9869dea2588264926d4174a98c3357db2e4106c434438cbf3c77273a8b811f",
+    "server/routes/c2c/project-route-access.ts": "c13ede00095922ea1f960f47ac1ad6c49f86b929650d38be87130e5c6589b4b3",
+    "server/services/c2c/current-program-access.ts": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+    "server/services/csr/project-scope.ts": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049",
+    "server/services/document-data-disposition/__tests__/confirmation-freshness.pglite.integration.test.ts": "c45f801582ba3c116346f851532c870904ca3fe45825e4f7f245d43cf91b7453",
+    "server/services/document-data-disposition/__tests__/route-auth.test.ts": "d6016aa97b0cf9a8f77c0f0aca9ff8ab4745d127015d906ac948ed505db19d72",
+    "server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts": "4cb9be5fe36ec12ae5b02b96b3ce6d41bd4de08edbe0d84fdf93d997f5bc01ac",
+    "server/services/document-data-disposition/service.ts": "0640708fbe024cf477a20af7ba15eea3b4b53bea7380346a8658d7701b6e4184"
+  }
+}

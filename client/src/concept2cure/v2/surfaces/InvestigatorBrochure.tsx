@@ -105,6 +105,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
       };
     }
     return {
+      documentType: 'ICH_IB',
       summary:
         `Investigator's Brochure (ICH E6(R3) Appendix A): ${rows.length} section(s), ` +
         `${required.length} required — ${readyRequired} rendered, so required-section completeness is ` +

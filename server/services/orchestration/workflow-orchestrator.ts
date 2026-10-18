@@ -75,11 +75,21 @@ export function getProjectWorkflows(orgId: number, projectId: number): WorkflowE
 // ---------------------------------------------------------------------------
 
 /**
+ * Where a run was requested from, for the audit rows of the actions it
+ * dispatches: the request's client address as server/utils/client-ip.ts reads
+ * it (clientIpKey — 'unknown' when the request carried none).
+ */
+export interface WorkflowRequestOrigin {
+  ipAddress: string;
+}
+
+/**
  * Start and execute a workflow from a template.
  * Runs steps sequentially, stopping on failure if configured.
  */
 export async function executeWorkflow(
-  request: WorkflowExecutionRequest
+  request: WorkflowExecutionRequest,
+  origin: WorkflowRequestOrigin
 ): Promise<WorkflowExecution> {
   const template = templates.get(request.templateId);
   if (!template) {
@@ -121,9 +131,11 @@ export async function executeWorkflow(
 
   executions.set(executionId, execution);
 
-  // Build dispatch options for AI actions
+  // Build dispatch options for AI actions. 2026-10-15: the address was the
+  // literal '127.0.0.1', written to every dispatched action's Part 11 audit row
+  // whoever had asked for the run.
   const dispatchOptions: DispatchOptions = {
-    ipAddress: '127.0.0.1',
+    ipAddress: origin.ipAddress,
     user: request.requestedBy,
   };
 
@@ -173,6 +185,8 @@ export async function executeWorkflow(
     try {
       // Execute based on action type
       let stepResult: Record<string, unknown>;
+      // The dispatched action's error messages, when it returned success:false.
+      let actionFailure: string | null = null;
 
       if (stepDef.actionType === 'orchestrator_logic') {
         // Internal orchestration step — execute the template's custom logic
@@ -221,6 +235,7 @@ export async function executeWorkflow(
             code: e.code,
             message: e.message,
           }));
+          actionFailure = actionResponse.errors.map(e => e.message).join('; ');
           if (stepDef.stopOnFailure) {
             stepExec.status = 'failed';
             stepExec.completedAt = new Date().toISOString();
@@ -228,7 +243,7 @@ export async function executeWorkflow(
             addAuditEntry(
               execution,
               'step_failed',
-              `Step failed: ${actionResponse.errors.map(e => e.message).join('; ')}`,
+              `Step failed: ${actionFailure}`,
               request.requestedBy.userId,
               stepDef.stepId
             );
@@ -241,14 +256,17 @@ export async function executeWorkflow(
 
       stepResults.push(stepResult);
       stepExec.result = stepResult;
-      stepExec.status = 'completed';
+      // 2026-10-15: a failed action on a step that does not stop the run was
+      // recorded 'completed' and audited 'step_completed', and the roll-up
+      // counted it as a success. It is a failed step the run continues past.
+      stepExec.status = actionFailure === null ? 'completed' : 'failed';
       stepExec.completedAt = new Date().toISOString();
       stepExec.durationMs = Date.now() - new Date(stepExec.startedAt!).getTime();
 
       addAuditEntry(
         execution,
-        'step_completed',
-        `Step completed: ${stepDef.name}`,
+        actionFailure === null ? 'step_completed' : 'step_failed',
+        actionFailure === null ? `Step completed: ${stepDef.name}` : `Step failed: ${actionFailure}`,
         request.requestedBy.userId,
         stepDef.stepId
       );
@@ -461,15 +479,20 @@ async function aggregateResults(
 ): Promise<WorkflowResult> {
   const completedSteps = execution.steps.filter(s => s.status === 'completed').length;
   const failedSteps = execution.steps.filter(s => s.status === 'failed').length;
+  const notRun = execution.steps.length - completedSteps - failedSteps;
 
-  // Build summary
+  // Build summary. 2026-10-15: it read "completed: N/N steps succeeded" while
+  // a step that does not stop the run had failed.
+  const tally = `${completedSteps} of ${execution.steps.length} steps succeeded, ${failedSteps} failed${
+    notRun > 0 ? `, ${notRun} not run` : ''
+  }`;
   let summary: string;
   if (execution.status === 'completed') {
-    summary = `Workflow "${execution.templateId}" completed: ${completedSteps}/${execution.steps.length} steps succeeded.`;
+    summary = `Workflow "${execution.templateId}" completed: ${tally}.`;
   } else {
     summary = `Workflow "${execution.templateId}" failed at step ${
       execution.currentStepIndex + 1
-    }: ${failedSteps} step(s) failed.`;
+    }: ${tally}.`;
   }
 
   if (blockers.length > 0) {

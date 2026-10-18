@@ -65,6 +65,18 @@ export async function exportArtifactWithLedger(
   if (ledger.auditLogUnavailable) {
     throw new VerificationUnavailableError('AnALedger audit log', ledger.auditLogUnavailable);
   }
+  // 2026-10-15: the AI-use sections (proposals, citation runs, authoring plan)
+  // were embedded as "none" when unread; a document that cannot substantiate
+  // its AI-use record is refused the same way.
+  if (ledger.proposalsUnavailable) {
+    throw new VerificationUnavailableError('AnALedger proposals', ledger.proposalsUnavailable);
+  }
+  if (ledger.runsUnavailable || !ledger.runs) {
+    throw new VerificationUnavailableError('AnALedger citation runs', ledger.runsUnavailable ?? 'not read');
+  }
+  if (ledger.authoringPlanUnavailable) {
+    throw new VerificationUnavailableError('AnALedger authoring plan', ledger.authoringPlanUnavailable);
+  }
 
   // 1. Pull the artifact's content body for the docx body. The collector
   // reads the lighter columns; the content is large so we fetch it
@@ -173,7 +185,11 @@ export function renderProvenanceSummaryText(ledger: ArtifactLedger): string {
   lines.push('');
 
   // Proposals
-  lines.push(`Proposals: ${ledger.proposals.length}`);
+  if (ledger.proposalsUnavailable) {
+    lines.push(`Proposals: UNAVAILABLE — ${ledger.proposalsUnavailable}`);
+  } else {
+    lines.push(`Proposals: ${ledger.proposals.length}`);
+  }
   for (const p of ledger.proposals.slice(-5)) {
     lines.push(
       `  ${p.createdAt} — ${p.proposalId} (${p.status})` +
@@ -183,12 +199,17 @@ export function renderProvenanceSummaryText(ledger: ArtifactLedger): string {
   lines.push('');
 
   // Runs
-  lines.push(`Citation runs: ${ledger.runs.totalRuns}`);
-  if (ledger.runs.latestRunAt) {
-    lines.push(`  Latest: ${ledger.runs.latestRunAt} (${ledger.runs.latestRunId})`);
-  }
-  if (ledger.runs.modelsUsed.length > 0) {
-    lines.push(`  Models: ${ledger.runs.modelsUsed.join(', ')}`);
+  const runs = ledger.runs;
+  if (ledger.runsUnavailable || !runs) {
+    lines.push(`Citation runs: UNAVAILABLE — ${ledger.runsUnavailable ?? 'not read'}`);
+  } else {
+    lines.push(`Citation runs: ${runs.totalRuns}`);
+    if (runs.latestRunAt) {
+      lines.push(`  Latest: ${runs.latestRunAt} (${runs.latestRunId})`);
+    }
+    if (runs.modelsUsed.length > 0) {
+      lines.push(`  Models: ${runs.modelsUsed.join(', ')}`);
+    }
   }
 
   return lines.join('\n');

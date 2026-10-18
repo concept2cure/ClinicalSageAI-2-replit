@@ -1,0 +1,47 @@
+{
+  "runtime": "v22.23.3",
+  "baselineHEAD": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.config.mts"
+  ],
+  "startedAt": "2026-10-14T06:46:50.013Z",
+  "finishedAt": "2026-10-14T06:46:52.409Z",
+  "exitCode": 1,
+  "signal": null,
+  "counts": "Tests  1 failed | 2 passed (3)",
+  "qualified": false,
+  "before": {
+    "server/services/ana/document-catalog-tools.ts": "3efcaf1660faafa2d00226182f7a31d66469641e986aef3ae5aef958d27ec0ec",
+    "server/services/ana/document-catalog-input.ts": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c",
+    "server/services/ana/document-tools-shared.ts": "36cce078fc787a4482bb7c95e6e4a2e9242669db4c45068c07a2c1999eb0207d",
+    "server/services/ana/catalog-scope.ts": "5d02ce6829fa3425e0399b4072aa415dbe314275f56bd77ba3e92d9e414655a3",
+    "server/services/vault/document-catalog.service.ts": "30419113fea7b30cc5f2999a5387f385d565d0b420187b28b75ba298e4a626d1",
+    "server/services/vault/document-catalog-core.ts": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e",
+    "server/services/vault/document-catalog-eligibility.ts": "75a88283e67c84ca643afda195802b2cfd9e507ed13f7bdb8c11d1d57614b97a",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "shared/ana/catalog-facts.ts": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.config.mts": "0f2dc13788059c7aca41788be2e0717ed9fd1c595fc0426811bbff9ced3247c7",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts": "dc8cb900ed49269020fc14b8d854cb727da1306e6fd92d1df376e60ce0221545"
+  },
+  "after": {
+    "server/services/ana/document-catalog-tools.ts": "3efcaf1660faafa2d00226182f7a31d66469641e986aef3ae5aef958d27ec0ec",
+    "server/services/ana/document-catalog-input.ts": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c",
+    "server/services/ana/document-tools-shared.ts": "36cce078fc787a4482bb7c95e6e4a2e9242669db4c45068c07a2c1999eb0207d",
+    "server/services/ana/catalog-scope.ts": "5d02ce6829fa3425e0399b4072aa415dbe314275f56bd77ba3e92d9e414655a3",
+    "server/services/vault/document-catalog.service.ts": "30419113fea7b30cc5f2999a5387f385d565d0b420187b28b75ba298e4a626d1",
+    "server/services/vault/document-catalog-core.ts": "866bb582da097b67a94e852d2d31834e292c183396302a83a4c21589c02f6f6e",
+    "server/services/vault/document-catalog-eligibility.ts": "75a88283e67c84ca643afda195802b2cfd9e507ed13f7bdb8c11d1d57614b97a",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "shared/ana/catalog-facts.ts": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.config.mts": "0f2dc13788059c7aca41788be2e0717ed9fd1c595fc0426811bbff9ced3247c7",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts": "dc8cb900ed49269020fc14b8d854cb727da1306e6fd92d1df376e60ce0221545"
+  },
+  "proofScope": "Actual registered catalog handler plus actual completeCatalog lexical source loader and handoff; controlled SQL-visible source rows, membership/open-program, embedding and final writer seams. Separate PostgreSQL cases exercise the actual final writer source move refusal. No deployed authority/provider qualification.",
+  "sourcesUnchangedDuringRun": true,
+  "changedSources": [],
+  "logSha256": "843449672da4c8bdbfbfa8d5590c7397f6d6bb922207df741896f279f0583f4b"
+}

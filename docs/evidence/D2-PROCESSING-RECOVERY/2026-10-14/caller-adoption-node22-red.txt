@@ -1,0 +1,514 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:05:16.001Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:05:16.118Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:05:16.119Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:05:16.119Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details
+{
+  "timestamp": "2026-10-14T04:05:18.132Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details
+{
+  "timestamp": "2026-10-14T04:05:18.140Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails
+{
+  "timestamp": "2026-10-14T04:05:18.168Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "source insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails
+{
+  "timestamp": "2026-10-14T04:05:18.171Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails
+{
+  "timestamp": "2026-10-14T04:05:18.173Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available
+{
+  "timestamp": "2026-10-14T04:05:18.184Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > loads bytes through the canonical reader, retains the original and captures pending extraction with paired audits 29ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details 6ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses missing bytes without capture or unsafe storage details 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign organization without capture or unsafe storage details 4ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses withdrawn upload without capture or unsafe storage details 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > keeps checksum-less identity unknown instead of trusting recomputed bytes 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > locks the canonical program before row/write locks and reserves impact tables before identity reads 4ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects path changed at the final locked recheck 5ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum changed at the final locked recheck 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum lost at the final locked recheck 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects eligibility withdrawn at the final locked recheck 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails 6ms
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > duplicate adoption still verifies bytes and writes no source or audit, including a historical source 5ms
+   → expected { adopted: false, sourceId: 16, …(1) } to match object { processed: false, …(1) }
+(3 matching properties omitted from actual)
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > denies a non-lead member before bytes and refuses foreign program identity 4ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rechecks authorization after the advisory lock and refuses a disappeared project 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > allows an organization manager under the existing mutation policy 2ms
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:05:18.220Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "private provider path /private/file",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rejects missing auth, malformed project and missing file identity before a transaction 5ms
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns extraction_failed 3ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retryable_failure 3ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns blocked 3ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns stale_source 3ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns busy 2ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_not_due 2ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_exhausted 3ms
+   → expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects 3ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through completed without another capture or audit 3ms
+   → expected { adopted: false, sourceId: 16, …(1) } to match object { adopted: false, sourceId: 16, …(2) }
+(1 matching property omitted from actual)
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through already_complete without another capture or audit 2ms
+   → expected { adopted: false, sourceId: 16, …(1) } to match object { adopted: false, sourceId: 16, …(2) }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > loads bytes through the canonical reader, retains the original and captures pending extraction with paired audits
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": true,
+-   "processing": {
+-     "ok": true,
+-     "processed": true,
+-     "status": "completed",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:152:22
+    150|     const res = await adopt();
+    151|     expect(res.status).toBe(201);
+    152|     expect(res.body).toEqual({ adopted: true, sourceId: 41, processed:…
+       |                      ^
+    153|       processing: { ok: true, processed: true, status: 'completed' } }…
+    154|     expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 41, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > duplicate adoption still verifies bytes and writes no source or audit, including a historical source
+AssertionError: expected { adopted: false, sourceId: 16, …(1) } to match object { processed: false, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "processed": false,
+-   "processing": {
+-     "reasonCode": "SOURCE_NOT_CURRENT",
+-     "status": "stale_source",
+-   },
++   "adopted": false,
++   "message": "This file is already in the project’s Data Room.",
++   "sourceId": 16,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:249:22
+    247|     expect(res.status).toBe(200);
+    248|     expect(res.body).toMatchObject({ adopted: false, sourceId: 16 });
+    249|     expect(res.body).toMatchObject({ processed: false, processing: { s…
+       |                      ^
+    250|     expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
+    251|     noCapture();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns extraction_failed
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "extraction_failed",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retryable_failure
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "retryable_failure",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns blocked
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "blocked",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns stale_source
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "stale_source",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns busy
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "busy",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_not_due
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "retry_not_due",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_exhausted
+AssertionError: expected { adopted: true, sourceId: 41, …(1) } to deeply equal { adopted: true, sourceId: 41, …(2) }
+
+- Expected
++ Received
+
+  {
+    "adopted": true,
+    "processed": false,
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_PROCESSING_REASON",
+-     "status": "retry_exhausted",
+-   },
+    "sourceId": 41,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:302:24
+    300|       const res = await adopt();
+    301|       expect(res.status).toBe(201);
+    302|       expect(res.body).toEqual({ adopted: true, sourceId: 41, processe…
+       |                        ^
+    303|       expect(committed.filter(write => write.kind === 'audit')).toHave…
+    304|       expect(sqlCalls().at(-1)).toBe('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:311:24
+    309|     mocks.processCapturedSource.mockRejectedValue(new Error('private p…
+    310|     const res = await adopt();
+    311|     expect(res.status).toBe(201);
+       |                        ^
+    312|     expect(res.body).toEqual({ adopted: true, sourceId: 41, processed:…
+    313|       processing: { ok: false, processed: false, status: 'retryable_fa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through completed without another capture or audit
+AssertionError: expected { adopted: false, sourceId: 16, …(1) } to match object { adopted: false, sourceId: 16, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "adopted": false,
+-   "processed": true,
+-   "processing": {
+-     "ok": true,
+-     "processed": true,
+-     "status": "completed",
+-   },
+    "sourceId": 16,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:326:22
+    324|     const res = await adopt();
+    325|     expect(res.status).toBe(200);
+    326|     expect(res.body).toMatchObject({ adopted: false, sourceId: 16, pro…
+       |                      ^
+    327|       processing: { ok: true, processed: true, status } });
+    328|     expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 16, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through already_complete without another capture or audit
+AssertionError: expected { adopted: false, sourceId: 16, …(1) } to match object { adopted: false, sourceId: 16, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "adopted": false,
+-   "processed": true,
+-   "processing": {
+-     "ok": true,
+-     "processed": true,
+-     "status": "already_complete",
+-   },
+    "sourceId": 16,
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:326:22
+    324|     const res = await adopt();
+    325|     expect(res.status).toBe(200);
+    326|     expect(res.body).toMatchObject({ adopted: false, sourceId: 16, pro…
+       |                      ^
+    327|       processing: { ok: true, processed: true, status } });
+    328|     expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 16, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 19 passed (31)
+   Start at  04:05:14
+   Duration  3.76s (transform 1.83s, setup 62ms, import 3.36s, tests 129ms, environment 0ms)
+

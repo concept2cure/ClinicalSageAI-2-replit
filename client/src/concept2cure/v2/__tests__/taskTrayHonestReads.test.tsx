@@ -37,6 +37,7 @@ function serve(routes: Routes = {}) {
     const pick = (r: { payload: unknown; status?: number } | undefined, dflt: unknown) =>
       r ? res(r.payload, r.status ?? 200) : res(dflt);
     if (url.startsWith('/api/mdx/notifications/unread-count')) return pick(routes.unread, { data: { unread: 0 } });
+    if (url === '/api/mdx/notifications/5/target') return res({data:{surface:'insights',label:'Open saved report',params:{reportRunId:'41'},programId:null}});
     if (url.startsWith('/api/mdx/notifications')) return pick(routes.notifs, { data: [], meta: { count: 0 } });
     if (url === '/api/task-management/my-work') return pick(routes.myWork, MY_WORK);
     if (url === '/api/concept2cure/reviews/my-queue') {
@@ -67,6 +68,25 @@ beforeEach(() => {
 });
 
 describe('TaskTray — messages & alerts', () => {
+  it('opens a saved report using its validated run resource instead of an arbitrary action URL', async () => {
+    serve({ notifs: { payload: { data: [{ id: 5, category: 'reporting', severity: 'info', title: 'Weekly report ready', body: 'Saved snapshot', resource_type: 'report_run', resource_id: '41', action_url: 'https://unrelated.example/ignore' }] } } });
+    const onNav = vi.fn();
+    render(<TaskTray onNav={onNav} />);
+    await openTray();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open saved report' }));
+    await waitFor(()=>expect(onNav).toHaveBeenCalledWith('insights?reportRunId=41'));
+    expect(screen.queryByRole('dialog', { name: 'Your work' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it('does not offer a report link for a malformed or unrelated resource', async () => {
+    serve({ notifs: { payload: { data: [{ id: 5, category: 'reporting', severity: 'info', title: 'Malformed report', body: null, resource_type: 'report_run', resource_id: '../41', action_url: '/concept2cure/insights?reportRunId=41' }, { id: 6, category: 'general', severity: 'info', title: 'Other notification', body: null, resource_type: 'document', resource_id: '41' }] } } });
+    render(<TaskTray onNav={vi.fn()} />);
+    await openTray();
+    await screen.findByText('Malformed report');
+    expect(screen.queryByRole('button', { name: 'Open saved report' })).toBeNull();
+  });
+
   it('a failed notifications read is an alert, not "No unread messages"', async () => {
     serve({ notifs: { payload: { error: 'boom' }, status: 500 } });
     render(<TaskTray onNav={vi.fn()} />);

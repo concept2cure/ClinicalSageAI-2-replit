@@ -23,9 +23,9 @@
  * evidence. Filing decisions get made off that screen.
  *
  * `DataState<T>` makes the five cases irreducible — you cannot render
- * without saying which one you are in. Fixtures are no longer reachable
- * by accident; they are reachable only in an explicitly enabled sample
- * mode (see ./sampleMode), and only with a standing banner.
+ * without saying which one you are in. Fixtures are not reachable at all:
+ * the sample mode that once showed them on request was removed with the
+ * example datasets on 2026-10-14.
  *
  * ## Usage
  *

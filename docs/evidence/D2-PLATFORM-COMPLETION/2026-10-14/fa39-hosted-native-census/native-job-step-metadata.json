@@ -1,0 +1,100 @@
+{
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1
+    },
+    {
+      "name": "Initialize containers",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2
+    },
+    {
+      "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3
+    },
+    {
+      "name": "Setup Node.js",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4
+    },
+    {
+      "name": "Install dependencies",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5
+    },
+    {
+      "name": "Install Postgres client",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6
+    },
+    {
+      "name": "Apply GCC migrations",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7
+    },
+    {
+      "name": "Smoke — apply RLS rollout migrations (0019/0020/0021)",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8
+    },
+    {
+      "name": "Provision a deploy-shaped database for the real-database tests",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9
+    },
+    {
+      "name": "Run real-database tests (unmocked pg, RLS_ENFORCE=on)",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 10
+    },
+    {
+      "name": "Upload real-database test results",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 11
+    },
+    {
+      "name": "Run integration tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "number": 12
+    },
+    {
+      "name": "Upload integration test results",
+      "status": "pending",
+      "conclusion": null,
+      "number": 13
+    },
+    {
+      "name": "Post Setup Node.js",
+      "status": "pending",
+      "conclusion": null,
+      "number": 24
+    },
+    {
+      "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+      "status": "pending",
+      "conclusion": null,
+      "number": 25
+    },
+    {
+      "name": "Stop containers",
+      "status": "pending",
+      "conclusion": null,
+      "number": 26
+    }
+  ]
+}

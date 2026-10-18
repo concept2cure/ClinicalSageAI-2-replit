@@ -1,0 +1,4 @@
+# the question engine, both catalogues, the wider intelligence tier and the card
+$ npx vitest run server/services/ana/intelligence-questions tests/ana-intelligence shared/regulatory/__tests__ client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+ Test Files  35 passed (35)
+      Tests  634 passed (634)

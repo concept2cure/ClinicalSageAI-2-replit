@@ -95,22 +95,41 @@ export function validateAnswers(
       }
     }
 
-    if (field.type === 'select' || field.type === 'radio') {
-      if (field.options && typeof value === 'string') {
-        const validValues = field.options.map(o => o.value);
-        if (!validValues.includes(value)) {
-          errors.push({ fieldId: field.id, message: `${field.label}: "${value}" is not a valid option.` });
-        }
+    /* A question that OFFERS positions enforces them, whatever its field type.
+       This used to read `field.type === 'select' || 'radio'`, so
+       `agency_select` — the one answer the platform keys the Module 1
+       backbone, the validation profile and the gateway on — was never checked
+       against the twelve agencies it offers, and a caller could store prose
+       (2026-10-12 review). */
+    if (field.options && typeof value === 'string') {
+      const validValues = field.options.map(o => o.value);
+      if (!validValues.includes(value)) {
+        errors.push({ fieldId: field.id, message: `${field.label}: "${value}" is not a valid option.` });
       }
     }
 
-    if (field.type === 'multi_select' && Array.isArray(value) && field.options) {
+    if (Array.isArray(value) && field.options) {
       const validValues = field.options.map(o => o.value);
       for (const item of value) {
         if (typeof item === 'string' && !validValues.includes(item)) {
           errors.push({ fieldId: field.id, message: `${field.label}: "${item}" is not a valid option.` });
         }
       }
+    }
+
+    /* A question whose governed catalogue holds nothing for this programme —
+       AnA has no routes to market for PMDA — offers NO positions, so the check
+       above has nothing to check against and every string passed. The card
+       sends the person's own words under OTHER_POSITION; a tool or an API
+       caller could send prose that the record would then carry as though AnA
+       had offered it. Their words are the only answer here. */
+    if (field.optionsFrom && !field.options?.length && typeof value === 'string' && value !== OTHER_POSITION) {
+      errors.push({
+        fieldId: field.id,
+        message:
+          `${field.label}: AnA holds no positions for this programme, so she cannot record an answer as one of ` +
+          'hers. Describe it in your own words and she will record it as yours.',
+      });
     }
 
     if (field.type === 'date' && typeof value === 'string') {

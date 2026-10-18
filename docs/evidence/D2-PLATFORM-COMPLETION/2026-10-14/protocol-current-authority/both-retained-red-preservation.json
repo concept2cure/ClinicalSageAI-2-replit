@@ -1,0 +1,58 @@
+{
+  "database": "platform_test",
+  "before": {
+    "database": "platform_test",
+    "organizationId": 1538506,
+    "protocolId": 86,
+    "signatureId": 22,
+    "sha256": "15131d8bcdf7be62510e6e64d600f8339547ebd8680deab37e06f8a3a723bcf2",
+    "sectionCount": 13,
+    "versionCount": 1,
+    "signatureCount": 1,
+    "lineageRows": 29,
+    "actionCount": 17,
+    "auditCount": 17
+  },
+  "after": {
+    "database": "platform_test",
+    "organizationId": 1538506,
+    "protocolId": 86,
+    "signatureId": 22,
+    "sha256": "15131d8bcdf7be62510e6e64d600f8339547ebd8680deab37e06f8a3a723bcf2",
+    "sectionCount": 13,
+    "versionCount": 1,
+    "signatureCount": 1,
+    "lineageRows": 29,
+    "actionCount": 17,
+    "auditCount": 17
+  },
+  "unchanged": true,
+  "authorityRedBefore": {
+    "database": "platform_test",
+    "organizationId": 1179328,
+    "protocolId": 93,
+    "signatureId": 27,
+    "sha256": "05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a",
+    "sectionCount": 13,
+    "versionCount": 1,
+    "signatureCount": 1,
+    "lineageRows": 26,
+    "actionCount": 16,
+    "auditCount": 16
+  },
+  "authorityRedAfter": {
+    "database": "platform_test",
+    "organizationId": 1179328,
+    "protocolId": 93,
+    "signatureId": 27,
+    "sha256": "05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a",
+    "sectionCount": 13,
+    "versionCount": 1,
+    "signatureCount": 1,
+    "lineageRows": 26,
+    "actionCount": 16,
+    "auditCount": 16
+  },
+  "authorityRedUnchanged": true,
+  "qualification": "Both exact retained red fixtures only: org1538506/protocol86/signature22 and org1179328/protocol93/signature27. Green uses fresh QA records; no old history is rewritten."
+}

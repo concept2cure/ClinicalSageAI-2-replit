@@ -1,0 +1,23 @@
+# The last failure in the full vitest suite at HEAD.
+ tests/lineage/founder-path-lineage.pglite.test.ts
+      Tests  1 failed | 14 passed (15)
+
+Error: ana-draft/model-recorded FAILS and is not baselined
+       — provenance names the model the gateway served
+    observed undefined
+    AssertionError: expected undefined to be 'claude-opus-5'
+ at Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+ at Module.hopAnaDraft tests/lineage/founder-path-lineage.hops-authoring.ts:214:7
+
+# Cause: 27211528b (SEC-A-7 door 2) made the model resolve from the turn record
+# the draft names, and from nowhere else. The walk filed no turn record --
+# WALK_RUN_ID was the bare string 'run_walk_draft' and the world never applied
+# migrations/20260926_ana_turn_records.sql -- so undefined was CORRECT for the
+# question asked, and the question was the closed channel.
+
+# A first, wrong attempt (recorded because its failure mode is instructive):
+#   writeTurnRecordSafely swallows its error and returns not_recorded, so
+#   passing a pool without .connect() produced
+#     [turn-record] could not write the turn record: Cannot read properties of undefined (reading 'connect')
+#     → the walk's turn record was not filed: {"status":"not_recorded",...}
+#   and 11 of 15 hops cascaded red -- worse than the single failure it started from.

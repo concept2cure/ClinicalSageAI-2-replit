@@ -1,6 +1,7 @@
-# AIOS Evidence Pack (Generated)
+# AIOS Evidence Pack (Generated) — SAMPLE, not evidence
 
-Generated: 2026-05-20
+Generated: 2026-10-15
+Source run: none — these metrics were not measured in a recorded run
 Release ID: pilot-rc1
 Environment: staging
 
@@ -36,7 +37,7 @@ Environment: staging
 
 ## Decision
 
-Overall pilot gate decision: PASS
+Overall pilot gate decision: NOT MADE — sample metrics with no source run; the gate logic evaluates them as PASS.
 
 ## Notes
 

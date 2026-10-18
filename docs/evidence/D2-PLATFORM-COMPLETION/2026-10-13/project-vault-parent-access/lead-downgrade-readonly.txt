@@ -1,0 +1,5 @@
+Read-only execution of the canonical canMutateProgram; no database writes.
+role=viewer; matching_lead=true; allowed=true
+role=readonly; matching_lead=true; allowed=true
+role=read_only; matching_lead=true; allowed=true
+role=guest; matching_lead=true; allowed=true

@@ -115,32 +115,42 @@ describe('useAnaChat — pinned data-room sources', () => {
      request. These lock the read, and the one-turn consumption that stops a
      stale pin grounding every later question. */
   describe('shell handoff via window.C2C_SOURCE_PINS', () => {
-    afterEach(() => { delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; });
+    afterEach(() => {
+      delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
+    });
 
     it('sends sources the Data Room pinned on the window', async () => {
       (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS = ['11', '22'];
       const { result } = renderHook(() => useAnaChat({ projectId: 'proj_12' }));
-      await act(async () => { await result.current.send('draft with my pinned sources'); });
+      await act(async () => {
+        await result.current.send('draft with my pinned sources');
+      });
       expect(sentBody().source_ids).toEqual(['11', '22']);
     });
 
     it('consumes the pin so a later, unrelated turn is not silently grounded on it', async () => {
       (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS = ['11'];
       const { result } = renderHook(() => useAnaChat({ projectId: 'proj_12' }));
-      await act(async () => { await result.current.send('first turn'); });
+      await act(async () => {
+        await result.current.send('first turn');
+      });
       expect(sentBody().source_ids).toEqual(['11']);
 
       fetchMock.mockClear();
-      await act(async () => { await result.current.send('something else entirely'); });
+      await act(async () => {
+        await result.current.send('something else entirely');
+      });
       expect(sentBody()).not.toHaveProperty('source_ids');
     });
 
     it('lets an explicit prop win over the window handoff', async () => {
       (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS = ['99'];
       const { result } = renderHook(() =>
-        useAnaChat({ projectId: 'proj_12', selectedSourceIds: [7] }),
+        useAnaChat({ projectId: 'proj_12', selectedSourceIds: [7] })
       );
-      await act(async () => { await result.current.send('draft'); });
+      await act(async () => {
+        await result.current.send('draft');
+      });
       expect(sentBody().source_ids).toEqual([7]);
     });
   });
@@ -149,7 +159,7 @@ describe('useAnaChat — pinned data-room sources', () => {
     // The two are independent ways of choosing context and must not displace
     // each other: a user can pin a stored source AND attach a new file.
     const { result } = renderHook(() =>
-      useAnaChat({ projectId: 'proj_12', selectedSourceIds: [7] }),
+      useAnaChat({ projectId: 'proj_12', selectedSourceIds: [7] })
     );
     await act(async () => {
       await result.current.send('compare these', [
@@ -158,5 +168,23 @@ describe('useAnaChat — pinned data-room sources', () => {
     });
     expect(sentBody().source_ids).toEqual([7]);
     expect(sentBody().file_ids).toEqual(['file_new']);
+  });
+});
+
+describe('useAnaChat — visible surface context', () => {
+  it('sends the current surface state to the streaming route', async () => {
+    const moduleContext = {
+      surface: 'ectd-coauthor',
+      summary: 'eCTD co-authoring Quality Overall Summary',
+      facts: { coauthorDocumentId: 42, moduleNumber: '2.3' },
+      available_actions: ['Validate document structure'],
+    };
+    const { result } = renderHook(() => useAnaChat({ projectId: 'proj_12', moduleContext }));
+
+    await act(async () => {
+      await result.current.send('What should I do next?');
+    });
+
+    expect(sentBody().module_context).toEqual(moduleContext);
   });
 });

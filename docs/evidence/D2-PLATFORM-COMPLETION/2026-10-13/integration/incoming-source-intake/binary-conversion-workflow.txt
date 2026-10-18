@@ -1,0 +1,252 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T23:13:34.488Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T23:13:34.489Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T23:13:34.489Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 119ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T23:13:39.430Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cc35d917-64e4-49ff-9d62-7283244bfdb7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T23:13:39.451Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cc35d917-64e4-49ff-9d62-7283244bfdb7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 1069ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 332ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > admits an explicitly assigned private-project member and refuses revoked access to their saved import 103ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > uses the current membership role rather than a previously issued member token 12ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > current source project and membership access > keeps document ownership separate from current saved-binary source access after project revocation 149ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T23:13:40.405Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "e0920409-3052-4231-a65e-08978476c97f",
+    "recorded": "92df6787694f",
+    "actual": "9375701c5719"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > rechecks a sharing revocation during conversion inside the real canonical creation transaction 209ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses source/project mismatches and foreign tenants without creating anything 36ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 48ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > requires a stated reason and an editor role 7ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T23:13:40.692Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 061746d5-e20e-4faf-9bb3-b7704e1e9a80 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T23:13:40.706Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 061746d5-e20e-4faf-9bb3-b7704e1e9a80 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '98b5e649-dec8-45e4-8dcb-d17113b13daf',
+    '14aaad2c-bfbe-4eaa-91ae-0fc4b38f60f9',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '68ea4cef-7621-43dc-bdb4-a50814cb30be',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T23:13:40.791Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction, integrity and format guards > imports a captured data-room source through the real tenant-checked upload byte reader 291ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T23:13:40.932Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc db62bd39-9fa2-482a-ba59-1c565342c35c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T23:13:40.956Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc db62bd39-9fa2-482a-ba59-1c565342c35c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T23:13:40.997Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc db62bd39-9fa2-482a-ba59-1c565342c35c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 111ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 16ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T23:13:41.050Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc db62bd39-9fa2-482a-ba59-1c565342c35c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+{
+  "timestamp": "2026-10-13T23:13:41.303Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 416a0845-90c8-4781-bc8b-ca40968b14cc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse 326ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false) 62ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true) 120ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true)
+{
+  "timestamp": "2026-10-13T23:13:41.503Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 374c1765-236b-4ada-84bb-79d0556e676b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false) 89ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true) 141ms
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+{
+  "timestamp": "2026-10-13T23:13:42.679Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 69ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > keeps ordinary signed export manifestations while caller-executor content-only export excludes them 46ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 38ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 66ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 71ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 29ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 31ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 42ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation 28ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 36ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 18ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 22ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 25ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 36ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 25ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 21ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > keeps the first coded heading and names each repeated heading in its working-code warning 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > reserves all recorded codes before assigning uncoded or repeated working identifiers 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-conversion.test.ts > source section identifiers preserve every Word passage > retains unique recorded codes and the existing single-section source coordinate without extra warnings 0ms
+
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+   Start at  23:13:24
+   Duration  21.98s (transform 6.19s, setup 140ms, import 1.83s, tests 19.32s, environment 0ms)

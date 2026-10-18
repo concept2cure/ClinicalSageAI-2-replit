@@ -1,0 +1,19 @@
+{
+  "original": {
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "8df82fe0ad2e1c52923393d988af9da17c1c74dac41531a57ae70123eaa72122",
+    "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16",
+    "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx": "83eca25661c4075671ca1b328edc5f12dacfaec3a3333d7ddefdac6c75064e9a"
+  },
+  "merged": {
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "8df82fe0ad2e1c52923393d988af9da17c1c74dac41531a57ae70123eaa72122",
+    "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16",
+    "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx": "6986a700c4032946f5a41bcb1c7cdbe85ed3e1a839aea1cf9d787d6a8ebad1ed"
+  },
+  "fixtureRemedy": {
+    "file": "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx",
+    "change": "Add savedReuseRevision:0 required by incoming Owner type; historical baseline-client snapshot retained.",
+    "productionGuardAndThreeServerFrozenSuitesUnchanged": true
+  }
+}

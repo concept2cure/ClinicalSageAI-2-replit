@@ -1,0 +1,18 @@
+# MUTATION B (reverted): comprehensionRefusal without catalogVersionRefusal and without the contentHash equality. npx vitest run server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts -t 'source-version truth'
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+AssertionError: expected { ok: true, …(5) } to match object { ok: false, refused: true, …(1) }
+(16 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "code": "SOURCE_VERSION_CHANGED",
+-   "ok": false,
+-   "refused": true,
++   "ok": true,
+  }
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:252:24
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 20 skipped (22)

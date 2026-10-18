@@ -1,0 +1,37 @@
+{"fixture":"ready","name":"c2c-catalog-race-08f1cbcd-421","port":32772,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts
+{
+  "timestamp": "2026-10-14T06:58:09.257Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > control persists one exact source-bound suggestion and one actual chained audit 57ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > withdrawal holds the advisory fence before fresh READ COMMITTED admission 78ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > a canonical successor inserted during the advisory wait refuses the predecessor 67ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > same-byte re-extraction during advisory wait refuses the old expected digest 67ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > moving the source to another valid program during the wait refuses its prior scope 64ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > persisted viewer role overrides stale member request scope after waiting 50ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > membership removal during waiting refuses without a receipt 46ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > private-project member revocation during waiting uses actual canonical sharing policy 51ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > inactive actor during waiting refuses despite existing membership and stale scope 53ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > document SHARE reservation serializes concurrent re-extraction after admission 46ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > held active membership serializes concurrent role revocation through commit 43ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > stale shown extraction refuses review while historical confirmed decision stays visible 108ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > a real zero-row BEFORE UPDATE refusal cannot produce success or an audit on vector fallback 36ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > a forced synthetic UPDATE policy refusal cannot become non-vector success 30ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/catalog-postgres.test.mts > genuine PostgreSQL catalog admission and source races > actual audit INSERT failure rolls the catalog mutation back 36ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  06:58:06
+   Duration  4.55s (transform 2.01s, setup 0ms, import 3.27s, tests 908ms, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-catalog-race-08f1cbcd-421","testExitCode":0,"cleanup":"exact owned container removed","cleanupVerified":true}

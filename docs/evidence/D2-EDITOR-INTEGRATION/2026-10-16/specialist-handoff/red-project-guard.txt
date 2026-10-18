@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program 4ms
+   → captureShellProjectGuard is not a function
+ × client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current 1ms
+   → captureShellProjectGuard is not a function
+ × client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program 1ms
+   → captureShellProjectGuard is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program
+TypeError: captureShellProjectGuard is not a function
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts:9:29
+      7| describe('the existing shell project channel revision', () => {
+      8|   it('detects leaving and returning to the same program', () => {
+      9|     const current = project.captureShellProjectGuard();
+       |                             ^
+     10|     project.publishShellProject({ id: B }); project.publishShellProjec…
+     11|     expect(current()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current
+TypeError: captureShellProjectGuard is not a function
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts:14:29
+     12|   });
+     13|   it('keeps same-program and metadata updates current', () => {
+     14|     const current = project.captureShellProjectGuard();
+       |                             ^
+     15|     project.publishShellProject({ id: A, title: 'Current title' });
+     16|     project.updateShellProject({ product: 'Recorded product' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program
+TypeError: captureShellProjectGuard is not a function
+ ❯ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts:20:27
+     18|   });
+     19|   it('a fresh guard belongs to the current program', () => {
+     20|     const first = project.captureShellProjectGuard();
+       |                           ^
+     21|     project.publishShellProject({ id: B });
+     22|     const next = project.captureShellProjectGuard();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  21:21:49
+   Duration  917ms (transform 100ms, setup 150ms, import 34ms, tests 9ms, environment 532ms)

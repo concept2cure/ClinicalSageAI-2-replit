@@ -1,0 +1,9 @@
+{
+  "serverPid": 19741,
+  "serverStopped": true,
+  "loopbackPort": 5188,
+  "loopbackConnectCode": 111,
+  "browserClosedByRunners": true,
+  "productionPinsStillMatch": true,
+  "drift": []
+}

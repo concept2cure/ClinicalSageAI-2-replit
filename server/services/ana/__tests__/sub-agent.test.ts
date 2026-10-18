@@ -67,7 +67,8 @@ function host(over: Partial<SubAgentHost> = {}): SubAgentHost & { frames: AgentE
     ...over,
   } as SubAgentHost & { frames: AgentEventFrame[] };
 }
-const CTX = { organizationId: 7, userId: 3, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
+const SQL_CLIENT = { query: vi.fn() };
+const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
 const RESEARCH = { role: 'research', objective: 'Find the pivotal trial', instructions: 'Search PubMed for the pivotal trial of drug X.' };
 const inTenant = <T>(fn: () => Promise<T>, tenantId = '7') =>
   runWithTenantScope({ tenantId, source: 'test', caller: 'sub-agent-test' } as any, fn);
@@ -156,6 +157,7 @@ describe('the child is governed', () => {
     expect(ctx.modelCalls).toBe('refuse');
     expect(ctx.organizationId).toBe(7);
     expect(ctx.projectRef).toBe('prog-uuid');
+    expect(ctx.sqlClient).toBe(SQL_CLIENT);
     expect(ctx.signal).toBeInstanceOf(AbortSignal);
     expect(seen[0].refusal).not.toBeNull();
   });

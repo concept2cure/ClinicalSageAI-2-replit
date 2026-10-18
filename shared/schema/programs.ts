@@ -53,6 +53,14 @@ export const regulatoryPrograms = pgTable(
     programType: text('program_type').notNull(), // 'CER', '510K', 'IND', 'NDA', 'BLA', 'PMA', 'DE_NOVO'
     productType: text('product_type').notNull(), // 'drug', 'biologic', 'device', 'ivd', 'combination'
     deviceClass: text('device_class'), // 'I', 'II', 'III' (for devices)
+    /** MDR (EU) 2017/745 Annex VIII class AS DECLARED: I, Is, Im, Ir, IIa, IIb,
+     *  III. NULL = not stated or no EU filing planned. Distinct from
+     *  `deviceClass`, which is the US 21 CFR 860 class the eSTAR prints.
+     *  migrations/20261012b_regulatory_programs_eu_device_classes.sql */
+    euMdrClass: text('eu_mdr_class'),
+    /** IVDR (EU) 2017/746 Annex VIII class: A, B, C or D. NULL = not stated or
+     *  no EU filing planned. Same migration. */
+    euIvdrClass: text('eu_ivdr_class'),
     regulatoryPath: text('regulatory_path'), // '510k', 'de_novo', 'pma' (for devices)
 
     // Target agencies

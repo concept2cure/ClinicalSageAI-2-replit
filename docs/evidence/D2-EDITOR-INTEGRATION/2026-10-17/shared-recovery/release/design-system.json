@@ -1,0 +1,7 @@
+{
+  "command": "npm run --silent ci:design-system",
+  "publicationBase": "d6a33d3a4a09e08a28d9a3b6047e30fe3a2532d1",
+  "exitCode": 0,
+  "rawSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+  "rawOutput": "[design-system] OK \u2014 no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.\n"
+}

@@ -30,7 +30,6 @@ const H = vi.hoisted(() => ({
   trainRows: [] as unknown[] | null,
   trainError: null as string | null,
   trainRefresh: vi.fn(),
-  sample: false,
   apiRequest: vi.fn(),
   refresh: vi.fn(),
   signed: null as unknown,
@@ -50,10 +49,6 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
-}));
-vi.mock('../../mdx/lib/useSampleRows', () => ({
-  useSampleRows: <T,>(live: T[] | null) => (live ?? []) as T[],
-  useShowingSample: () => H.sample,
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
@@ -95,7 +90,6 @@ beforeEach(() => {
   H.trainRows = [];
   H.trainError = null;
   H.trainRefresh.mockReset();
-  H.sample = false;
   H.apiRequest.mockReset();
   H.refresh.mockReset();
   H.signed = null;
@@ -150,12 +144,6 @@ describe('SopRegister — approval is a signature taken here', () => {
     expect(H.signed).toBeNull();
   });
 
-  it('cannot approve a sample row', () => {
-    H.sample = true;
-    renderRegister();
-    const btn = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-  });
 });
 
 /* QA walk 2026-10-08 (J8): a draft row offered Approve, whose dialog said
@@ -184,9 +172,11 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: { id: 7, status: 'in_review' } }) });
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
     await waitFor(() => expect(H.refresh).toHaveBeenCalled());
     expect(H.apiRequest).toHaveBeenCalledTimes(1);
-    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review' });
+    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review', reason: 'Ready for independent Quality review.' });
     expect(screen.getByRole('status').textContent).toMatch(/WI-014 was sent for review/);
   });
 
@@ -195,15 +185,10 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     H.apiRequest.mockRejectedValue(new Error('This document is effective. An approved document changes only through a revision.'));
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Ready for independent Quality review.' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /Send for review/ }).at(-1)!);
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
     expect(H.refresh).not.toHaveBeenCalled();
-  });
-
-  it('cannot send a sample row for review', () => {
-    H.docs = [DRAFT_ROW];
-    H.sample = true;
-    renderRegister();
-    expect((screen.getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 
@@ -303,14 +288,14 @@ describe('SopRegister — a failed read is not an empty register', () => {
     renderRegister();
     expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
     expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
-    expect(kpi('Training compliance').querySelector('.val')?.textContent).toBe('—');
+    expect(kpi('Acknowledgement coverage').querySelector('.val')?.textContent).toBe('—');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(H.trainRefresh).toHaveBeenCalled();
   });
 
   it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
     renderRegister();
-    const k = kpi('Training compliance');
+    const k = kpi('Acknowledgement coverage');
     expect(k.querySelector('.val')?.textContent).toBe('—');
     expect(k.getAttribute('data-tone')).toBe('');
     expect(k.textContent).toMatch(/No training-controlled documents yet/);

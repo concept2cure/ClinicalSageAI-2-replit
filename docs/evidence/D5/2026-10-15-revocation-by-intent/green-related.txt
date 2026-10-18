@@ -1,0 +1,177 @@
+# Every suite that imports signature-persistence or the c2c actions route, plus the part11, release-signature,
+# sequence-release-signature, Shadow Review waiver and c2c route suites (related-files.txt), on the fixed code:
+# npx vitest run --config vitest.config.ts $(cat related-files.txt)
+
+ Test Files  3 failed | 147 passed | 1 skipped (151)
+      Tests  10 failed | 1994 passed | 2 skipped (2006)
+
+## The 10 failures: 3 files, one cause, not this change
+# Each is 42703 'column f.disposition_signature_action_id does not exist'. The P-35 finding-disposition work (committed in
+# 3624fe667, with further uncommitted edits in this working tree by another session to shadow-finding-disposition.ts,
+# assess-dispatch-readiness.ts and server/db/pglite-harness.ts) reads a column these suites' schemas do not create yet.
+# None of the three suites revokes a signature (grep -ci 'revoke' on the golden journey and lineage files: 0).
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispa
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_s
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the sourc
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is arc
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and c
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its 
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once i
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note s
+ × server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a completed review needs no waiver: none is offered, and the gate clear
+
+    "err": "column f.disposition_signature_action_id does not exist",
+    "err": "column f.disposition_signature_action_id does not exist",
+  [42703] column f.disposition_signature_action_id does not exist
+
+## Passing, per file
+      4 client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts
+      3 server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts
+      2 server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts
+      2 server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts
+     27 server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+      3 server/api/cmc/__tests__/contradiction-sweep-scope.test.ts
+     21 server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts
+     14 server/api/cmc/__tests__/module3ProjectScope.test.ts
+      7 server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+      7 server/api/cmc/__tests__/module3SectionApproveSignature.test.ts
+     64 server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+      7 server/routes/__tests__/financial-disclosure-certify-meaning.test.ts
+     15 server/routes/__tests__/mdx-qms-retire.test.ts
+      6 server/routes/__tests__/part11-signature-post-removed.test.ts
+     28 server/routes/__tests__/protocol-signatures.routes.test.ts
+      8 server/routes/__tests__/qms-change-approval-signature.test.ts
+     21 server/routes/__tests__/qms-document-approval-signature.test.ts
+     18 server/routes/__tests__/report-os-audit-recording.test.ts
+     25 server/routes/__tests__/report-os-finalize-signature.test.ts
+      6 server/routes/__tests__/report-os-regional-context.test.ts
+     28 server/routes/__tests__/report-os-report-pack-export.test.ts
+      5 server/routes/__tests__/submissions-shadow-review-waive.test.ts
+      8 server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+     18 server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+      3 server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+     14 server/routes/c2c/__tests__/c2c-router.parity.test.ts
+      7 server/routes/c2c/__tests__/communication-center.test.ts
+      5 server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+      4 server/routes/c2c/__tests__/exports-recorded.test.ts
+      9 server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts
+     15 server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts
+      8 server/routes/c2c/__tests__/governed-sign-authority.test.ts
+     13 server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+      4 server/routes/c2c/__tests__/log-audit-entry-outcome.test.ts
+      7 server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+      8 server/routes/c2c/__tests__/project-intake-code.test.ts
+     11 server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+      7 server/routes/c2c/__tests__/project-vault-branches.test.ts
+      3 server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+     12 server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+      3 server/routes/c2c/__tests__/project-vault-completion.test.ts
+      3 server/routes/c2c/__tests__/project-vault-document-count.test.ts
+      3 server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+     35 server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+      5 server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+     23 server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+     35 server/routes/c2c/__tests__/projects-adoption.test.ts
+     16 server/routes/c2c/__tests__/projects-authorization.test.ts
+     15 server/routes/c2c/__tests__/projects-closeout.test.ts
+      6 server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+      2 server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts
+     15 server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+      6 server/routes/c2c/__tests__/projects-create-stated-facts.test.ts
+     26 server/routes/c2c/__tests__/projects-create.test.ts
+      4 server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+      8 server/routes/c2c/__tests__/projects-list.test.ts
+     10 server/routes/c2c/__tests__/projects-readiness.test.ts
+      6 server/routes/c2c/__tests__/projects-records-current.pglite.test.ts
+      3 server/routes/c2c/__tests__/projects-sources-processing.test.ts
+      5 server/routes/c2c/__tests__/projects-sources-window.test.ts
+      6 server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+     12 server/routes/c2c/__tests__/reauth-second-factor.test.ts
+      5 server/routes/c2c/__tests__/reviews-my-queue-program.test.ts
+     25 server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts
+      9 server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+      5 server/routes/c2c/__tests__/section-author-kind.pglite.integration.test.ts
+      3 server/routes/c2c/__tests__/section-versions-route.test.ts
+      5 server/routes/c2c/__tests__/summarize-fail-closed.test.ts
+      8 server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+      2 server/routes/c2c/__tests__/templates-list.test.ts
+     12 server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+      5 server/routes/c2c/__tests__/vault-document-details-route.test.ts
+      4 server/routes/c2c/__tests__/vault-document-history-route.test.ts
+      5 server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+      6 server/routes/c2c/__tests__/vault-download-integrity.test.ts
+      4 server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+      6 server/routes/c2c/__tests__/vault-structure.test.ts
+      1 server/routes/c2c/__tests__/writeMutation-tenant-context.test.ts
+     16 server/services/__tests__/adaptive-decision-is-governed.test.ts
+     14 server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts
+     13 server/services/__tests__/signature-content-verification.test.ts
+      7 server/services/__tests__/signature-write-path-single.test.ts
+     23 server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts
+     18 server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts
+     43 server/services/ana-ri/__tests__/mdx-command-handlers.test.ts
+     18 server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+     27 server/services/ana/__tests__/ana-cannot-sign.test.ts
+      4 server/services/ana/__tests__/document-spine.pglite.integration.test.ts
+      5 server/services/ana/__tests__/finalize-protocol-tool.test.ts
+     60 server/services/ana/__tests__/governed-reason-not-invented.test.ts
+     32 server/services/ana/__tests__/protocol-design-tools.test.ts
+     17 server/services/ana/__tests__/qms-change-tools.test.ts
+     13 server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts
+      8 server/services/ana/__tests__/revise-qms-document-role.test.ts
+     34 server/services/audit/__tests__/chain-head-on-demand.test.ts
+      4 server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+     27 server/services/ectd/__tests__/filed-sequence-rejection.test.ts
+      6 server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts
+      6 server/services/ectd/__tests__/package-content-change.test.ts
+     18 server/services/ectd/__tests__/release-signature-covers-sequence.test.ts
+     39 server/services/ectd/__tests__/release-signature-gate.test.ts
+     50 server/services/ectd/__tests__/release-signature-status.test.ts
+      9 server/services/ectd/__tests__/sequence-release-signature.pglite.integration.test.ts
+     18 server/services/ectd/__tests__/sequence-release-signature.test.ts
+     16 server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+     24 server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+     10 server/services/irb/__tests__/submission-context.route.test.ts
+      3 server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts
+     12 server/services/part11/__tests__/electronic-signature-meaning-required.test.ts
+     10 server/services/part11/__tests__/governed-actor.test.ts
+     13 server/services/part11/__tests__/governed-sign-meaning.test.ts
+      7 server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts
+      5 server/services/part11/__tests__/one-signing-authority-policy.test.ts
+     11 server/services/part11/__tests__/resolve-signer-identity.test.ts
+     33 server/services/part11/__tests__/reverify-signer.test.ts
+     10 server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts
+      6 server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts
+      4 server/services/part11/__tests__/signer-org-scope.test.ts
+      7 server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts
+      6 server/services/part11/__tests__/signing-authority.test.ts
+      9 server/services/part11/__tests__/version-binding.test.ts
+      5 server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts
+     11 server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+     21 server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+     37 server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+     35 server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts
+      3 server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+     11 server/services/submission-service/__tests__/gateway-selection.test.ts
+      2 server/services/submission-service/__tests__/packageability-dry-run.test.ts
+     11 server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+      5 server/services/tasking/__tests__/task-audit-outcome.test.ts
+      4 server/services/tasking/__tests__/task-audit-transaction.test.ts
+     11 server/services/tasking/__tests__/task-audit.test.ts
+     15 tests/artifact-status-lock-covers-approval.test.ts
+      9 tests/lineage/founder-path-lineage.pglite.test.ts
+     28 tests/mdx-qms-labeling-search-analytics-routes.test.ts
+     11 tests/routes/estar-submission-filing.test.ts
+      2 tests/routes/realtime-collab-lock-reason.test.ts
+      8 tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts
+     19 tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts
+     13 tests/submission-ops-artifact-mapping-routes.test.ts
+     60 tests/submission-ops-assemble-routes.test.ts
+     14 tests/submission-ops-blocker-resolver.test.ts
+      3 tests/submission-ops-package-project.pglite.test.ts
+     22 tests/submission-ops-package-spine.pglite.e2e.test.ts
+     13 tests/submission-ops-preflight-routes.test.ts
+     18 tests/submission-ops-regulatory-identifiers-routes.test.ts
+      6 tests/submission-ops-section-routes.pglite.integration.test.ts
+     53 tests/submission-ops-section-routes.test.ts

@@ -1,15 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ceremonyOpen } from '../ceremony';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { isApiRequestError } from '../apiCall';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
-import { AdminMemberActions, ROLE_OPTIONS, setupLinkHandover, type InvitationReply } from './AdminMemberActions';
+import { CompanyDocumentSettings } from './CompanyDocumentSettings';
+import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
+import { AdminApiKeyCreate } from './AdminApiKeyCreate';
+import { AdminApiKeyUsage } from './AdminApiKeyUsage';
+import { AdminPlatformGrants } from './AdminPlatformGrants';
+import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
 import '../styles/admin-access.css';
 
 /**
@@ -101,7 +107,7 @@ function formatWhen(iso: string): string {
 // + a trailing Action column for the explicit Revoke control.
 const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
-export function AdminAccess({ onAsk }: SurfaceViewProps) {
+export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
@@ -131,6 +137,12 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      stored them. */
   const [toast, fireToast] = useToast();
   const [inviting, setInviting] = useState(false);
+  const [invitationResults, setInvitationResults] = useState<OnboardingInvitationOutcome[]>([]);
+  const rememberInvitation = (result: OnboardingInvitationOutcome) => setInvitationResults(previous => [
+    ...previous.filter(item => item.email.toLowerCase() !== result.email.toLowerCase()), result,
+  ]);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [keyUsage, setKeyUsage] = useState<{ keyId: number; name: string } | null>(null);
 
   /** The key a Revoke click is confirming. Null when no confirmation is open. */
   const [revoking, setRevoking] = useState<{ id: string; keyId?: number; name: string } | null>(null);
@@ -153,10 +165,12 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       fireToast(`API key "${k.name}" revoked — the revocation is in the audit trail.`);
       setAdminEpoch((n) => n + 1);
     } catch (e) {
-      fireToast(
-        'Key not revoked — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing changed.',
-        'error',
-      );
+      const code = isApiRequestError(e) ? (e.payload as { code?: unknown } | null)?.code : undefined;
+      const unconfirmed = !isApiRequestError(e) || code === 'API_KEY_COMMIT_UNCONFIRMED';
+      fireToast(unconfirmed
+        ? 'The revocation could not be confirmed. Check the key list before trying again.'
+        : e instanceof Error ? e.message : 'The revocation was refused.', 'error');
+      reload();
     }
   };
 
@@ -191,10 +205,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
   const invite = async (v: Record<string, string>) => {
     setInviting(false);
+    const email = (v.email || '').trim();
     try {
       const res = await apiRequest('POST', '/api/tenant-users', {
         name: (v.name || '').trim(),
-        email: (v.email || '').trim(),
+        email,
         role: v.role,
         title: (v.title || '').trim() || undefined,
         department: (v.department || '').trim() || undefined,
@@ -203,51 +218,24 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         // AuthProvider just to name it. Reading it from useAuth here broke
         // every AdminAccess test, which render the surface standalone.
       });
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
-        fireToast(
-          'Member not invited — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
-          'error',
-        );
-        return;
-      }
-      // The server says how the invitee gets their setup link. When this
-      // deployment has no email delivery, the link comes back once, here, and
-      // the admin hands it over — so put it on the clipboard and say so.
-      const body = (await res.json().catch(() => null)) as { invitation?: InvitationReply; reissued?: boolean; role?: string } | null;
-      const inv = body && typeof body === 'object' ? body.invitation : undefined;
-      const who = (v.name || '').trim();
-      if (body?.reissued === true) {
-        /* The address belongs to a member who never set a password: the
-           invitation route issued them a new setup link instead (QA
-           2026-10-08, j9). Their role is the stored one, not the form's. */
-        const role = String(body.role ?? '');
-        fireToast(
-          `${who} was invited before and has not set a password, so a new setup link was issued and the previous one no longer works. ` +
-            `Their role is unchanged (${role.charAt(0).toUpperCase() + role.slice(1)}). ${await setupLinkHandover(inv)}`,
-        );
-      } else if (inv && inv.delivery === 'failed') {
-        fireToast(
-          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
-          'error',
-        );
-      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
-        fireToast(`${who} invited as ${v.role}. ${await setupLinkHandover(inv)}`);
-      } else {
-        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
-      }
-      setAdminEpoch((n) => n + 1);
+      const result = invitationOutcome(email, res.status, await res.json().catch(() => null));
+      rememberInvitation(result);
+      fireToast(result.recorded ? 'Invitation recorded. Review its delivery and any setup link below.' : result.note,
+        result.recorded ? undefined : 'error');
+      if (result.recorded) reload();
     } catch (e) {
-      fireToast(
-        'Member not invited — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was created.',
-        'error',
-      );
+      const result = e instanceof ApiRequestError
+        ? invitationOutcome(email, e.status, e.payload)
+        : invitationOutcome(email, 0, null);
+      rememberInvitation(result);
+      fireToast(result.note, 'error');
     }
   };
 
   const [tab, setTab] = useState<TabId>('members');
+  useEffect(() => { setCreatingKey(false); }, [tab]);
   const [selected, setSelected] = useState<string>('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
 
   // Every list comes straight from the live payload (an empty array until it
@@ -345,15 +333,16 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         aMemberIsSelected: member != null,
       },
       availableActions: [
-        'Inviting a member, granting program access, editing role scopes, revoking an API key and changing org settings each capture a reason and emit a Part 11 audit entry — administrator acts, proposed only in conversation',
+        'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
+        'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
+        'Invite members, change membership roles, revoke API keys, or propose program access and organization settings changes',
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
       ],
     };
   }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
-  /* View state only. Every mutation this screen offers — invite, grant,
-     scope edit, key revoke, setting change — is a governed administrator act
-     that routes through the rail's §11.50 sign-off, and none is reachable
-     from here. Switching under an open invite/revoke form would discard it. */
+  /* View state only. Administrative mutations require the person's explicit
+     action; AnA cannot create a credential. Switching under an open invite,
+     revoke or key-creation drawer would discard it or its one-time secret. */
   useSurfaceActionHandlers('admin-console', {
     'admin-console.open-tab': (params) => {
       const target = String(params.tab ?? '');
@@ -533,7 +522,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                     {/* Role change and removal call the membership routes directly
                         (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
                         the server's own answer. */}
-                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} />
+                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} onInvitationOutcome={rememberInvitation} />
                   </div>
                 </aside>
               )}
@@ -555,6 +544,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
               </div>
             </section>
           )}
+
+          {tab === 'roles' && <AdminPlatformGrants />}
 
           {tab === 'sso' && !sso && (
             <div className="adm-facet-error">
@@ -595,7 +586,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
           {tab === 'apikeys' && (
             <section className="section">
-              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span></div>
+              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span><button className="btn primary small adm-key-create" onClick={() => setCreatingKey(true)} disabled={!ready}>{I.plus} Create API key</button></div>
               {facetDown('apiKeys') ? (
                 <div className="adm-facet-error">
                   <EmptyState
@@ -643,7 +634,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
                         <div className="adm-muted">{formatWhen(k.lastUsed)}</div>
-                        <div>
+                        <div className="adm-key-actions">
+                          {k.keyId && <button className="btn ghost small" onClick={() => setKeyUsage({ keyId: k.keyId!, name: k.name })} aria-label={`Usage for ${k.name}`}>{I.eye} Usage</button>}
                           <button
                             className="btn ghost small"
                             onClick={() => setRevoking(k)}
@@ -697,6 +689,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
               {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
                   shown whether or not the settings above could be read. */}
               <ClaudeConnectorSetting />
+              <CompanyDocumentSettings onNav={onNav} />
             </section>
           )}
 
@@ -733,6 +726,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         </>
       )}
 
+      {/* Handover remains mounted while the real roster reloads. A link is never copied automatically. */}
+      {invitationResults.length > 0 && <section className="section" aria-label="Member invitation handover">
+        <OnboardingInvitations invitations={invitationResults} />
+        <button type="button" className="btn ghost small" onClick={() => setInvitationResults([])}>Dismiss invitation handover</button>
+      </section>}
       {inviting && (
         <C2CForm
           config={INVITE_FORM}
@@ -747,6 +745,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           onSubmit={() => void revokeKey()}
         />
       )}
+      {creatingKey && <AdminApiKeyCreate onClose={() => setCreatingKey(false)} onCreated={reload} />}
+      {keyUsage && <AdminApiKeyUsage {...keyUsage} onClose={() => setKeyUsage(null)} />}
       <C2CToast msg={toast} />
     </div>
   );

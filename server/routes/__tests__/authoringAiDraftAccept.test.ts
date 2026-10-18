@@ -38,13 +38,18 @@ vi.mock('../../db', () => {
   };
   return { pool: api, getPool: () => api, query: (...a: unknown[]) => mockQuery(...a), db: {} };
 });
-vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', () => ({
+vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/clinical-regulatory-evidence/draft-candidate-store.js')>()),
   consumeDraftCandidate: (...a: unknown[]) => mockConsume(...a),
   createDraftCandidate: vi.fn(async () => ({ id: 'draft-xyz', expiresAt: 'later' })),
 }));
 vi.mock('../../services/clinical-regulatory-evidence/lineage-gate.js', () => ({
   enforceSourceAndAuthorLineage: (...a: unknown[]) => mockEnforce(...a),
-  enforceAuthorLineage: vi.fn(async () => {}),
+  /* Its RESULT is read by the save door — `clausesInAcceptedText` decides
+     whether the revision and the filing name a machine contributor (round
+     15, SEC-A-7 door 1) — so a stand-in has to return the shape, not
+     nothing. Zero is right here: these saves accept no machine text. */
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
 }));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-accept';
@@ -80,10 +85,21 @@ function sectionExists() {
   });
 }
 
-/** Default tx client: BEGIN/COMMIT/ROLLBACK are no-ops; the UPDATE returns a row. */
+/** Default tx client: BEGIN/COMMIT/ROLLBACK are no-ops; the UPDATE returns a row.
+ *  The parent reservation (reserveWritableSection, 0e4ccf46f) runs on the same
+ *  client first: S1 resolves to D1, D1 is an unsealed draft, and the touch lands. */
 function txOk() {
   mockClientQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    if (s.includes('SELECT doc_id::text FROM authoring_sections')) {
+      return { rowCount: 1, rows: [{ doc_id: 'D1' }] };
+    }
+    if (s.includes('SELECT status, locked_at FROM authoring_documents')) {
+      return { rowCount: 1, rows: [{ status: 'draft', locked_at: null }] };
+    }
+    if (s.includes('UPDATE authoring_documents SET updated_at')) {
+      return { rowCount: 1, rows: [{ id: 'D1' }] };
+    }
     if (s.includes('UPDATE authoring_sections')) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'accepted text' }] };
     }
@@ -165,6 +181,20 @@ describe('POST /sections/:id/ai/draft/accept', () => {
     expect(contentArg).toBe('The primary endpoint was met.');
     expect(actorArg).toBe('u1');
     expect(sourcesArg).toEqual([{ sourceId: 42, content: 'The primary endpoint was met.', title: 'csr.pdf' }]);
+  });
+
+  it('rolls back a candidate with an unavailable recorded Vault source before writing content', async () => {
+    sectionExists(); txOk();
+    mockConsume.mockResolvedValue({ id: 'd1', sectionId: 'S1', content: 'A source-based draft.', sources: [],
+      generator: { vaultSources: { programId: '11111111-1111-4111-8111-111111111111',
+        documents: [{ documentId: '22222222-2222-4222-8222-222222222222', contentHash: 'a'.repeat(64), version: '1.0' }] } } });
+    const res = await request(makeApp()).post('/api/authoring/sections/S1/ai/draft/accept')
+      .set('Authorization', await bearer()).send({ draftId: 'd1' });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('DRAFT_SOURCES_UNAVAILABLE');
+    expect(mockClientQuery.mock.calls.some(c => String(c[0]).includes('UPDATE authoring_sections'))).toBe(false);
+    expect(mockClientQuery).toHaveBeenCalledWith('ROLLBACK');
+    expect(mockEnforce).not.toHaveBeenCalled();
   });
 
   it('attributes the EDITED text when the client sends its own content', async () => {

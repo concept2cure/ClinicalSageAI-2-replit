@@ -19,13 +19,10 @@
  * and what the caller's org role is. That is deliberately coarser than
  * project-sharing-access.ts, which has a real member roster to consult.
  *
- * READ ROUTES ARE NOT GATED, on purpose. There is no membership store for
- * uuid-keyed programs, so "private unless you are a member" would evaluate to
- * "private to the lead" for every program that exists today and lock every
- * other user out of projects they legitimately work in. Read-side privacy needs
- * the id-space convergence (regulatory_programs ↔ projects) and a real member
- * table first; until then reads stay org-scoped and only MUTATIONS are
- * authorized here.
+ * This module retains the existing mutation-role policy. Current read access
+ * is now evaluated by current-program-access.ts through the programme's
+ * canonical integer project anchor and the existing durable sharing roster.
+ * Neither the lead nor a stale request role substitutes for that admission.
  *
  * @module server/services/c2c/program-access
  */
@@ -67,6 +64,11 @@ export function canMutateProgram(input: ProgramMutationInput): boolean {
 /** Org roles that may NOT create a program. Everything else in the org may. */
 const ORG_READ_ONLY_ROLES = new Set(['viewer', 'readonly', 'read_only', 'guest']);
 
+/** Existing organization read-only policy, shared by governed authoring. */
+export function isReadOnlyOrganizationRole(role: string | null | undefined): boolean {
+  return ORG_READ_ONLY_ROLES.has((role || '').toLowerCase().trim());
+}
+
 /**
  * May this actor create a program?
  *
@@ -84,8 +86,7 @@ const ORG_READ_ONLY_ROLES = new Set(['viewer', 'readonly', 'read_only', 'guest']
  * cannot write.
  */
 export function canCreateProgram(input: { orgRole: string | null | undefined }): boolean {
-  const normalizedRole = (input.orgRole || '').toLowerCase().trim();
-  return !ORG_READ_ONLY_ROLES.has(normalizedRole);
+  return !isReadOnlyOrganizationRole(input.orgRole);
 }
 
 /**
@@ -133,6 +134,11 @@ export interface ProgramScopeOptions {
    * surface does (a deleted project 404s on its own page).
    */
   includeDeleted?: boolean;
+  /** Reserve the same programme row on the caller's open write transaction. */
+  forUpdate?: boolean;
+  /** Retain the matching row inside the supplied caller-owned transaction. */
+  forShare?: boolean;
+
 }
 
 /**
@@ -167,6 +173,21 @@ export interface ProgramScopeOptions {
  */
 type ProgramQueryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
 
+async function readProgramOwnership(q: ProgramQueryable, programId: string, org: number, options: ProgramScopeOptions) {
+  if (options.forUpdate) {
+    return options.includeDeleted
+      ? q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR UPDATE', [programId, org])
+      : q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE', [programId, org]);
+  }
+  if (options.forShare === true) {
+    return options.includeDeleted
+      ? q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR SHARE', [programId, org])
+      : q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR SHARE', [programId, org]);
+  }
+  const live = options.includeDeleted ? '' : ' AND deleted_at IS NULL';
+  return q.query(`SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`, [programId, org]);
+}
+
 export async function programInOrganization(
   db: ProgramQueryable | (() => ProgramQueryable),
   programId: unknown,
@@ -179,14 +200,11 @@ export async function programInOrganization(
   // is not a positive integer is no organization at all.
   const org = typeof organizationId === 'string' && /^\d+$/.test(organizationId) ? Number(organizationId) : organizationId;
   if (typeof org !== 'number' || !Number.isSafeInteger(org) || org <= 0) return false;
-  const live = options.includeDeleted ? '' : ' AND deleted_at IS NULL';
   let rows: unknown[];
   try {
     const q = typeof db === 'function' ? db() : db;
-    ({ rows } = await q.query(
-      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`,
-      [programId, org],
-    ));
+    ({ rows } = await readProgramOwnership(q, programId, org, options));
+
   } catch (err) {
     throw new VerificationUnavailableError('program ownership check', describeFailure(err));
   }

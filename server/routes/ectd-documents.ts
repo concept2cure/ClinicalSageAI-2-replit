@@ -429,6 +429,8 @@ const INGESTION_ERROR_STATUS: Record<IngestionError['code'], number> = {
   NOT_FOUND: 404,
   FORBIDDEN: 403,
   INVALID_AI_RESPONSE: 502,
+  // A section code outside the submission's vocabulary (extract). 2026-10-15.
+  INVALID_SECTION_CODE: 422,
   RATE_LIMITED: 429,
   PROVIDER_UNAVAILABLE: 503,
   TOKEN_LIMIT_EXCEEDED: 413,

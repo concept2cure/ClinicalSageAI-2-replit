@@ -71,4 +71,3 @@ AssertionError: wo03_2052_muhrga1m-floor-weak was recorded under threshold 0.6: 
       Tests  3 failed (3)
    Start at  02:18:30
    Duration  4.52s (transform 1.63s, setup 127ms, import 3.28s, tests 749ms, environment 0ms)
-

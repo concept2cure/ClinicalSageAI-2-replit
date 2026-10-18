@@ -195,7 +195,10 @@ describe('matchExpeditedPrograms — PMDA', () => {
     expect(m!.rationale).toMatch(/exploratory/i);
     expect(m!.rationale).not.toMatch(/confirmatory trials are difficult/i);
     expect(m!.rationale).toMatch(/recall — not checked against the regulator's text/);
-    const miss = matchExpeditedPrograms({ region: 'PMDA' }).notSuitable.find((e) => e.id === 'pmda-conditional-approval');
+    // A miss needs a stated-false fact: an unstated one is not assessed, not "not suitable" (2026-10-15).
+    const miss = matchExpeditedPrograms({ region: 'PMDA', seriousOrLifeThreatening: false }).notSuitable.find(
+      (e) => e.id === 'pmda-conditional-approval',
+    );
     expect(miss!.reason).not.toMatch(/confirmatory trials are difficult/i);
   });
 
@@ -206,11 +209,12 @@ describe('matchExpeditedPrograms — PMDA', () => {
 });
 
 describe('matchExpeditedPrograms — non-matching and scoping', () => {
-  it('empty input → nothing eligible, programs reported as notSuitable', () => {
+  it('empty input → nothing eligible, programs reported as not assessed (not "not suitable")', () => {
+    // Pinned notSuitable until 2026-10-15: a verdict on facts nobody stated.
     const res = matchExpeditedPrograms({ region: 'FDA' });
     expect(res.eligible).toEqual([]);
-    expect(ids(res.notSuitable)).toContain('fda-fast-track');
-    expect(res.notSuitable.length).toBeGreaterThan(0);
+    expect(res.notSuitable).toEqual([]);
+    expect(ids(res.notAssessed)).toContain('fda-fast-track');
   });
 
   it('only returns programs for the requested region', () => {
@@ -220,10 +224,10 @@ describe('matchExpeditedPrograms — non-matching and scoping', () => {
       unmetMedicalNeed: true,
       orphan: true,
     });
-    const all = [...res.eligible, ...res.notSuitable];
+    const all = [...res.eligible, ...res.notSuitable, ...res.notAssessed];
     expect(all.every((m) => m.id.startsWith('fda-'))).toBe(true);
     expect(ids(all)).not.toContain('pmda-orphan-drug');
-    // Every FDA program appears exactly once across the two lists.
+    // Every FDA program appears exactly once across the three lists.
     expect(all.length).toBe(programsForRegion('FDA').length);
   });
 

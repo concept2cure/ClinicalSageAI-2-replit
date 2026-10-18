@@ -38,7 +38,8 @@ export interface InspectionPackageResult {
   fileName: string;
   sha256: string;
   sizeBytes: number;
-  ready: boolean;
+  /** null: every remaining gap is a reference this service cannot check (see TmfCompletenessResult.ready). */
+  ready: boolean | null;
   summary: TmfCompletenessResult['summary'];
   artifactCount: number;
 }
@@ -50,6 +51,19 @@ function referenceLabelMap(): Map<string, { label: string; zone: number }> {
     for (const a of zone.artifacts) m.set(a.code, { label: a.name, zone: zone.number });
   }
   return m;
+}
+
+/** The README's account of what "filed" rests on. */
+function contentBasisNote(basis: TmfCompletenessResult['basis']): string {
+  return basis === 'verified_documents'
+    ? '  An artifact counts as filed only when its filing references a vault\n' +
+        '  document that resolved when this package was generated. A filing with\n' +
+        '  no reference, a reference that no longer resolves, or an off-platform\n' +
+        '  reference this service cannot check is counted as missing, and the\n' +
+        '  document_evidence column says which. When off-platform references are\n' +
+        '  the only gaps, readiness is NOT DETERMINED rather than YES or NO.'
+    : '  Readiness was assessed from artifact codes as listed; no document was\n' +
+        '  checked.';
 }
 
 function csvCell(v: unknown): string {
@@ -90,6 +104,7 @@ export async function buildTmfInspectionPackage(
     generatedAt,
     referenceModel: 'DIA TMF Reference Model (ICH E6(R3) Appendix C)',
     ready: completeness.ready,
+    basis: completeness.basis,
     summary: completeness.summary,
     artifactCount: orderedFilings.length,
     contents: ['manifest.json', 'completeness.json', 'inspection-index.csv', 'README.txt'],
@@ -98,7 +113,9 @@ export async function buildTmfInspectionPackage(
       'record referenced by each filing; they are not embedded in this package.',
   };
 
-  const csvHeader = 'zone,artifact_code,artifact_name,filed_at,document_ref';
+  // document_evidence: what each filing's reference was found to be when this
+  // package was built ('not_assessed' only if the assessment carried none).
+  const csvHeader = 'zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence';
   const csvRows = orderedFilings.map((f) => {
     const meta = labels.get(f.artifactCode);
     return [
@@ -107,10 +124,15 @@ export async function buildTmfInspectionPackage(
       csvCell(meta?.label ?? ''),
       csvCell((f as any).filedAt instanceof Date ? (f as any).filedAt.toISOString() : (f as any).filedAt ?? ''),
       csvCell((f as any).documentRef ?? ''),
+      csvCell(completeness.documentEvidence?.[f.artifactCode] ?? 'not_assessed'),
     ].join(',');
   });
   const csv = [csvHeader, ...csvRows].join('\n') + '\n';
 
+  /* 2026-10-15: this printed "Inspection ready: YES" whenever every essential
+     code had a filing row — with or without a document — under a note that
+     "nothing in this package is fabricated". */
+  const readyLabel = completeness.ready === null ? 'NOT DETERMINED' : completeness.ready ? 'YES' : 'NO';
   const readme = [
     'TRIAL MASTER FILE — INSPECTION-READINESS PACKAGE',
     '='.repeat(50),
@@ -118,24 +140,25 @@ export async function buildTmfInspectionPackage(
     `Trial:            ${trialId}`,
     `Scope:            ${scope} artifacts`,
     `Reference model:  DIA TMF Reference Model (ICH E6(R3) Appendix C)`,
-    `Inspection ready: ${completeness.ready ? 'YES' : 'NO'}`,
+    `Inspection ready: ${readyLabel}`,
     ``,
     `Zones complete:   ${completeness.summary.zonesComplete} / ${completeness.summary.zoneCount}`,
     `Required docs:    ${completeness.summary.totalRequired}`,
     `Missing:          ${completeness.summary.totalMissing}`,
+    `  of which filed without a verified document: ${completeness.summary.totalUnverified}`,
     `Artifacts filed:  ${orderedFilings.length}`,
     ``,
     'CONTENTS',
     '  manifest.json         Machine-readable package descriptor',
     '  completeness.json     Per-zone readiness assessment',
-    '  inspection-index.csv  Every filed artifact (zone, code, filed, ref)',
+    '  inspection-index.csv  Every filed artifact (zone, code, filed, ref, evidence)',
     '  README.txt            This file',
     ``,
     'NOTE ON CONTENT',
     '  This package is the inspection index and readiness picture. Artifact',
     '  document bytes live in the systems of record referenced by each filing',
-    '  and are not embedded here. Nothing in this package is fabricated: a',
-    "  missing or unfiled artifact is reported as missing, not glossed over.",
+    '  and are not embedded here.',
+    contentBasisNote(completeness.basis),
     ``,
   ].join('\n');
 

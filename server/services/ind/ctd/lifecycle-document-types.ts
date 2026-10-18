@@ -35,13 +35,16 @@ export const IND_SAFETY_REPORT_TIMING = 'Initial reports under 312.32(c)(1)(i)-(
 export const FDA_FORMAL_MEETINGS_GUIDANCE =
   'FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (final, Aug 2026)';
 
-const CHECKED = '2026-10-04';
+// 2026-10-15: the PDUFA VII, draft-text and E2F bases were `regulator-text`, but
+// each was read only in a search extract (regulator hosts block WebFetch here;
+// b3-meetings-dsur-facts.md), which is recall. A recall deadline says so where stated.
+const SEARCH_EXTRACT = 'Search extract of the regulator-hosted document on 2026-10-04; the document itself was not read (egress blocked). Verbatim re-read owed.';
 const PDUFA_VII_URL = 'https://www.fda.gov/media/151712/download';
-/** Sept 2023 revised draft; finalized Aug 2026. Package deadlines were read from this text, not the final. */
+/** Sept 2023 revised draft; finalized Aug 2026. Package deadlines were seen in a search extract of this text, not the final. */
 const FORMAL_MEETINGS_DRAFT_URL = 'https://www.fda.gov/media/172311/download';
 
-const pdufa = (ref: string): E3Basis => ({ ref: `PDUFA VII commitment letter: ${ref}`, confidence: 'regulator-text', url: PDUFA_VII_URL, checked: CHECKED });
-const draftText = (ref: string): E3Basis => ({ ref: `FDA formal-meetings guidance (2023 revised draft text; finalized Aug 2026): ${ref}`, confidence: 'regulator-text', url: FORMAL_MEETINGS_DRAFT_URL, checked: CHECKED });
+const pdufa = (ref: string): E3Basis => ({ ref: `PDUFA VII commitment letter: ${ref}`, confidence: 'recall', url: PDUFA_VII_URL, note: SEARCH_EXTRACT });
+const draftText = (ref: string): E3Basis => ({ ref: `FDA formal-meetings guidance (2023 revised draft text; finalized Aug 2026): ${ref}`, confidence: 'recall', url: FORMAL_MEETINGS_DRAFT_URL, note: SEARCH_EXTRACT });
 
 export type FdaMeetingType = 'A' | 'B' | 'B(EOP)' | 'C' | 'D' | 'INTERACT';
 
@@ -206,7 +209,7 @@ export interface E2fSection {
 // §20 in ana-ri's prompt and made §16, the US IND items, look optional.)
 const e2f = (number: string | undefined, title: string, guidance: string): E2fSection => ({
   ...(number ? { number } : {}), title, required: true, guidance,
-  basis: [{ ref: number ? `ICH E2F §${number}` : `ICH E2F ${title}`, confidence: 'regulator-text', url: E2F_URL, checked: CHECKED }],
+  basis: [{ ref: number ? `ICH E2F §${number}` : `ICH E2F ${title}`, confidence: 'recall', url: E2F_URL, note: SEARCH_EXTRACT }],
 });
 
 export const ICH_E2F_DSUR_SECTIONS: E2fSection[] = [

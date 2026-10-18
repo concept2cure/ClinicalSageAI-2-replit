@@ -1,0 +1,183 @@
+{
+  "qualificationBase": "accf8c6ba",
+  "pins": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx",
+      "sha256": "32f7ada068a8e3a5d694c47ca42bd964a7200f0eb1c4a80f2972ba60b89b2178"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
+      "sha256": "63c378fb643c36ad95938d9c4d66db3192082ccbf1d7caa6245bc944faafeaf2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx",
+      "sha256": "a9d99d2b7cbce01ad1fc486e42b68f35bafb202dd6ae132e123ebfa4033aabfb"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "sha256": "9556e81def88371b26aeac17c04612ffbb37d94cffb23469c7b5a404766304b2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationAuthoringUnsaved.test.tsx",
+      "sha256": "5bb8d0babd411dc6102aec6ae3fb87b80e9ea61b3b63c439cb0c1654b3c3fc31"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "4301fa88fcc586a54497e3fd220037ebfdfa0ca163fbe09876e889e0e3c5e66a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+      "sha256": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+      "sha256": "02efda4c8f41893133f12e78e598668b7dce21ff0666d2b7dc2745fd1256aa95"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+      "sha256": "3ee33e3459d1765d3d5638f0eb2155339824ea43e0551fd148ff61f86d61ea14"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+      "sha256": "a26ba49565a1cf0fe7a60713f85b2182ebf2b6168a9c1de3258d54e03bd6ab02"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
+      "sha256": "3d58ab5c75e7dd110d8db0b7f8ea7cac9c8c2a8dbc198e55b56a3db4058e6bd0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "d741cc1fc8360b5ed92ad274521bbc95eca231f561bcb1247e184b42b8df32c3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+      "sha256": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "a2cc5545ce69c072793a9e118fc0527facc46d6505da00e0e497e38a8fb620a7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+      "sha256": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+      "sha256": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278"
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "1ca5d557a44a0c8c47fc5fa04c29c39d83ec36b3abab58e6c5f86f45906d704a"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "sha256": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+      "sha256": "0bd6edffa6ceffe47389a876de34430d2c3474dc7046396f540aa802c5f89c51"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+      "sha256": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-draft-program-sources.test.ts",
+      "sha256": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+      "sha256": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftStructured.test.ts",
+      "sha256": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+      "sha256": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a"
+    },
+    {
+      "path": "server/routes/authoring-assembly.ts",
+      "sha256": "f9e3fdade4c188e9ca4a5063a7f76edfcfb93ea0c6e79f02b8e17013c63aac74"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "ea1973f7f5f64203821acd8b925da5962453720f6ea8a91cd366aa1ba624653e"
+    },
+    {
+      "path": "server/services/authoring/__tests__/assembly-plan.test.ts",
+      "sha256": "bf66c80604e33ebd58ca16937d39fc3d2142215e8d0265a084c44a2bebd0cc2c"
+    },
+    {
+      "path": "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts",
+      "sha256": "00a7f92c8859a285572a6b31f032fffb781231abc6b6d93c7cefc31d0b1cb036"
+    },
+    {
+      "path": "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+      "sha256": "d1f590b56c60d3aa459ea3db944a0187b4508fe81bcc4ed74199cd385864a743"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-plan.ts",
+      "sha256": "40a0712aaf9bb27867dfc8fa1ff9f8e49e28f040c9679c05bdf9c54f0b236711"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-source.ts",
+      "sha256": "7cd94d43e8655a1b15b485ee749f7bf7c800ed23cc790c29f99689060ee42500"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly.ts",
+      "sha256": "a8f57c793f3370f66c60962bd8e0e41254e84fd883d6d1b114173f474fdd9a00"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "sha256": "abc60a0fd1185b7f7e0c9f654d48c814f5aea330ba69010aa5a322a5b7554804"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-sources.ts",
+      "sha256": "ce5b3731cc696e4ec0796f983044a98d14876ee72618e99811239052ed3a79c5"
+    },
+    {
+      "path": "server/services/authoring/authoring-section-seed.ts",
+      "sha256": "de53688969cd09271253997928da3d37389f4a7ce440cf790cfabaa41c0e4e86"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "sha256": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-sections.ts",
+      "sha256": "6db0f217c53d4bc31634b98ae0e0176b082af76ac718b1ac1326c8660e89bb92"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "sha256": "8ddcd99c558be189572932e6bce0809a8fe305598c82b0abdcc27cb5bdb0879d"
+    },
+    {
+      "path": "shared/authoring/assembly.ts",
+      "sha256": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  ],
+  "qualification": "Final frozen source, including same-client post-COMMIT reads and one-slot pool assertion. Official final compiler enforced by normal pre-push hook.",
+  "worktreeHeadAtCapture": "5ff73e6698f4dccc1a6ddf9bfe13464e0b49586b"
+}

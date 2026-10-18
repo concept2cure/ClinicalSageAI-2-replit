@@ -43,6 +43,8 @@
 import { createHash } from 'node:crypto';
 import { DEFAULT_RETENTION_YEARS } from '../../../shared/schema/vault';
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
@@ -53,7 +55,7 @@ import {
   refusalAfterDiscard,
   type StoredUpload,
 } from './vault-ingest-discard.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
+import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
 import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
@@ -63,7 +65,6 @@ import {
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
-import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -113,6 +114,13 @@ export interface VaultIngestArgs {
    * document it became. Set only by vault-data-room-filing.ts.
    */
   dataRoomSourceId?: number;
+  /** Server-owned provenance for an explicit byte-preserving company-library copy. */
+  companyLegalSource?: { registryId: string; vaultDocumentId: string; contentHash: string; reason: string };
+  /** Server-owned request executor; existing generated-file callers choose the tenant pool. */
+  executor?: Queryable & { connect(): Promise<Queryable & { release(): void }> };
+  /** Source admission is independent of target permission. Commit runs inside BEGIN,
+   * before ingest child locks, so the caller can reserve the exact source identity. */
+  assertSourceAccess?: (q: RequestSqlClient, phase: 'preview' | 'commit') => Promise<void>;
 }
 
 export interface VaultIngestFiling {
@@ -192,10 +200,6 @@ async function admitVaultDocument(
   args: VaultIngestArgs,
   stored: StoredUpload,
 ): Promise<VaultIngestResult> {
-  // Role first, as requireEditorAccess orders it: a caller who may not write
-  // is told so before anything is stored, checked or disclosed.
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   // A filing the uploader names is held to the vocabulary before any byte is
   // stored (VR-04). Only a named folder's kind and section are written; without
   // one the classifier's proposal is, so those are not the caller's to break.
@@ -217,20 +221,9 @@ async function admitVaultDocument(
     return { ok: false, status: 403, code: 'NO_ORG_CONTEXT',
       message: 'An authenticated organization context is required to ingest documents.' };
   }
-  try {
-    if (!(await programInOrganization(pool, args.programId, orgId))) {
-      logger.warn('Vault ingest denied: program not owned by caller organization', {
-        programId: args.programId,
-        orgId,
-      });
-      return { ok: false, status: 403, code: 'PROGRAM_FORBIDDEN',
-        message: 'Program not found or not owned by your organization.' };
-    }
-  } catch (ownErr: any) {
-    logger.error('Vault ingest program-ownership check failed', { err: ownErr?.message });
-    return { ok: false, status: 500, code: 'OWNERSHIP_CHECK_FAILED',
-      message: 'Could not verify program ownership.' };
-  }
+  const db = args.executor ?? pool;
+  const targetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (targetRefusal) return targetRefusal;
 
   const fileName = args.fileName || 'document';
   const mimeType = args.mimeType || 'application/octet-stream';
@@ -263,7 +256,7 @@ async function admitVaultDocument(
   // A check-in is planned before any byte is stored, so a refusal stores
   // nothing, and again under the head's row lock in the transaction below.
   const checkIn = args.supersedesDocumentId
-    ? await planCheckIn(pool, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
     : null;
   if (checkIn && !checkIn.ok) return checkIn;
   // What this version is recorded as: a check-in's are the server's.
@@ -306,6 +299,10 @@ async function admitVaultDocument(
   let storageVersionId: string;
   let storageProvider: string;
   let storageFileId: string;
+  const sourceRefusal = await ingestSourceRefusal(db, args, 'preview');
+  if (sourceRefusal) return sourceRefusal;
+  const currentTargetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (currentTargetRefusal) return currentTargetRefusal;
   try {
     const written = await getStorageProvider().put({
       orgId,
@@ -332,14 +329,11 @@ async function admitVaultDocument(
   /* `s3_key` carries the PROVIDER's own handle (`vault://{org}/{project}/{file}`)
      rather than a filesystem path, because the bytes are no longer at one.
 
-     It is not left NULL, for two reasons that only show up on a real database:
-       - the column is NOT NULL on a drizzle-push/baseline database
-         (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails every
-         upload;
-       - migrations/20260821_vault_documents_canonical_shape.sql:131 runs
-         `UPDATE vault.documents SET s3_key = id::text WHERE s3_key IS NULL` and,
-         like every file in the set, re-runs on EVERY deploy — so a NULL would
-         be quietly replaced by a path that resolves to nothing on the next one.
+     It is not left NULL: the column is NOT NULL on a drizzle-push/baseline
+     database (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails
+     every upload. (A second reason stood here until 2026-10-15: the canonical-
+     shape migration replaced every NULL s3_key with the row id on each deploy.
+     That backfill is removed; a row with no locator now keeps none.)
 
      Writing the old `uploads/...` path would have been the "record that lies"
      this path refuses above; the provider handle is simply where the bytes are,
@@ -482,9 +476,15 @@ async function admitVaultDocument(
      takes `FOR UPDATE` on the chain tip and deliberately does not manage its
      own BEGIN/COMMIT, so the audit entry and the document it describes commit
      together or not at all. */
-  const client = await pool.connect();
+  const client = await db.connect();
   try {
     await client.query('BEGIN');
+    const currentRefusal = await ingestTargetRefusal(client, args, orgId, true) ??
+      await ingestSourceRefusal(client, args, 'commit');
+    if (currentRefusal) {
+      await client.query('ROLLBACK');
+      return currentRefusal;
+    }
     // A check-in holds its head's row lock from here to COMMIT: a concurrent
     // check-in waits, then finds this version and is refused, naming it.
     const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
@@ -690,6 +690,7 @@ async function admitVaultDocument(
         storageKey: doc.s3_key,
         ...(recorded ? { changes } : {}),
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
+        ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
         ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit

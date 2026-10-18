@@ -1,0 +1,172 @@
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+{
+  "timestamp": "2026-10-14T03:09:55.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 16ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 3ms
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 6ms
+   → expected '960 minutes' to be '30 minutes' // Object.is equality
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeout":120} 3ms
+   → expected '120 minutes' to be '15 minutes' // Object.is equality
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999} 3ms
+   → expected undefined to be '1440 minutes' // Object.is equality
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0} 6ms
+   → expected undefined to be '1 minutes' // Object.is equality
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"} 4ms
+   → expected undefined to be '15 minutes' // Object.is equality
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9} 2ms
+   → expected undefined to be '22 minutes' // Object.is equality
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 2ms
+ × server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > records both idle minutes and the concurrent-session limit before and after on the writer client 128ms
+   → expected { mfaRequired: null, …(3) } to match object { sessionTimeoutMinutes: 15, …(1) }
+(3 matching properties omitted from actual)
+ ✓ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > refuses a session-policy change whose chained audit cannot be written 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values
+AssertionError: expected '960 minutes' to be '30 minutes' // Object.is equality
+
+Expected: "30 minutes"
+Received: "960 minutes"
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:100:33
+     98|     // What sign-in enforces (routes/auth.ts), not settings.security.m…
+     99|     expect(byId['mfa-required']).toBe('Required for every member');
+    100|     expect(byId['session-ttl']).toBe('30 minutes');
+       |                                 ^
+    101|     expect(byId['sso']).toBe('Disabled');
+    102|     expect(byId['branding']).toBe('Bright Biosciences');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeout":120}
+AssertionError: expected '120 minutes' to be '15 minutes' // Object.is equality
+
+Expected: "15 minutes"
+Received: "120 minutes"
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:116:24
+    114|     expect(res.status).toBe(200);
+    115|     const row = res.body.data.settings.find((s: { id: string }) => s.i…
+    116|     expect(row?.value).toBe(expected);
+       |                        ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999}
+AssertionError: expected undefined to be '1440 minutes' // Object.is equality
+
+- Expected:
+"1440 minutes"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:116:24
+    114|     expect(res.status).toBe(200);
+    115|     const row = res.body.data.settings.find((s: { id: string }) => s.i…
+    116|     expect(row?.value).toBe(expected);
+       |                        ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0}
+AssertionError: expected undefined to be '1 minutes' // Object.is equality
+
+- Expected:
+"1 minutes"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:116:24
+    114|     expect(res.status).toBe(200);
+    115|     const row = res.body.data.settings.find((s: { id: string }) => s.i…
+    116|     expect(row?.value).toBe(expected);
+       |                        ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"}
+AssertionError: expected undefined to be '15 minutes' // Object.is equality
+
+- Expected:
+"15 minutes"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:116:24
+    114|     expect(res.status).toBe(200);
+    115|     const row = res.body.data.settings.find((s: { id: string }) => s.i…
+    116|     expect(row?.value).toBe(expected);
+       |                        ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9}
+AssertionError: expected undefined to be '22 minutes' // Object.is equality
+
+- Expected:
+"22 minutes"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/mdx-admin-facets.test.ts:116:24
+    114|     expect(res.status).toBe(200);
+    115|     const row = res.body.data.settings.find((s: { id: string }) => s.i…
+    116|     expect(row?.value).toBe(expected);
+       |                        ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > records both idle minutes and the concurrent-session limit before and after on the writer client
+AssertionError: expected { mfaRequired: null, …(3) } to match object { sessionTimeoutMinutes: 15, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "maxConcurrentSessions": 5,
+    "sessionTimeoutMinutes": 15,
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts:50:66
+     48|     expect(h.log).toEqual(['BEGIN', 'AUDIT', 'COMMIT']);
+     49|     expect(h.auditCalls[0].entry.reason).toBe('Reviewed session contro…
+     50|     expect(h.auditCalls[0].entry.details.values.security.before).toMat…
+       |                                                                  ^
+     51|     expect(h.auditCalls[0].entry.details.values.security.after).toMatc…
+     52|     expect(h.auditCalls[0].entry.details.changedFields.security).toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 8 passed (15)
+   Start at  03:09:54
+   Duration  1.45s (transform 557ms, setup 61ms, import 85ms, tests 1.09s, environment 0ms)

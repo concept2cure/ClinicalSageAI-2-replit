@@ -18,11 +18,12 @@
  * @module server/services/pathway-engines/technical-file-manifest
  */
 
+import type { PathwayEvidenceSlot } from './source-aware-evidence';
 import type { EuRegulation, TechDocResult } from './mdr-ivdr/tech-doc-assembler';
 
-export type TechnicalFileSectionStatus = 'present' | 'missing' | 'optional-absent';
+export type TechnicalFileSectionStatus = 'present' | 'missing' | 'optional-absent' | 'undetermined';
 
-export interface TechnicalFileManifestEntry {
+export interface TechnicalFileManifestEntry extends PathwayEvidenceSlot {
   /** Deterministic, sortable folder path, e.g. "03-annex-ii/device-description". */
   path: string;
   id: string;
@@ -48,6 +49,7 @@ export interface TechnicalFileManifest {
     sections: number;
     requiredPresent: number;
     requiredMissing: number;
+    undetermined?: number;
   };
   entries: TechnicalFileManifestEntry[];
 }
@@ -86,8 +88,9 @@ export function buildTechnicalFileManifest(
     label: s.label,
     annex: s.annex,
     required: s.required,
-    status: statusOf(s.required, s.present),
+    status: !s.present && s.contentUndetermined ? 'undetermined' : statusOf(s.required, s.present),
     sources: s.sources,
+    ...(s.sourceRefs ? {sourceRefs:s.sourceRefs,contentUndetermined:s.contentUndetermined} : {}),
   }));
 
   const requiredPresent = result.sections.filter(s => s.required && s.present).length;
@@ -104,6 +107,7 @@ export function buildTechnicalFileManifest(
       sections: result.sections.length,
       requiredPresent,
       requiredMissing,
+      ...(result.summary.undetermined ? {undetermined:entries.filter(e=>e.status==='undetermined').length} : {}),
     },
     entries,
   };

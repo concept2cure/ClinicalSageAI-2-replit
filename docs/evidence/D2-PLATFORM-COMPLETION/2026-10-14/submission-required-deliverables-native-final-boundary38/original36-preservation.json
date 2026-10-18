@@ -1,0 +1,12 @@
+{
+  "tests/db/submission-required-deliverables.dbtest.ts": {
+    "originalFileSha256AfterRemovingOnlyNewAdditions": "38c2b6dd040020e004d59661471833e6ee67089aad228bd26ad1bcadc91cf282",
+    "originalFrozenFileMatches": true,
+    "currentSha256": "90cfb2a1c07aec76967bfc4d9ee47da166be9c86d7da5b07842eec3704e891c8"
+  },
+  "tests/db/submission-required-deliverables-fixture.ts": {
+    "originalFileSha256AfterRemovingOnlyNewAdditions": "795e3c2d2630311a52cc3164b45862e02327427378475f46233da6da8ca50c40",
+    "originalFrozenFileMatches": true,
+    "currentSha256": "df2c7195dfb5a431df12d9f0c1f0207a78bde0dc3ff6aa06625b79a99f251f52"
+  }
+}

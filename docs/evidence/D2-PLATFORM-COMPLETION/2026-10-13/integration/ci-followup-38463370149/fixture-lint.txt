@@ -1,0 +1,11 @@
+
+/workspace/ClinicalSageAI-2-replit/tests/db/entitlement-grants-resolution.dbtest.ts
+  410:74   warning  Arrow function has too many lines (107). Maximum allowed is 100  max-lines-per-function
+  542:97   warning  Arrow function has too many lines (167). Maximum allowed is 100  max-lines-per-function
+  681:1    warning  File has too many lines (880). Maximum allowed is 500            max-lines
+  960:113  warning  Arrow function has too many lines (155). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/tests/db/signup-launch-catalog.dbtest.ts
+  328:79  warning  Arrow function has too many lines (122). Maximum allowed is 100  max-lines-per-function
+
+✖ 5 problems (0 errors, 5 warnings)

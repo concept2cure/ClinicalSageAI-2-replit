@@ -1,0 +1,7 @@
+{
+  "command": "npm run --silent ci:eslint-ratchet:since -- accf8c6ba --gate",
+  "exitCode": 0,
+  "qualification": "Net gate passed but a new Workbench complexity warning was inspected and removed rather than offset against the panel decrease.",
+  "rawSha256": "ad56423735941e191e37bbbcaf0edd0f38c8ed5307824df660e7fddf08f1f342",
+  "rawOutput": "[ci:eslint-warning-ratchet] --since accf8c6ba (accf8c6ba) -- 47 lintable file(s) changed; linting both versions of each...\n\n    +1  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx  (13 -> 14)\n         client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:1566:97  complexity  Arrow function has a complexity of 16. Maximum allowed is 15.\n    -3  client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx  (5 -> 2)\n\n[ci:eslint-warning-ratchet] net -2 warning(s) across the files changed since accf8c6ba.\n"
+}

@@ -1,0 +1,17 @@
+# after the repairs
+$ npx vitest run server/services/ana/intelligence-questions tests/ana-intelligence shared/regulatory/__tests__
+ Test Files  41 passed (41)
+      Tests  701 passed (701)
+
+$ npx vitest run server/services/cmc
+ Test Files  44 passed (44)
+      Tests  1086 passed (1086)
+
+$ TYPECHECK_HEAP_MB=20480 npm run ci:typecheck:no-regression
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+
+$ npx eslint server/services/ana/intelligence-questions/annex-viii-classification.ts
+(clean — the no-fallthrough error that refused the previous push)

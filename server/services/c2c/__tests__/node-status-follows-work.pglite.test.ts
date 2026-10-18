@@ -222,6 +222,18 @@ async function readiness(doc: string): Promise<number> {
   return Number(row.readiness);
 }
 
+async function sealedState(f: { doc: string; authoringDocId: string }) {
+  return {
+    document: await q('SELECT status FROM authoring_documents WHERE id=$1',[f.authoringDocId]),
+    filing: await q('SELECT section_key,status,content FROM c2c_document_sections WHERE document_id=$1 ORDER BY section_key',[f.doc]),
+    signatures: await q('SELECT * FROM authoring_signatures WHERE doc_id=$1 ORDER BY id',[f.authoringDocId]),
+    freezes: await q('SELECT * FROM frozen_documents WHERE document_id=$1 ORDER BY id',[f.authoringDocId]),
+    workflow: await q('SELECT * FROM authoring_workflow_steps WHERE doc_id=$1 ORDER BY id',[f.authoringDocId]),
+    trail: await q('SELECT * FROM authoring_audit_trail WHERE doc_id=$1 ORDER BY id',[f.authoringDocId]),
+    approvals: await q("SELECT * FROM audit_logs WHERE action='c2c.work.approve' AND target=$1 ORDER BY id",[`c2c_document:${f.doc}`]),
+  };
+}
+
 describe('1. a save in the editor moves the section to drafted', () => {
   it('a save with text leaves the bound section drafted, not todo', async () => {
     const f = await makeFiling(['2.5', '2.6']);
@@ -416,8 +428,7 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
     // so no section is approved either.
     const plain = await makeFiling(['2.5']);
     expect((await save(plain.sectionIds['2.5'], 'Text.')).status).toBe(200);
-    const noWf = await as(request(app).post(`/api/authoring/docs/${plain.authoringDocId}/sign`), approverToken)
-      .send({ meaning: 'APPROVER', reason: 'Approving.', password: PASSWORD });
+    const noWf = await as(request(app).post(`/api/authoring/docs/${plain.authoringDocId}/sign`), approverToken).send({ meaning: 'APPROVER', reason: 'Approving.', password: PASSWORD });
     expect(noWf.status, JSON.stringify(noWf.body)).toBe(200);
     expect(await statuses(plain.doc)).toEqual({ '2.5': 'drafted' });
     expect(noWf.body.filingApproval).toBeNull();
@@ -430,15 +441,14 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
        VALUES (gen_random_uuid(), $1, 1, 'APPROVER', $2, 'PENDING', 1)`,
       [f.authoringDocId, AUTHOR.email],
     );
-    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken)
-      .send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
+    const res = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken).send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved', '2.6': 'todo' });
     expect(await readiness(f.doc)).toBe(50);
     expect(res.body.filingApproval).toEqual({ approved: ['2.5'], notApproved: ['2.6'], documentId: f.doc });
   }, T);
 
-  it('a /sign after the workflow is complete decides no step and approves nothing, whatever its meaning', async () => {
+  it('a completed signed workflow refuses status changes and permits only a new review signature over unchanged content', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Clinical overview.')).status).toBe(200);
     await q(
@@ -446,23 +456,41 @@ describe('2. the approval signature approves the sections it covers: /sign, and 
        VALUES (gen_random_uuid(), $1, 1, 'APPROVER', $2, 'PENDING', 1)`,
       [f.authoringDocId, AUTHOR.email],
     );
-    const first = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken)
-      .send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
+    const first = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), approverToken).send({ meaning: 'APPROVER', reason: 'Final approval.', password: PASSWORD });
     expect(first.status, JSON.stringify(first.body)).toBe(200);
     expect(first.body.filingApproval).toMatchObject({ approved: ['2.5'] });
+    const before = await sealedState(f);
+    expect(before.document).toEqual([{status:'APPROVED'}]);
+    expect(before.signatures).toHaveLength(1);
+    expect(before.freezes).toHaveLength(1);
 
-    // The section is sent back to review (allowed: a move away from approved).
-    const back = await request(app)
-      .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
-      .send({ status: 'review', reason: 'Another look.' });
-    expect(back.status, JSON.stringify(back.body)).toBe(200);
-    expect(await statuses(f.doc)).toEqual({ '2.5': 'review' });
+    // A signed filing is immutable. Reopening it requires a governed new
+    // version; a later review may append a signature over this unchanged seal.
+    const back = await request(app).patch(`/api/c2c/documents/${f.doc}/sections/2.5`).send({ status: 'review', reason: 'Another look.' });
+    expect(back.status, JSON.stringify(back.body)).toBe(403);
+    expect(back.body.code).toBe('DOCUMENT_FROZEN');
+    expect(await sealedState(f)).toEqual(before);
 
-    const later = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), reviewerToken)
-      .send({ meaning: 'REVIEWER', reason: 'Reviewed.', password: PASSWORD });
+    const later = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/sign`), reviewerToken).send({ meaning: 'REVIEWER', reason: 'Reviewed.', password: PASSWORD });
     expect(later.status, JSON.stringify(later.body)).toBe(200);
     expect(later.body.filingApproval).toBeNull();
-    expect(await statuses(f.doc)).toEqual({ '2.5': 'review' });
+    const after = await sealedState(f);
+    for (const key of ['document','filing','freezes','workflow','approvals'] as const) expect(after[key]).toEqual(before[key]);
+    expect(after.signatures).toEqual(expect.arrayContaining(before.signatures));
+    expect(after.signatures).toHaveLength(before.signatures.length+1);
+    const review = after.signatures.find(signature => signature.id===later.body.signatureId);
+    expect(review).toMatchObject({meaning:'REVIEWER',signer_email:AUTHOR.email,
+      content_hash:before.signatures[0].content_hash,covered_content_hash:before.freezes[0].content_hash});
+    expect(after.trail).toEqual(expect.arrayContaining(before.trail));
+    expect(after.trail).toHaveLength(before.trail.length+1);
+    expect(after.trail.find(row => row.metadata?.signatureId===later.body.signatureId)).toMatchObject({
+      operation_type:'SIGN',actor_id:AUTHOR.id,metadata:{meaning:'REVIEWER'} });
+    const chained = await q("SELECT * FROM audit_logs WHERE action='authoring.document.sign' AND new_values->>'signatureId'=$1",[later.body.signatureId]);
+    expect(chained).toHaveLength(1);
+    expect(chained[0].sha256_chain).toBeTruthy();
+    expect(chained[0].hmac_seal).toBeTruthy();
+    expect(await statuses(f.doc)).toEqual({ '2.5': 'approved' });
+    expect(await readiness(f.doc)).toBe(100);
     const approvals = await q(
       `SELECT 1 FROM audit_logs WHERE action = 'c2c.work.approve' AND target = $1`, [`c2c_document:${f.doc}`],
     );
@@ -511,7 +539,7 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     expect(await q(`SELECT count(*)::int AS n FROM audit_logs`)).toEqual(before);
   }, T);
 
-  it('a content PATCH on an approved section withdraws it to drafted and records that', async () => {
+  it('a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
     const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
@@ -520,32 +548,34 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved' });
     expect(await readiness(f.doc)).toBe(100);
+    const before = await sealedState(f);
 
     const res = await request(app)
       .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
       .send({ content: { text: 'Text nobody signed.' }, reason: 'Edited in the dossier editor.' });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.status).toBe('drafted');
-    expect(await statuses(f.doc)).toEqual({ '2.5': 'drafted' });
-    expect(await readiness(f.doc)).toBe(0);
-    const [rec] = await q<{ payload: any }>(
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
+    expect(await sealedState(f)).toEqual(before);
+    expect(await statuses(f.doc)).toEqual({ '2.5': 'approved' });
+    expect(await readiness(f.doc)).toBe(100);
+    const withdrawals = await q(
       `SELECT a.payload FROM c2c_ana_actions a JOIN audit_logs l ON l.ana_action_id = a.id
-        WHERE l.target = $1 AND l.action = 'c2c.work.transition'`,
+        WHERE l.target = $1 AND l.action = 'c2c.work.transition' AND a.payload->>'approvalWithdrawn'='true'`,
       [`section:${f.doc}:2.5`],
     );
-    expect(rec.payload).toMatchObject({ from: 'approved', to: 'drafted', approvalWithdrawn: true });
+    expect(withdrawals).toHaveLength(0);
   }, T);
 
   it('a PATCH on a locked section is refused with 409 SECTION_LOCKED and changes nothing', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Locked text.')).status).toBe(200);
     await q(`UPDATE c2c_document_sections SET status = 'locked' WHERE document_id = $1`, [f.doc]);
-    for (const body of [{ content: { text: 'New text.' } }, { status: 'todo' }]) {
+    for (const [body, code] of [[{ content: { text: 'New text.' } }, 'SECTION_TEXT_IS_AUTHORED'], [{ status: 'todo' }, 'SECTION_LOCKED']] as const) {
       const res = await request(app)
         .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
         .send({ ...body, reason: 'Trying to edit.' });
       expect(res.status, JSON.stringify(res.body)).toBe(409);
-      expect(res.body.code).toBe('SECTION_LOCKED');
+      expect(res.body.code).toBe(code);
       expect(res.body.message).toMatch(/Nothing was changed\.$/);
     }
     const [row] = await q<{ status: string; text: string }>(

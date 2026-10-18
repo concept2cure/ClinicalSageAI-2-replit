@@ -1,0 +1,32 @@
+Green, 2026-10-12, after widening the E6(R3) citation gate and fixing the fourteen citations
+behind its two holes.
+
+tests/regulatory/ich-e6r3-citations.test.ts (the widened gate itself):
+
+      Tests  6 passed (6)
+
+tests/regulatory/ (the whole regulatory contract suite):
+
+      Tests  1377 passed (1377)
+
+tests/services/regulatory/ + the gate:
+
+ Test Files  4 passed (4)
+      Tests  43 passed (43)
+
+server/__tests__/routes/smoke.test.ts (the only test touching server/api/validation,
+ProtocolDesignAnalyzer, ind-risks, and the amendment/safety-supplement pyramids):
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+
+Typecheck: the pre-push gate ci:typecheck-no-regression runs `tsc --noEmit --incremental`
+against a baseline of 0 and refuses the push on any error. It reported, on the push carrying
+this change:
+
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+The trees NOT scanned, each measured at zero E6 citations of either revision at this commit
+(.ts/.tsx/.js/.mjs/.cjs): workers, ingestion, config, database, db, schemas, skills, templates,
+charts, policy.

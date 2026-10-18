@@ -1,0 +1,216 @@
+{
+  "assembledAt": "2026-10-17T23:04:38.828273+00:00",
+  "assemblyTimezone": "UTC",
+  "target": "concept2cure-v2",
+  "publicationBaseCommit": "4b0e3ff1ed0882f8681fb3ad5b97660c6b969d7c",
+  "landedSourceCommit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "localQualifiedCommit": "a4200db6051ae62a9038b19cf67199318fe2743a",
+  "canonicalSourceTree": "f5454bed52173af49db1f51267ded76cd00fe7b7",
+  "sourceFiles": 768,
+  "initialUpstreamCommitsIntegratedAfterPause": 402,
+  "additionalSourceIdentityCommits": 5,
+  "latestQualifiedCanonicalCommit": "7576327d5d278285cb1846feb6afa6edb42b435d",
+  "uiPerFileAcceptance": {
+    "cases": 424,
+    "files": 31
+  },
+  "latestUiRecoveryAcceptance": {
+    "cases": 229,
+    "files": 9
+  },
+  "scopedAcceptance": [
+    {
+      "category": "routes",
+      "artifact": "oct17-routes-tests-final-summary.json",
+      "cases": 399,
+      "files": 33,
+      "status": "passed"
+    },
+    {
+      "category": "routes communication follow-up",
+      "artifact": "oct17-routes-communication-final-summary.json",
+      "cases": 75,
+      "files": 3,
+      "status": "passed"
+    },
+    {
+      "category": "domain",
+      "artifact": "oct17-domain-green-summary.json",
+      "cases": 189,
+      "files": 24,
+      "status": "passed"
+    },
+    {
+      "category": "domain writerless follow-up",
+      "artifact": "oct17-domain-writerless-final-summary.json",
+      "cases": 115,
+      "files": 11,
+      "status": "passed"
+    },
+    {
+      "category": "sources",
+      "artifact": "oct17-sources-accepted-tests-summary.json",
+      "cases": 230,
+      "files": 17,
+      "status": "passed"
+    },
+    {
+      "category": "authoring outcome follow-up",
+      "artifact": "oct17-authoring-outcome-accepted-tests-summary.json",
+      "cases": 209,
+      "files": 8,
+      "status": "passed"
+    },
+    {
+      "category": "authoring creation and tool trace frozen fault cases",
+      "artifact": "oct17-authoring-outcome-frozen-tests-summary.json",
+      "cases": 23,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "current source identity integration",
+      "artifact": "oct17-source-identity-sync-tests-summary.json",
+      "cases": 232,
+      "files": 12,
+      "status": "passed"
+    },
+    {
+      "category": "current source identity batch integration",
+      "artifact": "oct17-source-identity-batch-sync-tests-summary.json",
+      "cases": 32,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "CAPA required assessment follow-up",
+      "artifact": "oct17-routes-capa-assessment-type-followup-summary.json",
+      "cases": 26,
+      "files": 3,
+      "status": "passed"
+    },
+    {
+      "category": "CAPA final exact assessment refusal",
+      "artifact": "oct17-routes-capa-assessment-final-exact-summary.json",
+      "cases": 7,
+      "files": 1,
+      "status": "passed"
+    },
+    {
+      "category": "security fixes",
+      "artifact": "oct17-semgrep-final-tests-summary.json",
+      "cases": 161,
+      "files": 19,
+      "status": "passed"
+    },
+    {
+      "category": "agency requirements unit",
+      "artifact": "oct17-agency-requirements-unit-summary.json",
+      "cases": 10,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "latest selected source qualification",
+      "artifact": "oct17-draft-checkpoint-sync-tests-summary.json",
+      "cases": 198,
+      "files": 11,
+      "status": "passed"
+    }
+  ],
+  "sourcePerFileAcceptance": {
+    "cases": 647,
+    "files": 39,
+    "scope": "Selected current passing per-file proofs, not a fresh all-files run"
+  },
+  "latestSourceIntegration": {
+    "cases": 198,
+    "files": 11,
+    "reports": [
+      "oct17-draft-checkpoint-sync-tests.json"
+    ]
+  },
+  "privateSourceSpanAcceptance": {
+    "cases": 42,
+    "files": 3,
+    "scope": "Overlapping focused regression"
+  },
+  "nativeDistinctFileAcceptance": {
+    "cases": 133,
+    "files": 13
+  },
+  "agencyUnitAcceptance": {
+    "cases": 10,
+    "files": 2
+  },
+  "additionalNativeFeatureQualification": {
+    "cases": 60,
+    "files": 4,
+    "scope": "Disjoint from prior current73/9"
+  },
+  "currentNativeReplacement": {
+    "cases": 51,
+    "files": 7,
+    "scope": "Replaces the same old cases/files inside 73/9"
+  },
+  "localCiNoSslCompatibility": {
+    "cases": 51,
+    "files": 7,
+    "scope": "Same fixture cases, separate explicit local CI transport run; not additive qualification"
+  },
+  "nativeTransportOnlyEditsNotFeatureQualified": [],
+  "typecheckErrors": 0,
+  "releaseGuards": {
+    "commands": 82,
+    "failures": 0
+  },
+  "fullEnabledPrePushExitCode": 0,
+  "migrationsFreshEmptyAndPopulatedReplay": 408,
+  "restrictedGrantRelations": 1305,
+  "rlsGaps": 0,
+  "retainedHistoryTables": 8,
+  "retainedOriginalFiles": 6,
+  "productionReadinessHttpStatus": 200,
+  "currentBrowserCases": 31,
+  "latestGoldenRerunCases": 1,
+  "nativeHistoryDatabase": "c2c_audit_oct17_final_tls",
+  "separateCleanBootDatabase": "c2c_audit_oct17_boot_tls",
+  "browserBreakdown": {
+    "authenticated": 2,
+    "accessControl": 20,
+    "keyboard": 8,
+    "golden": 1
+  },
+  "historicalOctober14Only": {
+    "unitPerFileCases": 3246,
+    "unitFiles": 257,
+    "nativePerFileCases": 491,
+    "nativeFiles": 38
+  },
+  "ciStatus": "Remote CI is not asserted green by this local receipt. Known historical failures and new landed runs require separate inspection.",
+  "credentialRotation": "Three previously identified live credentials in repository history require external owner rotation. No rotation is claimed.",
+  "draftContextAndGenerationCheckpointStatus": {
+    "file": "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md",
+    "status": "Implemented by canonical 74cba41d1 and qualified in current 198-case/11-file integration cohort. Supersedes the prior profile planned-only flag.",
+    "limits": "Checkpoint admission only: no continuous in-flight revocation, recall of sent text, native application concurrency/load proof, provider delivery/model use, scientific qualification or agency acceptance."
+  },
+  "qualificationLimits": [
+    "Scoped report counts overlap and are not a single current whole-codebase all-green test run.",
+    "Synthetic local TLS/RLS, deterministic AI and storage fixtures do not qualify live providers, agency acknowledgement, managed signing, durable storage or production deployment.",
+    "Source-read receipts attest host-budget admission; providerDelivery remains unestablished.",
+    "Unconfirmed COMMIT outcomes preserve actual recovery identifiers, discard physical clients and do not prove rollback or authorize blind retries.",
+    "Historical engineering/governance boundaries F05, F22, D05, D06, O01, X02, O05 and R03 remain open until contemporary closure or requalification; older inventory counts are not asserted current."
+  ],
+  "historicalOpenBoundaryIds": [
+    "F05",
+    "F22",
+    "D05",
+    "D06",
+    "O01",
+    "X02",
+    "O05",
+    "R03"
+  ],
+  "historicalOpenBoundarySource": "../../2026-10-14/remediation-report.md#remaining-work",
+  "historicalBoundaryCaveat": "These entries preserve previously open boundaries, not a fresh inventory after the subsequent 402-plus canonical commits. Older counts and observed states are not asserted current. Completed sub-remedies and the newly implemented checkpoint qualification remain valid; each broader boundary needs traceable contemporary closure or requalification."
+}

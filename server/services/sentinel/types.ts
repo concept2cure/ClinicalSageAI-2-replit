@@ -81,7 +81,7 @@ export const DEFAULT_SENTINEL_CONFIG: Omit<SentinelConfig, 'organizationId'> = {
     cross_project: true,
     regulatory_change: true,
     quality_drift: true,
-    budget_burn: true,
+    budget_burn: false,
   },
   thresholds: {
     deadlineWarningDays: 14,

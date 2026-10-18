@@ -33,14 +33,17 @@ import { basisProblems, basisLabel } from '../../shared/regulatory/regulatory-ba
 
 const ROOT = path.resolve(__dirname, '../..');
 const RECORD = 'shared/regulatory/ich-e6r3.ts';
-const SCAN = ['server', 'shared', 'client/src'];
+/* The root-level `services/` tree was missing when this gate was written, so ten E6(R2) citations
+   survived there — three of them with R2 section numbers — while the gate reported the rest of the
+   platform clean. A gate that misses a whole top-level source tree is a gate with a hole. */
+const SCAN = ['server', 'shared', 'client/src', 'services', 'scripts'];
+/* .mjs too: the two citations `scripts/` carried were both in .mjs, and one of them writes into a
+   client-facing evidence pack. An extension filter is not a reason for a wrong citation to ship. */
+const SOURCE_EXT = /\.(ts|tsx|mjs|cjs|js)$/;
 
 /** Held by another lane on 2026-10-08; handed on at release. Count may only fall. */
 const HANDED_ON: Record<string, number> = {
-  'server/services/ai-gateway/gateway.ts': 1,
-  'server/services/ana/AnaToolDefinitions.ts': 2,
   'server/services/ana/AnaToolExecutor.ts': 2,
-  'server/services/ana/evidence-literature-tool-defs.ts': 2,
 };
 
 function sources(): string[] {
@@ -50,7 +53,7 @@ function sources(): string[] {
       if (name === 'node_modules' || name === '__tests__' || name.startsWith('.')) continue;
       const p = path.join(dir, name);
       if (statSync(p).isDirectory()) walk(p);
-      else if (/\.(ts|tsx)$/.test(name) && !/\.(test|spec)\.tsx?$/.test(name)) out.push(p);
+      else if (SOURCE_EXT.test(name) && !/\.(test|spec)\.[tj]sx?$/.test(name)) out.push(p);
     }
   };
   SCAN.forEach((d) => walk(path.join(ROOT, d)));

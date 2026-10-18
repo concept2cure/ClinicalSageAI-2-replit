@@ -155,7 +155,7 @@ I tried to refute this at aff7eae16 and could not. The defect is real. It is not
    - `governedTierOf('retire_qms_document')` returns `'confirm'`, because the tool is not in `PART11_ESIGN_COMMANDS` or `PART11_GOVERNED_COMMANDS` (part11-governance.ts:156-162).
    - `/governed-action` asks only for `body.confirm === true` on that tier (server/routes/ana-ri/utility.ts:593-597). `reverifySigner` runs only when `tier === 'esignature'` (:611-620).
    - `runConfirmedTool` (utility.ts:222-240) then calls the handler with `humanConfirmed: true`. There is still no role check, signing-authority check or re-authentication.
-   
+
    So any authenticated org member, including a viewer whom the HTTP route would refuse with 403, can retire an effective controlled document by asking AnA and clicking "yes". No password, no MFA and no signature record are involved. This bypasses §11.200 re-authentication, §11.10(g) authority checks and §11.50 signature manifestation.
 
 5. Reproduced: `npx vitest run server/services/ana/__tests__/qms-change-tools.test.ts -t retire` passes 4/4. The test "retires a document (terminal)" (:257-264) calls the tool with ctx `{organizationId:1, userId:10, humanConfirmed:true}` and only a reason. It gets `ok:true, status:'retired'`, so the suite currently pins the unsigned retirement as intended behaviour.
@@ -201,4 +201,3 @@ Net effect: the §11.50 manifestation for the irreversible transmit exists serve
 A caveat on the proposed fix: signedTarget is `submission:<packageId>` (governed-transmit.ts:712), so every transmit of the same package shares one target. Joining electronic_signatures by target in the list query would attach the wrong signature to a re-transmitted package.
 
 Severity medium is right. The signature is recorded correctly; the gap is where it is shown (§11.50(b) display), not a missing record.
-

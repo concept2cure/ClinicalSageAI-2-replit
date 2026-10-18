@@ -1,0 +1,202 @@
+{
+  "database": "c2c_audit_oct17_final_tls",
+  "migrationCount": 408,
+  "verifiedTlsConnections": [
+    {
+      "database": "c2c_audit_oct17_final_tls",
+      "role": "postgres",
+      "rolsuper": true,
+      "rolbypassrls": true,
+      "ssl": true,
+      "version": "TLSv1.3",
+      "certificateAuthorized": true
+    },
+    {
+      "database": "c2c_audit_oct17_final_tls",
+      "role": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "ssl": true,
+      "version": "TLSv1.3",
+      "certificateAuthorized": true
+    }
+  ],
+  "grants": {
+    "relations": 1305,
+    "denied": 0,
+    "excess": 0
+  },
+  "agencyRequirementsPolicies": [
+    {
+      "policyname": "agency_requirements_insert_own_org",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::bigint)"
+    },
+    {
+      "policyname": "tenant_isolation_policy",
+      "cmd": "SELECT",
+      "qual": "((validation_status = 'validated'::text) OR ((validation_status = 'unvalidated'::text) AND (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::bigint)))",
+      "with_check": null
+    }
+  ],
+  "proofs": [
+    {
+      "artifact": "oct17-agency-requirements-unit.json",
+      "success": true,
+      "testsPassed": 10,
+      "testsFailed": 0,
+      "files": 2
+    },
+    {
+      "artifact": "oct17-agency-requirements-native.json",
+      "success": true,
+      "testsPassed": 9,
+      "testsFailed": 0,
+      "files": 1
+    },
+    {
+      "artifact": "oct17-governed-integration-native.json",
+      "success": true,
+      "testsPassed": 24,
+      "testsFailed": 0,
+      "files": 4
+    },
+    {
+      "artifact": "oct17-qms-current-native.json",
+      "success": true,
+      "testsPassed": 33,
+      "testsFailed": 0,
+      "files": 3
+    },
+    {
+      "artifact": "oct17-csr-source-native.json",
+      "success": true,
+      "testsPassed": 7,
+      "testsFailed": 0,
+      "files": 1
+    }
+  ],
+  "sourceFilesAtEvidenceAssembly": [
+    {
+      "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+      "sha256": "33f60e5c1bf55adf760c6f70edfd1b66a221c7747d1f9ee1ea7bff2ef11abb6f"
+    },
+    {
+      "file": "tests/db/part11-audit-receipts.dbtest.ts",
+      "sha256": "d1f78917e355959be0eb7e3af5a1d24c8afa79f5183255d67b4684287c137719"
+    },
+    {
+      "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+      "sha256": "31f1bccd20e807084558295d8fa3a2bacde17a126d46670d01f984231964c683"
+    },
+    {
+      "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+      "sha256": "4d9691833580fc8598cbe7d4433fd33b84dbdb7807da5d5bda2e8d1f6fb106fa"
+    },
+    {
+      "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "sha256": "eee239c57da13104ca275f48863bf8e2e7eed0f4849398248f20e5a0e29f3e46"
+    },
+    {
+      "file": "tests/db/data-room-processing.dbtest.ts",
+      "sha256": "eb18b1beca41f8e5fb2ae862bd0bdcfb83605a12e28c4d26be38c56b2417bb03"
+    },
+    {
+      "file": "tests/db/content-audit-consumers.dbtest.ts",
+      "sha256": "df2b8df96f962fc4e96093179f44124f8b9921e8df488df1a4fe17f2da4d9c9c"
+    },
+    {
+      "file": "tests/db/csr-vault-source-input.dbtest.ts",
+      "sha256": "f1409ea9c05772d91e9c519bf9e1e1d66888f5517fc56728638a7954038a1c19"
+    },
+    {
+      "file": "tests/db/ind-audit-outcomes.dbtest.ts",
+      "sha256": "7181d81062f5dc24a15314acb5c09397aaffe056672a59a6a64c79b66401c656"
+    },
+    {
+      "file": "tests/db/provenance-audit-outcomes.dbtest.ts",
+      "sha256": "f3dd66e528815074ab1c1adaf8a8e2c987844dc23a3b158983a9b5898acd5363"
+    },
+    {
+      "file": "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+      "sha256": "3628d139f1544fef185ff964573e51ceebf3e7b47b9df44d44bcea00c6fdf531"
+    }
+  ],
+  "limitations": "Synthetic local integration; no provider delivery, regulator acknowledgment, live filing, or production deployment is claimed.",
+  "populatedReplay": {
+    "artifact": "oct17-populated-replay-verification.json",
+    "verified": true,
+    "migrationCount": 408,
+    "minApplyCount": 3,
+    "tables": [
+      {
+        "table": "public.audit_logs",
+        "retainedRows": 71,
+        "sha256": "3c715e14057b61e6ae4d59f5d5be8b03a95cbd8f5f49b144b8de87b9940e615e",
+        "unchanged": true
+      },
+      {
+        "table": "audit.tamper_proof_log",
+        "retainedRows": 4,
+        "sha256": "40fd647e9c967e89a40209526959904df8be849c1b584549d88e52444bedf1f7",
+        "unchanged": true
+      },
+      {
+        "table": "public.ana_source_read_receipts",
+        "retainedRows": 5,
+        "sha256": "c72f685cc70e4b6acf3ec751d28a57d83f3fb41e713f2e85aff7cea30eb5765e",
+        "unchanged": true
+      },
+      {
+        "table": "public.cre_evidence_sources",
+        "retainedRows": 467,
+        "sha256": "fb77638cb7f11664bd37f262ea5f6501bb236a32d5046960edb6adfd0be5d9be",
+        "unchanged": true
+      },
+      {
+        "table": "public.qms_document_versions",
+        "retainedRows": 5,
+        "sha256": "99f9f71de73d2b987f3f1a303e91039f491d0c94ea52a08659c99340bd3b706e",
+        "unchanged": true
+      },
+      {
+        "table": "public.electronic_signatures",
+        "retainedRows": 17,
+        "sha256": "b5e4d3cf8a0c7f7d48161450641c7a771cc29c249e07572c682641d0bc0b21f4",
+        "unchanged": true
+      },
+      {
+        "table": "public.submission_orchestrator_inputs",
+        "retainedRows": 1,
+        "sha256": "a35c655c7b81437e8555b3f7bda836ed2f522d3d7eeb4224b473f97ea7b97d21",
+        "unchanged": true
+      },
+      {
+        "table": "intelligence.agency_requirements",
+        "retainedRows": 6,
+        "sha256": "6589119049628a8391834617f73008f51e89936e4f4fa48f9c9b11944f9e6468",
+        "unchanged": true
+      }
+    ],
+    "retainedOriginalFiles": 6
+  },
+  "additionalReadOnlyChecks": [
+    "oct17-deploy-smoke.log: exit0",
+    "oct17-parent-scope-delegates.log: empty0rows"
+  ],
+  "transportCompatibilityFollowup": {
+    "artifact": "oct17-native-transport-acceptance.json",
+    "tlsPassed": 51,
+    "plaintextPassed": 51,
+    "uniqueFilesPerMode": 7,
+    "deduplication": "Paired51 transport runs repeat existing cases. The initial73/9 and subsequent60/4 have disjoint file scopes; these 133/13 scoped native cases must still be deduplicated against broader historical publication proof.",
+    "remainingNativeFeatureAcceptance": {
+      "artifact": "oct17-remaining-transport-features-acceptance.json",
+      "passed": 60,
+      "files": 4,
+      "failed": 0,
+      "skipped": 0
+    }
+  }
+}

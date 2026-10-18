@@ -1,8 +1,9 @@
 /**
- * LORENZ eValidator adapter — the licensed, agency-grade engine target.
+ * LORENZ eValidator adapter — the external-engine integration target.
  *
  * `isConfigured()` is true only when `EVALIDATOR_BINARY`/`EVALIDATOR_ENDPOINT`
- * points at an existing engine. When configured, `validate()`:
+ * names an accessible path or an HTTP(S) URL. That is configuration discovery,
+ * not evidence of a licence, provider identity or qualified profile. `validate()`:
  *   - CLI mode  (a filesystem path): spawns the engine with a configurable arg
  *     template (`EVALIDATOR_ARGS`, placeholders {packageDir} {profile} {report}),
  *     then reads + parses the report it writes;
@@ -15,7 +16,8 @@
  * no-op is used instead). A configured engine that fails to run or whose report
  * cannot be parsed THROWS — never a fabricated pass. The dispatch gate treats a
  * throw / un-run validation as "not passed", so this can never silently clear a
- * package the agency validator hasn't actually approved.
+ * required gate with an unrun report. A parsed engine pass is not agency
+ * acceptance or proof that the engine/profile was independently qualified.
  *
  * @module server/services/ectd/external-validator/lorenz-adapter
  */
@@ -35,20 +37,22 @@ import {
   type ValidateArgs,
 } from './types';
 
-/** Map an engine's severity token to our tri-state severity. */
-export function normalizeSeverity(raw: string | undefined): ValidationSeverity {
-  const s = String(raw ?? '').trim().toLowerCase();
-  if (['error', 'err', 'high', 'fail', 'failure', 'critical'].includes(s)) return 'error';
-  if (['warning', 'warn', 'medium', 'low'].includes(s)) return 'warning';
-  return 'info';
-}
-
-/** The severity words a JSON report may use, and what each one counts as. */
-const JSON_SEVERITY: ReadonlyMap<string, ValidationSeverity> = new Map([
+/** The severity words a report (JSON or XML) may use, and what each one counts as. */
+const SEVERITY_WORDS: ReadonlyMap<string, ValidationSeverity> = new Map([
   ...['error', 'err', 'high', 'fail', 'failure', 'failed', 'critical', 'fatal'].map((w) => [w, 'error'] as const),
   ...['warning', 'warn', 'medium', 'low'].map((w) => [w, 'warning'] as const),
   ...['info', 'information', 'informational', 'notice', 'pass', 'passed', 'ok'].map((w) => [w, 'info'] as const),
 ]);
+
+/**
+ * Map an engine's severity token to our tri-state severity, or null when it is
+ * not a word this product maps. 2026-10-15: every unknown token (and 'fatal',
+ * 'failed') came back as 'info', so the XML parser counted a finding it could
+ * not name as no error.
+ */
+export function normalizeSeverity(raw: string | undefined): ValidationSeverity | null {
+  return SEVERITY_WORDS.get(String(raw ?? '').trim().toLowerCase()) ?? null;
+}
 
 /**
  * Parse a JSON eValidator report. Accepts either our native shape
@@ -57,7 +61,7 @@ const JSON_SEVERITY: ReadonlyMap<string, ValidationSeverity> = new Map([
  * the engine (or a thin wrapper) at JSON output.
  *
  * FAILS CLOSED (2026-09-23, W5/D7). Any other envelope, a row that is not an
- * object, or a severity outside JSON_SEVERITY THROWS, naming what it found. It
+ * object, or a severity outside SEVERITY_WORDS THROWS, naming what it found. It
  * used to return [] for an unknown envelope and map an unknown severity to
  * 'info', and the adapter reported both as passed:true — a report this product
  * could not read, or an error it could not name, cleared the external gate.
@@ -87,7 +91,7 @@ export function parseEvalidatorJsonReport(text: string): ExternalValidationFindi
     if (sevRaw == null || String(sevRaw).trim() === '') {
       throw new Error(`eValidator report finding ${i + 1} has no severity, so it cannot be counted.`);
     }
-    const severity = JSON_SEVERITY.get(String(sevRaw).trim().toLowerCase());
+    const severity = normalizeSeverity(String(sevRaw));
     if (!severity) {
       throw new Error(`eValidator report finding ${i + 1} has severity "${String(sevRaw)}", which this product does not map.`);
     }
@@ -101,12 +105,26 @@ export function parseEvalidatorJsonReport(text: string): ExternalValidationFindi
   });
 }
 
+/** The severity of XML report row `row`; throws, naming the word, when it is not one this product maps. */
+function xmlRowSeverity(sevRaw: unknown, row: number): ValidationSeverity {
+  const severity = normalizeSeverity(String(sevRaw));
+  if (!severity) {
+    throw new Error(`eValidator XML report row ${row} has severity "${String(sevRaw)}", which this product does not map.`);
+  }
+  return severity;
+}
+
 /**
  * Tolerant parser for a LORENZ-style XML report. Recursively collects elements
  * that carry a severity-like attribute (severity/type/level) — the finding rows
  * — and reads rule id, message, and location from common attribute/child names,
  * case-insensitively. Robust to element-name and casing differences across
  * engine versions.
+ *
+ * FAILS CLOSED like the JSON parser. 2026-10-15: an unmapped severity was read
+ * as 'info' and a report with no severity-bearing element parsed to [], which
+ * the adapter reported as passed. Both now throw: with no finding row, a clean
+ * report cannot be told from a layout this parser does not recognise.
  */
 export async function parseEvalidatorXmlReport(text: string): Promise<ExternalValidationFinding[]> {
   const doc = await parseStringPromise(text, { explicitArray: false, mergeAttrs: false, attrkey: '$', charkey: '_' });
@@ -120,11 +138,12 @@ export async function parseEvalidatorXmlReport(text: string): Promise<ExternalVa
         const attrs = node.$ ? lc(node.$) : {};
         const sevRaw = attrs.severity ?? attrs.type ?? attrs.level;
         if (sevRaw !== undefined) {
+          const severity = xmlRowSeverity(sevRaw, findings.length + 1);
           const child = lc(node);
           const messageChild = child.message ?? child.description ?? child.text;
           findings.push({
             ruleId: String(attrs.number ?? attrs.ruleid ?? attrs.id ?? attrs.code ?? 'UNKNOWN'),
-            severity: normalizeSeverity(String(sevRaw)),
+            severity,
             message: String(
               attrs.message ??
                 (typeof messageChild === 'object' ? messageChild._ ?? '' : messageChild ?? node._ ?? ''),
@@ -140,6 +159,12 @@ export async function parseEvalidatorXmlReport(text: string): Promise<ExternalVa
     }
   };
   visit(doc);
+  if (findings.length === 0) {
+    throw new Error(
+      'This is not an eValidator report this product reads: no element in it carries a severity, type or level ' +
+        'attribute, so a clean report cannot be told from a layout this parser does not recognise.',
+    );
+  }
   return findings;
 }
 
@@ -164,6 +189,7 @@ function runCli(bin: string, args: string[], timeoutMs = 120000): Promise<void> 
 
 export class LorenzEValidatorAdapter implements ExternalValidator {
   readonly name = 'lorenz-evalidator';
+  readonly kind = 'external_engine' as const;
 
   async isConfigured(): Promise<boolean> {
     const bin = evalidatorBinary();

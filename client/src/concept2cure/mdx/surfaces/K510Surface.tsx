@@ -29,7 +29,7 @@ import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { readyRows, toDataState } from '../lib/dataState';
-import { DataGate, useSampleMode } from '../components/DataGate';
+import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
 
@@ -110,7 +110,6 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      opened. */
   const activeStageIdx = program ? program.stageIdx : -1;
   const programStatus = program?.status ?? 'idle';
-  const sampleOn = useSampleMode();
   const programId = program?.id ?? null;
 
   /* Live data — three independent fetches that fall back to the kit
@@ -396,13 +395,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         >
           <span className="banner-ic">{I.alertCircle}</span>
           <span>
-            {sampleOn
-              ? 'Predicate intelligence is not reachable for this tenant. The table below shows the ' +
-                'canonical example data because sample mode is on; live K-number candidates appear ' +
-                'here once the shadow service is reachable.'
-              : 'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
-                'appear here once the shadow service is reachable; until then the reduced openFDA ' +
-                'clearance lookup below is the only source.'}
+            {'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
+              'appear here once the shadow service is reachable; until then the reduced openFDA ' +
+              'clearance lookup below is the only source.'}
           </span>
         </div>
       )}

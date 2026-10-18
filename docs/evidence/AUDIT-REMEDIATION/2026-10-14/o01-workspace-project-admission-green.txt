@@ -1,0 +1,286 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:30:11.309Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:30:12.620Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:30:12.620Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:30:12.620Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:30:14.938Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952214933_108ba3f27c09687a,9,conversation,conv_1791952214931_7c32bfabb812,CREATE,data-change,,{\"projectId\":\"3\",\"title\":\"Saved conversation\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"f892783ce98f569f0a8ec87165a3ee86aee01711f52c8a549a659de58302c25f\"}",
+    "action": "CREATE",
+    "entityType": "conversation",
+    "entityId": "conv_1791952214931_7c32bfabb812"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:30:14.939Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791952214931_7c32bfabb812"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:30:14.964Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791952214961_6460225792da"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge
+{
+  "timestamp": "2026-10-14T04:30:14.986Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952214984_ab37d5b957882542,9,project,3,UPDATE,data-change,{\"id\":3,\"name\":\"Actual workspace\",\"description\":null,\"metadata\":null,\"status\":\"planning\",\"organizationId\":9,\"createdById\":null,\"ownerId\":null,\"settings\":{},\"createdAt\":\"2026-10-14T04:30:14.885Z\",\"updatedAt\":\"2026-10-14T04:30:14.885Z\"},{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{\"customInstructions\":\"\",\"knowledge\":{\"documents\":[],\"customInstructions\":\"\",\"context\":\"Verified program context.\",\"memoryEnabled\":false}},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:30:14.885Z\",\"updatedAt\":\"2026-10-14T04:30:14.982Z\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"e1e1858f57945957daf8684475de752ad3b6c796142f7a70b884bdc96fe342b1\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "3"
+  }
+}
+
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result 56ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result 21ms
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:30:15.022Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215020_3ed483536f39ed36,9,project,3,UPDATE,data-change,{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:30:14.885Z\",\"updatedAt\":\"2026-10-14T04:30:15.004Z\"},{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{\"connectedApps\":[{\"appId\":\"deep-research\",\"connectedAt\":\"2026-10-14T04:30:15.019Z\",\"status\":\"active\"}],\"knowledge\":{\"appContext\":\"\"}},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:30:14.885Z\",\"updatedAt\":\"2026-10-14T04:30:15.019Z\"},7,author@example.test,admin,::ffff:127.0.0.1,,,true,{\"integrityHash\":\"286fc6c734e96c8a6e83c7bc63383535e7011714c76c826b2678bde06c6c5513\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "3"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:30:15.022Z",
+  "level": "info",
+  "message": "[concept2cure-knowledge-sources] App connected to project",
+  "context": {
+    "projectId": 3,
+    "appId": "deep-research",
+    "totalConnected": 1
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:30:15.036Z",
+  "level": "info",
+  "message": "[concept2cure-knowledge-sources] App connected to project",
+  "context": {
+    "projectId": 3,
+    "appId": "deep-research",
+    "totalConnected": 1
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history
+{
+  "timestamp": "2026-10-14T04:30:15.051Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215050_b33b6e58cf0bd0c0,9,project,proj_3,CREATE,data-change,,{\"authorityProfileId\":\"auth_1791952215049_4d958c4b\",\"authority\":\"FDA\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"f7365a7ca47ebf7fb33e779264c9f2a2ef4f11d084fd1ac4578c888e04524837\"}",
+    "action": "CREATE",
+    "entityType": "project",
+    "entityId": "proj_3"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers
+{
+  "timestamp": "2026-10-14T04:30:15.074Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215073_76e9633f4cab848e,9,artifact,o01-audit-1ce396e2-c2fa-4353-894c-177d46470efc.docx,EXPORT,access,,{\"filename\":\"o01-audit-1ce396e2-c2fa-4353-894c-177d46470efc.docx\",\"fileSize\":34,\"exportHash\":\"f18c0e1fe7933aba4122cad6ab69842350c330c397e8113a1e9798a84165abc2\",\"exportedAt\":\"2026-10-14T04:30:15.073Z\",\"exportedBy\":\"a***@example.test\",\"exportedByRole\":\"admin\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"a22015a19086a20ca9ecb4935959a1bc1624a06f6b32f7d331ef24f93a0e1b7b\"}",
+    "action": "EXPORT",
+    "entityType": "artifact",
+    "entityId": "o01-audit-1ce396e2-c2fa-4353-894c-177d46470efc.docx"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome
+{
+  "timestamp": "2026-10-14T04:30:15.099Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215098_fb3b6caf74205893,9,submission_package,3,EXPORT,access,,{\"readinessPercent\":0,\"eligibleCount\":0,\"totalArtifacts\":0},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"df5e2877c72af505d4fdbfa085f073212440a4f54975ab8c33a94d7b88065042\"}",
+    "action": "EXPORT",
+    "entityType": "submission_package",
+    "entityId": "3"
+  }
+}
+
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge 24ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=false persists the exact requested knowledge 17ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it 16ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it 13ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history 16ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=false remains a real saved profile and reports lost history 11ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers 13ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=false retains the file bytes and exposes the canonical warning headers 7ms
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > a failed business save creates no row and no successful audit receipt
+{
+  "timestamp": "2026-10-14T04:30:15.129Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure create conversation failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_conversations\" (\"id\", \"conversation_id\", \"project_id\", \"organization_id\", \"title\", \"summary\", \"parent_conversation_id\", \"fork_message_index\", \"thread_id\", \"message_count\", \"status\", \"created_by_id\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, default, default, default, $6, $7, default, default, default) returning \"id\", \"conversation_id\", \"project_id\", \"organization_id\", \"title\", \"summary\", \"parent_conversation_id\", \"fork_message_index\", \"thread_id\", \"message_count\", \"status\", \"created_by_id\", \"metadata\", \"created_at\", \"updated_at\"\nparams: conv_1791952215127_2f0ea95d0116,3,9,Refused conversation,,active,7",
+    "operation": "create conversation",
+    "projectId": "3"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+{
+  "timestamp": "2026-10-14T04:30:15.190Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215189_13fd67aeace5be99,9,conversation,conv_1791952215185_01235efb95fe,CREATE,data-change,,{\"projectId\":\"3\",\"title\":\"Authorized fork\",\"forkedFrom\":\"private-parent\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"0b27ad97eee23085d39344a828acd0aaa4e8b1b90ec84f9249bcc8a57947c971\"}",
+    "action": "CREATE",
+    "entityType": "conversation",
+    "entityId": "conv_1791952215185_01235efb95fe"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+{
+  "timestamp": "2026-10-14T04:30:15.190Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791952215185_01235efb95fe"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+{
+  "timestamp": "2026-10-14T04:30:15.202Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215201_df255cc8c6ae9f44,9,message,msg_1791952215199_06dc3cb3094d,CREATE,data-change,,{\"conversationId\":\"conv_1791952215185_01235efb95fe\",\"role\":\"user\",\"contentLength\":16,\"contentHash\":\"e9febbeff722277d01a7ab26aa4c34ba10fae5cbad8952731567bcb3806fdee9\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"416cea9bc7d5439d5b3dc2dcd4f221d9f549d649b62ed337e7ba4c8d48da1171\"}",
+    "action": "CREATE",
+    "entityType": "message",
+    "entityId": "msg_1791952215199_06dc3cb3094d"
+  }
+}
+
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome 15ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=false preserves the actual manifest outcome 13ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > a failed business save creates no row and no successful audit receipt 19ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot append to a conversation from another project through an authorized project URL 15ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot fork private conversation content into an authorized project 12ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot fork an archived parent even in the authorized project 13ms
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+{
+  "timestamp": "2026-10-14T04:30:15.213Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215212_34c8abf9cf4fa9a6,9,conversation,conv_1791952215185_01235efb95fe,UPDATE,data-change,{\"id\":4,\"conversationId\":\"conv_1791952215185_01235efb95fe\",\"projectId\":3,\"organizationId\":9,\"title\":\"Authorized fork\",\"summary\":null,\"parentConversationId\":41,\"forkMessageIndex\":0,\"threadId\":null,\"messageCount\":0,\"status\":\"active\",\"createdById\":7,\"metadata\":null,\"createdAt\":\"2026-10-14T04:30:15.187Z\",\"updatedAt\":\"2026-10-14T04:30:15.200Z\"},{\"title\":\"Renamed fork\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"64f55aee25a2904258d36f7156d2edef151ddd97c13c0eb8e6411e74d1e97f01\"}",
+    "action": "UPDATE",
+    "entityType": "conversation",
+    "entityId": "conv_1791952215185_01235efb95fe"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+{
+  "timestamp": "2026-10-14T04:30:15.223Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791952215222_49d98e5ade5350ff,9,conversation,conv_1791952215185_01235efb95fe,DELETE,data-change,{\"id\":4,\"conversationId\":\"conv_1791952215185_01235efb95fe\",\"projectId\":3,\"organizationId\":9,\"title\":\"Renamed fork\",\"summary\":null,\"parentConversationId\":41,\"forkMessageIndex\":0,\"threadId\":null,\"messageCount\":0,\"status\":\"active\",\"createdById\":7,\"metadata\":null,\"createdAt\":\"2026-10-14T04:30:15.187Z\",\"updatedAt\":\"2026-10-14T04:30:15.211Z\"},,7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"88a17b8169eb3be9f1ff238a6437d904a01dc12d3c9916f64cfcca93f0233bd8\"}",
+    "action": "DELETE",
+    "entityType": "conversation",
+    "entityId": "conv_1791952215185_01235efb95fe"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=false
+{
+  "timestamp": "2026-10-14T04:30:15.243Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791952215239_4c3f5cdfab21"
+  }
+}
+
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true 56ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=false 48ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private apps through a stale administrator claim 8ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private authority-profiles through a stale administrator claim 7ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private agency-communications through a stale administrator claim 7ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private publishops/services through a stale administrator claim 7ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private submission-center/items through a stale administrator claim 7ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private knowledge through a stale administrator claim 6ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private apps through a stale administrator claim 9ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private authority-profiles through a stale administrator claim 9ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private conversations through a stale administrator claim 8ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a private project use grant permits reads but does not permit metadata writes 14ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a viewer with project edit sharing cannot write governed records 7ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > revoked membership refuses reads despite retained project grants and a stale token 4ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a valid member in another organization cannot read the same integer project 6ms
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an actual editor of a private project can read and save with a stale viewer claim 18ms
+
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+   Start at  04:30:09
+   Duration  5.42s (transform 1.33s, setup 57ms, import 2.66s, tests 2.52s, environment 0ms)
+

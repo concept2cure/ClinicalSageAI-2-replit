@@ -1,0 +1,66 @@
+{
+  "recordedAt": "2026-10-16T21:33:25.311Z",
+  "assessedCanonicalBaseline": "990a687c6",
+  "scope": "D2 selected-source V2 producer, shared types and identity factory",
+  "sourceFiles": [
+    {
+      "path": "shared/authoring/draft-source-reference.ts",
+      "bytes": 805,
+      "sha256": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d"
+    },
+    {
+      "path": "server/services/ana/draft-source-identity.ts",
+      "bytes": 1549,
+      "sha256": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7"
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "bytes": 10423,
+      "sha256": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-identity.test.ts",
+      "bytes": 3967,
+      "sha256": "afd9143794cf8af09d059839fdd9ac7cb5f13e4d4509a10cade99a8f4ac65854"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "bytes": 13817,
+      "sha256": "1f64a79cc2ad960aec2daa596615172879273ff6d19425907d6fb1a1fea43978"
+    },
+    {
+      "path": "server/services/ana/draft-source-window.ts",
+      "bytes": 4948,
+      "sha256": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-source-window.test.ts",
+      "bytes": 2967,
+      "sha256": "f35822f9e7f565200671d8dadde399d00bc92a8f177b1dbbd2e226ee7ac0bf73"
+    }
+  ],
+  "verification": {
+    "focusedTests": {
+      "passed": 77,
+      "files": 3,
+      "log": "ingestion-focused-final.txt"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 0,
+      "files": 5,
+      "report": "ingestion-lint-final.json"
+    },
+    "authority": "Focused loader tests mock canonical actor and program services; they establish producer orchestration and refusal, not genuine database authorization or locking.",
+    "limits": "Loader-return source checks establish a point-in-time checkpoint. They do not prove provider dispatch/delivery, comprehension, scientific qualification or agency acceptance."
+  },
+  "behavior": [
+    "V2 hashes bind complete well-formed extracted text and exact original UTF-16 slice.",
+    "Selected IDs and serving-context identity/project/executor are copied before asynchronous imports or reads.",
+    "Canonical actor metadata identity must match text identity; all sources are privately reloaded and validated after assembly.",
+    "Original-file availability, disposition, extraction metadata and source eligibility changes refuse the entire context.",
+    "One-unit inward boundary adjustment prevents splitting a valid surrogate pair without normalizing text.",
+    "Audit metadata retains version and hashes with copied spans and no raw evidence text.",
+    "Existing 12,000-unit per-source and 48,000-unit aggregate budgets remain in effect."
+  ]
+}

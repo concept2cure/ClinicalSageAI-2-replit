@@ -1,0 +1,47 @@
+{
+  "node": "v22.23.3",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts"
+  ],
+  "startedAt": "2026-10-17T22:25:08.728Z",
+  "finishedAt": "2026-10-17T22:25:14.480Z",
+  "exitCode": 0,
+  "scope": "Actual source decoder/verifier/producer; mocked catalog and actor/program authority seams; no database/provider or agency qualification",
+  "counterfactual": null,
+  "before": {
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/import-source-references.ts": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/vault/document-catalog-eligibility.ts": "284200d721fa4e84cfc644d417fe0b01485410e0977f87d4822eb62a782f9ea0",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "088f05d52c2b3a214e114e99c31541602984f5a1e9bb18a1e697d785f9812b0d",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e"
+  },
+  "after": {
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/import-source-references.ts": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/vault/document-catalog-eligibility.ts": "284200d721fa4e84cfc644d417fe0b01485410e0977f87d4822eb62a782f9ea0",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "088f05d52c2b3a214e114e99c31541602984f5a1e9bb18a1e697d785f9812b0d",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e"
+  },
+  "sourcesUnchangedDuringRun": true
+}

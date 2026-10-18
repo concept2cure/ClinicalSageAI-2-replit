@@ -1,0 +1,1 @@
+Scoped ESLint completed successfully for native-parent-access.probe.ts and vitest.native-probe.config.ts: 0 errors, 0 warnings.

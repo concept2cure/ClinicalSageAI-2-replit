@@ -38,9 +38,10 @@ export interface UserIdentity {
   bio: string | null;
   avatar: string | null;
   greetingName: string; // How AnA addresses them (from prefs or parsed name)
-  role: string; // admin, manager, member, viewer
-  expertiseLevel: string; // novice, intermediate, expert
-  communicationStyle: string; // concise, detailed, academic
+  /** organization_users.role in this organization; null when no membership row records one. */
+  role: string | null; // admin, manager, member, viewer
+  expertiseLevel: string | null; // novice, intermediate, expert; null when not recorded
+  communicationStyle: string | null; // concise, detailed, academic; null when not recorded
   focusAreas: string[]; // ["CMC", "nonclinical", "clinical"]
   lastLogin: string | null;
 }
@@ -49,10 +50,10 @@ export interface OrganizationProfile {
   id: number;
   name: string;
   slug: string;
-  industryMode: string; // biotech, pharma, cro, medtech, academic
-  tier: string; // free, standard, professional, enterprise
-  maxUsers: number;
-  maxProjects: number;
+  industryMode: string | null; // biotech, pharma, cro, medtech, academic; null when not recorded
+  tier: string | null; // free, standard, professional, enterprise; null when not recorded
+  maxUsers: number | null; // null when not recorded
+  maxProjects: number | null; // null when not recorded
   enabledModules: string[]; // from module_subscriptions
   settings: Record<string, any>;
 }
@@ -60,9 +61,11 @@ export interface OrganizationProfile {
 export interface ProjectSummary {
   id: number;
   name: string;
-  submissionType: string;
+  /** As recorded in the project's metadata; null when none is recorded, never assumed. */
+  submissionType: string | null;
   status: string;
-  progress: number;
+  /** projects.progress as recorded; null when NULL (a recorded 0 stays 0). */
+  progress: number | null;
   phase: string | null;
   therapeuticArea: string | null;
   role: string; // user's role on this project (owner, member)
@@ -107,22 +110,32 @@ export interface RecentActivity {
   createdAt: string;
 }
 
+/**
+ * Every facet below that may be null is null either because there is nothing
+ * recorded (no organization row, no active session) or because its read
+ * failed — and a failed read is named in `unread`. Null is never "none found"
+ * for a facet listed there.
+ */
 export interface UserIntelligence {
   identity: UserIdentity;
-  organization: OrganizationProfile;
-  projects: ProjectSummary[]; // all user's projects across the org
+  /** The organization this was loaded for, whether or not its profile could be read. */
+  organizationId: number;
+  organization: OrganizationProfile | null;
+  projects: ProjectSummary[] | null; // all user's projects across the org
   activeProject: ProjectSummary | null;
   currentSession: WorkSession | null; // what they're doing right now
-  recentSessions: WorkSession[]; // last 5 work sessions
-  workQueue: WorkQueueItem[]; // AI-recommended next tasks
-  recentActivity: RecentActivity[]; // last 10 activities
+  recentSessions: WorkSession[] | null; // last 5 work sessions
+  workQueue: WorkQueueItem[] | null; // AI-recommended next tasks
+  recentActivity: RecentActivity[] | null; // last 10 activities
   conversationMemory: {
     // summary of past AI interactions
     totalConversations: number;
     totalMessages: number;
     lastTopics: string[]; // last 5 things they asked about
     frequentTopics: string[]; // most common query themes
-  };
+  } | null;
+  /** The facets whose read failed, sorted; each is null above. */
+  unread: string[];
   timestamp: string;
 }
 
@@ -141,7 +154,7 @@ async function loadUserIdentity(
     const result = await pool.query(
       `SELECT u.id, u.name, u.email, u.title, u.department, u.bio, u.avatar,
               u.last_login, u.preferences,
-              COALESCE(ou.role, 'member') as org_role
+              ou.role as org_role
        FROM users u
        LEFT JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $2
        WHERE u.id = $1
@@ -168,15 +181,17 @@ async function loadUserIdentity(
       bio: u.bio,
       avatar: u.avatar,
       greetingName,
-      role: u.org_role || 'member',
-      expertiseLevel: prefs.expertise_level || 'intermediate',
-      communicationStyle: prefs.communication_style || 'professional',
+      // 2026-10-15: a user with no membership row read 'member', and unrecorded
+      // preferences read 'intermediate' / 'professional'. Unrecorded is null.
+      role: u.org_role || null,
+      expertiseLevel: prefs.expertise_level || null,
+      communicationStyle: prefs.communication_style || null,
       focusAreas: prefs.focus_areas || [],
       lastLogin: u.last_login?.toISOString() || null,
     };
   } catch (error) {
     logger.warn('Failed to load identity', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -204,20 +219,22 @@ async function loadOrganizationProfile(
     if (orgResult.rows.length === 0) return null;
 
     const o = orgResult.rows[0];
+    // 2026-10-15: unrecorded values were filled with 'biotech' / 'standard' / 5 / 10,
+    // and AnA was told an organization with no recorded industry is a biotech.
     return {
       id: o.id,
       name: o.name,
       slug: o.slug,
-      industryMode: o.industry_mode || 'biotech',
-      tier: o.tier || 'standard',
-      maxUsers: o.max_users || 5,
-      maxProjects: o.max_projects || 10,
+      industryMode: o.industry_mode || null,
+      tier: o.tier || null,
+      maxUsers: o.max_users ?? null,
+      maxProjects: o.max_projects ?? null,
       enabledModules: modulesResult.rows.map((r: any) => r.module_id),
       settings: o.settings || {},
     };
   } catch (error) {
     logger.warn('Failed to load org profile', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -247,9 +264,11 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
       return {
         id: p.id,
         name: p.name,
-        submissionType: meta.submissionType || meta.submission_type || 'IND',
+        // 2026-10-15: an unrecorded type read 'IND' (detectActiveModule then chose
+        // the IND module) and NULL progress read 0. Unrecorded is null.
+        submissionType: meta.submissionType || meta.submission_type || null,
         status: p.status,
-        progress: p.progress || 0,
+        progress: p.progress ?? null,
         phase: meta.phase || meta.clinicalPhase || null,
         therapeuticArea: meta.therapeuticArea || meta.therapeutic_area || null,
         role: p.user_role,
@@ -258,7 +277,7 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
     });
   } catch (error) {
     logger.warn('Failed to load projects', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -268,7 +287,9 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
 async function loadCurrentSession(userId: number, organizationId: number): Promise<WorkSession | null> {
   try {
     // Project-name resolution is org-scoped so a session row can never
-    // surface another org's project name.
+    // surface another org's project name. 2026-10-15: the session rows were
+    // not, so a user in two organizations had the other one's open work
+    // (title, reference, project id) as this one's current session.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
@@ -276,7 +297,7 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
        LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
-       WHERE uws.user_id = $1 AND uws.session_type = 'active'
+       WHERE uws.user_id = $1 AND uws.organization_id = $2 AND uws.session_type = 'active'
        ORDER BY uws.last_activity_at DESC
        LIMIT 1`,
       [userId, organizationId]
@@ -299,7 +320,7 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
     };
   } catch (error) {
     logger.warn('Failed to load current session', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -308,8 +329,8 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
  */
 async function loadRecentSessions(userId: number, organizationId: number): Promise<WorkSession[]> {
   try {
-    // Project-name resolution is org-scoped so a session row can never
-    // surface another org's project name.
+    // Project-name resolution and the session rows are both org-scoped
+    // (the rows since 2026-10-15; see loadCurrentSession).
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
@@ -317,7 +338,7 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
        LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
-       WHERE uws.user_id = $1 AND uws.session_type = 'completed'
+       WHERE uws.user_id = $1 AND uws.organization_id = $2 AND uws.session_type = 'completed'
        ORDER BY uws.last_activity_at DESC
        LIMIT 5`,
       [userId, organizationId]
@@ -337,7 +358,7 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
     }));
   } catch (error) {
     logger.warn('Failed to load recent sessions', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -346,13 +367,16 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
  */
 async function loadWorkQueue(userId: number, organizationId: number): Promise<WorkQueueItem[]> {
   try {
+    // 2026-10-15: the project join was unscoped. POST /work-queue/add stores the
+    // body's projectId as given, so an item naming another organization's
+    // project id came back with that project's name.
     const result = await pool.query(
       `SELECT uwq.id, uwq.task_type, uwq.task_title, uwq.task_description,
               uwq.priority, uwq.reference_type, uwq.reference_id,
               uwq.project_id, p.name as project_name,
               uwq.due_date, uwq.estimated_minutes, uwq.source, uwq.ai_reasoning
        FROM user_work_queue uwq
-       LEFT JOIN projects p ON p.id = uwq.project_id
+       LEFT JOIN projects p ON p.id = uwq.project_id AND p.organization_id = $2
        WHERE uwq.user_id = $1 AND uwq.organization_id = $2
          AND uwq.status = 'pending'
        ORDER BY uwq.priority ASC, uwq.due_date ASC NULLS LAST
@@ -377,7 +401,7 @@ async function loadWorkQueue(userId: number, organizationId: number): Promise<Wo
     }));
   } catch (error) {
     logger.warn('Failed to load work queue', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -389,12 +413,14 @@ async function loadRecentActivity(
   organizationId: number
 ): Promise<RecentActivity[]> {
   try {
+    // 2026-10-15: the project join was unscoped, so an activity row naming
+    // another organization's project id came back with that project's name.
     const result = await pool.query(
       `SELECT af.action, af.entity_type, af.entity_name, af.description,
               af.created_at,
               p.name as project_name
        FROM activity_feed af
-       LEFT JOIN projects p ON p.id = CASE
+       LEFT JOIN projects p ON p.organization_id = $2 AND p.id = CASE
          WHEN af.entity_type = $3 THEN CAST(af.entity_id AS INTEGER)
          ELSE NULL
        END
@@ -414,7 +440,7 @@ async function loadRecentActivity(
     }));
   } catch (error) {
     logger.warn('Failed to load activity', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -468,7 +494,7 @@ async function loadConversationMemory(
     };
   } catch (error) {
     logger.warn('Failed to load conversation memory', { error });
-    return { totalConversations: 0, totalMessages: 0, lastTopics: [], frequentTopics: [] };
+    throw error;
   }
 }
 
@@ -481,7 +507,9 @@ async function loadConversationMemory(
  * personalized, context-aware assistant.
  *
  * All sub-queries run in parallel and fail independently, so partial
- * intelligence is still valuable.
+ * intelligence is still valuable — and a facet whose read failed is null and
+ * named in `unread`. A failed identity read fails the whole load: without it
+ * there is no user to describe, and it is not "user not found" (null).
  */
 export async function loadUserIntelligence(params: {
   userId: number;
@@ -489,6 +517,17 @@ export async function loadUserIntelligence(params: {
   activeProjectId?: number;
 }): Promise<UserIntelligence | null> {
   const { userId, organizationId, activeProjectId } = params;
+
+  /* 2026-10-15: each loader caught its own error to null, [] or zero counts,
+     and a failed organization read became an invented 'Unknown Organization'
+     ('biotech', 'standard', 5 users, 10 projects) — so a failed read was
+     indistinguishable from an empty one. */
+  const unread: string[] = [];
+  const facet = <T>(name: string, load: Promise<T>): Promise<T | null> =>
+    load.catch(() => {
+      unread.push(name); // the loader has logged the error
+      return null;
+    });
 
   const [
     identity,
@@ -501,40 +540,32 @@ export async function loadUserIntelligence(params: {
     conversationMemory,
   ] = await Promise.all([
     loadUserIdentity(userId, organizationId),
-    loadOrganizationProfile(organizationId),
-    loadUserProjects(userId, organizationId),
-    loadCurrentSession(userId, organizationId),
-    loadRecentSessions(userId, organizationId),
-    loadWorkQueue(userId, organizationId),
-    loadRecentActivity(userId, organizationId),
-    loadConversationMemory(userId, organizationId),
+    facet('organization profile', loadOrganizationProfile(organizationId)),
+    facet('user projects', loadUserProjects(userId, organizationId)),
+    facet('current work session', loadCurrentSession(userId, organizationId)),
+    facet('recent work sessions', loadRecentSessions(userId, organizationId)),
+    facet('work queue', loadWorkQueue(userId, organizationId)),
+    facet('recent activity', loadRecentActivity(userId, organizationId)),
+    facet('conversation memory', loadConversationMemory(userId, organizationId)),
   ]);
 
   if (!identity) return null;
 
   // Determine active project
+  const readProjects = projects ?? [];
   let activeProject: ProjectSummary | null = null;
   if (activeProjectId) {
-    activeProject = projects.find(p => p.id === activeProjectId) || null;
+    activeProject = readProjects.find(p => p.id === activeProjectId) || null;
   } else if (currentSession?.projectId) {
-    activeProject = projects.find(p => p.id === currentSession.projectId) || null;
-  } else if (projects.length > 0) {
-    activeProject = projects[0]; // Most recently accessed
+    activeProject = readProjects.find(p => p.id === currentSession.projectId) || null;
+  } else if (readProjects.length > 0) {
+    activeProject = readProjects[0]; // Most recently accessed
   }
 
   return {
     identity,
-    organization: organization || {
-      id: organizationId,
-      name: 'Unknown Organization',
-      slug: 'unknown',
-      industryMode: 'biotech',
-      tier: 'standard',
-      maxUsers: 5,
-      maxProjects: 10,
-      enabledModules: [],
-      settings: {},
-    },
+    organizationId,
+    organization,
     projects,
     activeProject,
     currentSession,
@@ -542,6 +573,7 @@ export async function loadUserIntelligence(params: {
     workQueue,
     recentActivity,
     conversationMemory,
+    unread: [...unread].sort(),
     timestamp: new Date().toISOString(),
   };
 }
@@ -565,12 +597,14 @@ export async function touchWorkSession(params: {
   const { userId, organizationId, projectId, contextType, contextReference, contextTitle } = params;
 
   try {
-    // Try to find an active session for this user
+    // The user's active session in THIS organization. 2026-10-15: it was found
+    // across organizations, so a turn in one closed or bumped (and could retitle)
+    // the session open in another.
     const existingResult = await pool.query(
       `SELECT id, project_id, context_type FROM user_work_sessions
-       WHERE user_id = $1 AND session_type = 'active'
+       WHERE user_id = $1 AND organization_id = $2 AND session_type = 'active'
        ORDER BY last_activity_at DESC LIMIT 1`,
-      [userId]
+      [userId, organizationId]
     );
 
     if (existingResult.rows.length > 0) {
@@ -648,7 +682,18 @@ export async function recordArtifactCreation(userId: number): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Add an AI-recommended task to a user's work queue.
+ * Where a queued item came from. 'manual' is a person's; the others are the
+ * rule that derived it from section status (generateWorkRecommendations).
+ * 'ai' is not written any more: nothing here asks a model (2026-10-15).
+ */
+export type WorkQueueSource = 'manual' | 'deadline' | 'review_request' | 'sequence';
+
+/**
+ * Add a task to a user's work queue.
+ *
+ * A failed insert used to log at warn and return null, and POST
+ * /work-queue/add answered 200 with { id: null }; it throws now. The
+ * ai_confidence column is written NULL: no model scored these items.
  */
 export async function addToWorkQueue(params: {
   userId: number;
@@ -662,40 +707,36 @@ export async function addToWorkQueue(params: {
   referenceId?: string;
   dueDate?: Date;
   estimatedMinutes?: number;
-  source?: string;
-  aiConfidence?: number;
+  source: WorkQueueSource;
+  /** Why the item is queued, in terms of the record it was derived from. */
   aiReasoning?: string;
-}): Promise<number | null> {
-  try {
-    const result = await pool.query(
-      `INSERT INTO user_work_queue
-        (user_id, organization_id, project_id, task_type, task_title, task_description,
-         priority, reference_type, reference_id, due_date, estimated_minutes,
-         source, ai_confidence, ai_reasoning)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-       RETURNING id`,
-      [
-        params.userId,
-        params.organizationId,
-        params.projectId || null,
-        params.taskType,
-        params.taskTitle,
-        params.taskDescription || null,
-        params.priority || 50,
-        params.referenceType || null,
-        params.referenceId || null,
-        params.dueDate || null,
-        params.estimatedMinutes || null,
-        params.source || 'ai',
-        params.aiConfidence || null,
-        params.aiReasoning || null,
-      ]
-    );
-    return result.rows[0]?.id || null;
-  } catch (error) {
-    logger.warn('Failed to add to queue', { error });
-    return null;
-  }
+}): Promise<number> {
+  const result = await pool.query(
+    `INSERT INTO user_work_queue
+      (user_id, organization_id, project_id, task_type, task_title, task_description,
+       priority, reference_type, reference_id, due_date, estimated_minutes,
+       source, ai_confidence, ai_reasoning)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL, $13)
+     RETURNING id`,
+    [
+      params.userId,
+      params.organizationId,
+      params.projectId || null,
+      params.taskType,
+      params.taskTitle,
+      params.taskDescription || null,
+      params.priority || 50,
+      params.referenceType || null,
+      params.referenceId || null,
+      params.dueDate || null,
+      params.estimatedMinutes || null,
+      params.source,
+      params.aiReasoning || null,
+    ]
+  );
+  const id = result.rows[0]?.id;
+  if (id == null) throw new Error('The work-queue item was not recorded.');
+  return Number(id);
 }
 
 /**
@@ -745,18 +786,23 @@ export async function generateWorkRecommendations(params: {
       (s: any) => s.status === 'internal_review' || s.status === 'qc_review'
     );
 
-    // Clear old AI recommendations for this project
+    /* Every item below is derived by rule from the sections' recorded status
+       and deadline. They were written as source 'ai' with constant
+       confidences (0.95 / 0.85 / 0.75) and reasons nothing checked —
+       "Blocking downstream sections from proceeding" with no dependency
+       looked at — and lumen-context-builder put those reasons in AnA's
+       prompt. Each now carries the rule that produced it and the facts it
+       read (2026-10-15). Old 'ai' rows are cleared with the rule's own. */
     await pool.query(
       `DELETE FROM user_work_queue
-       WHERE user_id = $1 AND project_id = $2 AND source = 'ai'
+       WHERE user_id = $1 AND project_id = $2
+         AND source IN ('ai', 'deadline', 'review_request', 'sequence')
          AND status = 'pending'`,
       [userId, projectId]
     );
 
-    // Generate new recommendations
     let priority = 1;
 
-    // Overdue items are highest priority
     for (const item of overdueItems.slice(0, 3)) {
       await addToWorkQueue({
         userId,
@@ -764,36 +810,33 @@ export async function generateWorkRecommendations(params: {
         projectId,
         taskType: 'draft_section',
         taskTitle: `OVERDUE: Complete ${item.title || item.section_code}`,
-        taskDescription: `Section ${item.section_code} (Module ${item.module}) was due ${new Date(item.deadline).toLocaleDateString()} and is currently "${item.status}". This needs immediate attention.`,
+        taskDescription: `Section ${item.section_code} (Module ${item.module}) was due ${new Date(item.deadline).toLocaleDateString()} and is currently "${item.status}".`,
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
         dueDate: item.deadline,
-        source: 'ai',
-        aiConfidence: 0.95,
-        aiReasoning: 'Section is past deadline — regulatory timeline at risk',
+        source: 'deadline',
+        aiReasoning: `Past its deadline (${new Date(item.deadline).toISOString().slice(0, 10)}) and still "${item.status}".`,
       });
     }
 
-    // Items needing review
     for (const item of inReview.slice(0, 2)) {
+      const stage = item.status === 'internal_review' ? 'internal' : 'QC';
       await addToWorkQueue({
         userId,
         organizationId,
         projectId,
         taskType: 'review_document',
         taskTitle: `Review: ${item.title || item.section_code}`,
-        taskDescription: `Section ${item.section_code} is awaiting ${item.status === 'internal_review' ? 'internal' : 'QC'} review.`,
+        taskDescription: `Section ${item.section_code} is awaiting ${stage} review.`,
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
-        source: 'ai',
-        aiConfidence: 0.85,
-        aiReasoning: 'Blocking downstream sections from proceeding',
+        source: 'review_request',
+        aiReasoning: `Awaiting ${stage} review.`,
       });
     }
 
-    // Not-started items in logical order
     for (const item of myNotStarted.slice(0, 5)) {
       await addToWorkQueue({
         userId,
@@ -805,12 +848,13 @@ export async function generateWorkRecommendations(params: {
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
-        source: 'ai',
-        aiConfidence: 0.75,
-        aiReasoning: `Follows CTD Module ${item.module} authoring sequence`,
+        source: 'sequence',
+        aiReasoning: `Not started and ${item.assigned_to_id === userId ? 'assigned to you' : 'unassigned'}; listed in Module ${item.module} order.`,
       });
     }
   } catch (error) {
+    // A regeneration that failed is reported, not served as the queue.
     logger.warn('Failed to generate recommendations', { error });
+    throw error;
   }
 }

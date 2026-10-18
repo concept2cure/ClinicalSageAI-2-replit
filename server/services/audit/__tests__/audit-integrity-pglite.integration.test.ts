@@ -91,6 +91,31 @@ describe('verifyAuditIntegrity against PGlite', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('is unverifiable, not ok, when rows exist and none carries a seal', async () => {
+    // Written with no key, verified with one: every row is unsealed. The walk
+    // found no seal to fail and this read `seals: { checked: true, valid: true }`.
+    delete process.env.AUDIT_HMAC_KEY;
+    for (let i = 0; i < 3; i++) await appendRow(row(i));
+    process.env.AUDIT_HMAC_KEY = KEY;
+    const result = await verifyAuditIntegrity(pglite as unknown as PoolClient);
+    expect(result.chain.ok).toBe(true);
+    expect(result.seals).toMatchObject({ checked: false });
+    expect(result.unverifiable).toBe(true);
+    expect(result.ok).toBe(false);
+  });
+
+  it('is unverifiable when a row written after sealing began carries no seal', async () => {
+    for (let i = 0; i < 2; i++) await appendRow(row(i));
+    delete process.env.AUDIT_HMAC_KEY;
+    await appendRow(row(2)); // a lapse in sealing — or a removed seal; the walk cannot tell
+    process.env.AUDIT_HMAC_KEY = KEY;
+    const result = await verifyAuditIntegrity(pglite as unknown as PoolClient);
+    expect(result.chain.ok).toBe(true);
+    expect(result.seals).toMatchObject({ checked: true, valid: true, verified: 2, unsealed: 1, unsealedAfterSealed: 1 });
+    expect(result.unverifiable).toBe(true);
+    expect(result.ok).toBe(false);
+  });
+
   it('is ok for an empty log', async () => {
     const result = await verifyAuditIntegrity(pglite as unknown as PoolClient);
     expect(result.chain.ok).toBe(true);

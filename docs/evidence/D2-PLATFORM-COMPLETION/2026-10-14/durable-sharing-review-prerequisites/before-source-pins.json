@@ -1,0 +1,24 @@
+{
+  "status": "prepared-unexecuted; root contract approval pending",
+  "contract": "/tmp/platform-sharing-review-durability-contract.md",
+  "files": [
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "baseSHA256": "0bc9fb272c760e6621d636b98e05faee3459de49d611ffe16840529648190899",
+      "preparedSHA256": "0c572cacaca9cca89fa194f2e1b0be307d71f1a01ccd8d44200061bb64fa0c98",
+      "changed": true
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "baseSHA256": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c",
+      "preparedSHA256": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c",
+      "changed": false
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "baseSHA256": "4cb6f1ec23eb5a0a63be3df60ac80aac3b0de8ce1331a06f1c1b9918bb3fe99f",
+      "preparedSHA256": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0",
+      "changed": true
+    }
+  ]
+}

@@ -46,19 +46,29 @@ const H = vi.hoisted(() => ({
   sql: [] as string[],
 }));
 
+function authoringQuery(s: string, params: unknown[]) {
+  if (/FROM regulatory_programs/i.test(s)) return { rows: [{ id: '00000000-0000-4000-8000-000000000012' }] };
+  if (/FROM authoring_documents/i.test(s)) return { rows: [{ id: '00000000-0000-4000-8000-000000000011', title: 'Control', client_program_id: '00000000-0000-4000-8000-000000000012' }] };
+  if (/FROM authoring_sections/i.test(s)) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Control document numbers.', order_index: 1 }] };
+  if (/INSERT INTO authoring_documents/i.test(s)) return { rows: [{ id: params[0] }] };
+  if (/INSERT INTO authoring_sections/i.test(s)) return { rows: [{ id: 'section', code: params[1], content: params[3] }] };
+  return null;
+}
+
 /** One qms_documents row, read and written the way Postgres would. */
 async function fakeQuery(sql: string, params: unknown[] = []) {
   const s = String(sql);
   H.sql.push(s);
   const doc = H.doc;
+  const authoring = authoringQuery(s, params); if (authoring) return authoring;
   if (/^\s*INSERT INTO qms_documents/i.test(s)) {
-    return { rows: [{ id: 21, status: params[6] ?? 'draft' }], rowCount: 1 };
+    return { rows: [{ id: 21, status: 'draft' }], rowCount: 1 };
   }
   if (!doc) return { rows: [], rowCount: 0 };
   if (/^\s*UPDATE qms_documents/i.test(s)) {
     const guarded = /status\s+IN\s*\(\s*'draft'\s*,\s*'in_review'\s*\)/i.test(s);
     if (guarded && !['draft', 'in_review'].includes(String(doc.status))) return { rows: [], rowCount: 0 };
-    const statusParam = /(?:SET|,)\s*status\s*=\s*\$(\d+)/i.exec(s);
+    const statusParam = /(?:SET|,)\s*status\s*=\s*(?:COALESCE\()?\$(\d+)/i.exec(s);
     const next = { ...doc };
     if (statusParam) next.status = params[Number(statusParam[1]) - 1];
     if (/title\s*=\s*\$/i.test(s)) next.title = 'edited';
@@ -69,7 +79,13 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   return { rows: [], rowCount: 0 };
 }
 
-vi.mock('../../db', () => ({ pool: { query: (sql: string, p?: unknown[]) => fakeQuery(sql, p) } }));
+vi.mock('../../db', () => ({ pool: { query: fakeQuery, connect: async () => ({ query: fakeQuery, release: () => undefined }) } }));
+vi.mock('../c2c/actions', () => ({ recordGovernedAction: async () => ({ actionId: 'action', auditId: 'audit', sha256Chain: 'chain' }) }));
+vi.mock('../../services/c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }) }));
+// Actual fresh membership/private-project checks are exercised in the canonical QMS PGlite lifecycle suite.
+vi.mock('../../services/authoring/authoring-program-access', () => ({ authorizeAuthoringProgram: async () => ({principal:{id:'7',email:null,roles:['ADMIN']}}), AuthoringProgramAccessError: class extends Error {} }));
+vi.mock('../../services/authoring/authoring-evidence', () => ({ createRevision: async () => 'revision', writeAuthoringAuditTrail: async () => undefined }));
+vi.mock('../../services/authoring/authoring-permissions', async (original) => ({ ...await original<typeof import('../../services/authoring/authoring-permissions')>(), grantAuthoringPermission: async () => undefined }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async () => ({ persisted: true, chained: true }),
 }));
@@ -80,6 +96,7 @@ vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
   requireEditorAccess: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 
+vi.mock('../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'admin' }));
 import mdxQmsRouter from '../mdx-qms';
 
 function app() {
@@ -88,6 +105,7 @@ function app() {
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: 9, id: 7 };
     (req as unknown as { tenantContext: unknown }).tenantContext = { organizationId: 9 };
+    Object.assign(req, { dbClient: { query: fakeQuery } });
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
@@ -103,7 +121,7 @@ const docInState = (status: string) => ({
   status,
   approver_id: status === 'effective' ? 3 : null,
   approved_at: status === 'effective' ? '2026-09-20T10:00:00Z' : null,
-  author_id: 7,
+  author_id: 7, authoring_document_id: '00000000-0000-4000-8000-000000000011',
 });
 
 const wrote = () => H.sql.some((s) => /^\s*(UPDATE|INSERT)/i.test(s));
@@ -118,7 +136,7 @@ describe('PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state',
     it(`refuses status=${to} on a document in review and changes nothing`, async () => {
       H.doc = docInState('in_review');
       const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: to });
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
       expect(H.doc?.status).toBe('in_review');
       expect(H.doc?.approver_id).toBeNull();
       expect(wrote()).toBe(false);
@@ -128,7 +146,7 @@ describe('PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state',
   it('refuses status=retired on an effective document: retirement is the signed retire route', async () => {
     H.doc = docInState('effective');
     const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'retired' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
     expect(H.doc?.status).toBe('effective');
     expect(wrote()).toBe(false);
   });
@@ -157,14 +175,14 @@ describe('POST /api/mdx/qms/documents cannot create an effective document', () =
     const res = await request(app())
       .post('/api/mdx/qms/documents')
       .send({ docNumber: 'SOP-002', title: 'Born approved', docType: 'sop', status: 'effective', effectiveDate: '2026-09-24' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
     expect(wrote()).toBe(false);
   });
 
   it('still creates a draft', async () => {
     const res = await request(app())
       .post('/api/mdx/qms/documents')
-      .send({ docNumber: 'SOP-002', title: 'New procedure', docType: 'sop' });
+      .send({ docNumber: 'SOP-002', title: 'New procedure', docType: 'sop', programId: '00000000-0000-4000-8000-000000000012', reason: 'Create actual document' });
     expect(res.status).toBe(201);
   });
 });
@@ -173,14 +191,14 @@ describe('PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a sig
   it('refuses status=effective before any write', async () => {
     H.doc = docInState('in_review');
     const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'effective' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
     expect(H.doc?.status).toBe('in_review');
     expect(wrote()).toBe(false);
   });
 
   it('refuses to edit an effective document: that is a revision', async () => {
     H.doc = docInState('effective');
-    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ title: 'Quietly changed' });
+    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ title: 'Quietly changed', reason: 'Attempt controlled edit' });
     expect(res.status).toBe(409);
     expect(res.body.details?.code).toBe('QMS_DOCUMENT_CONTROLLED');
     expect(H.doc?.title).toBe('Design control');
@@ -189,14 +207,14 @@ describe('PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a sig
 
   it('still edits a draft and routes it for review', async () => {
     H.doc = docInState('draft');
-    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review', title: 'Design control' });
+    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ status: 'in_review', title: 'Design control', reason: 'Route for independent review' });
     expect(res.status).toBe(200);
     expect(H.doc?.status).toBe('in_review');
   });
 
   it('says a missing document is missing, not controlled', async () => {
     H.doc = null;
-    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ title: 'x' });
+    const res = await request(app()).patch('/api/mdx/qms/documents/11').send({ title: 'x', reason: 'Update document metadata' });
     expect(res.status).toBe(404);
   });
 });

@@ -20,22 +20,28 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { DispatchReadiness } from '../surfaces/DispatchReadiness';
+import { useActiveSurfaceContext, toModuleContext } from '../surfaceContext';
+
+function AnaContextProbe() {
+  const context = useActiveSurfaceContext('dispatch-readiness');
+  return <pre data-testid="ana-wire-context">{JSON.stringify(toModuleContext(context))}</pre>;
+}
 
 const PROGRAM_UUID = '5b1c2d3e-0000-4000-8000-000000000009';
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data: payload }) }) as Response;
 const rule = (id: string, title: string) => ({ id, title, category: 'integrity', regions: ['ich'], severity: 'high', source: 's', enforcement: 'dispatch-readiness', enforcementStatement: 'e' });
 const NOTE = 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
 
-const assessment = (external: Record<string, unknown>) => ({
+const assessment = (external: Record<string, unknown>, validation: Record<string, unknown> = {}) => ({
   sequenceId: 12, region: 'fda', sequenceStatus: 'validated', validationErrors: 0, unacknowledgedShadowCriticals: 0,
   shadowReviewRunCount: 1, shadowReviewMissing: false, leafCount: 6,
-  externalValidation: { configured: false, ran: false, errorCount: 0, cleared: true, blockers: [] },
+  externalValidation: { configured: false, ran: false, errorCount: 0, cleared: true, blockers: [], ...validation },
   releaseSignature: { required: false, verdict: 'not-required', cleared: true },
   readiness: { errors: 0, warnings: 0, infos: 0, findings: [] },
   gate: { cleared: true, blockers: [] },
   gates: [
     { key: 'structural', cleared: true, blockers: [], rule: rule('STRUCTURAL_GATE_CLEAR', 'No open error-severity finding') },
-    { key: 'external', cleared: true, blockers: [], rule: rule('EXTERNAL_VALIDATION_CLEAN', 'The agency-grade validator’s report for this package carries no errors'), ...external },
+    { key: 'external', cleared: true, blockers: [], rule: rule('EXTERNAL_VALIDATION_CLEAN', 'External validation result and dispatch policy are assessed'), ...external },
     { key: 'shadowPresence', cleared: true, blockers: [], rule: rule('SHADOW_REVIEW_COMPLETED', 'At least one Shadow Review has completed') },
     { key: 'releaseSignature', cleared: true, blockers: [], rule: rule('RELEASE_SIGNATURE_VALID', 'A valid release signature') },
   ],
@@ -85,5 +91,89 @@ describe('the external validator gate', () => {
     render(<DispatchReadiness {...props()} />);
     await screen.findByText('At least one Shadow Review has completed');
     expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('Satisfied.');
+  });
+
+  it.each([
+    ['failed', 'External validation failed.', 'The external validator found 1 error. Dispatch policy is advisory.'],
+    ['invalid', 'External validation report invalid.', 'The supplied report names a different engine. Dispatch policy is advisory.'],
+  ])('shows advisory %s validation without converting clearance into a pass', async (assessmentStatus, label, assessmentNote) => {
+    serve(assessment({ assessmentStatus, assessmentNote }, { configured: true, ran: true, errorCount: assessmentStatus === 'failed' ? 1 : 0, assessmentStatus, assessmentNote, qualifyingRun: assessmentStatus === 'failed' }));
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    const card = document.querySelector('[data-gate="external"]')!;
+    expect(card.textContent).toContain(label);
+    expect(card.textContent).toContain(assessmentNote);
+    expect(card.textContent).not.toMatch(/Satisfied|Not assessed/);
+    expect(card.className).toContain('warn');
+    expect(document.body.textContent).toContain('Cleared to dispatch');
+    expect(document.body.textContent).not.toContain('external validator clean');
+  });
+
+  it('publishes an invalid zero placeholder with its status and engine provenance to AnA', async () => {
+    const assessmentNote = 'The external report is invalid; its numeric placeholder does not establish a clean assessment.';
+    serve(assessment({ assessmentStatus: 'invalid', assessmentNote }, { configured: true, ran: true, errorCount: 0, errorCountKnown: false, qualifyingRun: false, assessmentStatus: 'invalid', assessmentNote, validatorKind: 'external_engine', selectedValidatorName: 'LORENZ', reportedValidatorName: 'other-engine' }));
+    render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
+    await screen.findByText('At least one Shadow Review has completed');
+    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
+    expect(wire.facts).toMatchObject({ externalValidationCleared: true, externalValidationStatus: 'invalid', externalQualifyingRun: false, externalErrorCountKnown: false, externalSelectedValidator: 'LORENZ', externalReportedValidator: 'other-engine', externalValidationNote: assessmentNote });
+    expect(document.body.textContent).not.toContain('external validator clean');
+  });
+
+  it('shows a raw executed subset as not externally assessed', async () => {
+    const assessmentNote = 'Only the internal FDA criteria subset ran; no external assessment is established.';
+    serve(assessment({ assessmentStatus: 'not_assessed', assessmentNote, notAssessed: assessmentNote }, { configured: false, ran: true, qualifyingRun: false, assessmentStatus: 'not_assessed', assessmentNote }));
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('Not assessed.');
+    expect(document.body.textContent).not.toContain('external validator clean');
+  });
+
+  it('does not call a legacy advisory report clean when its observed error count is positive', async () => {
+    serve(assessment({}, { configured: true, ran: true, errorCount: 1 }));
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('External validation failed.');
+    expect(document.body.textContent).not.toContain('external validator clean');
+    expect(document.body.textContent).toContain('Cleared to dispatch');
+  });
+});
+
+describe('a Shadow Review waived by signature (P-34)', () => {
+  const WAIVED =
+    'Shadow Review waived under signature 41 by Dana Reyes because the AI provider was unavailable (run #7); this dossier was not adversarially reviewed.';
+  const waived = () => {
+    const a = assessment({});
+    Object.assign(a, { shadowReviewRunCount: 0, shadowReviewMissing: true });
+    a.gates[2] = { ...a.gates[2], notAssessed: WAIVED } as (typeof a.gates)[number];
+    return a;
+  };
+
+  it('the presence card says "Not assessed" with the server’s sentence, never "Satisfied"', async () => {
+    serve(waived());
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    const card = document.querySelector('[data-gate="shadowPresence"]')!;
+    expect(card.textContent).toContain('Not assessed.');
+    expect(card.textContent).toContain('not adversarially reviewed');
+    expect(card.textContent).not.toContain('Satisfied');
+  });
+
+  it('the cleared verdict does not call it proven clear or count zero criticals found', async () => {
+    serve(waived());
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    expect(document.body.textContent).toContain('cleared to dispatch');
+    expect(document.body.textContent).not.toContain('Every hard gate is proven clear');
+    expect(document.body.textContent).toContain('no Shadow Review run (waived by signature)');
+    expect(document.body.textContent).not.toContain('0 unacknowledged Shadow Review criticals');
+  });
+
+  it('AnA is told which gate cleared without assessing, in the server’s words', async () => {
+    serve(waived());
+    render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
+    await screen.findByText('At least one Shadow Review has completed');
+    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
+    expect(wire.facts.notAssessed).toEqual([{ gate: 'shadowPresence', note: WAIVED }]);
+    expect(wire.facts.shadowReviewMissing).toBe(true);
   });
 });

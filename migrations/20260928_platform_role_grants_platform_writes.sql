@@ -13,7 +13,7 @@
 --
 -- Determinism Contract:
 --   - Schema changes must not undermine deterministic evidence pointers.
---   - No table shape change; RLS and policies only. Idempotent.
+--   - RLS, policies and canonical grant identity converge. Idempotent.
 --
 -- Notes:
 --   - Row D3, 2026-09-28. Evidence:
@@ -46,6 +46,13 @@
 -- Converges on every run: ALTER POLICY when a policy exists, CREATE when it does
 -- not. Nothing is dropped (Rule 1).
 
+-- 2026-10-14 additive convergence correction: fresh strict QA had only the
+-- table primary key, so the existing Access Management ON CONFLICT(user_id,
+-- role) grant writer could not plan (42P10). Converge shared/schema.ts's
+-- canonical platform_role_grants_user_role_idx during every deploy replay.
+-- Retain all existing grants and policies. Duplicates or an unrelated index
+-- using the canonical name refuse; no DROP or historical-row repair is made.
+--
 DO $$
 DECLARE
   off   CONSTANT text := $e$(NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on')$e$;
@@ -56,6 +63,27 @@ BEGIN
   IF to_regclass('public.platform_role_grants') IS NULL THEN
     RAISE NOTICE '[platform-role-grants-writes] skipped — public.platform_role_grants not provisioned';
     RETURN;
+  END IF;
+
+  CREATE UNIQUE INDEX IF NOT EXISTS platform_role_grants_user_role_idx
+    ON public.platform_role_grants (user_id, role);
+
+  -- IF NOT EXISTS alone would accept an unrelated or invalid named index.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_index i
+     WHERE i.indexrelid = to_regclass('public.platform_role_grants_user_role_idx')
+       AND i.indrelid = 'public.platform_role_grants'::regclass
+       AND i.indisunique AND i.indisvalid AND i.indisready AND i.indimmediate
+       AND i.indnkeyatts = 2 AND i.indnatts = 2
+       AND i.indpred IS NULL AND i.indexprs IS NULL
+       AND ARRAY(
+         SELECT a.attname::text
+           FROM unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
+           JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+          WHERE k.ord <= i.indnkeyatts ORDER BY k.ord
+       ) = ARRAY['user_id', 'role']
+  ) THEN
+    RAISE EXCEPTION 'Platform role grant identity requires reconciliation; existing rows and index definitions were retained.';
   END IF;
 
   platform_only := format('(%s OR %s)', off, super);

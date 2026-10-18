@@ -1,0 +1,41 @@
+{
+  "baseline": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "ownedFiles": [
+    {
+      "file": "server/services/tenant/tenant-offboarding.ts",
+      "sha256": "da3762523a15660dd0bba217e524ebbc8dfb2930e3a82d111af92687312b00d8"
+    },
+    {
+      "file": "server/services/tenant/tenant-source-read-receipt-purge.ts",
+      "sha256": "5f8926a51e39110330ec06db48e0a155d299a2e3ef57b111b19df7ee0565a8a0"
+    },
+    {
+      "file": "server/services/tenant-export/tenant-full-export.service.ts",
+      "sha256": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c"
+    },
+    {
+      "file": "scripts/db/provision-app-role.mjs",
+      "sha256": "149989da698f122340634bfab0d066b0faa92750888a7e4eac24031699c2b2f5"
+    },
+    {
+      "file": "scripts/db/security-definer-allowlist.json",
+      "sha256": "7b6de0e97272bdc9e058c25652de932dff10d21fd0f165dca1f5fb9f462a4fa1"
+    },
+    {
+      "file": "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+      "sha256": "32d24e221e96dd2daf38fdc3b4ff64e2404210057bf1eacd93ac849e6c00e6e4"
+    },
+    {
+      "file": "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+      "sha256": "6a08c17197f50e3cc0ddd8a77c058e049a0a4d0e7d4f1dfd9afcc5e703ced2a1"
+    },
+    {
+      "file": "server/db/__tests__/provision-app-role-append-only.test.ts",
+      "sha256": "c77ed696b2814459d324c582f7a1b1af56668069097b919ec40dac3dc22de6c5"
+    }
+  ],
+  "schemaDependency": {
+    "file": "migrations/20261014_ana_source_read_receipts.sql",
+    "sha256": "ec96e38a9cf0466c6abea7c223e0ea715b64bedaccd1b85f43967b462c7cb9dd"
+  }
+}

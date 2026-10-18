@@ -46,6 +46,8 @@
  * @module server/services/biomarkers/biomarker-knowledge
  */
 
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+
 // ════════════════════════════════════════════════════════════════════════════
 // SHARED TYPES
 // ════════════════════════════════════════════════════════════════════════════
@@ -1167,7 +1169,7 @@ export interface DesignCDxCodevelopmentParams {
   /** Whether the marker is essential for safe/effective use (true CDx) vs complementary. */
   essentialForUse?: boolean;
   /** Device risk class (drives PMA vs 510(k)). */
-  deviceRiskClass?: 'I' | 'II' | 'III';
+  deviceRiskClass?: DeviceClass;
   /** Whether a single locally-developed clinical trial assay (CTA) was used to enroll the pivotal trial. */
   usedClinicalTrialAssay?: boolean;
   /** Whether the market-ready IVD differs from the CTA (drives bridging study need). */

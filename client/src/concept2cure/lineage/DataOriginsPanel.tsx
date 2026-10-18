@@ -102,6 +102,7 @@ function OriginCard({
      thing this panel can say about a passage, so it is said on the row: in the
      heading, in the byline, in the dot colour, and in a note of its own. */
   const isUnaccepted = row.provenanceKind === 'machine_draft';
+  const isWorkflowImport = (isMachine || isUnaccepted) && row.machineAuthorId === 'workflow_import';
   const note = isUnaccepted
     ? { text: 'No person has accepted this text', color: WARN }
     : row.state
@@ -110,7 +111,9 @@ function OriginCard({
   const canNavigate =
     !isAuthor && !isMachine && !isUnaccepted && !!row.referenceId && !!onNavigateToSource;
   const usageText =
-    row.usage !== 'asserted'
+    isWorkflowImport
+      ? isMachine ? 'Imported content, accepted by a person' : 'Imported content awaiting human review'
+      : row.usage !== 'asserted'
       ? (USAGE_LABEL[row.usage] ?? row.usage)
       : isMachine
         ? 'Drafted by the AI, accepted by the author'
@@ -159,6 +162,8 @@ function OriginCard({
           <span style={{ fontWeight: 600, color: INK }}>
             {isAuthor
               ? 'Author assertion'
+              : isWorkflowImport
+                ? `Saved workflow import${isUnaccepted ? ' — awaiting review' : ''}`
               : isMachine
                 ? (row.machineAuthorName ?? `AI draft (${row.machineAuthorId ?? 'machine author'})`)
                 : isUnaccepted

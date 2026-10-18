@@ -1,0 +1,17 @@
+{
+  "esbuildVersion": "0.28.1",
+  "options": {
+    "loader": "ts",
+    "sourcefile": "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts",
+    "target": "es2022",
+    "format": "esm",
+    "minifySyntax": true,
+    "legalComments": "none"
+  },
+  "sourceBeforeSha256": "53a41143cb64c05ab95d08184b9f0f43dbddaf78f100c5e9e9c6046b6a8561da",
+  "sourceAfterSha256": "8afc6c12da1c8f25f781b5039b2c5868ae238dd0c8af61f30bf9b072f4fd5d0c",
+  "erasedJavaScriptBeforeSha256": "a411e8e16217577126b01acfc5544fc14782995d8d438e87f08b44a863c61d32",
+  "erasedJavaScriptAfterSha256": "a411e8e16217577126b01acfc5544fc14782995d8d438e87f08b44a863c61d32",
+  "byteIdenticalErasedJavaScript": true,
+  "scope": "Five erased Record<string,unknown> casts only; no assertion/mock/fixture/runtime code change."
+}

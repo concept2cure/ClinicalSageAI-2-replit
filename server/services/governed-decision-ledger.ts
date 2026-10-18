@@ -13,6 +13,7 @@
 import { createScopedLogger } from '../utils/logger';
 import { governanceMetrics } from './governance-observability';
 import type { DecisionRecord } from './decision-record-service.js';
+import type { GovernedDecisionReference } from '../../shared/types/governed-document-fabric';
 
 const log = createScopedLogger('governed-decision-ledger');
 
@@ -56,25 +57,85 @@ export const GOVERNED_FABRIC_CODE_PREFIX = 'governed-fabric:';
  *
  * Failures stay data: they are counted and logged here, exactly as the inline
  * catch did, so `governanceMetrics` remains the honest signal.
+ *
+ * Resolves true when the row was written and false when it was not. It resolved
+ * the same either way until 2026-10-15, so a caller handed out the decisionId
+ * of a row that might not exist.
  */
 let ledgerQueue: Promise<void> = Promise.resolve();
 
-export function enqueueLedgerWrite(write: () => Promise<void>, decisionId: string): Promise<void> {
-  ledgerQueue = ledgerQueue.then(async () => {
+export function enqueueLedgerWrite(write: () => Promise<void>, decisionId: string): Promise<boolean> {
+  const written = ledgerQueue.then(async () => {
     // Yield first, so the write can never run synchronously inside the
     // caller's transaction on the same tick.
     await new Promise<void>(resolve => setTimeout(resolve, 0));
     try {
       await write();
+      return true;
     } catch (err) {
       governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
       log.warn('Governed decision durable write failed', {
         decisionId,
         error: err instanceof Error ? err.message : String(err),
       });
+      return false;
     }
   });
-  return ledgerQueue;
+  ledgerQueue = written.then(() => undefined);
+  return written;
+}
+
+/**
+ * The pending ledger write behind each reference the evaluator's hot path
+ * (recordGovernedDecisionSync) hands out. That reference is returned before
+ * its queued insert has run, and the insert can fail or be refused; a caller
+ * that shows the decisionId, or files it in another record, asks
+ * governedDecisionPersisted first. Keyed by the reference object, so an entry
+ * lives exactly as long as the reference does.
+ */
+const decisionWrites = new WeakMap<GovernedDecisionReference, Promise<boolean>>();
+
+/**
+ * Register the background write behind a hot-path reference. A refusal (no
+ * valid organization, no actor) is thrown before the queue, so nothing else has
+ * counted or logged it: it is counted and logged here, and answers false. The
+ * hot path's catch read "Already logged" and was silent until 2026-10-15.
+ */
+export function trackGovernedDecisionWrite(
+  reference: GovernedDecisionReference,
+  write: Promise<{ persisted: boolean }>,
+): void {
+  decisionWrites.set(reference, write.then(
+    (recorded) => recorded.persisted,
+    (err: unknown) => {
+      governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
+      log.warn('Governed decision not recorded', {
+        decisionId: reference.decisionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
+    },
+  ));
+}
+
+/**
+ * Whether the decision_records row behind a hot-path reference was written.
+ * False when the write failed or was refused — and for a reference no write
+ * was registered for, since nothing then shows that one was recorded.
+ */
+export function governedDecisionPersisted(reference: GovernedDecisionReference): Promise<boolean> {
+  return decisionWrites.get(reference) ?? Promise.resolve(false);
+}
+
+/**
+ * The actor an evaluation names, or null when it names no one: absent, blank,
+ * a stringified absent value, or user 0 (no user has id 0). recordGovernedDecision
+ * refuses such an evaluation; it filed it as decided by 'system' until 2026-10-15.
+ */
+export function statedActorId(actorId: unknown): string | null {
+  if (typeof actorId !== 'string') return null;
+  const value = actorId.trim();
+  return value === '' || value === 'undefined' || value === 'null' || value === '0' ? null : value;
 }
 
 /**

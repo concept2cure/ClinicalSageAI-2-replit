@@ -1,0 +1,8 @@
+
+> concept2cure-riai@1.0.0 ci:pushed-typecheck
+> node scripts/ci/check-pushed-typecheck.mjs
+
+[ci:pushed-typecheck] 10 type-relevant file(s) changed against origin/concept2cure-v2: server/routes/__tests__/project-schedule-of-events.test.ts, server/routes/project-schedule-of-events.ts, server/services/ana/AnaToolExecutor.ts, server/services/ana/__tests__/schedule-generation-reason.test.ts, server/services/ana/discovery-cheminformatics-tool-defs.ts, +5 more
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.

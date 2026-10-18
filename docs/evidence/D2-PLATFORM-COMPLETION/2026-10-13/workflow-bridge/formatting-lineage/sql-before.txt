@@ -1,0 +1,146 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T23:26:56.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > preserves the exact QA imported prose across figure insertion and TipTap table normalization 52ms
+   → QA saved study report: expected false to be true // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > retains original acceptance, signature, usage and confidence across formatting by another editor 24ms
+   → expected { char_start: +0, char_end: 86, …(9) } to match object { …(7) }
+(4 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > attributes genuinely changed clauses to the editor and retains unchanged imported clauses 16ms
+   → expected false to be true // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > bounds repeated prose to verified original occurrences and refuses changed scientific characters 16ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > fails closed and rolls back instead of converting a corrupt prior machine receipt into human authority 16ms
+   → promise resolved "{ clausesInAcceptedText: +0 }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > preserves the exact QA imported prose across figure insertion and TipTap table normalization
+AssertionError: QA saved study report: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:70:75
+     68|     const machine = rows.filter(span => span.provenance_kind==='machin…
+     69|     for (const value of ['QA saved study report','browser verification…
+     70|       expect(machine.some(span => contains(span,FORMATTED,value)), val…
+       |                                                                           ^
+     71|       expect(rows.filter(span => span.provenance_kind==='author_assert…
+     72|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > retains original acceptance, signature, usage and confidence across formatting by another editor
+AssertionError: expected { char_start: +0, char_end: 86, …(9) } to match object { …(7) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "asserted_at": 2026-10-13T23:26:59.894Z,
+-   "asserted_by": "101",
+-   "confidence": 0.91,
+-   "created_by": "101",
+-   "provenance_kind": "accepted_machine_draft",
+-   "signature_id": "c0a01272-038f-4a9b-a3a4-dd7061989c64",
+-   "usage": "summarized",
++   "asserted_at": 2026-10-13T23:26:59.906Z,
++   "asserted_by": "202",
++   "confidence": null,
++   "created_by": "202",
++   "provenance_kind": "author_assertion",
++   "signature_id": null,
++   "usage": "asserted",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:93:22
+     91|     const after = await raw(id);
+     92|     expect(after).toHaveLength(1);
+     93|     expect(after[0]).toMatchObject({provenance_kind:'accepted_machine_…
+       |                      ^
+     94|       asserted_at:before[0].asserted_at,signature_id:signature,created…
+     95|     expect(after[0].span_text_sha256).not.toBe(before[0].span_text_sha…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > attributes genuinely changed clauses to the editor and retains unchanged imported clauses
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:106:100
+    104|     await saved(id,prior,next);
+    105|     const rows = await raw(id);
+    106|     expect(rows.some(span => span.provenance_kind==='machine_draft' &&…
+       |                                                                                                    ^
+    107|     expect(rows.some(span => span.provenance_kind==='author_assertion'…
+    108|     expect(rows.some(span => span.provenance_kind==='author_assertion'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > bounds repeated prose to verified original occurrences and refuses changed scientific characters
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:118:73
+    116|     await saved(id,prior,next);
+    117|     const rows = await raw(id);
+    118|     expect(rows.filter(span => span.provenance_kind==='machine_draft')…
+       |                                                                         ^
+    119|     expect(rows.filter(span => span.provenance_kind==='author_assertio…
+    120|     expect(rows.filter(span => span.provenance_kind==='machine_draft')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts > retained lineage survives supported formatting without manufacturing human review > fails closed and rolls back instead of converting a corrupt prior machine receipt into human authority
+AssertionError: promise resolved "{ clausesInAcceptedText: +0 }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "clausesInAcceptedText": 0,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts:129:80
+    127|     const before = await raw(id);
+    128|     await db.exec('BEGIN');
+    129|     try { await expect(saved(id,SENTENCE,`<p><strong>${SENTENCE}</stro…
+       |                                                                                ^
+    130|     finally { await db.exec('ROLLBACK'); }
+    131|     expect(await raw(id)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  23:26:55
+   Duration  4.65s (transform 1.15s, setup 83ms, import 1.85s, tests 2.41s, environment 0ms)

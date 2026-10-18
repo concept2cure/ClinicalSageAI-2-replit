@@ -502,6 +502,32 @@
   .vd-d-filing-reason::placeholder{ color:var(--text-400); }
   .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
   .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
+
+  /* The three-pane cabinet needs more width than a small screen provides.
+     Keep its existing tree, results and selected record in one vertical flow;
+     hiding horizontal overflow alone leaves search and record panes offscreen. */
+  @media (max-width:1200px){
+    .vd-wrap{ display:block; min-width:0; width:100%; max-width:100%; overflow-y:auto; }
+    .vd-top, .vd-coexist{ padding-left:16px; padding-right:16px; }
+    .vd-top > div{ min-width:0; max-width:100%; }
+    .vd-sub-x, .vd-coexist-txt{ overflow-wrap:anywhere; }
+    .vd-grid{ display:flex; flex-direction:column; min-width:0; }
+    .vd-tree, .vd-list, .vd-detail{ min-width:0; width:100%; border-right:0; }
+    .vd-tree{ max-height:240px; border-bottom:1px solid var(--border); }
+    .vd-list{ border-bottom:1px solid var(--border); }
+    .vd-rows{ flex:none; max-height:360px; }
+    .vd-detail{ overflow:visible; }
+    .vd-breadcrumb .vd-crumb{ min-width:0; max-width:100%; overflow-wrap:anywhere; text-align:left; }
+    .vd-breadcrumb .vd-search{ flex:1 1 100%; min-width:0; margin-left:0; }
+    .vd-breadcrumb .vd-search input[type="search"]{ min-width:0; }
+    .vd-breadcrumb .vd-search input[type="checkbox"]{ width:auto; flex:none; }
+    /* Preserve all row facts while the name and metadata wrap into two columns. */
+    .vd-cols{ display:none !important; }
+    .vd-row{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .vd-row .vd-col-name{ grid-column:1 / -1; }
+    .vd-col-name .vd-row-t{ display:block; white-space:normal; overflow-wrap:anywhere; }
+    .vd-col-type, .vd-col-owner, .vd-col-mod{ white-space:normal; overflow-wrap:anywhere; }
+  }
 }
 
 /* ══ Master Licensing console ══════════════════════════════════════════════

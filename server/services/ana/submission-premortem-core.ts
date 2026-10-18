@@ -25,7 +25,9 @@ export interface PremortemFinding {
   category: string;
   severity: Severity;
   matchedText: string;
-  matchConfidence: number;
+  /** Not computed (null): a finding is a trigger-phrase hit, not a probability. */
+  matchConfidence: number | null;
+  matchConfidenceBasis: 'not_computed';
   reviewerQuestion: string;
   regulatoryBasis: string;
   remediation: string;
@@ -81,12 +83,18 @@ function countBySeverity(findings: PremortemFinding[]): Record<Severity, number>
   return c;
 }
 
-/** Rank findings by severity, then by match confidence (both descending). */
+/**
+ * Rank findings by severity (descending), then by patternId in code-point order
+ * so equal severities have one reproducible order. 2026-10-15: the tie-break
+ * was matchConfidence, the pattern's hand-set seed value — an uncalibrated
+ * constant presented as a ranking signal.
+ */
 export function rankFindings(findings: PremortemFinding[]): PremortemFinding[] {
   return [...findings].sort((a, b) => {
     const s = SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity];
     if (s !== 0) return s;
-    return b.matchConfidence - a.matchConfidence;
+    if (a.patternId === b.patternId) return 0;
+    return a.patternId < b.patternId ? -1 : 1;
   });
 }
 

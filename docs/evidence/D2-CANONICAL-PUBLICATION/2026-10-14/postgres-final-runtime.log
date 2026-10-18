@@ -1,0 +1,146 @@
+{"fixture":"ready","name":"c2c-durable-receipts-02e77c0d-9ca","port":32775,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts
+{
+  "timestamp": "2026-10-14T21:34:46.238Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG01 actual installed runtime/purger posture, populated replay and ordinary append-only controls 302ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG02 actual default selected writer commits viewer V2 despite actual legacy INSERT denial 195ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG03 actual FORCE tenant RLS hides foreign metadata and refuses foreign insert 88ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG04 two-session identical and mismatched ID retries wait then preserve one immutable row 287ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG05 actor/private history filters before count/LIMIT and survives source removal 227ms
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count
+{
+  "timestamp": "2026-10-14T21:34:51.116Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "fe07cc2c-f5b7-40c8-b61d-54d79e8ebe14",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG06 same-length re-extraction committed during advisory wait refuses V2 admission 150ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count 66ms
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit
+{
+  "timestamp": "2026-10-14T21:34:51.464Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 981009,
+    "purgedByUserId": 981009,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:8204640a7891457109348d2f043fca9607de62e0284dd8c201d664068b05b9d2",
+    "deletedRows": {
+      "ana_source_read_receipts": 1,
+      "vault.documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 1
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG08 actual complete export contains durable hashes/ranges and records final export evidence 148ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit 200ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG10 audit failure rolls back ledger, Vault deletion and status together 142ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG11 changed final export after source reservation wait refuses all erasure 194ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG12 fresh status and retention are rechecked after organization lock waits 327ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG13 active hold committed while purge waits is observed before deletes 274ms
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion
+{
+  "timestamp": "2026-10-14T21:34:52.643Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 981016,
+    "purgedByUserId": 981016,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:28ddd9776f0dc72aba402efc43030171c07653fcda1c29a0b5b24b6ceba86d88",
+    "deletedRows": {
+      "ana_source_read_receipts": 1,
+      "vault.documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 1
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT
+{
+  "timestamp": "2026-10-14T21:34:52.790Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 981017,
+    "purgedByUserId": 981017,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:1bd92fdc1fb1636991f28c80e13cb4bea57bb93971b84e5afeb08c061aca7ff8",
+    "deletedRows": {
+      "ana_source_read_receipts": 1,
+      "vault.documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 1
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion 237ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT 154ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG16 zero-row status UPDATE cannot commit source erasure or its audit 108ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG17 genuine autocommit SAVEPOINT refusal and absent vector type fall back without opening a transaction 181ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG18 caller transaction survives actual absent vector failure through its own savepoint 141ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG19 canonical WeakMap scopes reject constructed copies and executor swaps before any source query 30ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG20 current request document helper preserves exact bytes and rejects membership revocation after row materialization 31ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  21:34:40
+   Duration  12.36s (transform 5.05s, setup 0ms, import 8.25s, tests 3.71s, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-durable-receipts-02e77c0d-9ca","testExitCode":0,"cleanup":"exact owned container removed","cleanupVerified":true}

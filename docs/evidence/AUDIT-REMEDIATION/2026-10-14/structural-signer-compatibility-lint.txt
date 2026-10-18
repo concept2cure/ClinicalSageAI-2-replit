@@ -1,0 +1,27 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   634:1   warning  File has too many lines (2244). Maximum allowed is 500                         max-lines
+  1468:58  warning  Async arrow function has too many lines (208). Maximum allowed is 100          max-lines-per-function
+  1468:58  warning  Async arrow function has a complexity of 52. Maximum allowed is 15             complexity
+  1850:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  2736:59  warning  Async arrow function has a complexity of 18. Maximum allowed is 15             complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/__tests__/adaptive-decision-is-governed.test.ts
+  36:32  warning  'vi' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/adaptive-trial-operations-service.ts
+   517:3   warning  Async method 'evaluateStoppingRules' has too many lines (117). Maximum allowed is 100  max-lines-per-function
+   517:3   warning  Async method 'evaluateStoppingRules' has a complexity of 34. Maximum allowed is 15     complexity
+   656:3   warning  Async method 'performSSR' has a complexity of 34. Maximum allowed is 15                complexity
+   691:11  warning  'originalDropout' is assigned a value but never used                                   @typescript-eslint/no-unused-vars
+   703:1   warning  File has too many lines (1109). Maximum allowed is 500                                 max-lines
+   872:3   warning  Async method 'generateIDMCReport' has too many lines (127). Maximum allowed is 100     max-lines-per-function
+   872:3   warning  Async method 'generateIDMCReport' has a complexity of 42. Maximum allowed is 15        complexity
+  1192:3   warning  Method 'computeTestStatistic' has a complexity of 17. Maximum allowed is 15            complexity
+  1258:3   warning  Method 'evaluateRulesSync' has too many parameters (6). Maximum allowed is 5           max-params
+  1258:3   warning  Method 'evaluateRulesSync' has a complexity of 20. Maximum allowed is 15               complexity
+  1308:3   warning  Method 'runMonteCarloOC' has too many lines (133). Maximum allowed is 100              max-lines-per-function
+  1308:3   warning  Method 'runMonteCarloOC' has a complexity of 26. Maximum allowed is 15                 complexity
+
+✖ 18 problems (0 errors, 18 warnings)
+

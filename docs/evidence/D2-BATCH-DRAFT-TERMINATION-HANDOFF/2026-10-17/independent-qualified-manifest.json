@@ -1,0 +1,53 @@
+{
+  "qualifiedAt": "2026-10-17T23:52:31.692851+00:00",
+  "baseline": {
+    "testsPassed": 18,
+    "failFirst": false,
+    "stableBindings": 14,
+    "description": "Existing reported-termination server policy and compatibility controls."
+  },
+  "final": {
+    "testsPassed": 18,
+    "stableBindings": 14,
+    "currentBoundInputsMatch": true
+  },
+  "fixtureByteIdenticalToBaseline": true,
+  "runnerByteIdenticalToBaseline": true,
+  "fixtureSHA256": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+  "baselineFinalChangedBindings": [
+    "server/services/ai-gateway/finish-reason.ts",
+    "shared/ai/finish-reason.ts",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx"
+  ],
+  "reviewedProductionHashes": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7"
+  },
+  "sharedHelperByteIdenticalToOriginalServerSnapshot": true,
+  "unchangedAcceptRouteSHA256": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+  "ownedTestAndRunnerLint": {
+    "errors": 0,
+    "warnings": 0,
+    "configLintClaim": false
+  },
+  "artifacts": {
+    "independent-baseline-bindings.json": "747b6924b196741c80292fd866bf05f6222d8508f4225d382b622065e6d97e36",
+    "independent-final-bindings.json": "65cc689dfd7d2d6a128e24a6885f73a89d780f5c1f42ad0e2366d2e87d880260",
+    "independent-baseline.txt": "61002398c85a163d9e78ee4d3112659179e361dcf7c168ea75867cdaceb29d86",
+    "independent-final.txt": "0fc167240d2593878800b5c13fff6cba8d2f6d148aa4e9cb6310bef00b685324",
+    "independent-baseline.fixture.ts.txt": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+    "independent-baseline-finish-reason.ts.txt": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "independent-lint.json": "f9020635bc7401bd67091b49cba03f9c112c4888187a6ca9b3ad557740167c52",
+    "independent-review.md": "387a45f1def97d80016949e4b41de34ad4e280bd78054ceebefef5d5bd90063d"
+  },
+  "blockingFindingsWithinContract": [],
+  "scope": "Actual Express-registered accept handler through loopback HTTP with synthetic authenticated authority and requestDb sentinel; baseline/final positive policy controls. Source review of the final UI/shared/re-export diff. No production or Git changes.",
+  "limits": [
+    "Allowed cases stop with HTTP 418 accepted:false at requestDb, before DB objects/queries/writes; this is not successful acceptance.",
+    "Separate actual React suite replaces fetch responses; its 12 behavioral baseline failures plus four controls and 16 final passes belong to its owner.",
+    "PGlite acceptance write fixtures, integrated cohort, whole-tree TypeScript, browser qualification, hooks and publication belong to root; test counts overlap.",
+    "Client-reported finish metadata is not trusted attestation; omission/forgery and unsupported camelCase request aliases remain outside the correction.",
+    "Unknown/absent status is permitted, unconfirmed, and does not certify completeness, scientific correctness or filing readiness."
+  ]
+}

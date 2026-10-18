@@ -275,7 +275,12 @@ describe('release signing goes through the one electronic_signatures writer', ()
     // Columns the deleted builder set explicitly — none silently dropped.
     expect(Number(sig.signature_level)).toBe(1);
     expect(sig.verification_status).toBe('valid');
-    expect(sig.compliance_statement).toBe('Electronic signature complies with 21 CFR Part 11');
+    // What was applied, never a conclusion: this read "Electronic signature
+    // complies with 21 CFR Part 11" on every row until 2026-10-15.
+    expect(sig.compliance_statement).toMatch(
+      /^Submission release signature applied after re-verification of the signer \(password\) under 21 CFR Part 11 §11\.50\/§11\.70\/§11\.200; bound to the signed version's content;/,
+    );
+    expect(sig.compliance_statement).not.toMatch(/complies/i);
     expect(sig.is_valid).toBe(true);
 
     // §11.70 content binding: the digest of the version's ACTUAL stored bytes.
@@ -372,6 +377,17 @@ describe('the row records what the signing ceremony verified (services/part11/re
     await expect(
       signRelease({ reverified: { ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED', error: 'no' } }),
     ).rejects.toThrow(/not re-verified/);
+    expect(await rows(`SELECT * FROM electronic_signatures`)).toHaveLength(0);
+    expect(await rows(`SELECT * FROM device_audit_trail`)).toHaveLength(0);
+  });
+
+  it('refuses a signer or document it cannot name, rather than auditing "user 0" / "entity 0"', async () => {
+    // The device_audit_trail event used `typeof userId === 'number' ? userId : 0`
+    // (and the same for the document), so a caller that cast around the types
+    // produced a §11.10(e) event attributed to user 0 about entity 0.
+    await expect(signRelease({ userId: 'u-7' as unknown as number })).rejects.toThrow(/no signer id/);
+    await expect(signRelease({ userId: 0 })).rejects.toThrow(/no signer id/);
+    await expect(signRelease({ documentId: 'd-1' as unknown as number })).rejects.toThrow(/no document id/);
     expect(await rows(`SELECT * FROM electronic_signatures`)).toHaveLength(0);
     expect(await rows(`SELECT * FROM device_audit_trail`)).toHaveLength(0);
   });
@@ -480,5 +496,24 @@ describe('the release audit event commits WITH the signature, or not at all (L13
     // And nothing half-landed on the way there either.
     const trail = await rows(`SELECT id FROM device_audit_trail`);
     expect(trail, 'the device_audit_trail row rolls back with it').toHaveLength(0);
+  });
+  it('enlists a current-record guard before the signature insert on the actual transaction', async () => {
+    await pg.exec('CREATE TABLE source_guard_probe (id integer PRIMARY KEY)');
+    await signRelease({ transactionalGuard: async (q: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => {
+      expect((await q.query('SELECT id FROM electronic_signatures')).rows).toHaveLength(0);
+      await q.query('INSERT INTO source_guard_probe VALUES (1)');
+    } });
+    expect(await rows('SELECT id FROM source_guard_probe')).toHaveLength(1);
+    expect(await rows('SELECT id FROM electronic_signatures')).toHaveLength(1);
+  });
+  it('a source withdrawn during the ceremony leaves no signature or audit writes behind', async () => {
+    await pg.exec('CREATE TABLE source_guard_probe (id integer PRIMARY KEY)');
+    await expect(signRelease({ transactionalGuard: async (q: { query: (sql: string) => Promise<unknown> }) => {
+      await q.query('INSERT INTO source_guard_probe VALUES (1)');
+      throw new Error('Synthetic source withdrawn after password/MFA re-verification');
+    } })).rejects.toThrow('source withdrawn');
+    expect(await rows('SELECT id FROM source_guard_probe')).toHaveLength(0);
+    expect(await rows('SELECT id FROM electronic_signatures')).toHaveLength(0);
+    expect(await rows('SELECT id FROM device_audit_trail')).toHaveLength(0);
   });
 });

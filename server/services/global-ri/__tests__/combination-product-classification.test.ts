@@ -65,9 +65,9 @@ describe('classifyCombinationProduct — EU', () => {
     expect(r.deviceObligation).toContain('GSPR');
   });
 
-  it('defaults integral=true when omitted', () => {
-    const r = classifyCombinationProduct({ region: 'EU' }) as EuCombinationClassification;
-    expect(r.regulatoryRoute).toContain('117');
+  it('refuses when integral is omitted (it decides the route)', () => {
+    // Pinned an assumed integral=true until 2026-10-15.
+    expect(() => classifyCombinationProduct({ region: 'EU' })).toThrow(/integral/);
   });
 
   it('non-integral → separately CE-marked device route', () => {

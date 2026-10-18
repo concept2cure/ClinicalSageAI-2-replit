@@ -46,6 +46,12 @@ import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
+import {
+  canDeliverLoginCode,
+  LOGIN_CODE_UNDELIVERABLE_CODE,
+  LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+  LOGIN_CODE_UNDELIVERABLE_REASON,
+} from '../services/auth/login-code-delivery';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 import { signInLimits } from '../middleware/sign-in-limits';
@@ -408,6 +414,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const hasTotpSetup = mfaEnrolmentOf(user).signInFactor === 'totp';
     let maskedEmail: string | undefined;
 
+    /* The same refusal /api/auth/login makes, for the same reason: with no way
+       to send the emailed code, answering `success: true` with a masked address
+       tells the person a code is on its way to them. See
+       services/auth/login-code-delivery.ts. */
+    const emailOtpUndeliverable = !hasTotpSetup && !canDeliverLoginCode();
+
     // Password verified, second factor requested: the same event /api/auth/login records.
     // Against the organisation the partial token names, which verify-mfa
     // records its events against too: one sign-in, one ledger.
@@ -416,11 +428,23 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       userId: user.id,
       tenantId: organizationId,
       email: user.email,
-      outcome: 'success',
-      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      outcome: emailOtpUndeliverable ? 'failure' : 'success',
+      reason: emailOtpUndeliverable
+        ? LOGIN_CODE_UNDELIVERABLE_REASON
+        : hasTotpSetup
+          ? 'mfa_challenge_totp'
+          : 'mfa_challenge_email',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    if (emailOtpUndeliverable) {
+      console.error('[enterprise-auth] Sign-in refused: e-mail is not configured, so the code cannot be sent');
+      return res.status(503).json({
+        error: LOGIN_CODE_UNDELIVERABLE_CODE,
+        message: LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+      });
+    }
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send
@@ -787,6 +811,61 @@ router.get(
  * header). The selected organizationId is validated against the user's actual
  * organization memberships to prevent tenant impersonation.
  */
+// Membership-only selector: a platform operator's management directory is not
+// a list of organizations this account may enter.
+router.get('/organizations', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.userId);
+    if (!Number.isInteger(userId) || userId < 1) return res.status(401).json({ error: 'Authentication required' });
+    const memberships = await db.select({ id: organizations.id, name: organizations.name, role: organizationUsers.role, status: organizations.status })
+      .from(organizations)
+      .innerJoin(organizationUsers, eq(organizationUsers.organizationId, organizations.id))
+      .where(eq(organizationUsers.userId, userId));
+    return res.json(memberships);
+  } catch { return res.status(500).json({ error: 'Your organization memberships could not be read.' }); }
+});
+
+async function recordOrganizationSwitch(req: Request, input: {
+  organizationId: string; userId: string; fromOrganizationId: unknown; selectOrgRole: string;
+}) {
+  const { organizationId, userId, fromOrganizationId, selectOrgRole } = input;
+    const { auditRowOutcomeFrom } = await import('../services/audit/audit-write-outcome');
+    let auditResult: Awaited<ReturnType<typeof import('../services/audit/auditLogger').logAuditEvent>> | undefined;
+    let auditThrown: string | undefined;
+    try {
+      const { logAuditEvent } = await import('../services/audit/auditLogger');
+      auditResult = await runWithTenantScope(
+        { tenantId: String(organizationId), role: null, source: 'request', caller: 'auth audit: organization_switch' },
+        () => logAuditEvent({
+          category: 'authorization',
+          severity: 'info',
+          action: 'organization_switch',
+          userId: String(userId),
+          organizationId: String(organizationId),
+          resourceType: 'organization',
+          resourceId: String(organizationId),
+          success: true,
+          metadata: {
+            fromOrganizationId: fromOrganizationId != null ? String(fromOrganizationId) : null,
+            toOrganizationId: String(organizationId),
+            roleInTarget: selectOrgRole,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        })
+      );
+    } catch (auditError) {
+      auditThrown = auditError instanceof Error ? auditError.message : String(auditError);
+    }
+    const auditTrail = auditRowOutcomeFrom(auditResult, {
+      action: 'authorization.organization_switch',
+      resourceType: 'organization',
+      resourceId: organizationId,
+      thrown: auditThrown,
+    });
+  return auditTrail;
+}
+
 router.post('/select-organization', async (req: Request, res: Response) => {
   try {
     const parsed = selectOrganizationSchema.safeParse(req.body);
@@ -888,43 +967,19 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     //
     // Recorded against the DESTINATION org (the tenant being entered), with the
     // origin in metadata, because that is the direction a reviewer reads it from.
-    // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
-    // and the failure is logged rather than swallowed.
+    // Await the actual receipt without making an audit-sink outage break the
+    // already-rotated session. The current client carries a missing receipt
+    // through the organization-switch reload.
     //
     // Written in the scope of the organisation being entered, with no role. The
     // request runs in the pre-auth scope (tenant '0'), whose audit_logs policy
     // refused this row under RLS like every other tenant-named auth event (F-19).
     // Membership was validated above.
-    void import('../services/audit/auditLogger')
-      .then(({ logAuditEvent }) =>
-        runWithTenantScope(
-          { tenantId: String(organizationId), role: null, source: 'request', caller: 'auth audit: organization_switch' },
-          () =>
-            logAuditEvent({
-              category: 'authorization',
-              severity: 'info',
-              action: 'organization_switch',
-              userId: String(userId),
-              organizationId: String(organizationId),
-              resourceType: 'organization',
-              resourceId: String(organizationId),
-              success: true,
-              metadata: {
-                fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
-                toOrganizationId: String(organizationId),
-                roleInTarget: selectOrgRole,
-              },
-              ipAddress: req.ip,
-              userAgent: req.get('user-agent'),
-            })
-        )
-      )
-      .catch(auditError => {
-        console.warn(
-          '[Enterprise Auth] failed to record organization_switch in the audit trail:',
-          auditError instanceof Error ? auditError.message : String(auditError)
-        );
-      });
+    const { setAuditRowHeaders } = await import('../services/audit/audit-write-outcome');
+    const auditTrail = await recordOrganizationSwitch(req, {
+      organizationId, userId, fromOrganizationId: decoded.organizationId, selectOrgRole,
+    });
+    setAuditRowHeaders(res, auditTrail);
 
     res.json({
       success: true,
@@ -933,6 +988,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
         id: String(organizationId),
         name: orgName,
       },
+      meta: { auditTrail },
     });
   } catch (error: any) {
     console.error('[Enterprise Auth] select-organization error:', error);

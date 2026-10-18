@@ -173,7 +173,8 @@ export const canonicalFacts = pgTable(
     valueType: varchar('value_type', { length: 20 }).notNull().default('text'),
     establishedByClaimId: integer('established_by_claim_id'),
     establishedBySourceId: integer('established_by_source_id'),
-    confidence: numeric('confidence', { precision: 5, scale: 4 }).notNull().default('0.5000'),
+    // NULL = unscored (2026-10-15). It was NOT NULL DEFAULT '0.5000', a score nobody gave.
+    confidence: numeric('confidence', { precision: 5, scale: 4 }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     version: integer('version').notNull().default(1),
     supersedesId: uuid('supersedes_id'),

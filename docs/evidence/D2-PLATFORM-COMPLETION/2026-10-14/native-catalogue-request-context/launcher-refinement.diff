@@ -1,0 +1,20 @@
+--- first-private-launcher
++++ qualified-second-private-launcher
+@@ -42,13 +42,16 @@
+ for key in ['AI_LOCAL_ENABLED', 'AI_BEDROCK_ENABLED', 'AI_VERTEX_ENABLED', 'LOCAL_AI_SUPPORTS_TOOLS']:
+     env[key] = 'false'
+ env['APP_SERVICE_DB_PASSWORD'] = ''
++# Existing resolver rejects a declared local lane without an endpoint before client construction.
++# Recall explicitly sets its own 127.0.0.1 stub later.
++env['EMBEDDING_PROVIDER'] = 'local'
+ env['PATH'] = '/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:' + env.get('PATH', '')
+ targets = [
+     'tests/db/document-catalog.dbtest.ts', 'tests/db/document-catalog-recall.dbtest.ts',
+     'tests/db/document-catalog-role.dbtest.ts', 'tests/db/document-catalog-governed.dbtest.ts',
+     'server/mcp/__tests__/mcp-connector.dbtest.ts',
+ ]
+-log = pathlib.Path('/tmp/catalog-native-fixtures-first.txt')
++log = pathlib.Path('/tmp/catalog-native-fixtures-second.txt')
+ fd = os.open(log, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+ with os.fdopen(fd, 'wb') as output:
+     result = subprocess.run(['node_modules/.bin/vitest', 'run', '--config', 'vitest.db.config.ts', *targets],

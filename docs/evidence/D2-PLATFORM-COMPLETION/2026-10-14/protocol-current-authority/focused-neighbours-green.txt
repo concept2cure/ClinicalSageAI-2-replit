@@ -1,0 +1,401 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:32:54.518Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 33ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 10ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 11ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 36ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 13ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an author 38ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 14ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 15ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a member of the organization without signing authority is refused before the password, and nothing is written 7ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone who is not a member of the organization cannot sign its protocol 8ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 6ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a member, whose role holds no signing authority: 409, in a plain sentence, and nothing is written 5ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a manager, whose role holds no signing authority: 409, in a plain sentence, and nothing is written 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > assignable exactly when the signing ceremony would let them sign the disposition 25ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 4ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 5ms
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:33:01.208Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 95ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 58ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 64ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 33ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 29ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 68ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 76ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 57ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 23ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 38ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 24ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-14T06:33:06.145Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-10-14T06:33:07.009Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 34ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 9ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > checks independence after reservation when authorship changed while the signer waited 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: No current protocol target.) 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: Protocol changed while reservation waited.) 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 4ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified
+[signing-authority] signer role lookup failed: membership verification interrupted
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:33:08.336Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:33:08.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:33:08.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:33:08.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-14T06:33:09.172Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 26ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize where the signing policy admits the role: status, seal, chain row and signature commit together 14ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize where the signing policy admits the role: status, seal, chain row and signature commit together 6ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize where the signing policy admits the role: status, seal, chain row and signature commit together 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > limits signing attempts on finalize (11.300(d)) 1ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses no reason with 400 REASON_REQUIRED before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a reason under 8 characters with 400 REASON_REQUIRED before reading anything 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a password that is not accepted with 401, before any transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a meaning a finalize cannot carry 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role owner, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role manager, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses a viewer membership under a token saying admin (the role is the membership's), through the ceremony 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses no membership in the organization, through the ceremony 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a role with authority is checked before credentials and again on the signing transaction 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an approval from the run's own requester (separation of duties) and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an authorship signature from someone who did not request the run 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-14T06:33:09.181Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses when a concurrent finalize won the lock, and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > records nothing when the truthfulness gate refuses the finalize 2ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > stores the exact sealed document beside its seal on the snapshot 7ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > refuses a run with no snapshot to hold its seal, and rolls back: nothing signed or recorded 3ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-14T06:33:10.386Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.798Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.825Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 29ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 9ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 8ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.847Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.868Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.894Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.912Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-14T06:33:10.929Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'update', with no password asked 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 7ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an upper-case spelling signs under the lower-case target 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an id that is not a uuid is not an assessment: 404 before the ceremony, nothing written 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'modifications_required', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > reads the server tree 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 254ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > detects function, const and let declarations for every retired wrapper 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > does not confuse calls or longer identifiers with retired declarations 0ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 23ms
+stderr | server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > returns typed unavailable instead of authorizing when actual transaction SQL fails
+[signing-authority] signer role lookup failed: relation "organization_users" does not exist
+
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > admits an active allowed membership using the canonical policy 8ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses a now-demoted membership despite an earlier allowed read 5ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > does not borrow a membership from a different organization 2ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses inactive users on this executor 2ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses inactive organizations on this executor 2ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses a removed membership 2ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > returns typed unavailable instead of authorizing when actual transaction SQL fails 5ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > authorizes the default signing roles (admin/approver/reviewer) 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > is case-insensitive 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > fails closed for non-signing, empty, and absent roles 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > respects an explicit allowlist argument 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > honors the ESIGNATURE_SIGNING_ROLES env override 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > falls back to the default policy when the override is blank 0ms
+
+ Test Files  8 passed (8)
+      Tests  184 passed (184)
+   Start at  06:32:52
+   Duration  23.33s (transform 3.99s, setup 176ms, import 10.56s, tests 11.17s, environment 1ms)

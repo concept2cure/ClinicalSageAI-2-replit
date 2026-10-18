@@ -71,14 +71,151 @@
 -- the two migrations, and it states the NULL-invisible rule explicitly rather
 -- than inheriting whatever the generic sweep would emit.
 --
+-- ── AMENDED IN PLACE 2026-10-12 (D3) ────────────────────────────────────────
+-- citation_chains joins the list. It is the third table 20260730_graphrag_
+-- knowledge_tables.sql created and the only one of the trio this file left
+-- out, so on a provisioned database it stood at: org column NONE, RLS off,
+-- zero policies — while its two siblings were keyed and policied by the loop
+-- below. On 2026-10-12 that was found to be a LIVE cross-tenant read:
+-- GET /api/graphrag/citation-trace/:documentId walked
+-- `WHERE source_document_id = ANY($1) OR target_document_id = ANY($1)` from an
+-- unchecked path parameter, one hop per `?depth=`, behind authenticateToken
+-- alone — so any authenticated user of any tenant could read another tenant's
+-- citation graph: the linked ids, the citation type, the quoted `context`, the
+-- page and the section. The route was fixed the same day
+-- (docs/evidence/D3/2026-10-12-graphrag-citation-trace/); this is the
+-- structural half, so the next reader of this table inherits the isolation
+-- instead of having to remember it.
+--
+-- The backfill is in its own block ABOVE the loop, and that order is
+-- load-bearing ON THE ESTATES THAT MATTER. The loop sets FORCE ROW LEVEL
+-- SECURITY, which subjects the table OWNER to the policy, and the policy admits
+-- nothing on a connection carrying no app.current_tenant_id. Both halves were
+-- measured, because the first attempt to show it failed and the reason is the
+-- point:
+--
+--   applier = SUPERUSER (a local psql as postgres; a single-role estate whose
+--     applier is a superuser) -> RLS is bypassed outright, FORCE has no power
+--     over a superuser, and a backfill written AFTER the loop attributed its
+--     row normally. Ordering is invisible here, which is exactly why it would
+--     survive review on a laptop.
+--
+--   applier = NON-SUPERUSER OWNER (deploy-migrate's split-role mode,
+--     DATABASE_OWNER_URL; and every AWS RDS estate, which has no true
+--     superuser) -> the same UPDATE matched ZERO rows and reported success.
+--     The row stayed NULL. A backfill that silently does nothing, on a green
+--     deploy.
+--
+-- So the block stays above the loop, where it runs before the policy exists and
+-- behaves identically under both appliers. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-12-citation-chains-tenant-key/.
+--
+-- ── Amended 2026-10-13 (D6): the backfill reads a column a fresh database ──
+-- ── does not have yet ─────────────────────────────────────────────────────
+-- Above the loop, the backfill reads knowledge_graph_nodes.organization_id,
+-- and the loop below is what adds that column. A database that ran an
+-- earlier version of this file already has it. A freshly provisioned one
+-- does not. There the UPDATE failed with "column n.organization_id does not
+-- exist", and deploy-migrate halted at this file (172 of 375): CI's Blank DB,
+-- boot-smoke and image-boot jobs went red on every trunk run from 15af6bc4b.
+-- The backfill now runs only when the node table carries the tenant key. A
+-- fresh database's nodes are new and unattributed, so nothing could be
+-- attributed from them anyway. Nothing is removed.
+--
 -- Idempotent throughout; safe to re-run on every deploy.
 
 BEGIN;
 
+-- ── citation_chains: column + attribution, BEFORE the loop policies it ──────
+-- A citation row records "source_document_id cites target_document_id". It
+-- belongs to whoever owns the CITING document, so attribution reads
+-- knowledge_graph_nodes — the table that already carries organization_id for a
+-- source_document_id — and only where that document resolves to EXACTLY ONE
+-- organisation. A document whose nodes span two organisations, or that has no
+-- node at all, keeps organization_id NULL and is therefore served to nobody by
+-- the policy below. Guessing would assign one tenant's citation context to
+-- another, which is the failure this file exists to fix; the file's
+-- determinism contract already states that rule for the legacy node rows.
+DO $$
+DECLARE
+  attributed integer := 0;
+BEGIN
+  IF to_regclass('public.citation_chains') IS NULL
+     OR to_regclass('public.knowledge_graph_nodes') IS NULL THEN
+    RAISE NOTICE '[kg-tenant] citation_chains or knowledge_graph_nodes absent — backfill skipped';
+  ELSE
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'citation_chains'
+         AND column_name = 'organization_id'
+    ) THEN
+      ALTER TABLE public.citation_chains ADD COLUMN organization_id INTEGER;
+      RAISE NOTICE '[kg-tenant] citation_chains gained organization_id';
+    END IF;
+
+    -- And the column this backfill READS, for the same reason it adds its own.
+    --
+    -- The loop below adds organization_id to knowledge_graph_nodes, and this
+    -- block runs BEFORE the loop (it must: the policy the loop creates would
+    -- filter the owner's own UPDATE to zero rows — see the header note). So on
+    -- a path where nothing has added it yet, the attribution query below fails
+    -- with `column n.organization_id does not exist` and takes the whole file
+    -- with it. That is not hypothetical: it halted deploy-migrate at file
+    -- 172/375 on a database provisioned from empty on 2026-10-13. install-fresh
+    -- did NOT show it, because drizzle-kit push has already created the column
+    -- by the time the overlay runs there — the two provisioning paths disagree
+    -- about what exists at this point, and only the deploy path exposed it.
+    --
+    -- Adding it here is the same ALTER the loop performs, guarded the same way,
+    -- so the loop finds it present and skips. Order preserved, dependency
+    -- removed.
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
+         AND column_name = 'organization_id'
+    ) THEN
+      ALTER TABLE public.knowledge_graph_nodes ADD COLUMN organization_id INTEGER;
+      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes gained organization_id (ahead of the loop, so the citation backfill can read it)';
+    END IF;
+
+    -- Only rows still unattributed, so a re-run never overwrites an
+    -- attribution an operator made deliberately. Only when the nodes carry the
+    -- tenant key: on a fresh database the loop below adds it (2026-10-13 note).
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
+         AND column_name = 'organization_id'
+    ) THEN
+      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes has no organization_id yet — nothing to attribute from';
+      RETURN;
+    END IF;
+    WITH unambiguous AS (
+      SELECT n.source_document_id AS doc, min(n.organization_id) AS org
+        FROM public.knowledge_graph_nodes n
+       WHERE n.organization_id IS NOT NULL
+         AND n.source_document_id IS NOT NULL
+       GROUP BY n.source_document_id
+      HAVING count(DISTINCT n.organization_id) = 1
+    )
+    UPDATE public.citation_chains c
+       SET organization_id = u.org
+      FROM unambiguous u
+     WHERE c.organization_id IS NULL
+       AND c.source_document_id = u.doc;
+    GET DIAGNOSTICS attributed = ROW_COUNT;
+    RAISE NOTICE '[kg-tenant] citation_chains: % row(s) attributed, the rest stay NULL (served to nobody)', attributed;
+  END IF;
+END
+$$;
+
 DO $$
 DECLARE
   t text;
-  tables text[] := ARRAY['knowledge_graph_nodes', 'knowledge_graph_edges', 'lumen_knowledge_graph_edges'];
+  -- citation_chains added 2026-10-12 (D3); see the header note. Its column is
+  -- already present by the time the loop runs, so the loop only adds the
+  -- index, RLS, FORCE and the policy.
+  tables text[] := ARRAY['knowledge_graph_nodes', 'knowledge_graph_edges',
+                         'lumen_knowledge_graph_edges', 'citation_chains'];
 BEGIN
   FOREACH t IN ARRAY tables LOOP
     IF to_regclass('public.' || t) IS NULL THEN

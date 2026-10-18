@@ -218,7 +218,6 @@ describe('submission gateway routes — auth gate', () => {
 describe('submission gateway routes — role gate', () => {
   const MUTATIONS: Array<[string, string, Record<string, unknown>]> = [
     ['POST', '/api/mdx/gateways/fda/esg/transmit', { ...REAUTH, environment: 'production', submissionType: 'estar', bundle: { hash: 'h' } }],
-    ['POST', '/api/mdx/gateways/transmittals/1/rollback', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/findings', { code: 'X', message: 'y' }],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve', { resolution: 'done' }],

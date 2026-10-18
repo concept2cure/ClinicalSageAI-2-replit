@@ -1,0 +1,164 @@
+{
+  "recordedAt": "2026-10-17T22:25:36.048872+00:00",
+  "checkpoint": "postmerge frozen tooling review",
+  "head": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+  "contract": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md",
+  "productionChangeScope": "Advertised draft_authoring_document JSON schema only; no handler/provider/persistence implementation changes by tool owner",
+  "historicalPassingRuns": [
+    {
+      "path": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-schema-batch-focused.log",
+      "sha256": "a447444e6df0596e71aad089eff1f0c5d952ce27e45d7164c8c36867c61fbdfc",
+      "testFilesPassed": 3,
+      "testsPassed": 47,
+      "immutableBeforeAfterSourceBinding": false,
+      "currentRuntimeQualification": "Lead frozen combined cohort, separately recorded",
+      "scope": "Actual owned tests; prior run only; not an independent total or provider qualification"
+    },
+    {
+      "path": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/tool-real-pglite-final.log",
+      "sha256": "db8c662a5e083f175e510d85016f705ff36f623a4af2862ca61d35f0e17bbfe6",
+      "testFilesPassed": 3,
+      "testsPassed": 53,
+      "immutableBeforeAfterSourceBinding": false,
+      "currentRuntimeQualification": "Lead frozen combined cohort, separately recorded",
+      "scope": "Actual owned tests; prior run only; not an independent total or provider qualification"
+    }
+  ],
+  "failFirst": {
+    "tool-schema-fail-first.log": "10 intended failing schema assertions and 5 controls before advertised-schema edit",
+    "tool-schema-initial-probe.log": "Initial 1 failure/14 pass probe, historical only",
+    "tool-real-pglite-first.log": "7 fixture SQL typing failures/46 pass; error 42P08 text versus uuid. Not counted as product defect counterfactual."
+  },
+  "review": {
+    "completeV2Required": true,
+    "absoluteOffsetsBeyond80000Accepted": true,
+    "coordinatesSafeIntegersAdvertised": true,
+    "batchReceiptPreservesVersionDigestsAndAbsoluteSpan": true,
+    "batchReceiptStripsRawText": true,
+    "runtimeBudgetAndDistinctnessCanonicalDecoder": "1\u20138 distinct documents, width 1\u201312000 UTF-16 units, aggregate <=48000, safe integer and exact bounds",
+    "newInputCannotDowngradeToSavedOnlyLegacyDecoder": true,
+    "fixtureCoverage": "Schema validates JSON-round-tripped actual batch receipt. Actual tool/HTTP controls exercise same-length inside/outside changes, missing version/digests, Unicode far-offset positive save, receipt minimization. Existing tenant controls preserved."
+  },
+  "limitations": [
+    "Prior 47/53 test runs are passing logs without tool-owned immutable before/after bindings. Current complete runtime qualification is the lead frozen combined cohort.",
+    "PGlite exercises real SQL with one connection; it is not native PostgreSQL concurrency or production RLS proof.",
+    "No provider calls, model-use claim, scientific qualification, agency acceptance or deployment proof.",
+    "Five .mts evidence sources are outside the actual repository ESLint glob.",
+    "Owner and focused test counts overlap the combined regression cohort and must not be added to it."
+  ],
+  "premergeOwnedSourceSha256": {
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "0955073bc241ea3c22a064cf7e7b17177bbbaeee653bcdc15277d2a0f0e84ed6",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "e3ef5b72e7bb37c09184f9d9c59c9595273e15f83bf8e0fa2da0694ec26b1564",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "premergeRelatedSourceSha256": {
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/authoring/authoring-draft-tool.ts": "ac35116bd53cfa1f2bf0022638b0035db404106960b5f54b25a07a6847be0488",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66"
+  },
+  "premergeOwnedLint": {
+    "bindings": "finish-tools-owned-lint-bindings.json",
+    "results": "finish-tools-owned-lint.json",
+    "files": 8,
+    "errors": 0,
+    "warnings": 1,
+    "sourcesUnchangedDuringRun": true,
+    "warningDisposition": "One max-lines warning in existing tool PGlite fixture; upstream refactor pending integration; no edits during root freeze"
+  },
+  "premergeActiveEvidenceLint": {
+    "recursiveRoot": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16",
+    "inventorySha256": {
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts": "0999b2aec4db2c6a286115c90d6d50552a4ebd18c70aac426829362ae3b8dbf5",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "088f05d52c2b3a214e114e99c31541602984f5a1e9bb18a1e697d785f9812b0d",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts": "e586dc552fd5f77ab78da2515d8ee6ac90dad3c3d6d47e65b9b0cb7ea88b8816",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts": "200a29b5df74bec96a62643b375bd674e6bebca4372262a5bd9ff3db4bac8e18",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e"
+    },
+    "actualRepositoryGlobCoveredFiles": [
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs"
+    ],
+    "errors": 0,
+    "warnings": 0,
+    "repositoryGlobGap": [
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts"
+    ],
+    "gapExplanation": "Repository ESLint typed glob lists js/jsx/ts/tsx/cjs/mjs, omits mts/cts. No config changes or false lint qualification."
+  },
+  "ownedSourceSha256": {
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "6222137d7d8f73b653d7b7a8309e0d52c53acaccfe4dd587da4e6dfbc8661046",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "relatedSourceSha256": {
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/authoring/authoring-draft-tool.ts": "ac35116bd53cfa1f2bf0022638b0035db404106960b5f54b25a07a6847be0488",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66"
+  },
+  "freshOwnedAndEvidenceLint": {
+    "results": "finish-tools-postmerge-lint.json",
+    "bindings": "finish-tools-postmerge-lint-bindings.json",
+    "files": 11,
+    "ownedFiles": 8,
+    "activeEvidenceJsFiles": 3,
+    "errors": 0,
+    "warnings": 0,
+    "sourcesUnchangedDuringRun": true,
+    "mtsOutsideActualRepositoryGlob": [
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts",
+      "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts"
+    ],
+    "warningDisposition": "Upstream fixture helper extraction resolved the earlier max-lines warning; no owner source changes were made during review."
+  },
+  "postmergeReview": {
+    "integratedHead": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+    "mergeBindings": "merge-integration-source-bindings.json",
+    "allSevenMergeBoundFilesStillCurrent": true,
+    "focusedRuntimeLog": "merge-integration-focused.txt",
+    "focusedRuntimeLogSha256": "3a856851d5e4e92dc62fe699be9ae5f96efc195715c1aea61a7bfe6ee5e0e099",
+    "focusedTestsPassed": 50,
+    "focusedFilesPassed": 3,
+    "focusedScope": [
+      "draft_authoring_document registered tool PGlite",
+      "save_document_to_vault single-body draft PGlite",
+      "V2 advertised schema"
+    ],
+    "sharedFixtureHelper": "server/services/ana/__tests__/support/authoring-tool-db.ts",
+    "seamFindings": [
+      "V2 identity imports and controls coexist with upstream canonical migrations and count helpers.",
+      "authoringCounts const is initialized before module-level V2 control registration, avoiding a temporal dead zone.",
+      "Existing source changes/missing-version tests and Unicode far-window positive controls remain registered.",
+      "Strict source decoder, V2 provenance marker and single canonical source-store reservation remain in createDocumentFromDraft.",
+      "Single-body save composes the same writer, retains the stated change reason and does not invent selected source references.",
+      "Schema retains complete V2 identity and safe absolute offsets; separate human filing semantics remain explicit."
+    ],
+    "runtimeQualificationLimit": "Lead frozen 43-file combined regression is authoritative for the complete current tool/HTTP/tenant cohort; focused 50 count overlaps it and is not added."
+  }
+}

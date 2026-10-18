@@ -37,8 +37,8 @@
  * has a natural unique constraint.
  */
 
-/* Deterministic BX-204 program UUID — must match scripts/seed-mdx-beta.mjs
-   PROG.BX_204 so both seeders converge on the same regulatory_programs row. */
+/* Deterministic BX-204 program UUID — the one scripts/seed-mdx-beta.mjs
+   (removed 2026-10-15) used, so a database it seeded converges on one row. */
 const BX204_PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
 async function tableExists(client, table) {
@@ -78,8 +78,8 @@ async function resolveBx204ProgramId(client, org, admin) {
     let { rows } = await client.query(sel, [org.id]);
     if (!rows[0]) {
       const leadUserId = await resolveUserId(client, 'admin@concept2cure.pro', admin);
-      /* Values mirror scripts/seed-mdx-beta.mjs so either seeder can create
-         the row first. No ON CONFLICT target: covers both the PK and the
+      /* Values match the row the removed scripts/seed-mdx-beta.mjs wrote, so
+         either can have created it first. No ON CONFLICT target: covers both the PK and the
          (organization_id, code) unique index. */
       await client.query(
         `INSERT INTO regulatory_programs (

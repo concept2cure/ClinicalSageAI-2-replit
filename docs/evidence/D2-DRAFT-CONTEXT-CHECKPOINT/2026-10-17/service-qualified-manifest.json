@@ -1,0 +1,61 @@
+{
+  "recordedAt": "2026-10-17T22:42:44.221800+00:00",
+  "head": "3cdb2564400e150755c3133a5c8c5927d20bbee9",
+  "ownedFiles": {
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+  },
+  "tests": {
+    "transcript": "service-focused-first.txt",
+    "bindings": "service-focused-first-bindings.json",
+    "exitCode": 0,
+    "testFilesPassed": 4,
+    "testsPassed": 50,
+    "newServiceControlsPassed": 16,
+    "sourcesUnchangedDuringRun": true,
+    "recordedBindings": 12,
+    "allBindingsStillCurrent": true
+  },
+  "lint": {
+    "command": [
+      "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+      "node_modules/eslint/bin/eslint.js",
+      "--format=json",
+      "server/services/ana/AnaDocumentDraftingService.ts",
+      "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts"
+    ],
+    "exitCode": 0,
+    "before": {
+      "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+      "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+    },
+    "after": {
+      "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+      "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d"
+    },
+    "sourcesUnchangedDuringRun": true,
+    "errors": 0,
+    "warnings": 6,
+    "baselineWarnings": 7,
+    "disposition": "Six inherited production-file warnings (five unused type imports and overall file length), versus seven baseline. Both owned tests zero warnings. No rule, suppression or baseline changes."
+  },
+  "scope": "Actual selected-source loader/drafting service and existing per-section settlement; source authority/catalog/program seams and gateway/provider boundary are explicitly stubbed. Default Vitest pg is mocked. No network/provider/database qualification.",
+  "changes": [
+    "Snapshot caller-owned request fields and declared scalar project context before the first await; keep original source object identity.",
+    "Before source-bearing prompt construction, match original registered context and pinned consumer identity and recheck current source/actor/program authority.",
+    "Attach trusted beforeDispatch closure only for selected loaded sources; recheck again before returning response.",
+    "Refuse selected-source streaming or model tools before gateway handoff. Preserve ordinary no-source modes and successful batch siblings.",
+    "Replace manually fabricated positive blueprint context with actual loader under explicit synthetic authority."
+  ],
+  "limits": [
+    "Checkpoint validation does not reserve a source database across model waits or recall previously dispatched text.",
+    "Source-aware streaming/tools are refused pending separately qualified release boundaries.",
+    "Direct service entry/post-response errors retain the existing safe DRAFT_FAILED per-section envelope; gateway callback refusals use the canonical gateway classification owned separately.",
+    "This is an owned frozen-source integration checkpoint, not final whole-tree typechecking, canonical publication, deployment, scientific qualification or agency acceptance.",
+    "Owner counts overlap root combined and independent cohorts and are not additive."
+  ]
+}

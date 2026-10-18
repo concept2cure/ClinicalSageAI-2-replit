@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "testedHead": "d6a33d3a4a09e08a28d9a3b6047e30fe3a2532d1",
+  "completedAt": "2026-10-17T22:37:08.041Z",
+  "previousPositiveReceipt": "pre-null-guard/summary.json",
+  "replayChangedSourcePathsFromPrevious": [
+    "client/src/concept2cure/v2/authoringHandoffRecovery.ts"
+  ],
+  "caseCount": 8,
+  "passed": 8,
+  "stages": 20,
+  "screenshots": 12,
+  "documentPosts": 8,
+  "sectionPosts": 8,
+  "explicitContinuationPosts": 4,
+  "scopedInventoryGets": 20,
+  "allAuthoringGets": 36,
+  "otherMutations": 8,
+  "explicitNavigationReceipts": 12,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unexpectedApi": 0,
+  "productionFrozenDuringCapture": true,
+  "productionPinsMatchNow": true,
+  "fixturePinsMatchNow": true,
+  "strictLintFiles": 4,
+  "strictLintErrors": 0,
+  "strictLintWarnings": 0,
+  "nodeVersion": "v22.23.3"
+}

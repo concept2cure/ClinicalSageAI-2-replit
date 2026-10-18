@@ -23,6 +23,40 @@
  * `vault.evidence_citations` holds search hits, not uses, and is not listed.
  */
 
+import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,ProgramReadAccessError } from '../c2c/current-program-access';
+
+async function currentUsesScope(q: PlacementQueryable,organizationId:number,vaultIds:string[],userId:number | undefined) {
+  const identity={organizationId,userId};
+  const scope=await getCurrentAccessibleProgramScope(q,identity);
+  if (!vaultIds.length) return {identity,scope};
+  const wanted=[...new Set(vaultIds)];
+  const rows=await q.query(`SELECT d.id::text AS id,d.organization_id,d.program_id::text AS program_id FROM vault.documents d
+    JOIN regulatory_programs rp ON rp.id=d.program_id AND rp.organization_id=$1 AND rp.deleted_at IS NULL
+    WHERE d.id=ANY($2::uuid[]) AND d.deleted_at IS NULL`,[organizationId,wanted]);
+  if (rows.rows.length!==wanted.length) throw new ProgramReadAccessError(404,'VAULT_DOCUMENT_NOT_FOUND','Document not found.');
+  for (const row of rows.rows) {
+    await requireCurrentProgramAccess(q,{organizationId,userId,programId:row.program_id});
+    if (row.organization_id==null) throw new ProgramReadAccessError(409,'VAULT_TENANT_RECONCILIATION_REQUIRED','This Vault record needs a verified organization relationship.');
+    if (Number(row.organization_id)!==organizationId) throw new ProgramReadAccessError(404,'VAULT_DOCUMENT_NOT_FOUND','Document not found.');
+  }
+  return {identity,scope};
+}
+async function readableRetention(q: PlacementQueryable,organizationId:number,userId:number | undefined,rec:any):Promise<boolean> {
+  if (rec?.retention?.retained!==true) return true;
+  const id=rec.retention.documentId;
+  if (typeof id!=='string' || !id) return false;
+  // Historical JSON identifiers are compared as text, never cast to uuid.
+  const rows=await q.query(`SELECT d.program_id::text AS program_id FROM vault.documents d
+    JOIN regulatory_programs rp ON rp.id=d.program_id AND rp.organization_id=$1 AND rp.deleted_at IS NULL
+    WHERE d.id::text=$2 AND d.organization_id=$1 AND d.deleted_at IS NULL`,[organizationId,id]);
+  if (rows.rows.length!==1) return false;
+  try {await requireCurrentProgramAccess(q,{organizationId,userId,programId:rows.rows[0].program_id});return true;}
+  catch(error) {
+    if (error instanceof ProgramReadAccessError && ['PROJECT_PERMISSION_DENIED','PROJECT_NOT_FOUND','PROJECT_ANCHOR_UNRESOLVED'].includes(error.code)) return false;
+    throw error;
+  }
+}
+
 export interface VaultPlacement {
   leafId: number;
   submissionId: number;
@@ -50,8 +84,10 @@ export async function readVaultPlacements(
   q: PlacementQueryable,
   organizationId: number,
   vaultIds: string[],
+  opts: {userId:number | undefined},
 ): Promise<Map<string, VaultPlacement[]>> {
   const out = new Map<string, VaultPlacement[]>();
+  const {identity,scope}=await currentUsesScope(q,organizationId,vaultIds,opts.userId);
   if (vaultIds.length === 0) return out;
   const { rows } = await q.query(
     `SELECT l.document_uuid::text AS vault_id, l.id AS leaf_id, l.section_code, l.title AS leaf_title, l.lifecycle_op,
@@ -65,9 +101,9 @@ export async function readVaultPlacements(
       WHERE l.organization_id = $1
         AND l.document_table = 'vault_documents'
         AND l.document_uuid = ANY($2::uuid[])
-        AND l.deleted_at IS NULL
+        AND l.deleted_at IS NULL AND sub.program_id=ANY($3::uuid[])
       ORDER BY sub.id, s.sequence_number, l.section_code, l.id`,
-    [organizationId, vaultIds],
+    [organizationId, vaultIds, scope.programIds],
   );
   for (const r of rows) {
     const list = out.get(r.vault_id) ?? [];
@@ -87,6 +123,7 @@ export async function readVaultPlacements(
     });
     out.set(r.vault_id, list);
   }
+  await requireProgramScopeStillCurrent(q,identity,scope);
   return out;
 }
 
@@ -130,29 +167,37 @@ export async function readVaultEstarUses(
   q: PlacementQueryable,
   organizationId: number,
   vaultIds: string[],
+  opts: {userId:number | undefined},
 ): Promise<Map<string, VaultEstarUse[]>> {
   const out = new Map<string, VaultEstarUse[]>();
+  const {identity,scope}=await currentUsesScope(q,organizationId,vaultIds,opts.userId);
   if (vaultIds.length === 0) return out;
   const { rows } = await q.query(
     `SELECT 'artifact' AS record, c.artifact_id AS record_id, c.created_at AS at, c.metadata::jsonb AS rec
        FROM concept2cure_artifacts c
+       JOIN projects p ON p.id=c.project_id AND p.organization_id=c.organization_id AND p.status<>'deleted'
       WHERE c.organization_id = $1 AND c.metadata::jsonb ->> 'source' = 'export_estar_pdf'
+        AND p.regulatory_program_id=ANY($3::uuid[])
+        AND (c.metadata::jsonb->>'programId' IS NULL OR c.metadata::jsonb->>'programId'=p.regulatory_program_id::text)
         AND ${ESTAR_ATTACHMENT_MATCH('c.metadata::jsonb')}
      UNION ALL
      SELECT 'audit', a.id::text, a.created_at, a.new_values::jsonb
        FROM audit_logs a
       WHERE a.tenant_id = $1 AND a.action = 'EXPORT_GENERATED'
         AND a.new_values::jsonb ->> 'sourceType' = 'export_estar_pdf'
+        AND a.new_values::jsonb->>'programId'=ANY($3::text[])
         AND ${ESTAR_ATTACHMENT_MATCH('a.new_values::jsonb')}
       ORDER BY at, record_id`,
-    [organizationId, vaultIds],
+    [organizationId, vaultIds, scope.programIds],
   );
   const wanted = new Set(vaultIds);
   for (const r of rows) {
+    if (!await readableRetention(q,organizationId,opts.userId,r.rec)) continue;
     for (const { vaultId, use } of usesFrom(r.record, String(r.record_id), r.at, r.rec, wanted)) {
       out.set(vaultId, [...(out.get(vaultId) ?? []), use]);
     }
   }
+  await requireProgramScopeStillCurrent(q,identity,scope);
   return out;
 }
 
@@ -176,8 +221,10 @@ export async function readVaultCmcEvidenceUses(
   q: PlacementQueryable,
   organizationId: number,
   vaultIds: string[],
+  opts: {userId:number | undefined},
 ): Promise<Map<string, VaultCmcEvidenceUse[]>> {
   const out = new Map<string, VaultCmcEvidenceUse[]>();
+  const {identity,scope}=await currentUsesScope(q,organizationId,vaultIds,opts.userId);
   if (vaultIds.length === 0) return out;
   const { rows } = await q.query(
     `SELECT e.vault_document_id::text AS vault_id, e.id::text AS link_id, e.source_type, e.source_key,
@@ -187,10 +234,11 @@ export async function readVaultCmcEvidenceUses(
          ON o.organization_id = e.organization_id AND o.project_id = e.program_id::text AND o.source_key = e.source_key
        LEFT JOIN cmc_section_lineage l ON l.source_object_id = o.id AND l.organization_id = e.organization_id
        LEFT JOIN cmc_module3_sections s ON s.id = l.section_id AND s.organization_id = e.organization_id
-      WHERE e.organization_id = $1 AND e.vault_document_id = ANY($2::uuid[]) AND e.unlinked_at IS NULL
+         AND s.project_id=ANY($4::text[])
+      WHERE e.organization_id = $1 AND e.vault_document_id = ANY($2::uuid[]) AND e.unlinked_at IS NULL AND e.program_id=ANY($3::uuid[])
       GROUP BY e.vault_document_id, e.id, e.source_type, e.source_key
       ORDER BY e.vault_document_id, e.source_key, e.id`,
-    [organizationId, vaultIds],
+    [organizationId, vaultIds, scope.programIds, scope.programIds],
   );
   for (const r of rows) {
     const sections = (Array.isArray(r.sections) ? r.sections.map(String) : []).sort();
@@ -199,5 +247,6 @@ export async function readVaultCmcEvidenceUses(
       { linkId: String(r.link_id), sourceType: String(r.source_type), sourceKey: String(r.source_key), sections },
     ]);
   }
+  await requireProgramScopeStillCurrent(q,identity,scope);
   return out;
 }

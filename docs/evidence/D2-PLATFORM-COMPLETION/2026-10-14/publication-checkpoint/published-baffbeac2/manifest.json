@@ -1,0 +1,121 @@
+{
+  "branch": "concept2cure-v2",
+  "publication": {
+    "branch": "concept2cure-v2",
+    "publishedHead": "baffbeac2fb3a0c9bb5f05f64e9278708fc985e7",
+    "localAndRemoteHead": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+    "verifiedAtUtc": "2026-10-14T08:32:38.285100+00:00",
+    "exactEquality": true,
+    "postPublicationChange": "Automatic repo-health refresh; two documentation files only."
+  },
+  "qualification": "Verified normal source publication; hosted CI status at capture is pending, no production or regulatory qualification.",
+  "privateRawRecords": [
+    {
+      "path": "/tmp/reporting-governed-pack-normal-push.txt",
+      "bytes": 9753,
+      "sha256": "cf7d2f86bd6057e41cc403e3f6fba7f35ce7a109e81d04dcea64245be4312622"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-normal-push-retry.txt",
+      "bytes": 9306,
+      "sha256": "4b5a3df7019e9afc29fd0e642c930639b1add57e914407b24bcaaacf1eac09ae"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-final-styled-history.txt",
+      "bytes": 117,
+      "sha256": "98af75a7403dca49e6e7af7986d3d271fe2d599967501e95feaf89eb0ecf8864"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-final-styled-build.txt",
+      "bytes": 14419,
+      "sha256": "db81a2ed1441efe291545976ef70b31b81d54001ce5e4de5495062b53bce09ec"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-final-text-ramp.txt",
+      "bytes": 79,
+      "sha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-final-qms-fixtures.txt",
+      "bytes": 16376,
+      "sha256": "7a496cd4499eacdc0fc4ee3a63c7a6524cf5593eaad8a62503e85e89df07805f"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/README.md",
+      "bytes": 1871,
+      "sha256": "9265061bc3544e06380441b45d59cb49b0bda2f7f05c8ec2b7e085d37d579f8b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/final-styled-build.txt",
+      "bytes": 14419,
+      "sha256": "db81a2ed1441efe291545976ef70b31b81d54001ce5e4de5495062b53bce09ec"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/final-styled-build.txt.raw.gz",
+      "bytes": 4163,
+      "sha256": "17c03d8f0bc30a91e5038f7d72108f6033b36f6a762e6496bb530ab3ce049a53"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/final-styled-history-scan.txt",
+      "bytes": 117,
+      "sha256": "98af75a7403dca49e6e7af7986d3d271fe2d599967501e95feaf89eb0ecf8864"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/final-styled-history-scan.txt.raw.gz",
+      "bytes": 113,
+      "sha256": "d975d0f5499bd3de3c5cfcff7bdfc89991aa32c7756ede02b632093e636478d3"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/generated-text-ramp.txt",
+      "bytes": 79,
+      "sha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/generated-text-ramp.txt.raw.gz",
+      "bytes": 94,
+      "sha256": "8e2e12b5c87faee643f299a8266590cb2faa0ee429c3ae6878cd50633bf2e81c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/hosted-workflows-at-publication.json",
+      "bytes": 1305,
+      "sha256": "b65b359a3fa648c17c6debabfe2e6002bc67c9748f0120d7ddc1917de9c0301b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/latest-qms-fixtures-69-pass.txt",
+      "bytes": 16375,
+      "sha256": "ed254942002ce949b7539f30647b0d8527b64b123f21a279855b3b59051466fa"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/latest-qms-fixtures-69-pass.txt.raw.gz",
+      "bytes": 2450,
+      "sha256": "4647f2c2b4e00ba8f318889ce573d984436ddcac8722dac3f8f9354cbf11e959"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/normal-push-first-remote-race.txt",
+      "bytes": 9753,
+      "sha256": "cf7d2f86bd6057e41cc403e3f6fba7f35ce7a109e81d04dcea64245be4312622"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/normal-push-first-remote-race.txt.raw.gz",
+      "bytes": 3572,
+      "sha256": "7744f34cf4db0c5858a3ea02fbe39ba7bb8545170e998384f145225be35e5cd5"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/normal-push-success.txt",
+      "bytes": 9306,
+      "sha256": "4b5a3df7019e9afc29fd0e642c930639b1add57e914407b24bcaaacf1eac09ae"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/normal-push-success.txt.raw.gz",
+      "bytes": 3367,
+      "sha256": "d03996d8b84c71fb166d9ad608443471b6a500daa212b224b9fd405e06ab106e"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-baffbeac2/remote-verification.json",
+      "bytes": 336,
+      "sha256": "df361c69bde455529b812daf8b0bad560ff87975fc08f15437e81575c99cacef"
+    }
+  ]
+}

@@ -29,13 +29,13 @@
    UPDATE csr_reports SET title = $1, sponsor = $2, indication = $3, phase = $4, status = $5, date = $6 WHERE id = $7
    -> 42703 column "date" of relation "csr_reports" does not exist
 == csr_reports.drug_name (server/services/csr-extractor-service.ts; 1 segment(s))
-    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1 
+    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1
    -> 42703 column "nctrial_id" does not exist
 == csr_reports.file_name (server/scripts/fetch_and_import.js; 1 segment(s))
    INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
    -> 42703 column "date" of relation "csr_reports" does not exist
 == csr_reports.file_path (server/services/csr-extractor-service.ts; 1 segment(s))
-    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1 
+    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1
    -> 42703 column "nctrial_id" does not exist
 == csr_reports.file_size (server/scripts/fetch_and_import.js; 1 segment(s))
    INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
@@ -44,5 +44,5 @@
    INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
    -> 42703 column "date" of relation "csr_reports" does not exist
 == unified_documents.text_content (server/services/unifiedDocumentIngestion.js; 1 segment(s))
-    SELECT * FROM unified_documents WHERE text_content ILIKE $1 
+    SELECT * FROM unified_documents WHERE text_content ILIKE $1
    -> 42703 column "text_content" does not exist

@@ -54,7 +54,13 @@ import {
   getTriageQueue,
   TenantAccessError,
   NotFoundError,
+  CapaAccessError,
+  CapaPersistenceError,
+  ComplaintAssessmentRequired,
 } from '../services/capa-mdr/capaMdr.service';
+import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
+import type { CapaCaller } from '../services/capa-mdr/governed-context';
+import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { InvalidTransitionError } from '../services/capa-mdr/stateMachine';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -101,6 +107,16 @@ function getUserRole(req: Request): string | null {
   return typeof raw === 'string' && raw.length > 0 ? raw : null;
 }
 
+function callerOf(req: Request): CapaCaller {
+  const raw = req.identity?.legacyUserId ?? req.userId ?? req.user?.userId ?? req.user?.id;
+  const id = typeof raw === 'number' ? raw : typeof raw === 'string' && /^[1-9]\d*$/.test(raw) ? Number(raw) : NaN;
+  return { userId: id };
+}
+function mutationBody<T extends { auditTrail: AuditRowOutcome }>(row: T) {
+  const { auditTrail, ...body } = row;
+  return { ...body, meta: { auditTrail } };
+}
+
 function parseDate(v: unknown): Date | null {
   if (typeof v !== 'string' || v.length === 0) return null;
   const d = new Date(v);
@@ -133,9 +149,14 @@ function queryParam(req: Request, key: string): string | undefined {
 }
 
 function err(res: Response, e: unknown): Response {
+  if (e instanceof CapaAccessError || e instanceof CapaPersistenceError || e instanceof AuthoringProgramAccessError) {
+    return res.status(e.status).json({ error: e.message, code: e.code,
+      ...(e instanceof CapaPersistenceError && e.recovery ? { recovery: e.recovery } : {}) });
+  }
   if (e instanceof TenantAccessError) return res.status(403).json({ error: e.message });
   if (e instanceof NotFoundError) return res.status(404).json({ error: e.message });
   if (e instanceof InvalidTransitionError) return res.status(422).json({ error: e.message });
+  if (e instanceof ComplaintAssessmentRequired) return res.status(422).json({ error: e.message });
   return serverError(res, capaLog, 'completing the CAPA / MDR operation', e);
 }
 
@@ -151,7 +172,7 @@ router.get('/triage', async (req: Request, res: Response) => {
       programId: queryParam(req, 'program_id'),
       openOnly: queryParam(req, 'open_only') !== 'false',
       limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
-    });
+    }, callerOf(req));
     res.json({ items, count: items.length });
   } catch (e) {
     err(res, e);
@@ -174,7 +195,7 @@ router.get('/complaints', async (req: Request, res: Response) => {
       source: inSet(COMPLAINT_SOURCES, sourceRaw) ? sourceRaw : undefined,
       severity: inSet(SEVERITY_LEVELS, severityRaw) ? severityRaw : undefined,
       openOnly: queryParam(req, 'open_only') === 'true',
-    });
+    }, callerOf(req));
     res.json({ rows, count: rows.length });
   } catch (e) {
     err(res, e);
@@ -200,11 +221,17 @@ router.post('/complaints', async (req: Request, res: Response) => {
   if (typeof body.eventNarrative !== 'string' || body.eventNarrative.trim().length === 0) {
     return res.status(422).json({ error: 'eventNarrative is required' });
   }
-  if (body.patientHarm !== undefined && !inSet(HARM_LEVELS, body.patientHarm)) {
-    return res.status(422).json({ error: `patientHarm must be one of: ${HARM_LEVELS.join(', ')}` });
+  // Required, not defaulted: the preliminary MDR reportability classification
+  // is computed from patientHarm at intake. An absent value used to be stored
+  // as 'none' (and severity as 'minor'), so an unassessed complaint read
+  // "no harm reported — no MDR".
+  if (!inSet(HARM_LEVELS, body.patientHarm)) {
+    return res.status(422).json({
+      error: `patientHarm is required and must be one of: ${HARM_LEVELS.join(', ')} — the reportability classification is computed from it`,
+    });
   }
-  if (body.severityAssessment !== undefined && !inSet(SEVERITY_LEVELS, body.severityAssessment)) {
-    return res.status(422).json({ error: `severityAssessment must be one of: ${SEVERITY_LEVELS.join(', ')}` });
+  if (!inSet(SEVERITY_LEVELS, body.severityAssessment)) {
+    return res.status(422).json({ error: `severityAssessment is required and must be one of: ${SEVERITY_LEVELS.join(', ')}` });
   }
 
   try {
@@ -227,8 +254,8 @@ router.post('/complaints', async (req: Request, res: Response) => {
       anticipatesCorrection: body.anticipatesCorrection === true,
       trendThresholdCrossed: body.trendThresholdCrossed === true,
       createdBy: getUserId(req),
-    });
-    res.status(201).json(row);
+    }, callerOf(req));
+    res.status(201).json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -239,7 +266,7 @@ router.get('/complaints/:id', async (req: Request, res: Response) => {
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
 
   try {
-    const row = await getComplaint(orgId, pathParam(req, 'id'));
+    const row = await getComplaint(orgId, pathParam(req, 'id'), callerOf(req));
     if (!row) return res.status(404).json({ error: 'Complaint not found' });
     res.json(row);
   } catch (e) {
@@ -264,8 +291,8 @@ router.post('/complaints/:id/transition', async (req: Request, res: Response) =>
       reason: typeof body.reason === 'string' ? body.reason : null,
       actor: getUserId(req),
       actorRole: getUserRole(req),
-    });
-    res.json(row);
+    }, callerOf(req));
+    res.json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -285,7 +312,7 @@ router.get('/mdr-events', async (req: Request, res: Response) => {
       state: inSet(MDR_STATES, stateRaw) ? stateRaw : undefined,
       jurisdiction: inSet(MDR_JURISDICTIONS, jurisdictionRaw) ? jurisdictionRaw : undefined,
       overdueOnly: queryParam(req, 'overdue') === 'true',
-    });
+    }, callerOf(req));
     res.json({ rows, count: rows.length });
   } catch (e) {
     err(res, e);
@@ -333,8 +360,8 @@ router.post('/mdr-events', async (req: Request, res: Response) => {
       correctionsTaken: body.correctionsTaken ?? null,
       attachmentRefs: Array.isArray(body.attachmentRefs) ? body.attachmentRefs : undefined,
       createdBy: getUserId(req),
-    });
-    res.status(201).json(row);
+    }, callerOf(req));
+    res.status(201).json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -345,7 +372,7 @@ router.get('/mdr-events/:id', async (req: Request, res: Response) => {
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
 
   try {
-    const row = await getMdrEvent(orgId, pathParam(req, 'id'));
+    const row = await getMdrEvent(orgId, pathParam(req, 'id'), callerOf(req));
     if (!row) return res.status(404).json({ error: 'MDR event not found' });
     res.json(row);
   } catch (e) {
@@ -371,8 +398,8 @@ router.post('/mdr-events/:id/transition', async (req: Request, res: Response) =>
       reportConfirmationCode: body.reportConfirmationCode ?? null,
       actor: getUserId(req),
       actorRole: getUserRole(req),
-    });
-    res.json(row);
+    }, callerOf(req));
+    res.json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -394,7 +421,7 @@ router.get('/capa', async (req: Request, res: Response) => {
       source: inSet(CAPA_SOURCES, sourceRaw) ? sourceRaw : undefined,
       riskLevel: inSet(RISK_LEVELS, riskRaw) ? riskRaw : undefined,
       openOnly: queryParam(req, 'open_only') === 'true',
-    });
+    }, callerOf(req));
     res.json({ rows, count: rows.length });
   } catch (e) {
     err(res, e);
@@ -435,8 +462,8 @@ router.post('/capa', async (req: Request, res: Response) => {
       targetCloseDate: parseDate(body.targetCloseDate),
       problemStatement: body.problemStatement ?? null,
       createdBy: getUserId(req),
-    });
-    res.status(201).json(row);
+    }, callerOf(req));
+    res.status(201).json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -447,7 +474,7 @@ router.get('/capa/:id', async (req: Request, res: Response) => {
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
 
   try {
-    const row = await getCapaRecord(orgId, pathParam(req, 'id'));
+    const row = await getCapaRecord(orgId, pathParam(req, 'id'), callerOf(req));
     if (!row) return res.status(404).json({ error: 'CAPA not found' });
     res.json(row);
   } catch (e) {
@@ -471,8 +498,8 @@ router.post('/capa/:id/transition', async (req: Request, res: Response) => {
       effectivenessCheckResult: body.effectivenessCheckResult ?? null,
       actor: getUserId(req),
       actorRole: getUserRole(req),
-    });
-    res.json(row);
+    }, callerOf(req));
+    res.json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -498,8 +525,8 @@ router.post('/capa/:id/actions', async (req: Request, res: Response) => {
       owner: body.owner ?? null,
       dueDate: parseDate(body.dueDate),
       actor: getUserId(req),
-    });
-    res.status(201).json(row);
+    }, callerOf(req));
+    res.status(201).json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -520,8 +547,8 @@ router.post('/capa/actions/:actionId/transition', async (req: Request, res: Resp
       evidenceRefs: Array.isArray(body.evidenceRefs) ? body.evidenceRefs : undefined,
       reason: typeof body.reason === 'string' ? body.reason : null,
       actor: getUserId(req),
-    });
-    res.json(row);
+    }, callerOf(req));
+    res.json(mutationBody(row));
   } catch (e) {
     err(res, e);
   }
@@ -553,7 +580,7 @@ router.get('/vigilance', async (req: Request, res: Response) => {
       entityId: queryParam(req, 'entity_id'),
       kind: inSet(VIGILANCE_EVENT_KINDS, kindRaw) ? kindRaw : undefined,
       limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
-    });
+    }, callerOf(req));
     res.json({ rows, count: rows.length });
   } catch (e) {
     err(res, e);

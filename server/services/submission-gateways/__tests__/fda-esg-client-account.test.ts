@@ -7,8 +7,11 @@
  * and key are never read. FDA's own certificate and endpoint are the same for
  * every sponsor, so they still come from the platform's configuration. With no
  * choice recorded, the transmit goes out under the platform account as before.
+ * CMS primitives are explicit semantic doubles here; actual cryptographic
+ * proofs live in as2-cms.test.ts. The exact sponsor credential handoff is pinned.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { CmsEnvelopeInput } from './support/cms-semantic-double';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -23,10 +26,11 @@ vi.hoisted(() => {
   process.env.FDA_ESG_FDA_CERT_PATH = '/tmp/fda-pub.pem';
 });
 
-const { sentHeaders, TEST_KEY } = vi.hoisted(() => {
+const { sentHeaders, envelopes, TEST_KEY } = vi.hoisted(() => {
   const { generateKeyPairSync } = require('node:crypto');
   return {
     sentHeaders: [] as Array<Record<string, string>>,
+    envelopes: [] as CmsEnvelopeInput[],
     TEST_KEY: generateKeyPairSync('rsa', {
       modulusLength: 2048,
       privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
@@ -39,7 +43,7 @@ const { sentHeaders, TEST_KEY } = vi.hoisted(() => {
 vi.mock('../../../db', () => ({
   pool: {
     query: vi.fn(async (sql: string) =>
-      /INSERT INTO submission_transmittals/i.test(sql) ? { rows: [{ id: 4243 }], rowCount: 1 } : { rows: [], rowCount: 0 },
+      /INSERT INTO submission_transmittals/i.test(sql) ? { rows: [{ id: 4243 }], rowCount: 1 } : { rows: [], rowCount: /UPDATE/i.test(sql) ? 1 : 0 },
     ),
     connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [], rowCount: 0 })), release: vi.fn() })),
   },
@@ -51,6 +55,10 @@ vi.mock('fs', async (orig) => {
 });
 
 vi.mock('../bundle-integrity', () => ({ readVerifiedBundle: vi.fn(async () => Buffer.from('zip-bytes')) }));
+vi.mock('../as2-cms', async original => {
+  const { semanticCmsDouble } = await import('./support/cms-semantic-double');
+  return semanticCmsDouble(await original<typeof import('../as2-cms')>(), args => envelopes.push(args));
+});
 
 vi.mock('node:https', () => ({
   request: (opts: any, cb: (res: unknown) => void) => {
@@ -64,7 +72,7 @@ vi.mock('node:https', () => ({
     const handlers: Record<string, Array<(x?: unknown) => void>> = { data: [], end: [] };
     const res = {
       statusCode: 200,
-      headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>' },
+      headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>', 'content-type': 'multipart/report; boundary="----=_Part_FDA_MDN"' },
       on: (evt: string, h: (x?: unknown) => void) => handlers[evt]?.push(h),
     };
     globalThis.setImmediate(() => {
@@ -100,10 +108,11 @@ const fromOf = (h: Record<string, string>) => h['AS2-From'] ?? h['as2-from'];
 
 beforeEach(() => {
   sentHeaders.length = 0;
+  envelopes.length = 0;
 });
 
 describe("an organisation's own FDA ESG account", () => {
-  it("goes out under the client's AS2 identity, signed with the client's key, never reading the platform's", async () => {
+  it("uses the client's AS2 identity and passes its key to CMS without reading the platform's", async () => {
     const fsMod = await import('fs');
     const readFile = fsMod.promises.readFile as unknown as ReturnType<typeof vi.fn>;
     readFile.mockClear();
@@ -119,6 +128,8 @@ describe("an organisation's own FDA ESG account", () => {
     const sent = sentHeaders.at(-1)!;
     expect(fromOf(sent)).toBe('CLIENT-OWN-AS2');
     expect(String(sent['Message-ID'])).toMatch(/@CLIENT-OWN-AS2>$/);
+    expect(envelopes).toHaveLength(1);
+    expect(envelopes[0]).toMatchObject({ clientCertPem: '-----BEGIN CERTIFICATE-----\nMIIBclient\n-----END CERTIFICATE-----', clientKeyPem: TEST_KEY, body: Buffer.from('zip-bytes') });
     const pathsRead = readFile.mock.calls.map((c) => String(c[0]));
     expect(pathsRead).not.toContain('/tmp/fda-cert.pem');
     expect(pathsRead).not.toContain('/tmp/fda-key.pem');

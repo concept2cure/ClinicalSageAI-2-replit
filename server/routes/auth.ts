@@ -88,6 +88,12 @@ import {
   pathwaysForUseCases,
 } from '../services/industry-context/signup-profile';
 import { isEmailConfigured, sendPasswordResetEmail, sendLoginOtpEmail, sendVerificationEmail, sendWelcomeEmail } from '../services/emailService';
+import {
+  canDeliverLoginCode,
+  LOGIN_CODE_UNDELIVERABLE_CODE,
+  LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+  LOGIN_CODE_UNDELIVERABLE_REASON,
+} from '../services/auth/login-code-delivery';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
 import { signingPostureOf } from '../services/part11/reverify-signer';
@@ -666,19 +672,42 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
       jwtRole
     );
 
+    /* A CODE THAT CAN REACH NOBODY IS NOT A CHALLENGE.
+       This route used to mint the code and answer `success: true` with a masked
+       address whether or not the server could send it, so a tester waited on a
+       screen telling them a code had been sent to them. See
+       services/auth/login-code-delivery.ts; the sign-up handler in this same
+       file already refuses on this condition, "rather than create an account
+       nobody can activate". */
+    const emailOtpUndeliverable = !hasTotpSetup && !canDeliverLoginCode();
+
     // Audit: password verified, MFA challenge issued. Recorded as a
     // separate event from the eventual session creation (which happens
     // on /mfa/verify). Inspectors can correlate the two via userId.
+    // An undeliverable code is recorded as the failure it is, so the ledger
+    // says the challenge was never issued rather than issued and ignored.
     await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: userData.id,
       tenantId: organizationId,
       email: userData.email,
-      outcome: 'success',
-      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      outcome: emailOtpUndeliverable ? 'failure' : 'success',
+      reason: emailOtpUndeliverable
+        ? LOGIN_CODE_UNDELIVERABLE_REASON
+        : hasTotpSetup
+          ? 'mfa_challenge_totp'
+          : 'mfa_challenge_email',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    if (emailOtpUndeliverable) {
+      logger.error('Login refused: e-mail is not configured, so the sign-in code cannot be sent');
+      return res.status(503).json({
+        success: false,
+        error: { code: LOGIN_CODE_UNDELIVERABLE_CODE, message: LOGIN_CODE_UNDELIVERABLE_MESSAGE },
+      });
+    }
 
     if (hasTotpSetup) {
       // TOTP users get the authenticator app flow
@@ -1849,6 +1878,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
         type: 'access',
+        ...(challenge.provider === 'saml' ? { provider: 'saml', sessionIndex: challenge.sessionIndex } : {}),
         ...session,
       },
       config.jwt.secret,
@@ -1971,6 +2001,28 @@ router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: 
     // only thing that starts the count again. Refused, the pending code and its
     // expiry stand and nothing is mailed; the refusal is recorded against the
     // account, in the organisation the server signed into the challenge.
+    /* Nothing is reissued that cannot be delivered. This route answered
+       `success: true` with the sentence "A new verification code has been sent
+       to your email." — a statement of fact about something that provably did
+       not happen — and spent one of the challenge's limited resends doing it. */
+    if (!canDeliverLoginCode()) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_challenge',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: LOGIN_CODE_UNDELIVERABLE_REASON,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      logger.error('Code resend refused: e-mail is not configured, so the sign-in code cannot be sent');
+      return res.status(503).json({
+        success: false,
+        error: { code: LOGIN_CODE_UNDELIVERABLE_CODE, message: LOGIN_CODE_UNDELIVERABLE_MESSAGE },
+      });
+    }
+
     const otp = await emailOtpService.reissueEmailOtp(userId);
     if (otp === null) {
       await recordAuthEvent({

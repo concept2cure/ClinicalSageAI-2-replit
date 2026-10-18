@@ -207,7 +207,8 @@ router.post('/explain', express.json(), (req, res) => {
         rule: 'Document structure validation',
         explanation:
           'This rule checks if the document follows the required structure per ICH guidelines. It ensures all mandatory sections and subsections are present and in the correct order.',
-        references: ['ICH E6(R2) Section 6', 'FDA Guidance for Industry E6(R2)'],
+        // E6(R3) (Step 4, 2025-01-06) moved the protocol out of R2 §6 into Appendix B.
+        references: ['ICH E6(R3) Appendix B (Clinical Trial Protocol and Protocol Amendment(s))', 'FDA Guidance for Industry — ICH E6(R3) Good Clinical Practice'],
         examples: [
           "Missing required section '9.0 Quality Control and Quality Assurance'",
           'Section order does not follow ICH template',
@@ -218,7 +219,7 @@ router.post('/explain', express.json(), (req, res) => {
         rule: 'Regulatory header verification',
         explanation:
           'Verifies that document headers contain all required information including protocol number, version, date, and sponsorship information as required by regulatory authorities.',
-        references: ['ICH E6(R2) Section 6.1', 'EMA Clinical Trial Regulation'],
+        references: ['ICH E6(R3) Appendix B (Clinical Trial Protocol and Protocol Amendment(s))', 'EMA Clinical Trial Regulation'],
         examples: ['Missing protocol number in header', 'Missing version control information'],
       },
       REG003: {
@@ -289,7 +290,7 @@ router.post('/suggest-fix', express.json(), (req, res) => {
         suggestion:
           'Ensure all required sections are present in the document. Add missing sections as identified by the validator.',
         exampleFix:
-          "Add section '9.0 Quality Control and Quality Assurance' after section 8 with appropriate subsections as defined in ICH E6(R2).",
+          "Add section '9.0 Quality Control and Quality Assurance' after section 8 with appropriate subsections as defined in ICH E6(R3) Appendix B (Clinical Trial Protocol and Protocol Amendment(s)).",
         resources: ['https://database.ich.org/sites/default/files/E6_R2_Addendum.pdf'],
       },
       REG002: {

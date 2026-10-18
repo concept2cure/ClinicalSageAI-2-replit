@@ -105,9 +105,16 @@ describe('the CMC capabilities are in scope now that the surface is', () => {
 });
 
 describe('an interview whose answers reach no record is not offered in production', () => {
-  it('only the CMC specification flow commits', () => {
-    expect([...COMMITTING_FLOW_CATEGORIES]).toEqual(['cmc_specification']);
+  it('names every flow that commits, and no others', () => {
+    /* `project_setup` joined on 2026-10-12: it configures the programme record
+       through `applyProgrammeProfilePatch`, the same write the device-profile
+       endpoint calls, and reports every answer no column takes with the reason
+       (services/c2c/project-setup-projection.ts). Until then nine slices of
+       governed questions ended in an event that went nowhere, which is exactly
+       what this gate exists to refuse. */
+    expect([...COMMITTING_FLOW_CATEGORIES]).toEqual(['cmc_specification', 'project_setup']);
     expect(flowCommitsToRecord('cmc_specification')).toBe(true);
+    expect(flowCommitsToRecord('project_setup')).toBe(true);
     for (const category of ['protocol_development', 'csr_report', 'ind_submission', 'sop_development'] as const) {
       expect(flowCommitsToRecord(category as never), category).toBe(false);
     }

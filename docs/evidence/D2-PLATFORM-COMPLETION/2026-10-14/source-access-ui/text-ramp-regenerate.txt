@@ -1,0 +1,3 @@
+[surface-text-ramp] wrote client/src/concept2cure/v2/styles/surface-text-ramp.css (864 lines)
+[surface-text-ramp] wrote client/src/concept2cure/mdx/surface-text-ramp.css (258 lines)
+[surface-text-ramp] wrote client/src/concept2cure/pdev/surface-text-ramp.css (119 lines)

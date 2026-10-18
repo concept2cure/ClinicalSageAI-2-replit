@@ -1,0 +1,22 @@
+{
+  "files": 3,
+  "errors": 0,
+  "warnings": 0,
+  "perFile": [
+    {
+      "path": "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/routes/authoring-assembly.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "server/services/authoring/authoring-saved-assembly-sources.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

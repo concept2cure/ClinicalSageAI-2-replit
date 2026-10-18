@@ -3,17 +3,21 @@ import { createMockRequest, createMockResponse } from '../setup';
 
 const {
   mockSelectRows,
+  mockBeforeRows,
   mockUpdateSet,
   mockUpdateWhere,
+  mockUpdateReturning,
   mockLogAction,
   mockClassification,
   mockClearances,
   mockStandards,
 } = vi.hoisted(() => ({
   mockSelectRows: vi.fn<[], unknown[]>(() => []),
+  mockBeforeRows: vi.fn((): unknown[] => []),
   /** The VALUES the handler passed to .set() — what actually reaches the row. */
   mockUpdateSet: vi.fn<[Record<string, unknown>], void>(() => undefined),
-  mockUpdateWhere: vi.fn(async () => undefined),
+  mockUpdateWhere: vi.fn(),
+  mockUpdateReturning: vi.fn(async (): Promise<Array<{ id: string }>> => []),
   mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   /* The recognized-standards service is mocked so these tests assert the
      ROUTE's job — org scoping, ident → product-code resolution, and passing the
@@ -90,11 +94,18 @@ vi.mock('../../server/services/fda-recognized-standards/recognized-standards.ser
 
 // Behaviour is attached AFTER the hoisted shell exists, where mockSelectRows /
 // mockUpdateWhere are in scope.
-fakeDb.select = vi.fn(() => ({
+fakeDb.select = vi.fn((selection: Record<string, unknown>) => ({
   from: vi.fn(() => ({
-    where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
+    // A select without LIMIT is awaited by the governed writer to retain
+    // previous values; the route's ordinary profile read uses LIMIT instead.
+    where: vi.fn(() => ({
+      limit: vi.fn(async () => mockSelectRows()),
+      then: (resolve: (rows: unknown[]) => unknown, reject: (error: unknown) => unknown) =>
+        Promise.resolve('snapshot' in selection ? mockBeforeRows() : mockSelectRows()).then(resolve, reject),
+    })),
   })),
 }));
+mockUpdateWhere.mockImplementation(() => ({ returning: mockUpdateReturning }));
 fakeDb.update = vi.fn(() => ({
   set: (values: Record<string, unknown>) => {
     mockUpdateSet(values);
@@ -150,6 +161,25 @@ const PROGRAM = {
   predicateDevices: [],
 };
 
+// The actual to_jsonb(programme) pre-write snapshot uses database column
+// names. This is prior recorded content, not the newly submitted patch.
+const BEFORE = {
+  product_name: PROGRAM.productName,
+  device_class: PROGRAM.deviceClass,
+  product_code: PROGRAM.productCode,
+  intended_use: PROGRAM.intendedUse,
+  predicate_devices: [],
+  common_name: null,
+  regulation_number: null,
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockSelectRows.mockReturnValue([PROGRAM]);
+  mockBeforeRows.mockReset().mockReturnValue([{ snapshot: BEFORE }]);
+  mockUpdateReturning.mockReset().mockResolvedValue([{ id: PROGRAM.id }]);
+});
+
 /**
  * An EDITOR principal with a real numeric actor id — what the platform's
  * authentication middleware attaches. Both matter to the governed profile
@@ -173,11 +203,6 @@ function makeChainReq(role: string, overrides: Record<string, unknown> = {}) {
 }
 
 describe('510(k) device profile + openFDA lookups', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSelectRows.mockReturnValue([PROGRAM]);
-  });
-
   it('serves the org-scoped device profile', async () => {
     const req = makeReq({ query: { ident: PROGRAM.id } });
     const res = createMockResponse() as any;
@@ -221,6 +246,23 @@ describe('510(k) device profile + openFDA lookups', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(mockUpdateWhere).not.toHaveBeenCalled();
+  });
+
+  it.each(['I', 'II', 'III'])('accepts the US 510(k) class %s', async deviceClass => {
+    const req = makeReq({ query: { ident: PROGRAM.id }, body: { deviceClass } });
+    const res = createMockResponse() as any;
+    await getHandler('/profile', 'put')(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdateSet).toHaveBeenCalledWith(expect.objectContaining({ deviceClass }));
+  });
+
+  it.each(['Is', 'Im', 'Ir', 'IIa', 'IIb', 'A', 'D'])('refuses regional class %s in the US 510(k) field', async deviceClass => {
+    const req = makeReq({ query: { ident: PROGRAM.id }, body: { deviceClass } });
+    const res = createMockResponse() as any;
+    await getHandler('/profile', 'put')(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
   });
 
   it('passes through an honest unavailable classification result', async () => {
@@ -271,11 +313,6 @@ describe('510(k) device profile + openFDA lookups', () => {
  * every SSO-onboarded user was locked out of the whole workflow.
  */
 describe('PUT /profile — the governed write is role-gated and audited', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSelectRows.mockReturnValue([PROGRAM]);
-  });
-
   it('runs the role gate BEFORE the entitlement gate', () => {
     const names = routeLayer('/profile', 'put').route.stack.map((s: any) => s.handle.name);
     expect(names.slice(0, 2)).toEqual(['requireEditorAccess', 'requireEntitlementMiddleware']);
@@ -328,7 +365,11 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
       action: 'DEVICE_PROFILE_UPDATED',
       resourceType: 'regulatory_program',
       resourceId: PROGRAM.id,
-      details: { fields: ['commonName', 'regulationNumber'] },
+      details: {
+        fields: ['commonName', 'regulationNumber'],
+        before: { commonName: null, regulationNumber: null },
+        after: { commonName: 'Continuous glucose monitor', regulationNumber: '21 CFR 862.1355' },
+      },
     });
   });
 
@@ -378,12 +419,31 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
   });
 });
 
-describe('GET /standards — recognized consensus standards for a product code', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSelectRows.mockReturnValue([PROGRAM]);
+describe('PUT /profile — current program identity is rechecked before audit', () => {
+  it('refuses a program that disappears before the governed pre-write snapshot', async () => {
+    mockBeforeRows.mockReturnValueOnce([]);
+    const req = makeChainReq('manager', { query: { ident: PROGRAM.id }, body: { commonName: 'CGM' } });
+    const res = createMockResponse() as any;
+    await runChain('/profile', 'put')(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'PROGRAMME_NOT_FOUND' }));
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
   });
 
+  it('refuses a zero-row update and records no audit claim that the program changed', async () => {
+    mockUpdateReturning.mockResolvedValueOnce([]);
+    const req = makeChainReq('manager', { query: { ident: PROGRAM.id }, body: { commonName: 'CGM' } });
+    const res = createMockResponse() as any;
+    await runChain('/profile', 'put')(req, res);
+    expect(mockUpdateWhere).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'PROGRAMME_NOT_FOUND' }));
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /standards — recognized consensus standards for a product code', () => {
   it('refuses without an organization context', async () => {
     const req = createMockRequest({ query: { productCode: 'QBD' } }) as any;
     req.user = undefined; // tenantContext id is a slug, so nothing numeric resolves
@@ -495,11 +555,6 @@ describe('GET /standards — recognized consensus standards for a product code',
  * WHICH device the sponsor asserted equivalence to.
  */
 describe('PUT /profile — the predicate of record', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSelectRows.mockReturnValue([PROGRAM]);
-  });
-
   it('persists a claimed predicate and audits which one was claimed', async () => {
     const req = makeReq({
       query: { ident: 'BX-204' },

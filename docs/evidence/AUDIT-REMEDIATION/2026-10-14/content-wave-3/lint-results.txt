@@ -1,0 +1,58 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/cer-routes.ts
+   92:1   warning  Async function 'getFaersData' has a complexity of 16. Maximum allowed is 15  complexity
+  119:51  warning  Arrow function has a complexity of 17. Maximum allowed is 15                 complexity
+  299:5   warning  There is no `cause` attached to the symptom error being thrown               preserve-caught-error
+  367:52  warning  Async arrow function has a complexity of 16. Maximum allowed is 15           complexity
+  681:1   warning  File has too many lines (509). Maximum allowed is 500                        max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/routes/document-data-center.ts
+  271:11  warning  'organizationId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  272:11  warning  'documentId' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts
+   25:3   warning  'deviceComponents' is defined but never used                                             @typescript-eslint/no-unused-vars
+   26:3   warning  'organizations' is defined but never used                                                @typescript-eslint/no-unused-vars
+   27:3   warning  'deviceAuditTrail' is defined but never used                                             @typescript-eslint/no-unused-vars
+  141:7   warning  'DEVICE_COMPONENTS' is assigned a value but never used                                   @typescript-eslint/no-unused-vars
+  257:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  330:5   warning  'existingMetadata' is defined but never used. Allowed unused args must match /^_/u       @typescript-eslint/no-unused-vars
+  454:11  warning  'Express' is not defined                                                                 no-undef
+  551:7   warning  There is no `cause` attached to the symptom error being thrown                           preserve-caught-error
+  558:3   warning  Async method 'deepSearch' has a complexity of 19. Maximum allowed is 15                  complexity
+  574:13  warning  'baseQuery' is assigned a value but never used                                           @typescript-eslint/no-unused-vars
+  638:1   warning  File has too many lines (778). Maximum allowed is 500                                    max-lines
+  660:7   warning  There is no `cause` attached to the symptom error being thrown                           preserve-caught-error
+  715:7   warning  There is no `cause` attached to the symptom error being thrown                           preserve-caught-error
+  897:7   warning  There is no `cause` attached to the symptom error being thrown                           preserve-caught-error
+  904:33  warning  'organizationId' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+  939:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts
+  170:8   warning  Async function 'queueExtraction' has too many parameters (7). Maximum allowed is 5         max-params
+  491:1   warning  Async function 'classifyAndEnrich' has a complexity of 17. Maximum allowed is 15           complexity
+  579:63  warning  Unnecessary escape character: \-                                                           no-useless-escape
+  635:3   warning  The value assigned to 'factors' is not used in subsequent statements                       no-useless-assignment
+  635:3   warning  'factors' is assigned a value but never used                                               @typescript-eslint/no-unused-vars
+  640:1   warning  Async function 'storeExtractedArtifacts' has too many lines (311). Maximum allowed is 100  max-lines-per-function
+  692:1   warning  File has too many lines (855). Maximum allowed is 500                                      max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts
+   46:11  warning  'CerSection' is defined but never used                 @typescript-eslint/no-unused-vars
+  717:1   warning  File has too many lines (609). Maximum allowed is 500  max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts
+  286:8  warning  Async function 'generateFigure' has too many lines (101). Maximum allowed is 100  max-lines-per-function
+  286:8  warning  Async function 'generateFigure' has a complexity of 19. Maximum allowed is 15     complexity
+  616:1  warning  File has too many lines (599). Maximum allowed is 500                             max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/keywordExtractionService.ts
+  113:8   warning  Async function 'extractKeywords' has a complexity of 20. Maximum allowed is 15          complexity
+  363:11  warning  The value assigned to 'sentenceIndex' is not used in subsequent statements              no-useless-assignment
+  476:8   warning  Async function 'checkKeywordConsistency' has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/tests/db/content-audit-consumers.dbtest.ts
+  99:68  warning  Arrow function has too many lines (187). Maximum allowed is 100  max-lines-per-function
+
+✖ 39 problems (0 errors, 39 warnings)
+

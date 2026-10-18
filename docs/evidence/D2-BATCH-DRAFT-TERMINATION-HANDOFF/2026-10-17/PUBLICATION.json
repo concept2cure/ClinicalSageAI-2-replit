@@ -1,0 +1,20 @@
+{
+  "recordType": "remote observation before evidence commit",
+  "recordedAt": "2026-10-18T00:03:39.240709+00:00",
+  "branch": "concept2cure-v2",
+  "implementationCommit": "e42a5e59b19a9874f32f4cc08d388533d909f6c3",
+  "publishedSourceHead": "4c31ce4571487a7b0a89695d118a9707c5330a9b",
+  "observedRemoteHead": "4c31ce4571487a7b0a89695d118a9707c5330a9b",
+  "sourcePushExitCode": 0,
+  "allQualifiedBindingsStillCurrent": true,
+  "qualificationSha256": "d314ec42d2af0a5321d380f378baa30675b5c76e77eed4bd59cbe44c8461a492",
+  "sourcePushTranscriptSha256": "eb8e2d7c1f6b5424f0191b71e5d96c76887bb8ee9199f479ae84f4477c3c9521",
+  "contractCommit": "788f8a11865ebebcddba13f0f32cb008a94a7a57",
+  "retainedUpstream": [
+    "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+    "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+    "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+    "9577ec43944c86ca688e53997553f2397ba56f74"
+  ],
+  "publication": "Complete evidence and the prior candidate-status update are committed and normally pushed next on this same branch; this record does not predict that commit hash."
+}

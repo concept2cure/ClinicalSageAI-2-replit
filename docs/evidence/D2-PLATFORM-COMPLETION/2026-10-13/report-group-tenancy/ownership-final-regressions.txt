@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > resolves owned project, document, submission, group and account scopes 13ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > keeps organization mandatory when no workspace filter is selected 9ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > binds a supplied workspace separately from the current organization on every scope 9ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt project scope 21 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope foreign 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope foreign 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 2 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 999 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope broken 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope broken 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 3 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt account scope 8 0ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses a same-organization document from another client and a foreign workspace 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses unverified study scope and mismatched internal project proof 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  22:48:22
+   Duration  2.88s (transform 111ms, setup 100ms, import 55ms, tests 2.41s, environment 0ms)

@@ -1,0 +1,36 @@
+{
+  "name": "unconfirmed",
+  "metrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "canvas": null,
+    "editor": null,
+    "documentScroll": null,
+    "editorScroll": null,
+    "sectionHeading": null,
+    "editorCount": 0
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [],
+    "passes": 15
+  },
+  "notices": [
+    {
+      "text": "Could not confirm whether the section was created. Check document sections before creating another.Check document sections",
+      "x": 0,
+      "y": 75,
+      "width": 390,
+      "height": 102.28125,
+      "scrollWidth": 386,
+      "clientWidth": 386
+    }
+  ]
+}

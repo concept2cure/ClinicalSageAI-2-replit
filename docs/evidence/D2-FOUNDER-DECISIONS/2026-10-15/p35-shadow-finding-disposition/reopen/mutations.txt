@@ -1,0 +1,52 @@
+# Reopen-on-revocation mutations — base 3624fe667 + working change
+
+## R1 a closure stands on its status alone (signature ignored)
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a closure with no signature on record, or a status nothing signed, does not hold a critical closed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 14 passed (16)
+
+## R2 the dispatch gate does not say why a closed critical blocks again
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 passed (16)
+
+## R3 the act's compare-and-set drops the judged status and signature
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > clears it from the count and from the dispatch verdict, with all else clear, and records who, when, how and why
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > the same signature cannot disposition again, and the attempt does not void it
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > the act changes only the row it judged: a finding re-closed since is zero rows
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 8 passed (16)
+(R3 deletes the predicate line and leaves $8/$9 unbound: these failures are a SQL error, not the compare-and-set. R3b below is the real test of it.)
+
+## R3b the act's compare-and-set made vacuous (parameters still bound, predicate always true)
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > the act changes only the row it judged: a finding re-closed since is zero rows
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 passed (16)
+
+## R4 the findings read ignores the closing signature
+ × server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a closure stands only while its signature is in force > a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 passed (16)
+
+## C1 the screen offers only on status open
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a critical closed under a signature since revoked reads as open again, says why, and is offered as the server says
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+
+## C2 the chip shows the stored status over a closure that no longer stands
+ × client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a critical closed under a signature since revoked reads as open again, says why, and is offered as the server says
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+
+all three files restored byte-identical
+
+## H1 the harness copy drops disposition_reason
+ × server/db/__tests__/shadow-review-pglite-ddl.contract.test.ts > SHADOW_REVIEW_PGLITE_DDL > has exactly the columns and types the deploy path builds
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

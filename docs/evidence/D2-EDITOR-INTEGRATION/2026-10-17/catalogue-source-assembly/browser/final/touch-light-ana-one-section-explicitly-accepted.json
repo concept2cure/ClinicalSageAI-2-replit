@@ -1,0 +1,186 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": 390,
+  "bodyWidth": 390,
+  "assembly": {
+    "x": 44,
+    "y": 489,
+    "width": 302,
+    "height": 2083.1875,
+    "right": 346,
+    "bottom": 2572.1875,
+    "scrollWidth": 302,
+    "clientWidth": 302
+  },
+  "ai": null,
+  "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Synthetic analytical source A.txt · Data Room source 41Version: 2 · disposition: keep_data · original file: unavailable; retained text is separateOriginal SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Extraction SHA-256: 3333333333333333333333333333333333333333333333333333333333333333Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 5555555555555555555555555555555555555555555555555555555555555555Synthetic analytical source B.txt · Data Room source 42Version: 1 · disposition: not recorded · original file: availableOriginal SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Extraction SHA-256: 4444444444444444444444444444444444444444444444444444444444444444Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 6666666666666666666666666666666666666666666666666666666666666666Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Clear selected sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnADraft requirements (optional) Reason for build Preview buildBuild documentThe exact saved section was checked. Its retained candidate is ready for review; acceptance separately checks its saved base and your edit authority.Section candidatesCompleted candidates stay here while you review another section. Each acceptance uses the existing draft review and source-lineage controls.3.2.P.8.2 Post-approval stability protocol · accepted3.2.P.8.3 Stability data · readyReview 3.2.P.8.3",
+  "editorCount": 1,
+  "noticeOutsideToolbar": true,
+  "controls": [
+    {
+      "label": "Clear selected sources",
+      "rect": {
+        "x": 56,
+        "y": 1717.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 1761.125,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+      "rect": {
+        "x": 56,
+        "y": 1803.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 1847.125,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+      "rect": {
+        "x": 56,
+        "y": 1881.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 1925.125,
+        "scrollWidth": 276,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "checkbox",
+      "rect": {
+        "x": 60,
+        "y": 1936.125,
+        "width": 13,
+        "height": 13,
+        "right": 73,
+        "bottom": 1949.125,
+        "scrollWidth": 13,
+        "clientWidth": 13
+      },
+      "disabled": false
+    },
+    {
+      "label": "text",
+      "rect": {
+        "x": 56,
+        "y": 1987.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2031.125,
+        "scrollWidth": 329,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Why sections are being assembled",
+      "rect": {
+        "x": 56,
+        "y": 2065.125,
+        "width": 278,
+        "height": 44,
+        "right": 334,
+        "bottom": 2109.125,
+        "scrollWidth": 309,
+        "clientWidth": 276
+      },
+      "disabled": false
+    },
+    {
+      "label": "Preview build",
+      "rect": {
+        "x": 56,
+        "y": 2125.125,
+        "width": 108.28125,
+        "height": 44,
+        "right": 164.28125,
+        "bottom": 2169.125,
+        "scrollWidth": 106,
+        "clientWidth": 106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Build document",
+      "rect": {
+        "x": 172.28125,
+        "y": 2125.125,
+        "width": 121.203125,
+        "height": 44,
+        "right": 293.484375,
+        "bottom": 2169.125,
+        "scrollWidth": 121,
+        "clientWidth": 121
+      },
+      "disabled": true
+    },
+    {
+      "label": "Review 3.2.P.8.3",
+      "rect": {
+        "x": 96,
+        "y": 2503.1875,
+        "width": 121.984375,
+        "height": 44,
+        "right": 217.984375,
+        "bottom": 2547.1875,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    }
+  ],
+  "editorBody": "Edited first retained candidate for explicit human acceptance.",
+  "navigation": [
+    {
+      "route": "document-authoring",
+      "target": {
+        "assemblySources": {
+          "version": 1,
+          "sources": [
+            {
+              "kind": "data-room",
+              "sourceId": 41,
+              "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+            },
+            {
+              "kind": "data-room",
+              "sourceId": 42,
+              "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+            }
+          ]
+        },
+        "docType": null,
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionCode": null,
+        "sectionLabel": null,
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "programTitle": null,
+        "returnTo": null,
+        "setAt": 1792281503516
+      }
+    }
+  ],
+  "bridge": {
+    "docId": "dddddddd-0000-4000-8000-000000000181",
+    "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+    "editable": true
+  }
+}

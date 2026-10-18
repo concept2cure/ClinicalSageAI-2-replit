@@ -223,7 +223,7 @@ Coverage: I covered RB and every RB call site in RichSectionEditor.tsx. I did no
    - Undo (2072) and Redo (2075)
    - Comment on the selection (2102)
    - Previous match and Next match (2201, 2204)
-   
+
    Toggle header row and Toggle header column (2019, 2022) really are stateful, but no `active` is passed, so they are always announced "not pressed", even inside a table whose header row is on. That exposes a wrong state (WCAG 2.2 SC 4.1.2 Name, Role, Value).
 
 4. The genuine toggles all pass a real `active`: Bold, Italic, Underline, Superscript, Subscript, Highlight, the two lists, the three alignments, Link, Cross-reference, Cite, Find and Match case. So the correct split already exists at the call sites; only the wrapper erases it.
@@ -458,4 +458,3 @@ Coverage: I covered the ReviewerRow render path and the assembler's source of re
 3) This pattern is already classed as a defect. The 2026-09-28 a11y review (docs/evidence/reviews/2026-09-28/a11y.md:24, :73) rates the same pattern, "explains why ... disabled only via a `title` attribute on a button that is `disabled`", as blocker A-0928-1 in the filing dialogs. So by the repository's own standard this is not accepted design. It is also not a duplicate: a11y.md:44 says the "ProtocolDev* family beyond ProtocolDevSoa.tsx's 9-line diff was not opened", so this site was never recorded. One precedent points the other way: part11-ux 2026-09-24 Q6 accepted "disabled with the reason in its title" for Revert. But that was an affordance fix, and the later a11y review supersedes it for keyboard and screen-reader reachability.
 
 Severity: the server fails closed with 403 for anyone but the assigned user, so there is no data or authorisation risk. The harm is that a keyboard or screen-reader user sees a governed signature action they cannot use and is not told why.
-

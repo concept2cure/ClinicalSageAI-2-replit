@@ -6,11 +6,12 @@
  *   - pushDocument: authored C2C bytes → Vault document (create), link recorded
  *   - pullDocument: Vault document → bytes + mapped C2C metadata, link recorded
  *
- * Idempotency: every sync upserts `veeva_vault_links` (org-scoped, unique per
- * local doc and per Vault doc) with the content SHA-256, so re-syncs are
- * detectable and "which Vault doc is this artifact?" is answerable. Every sync
- * is audited through the canonical auditService in the same call path —
- * a sync that cannot be audited fails.
+ * Every sync upserts `veeva_vault_links` (org-scoped, unique per local and
+ * Vault document) with the exchanged hash. This records identity and drift;
+ * it does not make a remote create idempotent. Reconcile a confirmed upload
+ * before considering another push. Ancillary audit failure after exchange
+ * and local persistence is disclosed without misreporting a failed upload.
+ * A failed local link cannot roll back the already completed remote action.
  *
  * Dependencies (client, db pool, audit) are injectable so the workflow logic
  * is testable offline; defaults wire the real implementations.
@@ -19,6 +20,8 @@
  */
 
 import { createHash } from 'crypto';
+import type { AuditWriteResult } from '../../services/auditService';
+import { auditRowOutcomeFrom, type AuditRowOutcome } from '../../services/audit/audit-write-outcome';
 import { VeevaVaultClient, type VaultUploadResult, type VaultDocument } from './client';
 import {
   toVaultFields,
@@ -41,7 +44,7 @@ export interface AuditSink {
     resourceType: string;
     resourceId: number;
     details: Record<string, unknown>;
-  }): Promise<unknown>;
+  }): Promise<AuditWriteResult>;
 }
 
 export interface LocalDocumentRef {
@@ -63,6 +66,8 @@ export interface PushDocumentParams {
 
 export interface PushDocumentResult extends VaultUploadResult {
   contentSha256: string;
+  localLink: 'linked';
+  auditTrail: AuditRowOutcome;
 }
 
 export interface PullDocumentParams {
@@ -76,16 +81,39 @@ export interface PullDocumentParams {
 
 export interface PullDocumentResult {
   vaultDocument: VaultDocument;
+  localLink: 'linked';
+  auditTrail: AuditRowOutcome;
   meta: ReturnType<typeof fromVaultDocument>;
   bytes: Buffer;
   contentSha256: string;
+}
+
+export interface VaultSyncRecoveryReceipt {
+  organizationId: number;
+  local: LocalDocumentRef;
+  direction: 'push' | 'pull';
+  remoteState: 'uploaded' | 'downloaded';
+  remote: VaultUploadResult;
+  contentSha256: string;
+}
+
+/** The remote action completed; local SQL completion is not established.
+ * Never expose the caught SQL/provider text or invite another remote create. */
+export class VaultLinkUnconfirmedError extends Error {
+  readonly code = 'VEEVA_LINK_UNCONFIRMED';
+  readonly localLink = 'unconfirmed';
+  readonly recovery = { action:'reconcile-existing-link', retryUpload:false } as const;
+  constructor(readonly receipt: VaultSyncRecoveryReceipt, readonly auditTrail: AuditRowOutcome) {
+    super('The Vault exchange completed, but its local document link could not be confirmed. Reconcile the existing remote document and content hash before another push. Do not upload again automatically.');
+    this.name='VaultLinkUnconfirmedError';
+  }
 }
 
 function sha256(bytes: Buffer | Uint8Array): string {
   return createHash('sha256').update(Buffer.from(bytes)).digest('hex');
 }
 
-/** Upsert the org-scoped local ↔ Vault link (idempotent on both unique keys). */
+/** Upsert the org-scoped local key; conflicting remote identity remains refused. */
 export async function upsertVaultLink(
   pool: QueryablePool,
   link: {
@@ -153,7 +181,8 @@ export class VaultSyncService {
       fields,
     });
     const contentSha256 = sha256(params.bytes);
-    await upsertVaultLink(this.pool, {
+    let linkConfirmed = false;
+    try { await upsertVaultLink(this.pool, {
       organizationId: params.organizationId,
       local: params.local,
       vaultDocumentId: upload.documentId,
@@ -162,8 +191,8 @@ export class VaultSyncService {
       contentSha256,
       direction: 'push',
       createdBy: params.userId,
-    });
-    await this.audit.logAction({
+    }); linkConfirmed=true; } catch { /* The exchange already happened; reconcile instead of repeating it. */ }
+    const auditTrail = await this.writeAudit({
       organizationId: params.organizationId,
       userId: params.userId,
       action: 'VEEVA_VAULT_PUSH',
@@ -171,20 +200,25 @@ export class VaultSyncService {
       resourceId: params.local.documentId,
       details: {
         vaultDocumentId: upload.documentId,
+        localLink: linkConfirmed ? 'linked' : 'unconfirmed',
         fileName: params.fileName,
         contentSha256,
         vaultFields: fields,
       },
     });
-    return { ...upload, contentSha256 };
+    if (!linkConfirmed) throw new VaultLinkUnconfirmedError({ organizationId:params.organizationId,
+      local:{...params.local}, direction:'push', remoteState:'uploaded', remote:upload, contentSha256 }, auditTrail);
+    return { ...upload, contentSha256, localLink:'linked', auditTrail };
   }
 
   /** Pull a Vault document's metadata + file; record + audit the link. */
   async pullDocument(params: PullDocumentParams): Promise<PullDocumentResult> {
     const vaultDocument = await this.client.getDocument(params.vaultDocumentId);
     const bytes = await this.client.downloadDocumentFile(params.vaultDocumentId);
+    const meta=fromVaultDocument(vaultDocument, params.mapping);
     const contentSha256 = sha256(bytes);
-    await upsertVaultLink(this.pool, {
+    let linkConfirmed = false;
+    try { await upsertVaultLink(this.pool, {
       organizationId: params.organizationId,
       local: params.local,
       vaultDocumentId: vaultDocument.id,
@@ -193,8 +227,8 @@ export class VaultSyncService {
       contentSha256,
       direction: 'pull',
       createdBy: params.userId,
-    });
-    await this.audit.logAction({
+    }); linkConfirmed=true; } catch { /* The exchange already happened; reconcile instead of repeating it. */ }
+    const auditTrail = await this.writeAudit({
       organizationId: params.organizationId,
       userId: params.userId,
       action: 'VEEVA_VAULT_PULL',
@@ -202,11 +236,23 @@ export class VaultSyncService {
       resourceId: params.local.documentId,
       details: {
         vaultDocumentId: vaultDocument.id,
+        localLink: linkConfirmed ? 'linked' : 'unconfirmed',
         vaultName: vaultDocument.name,
         contentSha256,
       },
     });
-    return { vaultDocument, meta: fromVaultDocument(vaultDocument, params.mapping), bytes, contentSha256 };
+    if (!linkConfirmed) throw new VaultLinkUnconfirmedError({ organizationId:params.organizationId,
+      local:{...params.local}, direction:'pull', remoteState:'downloaded',
+      remote:{documentId:vaultDocument.id,majorVersion:vaultDocument.majorVersion??null,minorVersion:vaultDocument.minorVersion??null}, contentSha256 }, auditTrail);
+    return { vaultDocument, meta, bytes, contentSha256, localLink:'linked', auditTrail };
+  }
+
+  private async writeAudit(entry:Parameters<AuditSink['logAction']>[0]):Promise<AuditRowOutcome> {
+    let result:AuditWriteResult|undefined;
+    let thrown:string|undefined;
+    try { result=await this.audit.logAction(entry); }
+    catch(error) { thrown=error instanceof Error ? error.message : String(error); }
+    return auditRowOutcomeFrom(result,{action:entry.action,resourceType:entry.resourceType,resourceId:entry.resourceId,thrown});
   }
 }
 

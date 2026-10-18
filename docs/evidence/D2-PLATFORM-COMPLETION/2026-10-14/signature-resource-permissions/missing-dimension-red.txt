@@ -1,0 +1,132 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > denies when no grant matches 2ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > allows when an allow grant matches 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > explicit deny wins over allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > a null grant dimension is a wildcard matching any query value 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > role mismatch denies 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > applies the canonical defaults per role 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > a per-org DB deny override wins over the default allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > whoCan — the projection of RBAC > returns the org users whose role grants the action 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > uses only the supplied executor and applies its explicit deny 3ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (42P01) instead of using a default allow 2ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (57P01) instead of using a default allow 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"unknown"} 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":3} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":null,"effect":"allow"} 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"foreign-role","action":"sign","effect":"deny"} 1ms
+ × server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":null,"ctd_module":null} 8ms
+   → promise resolved "[ { role: 'admin', …(5) }, …(9) ]" instead of rejecting
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > retains valid custom action and dimension strings with null wildcards 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > preserves ordinary callers’ defaults-only fallback for an unmigrated store 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":null,"ctd_module":null}
+AssertionError: promise resolved "[ { role: 'admin', …(5) }, …(9) ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "action": "view",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "author",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "review",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "approve",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "sign",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "lock",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "submit",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "assign",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "manage_permissions",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+  {
+    "action": "sign",
+    "classification": null,
+    "ctdModule": null,
+    "effect": "allow",
+    "resourceType": null,
+    "role": "admin",
+  },
+]
+
+ ❯ server/services/governance/__tests__/permissions.test.ts:103:72
+    101|   ])('refuses malformed grant data without inventing an allow: %j', as…
+    102|     const executor = { query: vi.fn(async () => ({ rows: [row] })) };
+    103|     await expect(resolveGrants(42, 'admin', { executor, strict: true }…
+       |                                                                        ^
+    104|       .rejects.toMatchObject({ name: 'GovernanceGrantStoreUnavailableE…
+    105|     expect(query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  06:56:17
+   Duration  478ms (transform 122ms, setup 100ms, import 51ms, tests 26ms, environment 0ms)

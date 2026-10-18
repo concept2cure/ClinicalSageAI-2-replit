@@ -37,12 +37,14 @@ import { EmptyState } from '../dataConnect';
 import { assessmentState } from '../assessmentState';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { consumeNavParams } from '../navParams';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { OrchestratorRunControls } from './OrchestratorRunControls';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -291,7 +293,7 @@ interface OrchRun {
   submissionType: string;
   startedAt: string;
   completedAt?: string;
-  status: 'running' | 'complete' | 'failed' | 'partial';
+  status: 'running' | 'complete' | 'failed' | 'partial' | 'awaiting-async' | 'awaiting-signature';
   steps: OrchStep[];
   workflowVersion?: string | null;
 }
@@ -827,7 +829,7 @@ function readProjectIdent(): { ident: string | null; title?: string; code?: stri
 const REGIONS = ['FDA', 'EMA'] as const;
 const SUB_TYPES = ['initial', 'amendment'] as const;
 
-export function EctdCompile({ onAsk }: SurfaceViewProps) {
+export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so a publisher staring at a validation finding — the moment they most need
      to know what a rule means and whether it blocks the filing — had no way to
@@ -877,6 +879,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   // about this submission's build history — a network error is not evidence
   // for it.
   const [runIdInput, setRunIdInput] = useState('');
+  const [orchInteractionBusy, setOrchInteractionBusy] = useState(false);
   const [orchRun, setOrchRun] = useState<OrchRun | null>(null);
   const [orchState, setOrchState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [orchErrorDetail, setOrchErrorDetail] = useState<string | null>(null);
@@ -885,11 +888,25 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [orchAuditLoading, setOrchAuditLoading] = useState(false);
   const [signed, setSigned] = useState<SignedPackageView | null>(null);
   const [signedRefusal, setSignedRefusal] = useState<SignatureRefusal | null>(null);
+  const activeOrchLoad = useRef({ runId: null as string | null, programIdent: ident, serial: 0 });
+  // Invalidate synchronously during a program render, before an old request's
+  // promise can commit another program's run or signature into this surface.
+  if (activeOrchLoad.current.programIdent !== ident) {
+    activeOrchLoad.current = { runId: null, programIdent: ident, serial: activeOrchLoad.current.serial + 1 };
+  }
+  useEffect(() => {
+    setRunIdInput(''); setOrchRun(null); setOrchState('idle'); setOrchErrorDetail(null);
+    setOrchAudit([]); setOrchAuditErr(false); setOrchAuditLoading(false);
+    setSigned(null); setSignedRefusal(null);
+  }, [ident]);
 
   const loadOrchRun = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     setOrchState('loading');
     setOrchErrorDetail(null);
     const { ok, status, body } = await readJsonKeepingError<OrchRun>('GET', `/api/submission-orchestrator/runs/${encodeURIComponent(runId)}`);
+    if (activeOrchLoad.current !== load) return;
     if (!ok || !body) {
       setOrchRun(null);
       setOrchState('error');
@@ -905,8 +922,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadOrchAudit = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     setOrchAuditLoading(true);
     const { ok, body } = await readJsonKeepingError<{ events: OrchAuditEvent[] }>('GET', `/api/submission-orchestrator/runs/${encodeURIComponent(runId)}/audit`);
+    if (activeOrchLoad.current !== load) return;
     setOrchAuditLoading(false);
     if (!ok) { setOrchAuditErr(true); setOrchAudit([]); return; }
     setOrchAuditErr(false);
@@ -914,9 +934,12 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadSigned = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     const { ok, status, body } = await readJsonKeepingError<SignedPackageView & SignatureRefusal>(
       'GET', `/api/ectd/export/by-run/${encodeURIComponent(runId)}/signed`,
     );
+    if (activeOrchLoad.current !== load) return;
     if (ok && body && (body as SignedPackageView).signature) {
       setSigned(body as SignedPackageView);
       setSignedRefusal(null);
@@ -934,6 +957,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadOrchestrator = useCallback(async (runId: string) => {
+    activeOrchLoad.current = { ...activeOrchLoad.current, runId, serial: activeOrchLoad.current.serial + 1 };
+    setRunIdInput(runId);
+    setOrchRun(null); setOrchAudit([]); setOrchAuditErr(false);
+    setSigned(null); setSignedRefusal(null);
     await Promise.all([loadOrchRun(runId), loadOrchAudit(runId), loadSigned(runId)]);
   }, [loadOrchRun, loadOrchAudit, loadSigned]);
 
@@ -1149,13 +1176,25 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         // null, not 0 — a count nobody has is not a count of zero.
         orchestratorAuditEventCount: orchAuditErr ? null : orchAudit.length,
       },
+      /* Two kinds of line live here and the difference matters. The first
+         three and the last two are CONVERSATIONAL: things AnA can say about
+         what is on screen. The middle three are the registered actions she can
+         actually perform (the handlers below). The compile/validate lines were
+         bare imperatives — "Validate before compiling", "Compile the eCTD
+         backbone" — which, now that three real actions exist beside them, read
+         as abilities she has. They are governed acts and stay a person's
+         click, so they are phrased as the proposals they are (the fabricated-
+         ability failure shared/navigation/surface-actions.ts warns about). */
       availableActions: [
         'Explain what compiling this sequence will and will not produce',
         'Triage the validation findings (blocking vs advisory, and fix order)',
         'Explain why the package is not yet submittable',
-        'Validate before compiling',
-        'Compile the eCTD backbone',
-        'Load an orchestrator run and explain which steps were skipped and why',
+        'Switch the Region menu between US · FDA and EU · EMA (selector only)',
+        'Switch the Submission menu between initial and amendment (selector only)',
+        'Load an orchestrator run by its run id (a read)',
+        'Propose validating before compiling — a person clicks Validate',
+        'Propose compiling the eCTD backbone — a person clicks Compile eCTD',
+        'Explain which orchestrator steps were skipped and why',
         'Explain whether the signed package still verifies',
       ],
     }),
@@ -1165,6 +1204,155 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     ],
   );
   usePublishSurfaceContext('ectd-compile', anaContext);
+
+  /* ANA'S HANDS ON THIS SCREEN (wave 7). She could reach eCTD Compile and then
+     do nothing: it was one of the 13 launch-catalog screens with no registered
+     action at all.
+
+     Only three land here, and that is the honest count. This surface's main
+     buttons ARE the governed acts — Compile, Validate, Download package,
+     Import eValidator report — and they stay a person's click; its tables
+     carry no selection, filter, sort or search state to operate. What is left
+     that a person genuinely operates is the two menus in the header and the
+     orchestrator run-id box, and each handler below drives the SAME state its
+     control drives (setRegion / setSubmissionType / setRunIdInput +
+     loadOrchestrator). Nothing here writes: the only request any of them makes
+     is the orchestrator READ the Load run button performs.
+
+     Placed above the `ident == null` early return for the reason the anaContext
+     comment gives — these are hooks — and because "no program is open" is the
+     correct answer to all three, and a screen that goes silent exactly when it
+     has nothing cannot give it. */
+  /* Shared by both menu handlers. The two <select>s are never disabled while a
+     write is in flight (only the Rehearsal checkbox and the Validate / Compile
+     buttons are), so this guard is deliberately STRICTER than the human
+     control: a person can see the button reading "Compiling…" before they
+     touch the menu, AnA cannot, and a region or type switched mid-compile would
+     mislabel the result she then narrates. Both are read by the NEXT compile's
+     POST body (regionBody, submissionType), not the one in flight. */
+  const busyRefusal = (): { ok: false; reason: string } | null =>
+    busy == null
+      ? null
+      : {
+          ok: false,
+          reason: `A ${busy} is in flight — wait for it to finish before changing what the next compile is run for.`,
+        };
+  useSurfaceActionHandlers('ectd-compile', {
+    'ectd-compile.set-region': (params) => {
+      const wanted = (params.region ?? '').trim().toUpperCase();
+      // The resolver enforces the enum before the bus is involved; re-checked
+      // here so a caller that bypasses the registry cannot reach setRegion.
+      if (!(REGIONS as readonly string[]).includes(wanted)) {
+        return { ok: false, reason: `Region must be one of: ${REGIONS.join(', ')} (got "${params.region}").` };
+      }
+      // Before the loading guard, not after: with no program open loadStatus
+      // returns early and statusState never leaves 'idle', so holding here
+      // would wait out the 20 s TTL instead of answering.
+      if (ident == null) {
+        return { ok: false, reason: 'No program is open, so there is no compilation to set a region for — open a program first.' };
+      }
+      const blocked = busyRefusal();
+      if (blocked) return blocked;
+      if (statusState === 'loading' || statusState === 'idle') {
+        return {
+          ok: false,
+          reason: 'Compilation readiness is still loading, so whether this sequence already records its own region is not known yet.',
+          retry: true,
+        };
+      }
+      if (statusState === 'error') {
+        return {
+          ok: false,
+          reason:
+            'Compilation readiness could not be read, so whether this sequence records its own region is unknown and the ' +
+            'Region menu may not be on screen. That is a failed read, not a sequence without a recorded region.',
+        };
+      }
+      if (recordedRegion) {
+        return {
+          ok: false,
+          reason:
+            `This sequence records region ${recordedRegion.toUpperCase()}, so the Region menu is not on screen: the compile uses ` +
+            `the region recorded on sequence ${status?.sequence?.sequenceNumber ?? 'it'} and nothing can be switched here.`,
+        };
+      }
+      const target = wanted as (typeof REGIONS)[number];
+      if (region === target) return { ok: true, detail: `${target} is already the selected region` };
+      setRegion(target);
+      return {
+        ok: true,
+        detail:
+          `Selected region ${target} (${target === 'FDA' ? 'US · FDA' : 'EU · EMA'}) — what the next Validate or Compile is run ` +
+          'for. Nothing is sent until a person clicks one of them.',
+      };
+    },
+    'ectd-compile.set-submission-type': (params) => {
+      const wanted = (params.submissionType ?? '').trim().toLowerCase();
+      if (!(SUB_TYPES as readonly string[]).includes(wanted)) {
+        return { ok: false, reason: `Submission type must be one of: ${SUB_TYPES.join(', ')} (got "${params.submissionType}").` };
+      }
+      if (ident == null) {
+        return { ok: false, reason: 'No program is open, so this screen shows only its empty state and there is no Submission menu — open a program first.' };
+      }
+      const blocked = busyRefusal();
+      if (blocked) return blocked;
+      // Nothing to wait on: the Submission menu is rendered as soon as a
+      // program is open and does not depend on the readiness read (unlike the
+      // Region menu, whose very presence depends on it).
+      const target = wanted as (typeof SUB_TYPES)[number];
+      if (submissionType === target) return { ok: true, detail: `${target} is already the selected submission type` };
+      setSubmissionType(target);
+      return {
+        ok: true,
+        detail: `Selected submission type ${target} — what the next compile is run as. Nothing is sent until a person clicks Compile eCTD.`,
+      };
+    },
+    'ectd-compile.load-run': (params) => {
+      const wanted = (params.run ?? '').trim();
+      if (!wanted) {
+        return {
+          ok: false,
+          reason:
+            'No run id given. This screen lists no orchestrator run ids, so there is no set to choose from — the id comes from ' +
+            'the Orchestration board or from the run that built the package, and is pasted into the Orchestrator run box.',
+        };
+      }
+      if (ident == null) {
+        return {
+          ok: false,
+          reason:
+            'No program is open, so this screen shows only its empty state and the orchestrator panel is not rendered — a run ' +
+            'loaded now would be invisible. Open a program first.',
+        };
+      }
+      if (orchState === 'loading') {
+        return { ok: false, reason: 'A run is still loading — wait for that read to land before loading another.', retry: true };
+      }
+      // The run-id box first, then the same three reads the Load run button
+      // fires, so the box shows the id the panels are reading — exactly as the
+      // human path leaves it.
+      setRunIdInput(wanted);
+      void loadOrchestrator(wanted);
+      // Claims only that the read was STARTED. Whether the run exists, whether
+      // its steps passed and whether the package is signed are each reported by
+      // the panel that read them — including a 404 as "No run with that id is
+      // visible to your organization".
+      return {
+        ok: true,
+        detail: `Loading orchestrator run ${wanted}; its steps, signature state and audit trail appear when the read lands`,
+      };
+    },
+  });
+  /* The ready signal for the two holds above. Gated on the reads SETTLING and
+     nothing else — never on their succeeding: a failed read must reach a held
+     action as the handler's own refusal, not as a twenty-second timeout
+     (surfaceReadySignal.test.ts). Two reads, so the OR shape: either settling
+     is a reason to re-attempt, and whichever the held action was waiting on
+     will refuse-and-hold again until its own read lands. 'idle' counts as
+     settled, which is what makes the `ident == null` guards above reachable. */
+  useEffect(() => {
+    if (statusState !== 'loading' || orchState !== 'loading') notifySurfaceActionReady('ectd-compile');
+  }, [statusState, orchState]);
 
   // ── No program open ── (the server resolves UUID / code / numeric idents, so
   // the only honest dead-end left is having no program at all)
@@ -1414,24 +1602,33 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         <div className="pj-card-h">
           <span className="t">Orchestrator run</span>
           <span className="s">
-            {orchRun ? `${orchRun.applicationNumber} · ${orchRun.submissionType} · ${orchRun.region}` : 'paste a run id'}
+            {orchRun ? `${orchRun.applicationNumber} · ${orchRun.submissionType} · ${orchRun.region}` : 'build or select a saved run'}
           </span>
         </div>
+        <OrchestratorRunControls
+          programId={ident && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ident) ? ident : null}
+          sequenceId={openedSequence ? Number(openedSequence) : null}
+          run={orchRun}
+          onLoad={loadOrchestrator}
+          selectedRunId={activeOrchLoad.current.runId}
+          onBusyChange={setOrchInteractionBusy}
+          onNav={onNav}
+        />
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
-            className="c2c-input" style={{ height: 30, width: 320 }} value={runIdInput}
+            className="c2c-input" style={{ height: 30, width: 320 }} value={runIdInput} disabled={orchInteractionBusy}
             onChange={(e) => setRunIdInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && runIdInput.trim()) void loadOrchestrator(runIdInput.trim()); }}
+            onKeyDown={(e) => { if (!orchInteractionBusy && e.key === 'Enter' && runIdInput.trim()) void loadOrchestrator(runIdInput.trim()); }}
             placeholder="orchestrator run id" aria-label="Orchestrator run id"
           />
-          <button className="nda-open" onClick={() => runIdInput.trim() && void loadOrchestrator(runIdInput.trim())} disabled={!runIdInput.trim()}>
+          <button className="nda-open" onClick={() => !orchInteractionBusy && runIdInput.trim() && void loadOrchestrator(runIdInput.trim())} disabled={orchInteractionBusy || !runIdInput.trim()}>
             {I.search} Load run
           </button>
         </div>
         <div className="pj-card-b" style={{ paddingTop: 0 }}>
           {orchState === 'idle' ? (
             <EmptyState icon={I.workflow} title="No orchestrator run loaded"
-              hint="The orchestrator sequences Module 3 composition, CSR tabulation, the Module 2 summaries, package assembly, hardened validation, and the Part 11 release signature. Paste a run id to see its per-step state." />
+              hint="Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
           ) : orchState === 'loading' ? (
             <EmptyState icon={I.zap} title="Loading run…" busy />
           ) : orchState === 'error' ? (

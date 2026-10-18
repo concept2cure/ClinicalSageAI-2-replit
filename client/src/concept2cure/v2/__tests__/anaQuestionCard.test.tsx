@@ -158,6 +158,7 @@ const CAUTIONED: IntelligenceQuestionEvent = {
               availability: 'needs_basis',
               reason: 'You have named a predicate (K123456), so taking this position means saying why it does not apply.',
               authority: 'FD&C Act 513(f)(2); 21 CFR 860 Subpart D',
+              ruleId: 'de_novo_with_named_predicate',
             },
           },
         ],
@@ -249,5 +250,123 @@ describe('a question whose type the card never implemented', () => {
     );
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
     expect((screen.getByRole('textbox') as HTMLInputElement).id).toBe('ana-q-headquarters_country');
+  });
+});
+
+/**
+ * A question whose governed catalogue holds nothing for this programme: AnA
+ * holds no routes to market for PMDA, so the engine sends the question with no
+ * positions, the reason in its help text, and the escape hatch (2026-10-12).
+ * An empty select would be an error drawn as a result.
+ */
+describe('a question with no positions and the reason in their place', () => {
+  const noPositions: IntelligenceQuestionEvent = {
+    ...QUESTION,
+    node: {
+      ...QUESTION.node,
+      fields: [
+        {
+          id: 'device_submission_pathway',
+          label: 'Submission Pathway',
+          type: 'select',
+          required: true,
+          helpText: 'AnA holds no routes to market for PMDA — describe the route and she will record it in your words.',
+          allowOther: { prompt: 'Which route are you taking, in your own words?' },
+        },
+      ],
+    },
+  };
+
+  it('draws the reason and the box for their own words, and no empty list', () => {
+    render(<AnaQuestionCard question={noPositions} sessionId="sess-1" onAnswer={vi.fn()} />);
+    expect(screen.getByText(/holds no routes to market for PMDA/)).toBeTruthy();
+    expect(screen.queryAllByRole('radio'), 'nothing to pick, so nothing is drawn as pickable').toHaveLength(0);
+    expect(screen.getByLabelText('Which route are you taking, in your own words?')).toBeTruthy();
+  });
+
+  it('records the answer as the person’s own words, not as a position AnA offered', () => {
+    const onAnswer = vi.fn();
+    render(<AnaQuestionCard question={noPositions} sessionId="sess-1" onAnswer={onAnswer} />);
+    const submit = screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement;
+    expect(submit.disabled, 'an empty answer is still no answer').toBe(true);
+    fireEvent.change(screen.getByLabelText('Which route are you taking, in your own words?'), {
+      target: { value: 'Shonin application via a Japanese marketing authorisation holder' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      node_id: 'pathway',
+      answers: {
+        device_submission_pathway: OTHER_POSITION,
+        [otherFieldId('device_submission_pathway')]: 'Shonin application via a Japanese marketing authorisation holder',
+      },
+      session_id: 'sess-1',
+    });
+  });
+});
+
+/**
+ * A field gated on an answer in its OWN question (2026-10-12 review).
+ *
+ * The server decides every gate an earlier question answered. It cannot decide
+ * one that depends on an answer the person has not given yet, so it sends the
+ * field with its predicate and the card decides it live. Before this, such a
+ * field was dropped at draw time and demanded at validation — an unanswerable
+ * question — and `additional_agencies`, gated on a yes/no in its own node, was
+ * never drawn at all.
+ */
+describe('a field gated on an answer in the same question', () => {
+  const gated: IntelligenceQuestionEvent = {
+    ...QUESTION,
+    node: {
+      ...QUESTION.node,
+      fields: [
+        {
+          id: 'multi_country_submission',
+          label: 'Is this a multi-country submission?',
+          type: 'yes_no',
+          required: true,
+        },
+        {
+          id: 'additional_agencies',
+          label: 'Additional Regulatory Agencies',
+          type: 'multi_select',
+          required: true,
+          visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
+          options: [
+            { value: 'EU', label: 'EMA — European Union' },
+            { value: 'JP', label: 'PMDA — Japan' },
+          ],
+        },
+      ],
+    },
+  };
+
+  it('is not drawn until the answer it depends on is given', () => {
+    render(<AnaQuestionCard question={gated} sessionId="sess-1" onAnswer={vi.fn()} />);
+    expect(screen.queryByText('Additional Regulatory Agencies')).toBeNull();
+  });
+
+  it('appears the moment it applies, and is not required while it is hidden', () => {
+    const onAnswer = vi.fn();
+    render(<AnaQuestionCard question={gated} sessionId="sess-1" onAnswer={onAnswer} />);
+    /* Hidden and required: the submit must not be blocked by a question the
+       person cannot see. */
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    expect(screen.getByText('Additional Regulatory Agencies')).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled,
+      'now it applies, so it is required',
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /PMDA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      node_id: 'pathway',
+      answers: { multi_country_submission: 'yes', additional_agencies: ['JP'] },
+      session_id: 'sess-1',
+    });
   });
 });

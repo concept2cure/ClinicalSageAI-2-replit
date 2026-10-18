@@ -1,0 +1,14 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+    "bytes": 119864,
+    "digestAlgorithm": "sha256",
+    "digest": "6dfff90e38b57f70eb12ee10cc1024a8990c42dec95fff94af2e48affd1ebbf9"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+    "bytes": 3575,
+    "digestAlgorithm": "sha256",
+    "digest": "24e3713424200a7acd0625adc2279b05b92747514b9da44ba077f0a2b17a9dae"
+  }
+]

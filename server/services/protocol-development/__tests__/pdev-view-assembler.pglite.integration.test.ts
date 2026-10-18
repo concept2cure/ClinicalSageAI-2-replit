@@ -19,14 +19,14 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { assembleOrgPdevDocs, assembleOnePdevDocFacets } from '../pdev-view-assembler';
+import { assembleOrgPdevDocs, assembleOnePdevDocFacets, listPdevProtocolIndex } from '../pdev-view-assembler';
 
 const ORG = 7;
 const OTHER = 9;
 
 // Minimal DDL — only the columns the assembler reads (mirrors the migrations/protocol_* set).
 const DDL = `
-CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text, study_design_id text, study_design_linked_at timestamptz, study_design_linked_by int);
+CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, program_id uuid, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text, study_design_id text, study_design_linked_at timestamptz, study_design_linked_by int);
 CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
 CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, protocol_document_id int, objective_type text, objective text, endpoint text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
@@ -91,6 +91,26 @@ async function seedFullProtocol(org: number): Promise<number> {
 }
 
 describe('assembleOrgPdevDocs', () => {
+  it('indexes all older documents and loads a selected document outside the newest 25', async () => {
+    const program = '11111111-1111-4111-8111-111111111111';
+    const other = '22222222-2222-4222-8222-222222222222';
+    const ids: number[] = [];
+    for (let index = 0; index < 32; index++) {
+      const row = await pglite.query<{ id: number }>(`INSERT INTO protocol_documents (organization_id, program_id, protocol_kind, title, version, status)
+        VALUES ($1,$2,'clinical',$3,'0.1','draft') RETURNING id`, [ORG, program, `Protocol ${index}`]);
+      ids.push(row.rows[0].id);
+    }
+    await pglite.query(`INSERT INTO protocol_documents (organization_id, program_id, title) VALUES ($1,$2,'Other program'),($3,$2,'Other tenant'),($1,NULL,'Unfiled')`, [ORG, other, OTHER]);
+    const index = await listPdevProtocolIndex(ORG, { programId: program });
+    expect(index).toHaveLength(32);
+    expect(index.map((row) => row.id)).toContain(String(ids[0]));
+    const docs = await assembleOrgPdevDocs(ORG, { programId: program, documentId: ids[0] });
+    expect(docs).toHaveLength(1);
+    expect(docs[0]).toMatchObject({ id: String(ids[0]), title: 'Protocol 0', programId: program });
+    expect(await assembleOrgPdevDocs(OTHER, { documentId: ids[0] })).toEqual([]);
+    expect(await assembleOrgPdevDocs(ORG, { programId: other, documentId: ids[0] })).toEqual([]);
+    expect(await listPdevProtocolIndex(ORG, { programId: 'unfiled' })).toEqual([expect.objectContaining({ title: 'Unfiled', programId: null })]);
+  });
   it('maps a full real protocol into the PdevDoc contract', async () => {
     const id = await seedFullProtocol(ORG);
     const docs = await assembleOrgPdevDocs(ORG);
@@ -134,6 +154,9 @@ describe('assembleOrgPdevDocs', () => {
     expect(doc.completenessFindings.some((f: any) => f.sev === 'critical')).toBe(true);
   });
 
+});
+
+describe('protocol assessment and qualified detail assembly', () => {
   /* A deviation is ASSESSED only when both severity and safety impact are on
      record. The seeded row has a severity but no safety assessment — the shape
      every legacy row has (severity defaulted, affects_safety added 2026-09-22) —

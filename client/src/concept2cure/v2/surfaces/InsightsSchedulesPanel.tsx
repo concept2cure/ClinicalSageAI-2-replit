@@ -9,12 +9,10 @@
  *
  * ── TWO RULES THIS PANEL KEEPS ──────────────────────────────────────────────
  * 1. It never says a file was delivered. `worker-register.ts` computes the run
- *    and applies the delivery gate, then logs it — its own docstring leaves
- *    immutable-run persistence and mail to `/runs` and `/deliveries`. The
- *    `ScheduleTruthNote` is the only claim allowed, and the suite fails if the
- *    panel implies more.
+ *    and places a link to the retained run in the platform inbox. A scheduled
+ *    report remains subject to the same finalization and export gates.
  * 2. It only offers a type an engine computes. The sweep calls
- *    `computeInitialRun`, which throws for the 43 declared-but-uncomputed
+ *    `computeInitialRun`, which throws for the 39 declared-but-uncomputed
  *    types, so scheduling one would persist a row that fails every sweep for
  *    ever and tell the client nothing.
  *
@@ -34,6 +32,7 @@ import {
   whenText,
   type Cadence,
   type SubscriptionRow,
+  type CreateSubscriptionBody,
 } from './insightsLibraryModel';
 import {
   PanelAlert,
@@ -51,11 +50,24 @@ interface Draft {
   typeId: string;
   cadence: Cadence;
   hour: number;
+  minute: number;
+  timeZone: string;
   dayOfWeek: number;
   dayOfMonth: number;
 }
 
-const EMPTY_DRAFT: Draft = { typeId: '', cadence: 'weekly', hour: 8, dayOfWeek: 1, dayOfMonth: 1 };
+const EMPTY_DRAFT: Draft = { typeId: '', cadence: 'weekly', hour: 8, minute: 0, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', dayOfWeek: 1, dayOfMonth: 1 };
+type ScheduleScope = { scopeType: string; scopeId: string };
+function targetForType(type: LibraryReportType | undefined, scope: ScheduleScope | null): ScheduleScope | null {
+  return type?.runScopeType && type.runScopeId ? { scopeType: type.runScopeType, scopeId: type.runScopeId } : scope;
+}
+function scheduleBody(draft: Draft, target: ScheduleScope): CreateSubscriptionBody {
+  return { reportTypeId: draft.typeId, ...target, channel: 'platform', format: 'in_app', schedule: { cadence: draft.cadence, hour: draft.hour, minute: draft.minute, timeZone: draft.timeZone.trim(), ...(draft.cadence === 'weekly' ? { dayOfWeek: draft.dayOfWeek } : {}), ...(draft.cadence === 'monthly' ? { dayOfMonth: draft.dayOfMonth } : {}) } };
+}
+function scheduleProblem(draft: Draft): string | null {
+  try { new Intl.DateTimeFormat('en', { timeZone: draft.timeZone }); } catch { return 'Choose a valid timezone, such as Asia/Tokyo or Europe/London.'; }
+  return !Number.isInteger(draft.minute) || draft.minute < 0 || draft.minute > 59 ? 'Enter a minute from 0 to 59.' : null;
+}
 
 /** The day control the chosen cadence needs, or nothing for a daily one. */
 function DayField({ draft, setDraft }: { draft: Draft; setDraft: (d: Draft) => void }) {
@@ -119,6 +131,9 @@ function ScheduleForm({
   const typeFieldId = React.useId();
   const cadenceId = React.useId();
   const hourId = React.useId();
+  const minuteId = React.useId();
+  const zoneId = React.useId();
+  const zonesId = React.useId();
 
   return (
     <div className="rl-form" data-testid="rl-schedule-form">
@@ -151,7 +166,7 @@ function ScheduleForm({
           </select>
         </div>
         <div className="rl-filter">
-          <label className="gov-label" htmlFor={hourId}>Hour (UTC)</label>
+          <label className="gov-label" htmlFor={hourId}>Hour</label>
           <select
             id={hourId}
             className="rl-input"
@@ -163,11 +178,13 @@ function ScheduleForm({
             ))}
           </select>
         </div>
+        <div className="rl-filter"><label className="gov-label" htmlFor={minuteId}>Minute</label><input id={minuteId} className="rl-input" type="number" min={0} max={59} value={draft.minute} onChange={e => setDraft({ ...draft, minute: Number(e.target.value) })} /></div>
+        <div className="rl-filter"><label className="gov-label" htmlFor={zoneId}>Timezone</label><input id={zoneId} className="rl-input" list={zonesId} value={draft.timeZone} onChange={e => setDraft({ ...draft, timeZone: e.target.value })} /><datalist id={zonesId}>{['UTC', 'America/New_York', 'America/Los_Angeles', 'America/Sao_Paulo', 'Europe/London', 'Europe/Berlin', 'Africa/Johannesburg', 'Asia/Dubai', 'Asia/Kolkata', 'Asia/Shanghai', 'Asia/Tokyo', 'Australia/Sydney'].map(zone => <option key={zone} value={zone} />)}</datalist></div>
         <DayField draft={draft} setDraft={setDraft} />
       </div>
       <p className="rl-sub">
         Runs over {scope.scopeType} — {scope.scopeId}. Days 29 to 31 are not offered: the server clamps a
-        monthly schedule to day 28 so it is valid in every month.
+        monthly schedule to day 28 so it is valid in every month. The named timezone follows local daylight-saving changes.
       </p>
       <div className="rl-head-acts">
         <button type="button" className="btn primary" disabled={!draft.typeId || saving} onClick={onSave}>
@@ -183,8 +200,8 @@ function ScheduleForm({
 function NothingSchedulable() {
   return (
     <div className="ro-dash-note" role="note">
-      {I.info} No report type for this program is computed by an engine, so none can be scheduled. A
-      schedule over a type nothing computes would never produce a report.
+      {I.info} No report is available to schedule in this context. The report catalog states each
+      type’s supported scope, plan and availability.
     </div>
   );
 }
@@ -206,7 +223,7 @@ function ScheduleTable({
           <th scope="col">Report</th>
           <th scope="col">Cadence</th>
           <th scope="col">Scope</th>
-          <th scope="col">Last run</th>
+          <th scope="col">Last recorded run</th>
           <th scope="col">Next run</th>
           <th scope="col">State</th>
           <th scope="col" />
@@ -219,10 +236,10 @@ function ScheduleTable({
             <td>{scheduleInWords(s.schedule)}</td>
             <td>{s.scopeType} — {s.scopeId}</td>
             <td>{whenText(s.lastRunAt)}</td>
-            <td>{whenText(s.nextRunAt)}</td>
+            <td>{whenText(s.nextRunAt)}{s.enabled && s.nextRunAt && new Date(s.nextRunAt).getTime() < Date.now() && <div className="rl-cell-sub">Awaiting the next successful run</div>}</td>
             <td>
               <span className="rl-tag" data-status={s.enabled ? 'final' : 'draft'}>
-                {s.enabled ? 'Active' : 'Paused'}
+                {s.enabled ? 'Enabled' : 'Paused'}
               </span>
             </td>
             <td>
@@ -271,7 +288,7 @@ function SchedulesBody({
       <EmptyState
         icon={I.calendar}
         title="No scheduled reports"
-        hint="A schedule recomputes a governed report on a cadence, so a standing report is never stale when someone asks for it."
+        hint="Choose a supported report and its cadence. Successful runs appear in Run history and the platform inbox; failed delivery leaves the occurrence pending."
         testId="rl-schedules-empty"
       />
     );
@@ -284,37 +301,34 @@ export function SchedulesPanel({
   scope,
   canWrite,
   onSaved,
+  canSchedule = true,
 }: {
   types: LibraryReportType[];
   scope: { scopeType: string; scopeId: string } | null;
   canWrite: boolean;
   onSaved: (msg: string) => void;
+  canSchedule?: boolean;
 }) {
   const [attempt, setAttempt] = useState(0);
   const subs = useLiveData<unknown>('/api/insights/subscriptions', ['/api/insights/subscriptions', attempt], isRowList);
   const rows = useMemo(() => rowsOf<SubscriptionRow>(subs.data), [subs.data]);
-  const offerable = useMemo(() => schedulableTypes(types), [types]);
+  const offerable = useMemo(() => schedulableTypes(types).filter(t => (t.runScopeType && t.runScopeId) || (scope && t.computedScopes.includes(scope.scopeType))), [types, scope]);
 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [note, setNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const selected = offerable.find(t => t.typeId === draft.typeId);
+  const formScope = targetForType(selected ?? offerable[0], scope);
+  const mayCreate = canWrite && canSchedule && offerable.length > 0;
 
   const save = async () => {
-    if (!scope || !draft.typeId) return;
+    if (!formScope || !selected || !canSchedule) return;
+    const problem = scheduleProblem(draft);
+    if (problem) { setNote(problem); return; }
     setSaving(true);
     setNote(null);
-    const res = await createSubscription({
-      reportTypeId: draft.typeId,
-      scopeType: scope.scopeType,
-      scopeId: scope.scopeId,
-      schedule: {
-        cadence: draft.cadence,
-        hour: draft.hour,
-        ...(draft.cadence === 'weekly' ? { dayOfWeek: draft.dayOfWeek } : {}),
-        ...(draft.cadence === 'monthly' ? { dayOfMonth: draft.dayOfMonth } : {}),
-      },
-    });
+    const res = await createSubscription(scheduleBody(draft, formScope));
     setSaving(false);
     if (!res.ok) {
       setNote(res.message ?? 'The schedule was not saved.');
@@ -343,7 +357,7 @@ export function SchedulesPanel({
         title="Schedules"
         sub="Reports this organization computes on a recurring cadence."
         actions={
-          canWrite && scope && offerable.length > 0 ? (
+          mayCreate ? (
             <button type="button" className="btn primary" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
               {I.plus} New schedule
             </button>
@@ -352,13 +366,13 @@ export function SchedulesPanel({
       />
 
       <ScheduleTruthNote />
-      {!canWrite && <ViewOnlyNote action="Creating or pausing a schedule" />}
+      <ScheduleCapabilityNotice canWrite={canWrite} canSchedule={canSchedule} />
       <PanelAlert note={note} />
 
-      {open && scope && (
+      {open && formScope && (
         <ScheduleForm
           offerable={offerable}
-          scope={scope}
+          scope={formScope}
           draft={draft}
           setDraft={setDraft}
           saving={saving}
@@ -367,7 +381,7 @@ export function SchedulesPanel({
         />
       )}
 
-      {canWrite && scope && offerable.length === 0 && <NothingSchedulable />}
+      {canWrite && offerable.length === 0 && <NothingSchedulable />}
 
       <SchedulesBody
         loading={subs.loading}
@@ -379,4 +393,10 @@ export function SchedulesPanel({
       />
     </div>
   );
+}
+
+function ScheduleCapabilityNotice({ canWrite, canSchedule }: { canWrite: boolean; canSchedule: boolean }) {
+  if (!canWrite) return <ViewOnlyNote action="Creating or pausing a schedule" />;
+  if (canSchedule) return null;
+  return <div className="ro-dash-note" role="note">{I.lock} Scheduled reports require your organization’s Professional or Enterprise plan.</div>;
 }

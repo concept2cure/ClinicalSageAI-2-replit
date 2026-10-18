@@ -1,0 +1,61 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/project-schedule-atomic.dbtest.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > stage failure restores the exact existing plan, milestones, goals and revision history
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_retire failure restores the exact existing plan, milestones, goals and revision history
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_insert failure restores the exact existing plan, milestones, goals and revision history
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > revision failure restores the exact existing plan, milestones, goals and revision history
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > response failure restores the exact existing plan, milestones, goals and revision history
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > a first-generation failure leaves no header, milestone, goal or revision
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > returns the committed full view, retains plan identity and increments the version once
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'omitted'
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'empty'
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > preserves 'row.status only' without a task FK or fabricated completion fields
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > preserves 'metadata.scheduleStatus only' without a task FK or fabricated completion fields
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > leaves a completed row physically unchanged, keeps its task FK, and changes only allowed planning fields elsewhere
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > accepts a canonical pathway alias without replacing the existing completed milestone
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 records the previous baseline and new work > records the exact prior rows, proposal, version transition and supplied reason; genuinely new keys start uncompleted
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'pathway' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'framework' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'title' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'description' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'category' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'regulatory basis' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'dependencies' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'removed key' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'missing key' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'duplicate key' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'orphan rows' changes without altering plan, actuals, goals or revisions
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > a late revision fault rolls back preserved actuals, FK references and newly planned dates
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > a late response fault rolls back preserved actuals, FK references and newly planned dates
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: true)
+ ↓ tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: false)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-schedule-atomic.dbtest.ts [ tests/db/project-schedule-atomic.dbtest.ts ]
+Error: [db-suite] cannot reach the test database. This suite fails rather than skips, because a database test that silently does not run is the defect it exists to prevent. Underlying error: Connection terminated unexpectedly
+ ❯ tests/setup.db.ts:119:11
+    117|   } catch (error) {
+    118|     await pool.end().catch(() => {/* already broken */});
+    119|     throw new Error(
+       |           ^
+    120|       `[db-suite] cannot reach the test database. This suite fails rat…
+    121|         `because a database test that silently does not run is the def…
+
+Caused by: Error: Connection terminated unexpectedly
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/setup.db.ts:110:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  29 skipped (29)
+   Start at  00:26:25
+   Duration  1.05s (transform 378ms, setup 148ms, import 319ms, tests 25ms, environment 0ms)
+

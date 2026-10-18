@@ -45,15 +45,6 @@ import type { WorkflowTemplateId } from '../../../shared/types/orchestration';
 /** Staleness threshold in days. */
 const STALE_THRESHOLD_DAYS = 30;
 
-/** Minimum documents expected per CTD module for readiness. */
-const MIN_DOCS_PER_MODULE: Record<string, number> = {
-  'Module 1': 3,
-  'Module 2': 5,
-  'Module 3': 4,
-  'Module 4': 3,
-  'Module 5': 4,
-};
-
 /**
  * Tie-break order WITHIN one severity band, lowest first.
  *
@@ -272,7 +263,9 @@ function analyzeValidationFailures(
         targetTitle: v.documentTitle,
         reason: `Validation found ${v.criticalCount} critical and ${v.majorCount} major findings.`,
         evidence: [
-          `Compliance score: ${v.complianceScore}%`,
+          v.complianceScore === null
+            ? 'Compliance score: not computed (the analysis did not cover the whole content)'
+            : `Compliance score: ${v.complianceScore}%`,
           `Critical findings: ${v.criticalCount}`,
           `Major findings: ${v.majorCount}`,
           `Validated at: ${v.validatedAt}`,
@@ -289,6 +282,14 @@ function analyzeValidationFailures(
     });
 }
 
+/**
+ * A module is a gap only against a denominator something measured: Module 3's
+ * composed section set (cross-object-resolver.ts). A module with no
+ * required-section list is reported only when it holds no documents, and as
+ * that. 2026-10-15: this compared document counts with per-module minimums
+ * (3/5/4/3/4) nothing sourced, and said "Module 4 has 2/3 expected documents"
+ * beside evidence reading "Completeness: not assessed".
+ */
 function analyzeModuleGaps(
   payload: CrossObjectReasoningPayload,
   now: Date
@@ -297,24 +298,42 @@ function analyzeModuleGaps(
 
   for (const m of payload.moduleMap) {
     if (m.module === 'Unassigned') continue;
-    const expected = MIN_DOCS_PER_MODULE[m.module] || 3;
 
-    if (m.documentCount < expected) {
+    if (m.completenessPercent !== null) {
+      if (m.completenessPercent >= 100) continue;
       recs.push(
         makeRecommendation({
           type: 'readiness_gap',
-          severity: m.documentCount === 0 ? 'critical' : 'high',
+          severity: m.completenessPercent === 0 ? 'critical' : 'high',
           targetType: 'module',
           targetId: m.module,
           targetTitle: m.module,
-          reason: `${m.module} has ${m.documentCount}/${expected} expected documents.`,
+          reason: `${m.module}: ${m.assessedAgainst ?? `${m.completenessPercent}% complete`}.`,
           evidence: [
+            `Completeness: ${m.completenessPercent}%${m.assessedAgainst ? ` (${m.assessedAgainst})` : ''}`,
             `Current documents: ${m.documentCount}`,
-            `Expected minimum: ${expected}`,
-            m.completenessPercent === null
-              ? 'Completeness: not assessed — no required-section list for this module'
-              : `Completeness: ${m.completenessPercent}%`,
             ...m.missingItems.slice(0, 3),
+          ],
+          suggestedAction: `Resolve the outstanding ${m.module} sections`,
+          module: m.module,
+          now,
+        })
+      );
+      continue;
+    }
+
+    if (m.documentCount === 0) {
+      recs.push(
+        makeRecommendation({
+          type: 'readiness_gap',
+          severity: 'critical',
+          targetType: 'module',
+          targetId: m.module,
+          targetTitle: m.module,
+          reason: `${m.module} has no documents.`,
+          evidence: [
+            'Current documents: 0',
+            'Completeness: not assessed — no required-section list for this module',
           ],
           suggestedAction: `Draft or assign content to ${m.module}`,
           module: m.module,
@@ -384,6 +403,7 @@ function analyzeWeakContent(
   now: Date
 ): Recommendation[] {
   return payload.validations
+    .flatMap((v) => (v.complianceScore === null ? [] : [{ ...v, complianceScore: v.complianceScore }]))
     .filter((v) => v.complianceScore < 70 && v.complianceScore > 0 && v.criticalCount === 0)
     .map((v) =>
       makeRecommendation({
@@ -418,7 +438,12 @@ function deriveNextBestAction(
   now: Date
 ): Recommendation | null {
   if (recs.length === 0) {
-    // No issues — recommend running a readiness review
+    // No issues — recommend running a readiness review. The modules whose
+    // completeness nothing measured are named, so "no issues" is not read as
+    // "complete" (2026-10-15, when unmeasured modules stopped raising gaps).
+    const unmeasured = payload.moduleMap
+      .filter((m) => m.module !== 'Unassigned' && m.completenessPercent === null)
+      .map((m) => m.module);
     return makeRecommendation({
       type: 'next_best_action',
       severity: 'info',
@@ -426,7 +451,12 @@ function deriveNextBestAction(
       targetId: payload.scope.projectId,
       targetTitle: payload.project.name,
       reason: 'No critical issues found. Run a readiness review to confirm submission preparedness.',
-      evidence: ['All analyzers returned no critical or high findings'],
+      evidence: [
+        'All analyzers returned no critical or high findings',
+        ...(unmeasured.length > 0
+          ? [`Completeness not assessed for ${unmeasured.join(', ')} — no required-section list`]
+          : []),
+      ],
       suggestedAction: 'Run submission readiness review workflow',
       actionPayload: {
         actionType: 'submission_readiness_review' as WorkflowTemplateId,

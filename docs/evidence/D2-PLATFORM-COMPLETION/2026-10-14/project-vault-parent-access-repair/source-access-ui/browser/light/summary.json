@@ -1,0 +1,88 @@
+{
+  "variant": "light",
+  "fixture": {
+    "programId": "3a27db9b-c7de-4e93-8b34-ac4438fec36d",
+    "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+    "title": "Synthetic QA Source Access 20261014-014535"
+  },
+  "scope": "Actual positive authenticated seeded QA UI; synthetic records, no clinical evidence",
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "blockedWrites": [],
+  "providerTurns": [],
+  "surfaces": {
+    "project-home-sources": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "url": "/concept2cure/project-home",
+      "alpha": "Synthetic QA accessible source alpha.txt\nFile \u00b7 added Oct 14\nUsed in 1 accessible section \u00b7 1 accessible document\nNot processed yet\nWork on document\nReview file removal",
+      "beta": "Synthetic QA accessible source beta.txt\nFile \u00b7 added Oct 14\nNo accessible citations\nNot processed yet\nWork on document\nReview file removal"
+    },
+    "vault-record-context": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "url": "/concept2cure/vault",
+      "relationships": "RELATED DOCUMENTS\nOnly related documents you can currently access are shown.\nReferences\nSynthetic QA accessibility beta v1.0. Invented QA relationship only; no clinical support or approval.\nRemove\nRelate a document",
+      "history": "HISTORY\nAudit chain verified \u2014 45 rows checked.\nv1.0 \u00b7 Related: references Synthetic QA accessibility beta v1.0\n2026-10-14 01:45 \u00b7 JM Smith \u00b7 1f544dda3318",
+      "versions": "VERSIONS\nSubmission placements, eSTAR exports and CMC evidence are limited to records you can currently access.\nv1.0 \u00b7 current\n2026-10-14 01:45 UTC \u00b7 JM Smith \u00b7 size not recorded \u00b7 SHA-256 908bdf4e9dbb \u00b7 no submission placements are available to you\nNot sent for review\nDownload\nSend for review\nUpload new version\nExport signed history"
+    },
+    "vault-accessible-library": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "url": "/concept2cure/vault",
+      "library": "2 documents in projects you can access match \u201cSynthetic QA accessibility\u201d.\nSynthetic QA accessibility beta \u00b7 v1.0\nSynthetic QA Source Access 20261014-014535 (this project)\nDownload\nSynthetic QA accessibility alpha \u00b7 v1.0\nSynthetic QA Source Access 20261014-014535 (this project)\nDownload"
+    },
+    "source-tracer-recorded-citation": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "url": "/concept2cure/source-tracer",
+      "accessibleSectionsReturned": 1,
+      "seededSectionTitle": "Synthetic QA citation section",
+      "seededDocumentTitle": "Synthetic QA accessible citation document",
+      "seededCitationCount": 1,
+      "sourceScope": "verified-accessible-authoring-sections",
+      "seededSourceTitle": "Synthetic QA accessible source alpha.txt",
+      "sourceState": "current"
+    }
+  },
+  "apiReadFacts": {
+    "projectSources": {
+      "usageScope": "accessible-citations",
+      "total": 2,
+      "sources": [
+        {
+          "id": 12,
+          "title": "Synthetic QA accessible source beta.txt",
+          "usage": {
+            "sourceId": 12,
+            "sections": 0,
+            "documents": 0,
+            "changedSections": 0
+          },
+          "ingestionStatus": "ingested",
+          "extractionStatus": "pending"
+        },
+        {
+          "id": 11,
+          "title": "Synthetic QA accessible source alpha.txt",
+          "usage": {
+            "sourceId": 11,
+            "sections": 1,
+            "documents": 1,
+            "changedSections": 0
+          },
+          "ingestionStatus": "ingested",
+          "extractionStatus": "pending"
+        }
+      ]
+    },
+    "library": {
+      "scope": "verified-accessible-programs",
+      "total": 2,
+      "query": "Synthetic QA accessibility"
+    }
+  },
+  "programDocumentRow": "Synthetic QA accessible citation document\nDraft\nnull\nUpdated 01:45 AM\nOpen",
+  "passed": true
+}

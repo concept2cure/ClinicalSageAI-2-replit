@@ -1,0 +1,8 @@
+ × server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > is the market's Module 1 and 3.2.R, never the common modules 78ms
+ × server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > names the common sections the home filing lacks as gaps, and inserts nothing for them 55ms
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > the home filing is the whole pack, with no gaps 26ms
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > another organization's document is not read 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'home' to be 'market' // Object.is equality
+AssertionError: expected [] to include '2.1'
+      Tests  2 failed | 2 passed (4)

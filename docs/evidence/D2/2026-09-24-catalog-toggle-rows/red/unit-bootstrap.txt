@@ -42,4 +42,3 @@ AssertionError: expected '' to contain 'ana.document_catalog'
       Tests  1 failed | 9 passed (10)
    Start at  18:24:35
    Duration  1.71s (transform 722ms, setup 79ms, import 1.34s, tests 9ms, environment 0ms)
-

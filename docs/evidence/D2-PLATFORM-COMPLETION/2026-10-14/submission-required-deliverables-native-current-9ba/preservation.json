@@ -1,0 +1,18 @@
+{
+  "capturedAtUtc": "2026-10-14T21:15:26.692708+00:00",
+  "priorSealedPhaseManifestHashes": {
+    "submission-required-deliverables-native": "36880db13803dac9e0a1c68479f4ab92ca23d963616b81e40226b00487bb62d4",
+    "submission-required-deliverables-native-corrected-premerge": "46bc17fac0e9fb29f406078096b5f213272c6e39787da4187482ebf9bb2eb766"
+  },
+  "priorPhaseManifestsUnchanged": true,
+  "privateArtifacts": {
+    "/tmp/submission-required-deliverables-native-current-9ba.txt": "04e19ef3c1ee9901038e9da7700d7935a199d5c46dc8956e71d23e782d5a38d4",
+    "/tmp/submission-required-deliverables-native-current-9ba-observations.json": "2322a88aeff4bcb789db46f1a1dfeaae71d04f5b6d61470531959b23dfddaeab",
+    "/tmp/submission-required-deliverables-native-current-9ba/run-native.py": "d052b6a0f46dba8d74106470f427662c9025cbbbd37ee0f406bf960d4cfb263c",
+    "/tmp/submission-required-deliverables-native-current-9ba/frozen-source-pins.json": "b1aee1beab2a3cce93d7389ae3246f45ef7c6a8099ca808ffffb391321ad9070"
+  },
+  "currentSourcePinsVerified": 43,
+  "noNativeRerunForPackaging": true,
+  "noSqlOrSourceMutationsForPackaging": true,
+  "processExitCodeRecovered": false
+}

@@ -1,0 +1,5 @@
+Existing authoring creation picker after concurrent IND integration
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Duration  3.53s (transform 335ms, setup 195ms, import 462ms, tests 2.02s, environment 643ms)

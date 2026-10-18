@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Generate a concrete AI OS evidence pack from measured pilot metrics.
+"""Generate an AI OS evidence pack from pilot metrics.
+
+Metrics are evidence only when they name the run they were measured in:
+"source_run": {"id": ..., "sha256": <hash of the run's raw output>}. Without
+one the pack is labelled SAMPLE and makes no gate decision. Until 2026-10-15 the
+committed sample metrics — invented numbers — produced a document titled
+"Evidence Pack" ending "Overall pilot gate decision: PASS", and CI ran it as
+"enforce release gates".
 
 Usage:
   python scripts/generate_aios_evidence_pack.py \
@@ -30,6 +37,14 @@ def gate_pass(metric_value: float, op: str, expected: float) -> bool:
     if op == "==":
         return metric_value == expected
     raise GateEvaluationError(f"Unsupported operator: {op}")
+
+
+def source_run(metrics: Dict[str, Any]) -> str | None:
+    """The recorded run the metrics come from, or None for sample input."""
+    run = metrics.get("source_run")
+    if isinstance(run, dict) and run.get("id") and run.get("sha256"):
+        return f"{run['id']} (sha256 {str(run['sha256'])[:12]})"
+    return None
 
 
 def control_status(metrics: Dict[str, Any]) -> Dict[str, str]:
@@ -79,10 +94,16 @@ def build_markdown(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]])
     # Python < 3.12, so pre-join the multi-row tables outside the
     # f-string and interpolate the result instead.
     gate_rows_block = "\n".join(gate_rows)
-
-    markdown = f"""# AIOS Evidence Pack (Generated)
+    source = source_run(metrics)
+    title = "# AIOS Evidence Pack (Generated)" + ("" if source else " — SAMPLE, not evidence")
+    gate_word = "PASS" if overall_pass else "FAIL"
+    decision = gate_word if source else (
+        f"NOT MADE — sample metrics with no source run; the gate logic evaluates them as {gate_word}."
+    )
+    markdown = f"""{title}
 
 Generated: {now}
+Source run: {source or "none — these metrics were not measured in a recorded run"}
 Release ID: {metrics.get('release_id', 'TBD')}
 Environment: {metrics.get('environment', 'staging')}
 
@@ -108,7 +129,7 @@ Environment: {metrics.get('environment', 'staging')}
 
 ## Decision
 
-Overall pilot gate decision: {'PASS' if overall_pass else 'FAIL'}
+Overall pilot gate decision: {decision}
 
 ## Notes
 
@@ -148,10 +169,11 @@ def main() -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
     print(f"Wrote evidence pack to {output_path}")
-
     if args.fail_on_gate_fail and not overall_pass:
         print("AIOS exit-gate decision is FAIL")
         return 2
+    if args.fail_on_gate_fail and source_run(metrics) is None:
+        print("AIOS exit gates evaluated on sample metrics: no release gate was enforced.")
     return 0
 
 

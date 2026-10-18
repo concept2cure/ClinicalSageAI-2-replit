@@ -1518,11 +1518,18 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
       const eValuePoint = rr >= 1
         ? rr + Math.sqrt(rr * (rr - 1))
         : 1 / rr + Math.sqrt((1 / rr) * (1 / rr - 1));
-      const rrForCI = rrLower >= 1 ? rrLower : 1 / rrLower;
-      const eValueCI = rrForCI >= 1
-        ? rrForCI + Math.sqrt(rrForCI * (rrForCI - 1))
-        : 1;
-      eValueNote = `E-value for the point estimate (RR=${rr.toFixed(2)}): ${eValuePoint.toFixed(2)}. E-value for the confidence limit closest to the null (RR=${rrLower.toFixed(2)}): ${eValueCI.toFixed(2)}. An unmeasured confounder would need associations of at least RR=${eValuePoint.toFixed(2)} with both treatment and outcome to explain the observed effect. If this strength of confounding is implausible given the subject matter, the finding is more robust to unmeasured confounding.`;
+      // 2026-10-15: a lower limit below 1 was inverted (1/rrLower), so a CI that
+      // crosses the null got an E-value above 1 (RR 1.5, lower 0.9 -> 1.46); and
+      // for a protective estimate the lower limit is the one FARTHEST from the
+      // null. The CI E-value is 1 when the CI crosses the null, and is not
+      // computed for RR < 1, which needs the upper limit (not an input here).
+      const eValueCI: number | null = rr >= 1
+        ? (rrLower <= 1 ? 1 : rrLower + Math.sqrt(rrLower * (rrLower - 1)))
+        : null;
+      const ciText = eValueCI === null
+        ? 'E-value for the confidence limit closest to the null: not computed (for a protective estimate it needs the upper confidence limit, which was not given).'
+        : `E-value for the confidence limit closest to the null (RR=${rrLower.toFixed(2)}): ${eValueCI.toFixed(2)}${eValueCI === 1 ? ' (the interval includes the null)' : ''}.`;
+      eValueNote = `E-value for the point estimate (RR=${rr.toFixed(2)}): ${eValuePoint.toFixed(2)}. ${ciText} An unmeasured confounder would need associations of at least RR=${eValuePoint.toFixed(2)} with both treatment and outcome to explain the observed effect. If this strength of confounding is implausible given the subject matter, the finding is more robust to unmeasured confounding.`;
     }
   }
 

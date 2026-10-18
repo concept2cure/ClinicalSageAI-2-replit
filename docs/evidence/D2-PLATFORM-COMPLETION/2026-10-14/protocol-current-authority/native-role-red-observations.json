@@ -1,0 +1,123 @@
+{
+  "tag": "protocol-authority-native-145563-mv7pwxua-ba02125f",
+  "cases": {
+    "roleDemotedAfterPreflight": {
+      "documentId": 93,
+      "sectionId": 194,
+      "holderPid": 9520,
+      "signerWait": {
+        "pid": 9516,
+        "query": "SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        "wait_event": "transactionid",
+        "blocking_pids": [
+          9520
+        ]
+      },
+      "roleBefore": {
+        "organization_id": 1179328,
+        "user_id": 1208363,
+        "role": "admin",
+        "user_status": "active"
+      },
+      "roleAfter": {
+        "organization_id": 1179328,
+        "user_id": 1208363,
+        "role": "member",
+        "user_status": "active"
+      },
+      "freshAuthority": {
+        "status": 403,
+        "code": "ESIGNATURE_NO_AUTHORITY",
+        "message": "Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed."
+      },
+      "signerStatus": 201,
+      "signerErrorCode": null,
+      "document": {
+        "status": "finalized",
+        "version": "1.0",
+        "finalized_by": 1208363,
+        "finalized_at": "2026-10-14T06:17:35.413Z"
+      },
+      "signatureCount": 1,
+      "versionCount": 1,
+      "signatureId": 27,
+      "digestMatchesCurrent": true,
+      "signActionCount": 1,
+      "signAuditCount": 1,
+      "beforeDocumentStateDigest": "9c509fff4983699c1d53228e7a21198bf69fac7be1cc894eaf7b8d5481fc4624",
+      "afterDocumentStateDigest": "05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a",
+      "authorsAfter": {
+        "modelled": true,
+        "authors": [
+          1453486
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      }
+    }
+  },
+  "signatureRequestsStarted": 1,
+  "scope": "Actual native protocol APIs; synthetic QA only",
+  "database": "platform_test",
+  "runtime": {
+    "database": "platform_test",
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on"
+  },
+  "stores": [
+    {
+      "relname": "audit_logs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_ana_actions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "document_span_lineage",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "electronic_signatures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_versions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "organizationId": 1179328,
+  "actorIds": {
+    "author": 1453486,
+    "independent": 1208363
+  },
+  "signingPolicyRoles": [
+    "admin",
+    "approver",
+    "reviewer"
+  ],
+  "signerAttempts": {
+    "author": 0,
+    "independent": 1
+  }
+}

@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Japanese term written inside a sentence (the recorded probe)
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Latin term written against Japanese characters
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > chooses by the terms of a Japanese instruction sentence
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > matches a compound against text that splits it, over a passage sharing one part
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a Japanese full stop when no line break is in reach
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps UTF-16 source offsets after an astral Han character
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > still refuses a Latin term inside a Latin word in a Japanese document
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the English hyphen-edge boundary unchanged 14ms
+   → expected { start: 4201, end: 4701, …(1) } to deeply equal { start: +0, end: 500, …(1) }
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the opening for a query of hiragana only, which carries no term
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > is deterministic
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > splits at hiragana, drops boilerplate, then adds Han bigrams after whole terms
+ ↓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > separates Latin and Japanese in a mixed query and keeps katakana words whole
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the English hyphen-edge boundary unchanged
+AssertionError: expected { start: 4201, end: 4701, …(1) } to deeply equal { start: +0, end: 500, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "opening",
+-   "end": 500,
+-   "start": 0,
++   "basis": "relevant",
++   "end": 4701,
++   "start": 4201,
+  }
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:64:58
+     62|     const filler = 'Administrative text. '.repeat(200);
+     63|     const text = filler + '\nanti-drug antibodies measured.\n' + fille…
+     64|     expect(chooseSourceWindow(text, 'anti- titre', 500)).toEqual({ sta…
+       |                                                          ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  17:08:07
+   Duration  484ms (transform 100ms, setup 96ms, import 35ms, tests 19ms, environment 0ms)
+

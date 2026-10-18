@@ -14,6 +14,7 @@
  * real Postgres) so the write and verify hash paths must agree byte-for-byte.
  */
 
+import { createHash } from 'node:crypto';
 import { describe, it, expect, beforeAll } from 'vitest';
 import type { Pool } from 'pg';
 import { TamperProofAuditLog } from '../tamper-proof-audit';
@@ -59,7 +60,9 @@ function jsonbReorder<T>(value: T): T {
   if (Array.isArray(value)) return value.map(jsonbReorder) as unknown as T;
   if (value && typeof value === 'object' && !(value instanceof Date)) {
     const src = value as Record<string, unknown>;
-    const keys = Object.keys(src).sort((a, b) => (a.length - b.length) || (a < b ? -1 : a > b ? 1 : 0));
+    const keys = Object.keys(src).sort(
+      (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)
+    );
     const out: Record<string, unknown> = {};
     for (const k of keys) out[k] = jsonbReorder(src[k]);
     return out as unknown as T;
@@ -99,28 +102,55 @@ class FakePool {
     }
     if (/ORDER BY sequence_number DESC LIMIT 1/i.test(s)) {
       const last = this.rows[this.rows.length - 1];
-      return { rows: last ? [{ chain_hash: last.chain_hash, sequence_number: last.sequence_number }] : [] };
+      return {
+        rows: last ? [{ chain_hash: last.chain_hash, sequence_number: last.sequence_number }] : [],
+      };
     }
     if (s.startsWith('INSERT INTO audit.tamper_proof_log')) {
       const [
-        id, event_type, event_timestamp, user_id, user_name, session_id,
-        correlation_id, resource_type, resource_id, action, details,
-        previous_hash, content_hash, chain_hash, signature, ip_address, user_agent,
+        id,
+        event_type,
+        event_timestamp,
+        user_id,
+        user_name,
+        session_id,
+        correlation_id,
+        resource_type,
+        resource_id,
+        action,
+        details,
+        previous_hash,
+        content_hash,
+        chain_hash,
+        signature,
+        ip_address,
+        user_agent,
       ] = params as any[];
       this.rows.push({
-        id, sequence_number: ++this.seq, event_type, event_timestamp,
-        user_id: user_id ?? null, user_name: user_name ?? null, session_id: session_id ?? null,
-        correlation_id: correlation_id ?? null, resource_type: resource_type ?? null,
-        resource_id: resource_id ?? null, action,
+        id,
+        sequence_number: ++this.seq,
+        event_type,
+        event_timestamp,
+        user_id: user_id ?? null,
+        user_name: user_name ?? null,
+        session_id: session_id ?? null,
+        correlation_id: correlation_id ?? null,
+        resource_type: resource_type ?? null,
+        resource_id: resource_id ?? null,
+        action,
         // jsonb, not text: Postgres hands this back re-keyed, so the fake must too.
         details: jsonbReorder(typeof details === 'string' ? JSON.parse(details) : details),
-        previous_hash, content_hash, chain_hash, signature: signature ?? null,
-        ip_address: ip_address ?? null, user_agent: user_agent ?? null,
+        previous_hash,
+        content_hash,
+        chain_hash,
+        signature: signature ?? null,
+        ip_address: ip_address ?? null,
+        user_agent: user_agent ?? null,
       });
       return { rows: [] };
     }
     if (/FROM audit\.tamper_proof_log/i.test(s) && /ORDER BY sequence_number ASC/i.test(s)) {
-      return { rows: this.rows.map((r) => ({ ...r })) };
+      return { rows: this.rows.map(r => ({ ...r })) };
     }
     throw new Error(`FakePool: unhandled query: ${s.slice(0, 80)}`);
   }
@@ -151,7 +181,7 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
         sessionId: 's-1',
         ipAddress: '203.0.113.7',
         userAgent: 'Mozilla/5.0 (regression-test)',
-      },
+      }
     );
 
     const result = await log.verifyChain();
@@ -167,7 +197,7 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
       'RECORD_UPDATED',
       'Updated record',
       { field: 'x' },
-      { userId: 'u-2', ipAddress: '198.51.100.1', userAgent: 'agent/1' },
+      { userId: 'u-2', ipAddress: '198.51.100.1', userAgent: 'agent/1' }
     );
 
     // Tamper the stored ip_address directly (simulating a DB-level edit).
@@ -203,8 +233,13 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
     await log.log(
       'AUDIT_VERIFICATION_PASSED',
       'Audit chain verification completed successfully',
-      { entriesVerified: 0, startSequence: 1, endSequence: 9, verifiedAt: '2026-08-06T01:00:45.794Z' },
-      { correlationId: 'verify-1' },
+      {
+        entriesVerified: 0,
+        startSequence: 1,
+        endSequence: 9,
+        verifiedAt: '2026-08-06T01:00:45.794Z',
+      },
+      { correlationId: 'verify-1' }
     );
 
     // Guard the guard: if the fake ever stops reordering, this test would pass
@@ -223,13 +258,15 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('verifies historical audit-verification entries after jsonb reorders their details', verifyHistoricalAuditHash);
+
   it('detects tampering with details even though key order is normalized', async () => {
     const { log, pool } = newLog();
     await log.log(
       'RECORD_UPDATED',
       'Updated record',
       { field: 'dose', from: '10mg', to: '20mg' },
-      { userId: 'u-3' },
+      { userId: 'u-3' }
     );
 
     // Reordering keys must NOT be treated as tampering; changing a value must.
@@ -245,11 +282,63 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
     await log.log(
       'DOCUMENT_SIGNED',
       'Signature applied',
-      { signature: { meaning: 'approval', signedBy: 'u-9', reason: 'QA release' }, sectionCount: 12 },
-      { userId: 'u-9', resourceType: 'document', resourceId: 'doc-1' },
+      {
+        signature: { meaning: 'approval', signedBy: 'u-9', reason: 'QA release' },
+        sectionCount: 12,
+      },
+      { userId: 'u-9', resourceType: 'document', resourceId: 'doc-1' }
     );
 
     const result = await log.verifyChain();
     expect(result.valid).toBe(true);
   });
 });
+
+async function verifyHistoricalAuditHash(): Promise<void> {
+    const { log, pool } = newLog();
+    const timestamp = new Date('2026-06-03T01:09:04.717Z');
+    const legacyDetails = {
+      entriesVerified: 0,
+      startSequence: undefined,
+      endSequence: undefined,
+      verifiedAt: timestamp.toISOString(),
+    };
+    const legacyContent = {
+      eventType: 'AUDIT_VERIFICATION_PASSED',
+      action: 'Audit chain verification completed successfully',
+      details: legacyDetails,
+      timestamp: timestamp.toISOString(),
+      correlationId: 'verify-legacy',
+    };
+    const contentHash = createHash('sha256').update(JSON.stringify(legacyContent)).digest('hex');
+    const previousHash = '0'.repeat(64);
+
+    pool.rows.push({
+      id: 'legacy-verify',
+      sequence_number: 1,
+      event_type: 'AUDIT_VERIFICATION_PASSED',
+      event_timestamp: timestamp,
+      user_id: null,
+      user_name: null,
+      session_id: null,
+      correlation_id: 'verify-legacy',
+      resource_type: null,
+      resource_id: null,
+      action: 'Audit chain verification completed successfully',
+      details: jsonbReorder(legacyDetails),
+      previous_hash: previousHash,
+      content_hash: contentHash,
+      chain_hash: createHash('sha256')
+        .update(contentHash + previousHash)
+        .digest('hex'),
+      signature: null,
+      ip_address: null,
+      user_agent: null,
+    });
+
+    await expect(log.verifyChain()).resolves.toMatchObject({ valid: true });
+    (pool.rows[0].details as Record<string, unknown>).entriesVerified = 99;
+    await expect(log.verifyChain()).resolves.toMatchObject({
+      valid: false, invalidReason: expect.stringMatching(/content_hash mismatch/i),
+    });
+  }

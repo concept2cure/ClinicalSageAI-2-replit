@@ -16,7 +16,7 @@
  * actually reads the route, with the filters the route accepts — and the three
  * honesty rules the panels must not break:
  *
- *   1. a schedule never claims a file was delivered (the sweep only logs);
+ *   1. a schedule describes persisted platform output without claiming email;
  *   2. a type no engine computes is never offered as a control, anywhere;
  *   3. a failed read renders as a failure, never as "none yet".
  */
@@ -30,77 +30,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { InsightsCanvas } from '../surfaces/Insights';
+import { RUNS, ok, route, renderCanvas, openTab, requestCalls } from './_insights-library-fixture';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
-import { RUNS_WINDOW, runsSearchCaveat } from '../surfaces/insightsLibraryModel';
+import { runsUrl } from '../surfaces/insightsLibraryModel';
 import { readFailureOf } from '../surfaces/insightsLibraryShared';
 import { RunsPanel } from '../surfaces/InsightsRunsPanel';
-import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
-const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
 const boom = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) }) as unknown as Response;
-
-const OVERVIEW = {
-  data: {
-    organizationId: 1,
-    tier: 'enterprise',
-    segments: ['pharma'],
-    reportTypes: CANVAS_REPORT_TYPES,
-    leadProgram: {
-      projectId: 11, code: 'BX204', label: 'BX204', filing: 'NDA', indication: null,
-      readiness: 70, scope: 'project', scopeId: '11', agency: null, pdufa: null, criticalBlockerCount: 0,
-    },
-    portfolio: { programs: null },
-  },
-};
-
-/** Two real run rows, shaped as GET /api/report-os/runs enriches them. */
-const RUNS = [
-  {
-    id: 41, runUuid: 'aaaaaaaa-0000-4000-8000-000000000001', scopeType: 'project', scopeId: '11',
-    reportTypeId: 'readiness.executive_digest', reportTypeLabel: 'Executive Readiness Digest',
-    status: 'final', confidence: 82, createdAt: '2026-10-02T09:00:00.000Z',
-    completedAt: '2026-10-02T09:00:12.000Z', regionCode: 'US', agency: 'FDA',
-  },
-  {
-    id: 42, runUuid: 'aaaaaaaa-0000-4000-8000-000000000002', scopeType: 'project', scopeId: '11',
-    reportTypeId: 'etmf.completeness_pack', reportTypeLabel: 'eTMF Completeness & Gap Pack',
-    status: 'partial', confidence: null, createdAt: '2026-10-03T09:00:00.000Z', completedAt: null,
-  },
-];
-
-const SUBS = [
-  {
-    id: 7, reportTypeId: 'readiness.executive_digest', scopeType: 'project', scopeId: '11',
-    schedule: { cadence: 'weekly', hour: 8, minute: 0, dayOfWeek: 2 },
-    recipients: [], format: 'pdf', channel: 'platform', persona: null, enabled: true,
-    lastRunAt: '2026-10-06T08:00:00.000Z', nextRunAt: '2026-10-13T08:00:00.000Z',
-    createdAt: '2026-09-01T08:00:00.000Z',
-  },
-];
-
-const BUNDLES = [
-  {
-    bundleId: 'bbbbbbbb-0000-4000-8000-000000000001', name: 'Pre-approval inspection pack',
-    createdAt: '2026-10-04T10:00:00.000Z', createdBy: 3, projectIds: [11], runIds: [41],
-    items: [{
-      runId: 41, runUuid: 'aaaaaaaa-0000-4000-8000-000000000001',
-      reportTypeId: 'readiness.executive_digest', reportTypeLabel: 'Executive Readiness Digest',
-      scopeType: 'project', scopeId: '11', status: 'final', confidence: 82,
-      createdAt: '2026-10-02T09:00:00.000Z',
-    }],
-  },
-];
-
-/** Routes this suite serves. Anything else answers an empty object, so a call
- *  to an unexpected route shows up as a missing assertion rather than a pass. */
-function route(url: string): Response {
-  if (url.includes('/api/insights-canvas/overview')) return ok(OVERVIEW);
-  if (url.startsWith('/api/report-os/runs')) return ok({ data: RUNS });
-  if (url.startsWith('/api/insights/subscriptions')) return ok({ data: SUBS });
-  if (url.startsWith('/api/report-os/bundles')) return ok({ data: BUNDLES });
-  return ok({});
-}
 
 beforeEach(() => {
   apiRequest.mockReset();
@@ -108,24 +44,7 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-async function renderCanvas() {
-  render(
-    <InsightsCanvas
-      surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']}
-      segment="pharma"
-      onNav={() => {}}
-    />,
-  );
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
-}
-
-/** Click one of the artifact pane's tabs by its visible name. */
-async function openTab(name: RegExp) {
-  fireEvent.click(await screen.findByRole('tab', { name }));
-}
-
-const calls = (method: string, prefix: string) =>
-  apiRequest.mock.calls.filter(([m, u]) => m === method && String(u).startsWith(prefix));
+const calls = (method: string, prefix: string) => requestCalls(apiRequest, method, prefix);
 
 describe('the reporting library', () => {
   it('lands on the Report pane, so the surface a reader already knew is unchanged', async () => {
@@ -238,11 +157,13 @@ describe('Schedules — GET/POST/PATCH /api/insights/subscriptions', () => {
     expect(await screen.findByText('Every week on Tuesday at 08:00 UTC')).toBeTruthy();
   });
 
-  it('never claims a schedule delivered a file — the sweep only logs one', async () => {
+  it('describes persisted platform output and does not promise external email', async () => {
     await renderCanvas();
     await openTab(/Schedules/);
     const note = await screen.findByTestId('rl-schedule-truth');
-    expect(note.textContent).toMatch(/does not email a file/);
+    expect(note.textContent).toMatch(/saves a governed report/);
+    expect(note.textContent).toMatch(/platform inbox/);
+    expect(note.textContent).toMatch(/External email delivery is unavailable/);
     // The words that would be the false claim.
     const pane = document.querySelector('.rc-canvas')!;
     expect(pane.textContent).not.toMatch(/sent to your inbox|emailed to|delivered to your/i);
@@ -255,9 +176,13 @@ describe('Schedules — GET/POST/PATCH /api/insights/subscriptions', () => {
     const select = await screen.findByLabelText('Report');
     const offered = within(select).getAllByRole('option').map((o) => o.textContent);
     expect(offered).toContain('Executive Readiness Digest');
-    // runnable: false in the catalog fixture — no engine computes it.
+    // The regional engine computes this one over a program, so a schedule for
+    // it does produce a report (regional/filing-readiness.ts).
+    expect(offered).toContain('EMA MAA Readiness Assessment');
+    // runnable: false in the catalog fixture — no engine computes these.
     expect(offered).not.toContain('Compliance & Audit Assurance Pack');
-    expect(offered).not.toContain('EMA MAA Readiness Assessment');
+    expect(offered).not.toContain('FDA eSTAR / 510(k) Equivalence Matrix');
+    expect(offered).not.toContain('Evidence & Provenance Trace Report');
   });
 
   it('creates a schedule with the cadence chosen, and no creator in the body', async () => {
@@ -401,73 +326,37 @@ describe('Report catalog', () => {
   });
 });
 
-describe('the run search does not present a truncated answer as a complete one', () => {
-  /* GET /runs applies `search` and `sortBy` IN MEMORY, AFTER the SQL LIMIT
-     (report-os.ts: .limit(limit) then .filter() then .sort()). So a search
-     reaches only the rows already fetched. The panel asks for the route's
-     maximum window and, when that window is full, says what the answer
-     covered — CLAUDE.md: no silent caps. */
-
-  it('asks for the widest window the route serves, so the search reaches as far as it can', async () => {
-    await renderCanvas();
-    await openTab(/Run history/);
-    await waitFor(() =>
-      expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes(`limit=${RUNS_WINDOW}`))).toBe(true),
-    );
-  });
-
-  /* THE CASE THE FIRST VERSION OF THIS MITIGATION MISSED. The route filters in
-     memory after the SQL limit and returns only the matches, so a search that
-     matched 2 of the newest 500 runs returns 2 rows. Gating the caveat on
-     `loaded < RUNS_WINDOW` therefore suppressed it exactly when the reader most
-     needed it: two results, and no hint that nothing older had been looked at. */
-  it('still says what the search reached when only a few rows matched', async () => {
+describe('run history uses the complete SQL result before pagination', () => {
+  it('requests a page and sends the search to the canonical route', async () => {
     await renderCanvas();
     await openTab(/Run history/);
     await screen.findByRole('table');
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'etmf' } });
-    await waitFor(() =>
-      expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes('search=etmf'))).toBe(true),
-    );
-    const caveat = await screen.findByTestId('rl-runs-caveat');
-    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
+    await waitFor(() => expect(calls('GET', '/api/report-os/runs').some(([, url]) => String(url).includes('search=etmf') && String(url).includes('limit=50') && String(url).includes('offset=0'))).toBe(true));
   });
 
-  it('says nothing at all when no search or ordering is in play', async () => {
-    await renderCanvas();
-    await openTab(/Run history/);
-    await screen.findByRole('table');
-    expect(screen.queryByTestId('rl-runs-caveat')).toBeNull();
+  it('shows the server total and reaches older matching reports on the next page', async () => {
+    apiRequest.mockImplementation(async (_method, url) => ok({ data: RUNS, meta: { total: 52, limit: 50, offset: String(url).includes('offset=50') ? 50 : 0, hasMore: !String(url).includes('offset=50') } }));
+    render(<RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />);
+    expect(await screen.findByText(/52 matching reports/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(calls('GET', '/api/report-os/runs').some(([, url]) => String(url).includes('offset=50'))).toBe(true));
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Next' }) as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'older' } });
+    await waitFor(() => expect(calls('GET', '/api/report-os/runs').at(-1)?.[1]).toContain('offset=0'));
   });
 
-  /* Mounts RunsPanel directly rather than the whole canvas. A full window is
-     RUNS_WINDOW table rows, and rendering that inside the canvas tree once
-     starved a neighbouring suite's 5s waitFor on a 4-core box — a latent flake
-     worth not leaving behind. The panel alone is the cheapest render that
-     still proves the sentence reaches the DOM; runsSearchCaveat's own test
-     below covers the boundary logic. */
-  it('says what the search reached when the window came back full', async () => {
-    const many = Array.from({ length: RUNS_WINDOW }, (_, i) => ({ ...RUNS[0], id: 1000 + i }));
-    apiRequest.mockImplementation(async () => ok({ data: many }));
-    render(
-      <RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />,
-    );
-    fireEvent.change(await screen.findByLabelText('Search'), { target: { value: 'readiness' } });
-    const caveat = await screen.findByTestId('rl-runs-caveat');
-    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
-    expect(caveat.textContent ?? '').toMatch(/an older run that matches is not shown/);
+  it('does not imply a complete result when an older server omits pagination metadata', async () => {
+    apiRequest.mockImplementation(async () => ok({ data: RUNS }));
+    render(<RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />);
+    expect(await screen.findByText(/This list may be incomplete/)).toBeTruthy();
   });
 
-  it('runsSearchCaveat speaks whenever a search is bounded, and only then', () => {
-    // No search and no ordering: nothing to qualify.
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: false })).toBeNull();
-    // THE REGRESSION GUARD: a search matching few rows is still window-bounded.
-    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(0, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: true })).toMatch(/This ordering reaches/);
-    // It reports how many matched inside the window, without implying a total.
-    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/3 matched inside it/);
+  it('encodes scope, search and offset without dropping a zero offset', () => {
+    const url = runsUrl({ scopeType: 'project', scopeId: '11', search: ' older run ', offset: 0, limit: 50 });
+    expect(new URLSearchParams(url.split('?')[1]).get('search')).toBe('older run');
+    expect(url).toContain('offset=0');
+    expect(url).toContain('scopeId=11');
   });
 });
 

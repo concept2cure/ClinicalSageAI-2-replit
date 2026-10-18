@@ -301,6 +301,10 @@
   color: var(--text-400);
 }
 
+.ssoSection { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.ssoSection .form { margin-top: 12px; }
+.ssoSection a.primary { text-align: center; text-decoration: none; }
+
 /* ─── MFA 6-digit input ─── */
 .mfaInputs {
   display: flex; justify-content: center; gap: 8px;

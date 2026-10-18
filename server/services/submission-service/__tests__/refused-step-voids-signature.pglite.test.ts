@@ -101,7 +101,7 @@ const rowsNaming = async (actionId: string) =>
   )).rows as Array<{ action: string; record_id: string; step: string | null; refusal: string | null }>;
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
+  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);

@@ -1,0 +1,175 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a document twice on synchronous double activation 312ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a section twice on synchronous double activation 94ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > keeps the pending document guard after cancel and reopen 89ms
+   → expected null to be 'true' // Object.is equality
+stderr | client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > keeps the pending section guard after cancel and reopen 100ms
+   → expected null to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event 17ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > ignores a confirmed old document after a project A → B → A round trip 62ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "id": "D-created",
+        "title": "New document",
+      },
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > keeps an unreadable successful receipt unknown without claiming nothing persisted 104ms
+   → expected 'Couldn’t create the document — the se…' to match /(?:cannot|could not) confirm/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a document twice on synchronous double activation
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:83:25
+     81|     const button = screen.getByRole('button', { name: kind === 'docume…
+     82|     act(() => { button.click(); button.click(); });
+     83|     expect(postCalls()).toHaveLength(1);
+       |                         ^
+     84|     expect(screen.getByRole('dialog').getAttribute('aria-busy')).toBe(…
+     85|     await act(async () => pending.resolve(response(receipt(kind), 201)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a section twice on synchronous double activation
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:83:25
+     81|     const button = screen.getByRole('button', { name: kind === 'docume…
+     82|     act(() => { button.click(); button.click(); });
+     83|     expect(postCalls()).toHaveLength(1);
+       |                         ^
+     84|     expect(screen.getByRole('dialog').getAttribute('aria-busy')).toBe(…
+     85|     await act(async () => pending.resolve(response(receipt(kind), 201)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > keeps the pending document guard after cancel and reopen
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > keeps the pending section guard after cancel and reopen
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:98:66
+     96|     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+     97|     await open(kind);
+     98|     expect(screen.getByRole('dialog').getAttribute('aria-busy')).toBe(…
+       |                                                                  ^
+     99|     expect((screen.getByRole('button', { name: kind === 'document' ? '…
+    100|     expect(postCalls()).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:111:98
+    109|     const p = props();
+    110|     render(<AuthoringCreateExport {...p} programId={null} />);
+    111|     expect((screen.getByRole('button', { name: /New document/ }) as HT…
+       |                                                                                                  ^
+    112|     act(() => startNewDocument());
+    113|     expect(screen.queryByRole('dialog')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > ignores a confirmed old document after a project A → B → A round trip
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "id": "D-created",
+        "title": "New document",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:128:32
+    126|     view.rerender(<AuthoringCreateExport {...p} />);
+    127|     await act(async () => pending.resolve(response(receipt('document')…
+    128|     expect(p.onDocCreated).not.toHaveBeenCalled();
+       |                                ^
+    129|     expect(p.fireToast).not.toHaveBeenCalled();
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > keeps an unreadable successful receipt unknown without claiming nothing persisted
+AssertionError: expected 'Couldn’t create the document — the se…' to match /(?:cannot|could not) confirm/i
+
+- Expected:
+/(?:cannot|could not) confirm/i
+
++ Received:
+"Couldn’t create the document — the server refused it. Nothing was persisted."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:139:22
+    137|     await waitFor(() => expect(p.fireToast).toHaveBeenCalled());
+    138|     const messages = p.fireToast.mock.calls.map(call => String(call[0]…
+    139|     expect(messages).toMatch(/(?:cannot|could not) confirm/i);
+       |                      ^
+    140|     expect(messages).not.toMatch(/nothing was persisted|nothing was cr…
+    141|     expect(p.onDocCreated).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  21:47:51
+   Duration  2.04s (transform 275ms, setup 168ms, import 339ms, tests 781ms, environment 554ms)

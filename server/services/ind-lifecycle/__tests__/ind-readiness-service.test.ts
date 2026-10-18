@@ -68,6 +68,9 @@ describe('evaluateIndReadiness', () => {
     const report = evaluateIndReadiness({
       filingType: 'amendment',
       sectionStatus: allRequiredSigned('amendment'),
+      // 2026-10-15: stated, because an omitted count used to read as zero and
+      // made this amendment "ready" (ind-overdue-safety-count-not-assumed.test.ts).
+      overdueSafetyReports: 0,
     });
     expect(report.forms.required).toHaveLength(0);
     expect(report.blockers.some((b) => b.kind === 'required_form')).toBe(false);

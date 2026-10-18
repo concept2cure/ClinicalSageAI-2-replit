@@ -32,7 +32,7 @@ vi.mock('openai', () => ({
   },
 }));
 
-import { getEmbeddingProvider, resetEmbeddingProvider } from '../embedding-provider';
+import { getEmbeddingProvider, resetEmbeddingProvider, resolveEmbeddingProvider, EmbeddingConfigurationError } from '../embedding-provider';
 import { GatewayPolicyError, getGateway, resetGateway } from '../../gateway';
 import {
   resetOrgPlacementResolver,
@@ -158,4 +158,43 @@ describe('P1-45 outside production: embeddings unchanged', () => {
     expect(result.provider).toBe('openai');
     expect(sdk.create).toHaveBeenCalledTimes(1);
   });
+});
+
+describe('embedding credential readiness before SDK dispatch', () => {
+  const blankCredentials = [['missing', undefined], ['empty', ''], ['whitespace', ' \t\n ']] as const;
+  it.each(blankCredentials)('refuses a %s OpenAI credential lazily and records no content', async (_name, key) => {
+    if (key === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = key;
+    process.env.NODE_ENV = 'development';
+    const provider = getEmbeddingProvider();
+    expect(provider.kind).toBe('openai');
+    expect(sdk.construct).not.toHaveBeenCalled();
+    await expect(provider.embed({input: PLAIN_TEXT, organizationId: 7})).rejects.toBeInstanceOf(EmbeddingConfigurationError);
+    expect(sdk.construct).not.toHaveBeenCalled();
+    expect(sdk.create).not.toHaveBeenCalled();
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({success:false,taskType:'embedding',provider:'openai',inputTokens:0,
+      error:expect.stringContaining('OPENAI_API_KEY'),callerModule:'embedding-provider'});
+    expect(JSON.stringify(entries)).not.toContain('release specifications');
+    expect(JSON.stringify(entries)).not.toContain('sk-configured-for-another-tenant');
+  });
+
+  it.each(blankCredentials)('placement refusal takes priority over a %s credential', async (_name, key) => {
+    process.env.NODE_ENV = 'production';
+    if (key === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = key;
+    setOrgPlacementResolver({resolve:async()=>({allowedProviders:['anthropic']})});
+    const provider = resolveEmbeddingProvider();
+    await expect(provider.embed({input:PLAIN_TEXT,organizationId:7})).rejects.toMatchObject({
+      name:GatewayPolicyError.name,message:expect.stringContaining('DENY_TENANT_POLICY')});
+    expect(sdk.construct).not.toHaveBeenCalled();
+    expect(sdk.create).not.toHaveBeenCalled();
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({success:false,error:'DENY_TENANT_POLICY'});
+    expect(JSON.stringify(entries)).not.toContain('OPENAI_API_KEY');
+    expect(JSON.stringify(entries)).not.toContain('release specifications');
+  });
+
 });

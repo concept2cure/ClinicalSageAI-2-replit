@@ -1,0 +1,6 @@
+PASS API health
+PASS frontend HTML
+PASS database/schema/storage; AI provider is unconfigured
+PASS password login with development MFA bypass
+PASS authenticated account request
+PASS authenticated workspace projects request

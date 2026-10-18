@@ -12,6 +12,7 @@ import type {
   FlowDefinition,
   FlowState,
   FlowCategory,
+  QuestionField,
   QuestionNode,
   DetectedIssue,
   FieldPredicate,
@@ -19,11 +20,20 @@ import type {
   IntelligenceFlowCompleteEvent,
 } from './types.js';
 import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intelligence-questions.js';
+import { evaluatePredicate, predicateFieldIds } from '../../../../shared/ana/question-predicate.js';
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
-import { cautionedChoiceNotices, programmeFactsFrom, withCautions } from './programme-facts.js';
+import { annexViiiNotices } from './annex-viii-classification.js';
+import { withGovernedOptions } from './governed-options.js';
+import { cautionedChoiceNotices, declaredMdrClass, programmeFactsFrom, withCautions } from './programme-facts.js';
 import { validateAnswers } from './validators.js';
+
+/* The predicate evaluator moved to shared/ana/question-predicate.ts so the
+   card can decide a field gated on an answer in its own question. Re-exported
+   because validators.ts, issue-detector.ts and two test files import it from
+   here. */
+export { evaluatePredicate };
 
 /* ─── Public API ─────────────────────────────────────────────────────── */
 
@@ -62,7 +72,7 @@ export function startFlow(
     sectionProgress,
   };
 
-  const event = buildQuestionEvent(definition, state, entryNode, undefined, undefined, true);
+  const event = buildQuestionEvent(definition, state, entryNode, ctx, undefined, undefined, true);
 
   return { state, event, completeEvent: null };
 }
@@ -97,7 +107,12 @@ export function advanceFlow(
   // never be submitted: a deadlock), and `eq`/`in` read FALSE, so a required
   // field the renderer SHOWED passed validation blank. Pinned by
   // __tests__/visible-when-deadlock.test.ts.
-  const validationErrors = validateAnswers(currentNode, answers, state.answers);
+  /* Judged against the list the person was actually SHOWN, which is the list
+     resolved from the answers they had already given — not from the answer
+     they are submitting now. */
+  const shownFlat = flattenAnswers(state.answers);
+  const shownNode = resolveNode(currentNode, currentNode.fields, programmeFactsFrom(shownFlat), shownFlat, ctx);
+  const validationErrors = validateAnswers(shownNode, answers, state.answers);
   if (validationErrors.length > 0) {
     // Return the same question with validation errors surfaced as issues
     const validationIssues: DetectedIssue[] = validationErrors.map(err => ({
@@ -109,7 +124,7 @@ export function advanceFlow(
       triggerValues: { [err.fieldId]: answers[err.fieldId] },
     }));
 
-    const event = buildQuestionEvent(definition, state, currentNode, validationIssues, undefined, false);
+    const event = buildQuestionEvent(definition, state, shownNode, ctx, validationIssues, undefined, false);
     return { state, event, completeEvent: null };
   }
 
@@ -135,19 +150,35 @@ export function advanceFlow(
   // Run issue checks (node-level + cross-node cumulative)
   const newIssues = [
     ...ownPositionNotices(currentNode, own, nodeId),
-    ...cautionedChoiceNotices(currentNode, answers, facts),
-    ...runIssueChecks(currentNode, answers),
+    ...cautionedChoiceNotices(shownNode, answers, facts),
+    /* What the Annex VIII rules make of the answers, against what the sponsor
+       declared. The verdict is the engine's; the sentences only report it. */
+    ...annexViiiNotices(nodeId, { ...shownFlat, ...answers }, declaredMdrClass({ ...shownFlat, ...answers })),
+    /* Issue checks read every answer too. Of the 233 checks across these
+       flows exactly one reads an earlier node's field — cer_report's critical
+       "a Class III device with no clinical investigation" check — and it could
+       never fire while this passed the current node's answers alone. The other
+       232 are unaffected: their own field comes from `answers` either way. */
+    ...runIssueChecks(currentNode, { ...shownFlat, ...answers }),
   ];
   const allIssues = [...state.issues, ...newIssues];
 
-  // Run cross-node analysis with the updated state
-  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues };
+  // Mark node complete
+  const completedNodes = [...state.completedNodes, nodeId];
+
+  /* Run cross-node analysis with the updated state — INCLUDING the node just
+     answered. The detector decides whether a mitigating question has been put
+     to the person from `completedNodes`, and this ran five lines before that
+     list was extended: a rule whose trigger and mitigation live in the SAME
+     node read 'pending' at the moment the answer arrived, and fired one
+     question later. Where that node is terminal — `rems_evaluation` is the
+     last node of `bla_submission` — no later question existed, so the finding
+     never arrived at all. A sponsor who said a REMS was required and named no
+     elements was told nothing (2026-10-13 audit). */
+  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues, completedNodes };
   const crossNodeIssues = runCrossNodeAnalysis(crossNodeState, definition);
   allIssues.push(...crossNodeIssues);
   newIssues.push(...crossNodeIssues);
-
-  // Mark node complete
-  const completedNodes = [...state.completedNodes, nodeId];
 
   // Update section progress
   const sectionProgress = { ...state.sectionProgress };
@@ -160,8 +191,19 @@ export function advanceFlow(
     }
   }
 
-  // Resolve next node
-  const nextNodeId = resolveNextNode(currentNode, answers, definition);
+  /* Resolve next node against EVERY answer the interview holds, not just this
+     node's. A branch predicate that reads an earlier node's field — "this is a
+     vaccine", "the device contains software", "the product type is a device" —
+     was evaluated against the current node's answers alone, where that field
+     is absent, so it could never match: 30 of the 63 branch predicates across
+     these flows were unreachable, and with them the oncology and vaccine
+     efficacy questions, the 510(k) software, sterilisation, EMC and implant
+     questions, the PMA software documentation, the cell-therapy and vaccine
+     BLA characterisation, the SaMD and pharma hazard questions and the
+     biologics stability questions. Declared behaviour change: they now match
+     (founder's directive, 2026-10-12). `visibleWhen` and the validator have
+     always read this same flattened view. */
+  const nextNodeId = resolveNextNode(currentNode, { ...shownFlat, ...answers }, definition);
 
   if (!nextNodeId) {
     // Flow complete
@@ -200,6 +242,7 @@ export function advanceFlow(
     definition,
     updatedState,
     nextNode,
+    ctx,
     newIssues.length > 0 ? newIssues : undefined,
     undefined,
     false,
@@ -258,6 +301,27 @@ function ownPositionNotices(
 }
 
 /**
+ * A node as this programme sees it: the catalogues its fields declare resolved
+ * for the answers given, and the positions those answers speak against marked.
+ *
+ * ONE function, because two readers must agree. The question a person is drawn
+ * and the list the validator judges their answer against have to be the same
+ * list: a field whose positions come from a catalogue (`optionsFrom`) carries
+ * no static options, so a validator reading the raw definition would see a
+ * field with no list and accept any string — a closed question that is not
+ * closed (founder's directive, 2026-10-12).
+ */
+function resolveNode(
+  node: QuestionNode,
+  fields: readonly QuestionField[],
+  facts: ReturnType<typeof programmeFactsFrom>,
+  answers: Record<string, unknown>,
+  ctx: FlowEngineContext,
+): QuestionNode {
+  return { ...node, fields: withCautions(withGovernedOptions(fields, { facts, answers, ctx }), facts) };
+}
+
+/**
  * Resume a flow from a persisted state — returns the current question event.
  */
 export function resumeFlow(
@@ -278,7 +342,7 @@ export function resumeFlow(
 
   const isFirst = state.completedNodes.length === 0;
   const isLast = isTerminalNode(node, definition);
-  const event = buildQuestionEvent(definition, state, node, undefined, undefined, isFirst, isLast);
+  const event = buildQuestionEvent(definition, state, node, ctx, undefined, undefined, isFirst, isLast);
 
   return { state, event, completeEvent: null };
 }
@@ -307,9 +371,15 @@ function resolveNextNode(
   // Evaluate branch rules top-to-bottom
   if (currentNode.branches) {
     for (const branch of currentNode.branches) {
-      if (evaluatePredicate(branch.when, answers)) {
-        return branch.goto;
-      }
+      if (!evaluatePredicate(branch.when, answers)) continue;
+      /* A branch onto its own node can only ask the same question again, for
+         ever. It was unreachable while branches read the current node's
+         answers alone (df8e5200), and reading every answer brought one such
+         branch to life — an emergency IND looped on `ind_review`. The flow's
+         own branch is gone, and this refuses the shape rather than trusting
+         seventeen flows not to grow another. */
+      if (branch.goto === currentNode.id) continue;
+      return branch.goto;
     }
   }
 
@@ -337,73 +407,6 @@ function resolveNextNode(
  * an unrecognised value is returned unchanged so a non-yes_no field still
  * compares by strict identity.
  */
-function coerceForBooleanPredicate(actual: unknown): unknown {
-  if (typeof actual === 'boolean') return actual;
-  if (typeof actual === 'string') {
-    const v = actual.trim().toLowerCase();
-    if (v === 'yes' || v === 'true' || v === 'y' || v === '1') return true;
-    if (v === 'no' || v === 'false' || v === 'n' || v === '0') return false;
-  }
-  return actual;
-}
-
-/**
- * Parse a number-field answer to a finite number for a numeric (gt/lt) predicate.
- * number answers reach the engine as a real number from the UI but as a string
- * ('4') from the AnA tool surface (a free-form `answers` object), and gt/lt
- * previously required `typeof actual === 'number'` — so a string answer silently
- * made every numeric gate return false. That defeats critical filing gates such
- * as `evaluator_years_experience lt 5`, `vigilance_reports gt 10`, and
- * `number_of_arms gt 3`. Returns null for anything not finitely numeric (an
- * empty or non-numeric answer is not a valid trigger; required-field validation
- * handles absence).
- */
-function toFiniteNumber(actual: unknown): number | null {
-  if (typeof actual === 'number') return Number.isFinite(actual) ? actual : null;
-  if (typeof actual === 'string' && actual.trim() !== '') {
-    const n = Number(actual);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-export function evaluatePredicate(
-  pred: FieldPredicate,
-  values: Record<string, unknown>,
-): boolean {
-  const actual = values[pred.field];
-
-  switch (pred.operator) {
-    case 'eq':
-      return typeof pred.value === 'boolean'
-        ? coerceForBooleanPredicate(actual) === pred.value
-        : actual === pred.value;
-    case 'neq':
-      return typeof pred.value === 'boolean'
-        ? coerceForBooleanPredicate(actual) !== pred.value
-        : actual !== pred.value;
-    case 'in':
-      return Array.isArray(pred.value) && pred.value.includes(String(actual));
-    case 'not_in':
-      return Array.isArray(pred.value) && !pred.value.includes(String(actual));
-    case 'gt': {
-      const a = toFiniteNumber(actual);
-      return a !== null && typeof pred.value === 'number' && a > pred.value;
-    }
-    case 'lt': {
-      const a = toFiniteNumber(actual);
-      return a !== null && typeof pred.value === 'number' && a < pred.value;
-    }
-    case 'contains':
-      return typeof actual === 'string' && typeof pred.value === 'string' &&
-        actual.toLowerCase().includes(pred.value.toLowerCase());
-    case 'exists':
-      return actual != null && actual !== '' && !(Array.isArray(actual) && actual.length === 0);
-    default:
-      return false;
-  }
-}
-
 function isTerminalNode(node: QuestionNode, definition: FlowDefinition): boolean {
   if (node.defaultNext === null) return true;
   if (!node.branches && node.defaultNext === undefined) {
@@ -417,6 +420,7 @@ function buildQuestionEvent(
   definition: FlowDefinition,
   state: FlowState,
   node: QuestionNode,
+  ctx: FlowEngineContext,
   newIssues?: DetectedIssue[],
   expertFeedback?: string,
   isFirst = false,
@@ -426,18 +430,34 @@ function buildQuestionEvent(
 
   // Apply field-level visibility predicates using accumulated answers
   const allAnswerValues = flattenAnswers(state.answers);
+  /* A field gated on an answer in its OWN question cannot be decided here: the
+     person has not given it yet. Dropping it was an unanswerable question —
+     hidden when drawn, demanded when submitted (validators.ts evaluates over
+     the submitted answers too) — and it is why `additional_agencies`, gated on
+     a yes/no in its own node, was never drawn at all. Such a field is SENT,
+     with its predicate, and the card decides it as the person answers
+     (shared/ana/question-predicate.ts, the same evaluator this uses).
+     A field gated on an earlier question is decided here, as before. */
+  const ownFieldIds = new Set(node.fields.map(f => f.id));
   const visibleFields = node.fields.filter(f => {
     if (!f.visibleWhen) return true;
+    /* ANY field of a composite gate in this node is enough: the draw cannot
+       settle it either way, so the field is sent with its predicate. */
+    if (predicateFieldIds(f.visibleWhen).some(id => ownFieldIds.has(id))) return true;
     return evaluatePredicate(f.visibleWhen, allAnswerValues);
   });
 
-  /* The positions the answers so far speak against are marked here, where the
-     question is drawn, and nothing is removed: an absent option is a question
-     lying by omission (shared/types PositionAvailability). */
-  const nodeWithVisibleFields = {
-    ...node,
-    fields: withCautions(visibleFields, programmeFactsFrom(allAnswerValues)),
-  };
+  /* The catalogues these fields declare are resolved for this programme, and
+     the positions the answers so far speak against are marked. Nothing is
+     removed: an absent option is a question lying by omission (shared/types
+     PositionAvailability). */
+  const nodeWithVisibleFields = resolveNode(
+    node,
+    visibleFields,
+    programmeFactsFrom(allAnswerValues),
+    allAnswerValues,
+    ctx,
+  );
 
   return {
     flowId: definition.id,

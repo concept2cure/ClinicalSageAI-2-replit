@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx (13 tests) 591ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx (9 tests) 1143ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  19:54:19
+   Duration  3.51s (transform 493ms, setup 158ms, import 660ms, tests 1.73s, environment 756ms)
+

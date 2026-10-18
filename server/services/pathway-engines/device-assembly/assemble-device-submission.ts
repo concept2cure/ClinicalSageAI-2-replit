@@ -170,7 +170,7 @@ export function assembleDeviceSubmission(
   // of that documentation — and no deviceFlags supplied, which no route caller
   // does — was reported canProduceOfficialEstar with an empty error list. A
   // submission FDA would not accept reported as a submittable eSTAR.
-  const undetermined = 'undetermined' in estar.summary ? estar.summary.undetermined : [];
+  const undetermined = ('undetermined' in estar.summary ? estar.summary.undetermined : undefined) ?? [];
   if (undetermined.length > 0) {
     blockers.push(
       `${undetermined.length} eSTAR section(s) whose applicability is not established: ` +

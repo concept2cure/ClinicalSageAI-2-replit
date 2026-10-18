@@ -1,0 +1,72 @@
+{
+  "ownedSources": [
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "bytes": 5862,
+      "sha256": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "bytes": 11884,
+      "sha256": "dbcb51705815c791b26fb48c61dd599c130fb8eab3a496514b4836a20e0b3947"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+      "bytes": 16693,
+      "sha256": "a9d0c4ace71d1d45c04d2f71243f4f536561c0e94439b062099ae11c78eb26b5"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-governance-integrity.test.ts",
+      "bytes": 13483,
+      "sha256": "bbe49b2d3097690c06fb19596f548212671f0792d7dd259882ae96f41da06f41"
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "bytes": 11765,
+      "sha256": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8596,
+      "sha256": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "bytes": 15201,
+      "sha256": "9c0428730f9a57c05d6c2e2511e9fbb4b85a4893a081befebd6b09ca99e6680f"
+    },
+    {
+      "path": "server/services/ana/source-read-scope.ts",
+      "bytes": 10512,
+      "sha256": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "bytes": 14339,
+      "sha256": "9b0f0a1bae6a9ef0255a6c429378161932a4b352f8d91e9001780aa01d82c131"
+    }
+  ],
+  "focusedProof": {
+    "testFiles": 4,
+    "tests": 69,
+    "passed": 69,
+    "genuinePGliteCases": 10,
+    "log": "catalog-parent-reconciliation-final.txt",
+    "config": "vitest.config.js"
+  },
+  "counterfactual": {
+    "tests": 10,
+    "failed": 7,
+    "passed": 3,
+    "log": "catalog-captures-counterfactual-red-final.txt",
+    "config": "catalog-captures-counterfactual.config.mts",
+    "productionSourceUnchangedDuringReplay": true
+  },
+  "limitations": [
+    "PGlite executes actual policy/source SQL but does not prove two-connection locks or runtime-role RLS.",
+    "Existing canonical upload access is spied for call-count verification and delegates to its real implementation in all ten PGlite cases.",
+    "Lead owns full fresh integrated suite, independent checks, real PostgreSQL cases, source hashes and push gates."
+  ]
+}

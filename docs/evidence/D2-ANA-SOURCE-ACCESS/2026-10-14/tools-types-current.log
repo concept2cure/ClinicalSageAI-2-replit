@@ -1,0 +1,32 @@
+{
+  "sourceUnchangedDuringCheck": true,
+  "check": "target-file diagnostics, imports inspected but excluded from pass count",
+  "targets": [
+    "server/services/ana/document-catalog-tool-defs.ts",
+    "server/services/ana/step-presentation.ts",
+    "server/services/ana/__tests__/document-source-facade-integration.test.ts",
+    "server/services/ana/__tests__/step-document-titles.pglite.test.ts",
+    "server/services/ana/__tests__/document-placement-tools.test.ts",
+    "server/services/ana/catalog-scope.ts",
+    "server/services/ana/document-tools-shared.ts",
+    "server/services/ana/document-catalog-tools.ts",
+    "server/services/ana/document-catalog-input.ts",
+    "server/services/ana/document-passage-tools.ts",
+    "server/services/ana/draft-project-sources.ts",
+    "server/services/ana/__tests__/document-source-access-tools.test.ts",
+    "server/services/ana/__tests__/document-catalog-preview-tools.test.ts",
+    "server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts",
+    "server/services/ana/__tests__/document-catalog-tools-id-space.test.ts",
+    "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+    "server/services/ana/__tests__/document-passage-tools.test.ts",
+    "server/services/ana/__tests__/draft-project-sources.test.ts",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts",
+    "server/services/ana/__tests__/vault-access-without-key.test.ts",
+    "server/services/ana/__tests__/read-delivery-executor.test.ts",
+    "server/services/ana/__tests__/support/read-delivery-vault.ts",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts"
+  ],
+  "targetDiagnostics": 0,
+  "importedDiagnostics": 57
+}
+

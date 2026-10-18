@@ -130,11 +130,12 @@ $ sha256sum db/migrations/migrations_manifest.json
 
 ## 7. Seed verification
 
-Run `npm run db:seed:mdx-beta` once after migrations. Expected:
+Nothing is seeded at installation (2026-10-15: `npm run db:seed:mdx-beta`,
+which wrote invented programs, Q-Submissions and FDA feedback, was removed).
+Expected:
 
-- 5 programs in `regulatory_programs` for the customer organization (or, if the customer skipped the demo seed, this row count may be zero).
-- 7 Q-Submissions with the documented Q-numbers.
-- Verify-stage SQL block at the end of the seed script printed correct counts.
+- No rows in `regulatory_programs` or `q_submissions` for the customer organization until its users create them.
+- If a labelled demonstration was requested, every record created by `npm run demo:seed -- --pack mdx` is titled `[Demo · MDX]` and listed in `docs/evidence/DEMO/mdx/manifest.json`.
 
 | Check                              | Expected | Captured | Pass / Fail |
 |------------------------------------|----------|----------|-------------|

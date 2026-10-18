@@ -1,0 +1,31 @@
+# P-35 server suites against HEAD + the migration and schema only (no module, no act, no route) — 2026-10-15
+# npx vitest run server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts server/routes/__tests__/submissions-shadow-finding-disposition.test.ts server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > refuses a malformed body or finding id, and dispositions nothing
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > hands the sequence, the finding, the disposition and the signature to the service, with the session context
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a missing, wrong-intent or wrong-finding signature is 403 GOVERNED_REQUIRED
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a finding that is not disposable is 409 SHADOW_FINDING_NOT_DISPOSABLE, with the reason
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > accepts the 'shadow-finding-disposition' step with the finding and the disposition, and answers 200 either way
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > a disposition precheck that names no finding or no disposition is 400
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the findings read carries each disposition > returns the findings with who closed each, how, when, why and under which signature
+ ✓ server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts > no AnA tool can disposition a Shadow Review finding > no tool is declared to accept, fix, dismiss or close a Shadow Review finding
+ ✓ server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts > no AnA tool can disposition a Shadow Review finding > no AnA or MCP source reaches the disposition act
+ FAIL  server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts [ server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts ]
+Error: Cannot find module '/server/services/ectd/shadow-finding-disposition' imported from /home/user/ClinicalSageAI-2-replit/server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > refuses a malformed body or finding id, and dispositions nothing
+AssertionError: expected 404 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > hands the sequence, the finding, the disposition and the signature to the service, with the session context
+AssertionError: expected 404 to be 200 // Object.is equality
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a missing, wrong-intent or wrong-finding signature is 403 GOVERNED_REQUIRED
+AssertionError: expected 404 to be 403 // Object.is equality
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a finding that is not disposable is 409 SHADOW_FINDING_NOT_DISPOSABLE, with the reason
+AssertionError: expected 404 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > accepts the 'shadow-finding-disposition' step with the finding and the disposition, and answers 200 either way
+AssertionError: expected 400 to be 200 // Object.is equality
+ FAIL  server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the findings read carries each disposition > returns the findings with who closed each, how, when, why and under which signature
+AssertionError: expected [ { id: 41, runId: 12, …(2) } ] to deeply equal [ { id: 41, runId: 12, …(5) } ]
+ Test Files  2 failed | 1 passed (3)
+      Tests  6 failed | 3 passed (9)
+
+# The AnA guard passes in red because no door exists yet; mutation M6 (green/03-mutations.txt) shows it failing.

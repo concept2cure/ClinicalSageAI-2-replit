@@ -13,6 +13,29 @@ import { DeviceProfilePanel } from '../DeviceProfilePanel';
 import { EstarFilingPanel } from '../EstarFilingPanel';
 import type { Program } from '../../data/programs';
 
+describe('PreSTAR administrative preparation uses the native governed field flow', () => {
+  it.each(['q_sub', 'ide', '513g'] as const)('labels %s preparation and applicant completion before and after export', async type => {
+    const fields = {
+      descriptorId: `${type}-prestar`, type, variant: 'device', mappedCount: 4, sourcedCount: 4,
+      fields: ['applicantCompanyName','applicantContactEmail','correspondentCompanyName','correspondentContactEmail'].map((key,index) => ({ key, caption: ['Applicant company','Applicant email','Correspondent company','Correspondent email'][index], xfaSomPath: `root.${key}`, value: 'Offline value', source: 'organizations.name', declaredSource: 'organizations.name' })),
+    };
+    let posted: any;
+    mockFetch(readsThen({ ...READY, descriptorId: `${type}-prestar`, applicantCompletionRequired: true }, fields, (_url, init) => {
+      posted = JSON.parse(String(init?.body));
+      return okJson({ governed: true, officialEstarPdf: true, applicantCompletionRequired: true, erasedFields: [], downloadable_output_ref: { encoding: 'base64', mime_type: 'application/pdf', filename: 'PreSTAR.pdf', data: 'AA==' } });
+    }));
+    render(<OfficialEstarPanel program={PROGRAM} variant="device" type={type} />);
+    const button = screen.getByRole('button', { name: /Prepare PreSTAR fields/ });
+    await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+    expect(screen.getByTestId('prestar-completion-required').textContent).toContain('does not establish filing readiness or agency acceptance');
+    expect(screen.queryByRole('button', { name: /Generate official eSTAR/ })).toBeNull();
+    fireEvent.click(button);
+    await waitFor(() => expect(posted?.type).toBe(type));
+    expect(posted).toMatchObject({ useProgramData: true, meta: { ident: PROGRAM.id } });
+    await waitFor(() => expect(screen.getByText(/PreSTAR administrative prefill; applicant completion and review required before filing/)).toBeTruthy());
+  });
+});
+
 /**
  * Mount tests for the official eSTAR panel — the ONE place the official FDA
  * eSTAR PDF is produced from.
@@ -797,7 +820,7 @@ describe('OfficialEstarPanel — which template family', () => {
       urls.push(url);
       return readsThen(READY, { ...FIELDS, variant: 'ivd' }, () => okJson({}))(url, init);
     });
-    render(<OfficialEstarPanel program={{ ...PROGRAM, productType: 'ivd' }} variant="ivd" />);
+    render(<OfficialEstarPanel program={PROGRAM} variant="ivd" />);
     expect(screen.getByText(/Official eSTAR · 510\(k\) · IVD eSTAR/)).toBeTruthy();
     await waitFor(() => expect(urls.some(u => u.includes('/estar/official-fields'))).toBe(true));
     expect(

@@ -1,0 +1,86 @@
+{
+  "findingsIndependentlyReviewed": 41,
+  "qualification": "Lossless publication transport only; ten raw JSON source-pin maps are reconstructed at their original virtual paths. Original child manifests/sealed bytes are unchanged. No scanner rules, path suppressions or source code changed. Decoded values are verified source file digests.",
+  "records": [
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/final-production-source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/final-production-source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 8310,
+      "decodedHexDigest": "e12498e7c77ec529c8fa31d322104b27c475c724c5ca009d42c6afa28eae9ad7",
+      "archivedHexDigest": "9e0255acdad8da06958f080d5363a7d176d17c471fff109639241d35fa58f0f3"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/final/summary.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/final/summary.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 1211564,
+      "decodedHexDigest": "59c735a37de04246798c179822f9b58d2350888b126662ca3d53a97405f79d3b",
+      "archivedHexDigest": "409f45858e862ffbc816b284aec9d5357dafe8ce30ac35a6bbecd4f8da5a723a"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/mobile-pan/summary.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/mobile-pan/summary.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 70860,
+      "decodedHexDigest": "cc118c90ea1b6046c65e4b9fb7e9bbdbbb65ed2b6a1cf8c6a07f7d069894f38d",
+      "archivedHexDigest": "1eb59b1e2ef315a593d08cc8eeb0e33e1fd4bd99529101ef73817816c2b5d89a"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-corrected-premerge/sha256-manifest.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-corrected-premerge/sha256-manifest.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 6920,
+      "decodedHexDigest": "46bc17fac0e9fb29f406078096b5f213272c6e39787da4187482ebf9bb2eb766",
+      "archivedHexDigest": "7eb42672b7d8d3ced42aa8dbbd498ce4b16718ed645ebab019c39534d29a6f82"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-corrected-premerge/source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-corrected-premerge/source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5807,
+      "decodedHexDigest": "a6394a4bede458b98c6c8cb10757cba13a784825121077b9b2363dc2ce64c991",
+      "archivedHexDigest": "7ee3cefcc76918231e9ef2df429fe9078d172b50814c7ccecffdabdb8b69c90e"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-current-9ba/source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-current-9ba/source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5434,
+      "decodedHexDigest": "b1aee1beab2a3cce93d7389ae3246f45ef7c6a8099ca808ffffb391321ad9070",
+      "archivedHexDigest": "d19f8b2c5eef6e13daa92eb82123786f30a9d5c244071eead8c17d62404bcd38"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-final-boundary38/after-source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-final-boundary38/after-source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5184,
+      "decodedHexDigest": "f0adf647b95a61fb19a11db11e27afac5828f83264e298e82cda457ed59dc81b",
+      "archivedHexDigest": "40e4ea8b4b7521a3cb2ca235272e6a0db282da0a250361fa9f5d89a2e2c3b1cf"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-final-boundary38/source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native-final-boundary38/source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5403,
+      "decodedHexDigest": "e3d659a8e619c6047a98ff1eea4d6b2c2f9a3759e4b0b049b24b14579801aaef",
+      "archivedHexDigest": "2a59ca2b2a3707840fd71286fd9832b0ea372aa669e3fe96b695d14be6f7b065"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native/sha256-manifest.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native/sha256-manifest.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 8409,
+      "decodedHexDigest": "36880db13803dac9e0a1c68479f4ab92ca23d963616b81e40226b00487bb62d4",
+      "archivedHexDigest": "a31a2669996cec9ca8cdd15f21693ab022a58c581b9c768deacf343e76bd5322"
+    },
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native/source-pins.json",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-native/source-pins.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5279,
+      "decodedHexDigest": "2afde06c220ccc227de248b9a6a6f95e4e1315d8619a96545a00d11ee2011fff",
+      "archivedHexDigest": "ecf85d212f6604fce60cb41818870af110aba011d2c6c59734397228575698f9"
+    }
+  ]
+}

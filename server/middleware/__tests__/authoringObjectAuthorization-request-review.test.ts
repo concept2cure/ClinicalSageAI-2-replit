@@ -8,8 +8,8 @@
  * document's audit trail in their name. It is now the sender's act on the
  * document: an OWNER or AUTHOR grant (the 'edit' action), or a global admin.
  *
- * The verdict route beside it, POST /documents/:id/review, stays unclassified:
- * reviewers are named by the request, which grants them no doc_permissions row.
+ * Native verdicts now require review access; the request's governed grant
+ * writer supplies whole-document Reviewer access when the sender may grant it.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express, { type Request, type Response } from 'express';
@@ -148,13 +148,18 @@ describe('POST /documents/:id/request-review — only the document’s owner or 
     expect((res.body as any).error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
   });
 
-  it('leaves the verdict route alone: a reviewer has no grant, and still reaches POST /documents/:id/review', async () => {
+  it('refuses an ungranted verdict and admits only current review authority', async () => {
+    const req = request(member('user-reviewer'), `/authoring/documents/${DOC_ID}/review`);
     installQueryBehavior({ roles: [] });
-    const { res, next } = await run(request(member('user-reviewer'), `/authoring/documents/${DOC_ID}/review`));
-
-    expect(next).toHaveBeenCalledOnce();
-    expect(res.status).not.toHaveBeenCalled();
-    expect(h.query).not.toHaveBeenCalled();
+    const denied = await run(req);
+    expect(denied.next).not.toHaveBeenCalled();
+    expect(denied.res.status).toHaveBeenCalledWith(403);
+    expect((denied.res.body as { error: { code: string } }).error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+    installQueryBehavior({ roles: ['REVIEWER'] });
+    const allowed = await run(req);
+    expect(allowed.next).toHaveBeenCalledOnce();
+    expect(allowed.res.status).not.toHaveBeenCalled();
+    expect(allowed.res.locals.authoringAuthorization.action).toBe('review');
   });
 
   it('matches the request path exactly, not a longer path that only begins with it', async () => {

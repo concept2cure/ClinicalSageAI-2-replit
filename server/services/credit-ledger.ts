@@ -1,43 +1,48 @@
 /**
- * @fileoverview Credit balance ledger + auto-reload (Anthropic-style).
+ * @fileoverview Administrative allocation ledger and payment capability boundaries.
  * @module server/services/credit-ledger
  *
- * A rechargeable usage-credit balance modeled on Anthropic's billing page:
- * a current balance, purchasable top-ups, and an auto-reload rule ("top off
- * to $X when your balance is $Y"). Distinct from the per-tier monthly credit
- * grid in usage-metering.ts (fixed allowances that reset each period): this
- * ledger is a durable, signed, append-only account balance.
+ * This ledger records administrative allocations in integer cents. It does
+ * not fund feature usage, sell prepaid credits or charge a payment method.
+ * Subscription prices, provider costs and feature-quota units are separate
+ * contracts; no approved conversion binds them to this ledger.
  *
- * Ledger invariants:
- *   - amount_cents is SIGNED: credits (grant/purchase/auto_reload) >= 0,
- *     debits <= 0 (also CHECK-constrained in the migration).
- *   - balance = SUM(amount_cents); each row also stores balance_after_cents
- *     for cheap history reads. Writes serialize on a per-org advisory lock
- *     so concurrent entries cannot interleave balance computation.
- *   - debits that would take the balance below zero are rejected with an
- *     INSUFFICIENT_CREDITS error unless allowNegative is passed (for
- *     platform-admin adjustments).
- *
- * Money handling per the Business Center convention: integer cents only.
- * Governed mutations (auto-reload settings, admin grants/adjustments) carry
- * who/why and write a 21 CFR Part 11 audit event, mirroring
- * weekly-usage-limits.setWeeklyLimit.
- *
- * NOTE: purchase/auto_reload entries record the ledger movement only —
- * charging the payment method (Stripe) is deliberately out of scope here
- * and can be wired to the existing billing.ts checkout flow later. Until
- * then these entry types are restricted to platform-admin surfaces.
+ * Administrative grants/adjustments carry an identified actor and reason.
+ * The entry and its chained audit row commit together under a per-org lock.
+ * Historical purchase/reload/debit rows stay readable, but these entry types
+ * cannot be created until their payment and usage contracts are implemented.
+ * Legacy reload requests are reported separately from effective availability.
  */
 
 import { pool } from '../db.js';
 import { logAuditEvent } from './audit/auditLogger.js';
 import { auditRowOutcomeFrom, type AuditRowOutcome } from './audit/audit-write-outcome.js';
-import { createScopedLogger } from '../utils/logger.js';
-
-const logger = createScopedLogger('credit-ledger');
+import { writeChainedAuditRow } from './auditService';
+import { setTenantContextTx } from './tenant/governed-tenant-context';
 
 export const CREDIT_ENTRY_TYPES = ['grant', 'purchase', 'auto_reload', 'debit', 'adjustment'] as const;
 export type CreditEntryType = (typeof CREDIT_ENTRY_TYPES)[number];
+
+export type CreditCapability = 'purchase' | 'autoReload' | 'usageDebit';
+
+/** No environment switch enables a financial workflow that does not exist. */
+export function getCreditCapabilities() {
+  return {
+    balanceMode: 'administrative_allocation' as const,
+    unit: 'ledger_cent' as const,
+    purchase: { available: false as const, reason: 'Credit purchases are unavailable. Contact your administrator about allocations.' },
+    autoReload: { available: false as const, reason: 'Automatic credit reload is unavailable.' },
+    usageDebit: { available: false as const, reason: 'Allocations are not debited for usage and do not increase plan limits.' },
+  };
+}
+
+export class CreditCapabilityUnavailableError extends Error {
+  readonly code = 'CREDIT_CAPABILITY_UNAVAILABLE';
+  constructor(readonly capability: CreditCapability) {
+    super(getCreditCapabilities()[capability].reason);
+    this.name = 'CreditCapabilityUnavailableError';
+  }
+}
 
 export interface CreditEntry {
   id: number;
@@ -53,7 +58,10 @@ export interface CreditEntry {
 
 export interface AutoReloadSettings {
   organizationId: number;
+  /** Effective state; false while the charging workflow is unavailable. */
   enabled: boolean;
+  requestedEnabled: boolean;
+  available: false;
   /** Reload triggers when balance <= threshold. */
   thresholdCents: number;
   /** Amount credited by each reload. */
@@ -63,7 +71,7 @@ export interface AutoReloadSettings {
   updatedAt: Date | null;
 }
 
-/** Platform defaults mirror Anthropic's "top off to $25 when balance is $10". */
+/** Legacy preference defaults, retained for read compatibility; no charge is enabled. */
 export const DEFAULT_AUTORELOAD: Pick<AutoReloadSettings, 'enabled' | 'thresholdCents' | 'topupCents'> = {
   enabled: false,
   thresholdCents: 1_000,
@@ -107,8 +115,8 @@ export function validateAutoReload(input: {
 
 /** PURE: the signed amount an entry type requires (throws on sign mismatch). */
 export function normalizeEntryAmount(entryType: CreditEntryType, amountCents: number): number {
-  if (!Number.isInteger(amountCents) || amountCents === 0) {
-    throw validationError(['amountCents must be a non-zero integer']);
+  if (!Number.isSafeInteger(amountCents) || amountCents === 0 || Math.abs(amountCents) > 2_147_483_647) {
+    throw validationError(['amountCents must be a non-zero integer within the ledger range']);
   }
   if (entryType === 'debit' && amountCents > 0) return -amountCents;
   if ((entryType === 'grant' || entryType === 'purchase' || entryType === 'auto_reload') && amountCents < 0) {
@@ -173,24 +181,39 @@ export interface AddEntryInput {
   allowNegative?: boolean;
 }
 
+/** Validate the administrative mutation before opening a database connection. */
+function allocationInput(organizationId: number, input: AddEntryInput, actor?: { userId: number | null }) {
+  if (!CREDIT_ENTRY_TYPES.includes(input.entryType)) {
+    throw validationError([`entryType must be one of: ${CREDIT_ENTRY_TYPES.join(', ')}`]);
+  }
+  const unsupported = { purchase: 'purchase', auto_reload: 'autoReload', debit: 'usageDebit' } as const;
+  if (input.entryType in unsupported) {
+    throw new CreditCapabilityUnavailableError(unsupported[input.entryType as keyof typeof unsupported]);
+  }
+  const actorId = Number(actor?.userId);
+  const reason = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) throw validationError(['organizationId must be a positive integer']);
+  if (!Number.isSafeInteger(actorId) || actorId <= 0) throw validationError(['An identified actor is required for an administrative allocation']);
+  if (!reason) throw validationError(['A reason is required for an administrative allocation']);
+  return { actorId, reason, amount: normalizeEntryAmount(input.entryType, input.amountCents) };
+}
+
 /**
  * Append a ledger entry. Serializes per-org on a transaction-scoped advisory
  * lock so the balance-after computation cannot race a concurrent write.
- * Rejects debits that would overdraw unless allowNegative.
+ * Rejects a negative resulting allocation unless a platform adjustment permits it.
  */
 export async function addCreditEntry(
   organizationId: number,
   input: AddEntryInput,
   actor?: { userId: number | null },
 ): Promise<CreditEntry> {
-  if (!CREDIT_ENTRY_TYPES.includes(input.entryType)) {
-    throw validationError([`entryType must be one of: ${CREDIT_ENTRY_TYPES.join(', ')}`]);
-  }
-  const amount = normalizeEntryAmount(input.entryType, input.amountCents);
+  const { actorId, reason, amount } = allocationInput(organizationId, input, actor);
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await setTenantContextTx(client, organizationId);
     // Per-org serialization: same lock key for every ledger write of this org.
     await client.query(`SELECT pg_advisory_xact_lock(hashtext('credit_ledger:' || $1::text))`, [organizationId]);
     const balRes = await client.query<{ balance: string }>(
@@ -217,13 +240,28 @@ export async function addCreditEntry(
         input.entryType,
         amount,
         after,
-        input.description?.trim() || null,
+        reason,
         input.reference?.trim() || null,
-        actor?.userId ?? null,
+        actorId,
       ],
     );
+    const entry = rowToEntry(res.rows[0]);
+    await writeChainedAuditRow(client, {
+      tenantId: organizationId,
+      userId: actorId,
+      action: `billing.credit_allocation.${input.entryType}`,
+      resourceType: 'credit_ledger',
+      resourceId: entry.id,
+      reason,
+      details: {
+        reason, entryType: input.entryType,
+        amountCents: amount, balanceBeforeCents: balance, balanceAfterCents: after,
+        reference: input.reference?.trim() || null,
+        balanceMode: 'administrative_allocation',
+      },
+    });
     await client.query('COMMIT');
-    return rowToEntry(res.rows[0]);
+    return entry;
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;
@@ -233,22 +271,15 @@ export async function addCreditEntry(
 }
 
 /**
- * Debit the balance for a metered feature run, then apply auto-reload when
- * the post-debit balance qualifies. Returns the debit entry plus the reload
- * entry when one fired.
+ * Reserved usage boundary. An explicit refusal prevents a new caller from
+ * mistaking feature-quota units or provider costs for an approved customer tariff.
  */
 export async function debitCredits(
-  organizationId: number,
-  amountCents: number,
-  opts: { description?: string; reference?: string; actor?: { userId: number | null } } = {},
+  _organizationId: number,
+  _amountCents: number,
+  _opts: { description?: string; reference?: string; actor?: { userId: number | null } } = {},
 ): Promise<{ debit: CreditEntry; reload: CreditEntry | null }> {
-  const debit = await addCreditEntry(
-    organizationId,
-    { entryType: 'debit', amountCents, description: opts.description, reference: opts.reference },
-    opts.actor,
-  );
-  const reload = await maybeAutoReload(organizationId);
-  return { debit, reload };
+  throw new CreditCapabilityUnavailableError('usageDebit');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -265,6 +296,7 @@ export async function getAutoReload(organizationId: number): Promise<AutoReloadS
     return {
       organizationId,
       ...DEFAULT_AUTORELOAD,
+      requestedEnabled: false, available: false,
       updatedBy: null,
       reason: null,
       updatedAt: null,
@@ -273,7 +305,8 @@ export async function getAutoReload(organizationId: number): Promise<AutoReloadS
   const r = res.rows[0];
   return {
     organizationId,
-    enabled: r.enabled === true,
+    enabled: false,
+    requestedEnabled: r.enabled === true, available: false,
     thresholdCents: Number(r.threshold_cents),
     topupCents: Number(r.topup_cents),
     updatedBy: r.updated_by == null ? null : Number(r.updated_by),
@@ -298,6 +331,7 @@ export async function setAutoReload(
 ): Promise<{ settings: AutoReloadSettings; auditTrail: AuditRowOutcome }> {
   const errors = validateAutoReload(settings);
   if (errors.length) throw validationError(errors);
+  if (settings.enabled) throw new CreditCapabilityUnavailableError('autoReload');
   if (!reason || !reason.trim()) {
     throw validationError(['A reason-for-change is required to change auto-reload settings']);
   }
@@ -357,71 +391,9 @@ export async function setAutoReload(
 }
 
 /**
- * Apply an auto-reload when the current balance qualifies. The qualify
- * check and the insert run in ONE transaction holding the same per-org
- * advisory lock as every other ledger write, so two concurrent debits
- * that both dip below the threshold produce exactly one reload: the
- * second caller re-reads the post-reload balance under the lock and no
- * longer qualifies. Best-effort — returns null (never throws) when
- * reload is off, unqualified, or errored.
+ * No reload can be fulfilled without a verified successful payment. Retained
+ * as a safe compatibility boundary; a saved legacy request never mints credits.
  */
-export async function maybeAutoReload(organizationId: number): Promise<CreditEntry | null> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext('credit_ledger:' || $1::text))`, [organizationId]);
-
-    const settingsRes = await client.query(
-      `SELECT enabled, threshold_cents, topup_cents FROM credit_autoreload_settings WHERE organization_id = $1`,
-      [organizationId],
-    );
-    const settings = settingsRes.rows.length
-      ? {
-          enabled: settingsRes.rows[0].enabled === true,
-          thresholdCents: Number(settingsRes.rows[0].threshold_cents),
-          topupCents: Number(settingsRes.rows[0].topup_cents),
-        }
-      : DEFAULT_AUTORELOAD;
-
-    const balRes = await client.query<{ balance: string }>(
-      `SELECT COALESCE(SUM(amount_cents), 0) AS balance FROM credit_ledger WHERE organization_id = $1`,
-      [organizationId],
-    );
-    const balance = Number(balRes.rows[0]?.balance ?? 0);
-
-    if (!shouldAutoReload(balance, settings)) {
-      await client.query('ROLLBACK');
-      return null;
-    }
-
-    const res = await client.query(
-      `INSERT INTO credit_ledger
-         (organization_id, entry_type, amount_cents, balance_after_cents, description, created_at)
-       VALUES ($1, 'auto_reload', $2, $3, $4, NOW())
-       RETURNING *`,
-      [
-        organizationId,
-        settings.topupCents,
-        balance + settings.topupCents,
-        `Auto-reload: balance ${balance}¢ <= threshold ${settings.thresholdCents}¢`,
-      ],
-    );
-    await client.query('COMMIT');
-    const entry = rowToEntry(res.rows[0]);
-    logger.info('auto-reload applied', {
-      organizationId,
-      topupCents: settings.topupCents,
-      balanceAfter: entry.balanceAfterCents,
-    });
-    return entry;
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    logger.error('maybeAutoReload failed', {
-      organizationId,
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  } finally {
-    client.release();
-  }
+export async function maybeAutoReload(_organizationId: number): Promise<CreditEntry | null> {
+  return null;
 }

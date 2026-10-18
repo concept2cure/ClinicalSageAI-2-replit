@@ -23,6 +23,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
     fields: [
       {
         id: 'clinical_investigation_type',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Clinical Investigation Type',
         type: 'select',
         required: true,
@@ -36,6 +41,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_study_design',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Study Design',
         type: 'select',
         required: true,
@@ -51,6 +61,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_iso_14155_compliant',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Investigation Conducted per ISO 14155:2020',
         type: 'yes_no',
         required: true,
@@ -58,6 +73,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_primary_endpoint',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Primary Endpoint(s)',
         type: 'textarea',
         required: true,
@@ -65,12 +85,22 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_secondary_endpoints',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Secondary Endpoint(s)',
         type: 'textarea',
         helpText: 'List all secondary endpoints and their definitions',
       },
       {
         id: 'investigation_number_subjects',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Number of Subjects Enrolled',
         type: 'number',
         required: true,
@@ -78,6 +108,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_sample_size_justification',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Sample Size Justification',
         type: 'textarea',
         required: true,
@@ -85,12 +120,22 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_number_sites',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Number of Investigational Sites',
         type: 'number',
         validation: { min: 1 },
       },
       {
         id: 'investigation_follow_up_duration',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Follow-up Duration (months)',
         type: 'number',
         required: true,
@@ -99,6 +144,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_statistical_analysis',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Statistical Analysis Plan Summary',
         type: 'textarea',
         required: true,
@@ -106,6 +156,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_results_summary',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Results Summary',
         type: 'textarea',
         required: true,
@@ -114,6 +169,11 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_adverse_events',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Adverse Events Summary',
         type: 'textarea',
         required: true,
@@ -121,18 +181,33 @@ export const clinicalInvestigationNodes: QuestionNode[] = [
       },
       {
         id: 'investigation_ethics_approval',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Ethics Committee/IRB Approval Obtained',
         type: 'yes_no',
         required: true,
       },
       {
         id: 'investigation_competent_authority',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Competent Authority Notification/Approval',
         type: 'yes_no',
         helpText: 'Per EU MDR Article 70, clinical investigations in the EU must be notified to the Member State competent authority',
       },
       {
         id: 'investigation_registration',
+        /* Not asked of a programme that has said it has no clinical
+           investigation: ten required questions about an investigation that does
+           not exist is a demand to invent one. The critical Article 61(4)
+           finding still fires from this node (2026-10-12 review). */
+        visibleWhen: { field: 'clinical_investigation_available', operator: 'neq', value: false },
         label: 'Clinical Investigation Registered',
         type: 'text',
         helpText: 'Registry identifier (e.g. ClinicalTrials.gov NCT number, EUDAMED CIV-ID)',

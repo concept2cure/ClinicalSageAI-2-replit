@@ -16,23 +16,34 @@ export const EXPORT_CONTROL_BASIS = 'EAR 15 CFR 734.8 (FRE / NSDD-189); ITAR 22 
 export type ExportJurisdiction = 'itar' | 'ear' | 'ofac' | 'not_subject' | 'pending';
 export type ExportLicenseRequired = 'yes' | 'no' | 'unknown';
 
+/** The four screening questions. true / false are answers; null or absent is unanswered — never "no". */
+export const SCREENING_QUESTIONS = {
+  hasPublicationRestrictions: 'publication restrictions',
+  hasProprietaryRestrictions: 'proprietary/access restrictions',
+  involvesPhysicalExport: 'physical export',
+  involvesForeignNationals: 'foreign-national involvement',
+} as const;
+export type ScreeningQuestion = keyof typeof SCREENING_QUESTIONS;
+
 export interface ExportControlInput {
   jurisdiction: ExportJurisdiction | string;
   /** USML category (ITAR) or ECCN / 'EAR99' (EAR) — free text. */
   classification?: string | null;
-  involvesForeignNationals?: boolean;
-  hasPublicationRestrictions?: boolean;
-  hasProprietaryRestrictions?: boolean;
+  involvesForeignNationals?: boolean | null;
+  hasPublicationRestrictions?: boolean | null;
+  hasProprietaryRestrictions?: boolean | null;
   /** True when tangible items/technology physically leave the US (not just information). */
-  involvesPhysicalExport?: boolean;
+  involvesPhysicalExport?: boolean | null;
 }
 
 export interface ExportControlFinding { severity: 'critical' | 'warning' | 'info'; message: string }
 
 export interface ExportControlAssessment {
-  /** Whether the Fundamental Research Exclusion applies to the project's information. */
-  freApplies: boolean;
+  /** Whether the Fundamental Research Exclusion applies; null while a question it depends on is unanswered. */
+  freApplies: boolean | null;
   licenseRequired: ExportLicenseRequired;
+  /** Screening questions not answered. None of them was read as "no". */
+  unanswered: ScreeningQuestion[];
   findings: ExportControlFinding[];
   citations: string[];
   basis: string;
@@ -43,6 +54,25 @@ function isEar99(classification?: string | null): boolean {
 }
 function hasText(s?: string | null): boolean { return typeof s === 'string' && s.trim().length > 0; }
 
+/** The screening questions with no true/false answer, in SCREENING_QUESTIONS order. */
+export function unansweredQuestions(input: Partial<Record<ScreeningQuestion, boolean | null>>): ScreeningQuestion[] {
+  return (Object.keys(SCREENING_QUESTIONS) as ScreeningQuestion[]).filter((q) => typeof input[q] !== 'boolean');
+}
+const describeQuestions = (qs: ScreeningQuestion[]) => qs.map((q) => SCREENING_QUESTIONS[q]).join(', ');
+
+/**
+ * A restriction or a physical export defeats the FRE on its own; the FRE applies
+ * only when all three were answered "no". 2026-10-15: an unanswered one was read
+ * as "no", so the FRE "applied" — and EAR cleared with no license — on
+ * questions nobody had answered.
+ */
+function freAppliesFor(input: ExportControlInput, restricted: boolean): boolean | null {
+  if (restricted || input.involvesPhysicalExport === true) return false;
+  const allAnsweredNo =
+    input.hasPublicationRestrictions === false && input.hasProprietaryRestrictions === false && input.involvesPhysicalExport === false;
+  return allAnsweredNo ? true : null;
+}
+
 /**
  * Deterministic export-control assessment. The Fundamental Research Exclusion
  * applies only to *information* arising from research with no publication or
@@ -52,8 +82,9 @@ function hasText(s?: string | null): boolean { return typeof s === 'string' && s
 export function evaluateExportControl(input: ExportControlInput): ExportControlAssessment {
   const findings: ExportControlFinding[] = [];
   const citations: string[] = [];
+  const unanswered = unansweredQuestions(input);
   const restricted = input.hasPublicationRestrictions === true || input.hasProprietaryRestrictions === true;
-  const freApplies = !restricted && !(input.involvesPhysicalExport === true);
+  const freApplies = freAppliesFor(input, restricted);
 
   if (restricted) {
     findings.push({ severity: 'warning', message: 'Publication or proprietary/access restrictions defeat the Fundamental Research Exclusion (15 CFR 734.8 / NSDD-189).' });
@@ -82,18 +113,24 @@ export function evaluateExportControl(input: ExportControlInput): ExportControlA
 
     case 'ear':
       citations.push('15 CFR 730–774');
-      if (freApplies && !input.involvesPhysicalExport) {
+      // Each branch needs its own questions ANSWERED (=== false), not merely not-true.
+      if (freApplies === true) {
         licenseRequired = 'no';
         findings.push({ severity: 'info', message: 'EAR information qualifies for the Fundamental Research Exclusion — no license for the resulting information (15 CFR 734.8).' });
-      } else if (isEar99(input.classification) && input.involvesForeignNationals !== true) {
+      } else if (isEar99(input.classification) && input.involvesForeignNationals === false) {
         licenseRequired = 'no';
         findings.push({ severity: 'info', message: 'EAR99 item with no listed controls and no foreign-national/embargo concern — generally no license required (screen destination/end-user).' });
-      } else if (hasText(input.classification) && !isEar99(input.classification)) {
+      } else if (hasText(input.classification) && !isEar99(input.classification) && freApplies === false) {
         licenseRequired = 'yes';
         findings.push({ severity: 'critical', message: `Listed ECCN "${(input.classification as string).trim()}" with restrictions or a foreign-national recipient — check the Commerce Country Chart; a license is likely required (deemed export, 15 CFR 734.13).` });
       } else {
         licenseRequired = 'unknown';
-        findings.push({ severity: 'warning', message: 'EAR jurisdiction but classification incomplete — assign an ECCN/EAR99 before a final determination.' });
+        findings.push({
+          severity: 'warning',
+          message: hasText(input.classification) && unanswered.length > 0
+            ? 'EAR jurisdiction, but an unanswered screening question leaves the license outcome open — answer it before a final determination.'
+            : 'EAR jurisdiction but classification incomplete — assign an ECCN/EAR99 before a final determination.',
+        });
       }
       break;
 
@@ -113,8 +150,11 @@ export function evaluateExportControl(input: ExportControlInput): ExportControlA
   if (input.involvesForeignNationals === true) {
     findings.push({ severity: 'warning', message: 'Foreign-national participation triggers deemed-export analysis even for domestic work.' });
   }
+  if (unanswered.length > 0) {
+    findings.push({ severity: 'warning', message: `Not answered: ${describeQuestions(unanswered)}. An unanswered screening question is not read as "no".` });
+  }
 
-  return { freApplies, licenseRequired, findings, citations, basis: EXPORT_CONTROL_BASIS };
+  return { freApplies, licenseRequired, unanswered, findings, citations, basis: EXPORT_CONTROL_BASIS };
 }
 
 // ─── Determination readiness ───────────────────────────────────────────────────
@@ -128,14 +168,19 @@ export interface ExportReviewReadinessResult {
 
 /**
  * Gate finalizing an export-control determination. Blockers: jurisdiction still
- * pending; a subject (ITAR/EAR) review with no classification; foreign-national
- * involvement with the license outcome still unknown. Pure.
+ * pending; a subject (ITAR/EAR) review with no classification; a screening
+ * question unanswered (any jurisdiction: the FRE outcome is persisted with the
+ * determination); foreign-national involvement with the license outcome still
+ * unknown. Pure.
  */
 export function evaluateExportReviewReadiness(input: ExportControlInput & { foreignCountries?: string | null }): ExportReviewReadinessResult {
   const assessment = evaluateExportControl(input);
   const blockers: string[] = [];
 
   if (input.jurisdiction === 'pending') blockers.push('Jurisdiction is still pending — classify under ITAR/EAR/OFAC/not-subject.');
+  if (assessment.unanswered.length > 0) {
+    blockers.push(`Answer every screening question before determining — not answered: ${describeQuestions(assessment.unanswered)}.`);
+  }
   if ((input.jurisdiction === 'itar' || input.jurisdiction === 'ear') && !hasText(input.classification)) {
     blockers.push('A USML category (ITAR) or ECCN/EAR99 (EAR) classification is required before determining.');
   }

@@ -141,6 +141,8 @@ export interface DocumentAttributionSummary {
     charStart: number;
     charEnd: number;
     provenanceKind: string;
+    /** Retained compositor identity. Older server summaries may omit it. */
+    machineAuthorId?: string | null;
     usage: string;
     sourceTitle: string | null;
     stale: boolean;

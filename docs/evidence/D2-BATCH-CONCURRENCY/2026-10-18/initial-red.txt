@@ -1,0 +1,207 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:20:24.531Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:20:24.532Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:20:24.532Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-concurrency.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative' before reading or scheduling requests 6ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative infinity' before reading or scheduling requests 1ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'infinity' before reading or scheduling requests 1ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'NaN' before reading or scheduling requests 1ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'zero' before reading or scheduling requests 1ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'fraction' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'null' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'false' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'true' before reading or scheduling requests 1ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'numeric string' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'empty string' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'array' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'object' before reading or scheduling requests 0ms
+   → expected error to be instance of RangeError
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for undefined 103ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 1 304ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 3 102ms
+ ✓ server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 5 51ms
+ × server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 99 1002ms
+   → expected "draftDocument" to be called 5 times, but got 7 times
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:20:30.662Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:20:30.663Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+{
+  "timestamp": "2026-10-18T00:20:30.663Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording
+{
+  "timestamp": "2026-10-18T00:20:30.864Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording 122ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'zero' before service or recording 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'fraction' before service or recording 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'null' before service or recording 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'false' before service or recording 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'true' before service or recording 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'numeric string' before service or recording 2ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'empty string' before service or recording 2ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'array' before service or recording 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'object' before service or recording 3ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for undefined 4ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 1 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 3 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 5 2ms
+ ✓ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > retains default and capped positive-integer behavior for 99 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'negative' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'zero' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'fraction' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'null' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'false' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'true' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'numeric string' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'empty string' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'array' before service or recording
+ FAIL  server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts > HTTP batch concurrency > refuses 'object' before service or recording
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts:45:24
+     43|   it.each(invalid)('refuses $label before service or recording', async…
+     44|     const res = await request(app()).post('/api/claude/batch').send({ …
+     45|     expect(res.status).toBe(400);
+       |                        ^
+     46|     expect(res.body.error).toBe('INVALID_BATCH_CONCURRENCY');
+     47|     expect(res.body.message).toMatch(/positive integer/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'negative infinity' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'infinity' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'NaN' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'zero' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'fraction' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'null' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'false' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'true' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'numeric string' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'empty string' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'array' before reading or scheduling requests
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > refuses 'object' before reading or scheduling requests
+AssertionError: expected error to be instance of RangeError
+
+- Expected:
+[Function RangeError]
+
++ Received:
+Error {
+  "message": "REQUESTS_ACCESSED_BEFORE_CONCURRENCY_REFUSAL",
+}
+
+ ❯ server/services/ana/__tests__/batch-draft-concurrency.test.ts:25:45
+     23|     // The getter safely catches the pre-fix negative loop without han…
+     24|     const request = { get requests() { return read(); }, concurrency: …
+     25|     await expect(service.batchDraft(request)).rejects.toThrow(RangeErr…
+       |                                             ^
+     26|     expect(read).not.toHaveBeenCalled();
+     27|     expect(draft).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  server/services/ana/__tests__/batch-draft-concurrency.test.ts > batch scheduler concurrency boundary > bounds active work and keeps order for 99
+AssertionError: expected "draftDocument" to be called 5 times, but got 7 times
+ ❯ server/services/ana/__tests__/batch-draft-concurrency.test.ts:52:44
+     50|     while (started < requests.length) {
+     51|       const wave = Math.min(expected, requests.length - started);
+     52|       await vi.waitFor(() => expect(draft).toHaveBeenCalledTimes(start…
+       |                                            ^
+     53|       const waiting = releases.splice(0);
+     54|       waiting.reverse().forEach(release => release());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  24 failed | 9 passed (33)
+   Start at  00:20:22
+   Duration  8.05s (transform 3.95s, setup 73ms, import 5.87s, tests 1.74s, environment 0ms)
+

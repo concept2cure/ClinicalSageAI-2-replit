@@ -1,0 +1,250 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes
+{
+  "timestamp": "2026-10-14T19:53:06.740Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked
+{
+  "timestamp": "2026-10-14T19:53:06.742Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change
+{
+  "timestamp": "2026-10-14T19:53:06.743Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change
+{
+  "timestamp": "2026-10-14T19:53:06.744Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change
+{
+  "timestamp": "2026-10-14T19:53:06.745Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change
+{
+  "timestamp": "2026-10-14T19:53:06.745Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice
+{
+  "timestamp": "2026-10-14T19:53:06.746Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero)
+{
+  "timestamp": "2026-10-14T19:53:06.749Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor)
+{
+  "timestamp": "2026-10-14T19:53:06.750Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error)
+{
+  "timestamp": "2026-10-14T19:53:06.752Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "internal insert failed"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT
+{
+  "timestamp": "2026-10-14T19:53:06.754Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > notifies the host when insertion observes a typed source refusal after the first handoff check
+{
+  "timestamp": "2026-10-14T19:53:06.755Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > normalizes canonical actor/source verification refusal so the host withdraws it
+{
+  "timestamp": "2026-10-14T19:53:06.756Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > retains authorized read content for an ordinary SQL42501 receipt insertion failure
+{
+  "timestamp": "2026-10-14T19:53:06.757Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT permission denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > stops a three-read round after typed source refusal and preserves the first committed count
+{
+  "timestamp": "2026-10-14T19:53:06.757Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts
+{
+  "timestamp": "2026-10-14T19:53:06.763Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "receipt INSERT denied"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > an ordinary failed conditional persistence result does not become a source-access refusal
+{
+  "timestamp": "2026-10-14T19:53:06.764Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > keeps a private snapshot when the caller changes its receipt, span and actor after deferral 3ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not accept a same-length re-extraction under unchanged original bytes 4ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write when current private-project access was revoked 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source program change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source hash change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source withdrawal change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not write after source successor change 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects an unchanged payload whose source window differs from the actual stored slice 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rejects out-of-bounds source spans before recording a receipt 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > uses fresh read authority and only legacy storage columns for a mocked successful INSERT 2ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (zero) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (wrong_actor) 2ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > does not count a failed persistence receipt (error) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > clears a pre-cancelled round without opening a receipt connection 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > rolls back cancellation observed after INSERT and before COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > server-pinned legacy read receipt snapshots > retains the actual committed count when cancellation arrives after COMMIT 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > notifies the host when insertion observes a typed source refusal after the first handoff check 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > normalizes canonical actor/source verification refusal so the host withdraws it 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > retains authorized read content for an ordinary SQL42501 receipt insertion failure 0ms
+ × server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > stops a three-read round after typed source refusal and preserves the first committed count 6ms
+   → expected 2 to be 1 // Object.is equality
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > ordinary SQL42501 in a three-read round does not stop later authorized receipt attempts 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > canonical withdrawal after observed source refusal does not invent a receipt rollback outcome 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > an ordinary failed conditional persistence result does not become a source-access refusal 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > keeps an unchanged admitted read without writing or claiming provider service 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (source_changed) 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > replaces denied source context with no source-bearing metadata (private_revoked) 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > preserves an existing budget replacement and drops its receipt candidate without a source query 1ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > does not accept a post-deferral amended payload 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > withholds a pending source read when cancellation occurs during verification 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > late cancellation also withdraws earlier amended/budget-safe source results 0ms
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > rejects mutation through the publicly visible deferred map value 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/read-receipt-snapshots.test.ts > last controlled source-result handoff > stops a three-read round after typed source refusal and preserves the first committed count
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/read-receipt-snapshots.test.ts:188:23
+    186|       writes++; if (writes === 2) throw new SourceReadSnapshotError();
+    187|     }, { onSourceRefused: id => { refused.push(id); } });
+    188|     expect(committed).toBe(1); expect(writes).toBe(2); expect(refused)…
+       |                       ^
+    189|   });
+    190|   it('ordinary SQL42501 in a three-read round does not stop later auth…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  19:53:05
+   Duration  940ms (transform 553ms, setup 81ms, import 577ms, tests 37ms, environment 0ms)
+

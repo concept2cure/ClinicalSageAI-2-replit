@@ -1,0 +1,40 @@
+Complete existing reporting endpoint inventory (30 mounted handlers), 2026-10-13.
+Mounts: server/bootstrap/register-inline-routes.ts and register-clinical-intel-routes.ts.
+V = reviewed guarded source. V is not production verification.
+
+GET /api/report-os/scopes                         V Static supported scope vocabulary; no tenant/private records.
+GET /api/report-os/taxonomy                       V Global deployed enabled type declarations; organization segment/persona/plan annotation, no private output.
+GET /api/report-os/portfolio/org                  V Organization/plan gate; canonical accessible projects before aggregation.
+GET /api/report-os/portfolio                      V Organization/plan gate; all projects in requested group must be usable.
+GET /api/report-os/program-groups                 V Whole groups hidden unless every current member project is usable, before joining private member metadata.
+POST /api/report-os/program-groups                V Governed writing role/org/workspace plus every requested member project's canonical sharing permission before writes.
+PATCH /api/report-os/program-groups/:id           V Current group and every requested project permission precede membership replacement.
+GET /api/report-os/program-groups/:id/snapshots    V Retained snapshot project set checked; changed live membership cannot widen historical access; corrupt sets refuse.
+POST /api/report-os/program-groups/:id/snapshots   V All current group project permissions precede snapshot capture.
+POST /api/report-os/runs                          V Current actor/org/workspace/owned scope/plan/type/engine/applicability/sharing gates before engine; audited atomic persistence.
+GET /api/report-os/runs/:id/dependencies          V Same-org run plus canonical scope access before dependency payload.
+GET /api/report-os/runs/:id/export.pdf            V Same-org scope access, export entitlement, retained snapshot/seal/signature, record before response.
+GET /api/report-os/runs/:id/rendered              V Same-org scope access before retained result rendering; source/unknown scope disclosures remain.
+GET /api/report-os/runs/:id/seal                  V Same-org scope access before seal payload; signing ceremony stays canonical.
+POST /api/report-os/runs/:id/finalize             V Current scope plus restricted signing role, signature/seal/separation of duties, atomic audit.
+GET /api/report-os/runs/:id                       V SQL filtered same-org/current project access before row returned.
+GET /api/report-os/runs                           V Same-org access predicates in SQL before total/filter/search/sort/limit/offset; no client-provided permission list.
+POST /api/report-os/bundles                       V Every selected run's scope authorized; full JSON copies plus audit commit together; explicit manifest limit.
+GET /api/report-os/bundles                        V Every bundle item scope/project set authorized; corrupt retained pack refuses rather than hides silently.
+GET /api/report-os/bundles/:bundleId/export.pdf   V Every item scope/project set, per-type entitlement and audited export; current run statuses beside bundled statuses.
+GET /api/report-os/deliveries                     V Primary project plus every actual carried run/bundle scope checked; missing targets omitted and corrupt records refuse.
+POST /api/report-os/deliveries                    V Restricted writing role plus every current run/bundle scope, target ownership, current standing signatures, atomic persisted delivery/audit.
+GET /api/report-os/health                        V Canonical organization project-management role; every business count explicitly tenant-predicated, global registry count intentional.
+GET /api/insights/quality                         V Existing admin-only tenant-quality input summary; unchanged computation.
+POST /api/insights/predictions                    V Existing writing gate over caller-supplied normalized input; pure assembly, no private read or persistence.
+POST /api/insights/predictions/run                V Unsupported unscoped forecast refuses; actual calibration project ownership AND current sharing checked before model; org-only supplied draft preserved.
+GET /api/insights/subscriptions                   V Authenticated current numeric actor; inaccessible complete rows omitted, including private scopes/recipient addresses.
+POST /api/insights/subscriptions                  V Current creator/org/workspace/type/scope/plan/applicability and every recipient's project access before audited create.
+PATCH /api/insights/subscriptions/:id             V Both enable and disable require managing caller scope access, then existing CAS/audit; creator enablement validation remains separate.
+GET /api/insights-canvas/overview                 V Current numeric actor/project set before portfolio/lead choices; effective deployed catalog availability and supported contextual pickers.
+
+Historical program scopes are bound to copied accessProjectIds from the actual resolved project set, preserved in saved output and pack items. SQL and direct reads check this retained set. Ordinary members/viewers cannot read legacy unbound program output; the canonical organization-project-management role retains all-project access. Group membership changes cannot grant access to old private output or remove access to output generated only on permitted projects.
+
+Verified focused evidence: prediction project guard 3 failing cases before fix, then 51/51 prediction/subscription/viewer/contract cases green. Subscription management 8 failing cases before fix, 39/39 with existing suites after. Project-sharing creator/recipient proof 21/21 includes real PGlite SQL. Existing audit/delivery/finalize/viewer 94/94; delivery confidence-null rerun 27/27 overlaps. Lint passes on the two guarded route changes. Native RLS and whole-platform checks are separate control-tower evidence.
+
+Final independent runtime follow-up after owner fixes: 25/25 in saved-read-access, real SQL run-history and real SQL health-tenancy suites; final-read-boundaries-green.txt. The reviewed 30-handler inventory has no remaining open ACL finding as of 19:51 UTC. This does not replace whole-platform/typecheck/build/native-RLS/production gates.

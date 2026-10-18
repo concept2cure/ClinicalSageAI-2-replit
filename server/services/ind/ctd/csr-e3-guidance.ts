@@ -70,6 +70,21 @@ export function e3TopLevel(): E3Section[] {
 }
 
 /**
+ * One line saying what a heading carries, for an outline that shows one line
+ * per heading (AnA's CSR template, get_document_template's CSR spine, the DOCX
+ * csr-ich-e3 blueprint): its purpose; else what it carries; else the headings
+ * under it; else, for a heading E3 describes only by its title, the title. The
+ * outlines used to each write this rule out for themselves.
+ */
+export function e3SectionSummary(s: E3Section): string {
+  if (s.purpose) return s.purpose;
+  if (s.contains?.length) return s.contains.join('; ');
+  const children = e3Children(s.number);
+  if (children.length) return `Covers ${children.map((c) => `${c.number} ${c.title}`).join('; ')}.`;
+  return `${s.title}.`;
+}
+
+/**
  * Every basis a section rests on: its own E3 citation first, then any checked
  * source, then — when it names data sources — the note that those are
  * practice, not requirement.
@@ -86,9 +101,21 @@ function basisLine(b: E3Basis): string {
   const how = b.confidence === 'regulator-text'
     ? `checked against the regulator's text ${b.checked ?? ''}`.trim()
     : b.confidence === 'recall'
-      ? 'ICH E3 (1995) as recalled; verbatim check owed'
+      ? recallHow(b)
       : 'platform practice, not a requirement';
   return `- ${b.ref} — ${how}${b.url ? ` (${b.url})` : ''}`;
+}
+
+/**
+ * A recall basis says what it rests on: its note (the regulator documents in
+ * regulatory-basis.ts were seen only in search extracts), else, for a heading's
+ * own E3 citation, the 1995 text as recalled. 2026-10-15: every recall basis
+ * read "ICH E3 (1995) as recalled", false for an FDA or CFR document once those
+ * stopped being labelled regulator-text.
+ */
+function recallHow(b: E3Basis): string {
+  if (b.note) return `recall: ${b.note}`;
+  return b.ref.startsWith('ICH E3 §') ? 'ICH E3 (1995) as recalled; verbatim check owed' : "recall — not checked against the regulator's text";
 }
 
 function bullets(label: string, items: string[] | undefined): string | null {

@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=false) 1525ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=true) 1075ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > does not bind sources after cancelling the actual dirty-work navigation 850ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > refuses source binding while a governed ceremony owns the current editor 400ms
+ × client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not generate through an old open review after a new explicit source handoff 1054ms
+   → expected [ [ 'POST', …(2) ], …(2) ] to have a length of 2 but got 3
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not generate through an old open review after a new explicit source handoff
+AssertionError: expected [ [ 'POST', …(2) ], …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx:183:36
+    181|     if (generate) fireEvent.click(generate);
+    182|     await act(async () => { await Promise.resolve(); });
+    183|     expect(postCalls('/ai/draft')).toHaveLength(2);
+       |                                    ^
+    184|     expect(postCalls('/accept')).toHaveLength(0);
+    185|     expect(screen.getByTestId('assembly-candidates').textContent).toMa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  23:49:06
+   Duration  7.89s (transform 1.68s, setup 156ms, import 2.14s, tests 4.91s, environment 510ms)

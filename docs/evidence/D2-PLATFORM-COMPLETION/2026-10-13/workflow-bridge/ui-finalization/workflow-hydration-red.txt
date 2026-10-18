@@ -1,0 +1,256 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorHydration.test.tsx > a saved workflow table opens clean without creating a device draft > keeps initial schema normalization clean in StrictMode and writes nothing
+AssertionError: expected <div class="rse-gate" …(1)>…(2)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="rse-gate"
+  role="status"
+>
+  A draft cached on this device differs from the saved section.
+  <button
+    class="rse-link"
+    type="button"
+  >
+    Restore the device draft
+  </button>
+  <button
+    class="rse-link"
+    type="button"
+  >
+    Discard it
+  </button>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorHydration.test.tsx:40:65
+     38|     await waitFor(() => expect(document.querySelector('.rse-body .tipt…
+     39|     await act(async () => { await new Promise(resolve => setTimeout(re…
+     40|     expect(screen.queryByText(/A draft cached on this device/)).toBeNu…
+       |                                                                 ^
+     41|     expect(document.querySelector('.rse-save')?.textContent).toMatch(/…
+     42|     expect(localStorage.getItem(cacheKey)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorHydration.test.tsx > a saved workflow table opens clean without creating a device draft > still protects actual writing after hydration and restores it explicitly on return
+AssertionError: expected 'Unsaved changes — cached on this devi…' to match /All changes saved/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rse-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rse-gate"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mA draft cached on this device differs from the saved section.[0m
+          [36m<button[39m
+            [33mclass[39m=[32m"rse-link"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRestore the device draft[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rse-link"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDiscard it[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Formatting"[39m
+          [33mclass[39m=[32m"rse-ribbon"[39m
+          [33mrole[39m=[32m"toolbar"[39m
+        [36m>[39m
+          [36m<select[39m
+            [33maria-label[39m=[32m"Paragraph style"[39m
+            [33mclass[39m=[32m"rse-sel"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"p"[39m
+            [36m>[39m
+              [0mParagraph[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"h1"[39m
+            [36m>[39m
+              [0mHeading 1[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"h2"[39m
+            [36m>[39m
+              [0mHeading 2[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"h3"[39m
+            [36m>[39m
+              [0mHeading 3[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"h4"[39m
+            [36m>[39m
+              [0mHeading 4[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"h5"[39m
+            [36m>[39m
+              [0mHeading 5[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rse-sep"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Bold (⌘B)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+            [33mtitle[39m=[32m"Bold (⌘B)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0mB[0m
+            [36m</b>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Italic (⌘I)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+            [33mtitle[39m=[32m"Italic (⌘I)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<i>[39m
+              [0mI[0m
+            [36m</i>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Underline (⌘U)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+            [33mtitle[39m=[32m"Underline (⌘U)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"text-decoration: underline;"[39m
+            [36m>[39m
+              [0mU[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Superscript (⌘.)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+            [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mx[0m
+              [36m<sup>[39m
+                [0m2[0m
+              [36m</sup>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Subscript (⌘,)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+            [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mx[0m
+              [36m<sub>[39m
+                [0m2[0m
+              [36m</sub>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Highlight"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+            [33mtitle[39m=[32m"Highlight"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rse-hl-glyph"[39m
+            [36m>[39m
+              [0mab[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"rse-sep"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"rse-rb"[39m
+            [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+            [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-list"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12h.01"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 18h.01"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 6h.01"[39m
+              [...
+
+- Expected:
+/All changes saved/
+
++ Received:
+"Unsaved changes — cached on this device"
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorHydration.test.tsx:51:82
+     49|     const save = vi.fn();
+     50|     const first = render(<RichSectionEditor value={SAVED} onSave={save…
+     51|     await waitFor(() => expect(document.querySelector('.rse-save')?.te…
+       |                                                                                  ^
+     52|     act(() => { canvas().commands.insertContentAt(1, 'Real unsaved cor…
+     53|     await waitFor(() => expect(beforeUnloadHeld()).toBe(true));
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  22:05:07
+   Duration  7.83s (transform 620ms, setup 202ms, import 861ms, tests 5.38s, environment 1.19s)

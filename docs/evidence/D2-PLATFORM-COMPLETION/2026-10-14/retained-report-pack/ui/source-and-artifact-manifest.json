@@ -1,0 +1,180 @@
+{
+  "branch": "concept2cure-v2",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "status": "Client implementation and bounded API-facade regressions verified; release gates owned by control tower.",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "bytes": 119499,
+      "digestAlgorithm": "sha256",
+      "digest": "ca887932fbf8350cc4ad0f5957b7d529eb2aba537f79d079ef999a0f6eb8ac68",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "bytes": 6843,
+      "digestAlgorithm": "sha256",
+      "digest": "37ad4b808994d04f329fbcc347870da5ba99401a40edc786647003523b377d6f",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "bytes": 24385,
+      "digestAlgorithm": "sha256",
+      "digest": "e84b4dbca5d23b045a01a5fd1f29c13671509c25cee22829343f8b70494a235a",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "bytes": 21973,
+      "digestAlgorithm": "sha256",
+      "digest": "df530808d3111b0bffbb50f02272475900bdeb90eceee11aabcecb53603e6ee2",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "bytes": 9643,
+      "digestAlgorithm": "sha256",
+      "digest": "f3cd0e25ffce4492f728b20baca2ffb135c64986948cddb07809126eb7e92fde",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+      "bytes": 3808,
+      "digestAlgorithm": "sha256",
+      "digest": "0d6da9925dadb44f23abf8785b66b6230acec49e1bd8efcd6a3d4023bf061b54",
+      "role": "owned-implementation-or-tests"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "bytes": 7610,
+      "digestAlgorithm": "sha256",
+      "digest": "6f35aa6dcd2b2e2f448a5a3e308f49caa028f9dca6db9644431465bb4c1aedfd",
+      "role": "unchanged-regression-or-canonical-ui-dependency"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/insights-v2.css",
+      "bytes": 24381,
+      "digestAlgorithm": "sha256",
+      "digest": "11d111ee902baeed760c984f75b093008c63f6b5b0e286a62306a2abf8e3e6b2",
+      "role": "unchanged-regression-or-canonical-ui-dependency"
+    },
+    {
+      "path": "client/src/concept2cure/v2/download.ts",
+      "bytes": 4446,
+      "digestAlgorithm": "sha256",
+      "digest": "21503192353a07854d1935813eb9f47ae177451cf69244e0c7ce4e75829b1960",
+      "role": "unchanged-regression-or-canonical-ui-dependency"
+    },
+    {
+      "path": "client/src/concept2cure/v2/toast.tsx",
+      "bytes": 6815,
+      "digestAlgorithm": "sha256",
+      "digest": "10f296e1a8c9a1bcaf897a698bef1ece07cbb8b77d8b10f605fb24905c223a5c",
+      "role": "unchanged-regression-or-canonical-ui-dependency"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.log",
+      "bytes": 225131,
+      "digestAlgorithm": "sha256",
+      "digest": "cc116331039528278fb0a4eeeb2a04b50608d3c2eb5d898a649923259e372878",
+      "normalization": "Only terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.raw.txt.gz",
+      "rawArchiveBytes": 7463,
+      "rawArchiveDigest": "64070bd13451c26c5f197af0ada5b16403c4c703b4185579ea8005ecfe9553bc",
+      "uncompressedRawBytes": 225132,
+      "uncompressedRawDigest": "c66d806ea757478383b416cf737c2372e7fe4122a8a50de33c73f0cca6cd6cf5",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.log",
+      "bytes": 51709,
+      "digestAlgorithm": "sha256",
+      "digest": "45c70fbe099a16e8955653339c173836e05d72d15c4f70f463b83a1612db2f78",
+      "normalization": "Only terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.raw.txt.gz",
+      "rawArchiveBytes": 4285,
+      "rawArchiveDigest": "7d919c54f789123e2c056bd353b709f036c3da8ace618f2a13468fcef83deb2a",
+      "uncompressedRawBytes": 51710,
+      "uncompressedRawDigest": "935022a99a91cfb420f5c5753422cf367854b78834ae369af5ceb7342f7c3560",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.log",
+      "bytes": 1197,
+      "digestAlgorithm": "sha256",
+      "digest": "e159303d461c51ccb7974a6d0b1b461d8064ad86d7d27f89e3e294097e967362",
+      "normalization": "Only terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.raw.txt.gz",
+      "rawArchiveBytes": 407,
+      "rawArchiveDigest": "53a95af9852c9c6b0f69e84067d60c783f46cc3102bcd9d06b81260c0fc55d5b",
+      "uncompressedRawBytes": 1198,
+      "uncompressedRawDigest": "595c80da2f101793fddb90d31315d5faf6d1933eb84ef85b5883b91c148d00a0",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.log",
+      "bytes": 9096,
+      "digestAlgorithm": "sha256",
+      "digest": "104c6ec6f683a0b91b9801040538b4d92ab83de86943b0a983c96eed1e8585ed",
+      "normalization": "Only terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.raw.txt.gz",
+      "rawArchiveBytes": 1990,
+      "rawArchiveDigest": "3ec59e47bfcf98bca3a43ccd0491042cbc22e80ab04274144546448516ed9f0c",
+      "uncompressedRawBytes": 9097,
+      "uncompressedRawDigest": "6c43c0cf38ba3c7f10431a2ad74d0ad9ef5c1d83d75cd0ce44cc887a896d3795",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "90bf1e5f5842f27f08f8d2d47a4659f6e163e60a14d270604cbf7a8c96554b94",
+      "normalization": "Only terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.raw.txt.gz",
+      "rawArchiveBytes": 345,
+      "rawArchiveDigest": "acbb9c7296d5191524921f09180dae736ad89b32c8b3a2b641dcbad8da25e57d",
+      "uncompressedRawBytes": 885,
+      "uncompressedRawDigest": "335260e397cb874288ac4a4983a38ea479fc5fffa8449baea647b6175835e050",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red-source-pins.json",
+      "bytes": 1361,
+      "digestAlgorithm": "sha256",
+      "digest": "97a009284cc9d69bb84e1a570e35f396e7ebc492075724e176d671e57d5d2f92"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/test-inventory.json",
+      "bytes": 10800,
+      "digestAlgorithm": "sha256",
+      "digest": "711b60d75e1d5708fc33620f620ba164ecf79cff6e5f6ce63d37270cee6edb79"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/lint-warning-preservation.json",
+      "bytes": 414,
+      "digestAlgorithm": "sha256",
+      "digest": "2da5d3cde86cbce98875ff93ca7decff384883407ce24ee5acd2ff6ee1e1a356"
+    }
+  ],
+  "prospectiveBaselineRepositorySourcesUnchanged": true,
+  "finalVerification": {
+    "tests": 44,
+    "failed": 0,
+    "skipped": 0,
+    "files": 3,
+    "vitestDurationSeconds": 12.83,
+    "scopedLintErrors": 0,
+    "scopedLintWarnings": 7,
+    "testWarnings": 0,
+    "warningCountGrowth": 0
+  },
+  "qualifications": [
+    "API and download primitives are bounded test facades.",
+    "No native database, provider, browser, full PDF body, seal/coherence/audit persistence, PDF/A, scientific or clinical qualification is claimed by UI evidence.",
+    "Whole-tree TypeScript/build/mandatory gates and publication belong to the control tower."
+  ]
+}

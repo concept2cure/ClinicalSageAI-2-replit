@@ -20,7 +20,12 @@
  *              deterministic query over its own tables
  *              (research-compliance-report-providers.ts);
  *   lineage    the Evidence & Provenance Trace over ONE document, from the
- *              document's lineage dossier (lineage-trace-report.ts).
+ *              document's lineage dossier (lineage-trace-report.ts);
+ *   regional   one market's filing readiness: the agency's own Module 1
+ *              content question for the program's recorded filing, from the
+ *              Module 1 record and the canonical market statement
+ *              (regional/filing-readiness.ts). US, EU and JP only, because
+ *              those are the jurisdictions that record has a tree for.
  * Every other type is refused with REPORT_TYPE_NOT_COMPUTED, and the canvas
  * shows it as not computed in this release — the same rule as predictions
  * (PREDICTION_NOT_A_RUN) and as product decision P-7: a tool with no engine
@@ -32,10 +37,11 @@
  * @module server/services/report-os/report-engine
  */
 
+import { REGIONAL_FILING_TYPES } from './regional/filing-types';
 import { filterTypesForSegment, type ReportSegment } from './segment';
 import type { RunComputationResult } from './orchestrator';
 
-export type ReportEngine = 'readiness' | 'domain' | 'lineage';
+export type ReportEngine = 'readiness' | 'domain' | 'lineage' | 'regional';
 
 /** The report type ids the research-compliance domain providers compute. */
 export const DOMAIN_REPORT_TYPE_IDS = [
@@ -45,16 +51,52 @@ export const DOMAIN_REPORT_TYPE_IDS = [
   'etmf.completeness_pack', 'research_compliance.training_status',
   'effort.certification_register', 'research_security.coi_register',
   'research_admin.scorecard',
+  'global.label_currency_matrix',
 ] as const;
 
 const DOMAIN_TYPES: ReadonlySet<string> = new Set(DOMAIN_REPORT_TYPE_IDS);
 
 /** The engine that computes `typeId` over `scopeType`, or null when none does. */
 export function reportEngineFor(typeId: string, scopeType: string): ReportEngine | null {
+  const availability = reportAvailability(typeId, scopeType);
+  return availability.runnable ? availability.engine : null;
+}
+
+export interface ReportAvailability {
+  engine: ReportEngine | null;
+  runnable: boolean;
+  computedScope: 'organization' | 'project' | 'document' | null;
+  availabilityReason: string | null;
+}
+
+function engineForType(typeId: string): ReportEngine | null {
   if (typeId === 'readiness.executive_digest') return 'readiness';
   if (DOMAIN_TYPES.has(typeId)) return 'domain';
-  if (typeId === 'provenance.evidence_trace_report' && scopeType === 'document') return 'lineage';
+  if (typeId === 'provenance.evidence_trace_report') return 'lineage';
+  if (Object.prototype.hasOwnProperty.call(REGIONAL_FILING_TYPES, typeId)) {
+    return 'regional';
+  }
   return null;
+}
+
+/** Declared applicability and the engine's actual scope must both permit a run.
+ * Domain counts remain organization-wide unless a provider truly narrows them. */
+export function reportAvailability(typeId: string, scopeType: string, allowedScopes?: readonly string[]): ReportAvailability {
+  const engine = engineForType(typeId);
+  const computedScope = typeId === 'grants.portfolio_register' && scopeType === 'project' ? 'project'
+    : engine === 'domain' ? 'organization' : engine === 'lineage' ? 'document' : engine ? 'project' : null;
+  if (allowedScopes && !allowedScopes.includes(scopeType)) {
+    return { engine, computedScope, runnable: false, availabilityReason: `This report does not allow ${scopeType} scope.` };
+  }
+  if (!['account', 'program', 'project', 'submission', 'document'].includes(scopeType)) {
+    return { engine, computedScope, runnable: false, availabilityReason: 'This scope is unavailable until its ownership can be verified.' };
+  }
+  if (!engine) return { engine, computedScope, runnable: false, availabilityReason: 'No engine computes this report in this release.' };
+  if (((engine === 'readiness' || engine === 'regional') && scopeType !== 'project') ||
+      (engine === 'lineage' && scopeType !== 'document')) {
+    return { engine, computedScope, runnable: false, availabilityReason: `This engine computes ${computedScope} scope only.` };
+  }
+  return { engine, computedScope, runnable: true, availabilityReason: null };
 }
 
 export const REPORT_TYPE_NOT_COMPUTED = 'REPORT_TYPE_NOT_COMPUTED';
@@ -104,16 +146,42 @@ export async function computeDomainRun(
   organizationId: number,
   scopeType: string,
   scopeId: string,
+  options?: { clientWorkspaceId?: number | null },
 ): Promise<RunComputationResult> {
   const { computeDomainReport } = await import('./research-compliance-report-providers');
-  const domain = await computeDomainReport(typeId, organizationId);
+  const domain = await computeDomainReport(typeId, organizationId, { scopeType, scopeId, ...options });
   if (!domain) throw new Error(`No domain provider computes ${typeId}`);
   const blockers = domain.provider.status !== 'ready' && domain.provider.blocker ? [domain.provider.blocker] : [];
   return {
     providers: [domain.provider],
     confidence: null,
     blockers,
-    criticalBlockers: [],
-    summary: { scopeType, scopeId, domain: domain.summary, domainScope: 'organization' },
+    criticalBlockers: domain.criticalBlockers ?? [],
+    summary: { scopeType, scopeId, domain: domain.summary, domainScope: domain.computedScope ?? 'organization', computedScope: domain.computedScope ?? 'organization', provenance: domain.provenance },
   };
+}
+
+/**
+ * One market's filing readiness run: the agency's own Module 1 content question
+ * for the program's recorded filing, and that market's statement.
+ *
+ * The engine is loaded lazily for the same reason `computeDomainRun` is — this
+ * module must stay importable without a database. `declared` is the report
+ * type's registry row: the engine asserts the type's declared region against
+ * its own market binding, and discloses every declared dependency it does not
+ * compute, so nothing the type promised is silently absent.
+ *
+ * Throws when the market cannot be assessed (no registry context, another
+ * market's filing, a scope that is not one program), so a run is never another
+ * market's report in its place.
+ */
+export async function computeRegionalRun(
+  typeId: string,
+  organizationId: number,
+  scopeType: string,
+  scopeId: string,
+  declared?: { region?: string | null; label?: string | null; dataDependencies?: readonly string[] | null },
+): Promise<RunComputationResult> {
+  const { computeRegionalRun: compute } = await import('./regional/filing-readiness');
+  return compute(typeId, organizationId, scopeType, scopeId, declared);
 }

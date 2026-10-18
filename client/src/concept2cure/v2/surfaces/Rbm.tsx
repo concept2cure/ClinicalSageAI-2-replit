@@ -6,9 +6,19 @@ import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
 import { rbmBoardHasData } from './rbmBoard';
 import {
-  SeedEmpty, RbmAnaDock, type RbmAnaMessage,
-  RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls,
-  RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan,
+  SeedEmpty,
+  RbmAnaDock,
+  type RbmAnaMessage,
+  RbmOverview,
+  RbmReport,
+  RbmRact,
+  RbmKris,
+  RbmQtls,
+  RbmSignals,
+  RbmPatients,
+  RbmSites,
+  RbmOversight,
+  RbmPlan,
 } from './RbmSurfaces';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { activityPropsFor, hasReportableWork } from '../AnaActivity';
@@ -26,9 +36,15 @@ type SubSurface = React.ComponentType<{
 }>;
 
 const SURFACES: Record<string, SubSurface> = {
-  overview: RbmOverview, report: RbmReport, ract: RbmRact,
-  kris: RbmKris, qtls: RbmQtls, signals: RbmSignals,
-  patients: RbmPatients, sites: RbmSites, oversight: RbmOversight,
+  overview: RbmOverview,
+  report: RbmReport,
+  ract: RbmRact,
+  kris: RbmKris,
+  qtls: RbmQtls,
+  signals: RbmSignals,
+  patients: RbmPatients,
+  sites: RbmSites,
+  oversight: RbmOversight,
   plan: RbmPlan,
 };
 
@@ -48,7 +64,10 @@ const SEED_ACTIONS: Record<string, string[]> = {
 
 /* ── Icon map for cross-app links ── */
 const LINK_ICONS: Record<string, string> = {
-  project: 'folder', vault: 'vault', biostats: 'sigma', tasks: 'checkSquare',
+  project: 'folder',
+  vault: 'vault',
+  biostats: 'sigma',
+  tasks: 'checkSquare',
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -72,6 +91,13 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
+/**
+ * How many attention items the AnA context carries. The feed on screen is not
+ * capped; this bounds only what the narrator is handed, and the context declares
+ * the total beside it so a truncated list cannot read as the whole board.
+ */
+const ATTENTION_CONTEXT_CAP = 8;
+
 export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
@@ -124,20 +150,37 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      KRIs under another study's name. */
   const anaModuleContext = useMemo(() => {
     if (!study) {
-      return { surface: 'rbm', studySelected: false, note: 'No study is selected, so no RBM board is on screen.' };
+      return {
+        surface: 'rbm',
+        studySelected: false,
+        note: 'No study is selected, so no RBM board is on screen.',
+      };
     }
     if (board.loading || !boardReady) {
-      return { surface: 'rbm', studyId: study, studyLabel, boardReady: false, note: 'The RBM board for this study is still loading.' };
+      return {
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: false,
+        note: 'The RBM board for this study is still loading.',
+      };
     }
     if (board.error) {
       return {
-        surface: 'rbm', studyId: study, studyLabel, boardReady: false,
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: false,
         note: 'The RBM board could not be read, so no risk readings are on screen — a failure, not a clean board.',
       };
     }
     if (!hasData || !bd) {
       return {
-        surface: 'rbm', studyId: study, studyLabel, boardReady: true, boardSeeded: false,
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: true,
+        boardSeeded: false,
         note: 'This study has no RBM data seeded yet, so the board is genuinely empty.',
       };
     }
@@ -151,8 +194,22 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       asOf: bd.asOf,
       summary: bd.summary,
       /* The punch-list the overview leads with, capped — enough for AnA to name
-         an item back to the user, not the whole board. */
-      attention: (bd.attention ?? []).slice(0, 8).map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
+         an item back to the user, not the whole board.
+         THE CAP IS DECLARED, not silent (coverage review C-6). It used to publish
+         `slice(0, 8)` alone, so a severity-ranked regulatory attention list with
+         nine items reached the narrator as eight with nothing saying so, and the
+         model could then answer "these are the items needing attention" over a
+         truncated list. Under Rule 2 the engine supplies the figures; a figure
+         the narrator cannot tell is partial is worse than no figure. The
+         total-beside-the-cap shape is the one CommunicationCenter.tsx already
+         uses for its agency inbox.
+         The HUMAN feed is NOT capped — RbmSurfacesA.tsx renders `board.attention`
+         in full — so this is the narrator's view only, and the review's claim
+         that item 9 is hidden from a reader does not hold. */
+      attentionTotal: (bd.attention ?? []).length,
+      attentionShown: Math.min(ATTENTION_CONTEXT_CAP, (bd.attention ?? []).length),
+      attentionOrdering: 'severity-ranked (critical, high, medium); the items below are the most severe',
+      attention: (bd.attention ?? []).slice(0, ATTENTION_CONTEXT_CAP).map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
       reportApproved: bd.report ? bd.report.approved : null,
       storeProvisioned: bd.pendingStore ? false : true,
     };
@@ -194,9 +251,9 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
           <p className="reg-sub">
-            ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central
-            statistical monitoring, site oversight and the monitoring plan. Every score
-            is engine output — the number behind each chip is always visible.
+            ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central statistical
+            monitoring, site oversight and the monitoring plan. Every score is engine output — the
+            number behind each chip is always visible.
           </p>
         </div>
         <div className="rbm-study">
@@ -212,7 +269,9 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               <option value="">No RBM studies</option>
             ) : (
               programs.rows.map(s => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))
             )}
           </select>
@@ -239,7 +298,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {(I as Record<string, React.ReactNode>)[LINK_ICONS[k] || 'folder']}
               </span>
               <span className="rbm-link-t">
-                <b>{L.label}</b><em>{L.value}</em>
+                <b>{L.label}</b>
+                <em>{L.value}</em>
               </span>
               <span className="rbm-link-go">{I.chevRight}</span>
             </button>
@@ -298,7 +358,14 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               <EmptyState title="Loading the RBM board…" icon={I.clock} />
             </div>
           ) : hasData ? (
-            <Body key={bd.programId + '@' + bd.asOf} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} onReload={reload} />
+            <Body
+              key={bd.programId + '@' + bd.asOf}
+              board={bd}
+              onTab={setTab}
+              onAsk={askAna}
+              onNav={onNav}
+              onReload={reload}
+            />
           ) : (
             <SeedEmpty
               title={`No RBM data for ${studyLabel} yet`}
@@ -327,11 +394,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             }}
           />
         ) : (
-          <button
-            className="rbm-ana-seam"
-            onClick={() => setAnaOpen(true)}
-            title="Open AnA"
-          >
+          <button className="rbm-ana-seam" onClick={() => setAnaOpen(true)} title="Open AnA">
             <span className="mk">{'✻'}</span>AnA
           </button>
         )}

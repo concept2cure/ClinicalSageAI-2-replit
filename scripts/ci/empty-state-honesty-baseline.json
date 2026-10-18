@@ -2,7 +2,12 @@
   "files": [
     "client/src/concept2cure/v2/surfaces/Nonclinical.tsx"
   ],
+  "occurrences": {
+    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx": [
+      "(collection)|( No findings{r.risk ? ` · risk $ ` : ''} )"
+    ]
+  },
   "reasons": {
-    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx": "False positive, checked 2026-09-17. The detector sees `r.findings.length === 0` render \"No findings\" and cannot see that the conditional chain tests `r.error` FIRST (line ~747, rendering \"Not checked — …\" through redactInternals). So the zero branch is reached only when the check actually ran and returned nothing, which is a genuine zero, not a failed read shown as clean. If that error branch is ever removed, this entry stops being true and the line becomes a real defect."
+    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx": "False positive, checked 2026-09-17, re-verified and corrected 2026-10-13. The detector sees `r.findings.length === 0` render \"No findings\" and cannot see that the conditional chain guards it. CORRECTION: the guard is `!r.ok` (Nonclinical.tsx:737), not `r.error` as this entry said — r.error is what that branch RENDERS, through redactInternals, as \"Not checked — …\". The distinction matters because this entry is the reason the line is exempt: an ok-but-errored row would fall through to the zero branch if the guard were on r.error, and it is not. So the zero branch is reached only when the check ran and returned nothing — a genuine zero, not a failed read shown as clean. If that !r.ok branch is ever removed, this entry stops being true and the line becomes a real defect. SCOPE, 2026-10-13: this exemption is now pinned to the ONE occurrence above, not to the file. Until today enforcement was `allowed.has(h.file)`, so this reasoned false positive bought immunity for every clearance-on-empty line in an ~800-line file. Proven: a second, genuinely bad occurrence added to this file passed the old gate green, reported as \"2 baselined\". Evidence docs/evidence/D6/2026-10-13-empty-state-occurrence-scope/."
   }
 }

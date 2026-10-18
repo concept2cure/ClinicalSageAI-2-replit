@@ -5,6 +5,9 @@
 -- Purpose: Give vault.documents a tenant key, backfilled from the program that
 --          owns each document, with unattributable rows QUARANTINED rather than
 --          guessed.
+-- AMENDED IN PLACE 2026-10-14: converge existing deployments to FORCE RLS,
+-- preserving the canonical program policies and nullable quarantine. Native
+-- tests cover current scoped non-owner reads/writes and repeated deployment.
 --
 -- eCTD/CTD Context:
 --   - Module(s): all (the vault holds content destined for every module)
@@ -13,7 +16,7 @@
 --     only document store in this codebase with no tenant column at all.
 --
 -- Determinism Contract:
---   - Additive. No column is dropped, no policy is created, no behaviour changes.
+--   - Additive columns/indexes; existing program policies also apply to owners.
 --
 -- Notes:
 --   - Idempotent (ADD COLUMN IF NOT EXISTS, guarded backfill, IF NOT EXISTS
@@ -52,15 +55,12 @@
 --     is an EXPLICIT fixed (schema, table, column) list keyed on a UUID org GUC,
 --     and this column is INTEGER (matching regulatory_programs.organization_id,
 --     which is INTEGER NOT NULL, and req.user's org id).
--- vault.documents remains ENABLE ROW LEVEL SECURITY without FORCE
--- (db/migrations/044c_gcc_vault_schema.sql:112), which the table owner bypasses,
--- and server/db/getDatabaseUrl.ts:77-83 falls back to the owner URL when
--- APP_DATABASE_URL is unset. Adding FORCE is a BEHAVIOUR CHANGE, not a hardening
--- no-op: core.can_access_program is a live predicate on a provisioned database
--- (db/migrations/069_gcc_multitenant_rls_expansion.sql:268 delegates to
--- identity.can_access_program), and establishRequestTenantScope.ts:179 writes
--- `orgUuid ?? ''` — an empty string the resolver cannot resolve. FORCE before
--- that is proven takes the vault OFFLINE. That work is deliberately not here.
+-- FORCE was originally deferred pending UUID/program resolver proof. The
+-- canonical resolver now precedes this durable amendment, and actual scoped
+-- app_service tests prove the existing policies on the deployed schema. Both
+-- this file and the creator establish FORCE, so repeated installs converge.
+-- Runtime boot still refuses superuser and table-owner connections; FORCE
+-- never makes a superuser connection suitable for ordinary application use.
 --
 -- WHY NULL IS LEFT IN PLACE
 --
@@ -84,6 +84,8 @@ BEGIN
   END IF;
 
   ALTER TABLE vault.documents ADD COLUMN IF NOT EXISTS organization_id INTEGER;
+  ALTER TABLE vault.documents ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE vault.documents FORCE ROW LEVEL SECURITY;
 
   COMMENT ON COLUMN vault.documents.organization_id IS
     'Owning tenant, resolved from program_id -> regulatory_programs.organization_id. '

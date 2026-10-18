@@ -1,0 +1,5 @@
+WAIT FOR ROOT RUNNER SLOT before this command. No compiler, native, provider, index, commit or push belongs to this slice.
+
+PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+
+Expected inventory remains 55 cases across three suites; retain actual stdout/result. Hosted Semgrep re-verification remains with root; do not infer scanner green from scoped lint or a source search.

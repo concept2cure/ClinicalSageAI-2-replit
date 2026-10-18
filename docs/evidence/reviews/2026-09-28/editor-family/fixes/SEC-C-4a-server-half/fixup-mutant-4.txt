@@ -7,7 +7,7 @@
    const selection = selectionLine(ctx.selection);
 -  if (!surface && !summary && !selection) return '';
 +  if (!surface && !summary) return '';
- 
+
    const lines: string[] = [];
    if (surface) lines.push(`Surface: ${surface}`);
 
@@ -107,4 +107,3 @@ AssertionError: Target cannot be null or undefined.
       Tests  4 failed | 21 passed (25)
    Start at  19:13:25
    Duration  305ms (transform 80ms, setup 74ms, import 29ms, tests 37ms, environment 0ms)
-

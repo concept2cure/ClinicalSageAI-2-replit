@@ -95,18 +95,18 @@ interface CitationEntry {
 const ECFR_PART_3 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-3/subpart-A';
 
 /**
- * Basis of a 21 CFR Part 3 section as read on eCFR. The wording was confirmed
+ * Basis of a 21 CFR Part 3 section on eCFR. The wording was confirmed only
  * from search extracts of the eCFR section pages (the container cannot reach
- * ecfr.gov); see docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
- * g-combination-product-one-engine-facts.md.
+ * ecfr.gov), so it is recall; see docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * 2026-10-05-record/g-combination-product-one-engine-facts.md. 2026-10-15: this
+ * and cfr44b1 were labelled regulator-text over a note saying "search extract".
  */
 function part3Basis(section: string, paragraph = ''): RegulatoryBasis {
   return {
     ref: `21 CFR ${section}${paragraph}`,
-    confidence: 'regulator-text',
+    confidence: 'recall',
     url: `${ECFR_PART_3}/section-${section}`,
-    checked: '2026-10-05',
-    note: 'search extract of the eCFR section page; verbatim re-read owed.',
+    note: 'search extract of the eCFR section page on 2026-10-05; the page itself was not read. Verbatim re-read owed.',
   };
 }
 
@@ -805,12 +805,11 @@ const ECFR_4_4 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/p
 function cfr44b1(item: string): RegulatoryBasis {
   return {
     ref: `21 CFR 4.4(b)(1), ${item}`,
-    confidence: 'regulator-text',
+    confidence: 'recall',
     url: ECFR_4_4,
-    checked: '2026-10-05',
     factId: QMSR_FACT_ID,
     note:
-      'search extract of the eCFR page (as amended by the QMSR final rule, FR 2024-01709); verbatim re-read owed. ' +
+      'search extract of the eCFR page on 2026-10-05 (as amended by the QMSR final rule, FR 2024-01709); the page itself was not read. Verbatim re-read owed. ' +
       'ISO 13485:2016 clause titles are the standard\'s, not a regulator page.',
   };
 }

@@ -1,0 +1,358 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:33.280Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:33.705Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:41:33.705Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:33.706Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.022Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.028Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.033Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.041Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.046Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.057Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.062Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.067Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6368f8aa-9b0f-4443-9286-9d1e29bf270c by unknown",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+{
+  "timestamp": "2026-10-14T02:41:34.071Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "6368f8aa-9b0f-4443-9286-9d1e29bf270c",
+    "error": "column \"revoked_by\" does not exist"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written
+CRITICAL: Failed to create audit trail: error: new row for relation "authoring_audit_trail" violates check constraint "authoring_write_broken"
+    at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 522,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (10, 6007d54f-e297-479d-b894-d0cb41672934, 5ed3f87b-7781-4e81-9012-41068db2b254, CREATE, unknown, unknown, null, , null, null, Test late audit failure, {"qmsTemplate": null, "section_code": "qms-purpose", "authoringH..., ana-tool, ana-tool, 4dabc46a-838e-4052-9bca-898df4b605b5, 1, 10).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'authoring_audit_trail',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'authoring_write_broken',
+  file: 'execMain.c',
+  line: '2081',
+  routine: 'ExecConstraints',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '6007d54f-e297-479d-b894-d0cb41672934',
+    '5ed3f87b-7781-4e81-9012-41068db2b254',
+    'CREATE',
+    'unknown',
+    'unknown',
+    null,
+    '',
+    null,
+    null,
+    'Test late audit failure',
+    {
+      qmsTemplate: null,
+      authoringHint: 'Why this document exists and what it governs.',
+      section_code: 'qms-purpose'
+    },
+    'ana-tool',
+    'ana-tool',
+    '4dabc46a-838e-4052-9bca-898df4b605b5',
+    1,
+    '10'
+  ],
+  queryOptions: undefined
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction
+{
+  "timestamp": "2026-10-14T02:41:34.148Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 82921a52-ceec-4fb1-88ae-bec59ca4e7ca by unknown",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction
+{
+  "timestamp": "2026-10-14T02:41:34.155Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "82921a52-ceec-4fb1-88ae-bec59ca4e7ca",
+    "error": "column \"revoked_by\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all) 1019ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > FAILS CLOSED — a broken audit write rolls the document back 16ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written 22ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses without a verified actor (no anonymous controlled-document creation) 3ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person 7ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction 34ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > FAILS CLOSED — a broken audit write rolls the revision back 17ms
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.281Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.286Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.289Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.293Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.297Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.301Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.308Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.313Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.316Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa051ac5-e0e4-4425-a765-0ded4ff920cc by unknown",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+{
+  "timestamp": "2026-10-14T02:41:34.320Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "fa051ac5-e0e4-4425-a765-0ded4ff920cc",
+    "error": "column \"revoked_by\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — AnA cannot retire a controlled document > writes nothing and hands the retirement to the person 9ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > writes the artifact, its immutable version AND the audit row 20ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > REFUSES without a project — a vault document belonging to no project is an orphaned capture 3ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > FAILS CLOSED — a broken audit write rolls back the artifact AND its version 14ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > writes v2 AND the audit row 26ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > FAILS CLOSED — a broken audit write rolls the new version back 26ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input 52ms
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:41:35.240Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:41:35.241Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:41:35.241Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:41:35.314Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > creates a numbered QMS entry and canonical editable template sections on one transaction 45ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a foreign project and never creates a register entry or editing copy 3ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy 56ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 592ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 76ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 50ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 66ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > collects a stated reason before review and sends it through PATCH 54ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 54ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 70ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 43ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 68ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 348ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 40ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  02:41:10
+   Duration  30.71s (transform 10.63s, setup 333ms, import 15.85s, tests 13.32s, environment 376ms)
+

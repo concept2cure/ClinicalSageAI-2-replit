@@ -44,7 +44,7 @@ export interface ReviewPaneProps {
 function facetOf(v: unknown): PdevSignatureFacet | null {
   const f = v as { state?: unknown; signature?: unknown } | null | undefined;
   if (f?.state === 'none' || f?.state === 'unavailable') return f as PdevSignatureFacet;
-  if ((f?.state === 'signed' || f?.state === 'revoked') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
+  if ((f?.state === 'signed' || f?.state === 'revoked' || f?.state === 'changed' || f?.state === 'unverified') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
   return null;
 }
 
@@ -57,6 +57,15 @@ function facetOf(v: unknown): PdevSignatureFacet | null {
  * unreadable signature is said rather than left silent. The protocol header
  * uses the same line for the finalization.
  */
+/** A recorded meaning identifies the policy question, never its past result. */
+function unknownHistoricalPolicyLabel(meaning: string): string {
+  if (meaning === 'authorship') return 'Signing-time authorship-check evidence not recorded';
+  if (meaning === 'approval' || meaning === 'review' || meaning === 'responsibility') {
+    return 'Signing-time independence evidence not recorded';
+  }
+  return 'Signing-time policy-check evidence not recorded';
+}
+
 export function SignatureLine({ facet, expected, style }: { facet: unknown; expected: boolean; style?: React.CSSProperties }) {
   const f = facetOf(facet);
   if (!f || f.state === 'unavailable') {
@@ -68,11 +77,14 @@ export function SignatureLine({ facet, expected, style }: { facet: unknown; expe
   const s = f.signature;
   return (
     <span className="pde-review-meta" style={style}>
-      {f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
+      {f.state === 'changed' ? 'Content changed after signing · historical signer ' : f.state === 'unverified' ? 'Current signature binding unverified · historical signer ' : f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
       <strong>{s.signerName || 'a signer with no printed name on record'}</strong>
-      {' as ' + signatureMeaningLabel(s.meaning) + ' · '}
+      {' · Declared meaning: ' + signatureMeaningLabel(s.meaning) + ' · '}
       <GovernedTimestamp value={s.signedAt} layout="inline" />
       {s.recordedOnBehalfOf ? ' · recorded on behalf of ' + s.recordedOnBehalfOf : ''}
+      {f.state === 'signed' ? ' · Current content matches the signed content' : ''}
+      {' · ' + unknownHistoricalPolicyLabel(s.meaning)}
+      {' · Independent approval not verified from this signature record'}
     </span>
   );
 }

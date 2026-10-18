@@ -1,0 +1,69 @@
+{
+  "recordedAt": "2026-10-18T00:06:02.391142+00:00",
+  "predecessor": "proof.json preserves the original 89-case replay and its pre-typing-remedy pins unchanged",
+  "remedy": "selected() fixture query adapter uses db.pglite.query<Record<string, unknown>> instead of JourneyDb.pool whose rows are unknown[]; no casts, any, production or shared harness changes",
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+  "exitCode": 0,
+  "testFiles": 1,
+  "tests": 14,
+  "sourceBefore": {
+    "server/routes/authoring.router.ts": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "a8509ec4002de22309c1cad16ccdade15ef1e25fe8654229ae7af85e03b57dd1",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts": "01fdfded891ad72d3e1a70f01cbcd287cae547c69f43d6e641626107ce7951af",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "efbccd4f86546b8d41ed2a7bbce48aa880a72c2b8f04bdd6fce42a500b4ffeaa",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": "6683ecea3bc34d4e769e8fac77a1a866ffda1fea376e86a13c4f262a52fa4b3d",
+    "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts": "b0e5f81b74b5140a83d1e70029360e777264cdcf260825ded171d96c4fa8d512",
+    "server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts": "00fe71f589b7d669050c823e4e42b87f787dd0a8ab917375cc911dc9eb5b7a58"
+  },
+  "sourceAfter": {
+    "server/routes/authoring.router.ts": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "a8509ec4002de22309c1cad16ccdade15ef1e25fe8654229ae7af85e03b57dd1",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts": "01fdfded891ad72d3e1a70f01cbcd287cae547c69f43d6e641626107ce7951af",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "efbccd4f86546b8d41ed2a7bbce48aa880a72c2b8f04bdd6fce42a500b4ffeaa",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": "6683ecea3bc34d4e769e8fac77a1a866ffda1fea376e86a13c4f262a52fa4b3d",
+    "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts": "b0e5f81b74b5140a83d1e70029360e777264cdcf260825ded171d96c4fa8d512",
+    "server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts": "00fe71f589b7d669050c823e4e42b87f787dd0a8ab917375cc911dc9eb5b7a58"
+  },
+  "sourceUnchanged": true,
+  "log": {
+    "path": "typing-remedy-green.txt",
+    "rawSha256": "2588fc35d2afbb9461218e87eb3cc8d928f27340314ba8a38b6ea9d9bcfeed97",
+    "storedSha256": "1ce54783c17b0a2fc8128edbc5a47311c6a2a3c43b1ad1159582e6ee5d025797",
+    "normalization": "UTF-8 line endings; trailing line whitespace removed; one final newline"
+  },
+  "lint": {
+    "path": "typing-remedy-lint.json",
+    "command": "./node_modules/.bin/eslint server/routes/__tests__/authoringSelectedSources.pglite.test.ts -f json",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "diffCheck": {
+    "command": "git diff --check -- server/routes/__tests__/authoringSelectedSources.pglite.test.ts",
+    "exitCode": 0
+  },
+  "compiler": "Official compiler is owned by root; this record does not claim a compiler pass.",
+  "limits": [
+    "Same PGlite, synthetic model and transport fault qualifications as README.md; no live provider or production behavior changed by this remedy."
+  ]
+}

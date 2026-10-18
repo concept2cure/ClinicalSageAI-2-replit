@@ -1,15 +1,15 @@
 [register-eval] 12 turn(s)
-  chat-good-short-fact                             chat     PASS score=1.00 
-  chat-good-three-paragraphs-one-bold-one-citation chat     PASS score=1.00 
-  chat-good-user-asked-for-list                    chat     PASS score=1.00 
-  chat-good-first-turn-greeting                    chat     PASS score=1.00 
-  chat-good-tool-result-as-sentence                chat     PASS score=1.00 
-  chat-good-consequential-next-move                chat     PASS score=1.00 
+  chat-good-short-fact                             chat     PASS score=1.00
+  chat-good-three-paragraphs-one-bold-one-citation chat     PASS score=1.00
+  chat-good-user-asked-for-list                    chat     PASS score=1.00
+  chat-good-first-turn-greeting                    chat     PASS score=1.00
+  chat-good-tool-result-as-sentence                chat     PASS score=1.00
+  chat-good-consequential-next-move                chat     PASS score=1.00
   chat-bad-memo-shape                              chat     FAIL score=0.00 headers,bullets,paragraphs,greeting-ritual,praise-opener,next-step-ritual,empty-closer,exclamation
   chat-bad-bold-table-reintroduction               chat     FAIL score=0.60 bold,tables,reintroduction
   chat-bad-restates-filler-menu-long-paragraph     chat     FAIL score=0.60 paragraph-length,restates-question,capability-menu,filler
   chat-bad-too-many-paragraphs                     chat     FAIL score=0.90 paragraphs
-  artifact-good-section-draft                      artifact PASS 
+  artifact-good-section-draft                      artifact PASS
   artifact-bad-chat-interjection                   artifact FAIL chat-interjection,empty-closer
 
 [register-eval] chat register:

@@ -112,6 +112,7 @@ export function parseSsoHandoff(hash: string | null | undefined): SsoHandoff | n
   const raw = (hash ?? '').replace(/^#/, '');
   if (!raw) return null;
   const params = new URLSearchParams(raw);
+  if (params.has('mfa')) return null;
   const token = params.get('sso') ?? '';
   if (!JWT_SHAPE.test(token)) return null;
   const provider = params.get('provider');
@@ -120,6 +121,21 @@ export function parseSsoHandoff(hash: string | null | undefined): SsoHandoff | n
     token,
     provider: provider && PROVIDER_SHAPE.test(provider) ? provider : null,
     returnTo: candidate && isAllowedPathname(candidate) ? candidate : null,
+  };
+}
+
+/** First-factor SAML proof goes to the existing MFA verifier, never session adoption. */
+export function parseSsoMfaHandoff(hash: string | null | undefined): {
+  challenge: string; method: 'email' | 'totp'; returnTo: string | null; maskedEmail: string;
+} | null {
+  const params = new URLSearchParams((hash ?? '').replace(/^#/, ''));
+  const challenge = params.get('mfa') ?? '';
+  const method = params.get('method');
+  if (params.has('sso') || params.get('provider') !== 'saml' || !JWT_SHAPE.test(challenge) || challenge.length > 8192 || (method !== 'email' && method !== 'totp')) return null;
+  const candidate = normalizeRedirectCandidate(params.get('returnTo'));
+  return {
+    challenge, method, returnTo: candidate && isAllowedPathname(candidate) ? candidate : null,
+    maskedEmail: (params.get('maskedEmail') ?? '').slice(0, 254),
   };
 }
 

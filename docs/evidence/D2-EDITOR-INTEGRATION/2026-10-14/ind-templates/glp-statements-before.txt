@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ↓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > gives every module section and pyramid deliverable an editor-loadable template identity
+ × server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > offers tabulated summaries and recorded certificates only as preparation 77ms
+   → expected { phaseId: 'phase4', …(12) } to match object { aiDraftable: false }
+(23 matching properties omitted from actual)
+ ↓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every phase and every task deliverable, including pre-IND work
+ ↓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every canonical IND section and preserves form/manual drafting limits
+ ↓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > keeps official forms, signatures, datasets and agency receipts out of narrative-draft offers
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > offers tabulated summaries and recorded certificates only as preparation
+AssertionError: expected { phaseId: 'phase4', …(12) } to match object { aiDraftable: false }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "aiDraftable": false,
++   "aiDraftable": true,
+  }
+
+ ❯ server/services/authoring/__tests__/ind-document-catalog.test.ts:18:87
+     16|     expect(catalogue.deliverables.find(d => d.title === 'Nonclinical T…
+     17|     expect(catalogue.deliverables.find(d => d.title === 'Batch analysi…
+     18|     expect(catalogue.deliverables.find(d => d.title === 'GLP complianc…
+       |                                                                                       ^
+     19|   });
+     20|   it('includes every phase and every task deliverable, including pre-I…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  04:24:57
+   Duration  1.68s (transform 1.14s, setup 89ms, import 1.22s, tests 82ms, environment 0ms)

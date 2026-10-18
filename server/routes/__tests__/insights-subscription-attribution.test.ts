@@ -29,6 +29,14 @@ vi.mock('../../services/report-os/scheduling/subscription-service', () => ({
   createSubscription: subs.create,
   setEnabled: vi.fn(),
 }));
+/* The entitlement the create route gates on (coverage review C-26a). It is the
+   SAME predicate the sweep uses, so these cases are also the sweep's contract.
+   `scheduled_reports` needs the professional plan, and an unreadable tier fails
+   closed to 'standard' — so every case here must say which tier it is. */
+const caps = vi.hoisted(() => ({ resolve: vi.fn() }));
+vi.mock('../../services/entitlements/resolver', () => ({
+  resolveCapabilities: (...a: unknown[]) => caps.resolve(...a),
+}));
 const ws = vi.hoisted(() => ({ inOrg: vi.fn() }));
 vi.mock('../../services/featureToggleService', () => ({
   FeatureToggleService: { workspaceInOrganization: ws.inOrg },
@@ -45,6 +53,43 @@ const BODY = { reportTypeId: 'readiness.executive_digest', scopeType: 'project',
 beforeEach(() => {
   subs.create.mockReset().mockImplementation(async (input: unknown) => ({ id: 1, ...(input as object) }));
   ws.inOrg.mockReset().mockImplementation(async (id: number, org: number) => id === 30 && org === 7);
+  caps.resolve.mockReset().mockResolvedValue({ tier: 'professional' });
+});
+
+describe('POST /api/insights/subscriptions — entitlement (C-26a)', () => {
+  /* The sweep re-checked `scheduled_reports` at FIRE time and skipped a
+     downgraded org (scheduling/worker.ts planSweep). Nothing checked it at
+     CREATE time, so a standard-plan org could create a schedule the screen
+     showed as Active and the sweep skipped on every tick, for ever, silently. */
+  it('refuses a standard-plan org and stores nothing', async () => {
+    caps.resolve.mockResolvedValue({ tier: 'standard' });
+    const res = await request(app).post('/api/insights/subscriptions').send(BODY);
+    expect(res.status).toBe(403);
+    expect(res.body.feature).toBe('scheduled_reports');
+    expect(res.body.requiredTier).toBe('professional');
+    expect(res.body.tier).toBe('standard');
+    expect(subs.create).not.toHaveBeenCalled();
+  });
+
+  it('allows a professional-plan org', async () => {
+    caps.resolve.mockResolvedValue({ tier: 'professional' });
+    expect((await request(app).post('/api/insights/subscriptions').send(BODY)).status).toBe(201);
+  });
+
+  it('fails CLOSED when the plan cannot be read, and says so rather than naming a plan', async () => {
+    // An entitlement store that does not answer is not an enterprise licence.
+    caps.resolve.mockRejectedValue(new Error('entitlement store unreachable'));
+    const res = await request(app).post('/api/insights/subscriptions').send(BODY);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/plan could not be read/);
+    expect(subs.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses before it writes — the entitlement gate runs ahead of createSubscription', async () => {
+    caps.resolve.mockResolvedValue({ tier: 'free' });
+    await request(app).post('/api/insights/subscriptions').send(BODY);
+    expect(subs.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('POST /api/insights/subscriptions', () => {

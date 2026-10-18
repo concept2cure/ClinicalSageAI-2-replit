@@ -23,7 +23,9 @@
  *
  * The register row is NEVER rolled back on a propagation failure: it is real
  * recorded data whether or not the dossier layer accepted it this second, and
- * saving it again re-attempts the link.
+ * saving it again re-attempts the link. The durable recovery read compares the
+ * saved register with its canonical source, and its retry reprojects the stored
+ * row without changing the register or its signatures (register-link-recovery).
  *
  * @module server/services/cmc/link-to-module3
  */
@@ -67,7 +69,7 @@ export const MODULE3_NO_PROJECT_WARNING =
   'Saved to the register only. No project is set on this record, so it does not feed Module 3 yet.';
 
 export const MODULE3_WRITE_FAILED_WARNING =
-  'Saved to the register. The Module 3 canonical write did not complete, so this record is not composed into the dossier yet; saving it again re-attempts the link.';
+  'Saved to the register. The Module 3 canonical write did not complete, so this record is not composed into the dossier yet. Retry its Module 3 link in the CMC register-links panel; saving it again also re-attempts the link.';
 
 export const MODULE3_PROJECT_NOT_IN_TENANT_WARNING =
   'Saved to the register only. The project named on the request is not one of this organization\'s programs or projects, so the record was not linked into any Module 3 dossier.';
@@ -92,7 +94,9 @@ export const NO_CANONICAL_SOURCES_REMEDY =
  * `propagation_failed` error under `cmc_<propagation>`. The primary response
  * is never blocked on this, and a metric sink that throws never reaches the
  * request.
- * TODO(GA): consider retry/queue for guaranteed write-through.
+ * register-link-recovery provides durable missing/outdated status and an
+ * explicit retry through the same writer. Automatic queue delivery is not
+ * claimed: failed links stay pending until a successful retry or register save.
  */
 export function observeWriteThroughFailure(
   propagation: string,

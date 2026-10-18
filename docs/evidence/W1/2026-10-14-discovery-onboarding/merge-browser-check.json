@@ -1,0 +1,23 @@
+{
+  "browser": "Chromium",
+  "requestMode": "Synthetic API replies; actual canonical UI, AuthProvider and CSS",
+  "widths": [
+    1280,
+    390
+  ],
+  "mobileOverflow": [],
+  "pageErrors": [],
+  "completedRevision": 4,
+  "conditionalDiagnosticQuestions": true,
+  "reviewerRoleRetained": true,
+  "writePaths": [
+    "/api/onboarding/discovery",
+    "/api/onboarding/discovery",
+    "/api/onboarding/discovery",
+    "/api/onboarding/discovery",
+    "/api/organizations/7/profile",
+    "/api/mdx/industry-profile",
+    "/api/tenant-users",
+    "/api/billing/dtc-checkout"
+  ]
+}

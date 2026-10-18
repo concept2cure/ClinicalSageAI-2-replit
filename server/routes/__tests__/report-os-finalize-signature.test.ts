@@ -23,6 +23,14 @@ import request from 'supertest';
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -231,7 +239,7 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
 const CEREMONY_NO_AUTHORITY =
   'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
 
-describe('POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g))', () => {
+describe('POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g))', () => {
   it.each(['owner', 'manager'])(
     'refuses the role %s, which the default signing policy does not admit: the ceremony\'s 403, before any password or transaction',
     async (role) => {
@@ -274,14 +282,15 @@ describe('POST /runs/:id/finalize needs signing authority, checked once, by the 
     nothingWritten();
   });
 
-  it('a role with authority is looked up once, by the ceremony, and signs', async () => {
+  it('a role with authority is checked before credentials and again on the signing transaction', async () => {
     h.memberRole.mockResolvedValue('admin');
     eligible();
     lockedAs('completed');
     const res = await finalize('admin');
     expect(res.status).toBe(200);
-    expect(h.memberRole).toHaveBeenCalledTimes(1);
-    expect(h.memberRole).toHaveBeenCalledWith(5, 7);
+    expect(h.memberRole).toHaveBeenCalledTimes(2);
+    expect(h.memberRole).toHaveBeenNthCalledWith(1, 5, 7);
+    expect(h.memberRole).toHaveBeenNthCalledWith(2, 5, 7, expect.objectContaining({ query: expect.any(Function) }));
   });
 });
 

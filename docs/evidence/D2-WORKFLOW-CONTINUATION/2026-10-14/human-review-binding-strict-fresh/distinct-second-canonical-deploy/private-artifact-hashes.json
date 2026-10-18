@@ -1,0 +1,20 @@
+{
+  "privateArtifacts": {
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/run.py": "adf59f6e220940068d7260faf55713a2b76990577f8ec03a333daf6a5dc6fefc",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/validate-second-deploy.mjs": "42f452200b6f56f5657028af8e1944c80cd919fd6bba34c5763f8e5f5f610e23",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/before-source-pins.json": "a671f02d5e874a83e0e30f33aa94fcec5cdb110f38f34ef3975df8c0e74c6d77",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/after-source-pins.json": "ea66c16a7559c65297cf2229f66e51b7cf9aba66493486db39e99c272d4448ca",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/stages.json": "fd05ec60e54ea18fb2474e8d241c36b4e27d3efbf845ad6592ed209fda33ae47",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/deploy2.json": "8f0551aa5d3a4e801fb9947d728dcd3c5a46bacb0e3f35e381d09e061a144135",
+    "/tmp/authoring-review-binding-strict-fresh-second-deploy/second-deploy.log": "e25b572e572c9303a650c2ecea2649bd85adea0e47faeabf6aed3c942ad9472b"
+  },
+  "comparisonBaseline": {
+    "path": "/tmp/authoring-review-binding-strict-fresh-prep/deploy1-diagnostic.json",
+    "sha256": "2bedc850ef4d0ad38bbbf6a725dbb4bfe2079a62f8312edabbbaf13980055601",
+    "physicalSha256": "ccbf222dd6a018c47911abf99d69109e547d43a4d8b18a3082ca6332b24fbd51"
+  },
+  "priorAttemptManifestSha256": "46ebf04baea7ea1d9fa8ddbc0493f33bd2e644c433a32c7cd8e1a660fad40cdd",
+  "priorAttemptUnchanged": true,
+  "processExitCode": 0,
+  "timeouts": 0
+}

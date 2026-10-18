@@ -1,0 +1,56 @@
+.company-documents { margin: 24px 0 0; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-050); color: var(--text-100); min-width: 0; }
+.company-section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.company-section-head h2 { margin: 4px 0 8px; font-size: 19px; line-height: 1.4; font-weight: 650; }
+.company-section-head p, .company-legal-intro p { color: var(--text-300); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
+.company-eyebrow { font-size: 10px; letter-spacing: .12em; color: var(--text-400); text-transform: uppercase; }
+.company-revision { white-space: nowrap; font-size: 11px; color: var(--text-400); border: 1px solid var(--border); border-radius: 30px; padding: 4px 9px; }
+.company-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.company-tabs .active { background: var(--bg-200); color: var(--text-100); box-shadow: inset 0 -2px 0 var(--accent-strong); }
+.company-design-layout { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(220px, .8fr); gap: 28px; align-items: start; }
+.company-editor { border: 0; margin: 0; padding: 0; min-width: 0; }
+.company-editor h3, .company-legal-intro h3 { font-size: 15px; margin: 0 0 10px; }
+.company-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.company-wide { grid-column: 1 / -1; }
+.company-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; min-width: 0; }
+.company-field > span { color: var(--text-300); }
+.company-field input, .company-field textarea, .company-field select { width: 100%; box-sizing: border-box; border: 1px solid var(--border-control, var(--border)); background: var(--bg-000, var(--bg-050)); color: var(--text-100); border-radius: 6px; padding: 8px 9px; font: inherit; font-size: 13px; }
+.company-field input[type=color] { padding: 3px; min-height: 34px; }
+.company-field textarea { resize: vertical; }
+.company-field input:focus-visible, .company-field textarea:focus-visible, .company-field select:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 1px; }
+.company-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.6; margin: 10px 0; color: var(--text-200); }
+.company-check input { accent-color: var(--accent-strong); margin-top: 3px; }
+.company-hint { font-size: 11.5px; line-height: 1.6; color: var(--text-400); margin: 9px 0; overflow-wrap: anywhere; }
+.company-defaults { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.company-preview-shell { background: var(--bg-100); border: 1px solid var(--border); border-radius: 9px; padding: 14px; min-width: 0; }
+.company-preview-caption { font-size: 10px; color: var(--text-400); margin: 0 0 12px; }
+.company-preview { background: #fff; box-shadow: 0 3px 14px #0001; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; }
+.company-preview header { font-size: 8px; line-height: 1.6; padding-bottom: 10px; border-bottom: 2px solid; white-space: pre-wrap; }
+.company-preview header strong { display: block; font-size: 15px; }
+.company-preview img { max-height: 45px; max-width: 120px; object-fit: contain; margin-bottom: 6px; }
+.company-preview main { padding: 12px 0; flex: 1; font-size: 10px; }
+.company-preview main h3 { font-size: 13px; margin: 5px 0 15px; }
+.company-preview footer { font-size: 7px; white-space: pre-wrap; text-align: center; padding-top: 8px; border-top: 1px solid #ddd; }
+.company-preview-placeholder { color: #999; border: 1px dashed #ddd; padding: 20px 5px; text-align: center; }
+.company-save-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; padding-top: 18px; border-top: 1px solid var(--border); margin-top: 20px; }
+.company-save-bar .company-field { flex: 1; min-width: 200px; }
+.company-notice { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-100); font-size: 12px; line-height: 1.6; }
+.company-error { border-color: var(--danger, #b84141); color: var(--danger, #b84141); }
+.company-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.company-actions .company-field { flex: 1; min-width: 180px; }
+.company-register { margin: 18px 0; border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.company-documents summary { font-size: 12px; cursor: pointer; color: var(--text-200); }
+.company-register > summary { margin-bottom: 14px; font-weight: 600; }
+.company-vault-search { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 16px; }
+.company-search-results { max-height: 260px; overflow: auto; margin-top: 10px; }
+.company-search-hit { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.company-search-hit small { display: block; color: var(--text-400); margin-top: 4px; }
+.company-legal-list { display: grid; gap: 12px; }
+.company-legal-card { border: 1px solid var(--border); border-radius: 9px; padding: 16px; }
+.company-legal-card h4 { margin: 0 0 6px; font-size: 14px; }
+.company-legal-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.company-legal-card dt { font-size: 10px; color: var(--text-400); }
+.company-legal-card dd { font-size: 12px; margin: 3px 0 0; }
+.company-empty { border: 1px dashed var(--border); border-radius: 8px; padding: 22px; color: var(--text-400); font-size: 12px; }
+.company-archive { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+@media (max-width: 1000px) { .company-design-layout { grid-template-columns: minmax(0, 1fr); } .company-preview-shell { max-width: 430px; } }
+@media (max-width: 600px) { .company-documents { padding: 15px; } .company-fields, .company-legal-card dl { grid-template-columns: minmax(0, 1fr); } .company-wide { grid-column: auto; } .company-section-head { flex-wrap: wrap; } }

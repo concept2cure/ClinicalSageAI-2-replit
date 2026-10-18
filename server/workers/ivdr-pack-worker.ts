@@ -20,7 +20,7 @@
 import { Pool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
 import { buildManifestV1 } from '../services/ivdrPackManifest';
-import { buildIvdrPackContent } from '../services/ivdrPackContent';
+import { buildIvdrPackContent, readIvdrPackRecordIds } from '../services/ivdrPackContent';
 import { generateIvdrDocx } from '../services/docxGenerator';
 import { renderIvdrPackHtml } from '../services/ivdrPackHtml';
 import { renderHtmlToPdfTracked } from '../export/renderers';
@@ -68,6 +68,8 @@ function safePackError(error: any): SafePackError {
     return { code: 'IVDR_NOT_READY', label: 'Required binder claims not approved' };
   if (msg.includes('IVDR_NO_CLAIMS'))
     return { code: 'IVDR_NO_CLAIMS', label: 'No required claims found for this pack type' };
+  if (msg.includes('IVDR_NO_PROGRAM'))
+    return { code: 'IVDR_NO_PROGRAM', label: 'Project is not a live regulatory programme of this organization' };
   if (msg.includes('IVDR_MISSING_EVIDENCE'))
     return { code: 'IVDR_MISSING_EVIDENCE', label: 'One or more claims missing evidence' };
   if (msg.includes('IVDR_SNAPSHOT_FAILED'))
@@ -262,33 +264,13 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     }));
   }
 
-  // Collect IVDR record IDs (classifications, validations, evidence, cdx)
-  const classResult = await pool
-    .query(
-      `SELECT id FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-      [orgId]
-    )
-    .catch(() => ({ rows: [] }));
-
-  const analyticalResult = await pool
-    .query(
-      `SELECT id FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at`,
-      [orgId]
-    )
-    .catch(() => ({ rows: [] }));
-
-  const clinicalResult = await pool
-    .query(`SELECT id FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at`, [
-      orgId,
-    ])
-    .catch(() => ({ rows: [] }));
-
-  const cdxResult = await pool
-    .query(
-      `SELECT id FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-      [orgId]
-    )
-    .catch(() => ({ rows: [] }));
+  // Collect IVDR record IDs (classifications, validations, evidence, cdx) with
+  // the same programme-scoped reads the rendered pack uses.
+  // 2026-10-15: these were four organization-wide queries, each caught into an
+  // empty list, so the snapshot hashed into this pack named other devices'
+  // records and read a failed section as "none". A projectId that is no live
+  // programme is now refused here (IVDR_NO_PROGRAM), before a version is taken.
+  const records = await readIvdrPackRecordIds(pool, orgId, projectId);
 
   const snapshot = {
     snapshotVersion: '1.0' as const,
@@ -296,11 +278,12 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     projectId,
     packType,
     ivdrRecordIds: {
-      classificationId: classResult.rows[0]?.id || undefined,
-      analyticalValidationIds: analyticalResult.rows.map((r: any) => r.id),
-      clinicalEvidenceIds: clinicalResult.rows.map((r: any) => r.id),
-      cdxWorkflowId: cdxResult.rows[0]?.id || undefined,
+      classificationId: records.classificationId,
+      analyticalValidationIds: records.analyticalValidationIds,
+      clinicalEvidenceIds: records.clinicalEvidenceIds,
+      cdxWorkflowId: records.cdxWorkflowId,
     },
+    ...(records.readFailures.length > 0 ? { ivdrRecordReadFailures: records.readFailures } : {}),
     binder: {
       claimIds,
       requiredClaimIds,

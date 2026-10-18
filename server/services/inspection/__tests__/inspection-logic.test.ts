@@ -11,6 +11,7 @@ import {
   outcomeSeverity,
   findingPriority,
   scoreReadiness,
+  requiredReadinessDomains,
   type ReadinessArea,
 } from '../inspection-logic';
 
@@ -43,10 +44,14 @@ describe('outcomeSeverity / findingPriority', () => {
   });
 });
 
+// 2026-10-15: these used two arbitrary areas ('a', 'b') as the whole assessment —
+// the defect itself. They now record the required readiness domains.
+const gmp = requiredReadinessDomains('gmp').map((d) => d.id);
+
 describe('scoreReadiness', () => {
-  it('scores all-ready areas at 100 / ready', () => {
-    const areas: ReadinessArea[] = [{ area: 'a', status: 'ready' }, { area: 'b', status: 'ready' }];
-    const r = scoreReadiness(areas);
+  it('scores all-ready required domains at 100 / ready', () => {
+    const areas: ReadinessArea[] = gmp.map((area) => ({ area, status: 'ready' }));
+    const r = scoreReadiness(areas, { inspectionType: 'gmp' });
     expect(r.score).toBe(100);
     expect(r.verdict).toBe('ready');
     expect(r.blockers).toHaveLength(0);
@@ -57,11 +62,12 @@ describe('scoreReadiness', () => {
     expect(r.blockers.some((b) => /data integrity/.test(b))).toBe(true);
   });
   it('counts in_progress as half', () => {
-    const r = scoreReadiness([{ area: 'a', status: 'ready' }, { area: 'b', status: 'in_progress' }]);
+    const r = scoreReadiness(gmp.map((area, i) => ({ area, status: i % 2 ? 'in_progress' : 'ready' })), { inspectionType: 'gmp' });
     expect(r.score).toBe(75);
     expect(r.verdict).toBe('mostly_ready');
   });
-  it('returns not_ready when no areas assessed', () => {
-    expect(scoreReadiness([]).verdict).toBe('not_ready');
+  // 2026-10-15: pinned 'not_ready' — a verdict for an assessment nobody made.
+  it('returns incomplete when no areas assessed', () => {
+    expect(scoreReadiness([]).verdict).toBe('incomplete');
   });
 });

@@ -1,0 +1,2 @@
+❌ purge-coverage: DATABASE_URL is unset or a placeholder.
+   This check measures a LIVE schema; refusing to pass without one.

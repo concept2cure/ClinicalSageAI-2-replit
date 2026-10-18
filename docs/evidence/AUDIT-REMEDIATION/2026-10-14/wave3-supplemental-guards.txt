@@ -1,0 +1,394 @@
+TAP version 13
+# Subtest: recognizes the actual request-pinned transaction and both awaited prose callbacks
+ok 1 - recognizes the actual request-pinned transaction and both awaited prose callbacks
+  ---
+  duration_ms: 50.114554
+  type: 'test'
+  ...
+# Subtest: refuses missing wrapper
+ok 2 - refuses missing wrapper
+  ---
+  duration_ms: 27.274704
+  type: 'test'
+  ...
+# Subtest: refuses missing BEGIN
+ok 3 - refuses missing BEGIN
+  ---
+  duration_ms: 12.997388
+  type: 'test'
+  ...
+# Subtest: refuses missing COMMIT
+ok 4 - refuses missing COMMIT
+  ---
+  duration_ms: 10.685187
+  type: 'test'
+  ...
+# Subtest: refuses missing ROLLBACK
+ok 5 - refuses missing ROLLBACK
+  ---
+  duration_ms: 8.485222
+  type: 'test'
+  ...
+# Subtest: refuses different callback client
+ok 6 - refuses different callback client
+  ---
+  duration_ms: 6.063097
+  type: 'test'
+  ...
+# Subtest: refuses different governance client
+ok 7 - refuses different governance client
+  ---
+  duration_ms: 6.641646
+  type: 'test'
+  ...
+# Subtest: refuses different section writer client
+ok 8 - refuses different section writer client
+  ---
+  duration_ms: 10.264733
+  type: 'test'
+  ...
+# Subtest: refuses different synopsis writer client
+ok 9 - refuses different synopsis writer client
+  ---
+  duration_ms: 7.862528
+  type: 'test'
+  ...
+# Subtest: refuses unawaited callback
+ok 10 - refuses unawaited callback
+  ---
+  duration_ms: 7.448883
+  type: 'test'
+  ...
+# Subtest: refuses unawaited writer
+ok 11 - refuses unawaited writer
+  ---
+  duration_ms: 21.900099
+  type: 'test'
+  ...
+# Subtest: refuses rebound writer client
+ok 12 - refuses rebound writer client
+  ---
+  duration_ms: 4.94646
+  type: 'test'
+  ...
+# Subtest: refuses different request
+ok 13 - refuses different request
+  ---
+  duration_ms: 4.336476
+  type: 'test'
+  ...
+# Subtest: refuses noncanonical request helper
+ok 14 - refuses noncanonical request helper
+  ---
+  duration_ms: 5.51252
+  type: 'test'
+  ...
+# Subtest: refuses missing forwarding function
+ok 15 - refuses missing forwarding function
+  ---
+  duration_ms: 4.282155
+  type: 'test'
+  ...
+# Subtest: refuses substituted forwarded callback
+ok 16 - refuses substituted forwarded callback
+  ---
+  duration_ms: 5.028141
+  type: 'test'
+  ...
+# Subtest: a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+ok 17 - a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+  ---
+  duration_ms: 6.775766
+  type: 'test'
+  ...
+# Subtest: request binding failure must return before transaction entry
+ok 18 - request binding failure must return before transaction entry
+  ---
+  duration_ms: 4.203158
+  type: 'test'
+  ...
+# Subtest: the actual service callback itself must await the governed transaction
+ok 19 - the actual service callback itself must await the governed transaction
+  ---
+  duration_ms: 3.866288
+  type: 'test'
+  ...
+# Subtest: the real guard accepts actual Protocol ownership without removing its guarded service
+ok 20 - the real guard accepts actual Protocol ownership without removing its guarded service
+  ---
+  duration_ms: 559.413774
+  type: 'test'
+  ...
+# Subtest: the real guard rejects a different writer client even if an unrelated pooled transaction exists
+ok 21 - the real guard rejects a different writer client even if an unrelated pooled transaction exists
+  ---
+  duration_ms: 429.651381
+  type: 'test'
+  ...
+# Subtest: the gate ran against the fixture tree, not the repository
+ok 22 - the gate ran against the fixture tree, not the repository
+  ---
+  duration_ms: 372.467626
+  type: 'test'
+  ...
+# Subtest: a content write after a string holding /* is discovered
+ok 23 - a content write after a string holding /* is discovered
+  ---
+  duration_ms: 0.25572
+  type: 'test'
+  ...
+# Subtest: a content write after an https:// string on the same line is discovered
+ok 24 - a content write after an https:// string on the same line is discovered
+  ---
+  duration_ms: 0.178755
+  type: 'test'
+  ...
+# Subtest: a content write only inside real comments is not a writer
+ok 25 - a content write only inside real comments is not a writer
+  ---
+  duration_ms: 0.104215
+  type: 'test'
+  ...
+# Subtest: a content write named only in a trailing line comment is not a writer
+ok 26 - a content write named only in a trailing line comment is not a writer
+  ---
+  duration_ms: 0.09406
+  type: 'test'
+  ...
+# Subtest: a string holding /* or // does not open a comment
+ok 27 - a string holding /* or // does not open a comment
+  ---
+  duration_ms: 1.032102
+  type: 'test'
+  ...
+# Subtest: a quote inside a regex literal does not mis-pair the strings after it
+ok 28 - a quote inside a regex literal does not mis-pair the strings after it
+  ---
+  duration_ms: 1.174593
+  type: 'test'
+  ...
+# Subtest: a backtick inside a regex class does not swallow a template literal
+ok 29 - a backtick inside a regex class does not swallow a template literal
+  ---
+  duration_ms: 0.259155
+  type: 'test'
+  ...
+# Subtest: a division is not read as a regex
+ok 30 - a division is not read as a regex
+  ---
+  duration_ms: 0.273165
+  type: 'test'
+  ...
+# Subtest: a regex after return, =>, ( and = is skipped whole
+ok 31 - a regex after return, =>, ( and = is skipped whole
+  ---
+  duration_ms: 0.260737
+  type: 'test'
+  ...
+# Subtest: JSX closing tags are not regex literals, and comments around them still go
+ok 32 - JSX closing tags are not regex literals, and comments around them still go
+  ---
+  duration_ms: 0.162802
+  type: 'test'
+  ...
+# Subtest: lines are kept: the output has as many lines as the input, in both modes
+ok 33 - lines are kept: the output has as many lines as the input, in both modes
+  ---
+  duration_ms: 0.476386
+  type: 'test'
+  ...
+# Subtest: lineComments: 'drop' deletes a // comment instead of blanking it
+ok 34 - lineComments: 'drop' deletes a // comment instead of blanking it
+  ---
+  duration_ms: 0.163903
+  type: 'test'
+  ...
+# Subtest: proof retains exact source, builder, module, alias and counted opening
+ok 35 - proof retains exact source, builder, module, alias and counted opening
+  ---
+  duration_ms: 20.638587
+  type: 'test'
+  ...
+# Subtest: a valid AST call outside the raw regex count never creates a subtraction
+ok 36 - a valid AST call outside the raw regex count never creates a subtraction
+  ---
+  duration_ms: 2.310228
+  type: 'test'
+  ...
+# Subtest: duplicate counted offsets cannot subtract the same expression twice
+ok 37 - duplicate counted offsets cannot subtract the same expression twice
+  ---
+  duration_ms: 1.706312
+  type: 'test'
+  ...
+# Subtest: only a direct first argument to query receives proof
+ok 38 - only a direct first argument to query receives proof
+  ---
+  duration_ms: 5.49913
+  type: 'test'
+  ...
+# Subtest: caller paths are exact and do not normalize alternative paths into approval
+ok 39 - caller paths are exact and do not normalize alternative paths into approval
+  ---
+  duration_ms: 0.213106
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(alias)
+ok 40 - unproved expression remains counted: vaultDataEligibleSql(alias)
+  ---
+  duration_ms: 1.362041
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+ok 41 - unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+  ---
+  duration_ms: 1.195494
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("s")
+ok 42 - unproved expression remains counted: vaultDataEligibleSql("s")
+  ---
+  duration_ms: 2.716922
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d.x")
+ok 43 - unproved expression remains counted: vaultDataEligibleSql("d.x")
+  ---
+  duration_ms: 1.217206
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+ok 44 - unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+  ---
+  duration_ms: 1.055737
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(`d`)
+ok 45 - unproved expression remains counted: vaultDataEligibleSql(`d`)
+  ---
+  duration_ms: 4.976585
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("\\x64")
+ok 46 - unproved expression remains counted: vaultDataEligibleSql("\\x64")
+  ---
+  duration_ms: 1.3683
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+ok 47 - unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+  ---
+  duration_ms: 0.607011
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(...["d"])
+ok 48 - unproved expression remains counted: vaultDataEligibleSql(...["d"])
+  ---
+  duration_ms: 0.85522
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql?.("d")
+ok 49 - unproved expression remains counted: vaultDataEligibleSql?.("d")
+  ---
+  duration_ms: 0.864953
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql<string>("d")
+ok 50 - unproved expression remains counted: vaultDataEligibleSql<string>("d")
+  ---
+  duration_ms: 0.846917
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+ok 51 - unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+  ---
+  duration_ms: 0.515355
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql)("d")
+ok 52 - unproved expression remains counted: (vaultDataEligibleSql)("d")
+  ---
+  duration_ms: 1.014385
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql("d"))
+ok 53 - unproved expression remains counted: (vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 0.668121
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: String(vaultDataEligibleSql("d"))
+ok 54 - unproved expression remains counted: String(vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 0.651026
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+ok 55 - unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+  ---
+  duration_ms: 1.082717
+  type: 'test'
+  ...
+# Subtest: named import aliases and specifier-level type-only imports fail closed
+ok 56 - named import aliases and specifier-level type-only imports fail closed
+  ---
+  duration_ms: 2.294104
+  type: 'test'
+  ...
+# Subtest: catch/function/declaration shadowing cannot borrow another scope import proof
+ok 57 - catch/function/declaration shadowing cannot borrow another scope import proof
+  ---
+  duration_ms: 3.980717
+  type: 'test'
+  ...
+# Subtest: malformed syntax receives no partial parser proof
+ok 58 - malformed syntax receives no partial parser proof
+  ---
+  duration_ms: 1.329313
+  type: 'test'
+  ...
+# Subtest: multiple actual template spans retain their own opening offsets
+ok 59 - multiple actual template spans retain their own opening offsets
+  ---
+  duration_ms: 0.949369
+  type: 'test'
+  ...
+# Subtest: query type arguments and trivia do not change the import binding proof
+ok 60 - query type arguments and trivia do not change the import binding proof
+  ---
+  duration_ms: 1.004631
+  type: 'test'
+  ...
+# Subtest: a nested backtick cannot make a later uncounted expression eligible
+ok 61 - a nested backtick cannot make a later uncounted expression eligible
+  ---
+  duration_ms: 5.773117
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/figureGenerationService.ts
+ok 62 - content eligibility proof is restricted to its exact caller, import and alias: server/services/figureGenerationService.ts
+  ---
+  duration_ms: 5.03395
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/autoExtractionPipeline.ts
+ok 63 - content eligibility proof is restricted to its exact caller, import and alias: server/services/autoExtractionPipeline.ts
+  ---
+  duration_ms: 34.23298
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/keywordExtractionService.ts
+ok 64 - content eligibility proof is restricted to its exact caller, import and alias: server/services/keywordExtractionService.ts
+  ---
+  duration_ms: 3.723726
+  type: 'test'
+  ...
+1..64
+# tests 64
+# suites 0
+# pass 64
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1621.190648

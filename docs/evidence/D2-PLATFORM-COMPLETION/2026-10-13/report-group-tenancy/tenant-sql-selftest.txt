@@ -1,0 +1,26 @@
+[ci:tenant-isolation:selftest] gate under test: scripts/ci/check-tenant-isolation.mjs
+  ✓ harness — the patched gate scans the fixture tree, not this repository (empty tree is OK under --strict)
+  ✓ RED — DP-37: unscoped leaf-program lookup on vault.documents (its scoped sibling stays quiet)
+  ✓ RED — DP-37 as CI caught it: --strict-no-regression fails on 1 NEW finding above the baseline and names it
+  ✓ RED — submission lane (2026-09-28): ectd_sequences / submission_leaves / electronic_signatures read by primary key
+  ✓ RED — clinical-operations: ($1::INT IS NULL OR org_id = $1) is flagged even on tables NOT in the tenant list
+  ✓ RED — an optional tenant predicate on a listed table, although organization_id appears in the SELECT list
+  ✓ RED — a WHERE assembled from fragments with no tenant predicate (15a38fbf), and the VR-08 head walk
+  ✓ RED — writes and every quote style: UPDATE / DELETE FROM / INSERT INTO, single- and double-quoted, public. prefix
+  ✓ RED — a marker with no reason suppresses nothing; a reasoned marker does not reach a query 9 lines below it
+  ✓ RED control for the skip rules — only the plain file and the removed phantom server/routes/admin.ts are scanned
+  ✓ mode — default (no flag) reports the finding as WARN and exits 0; only --strict and --strict-no-regression fail
+  ✓ GREEN — DP-37 as fixed: the tenant predicate reaches vault.documents through regulatory_programs
+  ✓ GREEN — project-vault idiom: WHERE ${uploadsWhere} and a fragment built from it (${headsWhere}) carry the predicate
+  ✓ GREEN — quoted SQL literals ('active', '') before the tenant filter do not hide it
+  ✓ GREEN — (org_id IS NULL OR org_id = $1) is global-or-own, and ($2 IS NULL OR status = $2) is not a tenant escape
+  ✓ GREEN — SQL inside comments, a table name only as a word, and tables that merely START with a tenant table name
+  ✓ GREEN — a reasoned // tenant-isolation-safe: marker suppresses its query and is recorded with its reason
+  ✓ BASELINE — written fingerprint is file#sha12:tables; a baselined finding passes; line drift and reflow do not churn it
+  ✓ BASELINE — editing a baselined unscoped statement makes it NEW (and the old entry reported resolved)
+  ✓ BASELINE — the same unscoped SQL in a second file is NEW (fingerprints are file-scoped: DP-37's second caller)
+  ✓ BASELINE — a fixed (stale) entry is reported as resolved, not fatal; the gate does not fail on over-allowance
+  ✓ BASELINE — --strict-no-regression with no baseline file fails
+  ✓ BASELINE — a legacy file:line:tables entry covers its (file, tables) at any line, and no other table set
+
+[ci:tenant-isolation:selftest] 23 passed — the gate fails on what it exists to catch. (2.2s)

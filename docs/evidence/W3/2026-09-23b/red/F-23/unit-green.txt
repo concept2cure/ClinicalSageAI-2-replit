@@ -143,4 +143,3 @@ stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-clos
       Tests  4 passed (4)
    Start at  04:55:18
    Duration  1.61s (transform 749ms, setup 85ms, import 1.33s, tests 18ms, environment 0ms)
-

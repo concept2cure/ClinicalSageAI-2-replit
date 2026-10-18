@@ -1,0 +1,2 @@
+column UPDATE fails SHARE lock: 42501
+table UPDATE permits SHARE lock

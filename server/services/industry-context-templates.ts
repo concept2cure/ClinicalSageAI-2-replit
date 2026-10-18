@@ -374,14 +374,20 @@ export function getAgencies(): Array<{ value: string; label: string }> {
   }));
 }
 
-/** Get a specific company template by type */
-export function getCompanyTemplate(companyType: CompanyType): CompanyTemplate {
-  return COMPANY_TEMPLATES[companyType] ?? COMPANY_TEMPLATES.biotech;
+/**
+ * Get a specific company template by type; null for a type with no template.
+ * 2026-10-15: an unknown type (e.g. "cro") returned the biotech template as its own.
+ */
+export function getCompanyTemplate(companyType: CompanyType): CompanyTemplate | null {
+  return COMPANY_TEMPLATES[companyType] ?? null;
 }
 
-/** Get a specific project template by type */
-export function getProjectTemplate(projectType: ProjectType): ProjectTemplate {
-  return PROJECT_TEMPLATES[projectType] ?? PROJECT_TEMPLATES.IND;
+/**
+ * Get a specific project template by type; null for a type with no template.
+ * 2026-10-15: an unknown type returned the IND template as its own.
+ */
+export function getProjectTemplate(projectType: ProjectType): ProjectTemplate | null {
+  return PROJECT_TEMPLATES[projectType] ?? null;
 }
 
 /** Get agency-specific convention template */
@@ -389,7 +395,7 @@ export function getAgencyConventions(agency: string): AgencyConvention | null {
   return AGENCY_CONVENTIONS[agency] ?? null;
 }
 
-/** Get merged template for a specific company + project + agencies combination */
+/** Get merged template for a specific company + project + agencies combination; null when either type has no template. */
 export function getTemplateForContext(
   companyType: CompanyType,
   projectType: ProjectType,
@@ -398,9 +404,10 @@ export function getTemplateForContext(
   companySections: TemplateSection[];
   projectSections: TemplateSection[];
   agencySections: Array<{ agency: string; sections: TemplateSection[] }>;
-} {
+} | null {
   const company = getCompanyTemplate(companyType);
   const project = getProjectTemplate(projectType);
+  if (!company || !project) return null;
 
   const agencySections = agencies
     .map(a => {

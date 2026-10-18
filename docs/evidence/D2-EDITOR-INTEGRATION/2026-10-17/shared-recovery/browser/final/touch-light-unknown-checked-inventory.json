@@ -1,0 +1,35 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": 390,
+  "bodyWidth": 390,
+  "notice": {
+    "x": 32,
+    "y": 156.171875,
+    "width": 326,
+    "height": 292.359375,
+    "right": 358,
+    "bottom": 448.53125
+  },
+  "noticeScrollWidth": 322,
+  "noticeClientWidth": 322,
+  "noticeText": "Check these working documents before requesting another copy. This read cannot identify the interrupted request or prove that nothing was saved. Another creation is a deliberate choice.This list does not identify which request created a document. Review it before creating another copy.Synthetic working document · synthetic-confirmed-documentOpen working documents",
+  "noticeRole": "alert",
+  "controls": [
+    {
+      "text": "Open working documents",
+      "disabled": false,
+      "rect": {
+        "x": 51,
+        "y": 401.53125,
+        "width": 182.53125,
+        "height": 32,
+        "right": 233.53125,
+        "bottom": 433.53125
+      }
+    }
+  ],
+  "sourceRetained": true
+}

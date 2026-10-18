@@ -6,14 +6,20 @@
  *   1. Train employees in how to raise change requests (the "How to raise a
  *      change" panel — AnA-first).
  *   2. Draft the change-control documents and forms we provide (the change
- *      forms gallery — each opens the controlled template).
+ *      forms gallery — the server library's change-control entries, each
+ *      created as a controlled draft and opened in the controlled-text editor).
  *   3. Monitor the change-control log aligned to ICH Q10 / Annex 15 (the
  *      register + lifecycle flowchart).
  *   4. Link every change to deviations, CAPAs and validation documents (the
  *      per-change cross-reference panel).
  *
- * AnA-first: governed actions are conversational prompts handed to the host's
- * AnA surface via `onAsk`, and AnA runs the governed transition with its reason.
+ * The log's controls write through the QMS routes (qmsWrites.ts): "Raise change
+ * request" (POST /changes), "Advance" (POST /changes/:id/transition, with a
+ * reason, over the moves the server lists for the row), "Link a record"
+ * (POST /changes/:id/links). Until 2026-10-17 each handed AnA a sentence and
+ * wrote nothing (audit 2026-10-17). AnA keeps the questions — the health
+ * check, the per-change summary, the procedure explanation — and their buttons
+ * say so.
  *
  * Approval is the exception, because it is an electronic signature and AnA
  * cannot sign: a chat turn cannot collect a password. A change under assessment
@@ -30,8 +36,7 @@ import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
-  FIXTURE_SUMMARY,
-  CHANGE_FORMS,
+  CHANGE_FORM_TEMPLATE_KEYS,
   STATE_LABEL,
   STATE_TONE,
   CHANGE_TYPE_LABEL,
@@ -48,15 +53,17 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-/* The canonical sample-mode guard and its marker, shared with the MDX lane
-   rather than re-implemented here — one definition of "may a fixture reach the
-   screen", so the two lanes cannot answer it differently. */
-import { useSampleValue } from '../mdx/lib/useSampleRows';
-import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import { postQmsApproval } from './qmsApproval';
+import { C2CForm } from '../v2/C2CForm';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { useSopTemplates } from './hooks';
+import { NewControlledDocumentForm } from './NewControlledDocumentForm';
+import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
+import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
+import type { ChangeType, Classification, LinkType, Relationship } from './changeData';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -69,16 +76,16 @@ export interface ChangeControlProps {
   openId: number | null;
   /** Toggle a row's linked-records panel. */
   onOpenIdChange: (id: number | null) => void;
-  /** The change register, already through the sample-mode boundary (see QualityApp). */
+  /** The change register as QualityApp read it — the tenant's rows, or none. */
   changes: ChangeControlRow[];
   /** True while the register read is in flight. */
   loading: boolean;
-  /** True when `changes` is the fixture — renders the standing sample marker. */
-  showingSample: boolean;
   /** The register read's error, when it failed. A failed read is not an empty log. */
   error?: string | null;
   /** Re-run the register read. */
   onRetry?: () => void;
+  onNavigate?: (target: string) => void;
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
@@ -98,12 +105,24 @@ function Kpi({
   );
 }
 
+const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+const optionsOf = <K extends string>(labels: Record<K, string>) =>
+  (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
+/** The moves a row may take here: the server's list, less approval (the signed route). */
+const unsignedMovesOf = (c: ChangeControlRow): Exclude<ChangeState, 'approved'>[] =>
+  (c.nextStates ?? []).filter((s): s is Exclude<ChangeState, 'approved'> => s !== 'approved');
+
 /** Icon element for a link type (from the shared `I` set). */
 function linkIcon(iconKey: string): React.ReactNode {
   return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
 }
 
-export function ChangeControl({
+export function ChangeControl(props: ChangeControlProps) {
+  const user = useAuthUser();
+  return <ChangeControlSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
+}
+
+function ChangeControlSession({
   onAsk,
   stage,
   onStageChange,
@@ -111,39 +130,78 @@ export function ChangeControl({
   onOpenIdChange,
   changes,
   loading,
-  showingSample,
   error,
   onRetry,
+  onNavigate,
+  onEditorOpenChange,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
   const user = useAuthUser(); // display only; the server resolves the signer
   /** The change being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
+  /** The open write drawer, if any: raise, advance a row, or link to a row. */
+  const [drawer, setDrawer] = React.useState<
+    | { kind: 'raise' }
+    | { kind: 'advance'; change: ChangeControlRow }
+    | { kind: 'link'; change: ChangeControlRow }
+    | { kind: 'document'; templateKey: string }
+    | null
+  >(null);
+  /** The server's refusal of the open drawer's write, shown in the drawer. */
+  const [refusal, setRefusal] = React.useState<string | null>(null);
+  /** The last write's outcome, shown above the log. */
+  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The real bound editing copy created from the gallery. */
+  const [editingId, setEditingId] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    onEditorOpenChange?.(editingId !== null);
+    return () => onEditorOpenChange?.(false);
+  }, [editingId, onEditorOpenChange]);
+  const writing = React.useRef(false);
+  const tpl = useSopTemplates();
+  const allTemplates = tpl.templates ?? [];
+  const changeForms = allTemplates.filter((t) => CHANGE_FORM_TEMPLATE_KEYS.includes(t.key));
+  const openDrawer = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /** Run a drawer's write: close and report on success, keep the drawer and its
+      values with the server's sentence on refusal. */
+  const runWrite = async (write: () => Promise<string>, after?: () => void) => {
+    if (writing.current) return;
+    writing.current = true;
+    setRefusal(null);
+    try {
+      const text = await write();
+      setDrawer(null);
+      setNotice({ tone: 'ok', text });
+      onRetry?.();
+      after?.();
+    } catch (err) {
+      setRefusal(`Not recorded — ${errText(err)}`);
+    } finally {
+      writing.current = false;
+    }
+  };
 
-  /* The register read — and its sample-mode boundary — lives in QualityApp
-     now, lifted because AnA's open-change action resolves free-text names
-     against the same rows this log renders, and a handler can only read state
-     its own component holds. `changes` arrives already gated: live rows, or
-     the fixture only under explicit sample mode (impossible in a production
-     build), always under the standing marker below. */
-  const summary = useSampleValue(sum.summary, FIXTURE_SUMMARY);
+  /* The register read lives in QualityApp, lifted because AnA's open-change
+     action resolves free-text names against the same rows this log renders,
+     and a handler can only read state its own component holds. */
+  const summary = sum.summary;
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
   /* Until 2026-09-25 a failed read rendered "No changes at this stage." under
      a flowchart of zeroes, while the KPI strip above said the totals were
      unavailable (HS-1, docs/evidence/reviews/2026-09-24/lenses.md). A resolved
-     list that is non-empty is live or explicit sample mode; an empty one with
-     an error, or still loading, is unread and may not render a count. */
+     list that is non-empty is live; an empty one with an error, or still
+     loading, is unread and may not render a count. */
   const failed = changes.length === 0 && error != null;
   const unread = failed || (changes.length === 0 && loading);
 
+  if (editingId !== null) return <ControlledDocumentWorkbench documentId={editingId}
+    onBack={() => { setEditingId(null); onRetry?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} />;
+
   return (
     <>
-      {/* The standing marker. This surface once had none — its raw fallback
-          was silent as well as ungated. The gate now lives with the read in
-          QualityApp; the marker stays here, where the rows render. */}
-      <SampleDataBanner show={showingSample} loading={loading} label="change records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -158,6 +216,7 @@ export function ChangeControl({
         <div className="qms-actions">
           <button
             className="qms-btn ghost"
+            title="Sends this request to AnA; nothing in the log changes"
             onClick={() =>
               onAsk(
                 'Run a change-control health check — show every change overdue for implementation, every one ' +
@@ -165,18 +224,11 @@ export function ChangeControl({
               )
             }
           >
-            {I.shieldCheck} Health check
+            {I.sparkles} Ask AnA for a health check
           </button>
           <button
             className="qms-btn primary"
-            onClick={() =>
-              onAsk(
-                'Help me raise a change request. Walk me through the change-request form: what is changing ' +
-                  '(current state → proposed state), the reason, the classification (minor / major / critical), ' +
-                  'the impact assessment, and which documents, deviations, CAPAs and validation records it affects. ' +
-                  'Then assign the next CC- number and open it as a controlled change.',
-              )
-            }
+            onClick={() => openDrawer({ kind: 'raise' })}
           >
             {I.plus} Raise change request
           </button>
@@ -184,7 +236,7 @@ export function ChangeControl({
       </div>
 
       {/* The KPI row is derived entirely from `summary`, so with no summary
-          there is nothing to count. `useSampleValue` returns null rather than a
+          there is nothing to count. An unread summary is null rather than a
           zero-filled shell precisely so this decision has to be made here: a
           row of zeroes is a claim about the register ("no open changes"), not
           an absence of information about it. */}
@@ -266,6 +318,11 @@ export function ChangeControl({
             <div>Links</div>
             <div />
           </div>
+          {notice && (
+            <div className="qms-empty" role={notice.tone === 'err' ? 'alert' : 'status'} data-tone={notice.tone}>
+              {notice.text}
+            </div>
+          )}
           {failed && (
             <ErrorState
               title="The change log could not be read"
@@ -321,28 +378,19 @@ export function ChangeControl({
                     {I.link} {linkCount}
                   </button>
                   <div className="qms-cell qms-rowacts">
-                    <button
-                      className="qms-chip"
-                      title="Advance this change"
-                      onClick={() =>
-                        onAsk(
-                          `Advance ${c.changeNumber} ${c.title} (currently ${STATE_LABEL[c.status]}). Tell me the next ` +
-                            'controlled step and ask me for the reason for the change. If the next step is approval, ' +
-                            'tell me to approve it here with the Approve button, which takes my signature.',
-                        )
-                      }
-                    >
-                      {I.arrowRight} Advance
-                    </button>
+                    {unsignedMovesOf(c).length > 0 && (
+                      <button
+                        className="qms-chip"
+                        title="Move this change to its next lifecycle state, with a reason for the move"
+                        onClick={() => openDrawer({ kind: 'advance', change: c })}
+                      >
+                        {I.arrowRight} Advance
+                      </button>
+                    )}
                     {c.status === 'under_assessment' && (
                       <button
                         className="qms-chip"
-                        disabled={showingSample}
-                        title={
-                          showingSample
-                            ? 'Sample changes cannot be approved'
-                            : 'Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it.'
-                        }
+                        title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
                         onClick={() => setApproving(c)}
                       >
                         {I.check} Approve
@@ -366,13 +414,7 @@ export function ChangeControl({
                       <span className="qcc-detail-title">Linked records</span>
                       <button
                         className="qms-link"
-                        onClick={() =>
-                          onAsk(
-                            `Link a record to change ${c.changeNumber}. Ask me whether it is a deviation, CAPA, ` +
-                              'validation protocol or controlled document, capture its reference and how it relates ' +
-                              '(triggered by / addresses / requires / impacts), then attach it.',
-                          )
-                        }
+                        onClick={() => openDrawer({ kind: 'link', change: c })}
                       >
                         {I.plus} Link a record
                       </button>
@@ -416,7 +458,7 @@ export function ChangeControl({
         <section className="qms-sec">
           <div className="qms-sec-head">
             <h2>How to raise a change</h2>
-            <span className="meta">AnA trains your team</span>
+            <span className="meta">Procedure guidance</span>
           </div>
           <div className="qcc-train">
             <ol className="qcc-steps">
@@ -431,24 +473,23 @@ export function ChangeControl({
                 className="qms-btn primary"
                 onClick={() =>
                   onAsk(
-                    'Train me on how to raise a change request in this quality system. Explain each step of the ' +
+                    'Explain how to raise a change request in this quality system. Explain each step of the ' +
                       'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
-                      'assessment looks like. Then quiz me and record read-and-understood training for the change-control SOP.',
+                      'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.',
                   )
                 }
               >
-                {I.users} Train me
+                {I.users} Explain the procedure
               </button>
               <button
                 className="qms-btn ghost"
                 onClick={() =>
                   onAsk(
-                    'Record read-and-understood training on the change-control procedure for my team. Ask me which ' +
-                      'team members, capture the acknowledgment method, and set the next refresh date.',
+                    'Help me find the change-control procedure in the SOP register. I will open its controlled revision and record my own read-and-understood acknowledgement there.',
                   )
                 }
               >
-                {I.bookOpen} Record team training
+                {I.bookOpen} Find the controlled procedure
               </button>
             </div>
           </div>
@@ -457,19 +498,20 @@ export function ChangeControl({
         <section className="qms-sec">
           <div className="qms-sec-head">
             <h2>Change-control documents & forms</h2>
-            <span className="meta">Draft in the editor and AnA’s Canvas</span>
+            <span className="meta">Created as controlled drafts in the SOP register</span>
           </div>
           <div className="qcc-forms">
-            {CHANGE_FORMS.map((f) => (
+            {tpl.templates == null && (
+              <div className="qms-empty" role="status">
+                {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
+              </div>
+            )}
+            {changeForms.map((f) => (
               <button
                 key={f.key}
                 className="qms-tpl-card"
-                onClick={() =>
-                  onAsk(
-                    `Create a new ${f.label} from the Quality system library. Assign the next ${f.numberPrefix} number, ` +
-                      'then open it in the editor with the standard change-control sections so I can draft it.',
-                  )
-                }
+                title={`Create a new ${f.label} as a draft with its standard change-control sections`}
+                onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
               >
                 <div className="qms-tpl-top">
                   <span className="qms-tpl-ico">{I.fileText}</span>
@@ -482,6 +524,119 @@ export function ChangeControl({
           </div>
         </section>
       </div>
+      {drawer?.kind === 'raise' && (
+        <C2CForm
+          config={{
+            eyebrow: 'Change control',
+            title: 'Raise change request',
+            sub: 'The change is recorded as proposed. Assessment, independent approval (your electronic signature is not enough — a second person signs), implementation and verification follow.',
+            governed: 'Raising a change writes an audit entry under your name.',
+            submitLabel: 'Raise change',
+            ...(refusal ? { notice: refusal } : {}),
+            fields: [
+              { key: 'changeNumber', label: 'Change number', type: 'text', required: true, half: true, placeholder: 'CC-2026-001', desc: 'Unique in your organisation.' },
+              { key: 'targetImplementationDate', label: 'Target implementation date', type: 'date', half: true },
+              { key: 'title', label: 'Title', type: 'text', required: true },
+              { key: 'changeType', label: 'What is changing', type: 'select', half: true, options: optionsOf(CHANGE_TYPE_LABEL) },
+              { key: 'classification', label: 'Classification', type: 'seg', half: true, options: optionsOf(CLASSIFICATION_LABEL) },
+              { key: 'description', label: 'Current state → proposed state', type: 'textarea', rows: 3 },
+              { key: 'reason', label: 'Reason for the change', type: 'textarea', rows: 3, required: true },
+            ],
+          }}
+          onCancel={() => setDrawer(null)}
+          onSubmit={(v) => void runWrite(async () => {
+            const row = await createQmsChange({
+              changeNumber: v.changeNumber.trim(), title: v.title.trim(), reason: v.reason.trim(),
+              description: v.description.trim() || undefined,
+              changeType: (v.changeType || undefined) as ChangeType | undefined,
+              classification: (v.classification || undefined) as Classification | undefined,
+              targetImplementationDate: v.targetImplementationDate || undefined,
+            });
+            return `${row.change_number} was raised as a proposed change.`;
+          })}
+        />
+      )}
+      {drawer?.kind === 'advance' && (() => {
+        const c = drawer.change;
+        const moves = unsignedMovesOf(c);
+        return (
+          <C2CForm
+            config={{
+              eyebrow: 'Change control',
+              title: `Advance ${c.changeNumber}`,
+              sub: `Currently ${STATE_LABEL[c.status]}. ${c.nextStates?.includes('approved') ? 'Approval is not a move here: it is the Approve button, which takes the approver’s electronic signature.' : ''}`,
+              governed: 'The move and its reason are written to the audit trail under your name.',
+              submitLabel: 'Record the move',
+              ...(refusal ? { notice: refusal } : {}),
+              fields: [
+                { key: 'to', label: 'Move to', type: 'select', required: true, options: moves.map((m) => ({ value: m, label: STATE_LABEL[m] })) },
+                { key: 'reason', label: 'Reason for this move', type: 'textarea', rows: 3, required: true, desc: `At least ${GOVERNED_REASON_MIN} characters, recorded verbatim.` },
+                ...(moves.includes('closed')
+                  ? [{ key: 'effectivenessReview', label: 'Effectiveness review (recorded when the change is closed)', type: 'textarea' as const, rows: 3 }]
+                  : []),
+              ],
+            }}
+            onCancel={() => setDrawer(null)}
+            onSubmit={(v) => {
+              const reason = v.reason.trim();
+              if (reason.length < GOVERNED_REASON_MIN) {
+                setRefusal(`Not recorded — a reason for the move of at least ${GOVERNED_REASON_MIN} characters is required.`);
+                return;
+              }
+              const to = v.to as Exclude<ChangeState, 'approved'>;
+              void runWrite(async () => {
+                await transitionQmsChange(c.id, {
+                  to, reason, ...(to === 'closed' && v.effectivenessReview?.trim() ? { effectivenessReview: v.effectivenessReview.trim() } : {}),
+                });
+                return `${c.changeNumber} moved to ${STATE_LABEL[to]}.`;
+              });
+            }}
+          />
+        );
+      })()}
+      {drawer?.kind === 'link' && (
+        <C2CForm
+          config={{
+            eyebrow: 'Change control',
+            title: `Link a record to ${drawer.change.changeNumber}`,
+            governed: 'The link is written to the audit trail under your name.',
+            submitLabel: 'Link record',
+            ...(refusal ? { notice: refusal } : {}),
+            fields: [
+              { key: 'linkType', label: 'Record type', type: 'select', required: true, half: true, options: optionsOf(LINK_TYPE_LABEL) },
+              { key: 'relationship', label: 'How it relates', type: 'select', half: true, options: optionsOf(RELATIONSHIP_LABEL) },
+              { key: 'linkedRef', label: 'Reference', type: 'text', required: true, placeholder: 'DEV-2026-041', desc: 'The record’s number as it appears in its own register.' },
+              { key: 'linkedLabel', label: 'Short description', type: 'text' },
+            ],
+          }}
+          onCancel={() => setDrawer(null)}
+          onSubmit={(v) => {
+            const c = drawer.change;
+            void runWrite(async () => {
+              await linkQmsChange(c.id, {
+                linkType: v.linkType as LinkType,
+                linkedRef: v.linkedRef.trim(),
+                linkedLabel: v.linkedLabel.trim() || undefined,
+                relationship: (v.relationship || undefined) as Relationship | undefined,
+              });
+              return `${v.linkedRef.trim()} was linked to ${c.changeNumber}.`;
+            });
+          }}
+        />
+      )}
+      {drawer?.kind === 'document' && (
+        <NewControlledDocumentForm
+          templates={allTemplates}
+          initialKey={drawer.templateKey}
+          onCancel={() => setDrawer(null)}
+          onNavigate={onNavigate}
+          onCreated={(id) => {
+            setDrawer(null);
+            onRetry?.();
+            setEditingId(id);
+          }}
+        />
+      )}
       {approving && (
         <EsignModal
           open

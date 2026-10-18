@@ -1,0 +1,111 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > places creation notices outside the horizontally scrolling header actions 310ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project bbbbbbbb-0000-4000-8000-000000000001 and held-switch refusal to creation 115ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > passes the effective project null and held-switch refusal to creation 125ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a filtered host through the existing editor handoff 127ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created ID from a pinned host through the existing editor handoff 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > opens the exact created document after a clean all-status list refresh 235ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a filtered host 680ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > retains dirty work and permits a confirmed-ID open retry in a pinned host 424ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > consults the current dirty editor after a document-list refresh 291ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after project round trip 165ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > creation stays in the existing editor host context > suppresses a delayed creation open after unmount 95ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > retains text typed while the section refresh is pending 277ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > opens the returned section after a clean refresh 185ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > ignores an older section refresh after a project round trip 166ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > created sections use the current leave decision after the refresh > does not select the created section when its refresh fails 108ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > completes the current section read when the host filter changes while the first read is pending 113ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > shows all statuses when checking documents from a narrowed list 92ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > hands a pinned document to the full editor through the dirty-work guard 260ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx > unknown creation checks refresh the existing host > refreshes the current document sections without repeating a creation or changing the selected editor 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits 263ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open 69ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > gives AnA the exact loadable template identity and asks for every source-requirement page 53ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it 47ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > recovers an uncertain create through the existing scoped document list before offering another POST 84ms
+stderr | client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project
+An update to ScopedIndDocumentLibrary inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > module outlines stay in the same IND library > offers the module template through the same creation action 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name 59ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module M1 instead of the current M4 tree selection 47ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module null instead of the current M4 tree selection 45ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > files the document through the real authoring path 572ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > with no project open, files nothing, reports no filing, and says why (PF-07) 329ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the server refuses it 305ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the transport throws 310ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > previews source identity, gaps and unknown model before atomic create and exact section handoff 293ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > holds duplicate creation and refuses a changed fingerprint without navigation 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > invalidates an old preview when a different CSR selection is requested 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > holds opening a saved copy while the source editor has become dirty 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > does not accept saved sections outside the confirmed source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > keeps workflow machine origin and gaps visible after reopening without claiming human authorship 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > publishes only the confirmed document, program and actual returned section code 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow intake keeps the canonical governed reason fields > applies the same accessible reason bounds to creation and explicit association 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > discards a completed result and reason when the selected source changes 317ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > ignores a late import result after a program change and allows a new request 66ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > clears a source intake and selection when the files rail changes program 110ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx > source working copies stay in their selected scope > does not download or announce a file that finishes after the files rail changes program 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > requires a stated reason, shows server conversion warnings, and opens only the exact confirmed id 297ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > shows an explicit refusal and never navigates 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > holds double-clicks while the server saves the working copy 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > refuses a malformed or mismatched success response 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > does not treat an error envelope as success even when it contains data 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx > source working copy > the source surface handoff uses the returned document and project identity 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > keeps the numbers the headings carry, drops the title heading, and files the opening text under the title 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers sections in order, keeping each heading as the title, when the headings carry no numbers 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers in order when two headings carry the same number 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > is one section when the draft has no headings, and splits HTML the same way as markdown 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > splits at the top heading level present and keeps deeper headings inside their section 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > isProgramId > accepts a program UUID only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates through from-draft, recording the conversation and the turn, when no earlier copy exists 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > opens the document made from the same conversation and turn, and creates nothing 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates a new document when the same title came from another turn 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates nothing when the earlier-copy check cannot run 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > says what the server refused, and reports no document 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate renamed saved sections without replacing them with the source preview 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate added saved sections without replacing them with the source preview 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate removed saved sections without replacing them with the source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate reordered saved sections without replacing them with the source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > keeps the preview section-set check for a newly created copy 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-document section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-tenant section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses duplicate-id section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses duplicate-code section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses empty-id section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses empty-code section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses missing-provenance on the saved document 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-provenance on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses changed-provenance on the saved document 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses missing-program on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-program on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses changed source fingerprints and selections even when the saved rows are valid 0ms
+
+ Test Files  8 passed (8)
+      Tests  91 passed (91)
+   Start at  21:28:29
+   Duration  18.54s (transform 2.62s, setup 754ms, import 4.20s, tests 8.04s, environment 4.06s)

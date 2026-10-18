@@ -203,7 +203,7 @@ try {
   }
   const retainedHere = allResidue.filter((t) => Object.prototype.hasOwnProperty.call(retained, t));
   const residue = allResidue.filter((t) => !Object.prototype.hasOwnProperty.call(retained, t));
-  console.info(`   retained immutable evidence (outside customer-content erasure): ${retainedHere.length}`);
+  console.info(`   records with explicit retention policy (regulated content can block erasure): ${retainedHere.length}`);
   for (const table of retainedHere) console.info(`     ${table}: ${retained[table]}`);
 
   if (writeBaseline) {

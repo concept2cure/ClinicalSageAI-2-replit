@@ -73,4 +73,3 @@ AssertionError: expected '\n\n## OBSERVED SCREEN STATE\n\nThe f…' to be '\n\n#
       Tests  1 failed | 24 passed (25)
    Start at  19:13:26
    Duration  330ms (transform 105ms, setup 85ms, import 46ms, tests 32ms, environment 0ms)
-

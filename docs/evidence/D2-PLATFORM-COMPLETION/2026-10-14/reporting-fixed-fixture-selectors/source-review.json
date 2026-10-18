@@ -1,0 +1,11 @@
+{
+  "onlyFixedMapAndTwoSelectorsChanged": true,
+  "caseAssertionsAndAllFixtureValuesUnchanged": true,
+  "originalSha256": "306f19661793263f83964e72c97f8ef81d9ab3bac36aabdc266f7143c2f20800",
+  "preparedSha256": "3eb94909dad37123ee515405d823f6ecb72ca0b1f47831de2e0cbca844126bed",
+  "scopedLintExitCode": 0,
+  "scopedLintErrors": 0,
+  "scopedLintWarnings": 0,
+  "regressionExecution": "Prepared; waiting for root runner slot.",
+  "hostedScannerExecution": "Original failure retained; correction not yet hosted-verified."
+}

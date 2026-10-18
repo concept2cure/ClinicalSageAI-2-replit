@@ -1,0 +1,122 @@
+{
+  "qualification": "Bounded projection of complete hosted native step artifacts, not a local rerun or whole Integration verdict. The 24 failed assertions in five selected files do not describe all native failures or prove every failure fixture-only.",
+  "sourceAttribution": "All five original test-file hashes independently match published baffbeac2 tree; original snapshots/preparation retained.",
+  "hosted10f": {
+    "runId": 38522415630,
+    "jobId": 115722969088,
+    "artifactId": 11876225697,
+    "selectedFiles": [
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "failedAssertions": 5,
+        "failureCodes": [
+          "PROJECT_ANCHOR_UNRESOLVED",
+          "REQUEST_DB_CONTEXT_REQUIRED"
+        ],
+        "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+        "triage": "catalogue context/parent/API fixture adoption",
+        "caseNames": [
+          "AnA's catalog write is a suggestion that names who wrote it is stored as suggested, with the agent, model, thread and turn",
+          "AnA's catalog write is a suggestion that names who wrote it has a chained audit row naming the agent, model and turn",
+          "AnA's catalog write is a suggestion that names who wrote it the Vault read shows it as a suggestion by AnA and its model",
+          "AnA's catalog write is a suggestion that names who wrote it session recall labels it as her unconfirmed suggestion",
+          "the kind is the Vault vocabulary refuses a kind outside it and writes nothing"
+        ]
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "failedAssertions": 4,
+        "failureCodes": [],
+        "firstFailure": "TypeError: Cannot read properties of undefined (reading 'complete')",
+        "triage": "catalogue context/parent/API fixture adoption",
+        "caseNames": [
+          "semantic search over the catalog a cataloged document is embedded and findable; uncataloged ones are counted, not hidden",
+          "semantic search over the catalog D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off",
+          "chat-upload discovery lists the current upload with its reopenable file_id and excludes the superseded one",
+          "filing a chat upload into the vault performs the same governed admission the Vault surface does, and the file becomes catalogable"
+        ]
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "failedAssertions": 1,
+        "failureCodes": [
+          "REQUEST_DB_CONTEXT_REQUIRED"
+        ],
+        "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+        "triage": "catalogue context/parent/API fixture adoption",
+        "caseNames": [
+          "catalog_project_document — the comprehension record is a write accepts a member — the positive control: nothing else stood in the way"
+        ]
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "failedAssertions": 13,
+        "failureCodes": [],
+        "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality",
+        "triage": "catalogue context/parent/API fixture adoption",
+        "caseNames": [
+          "ingest with the catalog on — the extraction tier is recorded a readable upload lands with catalog_status=extracted and real counts",
+          "ingest with the catalog on — the extraction tier is recorded a real PDF records its actual page count, not null",
+          "ingest with the catalog on — the extraction tier is recorded an upload extraction cannot read is recorded as a FAILURE with a reason",
+          "ingest with the catalog on — the extraction tier is recorded read_project_document refuses to pretend the opaque document has content",
+          "ingest with the catalog on — the extraction tier is recorded list_project_documents shows both files with honest catalog states",
+          "a listing reports the scope, not the page it happened to return reports the scope total while the page stays at the limit",
+          "a listing reports the scope, not the page it happened to return counts what needs attention across the scope, not across the page",
+          "a listing reports the scope, not the page it happened to return claims completeness only when the page really is the whole scope",
+          "a listing reports the scope, not the page it happened to return the session-start digest carries the scope it sampled from",
+          "the read-coverage gate, end to end through the tool handlers catalog_project_document REFUSES a partial read and names what is unread",
+          "the read-coverage gate, end to end through the tool handlers after reading ALL of it, the catalog write succeeds and is durable",
+          "the read-coverage gate, end to end through the tool handlers hands the comprehension record BACK on the next read, instead of starting from zero",
+          "the read-coverage gate, end to end through the tool handlers another tenant cannot list or read the document"
+        ]
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "failedAssertions": 1,
+        "failureCodes": [],
+        "firstFailure": "AssertionError: expected [] to include '0dc0f23b-3929-44fa-9139-d4f7d7421033'",
+        "triage": "missing retained positive row; fixture parent admission requires inspection",
+        "caseNames": [
+          "tool calls are scoped to the token’s organisation c2c_list_vault_documents: each organisation sees only its own document"
+        ]
+      }
+    ]
+  },
+  "hostedBaff": {
+    "runId": 38535578465,
+    "artifactId": 11881124538,
+    "selectedFiles": [
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "status": "failed",
+        "failedAssertions": 5,
+        "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/document-catalog-governed.dbtest.ts:181:41\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "status": "failed",
+        "failedAssertions": 4,
+        "firstFailure": "TypeError: Cannot read properties of undefined (reading 'complete')\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/document-catalog-recall.dbtest.ts:313:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "status": "failed",
+        "failedAssertions": 1,
+        "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/document-catalog-role.dbtest.ts:141:41\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "status": "failed",
+        "failedAssertions": 13,
+        "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/document-catalog.dbtest.ts:184:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "status": "failed",
+        "failedAssertions": 1,
+        "firstFailure": "AssertionError: expected [] to include '40e1ef7a-5b93-431f-8d9e-318d5406f5ae'\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1319:15)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/server/mcp/_"
+      }
+    ]
+  },
+  "oldCleanupReplayed": false
+}

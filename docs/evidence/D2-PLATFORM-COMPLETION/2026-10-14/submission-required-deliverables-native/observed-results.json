@@ -1,0 +1,217 @@
+{
+  "testFile": "tests/db/submission-required-deliverables.dbtest.ts",
+  "passed": 36,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "vitest": "4.1.7",
+  "node": "22.22.0",
+  "heapMiB": 4096,
+  "config": "vitest.db.config.ts",
+  "durationSeconds": 9.97,
+  "testDurationSeconds": 5.22,
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "namespace": "sdd_mv8kwco3_ac6856a8",
+  "organizationId": 15,
+  "preflightTechnicalRuntimeProbe": {
+    "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+    "role": "app_service",
+    "pid": 21507,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on",
+    "tenant": "1",
+    "user_role": "member",
+    "bypass": "",
+    "admin": ""
+  },
+  "rlsForceRelations": [
+    {
+      "relname": "c2c_document_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "ectd_sequences",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_leaves",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_regions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submissions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "httpResponses": 59,
+  "actualRequestPostures": 57,
+  "statusDistribution": {
+    "200": 31,
+    "401": 1,
+    "403": 6,
+    "404": 6,
+    "409": 8,
+    "422": 1,
+    "500": 1,
+    "503": 5
+  },
+  "observedHttpReaderSqlCount": 1379,
+  "backendPidViolationCount": 0,
+  "nativeExactExecutorBinding": {
+    "firstPid": 21514,
+    "otherPid": 21511,
+    "attemptedReads": 0,
+    "actualSameActorDifferentExecutorsRefused": true
+  },
+  "basePrograms": {
+    "private": {
+      "id": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+      "projectId": 13,
+      "organizationId": 15,
+      "ownerId": 15,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "public": {
+      "id": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+      "projectId": 14,
+      "organizationId": 15,
+      "ownerId": 15,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "foreign": {
+      "id": "f0326ede-d734-489b-ab03-8638d2b43f59",
+      "projectId": 15,
+      "organizationId": 16,
+      "ownerId": 23,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "ind": {
+      "id": "b9f771bf-80b4-48da-9884-d0acb4efa5b0",
+      "projectId": 16,
+      "organizationId": 15,
+      "ownerId": 15,
+      "type": "IND",
+      "region": "fda",
+      "pathway": "ectd_v322"
+    },
+    "mdr": {
+      "id": "ddda67ac-4cf0-4d02-9b3b-fc1898877ff8",
+      "projectId": 17,
+      "organizationId": 15,
+      "ownerId": 15,
+      "type": "EU_MDR_TECHDOC",
+      "region": "eu",
+      "pathway": "mdr"
+    }
+  },
+  "baseFilings": {
+    "private": {
+      "id": 3,
+      "sequenceId": 3,
+      "leafId": 3,
+      "sectionId": 1,
+      "documentId": "sdd_mv8kwco3_ac6856a8-private-a8040113-37bd-46cb-8169-6728cb21b757",
+      "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d"
+    },
+    "public": {
+      "id": 4,
+      "sequenceId": 4,
+      "leafId": 4,
+      "sectionId": 2,
+      "documentId": "sdd_mv8kwco3_ac6856a8-public-ba66e1c0-286f-4525-8c07-45f51efe94b8",
+      "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951"
+    },
+    "foreign": {
+      "id": 5,
+      "sequenceId": 5,
+      "leafId": 5,
+      "sectionId": 3,
+      "documentId": "sdd_mv8kwco3_ac6856a8-foreign-af3bcf9d-a218-4838-a54d-ae3b9229cbbd",
+      "programId": "f0326ede-d734-489b-ab03-8638d2b43f59"
+    },
+    "ind": {
+      "id": 6,
+      "sequenceId": 6,
+      "leafId": 6,
+      "sectionId": 4,
+      "documentId": "sdd_mv8kwco3_ac6856a8-ind-7805031e-2b89-4ee8-aa77-6df916ef243f",
+      "programId": "b9f771bf-80b4-48da-9884-d0acb4efa5b0"
+    },
+    "mdr": {
+      "id": 7,
+      "sequenceId": 7,
+      "leafId": 7,
+      "sectionId": 5,
+      "documentId": "sdd_mv8kwco3_ac6856a8-mdr-042406bb-ad4e-4c63-bdf6-b42084186dba",
+      "programId": "ddda67ac-4cf0-4d02-9b3b-fc1898877ff8"
+    },
+    "unanchored": {
+      "id": 8,
+      "sequenceId": 8,
+      "leafId": null,
+      "sectionId": null,
+      "documentId": null,
+      "programId": null
+    }
+  },
+  "loggedProviderEventTermCounts": {
+    "frontier_call": 0,
+    "api.openai.com": 0,
+    "api.anthropic.com": 0,
+    "openai_error": 0,
+    "connection error": 0,
+    "tokens_consumed": 0
+  },
+  "observationTokenShapedValues": 0,
+  "qualification": "Actual bounded native HTTP/SQL proof, not complete production boot, all-pathway native coverage, browser proof, binary proof, positive filing approval or agency compliance."
+}

@@ -57,4 +57,3 @@ stderr | tests/db/signing-lockout.dbtest.ts > below the allowance > a successful
     "to": "dbslk-below-31629_mudww1vb@example.invalid"
   }
 }
-

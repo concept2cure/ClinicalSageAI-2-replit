@@ -1,0 +1,225 @@
+{
+  "variant": "mobile",
+  "fixture": {
+    "programId": "3a27db9b-c7de-4e93-8b34-ac4438fec36d",
+    "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+    "title": "Synthetic QA Source Access 20261014-014535"
+  },
+  "scope": "Actual positive authenticated seeded QA UI; synthetic records, no clinical evidence",
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "blockedWrites": [],
+  "providerTurns": [],
+  "surfaces": {
+    "vault-initial-layout": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "url": "/concept2cure/vault",
+      "layout": {
+        ".vd-wrap": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-top": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-grid": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "290px 1fr 320px"
+        },
+        ".vd-tree": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-list": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-detail": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-breadcrumb": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-search input[type=search]": {
+          "left": 66,
+          "right": 380,
+          "width": 314,
+          "clientWidth": 312,
+          "scrollWidth": 312,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "clip",
+          "gridTemplateColumns": "none"
+        }
+      }
+    },
+    "vault-selected-layout": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "url": "/concept2cure/vault",
+      "layout": {
+        ".vd-wrap": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 2152,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-top": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-grid": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "290px 1fr 320px"
+        },
+        ".vd-tree": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-list": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-detail": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-breadcrumb": {
+          "left": 56,
+          "right": 390,
+          "width": 334,
+          "clientWidth": 334,
+          "scrollWidth": 334,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-search input[type=search]": {
+          "left": 66,
+          "right": 380,
+          "width": 314,
+          "clientWidth": 312,
+          "scrollWidth": 312,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "clip",
+          "gridTemplateColumns": "none"
+        }
+      }
+    }
+  },
+  "apiReadFacts": {},
+  "responsiveLayoutPassed": true,
+  "passed": true
+}

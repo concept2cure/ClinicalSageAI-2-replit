@@ -1,0 +1,36 @@
+# 11 mutations, all red
+# driver: scratchpad/mutate5.py + mutate6.py (apply, run the named test, restore)
+
+RED       the list ignores the regulator and is always FDA's
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers exactly the catalogue’s US positions to a project that named FDA 17ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a project that named EMA the MDR conformity routes instead, not FDA’s marked 6ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a diagnostics programme the IVD positions, in whichever region 4ms
+RED       a regulator the catalogue holds nothing for draws an empty list
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers nothing for a regulator the catalogue has no positions for, and says why by name 6ms
+RED       the validator reads the unresolved question, so a route never offered is accepted
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the answer the validator judges > is judged against the list the person was shown, not against no list at all 10ms
+RED       the list is judged against the answer being submitted, not the one shown
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the answer the validator judges > is not invalidated by an agency that arrives in the same answer 13ms
+RED       the primary region is read from the additional agencies too
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > keeps the primary agency apart from the others, because it decides what is offered 14ms
+RED       a diagnostics programme is offered the plain device routes
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a diagnostics programme the IVD positions, in whichever region 12ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > reads the diagnostics domain from the client’s segment too, not only the answer 3ms
+RED       the question does not say whose routes these are
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers exactly the catalogue’s US positions to a project that named FDA 15ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a project that named EMA the MDR conformity routes instead, not FDA’s marked 4ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers nothing for a regulator the catalogue has no positions for, and says why by name 1ms
+RED       a device project is not asked its regulator
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the order the questions are asked in > asks a device project its regulator BEFORE its route 11ms
+RED       the card draws a bare text box where the catalogue holds nothing
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a question with no positions and the reason in their place > draws the reason and the box for their own words, and no empty list 17ms | × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a question with no positions and the reason in their place > records the answer as the person’s own words, not as a position AnA offered 19ms
+RED       the escape hatch is dropped where the catalogue holds nothing
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the escape hatch on a catalogue that admits what it does not hold > is added where the flow declared none and the catalogue holds nothing 7ms
+RED       the escape hatch is dropped where the catalogue holds positions
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the escape hatch on a catalogue that admits what it does not hold > is added where the flow declared none and the catalogue holds positions 6ms

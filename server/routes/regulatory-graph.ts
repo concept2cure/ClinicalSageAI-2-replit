@@ -17,6 +17,8 @@ import { and, eq } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { evidenceClaims } from '../../shared/schema';
 import { authenticateToken } from '../middleware/auth';
+import { requestPgClient } from '../db/requestDb';
+import { assertShadowProgramAccess, requireShadowProgramAccess, sendShadowContractRefusal } from '../services/defense-packet/request-contract';
 import {
   findContradictedClaims,
   findOrphanClaims,
@@ -33,10 +35,10 @@ import {
   registerPacketDependencies,
   type StalenessReasonCode,
 } from '../services/regulatory-graph/defense-packet-staleness.service';
-import { defensePackets } from '../../shared/schema/defense-packets';
 import {
   getSimulationRun,
   listProgramSimulations,
+  ReviewerSimulationInputError,
   runReviewerSimulation,
 } from '../services/intelligence-engine/reviewer-simulator.service';
 import {
@@ -48,7 +50,7 @@ import {
   propagateRegulatoryChange,
   type RegulatoryChangeEvent,
 } from '../services/living-file/change-router.service';
-import { programFreshnessReport } from '../services/living-file/freshness-report.service';
+import { FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE, FreshnessSourceUnavailableError, programFreshnessReport } from '../services/living-file/freshness-report.service';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import {
   getFact,
@@ -241,16 +243,21 @@ async function requirePacketAccess(
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: defensePackets.id })
-    .from(defensePackets)
-    .where(and(eq(defensePackets.id, packetId), eq(defensePackets.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
-    res.status(403).json({ error: 'Access denied' });
-    return;
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(packetId)) {
+    res.status(422).json({ error: 'packetId must be a UUID' }); return;
   }
-  next();
+  try {
+    const { rows } = await requestPgClient(req).query(`SELECT dp.program_id FROM predicate.defense_packets dp
+      JOIN regulatory_programs rp ON rp.id=dp.program_id
+      WHERE dp.id=$1::uuid AND rp.organization_id=$2 AND rp.deleted_at IS NULL`, [packetId, orgId]);
+    if (rows.length !== 1) { res.status(404).json({ error: 'Packet not found' }); return; }
+    await assertShadowProgramAccess(req, rows[0].program_id);
+    next();
+  } catch (error) {
+    if (sendShadowContractRefusal(res, error)) return;
+    if ((error as { status?: number }).status === 403) { res.status(403).json({ error: 'Current project and organization access is required.' }); return; }
+    res.status(503).json({ error: 'The packet and its current program access could not be verified.' });
+  }
 }
 
 const VALID_REASON_CODES: ReadonlySet<StalenessReasonCode> = new Set([
@@ -357,6 +364,7 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
       .json({ error: 'programId and predicateKNumber are required' });
   }
   try {
+    await assertShadowProgramAccess(req, programId);
     const userId = (req as any).user?.id;
     const result = await propagatePredicateChange(
       orgId,
@@ -366,6 +374,8 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
     );
     res.json(result);
   } catch (err: any) {
+    if (sendShadowContractRefusal(res, err)) return;
+    if (err?.status === 403) return res.status(403).json({ error: 'Current project and organization access is required.' });
     return serverError(res, logger, 'saving predicate', err);
   }
 });
@@ -416,15 +426,27 @@ router.post(
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
 
     const body = req.body ?? {};
-    if (!body.program || !body.intel) {
-      return res
-        .status(422)
-        .json({ error: 'program and intel facts are required in request body' });
+    // 2026-10-15: `intel` was required and used as given. Packet and intel facts
+    // are now read from the program's records; a body's packet, intel and reports
+    // are set aside and the result says so (inputsSource.setAside).
+    if (!body.program) {
+      return res.status(422).json({ error: 'program facts are required in request body' });
     }
 
     const personas = Array.isArray(body.personas)
       ? (body.personas as ReviewerPersonaCode[])
       : undefined;
+
+    // The ctd_programs id whose nonclinical studies the preclinical personas read.
+    // 2026-10-15: never passed, so over HTTP they could only report "not loaded".
+    const rawCtdProgramId: unknown = body.ctdProgramId;
+    const ctdProgramId =
+      typeof rawCtdProgramId === 'number' || (typeof rawCtdProgramId === 'string' && /^\d+$/.test(rawCtdProgramId))
+        ? Number(rawCtdProgramId)
+        : undefined;
+    if (rawCtdProgramId != null && !(ctdProgramId !== undefined && Number.isInteger(ctdProgramId) && ctdProgramId > 0)) {
+      return res.status(422).json({ error: 'ctdProgramId must be a positive integer (the ctd_programs id)' });
+    }
 
     try {
       const result = await runReviewerSimulation({
@@ -436,10 +458,11 @@ router.post(
         reports: body.reports,
         personas,
         defensePacketId: body.defensePacketId,
+        ctdProgramId,
         trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
         triggeredBy,
         dryRun: body.dryRun === true,
-      });
+      }, { executor: requestPgClient(req), userId: Number(userIdRaw) });
 
       /* Persisted runs land in the audit trail; dry runs don't.
 
@@ -470,6 +493,10 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
+      // A defensePacketId the program has no packet for is the request's fault.
+      if (err instanceof ReviewerSimulationInputError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
       return serverError(res, logger, 'saving reviewer simulation', err);
     }
   }
@@ -564,13 +591,16 @@ router.post(
 
 router.get(
   '/programs/:programId/freshness',
-  requireUuidProgramAccess,
+  requireShadowProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     try {
-      const report = await programFreshnessReport(orgId, String(req.params.programId));
+      const report = await programFreshnessReport(orgId, String(req.params.programId), requestPgClient(req));
       res.json(report);
     } catch (err: any) {
+      if (err instanceof FreshnessSourceUnavailableError) {
+        return res.status(503).json({ code: 'FRESHNESS_SOURCE_UNAVAILABLE', error: FRESHNESS_SOURCE_UNAVAILABLE_MESSAGE });
+      }
       return serverError(res, logger, 'loading freshness', err);
     }
   }

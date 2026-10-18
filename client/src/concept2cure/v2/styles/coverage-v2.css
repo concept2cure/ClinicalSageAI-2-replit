@@ -650,9 +650,6 @@
 .c2c-v2 .gi-gate-verdict{ font-size:15px; font-weight:600; letter-spacing:.02em; color:var(--text-100); }
 .c2c-v2 .gi-gate-sub{ font-size:13px; color:var(--text-300); margin-top:3px; line-height:1.5; max-width:640px; }
 .c2c-v2 .gi-gate-side{ display:flex; flex-direction:column; gap:9px; align-items:flex-end; }
-.c2c-v2 .gi-reg{ display:inline-flex; border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
-.c2c-v2 .gi-reg-b{ border:none; background:var(--bg-000); color:var(--text-300); font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; }
-.c2c-v2 .gi-reg-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .gi-gate-counts{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
 .c2c-v2 .gi-c{ font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px; background:var(--bg-100); color:var(--text-300); }
 .c2c-v2 .gi-c-bad{ background:color-mix(in srgb,var(--error) 14%,transparent); color:var(--error); }

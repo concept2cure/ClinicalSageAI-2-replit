@@ -1,0 +1,75 @@
+{
+  "draftContextAndGenerationCheckpoint": {
+    "file": "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md",
+    "status": "Implemented by canonical 74cba41d1 and qualified in current 198-case/11-file integration cohort. Supersedes the prior profile planned-only flag.",
+    "limits": "Checkpoint admission only: no continuous in-flight revocation, recall of sent text, native application concurrency/load proof, provider delivery/model use, scientific qualification or agency acceptance."
+  },
+  "scope": "Current implementation/qualification status comes from the latest source owner profile. Earlier planning-only status is historical and must not be carried forward over later implemented commits.",
+  "nativeFixtureTransportEditsNotFeatureQualified": [],
+  "externalQualification": [
+    "Live provider delivery and agency acknowledgement",
+    "Managed signing and storage durability",
+    "Production deployment/governance qualification",
+    "External owner rotation of three historical live credentials"
+  ],
+  "historicalOpenEngineeringAndGovernanceBoundaries": [
+    {
+      "id": "F05",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Requalify genuine source-backed CSR narratives and clinical/statistical/CDISC behavior through filing and eCTD placement.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "F22",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Inventory, implement and qualify remaining report engines against their actual service, renderer and UI paths.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "D05",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Complete or formally retire predictor and parallel-workflow prototypes with observed inputs, provenance and real durable effects.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "D06",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Complete and qualify fenced feature outcomes before release activation; retain their gates until closure.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "O01",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Adjudicate semantic store ownership, purge coverage, independent AI-action audit/cache and producer/availability gaps.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "X02",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Complete request-specific PreSTAR questions, declarations, SIR/routing and interactive PDF/XFA qualification.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "O05",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Review or activate the approved existing ruleset and verify effective branch protection.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    },
+    {
+      "id": "R03",
+      "status": "Historically open; contemporary closure or requalification required",
+      "requiredOutcome": "Approve and implement governed disposition for retained signed QMS prose and frozen clinical inputs; retain fail-closed erasure controls meanwhile.",
+      "historicalSource": "../../2026-10-14/remediation-report.md#remaining-work",
+      "historicalAsOf": "2026-10-14"
+    }
+  ],
+  "historicalBoundaryCaveat": "These entries preserve previously open boundaries, not a fresh inventory after the subsequent 402-plus canonical commits. Older counts and observed states are not asserted current. Completed sub-remedies and the newly implemented checkpoint qualification remain valid; each broader boundary needs traceable contemporary closure or requalification.",
+  "historicalSourceSha256": "6423d6073d7a8d64db5a1cde12aa37a23dec3363ad74b672d0c8d71246db4482"
+}

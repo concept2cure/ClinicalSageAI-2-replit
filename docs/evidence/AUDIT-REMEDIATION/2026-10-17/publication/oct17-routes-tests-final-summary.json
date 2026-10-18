@@ -1,0 +1,410 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-routes-tests-final.json",
+    "sha256": "5826b1b6a748cfdbcc28d1754aca86ff57ab87a733c67d943ece352bc91e96f6",
+    "bytes": 160103
+  },
+  "success": true,
+  "passedCases": 399,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 33,
+  "rows": [
+    {
+      "file": "tests/mdx-submission-gateway-routes.test.ts",
+      "status": "passed",
+      "cases": 41,
+      "counts": {
+        "passed": 41,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/mdx-submission-gateway-signing-authority.test.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/mdx-submission-gateway-technical-rejection.test.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/mdx-submission-gateway-transmit-bundle-guard.test.ts",
+      "status": "passed",
+      "cases": 52,
+      "counts": {
+        "passed": 52,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/mdx-submission-gateway-transmittals-region.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/audit-services-figures-call-the-engine.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/audit-services-keywords-call-the-engine.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts",
+      "status": "passed",
+      "cases": 53,
+      "counts": {
+        "passed": 53,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/capa-mdr-complaint-intake.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/licensing-routes-fail-closed.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-assemble-audit-outcome.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-assemble-dry-run.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-assess-stored-cer-equivalence-claim-unrecorded.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-consistency-audit-outcome.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-create-not-offered.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-leaf-reason.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-list-program-scope.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-market-support.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-program-anchor.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-request-current-access.pglite.test.ts",
+      "status": "passed",
+      "cases": 25,
+      "counts": {
+        "passed": 25,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-shadow-finding-disposition.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/submissions-shadow-review-waive.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/read-receipts.test.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/source-read-transaction-lifecycle.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-advance.pglite.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+      "status": "passed",
+      "cases": 23,
+      "counts": {
+        "passed": 23,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "status": "passed",
+      "cases": 36,
+      "counts": {
+        "passed": 36,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/ind-lifecycle/__tests__/annual-report-file-requires-the-draft-or-each-gap-acknowledged.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/ind-lifecycle/__tests__/report-dates-refused-by-name-not-500.test.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:single-native-canvas"
+  ],
+  "executionBase": "8d06f7156",
+  "exitCode": 0,
+  "rawSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+  "output": "[single-native-canvas] ok \u2014 @napi-rs/canvas 0.1.80: one copy\n"
+}

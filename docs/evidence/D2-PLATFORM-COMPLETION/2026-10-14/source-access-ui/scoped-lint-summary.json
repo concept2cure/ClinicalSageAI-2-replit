@@ -1,0 +1,140 @@
+{
+  "head": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "errors": 0,
+      "warnings": 7,
+      "rules": [
+        "max-lines-per-function",
+        "complexity",
+        "max-lines",
+        "max-lines-per-function",
+        "max-lines-per-function",
+        "complexity",
+        "complexity"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SourceTracer.tsx",
+      "errors": 0,
+      "warnings": 3,
+      "rules": [
+        "max-lines-per-function",
+        "complexity",
+        "react-hooks/exhaustive-deps"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "rules": [
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        "complexity"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "errors": 0,
+      "warnings": 13,
+      "rules": [
+        "complexity",
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        null,
+        "complexity",
+        "complexity",
+        "complexity",
+        "react-hooks/exhaustive-deps",
+        "complexity",
+        "no-undef",
+        "max-lines-per-function",
+        "complexity"
+      ]
+    }
+  ],
+  "final": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "errors": 0,
+      "warnings": 13,
+      "rules": [
+        "complexity",
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        null,
+        "complexity",
+        "complexity",
+        "complexity",
+        "react-hooks/exhaustive-deps",
+        "complexity",
+        "no-undef",
+        "max-lines-per-function",
+        "complexity"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "errors": 0,
+      "warnings": 7,
+      "rules": [
+        "max-lines-per-function",
+        "complexity",
+        "max-lines",
+        "max-lines-per-function",
+        "max-lines-per-function",
+        "complexity",
+        "complexity"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SourceTracer.tsx",
+      "errors": 0,
+      "warnings": 2,
+      "rules": [
+        "max-lines-per-function",
+        "complexity"
+      ]
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "errors": 0,
+      "warnings": 4,
+      "rules": [
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        "complexity"
+      ]
+    }
+  ],
+  "historyFollowup": "\n/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Vault.tsx\n   684:1   warning  File has too many lines (1726). Maximum allowed is 500                        max-lines\n   803:1   warning  Function 'VaultForProject' has too many lines (1145). Maximum allowed is 100  max-lines-per-function\n   803:1   warning  Function 'VaultForProject' has a complexity of 178. Maximum allowed is 15     complexity\n  1222:33  warning  Arrow function has a complexity of 41. Maximum allowed is 15                  complexity\n\n\u2716 4 problems (0 errors, 4 warnings)\n\n"
+}

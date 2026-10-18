@@ -21,10 +21,11 @@ import {
 } from '../../server/services/ana/intelligence-questions/flows/index';
 import {
   OTHER_POSITION,
+  type FieldPredicate,
   type FlowDefinition,
   type QuestionNode,
-  type FieldPredicate,
 } from '../../shared/types/intelligence-questions';
+import { predicateLeaves } from '../../shared/ana/question-predicate';
 import type { FlowEngineContext } from '../../server/services/ana/intelligence-questions/types';
 
 const ctx: FlowEngineContext = { organizationId: null, userId: null, projectId: null };
@@ -45,11 +46,19 @@ function allFieldIds(def: FlowDefinition): Set<string> {
 }
 
 /** Every predicate in a node (branches + issueChecks + field visibleWhen). */
+/**
+ * Every field id the node's predicates read.
+ *
+ * A `visibleWhen` may be a GROUP (`anyOf` / `allOf`) since 2026-10-12 — the
+ * notified-body question is gated on two answers — so the fields are flattened
+ * through the shared evaluator's own helper rather than read off `.field`,
+ * which a group does not have.
+ */
 function nodePredicates(node: QuestionNode): FieldPredicate[] {
   const preds: FieldPredicate[] = [];
   for (const b of node.branches ?? []) preds.push(b.when);
   for (const ic of node.issueChecks ?? []) preds.push(ic.condition);
-  for (const field of node.fields) if (field.visibleWhen) preds.push(field.visibleWhen);
+  for (const field of node.fields) if (field.visibleWhen) preds.push(...predicateLeaves(field.visibleWhen));
   return preds;
 }
 

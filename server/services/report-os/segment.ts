@@ -1,26 +1,10 @@
 /**
- * @fileoverview Per-organization client-segment derivation for report scoping.
- * @module server/services/report-os/segment
- *
- * The Report-OS taxonomy stamps every report type with an
- * `allowedClientSegments` list (pharma / biotech / device / ivd). To anchor
- * the catalog to what each client actually needs, we must know the requesting
- * org's segment(s). There is no stored segment column on `organizations`
- * today, so we DERIVE it from the org's regulatory programs:
- * `regulatory_programs.product_type` (drug / biologic / device / ivd /
- * combination) maps to a `ClientSegmentType`.
- *
- * Design choices (honest, non-restrictive):
- *   - Multi-product orgs return the UNION of their segments — a pharma+device
- *     org sees both catalogs rather than being forced into one.
- *   - Orgs with no product-owning programs (service orgs: CRO/CDMO, or brand
- *     new orgs) return `[]` → the caller shows only universal report types
- *     (empty `allowedClientSegments`) and, later, the CRO cross-sponsor view.
- *   - A future explicit `organizations.client_segment` override column can
- *     short-circuit this derivation; until then, programs are the source.
- *
- * The filter is a PURE function (unit-testable without a DB); the derivation
- * is a thin, missing-table-safe query.
+ * Reporting applicability separates a program's product type from the
+ * organization's service/institution identity. An anchored filing keeps its
+ * own product catalog and the organization's CRO/CDMO/academic/government
+ * reports; sibling product catalogs are excluded. Unanchored catalog views
+ * use the organization's union. No declared product type is guessed from the
+ * default organizations.client_type='pharma'.
  */
 
 import { getPool } from '../../db';
@@ -29,14 +13,8 @@ import type { ClientSegmentType } from '../../../shared/constants/domain/organiz
 
 const logger = createScopedLogger('report-os-segment');
 
-/**
- * The segment vocabulary the report catalog anchors on. This is the four
- * product-owning `ClientSegmentType`s PLUS the `'cro'` service segment — the
- * taxonomy stamps CRO-relevant report types (e.g. `etmf.completeness_pack`)
- * with `'cro'` in `allowedClientSegments`, but `ClientSegmentType` proper does
- * not include it because a CRO owns no regulatory program of its own.
- */
-export type ReportSegment = ClientSegmentType | 'cro';
+/** Product and organization identity vocabulary used only for reporting. */
+export type ReportSegment = ClientSegmentType | 'cro' | 'cdmo' | 'academic' | 'government';
 
 /** Map a `regulatory_programs.product_type` value to a client segment. */
 const PRODUCT_TYPE_TO_SEGMENT: Record<string, ClientSegmentType> = {
@@ -60,7 +38,7 @@ const PRODUCT_TYPE_TO_SEGMENT: Record<string, ClientSegmentType> = {
 
 /**
  * Service-organization markers (from `organizations.client_type` /
- * `industry_mode`) that add the `'cro'` service segment. Product-owning
+ * `industry_mode`) that add their own service segment. Product-owning
  * client_type values are DELIBERATELY excluded here: `client_type` defaults to
  * `'pharma'` for every org, so unioning product segments from it would show the
  * pharma catalog to every org and break per-segment anchoring. Product segments
@@ -86,27 +64,32 @@ export function productTypesToSegments(productTypes: Iterable<string>): ClientSe
 
 /**
  * PURE: does an org's declared type(s) name a service organization (CRO/CDMO)?
- * Reads the free-text `client_type` and `industry_mode` markers. Returns the
- * `'cro'` service segment when either names a service org, else `null`.
+ * Reads the free-text `client_type` and `industry_mode` markers. Returns the recorded CRO or CDMO identity, else `null`.
  */
 export function serviceSegmentFor(
   clientType?: string | null,
   industryMode?: string | null,
-): 'cro' | null {
+): 'cro' | 'cdmo' | null {
   const markers = [clientType, industryMode].map((v) => String(v ?? '').trim().toLowerCase());
-  return markers.some((m) => SERVICE_CLIENT_TYPES.has(m)) ? 'cro' : null;
+  return (markers.find((m) => SERVICE_CLIENT_TYPES.has(m)) as 'cro' | 'cdmo' | undefined) ?? null;
+}
+
+/** Service and institution identity supplements, rather than replaces, product scope. */
+export function institutionalSegmentFor(clientType?: string | null, industryMode?: string | null): 'academic' | 'government' | null {
+  const markers = [clientType, industryMode].map(v => String(v ?? '').trim().toLowerCase());
+  return (markers.find(m => m === 'academic' || m === 'government') as 'academic' | 'government' | undefined) ?? null;
 }
 
 /** Canonical order for a full ReportSegment list (product segments then service). */
 function orderSegments(set: Set<ReportSegment>): ReportSegment[] {
-  const order: ReportSegment[] = ['pharma', 'biotech', 'device', 'ivd', 'cro'];
+  const order: ReportSegment[] = ['pharma', 'biotech', 'device', 'ivd', 'cro', 'cdmo', 'academic', 'government'];
   return order.filter((s) => set.has(s));
 }
 
 /**
  * Derive the report segment(s) for an org: the UNION of its product segments
  * (from `regulatory_programs.product_type`) and — for a CRO/CDMO service org —
- * the `'cro'` service segment (from `organizations.client_type` /
+ * the service/institution identity (from `organizations.client_type` /
  * `industry_mode`). A CRO with no programs of its own therefore still sees its
  * cross-sponsor catalog (eTMF completeness, inspection readiness). Returns `[]`
  * for a program-less product org or on any DB error (fail-open to "universal
@@ -136,6 +119,8 @@ export async function deriveOrgSegments(organizationId: number): Promise<ReportS
     );
     const svc = serviceSegmentFor(rows[0]?.client_type, rows[0]?.industry_mode);
     if (svc) set.add(svc);
+    const institution = institutionalSegmentFor(rows[0]?.client_type, rows[0]?.industry_mode);
+    if (institution) set.add(institution);
   } catch (err) {
     logger.warn('deriveOrgSegments: service derivation failed', {
       organizationId,
@@ -185,14 +170,22 @@ export async function deriveProjectSegments(
 /**
  * The segments a report over `projectId` is offered and checked against: the
  * project's own program's, else (a project with no anchored program) the
- * organisation's derived union.
+ * organisation's derived union. Service/institution identities remain
+ * applicable even when one product narrows the catalog.
  */
 export async function deriveScopeSegments(
   organizationId: number,
   projectId: number | null,
 ): Promise<ReportSegment[]> {
   const own = projectId == null ? null : await deriveProjectSegments(organizationId, projectId);
-  return own ?? deriveOrgSegments(organizationId);
+  return segmentsForScope(own, await deriveOrgSegments(organizationId));
+}
+
+/** An anchored filing never inherits a sibling product's regional catalog. */
+export function segmentsForScope(own: ReportSegment[] | null, organization: ReportSegment[]): ReportSegment[] {
+  if (!own) return organization;
+  const identity = organization.filter(s => ['cro', 'cdmo', 'academic', 'government'].includes(s));
+  return orderSegments(new Set([...own, ...identity]));
 }
 
 /** A report-type row as seen by the filter — only the fields it reads. */

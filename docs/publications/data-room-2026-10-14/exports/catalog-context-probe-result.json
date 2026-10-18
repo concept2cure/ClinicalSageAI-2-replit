@@ -1,0 +1,21 @@
+{
+  "source": "Assay A sensitivity: 95.0%. Assay B sensitivity: 99.2%. Both studies used adult plasma samples.",
+  "findings": [
+    {
+      "name": "correct context",
+      "value": "95.0%",
+      "verified": true
+    },
+    {
+      "name": "invented value",
+      "value": "98.4%",
+      "verified": false
+    },
+    {
+      "name": "value from another assay",
+      "value": "99.2%",
+      "verified": true
+    }
+  ],
+  "fullCoverageGateAllowsMislabeledValue": true
+}

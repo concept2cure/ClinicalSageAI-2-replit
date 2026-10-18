@@ -139,6 +139,27 @@ beforeEach(async () => {
 });
 
 describe('summarizeDocumentAttribution', () => {
+  it('retains recorded machine composition identities without relabeling attribution or changing the partition', async () => {
+    const sourceId = await makeSource('source-version');
+    await span({ kind: 'machine_draft', start: 0, end: 10, machineAuthorId: 'workflow_import' });
+    await span({ kind: 'accepted_machine_draft', start: 10, end: 20, machineAuthorId: 'ana' });
+    await span({ kind: 'author_assertion', start: 20, end: 30 });
+    await span({ kind: 'cre_evidence_source', start: 30, end: 40, sourceId });
+
+    const summary = await summarizeDocumentAttribution(ORG, DOC, 50, exec as any);
+
+    expect(summary.spans.map(s => [s.provenanceKind, s.machineAuthorId])).toEqual([
+      ['machine_draft', 'workflow_import'],
+      ['accepted_machine_draft', 'ana'],
+      ['author_assertion', null],
+      ['cre_evidence_source', null],
+    ]);
+    expect(summary.byKind).toEqual({ fromSources: 10, authorAsserted: 10,
+      machineDrafted: 10, machineDraftedUnaccepted: 10 });
+    expect(summary.attributedChars).toBe(40);
+    expect(summary.unattributedChars).toBe(10);
+  });
+
   it('partitions the document by character, and the parts sum exactly', async () => {
     const sourceId = await makeSource('s1');
     await span({ kind: 'cre_evidence_source', start: 0, end: 40, sourceId });
@@ -260,7 +281,7 @@ describe('summarizeDocumentAttribution', () => {
     // A projection, not the row: nothing here hands a browser a checksum or an
     // actor id it has no use for.
     expect(Object.keys(s.spans[0]).sort()).toEqual([
-      'charEnd', 'charStart', 'provenanceKind', 'sourceTitle', 'stale', 'usage',
+      'charEnd', 'charStart', 'machineAuthorId', 'provenanceKind', 'sourceTitle', 'stale', 'usage',
     ]);
   });
 

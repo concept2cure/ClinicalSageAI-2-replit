@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/safetyNarrativeSaveRecovery.test.tsx (7 tests) 1621ms
+     ✓ preserves an unassessed seriousness value during a narrative-only save  616ms
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > TX_HISTORY: rolls back the current screening decision if its superseded history cannot be recorded
+{
+  "timestamp": "2026-10-14T21:00:38.710Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording the screening decision failed",
+  "context": {
+    "err": "Synthetic history store failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 422s a service refusal with its real reason, and does not audit a non-event
+{
+  "timestamp": "2026-10-14T21:00:38.726Z",
+  "level": "warn",
+  "message": "[cerv2-documents] Refused a literature screening decision",
+  "context": {
+    "code": "ENTRY_NOT_IN_CORPUS",
+    "reason": "PMID 38012345 — that article is not in this organization's literature corpus"
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails
+{
+  "timestamp": "2026-10-14T21:00:38.727Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording the screening decision failed",
+  "context": {
+    "err": "deadlock detected",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure
+{
+  "timestamp": "2026-10-14T21:00:38.732Z",
+  "level": "error",
+  "message": "[cerv2-documents] reading the screening decisions failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+
+ ✓ tests/routes/cerv2-literature-screening.test.ts (20 tests) 29ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  21:00:34
+   Duration  4.64s (transform 1.37s, setup 199ms, import 2.17s, tests 1.65s, environment 373ms)
+

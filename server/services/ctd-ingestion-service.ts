@@ -9,6 +9,19 @@
  */
 
 import { pool } from '../db.js';
+import { soleModule1Placement, type ApplicationKind, type DocumentRole } from '../../shared/regulatory/regional-module1';
+
+/**
+ * The US Module 1 heading the record files `role` under, or null when it holds none.
+ *
+ * A null is an answer: `detectCTDSection` returns the module with a null section, the shape it
+ * already uses when only the module is named, and the caller asks what the document is instead of
+ * being handed a number. Never a nearest match — a number that looks close is how a risk-management
+ * plan came to be proposed for the heading that means "withdrawal of an IND".
+ */
+function m1Section(role: DocumentRole, kind: ApplicationKind = 'ind'): string | null {
+  return soleModule1Placement(role, 'US', kind)?.code ?? null;
+}
 
 // ============================================================================
 // TYPES
@@ -51,10 +64,18 @@ export interface ComplianceGap {
 
 const REQUIRED_SECTIONS: Record<string, Array<{ module: number; section: string; title: string; severity: string }>> = {
   FDA: [
-    { module: 1, section: '1.1', title: 'Cover Letter', severity: 'critical' },
-    { module: 1, section: '1.2', title: 'Application Form (FDA Form 356h)', severity: 'critical' },
-    { module: 1, section: '1.3.1', title: 'Patent Information', severity: 'major' },
-    { module: 1, section: '1.3.2', title: 'Patent Certification', severity: 'major' },
+    /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+    (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+    The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+    of contents — so the row for it is gone rather than renumbered. */
+    /* This table was missed when SECTION_PATTERNS below was put on the record on 2026-10-12:
+       the same file held the same swapped pair twice, and only one copy was fixed. Patent
+       information and certification are 1.3.5 (1.3.5.1 / 1.3.5.2); FDA 1.3.2 is FIELD COPY
+       certification, which is a different document. */
+    { module: 1, section: '1.1', title: 'Forms (FDA Form 356h)', severity: 'critical' },
+    { module: 1, section: '1.2', title: 'Cover Letter', severity: 'critical' },
+    { module: 1, section: '1.3.5.1', title: 'Patent Information', severity: 'major' },
+    { module: 1, section: '1.3.5.2', title: 'Patent Certification', severity: 'major' },
     { module: 2, section: '2.2', title: 'Introduction to CTD', severity: 'critical' },
     { module: 2, section: '2.3', title: 'Quality Overall Summary', severity: 'critical' },
     { module: 2, section: '2.4', title: 'Nonclinical Overview', severity: 'critical' },
@@ -253,24 +274,32 @@ export async function uploadCTDDocument(
  * pharmacology before pharmacology). A generic safety word alone is a
  * medium-confidence signal, and a safety data sheet is not a CTD document.
  */
-const SECTION_PATTERNS: Array<{
+export const SECTION_PATTERNS: Array<{
   pattern: RegExp;
   module: number;
-  section: string;
+  /** Null where the record holds no single heading for the document: the caller asks. */
+  section: string | null;
   title: string;
   docType: string;
   confidence?: number;
 }> = [
-  { pattern: /\bcover ?letter\b/, module: 1, section: '1.1', title: 'Cover Letter', docType: 'cover_letter' },
-  { pattern: /\b(application ?form|356h|form ?1571)\b/, module: 1, section: '1.2', title: 'Application Form', docType: 'form' },
-  { pattern: /\bpatent\b/, module: 1, section: '1.3.1', title: 'Patent Information', docType: 'patent_info' },
+  /* Module 1 placements come from the record (m1Section below), not from this table: the three
+     rows here each named the wrong heading — the cover letter at 1.1 and the application form at
+     1.2 are swapped (US 1.1 is Forms, 1.2 is the Cover Letter), and patent information at 1.3.1,
+     which is Contact/Sponsor/Applicant Information, belongs at 1.3.5. */
+  { pattern: /\bcover ?letter\b/, module: 1, section: m1Section('cover_letter'), title: 'Cover Letter', docType: 'cover_letter' },
+  { pattern: /\b(application ?form|356h|form ?1571)\b/, module: 1, section: m1Section('application_form'), title: 'Application Form', docType: 'form' },
+  { pattern: /\bpatent\b/, module: 1, section: m1Section('patent', 'nda'), title: 'Patent Information', docType: 'patent_info' },
   { pattern: /\b(quality ?overall ?summary|qos)\b/, module: 2, section: '2.3', title: 'Quality Overall Summary', docType: 'summary' },
   { pattern: /\bnonclinical ?overview\b/, module: 2, section: '2.4', title: 'Nonclinical Overview', docType: 'summary' },
   { pattern: /\bclinical ?overview\b/, module: 2, section: '2.5', title: 'Clinical Overview', docType: 'summary' },
   { pattern: /\b(drug ?substance|api ?characterization)\b/, module: 3, section: '3.2.S', title: 'Drug Substance', docType: 'specification' },
   { pattern: /\b(drug ?product|formulation)\b/, module: 3, section: '3.2.P', title: 'Drug Product', docType: 'specification' },
   { pattern: /\bstability\b/, module: 3, section: '3.2.P.8', title: 'Stability', docType: 'study_report' },
-  { pattern: /\b(pk ?report|clinical ?pharmacology)\b/, module: 5, section: '5.3.3', title: 'Clinical Pharmacology', docType: 'study_report' },
+  /* 5.3.3 is Reports of Human Pharmacokinetic (PK) Studies (ICH M4E(R2)). "Clinical pharmacology"
+     is broader than that heading — PD reports file at 5.3.4 — so the row keeps the record's title
+     and the filename heuristic stays a proposal, not a determination. */
+  { pattern: /\b(pk ?report|clinical ?pharmacology)\b/, module: 5, section: '5.3.3', title: 'Reports of Human Pharmacokinetic (PK) Studies', docType: 'study_report' },
   { pattern: /\bpharmacology\b/, module: 4, section: '4.2.1', title: 'Pharmacology', docType: 'study_report' },
   { pattern: /\b(toxicology|tox ?study|carcinogenicity|genotox\w*)\b/, module: 4, section: '4.2.3', title: 'Toxicology', docType: 'study_report' },
   { pattern: /\b(pk ?study|pharmacokinetics?|adme)\b/, module: 4, section: '4.2.2', title: 'Pharmacokinetics', docType: 'study_report' },
@@ -280,7 +309,13 @@ const SECTION_PATTERNS: Array<{
   { pattern: /\b(efficacy|pivotal|phase ?(3|iii))\b/, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report' },
   { pattern: /\bcsr\b/, module: 5, section: '5.3.5', title: 'Clinical Study Report', docType: 'study_report' },
   { pattern: /\b(safety|adverse)\b/, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report', confidence: 0.6 },
-  { pattern: /\b(risk ?management|rmp)\b/, module: 1, section: '1.5.1', title: 'Risk Management Plan', docType: 'risk_management' },
+  /* A risk-management document names NO US Module 1 section. FDA has REMS (1.16) and risk
+     management that is not a REMS; it has no node called an RMP, so `m1Section('rmp')` is null and
+     this row proposes the module and asks. It used to assert 1.5.1 — US 1.5 is Application Status
+     ("withdrawal, inactivation, reactivation and reinstatement requests") with no child sections at
+     all, so the platform was proposing that a sponsor file their risk-management plan under the
+     heading whose controlled meaning is that they are withdrawing the IND. */
+  { pattern: /\b(risk ?management|rmp)\b/, module: 1, section: m1Section('rmp'), title: 'Risk Management Plan', docType: 'risk_management' },
 ];
 
 /** Names that look like CTD content and are not: a chemical safety data sheet. */

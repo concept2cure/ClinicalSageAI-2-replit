@@ -1,0 +1,231 @@
+{
+  "branch": "concept2cure-v2",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "status": "Fixed-selector fixture correction frozen; all 55 existing interactions pass, scoped lint passes, hosted scanner re-verification pending with root.",
+  "originalHostedFinding": {
+    "repository": "concept2cure/ClinicalSageAI-2-replit",
+    "publishedCommitPrefix": "baff",
+    "jobId": "115757525000",
+    "rule": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+    "originalSourceLines": [
+      237,
+      289
+    ],
+    "blockingFindings": 2,
+    "rulesRun": 455,
+    "targetsScanned": 209,
+    "jobExitCode": 1,
+    "excerptOrigin": "Original decoded GitHub log excerpt supplied by control tower; exact selected bytes retained, not the full job log."
+  },
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "bytes": 16099,
+      "digestAlgorithm": "sha256",
+      "digest": "3eb94909dad37123ee515405d823f6ecb72ca0b1f47831de2e0cbca844126bed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "bytes": 122493,
+      "digestAlgorithm": "sha256",
+      "digest": "5e2adeace0a18a01aa868eb0c2cb9993fd404b9f468f5254cd3493ae257b3019"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx",
+      "bytes": 15617,
+      "digestAlgorithm": "sha256",
+      "digest": "55a00802cd223074a95d9e2282696075ce8fa3f3e8296d249ef6151ac29a3514"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "bytes": 6843,
+      "digestAlgorithm": "sha256",
+      "digest": "37ad4b808994d04f329fbcc347870da5ba99401a40edc786647003523b377d6f"
+    },
+    {
+      "path": "docs/design/REPORTING_FIXED_FIXTURE_SELECTORS.md",
+      "bytes": 1499,
+      "digestAlgorithm": "sha256",
+      "digest": "3a974fb7b3076af3fc2693ca700f2e0e3191d33f6260fc1c1d06a82cd1f063f8"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/original-hosted-baff-finding-excerpt.log",
+      "bytes": 3060,
+      "digestAlgorithm": "sha256",
+      "digest": "2d1cde5240c1e576cdd23935f20decf2bf9f1f0e10f2c3c9767e41e21a1be5b8",
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; final newline added to nonempty readable text. Empty stdout remains empty. Raw selected excerpt unchanged.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/original-hosted-baff-finding-excerpt.raw.txt.gz",
+      "rawArchiveBytes": 1251,
+      "rawArchiveDigest": "40ae9d2efd62c7aed6b108805ff5ea36e89618f79c56389f2f21db718af300e5",
+      "uncompressedRawBytes": 3474,
+      "uncompressedRawDigest": "093b07ad085d5185d0ac4bc586e2b504eff57a6d00ba2a19f24dc48e71157c80",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/scoped-fixture-lint.log",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; final newline added to nonempty readable text. Empty stdout remains empty. Raw selected excerpt unchanged.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/scoped-fixture-lint.raw.txt.gz",
+      "rawArchiveBytes": 20,
+      "rawArchiveDigest": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "uncompressedRawBytes": 0,
+      "uncompressedRawDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/baseline-source-pins.json",
+      "bytes": 655,
+      "digestAlgorithm": "sha256",
+      "digest": "2f8185ae1e3558fd8ea7c8445259091b004de74e5f9e63664ded8d7b5726ac1f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/source-review.json",
+      "bytes": 520,
+      "digestAlgorithm": "sha256",
+      "digest": "9dafb58ecd6ed769bc82577ee23fcf62345571b13873f104db66007397127333"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/prepared-test-command.txt",
+      "bytes": 718,
+      "digestAlgorithm": "sha256",
+      "digest": "11d544852e55eab3f607239b52e0511847545458fd952225233c16dece08867c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/final-55-pass.log",
+      "bytes": 11326,
+      "digestAlgorithm": "sha256",
+      "digest": "44b39984444ff498c1555dc9ad05034395354f90f409cd8b556e0bc712d47ce2",
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; final newline added. Exact raw stdout/stderr is preserved in the archive.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/final-55-pass.raw.txt.gz",
+      "rawArchiveBytes": 2205,
+      "rawArchiveDigest": "6815ec3444c6b1c1a180ef7a0bf4a2b0f320e4ac6bc7a70af4da91b834f61a38",
+      "uncompressedRawBytes": 11327,
+      "uncompressedRawDigest": "f9d1824372a9df420f739c1ff84c6cbe8721b511ff98b3ad291338b48cc33866",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/test-inventory.json",
+      "bytes": 16423,
+      "digestAlgorithm": "sha256",
+      "digest": "83f1952387ae4b0be0ed669a2f2cc240c3926c6ee593b08a0a94886c844e140a"
+    }
+  ],
+  "actualPlanUiEvidenceFilesUnmodifiedAndVerified": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/README.md",
+      "bytes": 5178,
+      "digestAlgorithm": "sha256",
+      "digest": "f2308de4704834b21c41443a2ebc2610c25581014da33b3fa49a6624b5a5b166"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-191-pass.log",
+      "bytes": 37964,
+      "digestAlgorithm": "sha256",
+      "digest": "dda49b57785d2d0fec40b0f88a0449f8cd6cc59ec9b7dfea2876f5344120f828"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-191-pass.raw.txt.gz",
+      "bytes": 6566,
+      "digestAlgorithm": "sha256",
+      "digest": "714c92ca2f0569b68bcb09f6fbbb146a504012777b042f4c4b39f0e72200b3e0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "1973c2620e68b039ffffef9fed4ba91da1b05d3856fbb0426f15fbc91410d5c6"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-scoped-lint.raw.txt.gz",
+      "bytes": 345,
+      "digestAlgorithm": "sha256",
+      "digest": "b33283968f72d2a174f39fa2f523f88b4598c49e6c3787ff67e005e3935f571f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-integration-191-pass.log",
+      "bytes": 37967,
+      "digestAlgorithm": "sha256",
+      "digest": "4b8af620ee6d18a9cf0278bbde3110efc323697985672707717cb21d68b2a54c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-integration-191-pass.raw.txt.gz",
+      "bytes": 6523,
+      "digestAlgorithm": "sha256",
+      "digest": "2bbda2421c36cab5017203013e437f28e2483dd50424156b74fe179ceb0ed3ae"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-lint-three-new-warnings.log",
+      "bytes": 1316,
+      "digestAlgorithm": "sha256",
+      "digest": "a32cac6050f8ae11a21ae996ac3b387223d7f32982b353a140d49f012f952db3"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-lint-three-new-warnings.raw.txt.gz",
+      "bytes": 426,
+      "digestAlgorithm": "sha256",
+      "digest": "96f7b5bcbba054f8e42b50b5d2ee3e70f932bac9cb25f33a87f1903fb0fa2c9f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/prospective-11-fail-11-pass.log",
+      "bytes": 20912,
+      "digestAlgorithm": "sha256",
+      "digest": "2266f737b3832f2fdb322b1d9db8a419515157b74884f2609bace51f63f6eab4"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/prospective-11-fail-11-pass.raw.txt.gz",
+      "bytes": 2470,
+      "digestAlgorithm": "sha256",
+      "digest": "7af179d2393e2074fc37409cc6751007a15bbb1f8ff297b162a57fe99ec65b35"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/regional-baseline-sixteen-source-pins.json",
+      "bytes": 3751,
+      "digestAlgorithm": "sha256",
+      "digest": "6752ddba8e8fd833a9351fd235ff5efdd285e6058ae342e8cbae7884f3b9149c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/source-and-artifact-manifest.json",
+      "bytes": 30004,
+      "digestAlgorithm": "sha256",
+      "digest": "6ffc19e6eacee37e49c3434683d7b10806baa39536a7536953943a9aaa56e108"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/test-inventory.json",
+      "bytes": 44914,
+      "digestAlgorithm": "sha256",
+      "digest": "dfbd00e9d69da251303c61b2934c323715f93f431927f405350c3fc5263260d5"
+    }
+  ],
+  "review": {
+    "onlyFixedMapAndTwoSelectorReferencesChanged": true,
+    "allCaseAssertionsAndFixtureTransitionsPreserved": true,
+    "contentInputs": "Only literal reports/manifest tuples; map has those exact keys.",
+    "accessibleNames": "Export reports PDF and Export manifest PDF remain stable while Preparing PDF is a separate status; unanchored patterns preserve prior matching."
+  },
+  "verification": {
+    "scopedLintExitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "regression": {
+      "runner": "Vitest 4.1.7",
+      "runnerSlot": "Root-granted heavy slot #1; released after exit.",
+      "exitCode": 0,
+      "filesPassed": 3,
+      "casesPassed": 55,
+      "casesFailed": 0,
+      "casesSkipped": 0,
+      "durationSeconds": 12.2,
+      "inventoryPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/test-inventory.json",
+      "logPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/final-55-pass.log"
+    },
+    "hostedScanner": "Original failure preserved; fix not yet rechecked in hosted CI.",
+    "scope": "Actual client interaction replay only; no compiler, native database, provider, clinical readiness, production deployment or hosted scanner qualification."
+  },
+  "noScannerSuppressionsIgnoresOrBaselineChanges": true,
+  "preparationRecordsRetained": "source-review.json and prepared-test-command.txt retain their pre-run preparation state; this manifest and final regression artifacts record the authorized completed replay."
+}

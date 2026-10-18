@@ -18,7 +18,8 @@
 
 import type { DeviceBlueprint } from './device-blueprint';
 
-export type DimensionStatus = 'ready' | 'partial' | 'not_started' | 'n/a';
+/** 'not_assessed': applicable, and nothing has measured it. Scores 0 and keeps its weight. */
+export type DimensionStatus = 'ready' | 'partial' | 'not_started' | 'not_assessed' | 'n/a';
 
 export interface ScorecardDimension {
   id: string;
@@ -47,8 +48,11 @@ export interface ScorecardInput {
   classificationMissingFacts?: string[];
   /** Required-document coverage, when assessed. */
   requirements?: { present: number; total: number };
-  /** Per evidence module: applicable, and (when assessed) ready + present/total. */
-  evidence: Array<{ id: string; label: string; applicable: boolean; ready?: boolean; present?: number; total?: number }>;
+  /**
+   * Per evidence module: applicable, and (when assessed) ready + present/total.
+   * `missingFacts`: the facts without which the module's required set is not known.
+   */
+  evidence: Array<{ id: string; label: string; applicable: boolean; ready?: boolean; present?: number; total?: number; missingFacts?: string[] }>;
 }
 
 function levelFor(score: number): ReadinessLevel {
@@ -61,6 +65,9 @@ function levelFor(score: number): ReadinessLevel {
 
 /** Score one evidence module: ready→100, partial via present/total, else not started. */
 function scoreModule(m: ScorecardInput['evidence'][number]): { score: number; status: DimensionStatus } {
+  // A module whose required set turns on an unstated fact (IEC 62304 class, CER
+  // equivalence claim) has no share to score (2026-10-15: it scored ready, 100).
+  if (m.missingFacts && m.missingFacts.length > 0) return { score: 0, status: 'not_assessed' };
   if (m.ready === true) return { score: 100, status: 'ready' };
   if (typeof m.present === 'number' && typeof m.total === 'number' && m.total > 0) {
     const pct = Math.round((m.present / m.total) * 100);
@@ -68,13 +75,35 @@ function scoreModule(m: ScorecardInput['evidence'][number]): { score: number; st
   }
   if (m.ready === false) return { score: 0, status: 'not_started' };
   // Applicable but never assessed (no sections supplied).
-  return { score: 0, status: 'not_started' };
+  return { score: 0, status: 'not_assessed' };
+}
+
+/** One applicable evidence module's dimension, and its gap when it is not ready. */
+function evidenceDimension(m: ScorecardInput['evidence'][number], weight: number): { dimension: ScorecardDimension; gap: string | null } {
+  const { score, status } = scoreModule(m);
+  const counted = typeof m.present === 'number' && typeof m.total === 'number';
+  const missing = m.missingFacts && m.missingFacts.length > 0 ? m.missingFacts.join('; ') : null;
+  const detail = missing
+    ? `Not assessed: the required set turns on ${missing}.${counted ? ` ${m.present} of the ${m.total} sections known to be required are present.` : ''}`
+    : counted ? `${m.present}/${m.total} sections` : undefined;
+  const gap = missing
+    ? `${m.label} is not assessed: supply ${missing}.`
+    : status === 'ready' ? null : `${m.label} is ${status === 'not_started' ? 'not started' : status === 'not_assessed' ? 'not assessed' : 'incomplete'}.`;
+  return { dimension: { id: `evidence:${m.id}`, label: m.label, weight, score, status, detail }, gap };
 }
 
 /**
  * Compute the weighted readiness scorecard from structured inputs. Pure.
  * Weights: classification 10, required documents 30, evidence modules 60 (split
- * evenly across the applicable+scorable modules).
+ * evenly across the applicable modules).
+ *
+ * An applicable dimension nothing has measured is scored as not assessed: 0,
+ * with its weight kept and a gap naming it. Both the required documents (when
+ * no assessment is passed — the /device/blueprint route and AnA's tool pass
+ * none) and applicable evidence modules with no readiness data used to be
+ * DROPPED and the weights normalised over what was left, so a determined class
+ * and one ready module scored 100, 'ready' (2026-10-15). Readiness is now the
+ * share of the whole that has been shown, not of the part that was looked at.
  */
 export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceReadinessScorecard {
   const dimensions: ScorecardDimension[] = [];
@@ -95,7 +124,7 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
       : 'Risk classification not yet determined.');
   }
 
-  // Required documents (weight 30) — only when assessed.
+  // Required documents (weight 30).
   if (input.requirements && input.requirements.total > 0) {
     const pct = Math.round((input.requirements.present / input.requirements.total) * 100);
     dimensions.push({
@@ -107,15 +136,25 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
       detail: `${input.requirements.present}/${input.requirements.total} required documents`,
     });
     if (pct < 100) topGaps.push(`${input.requirements.total - input.requirements.present} required document(s) missing.`);
+  } else {
+    dimensions.push({
+      id: 'required_documents',
+      label: 'Required documents present',
+      weight: 30,
+      score: 0,
+      status: 'not_assessed',
+      detail: 'Not assessed — no document inventory was checked.',
+    });
+    topGaps.push('Required documents not assessed.');
   }
 
-  // Evidence modules (weight 60, split across applicable+scorable modules).
-  const scorable = input.evidence.filter((m) => m.applicable && (m.ready !== undefined || typeof m.present === 'number'));
-  const perModuleWeight = scorable.length > 0 ? 60 / scorable.length : 0;
-  for (const m of scorable) {
-    const { score, status } = scoreModule(m);
-    dimensions.push({ id: `evidence:${m.id}`, label: m.label, weight: perModuleWeight, score, status, detail: typeof m.present === 'number' && typeof m.total === 'number' ? `${m.present}/${m.total} sections` : undefined });
-    if (status !== 'ready') topGaps.push(`${m.label} is ${status === 'not_started' ? 'not started' : 'incomplete'}.`);
+  // Evidence modules (weight 60, split across the applicable modules).
+  const applicable = input.evidence.filter((m) => m.applicable);
+  const perModuleWeight = applicable.length > 0 ? 60 / applicable.length : 0;
+  for (const m of applicable) {
+    const { dimension, gap } = evidenceDimension(m, perModuleWeight);
+    dimensions.push(dimension);
+    if (gap) topGaps.push(gap);
   }
 
   // Weighted aggregate over the applicable weights.
@@ -125,16 +164,23 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
   return { score, level: levelFor(score), dimensions, topGaps };
 }
 
-/** Extract a readiness flag + counts from a blueprint evidence module's detail. */
-function moduleReadiness(detail: unknown): { ready?: boolean; present?: number; total?: number } {
+/** The strings in a `missingFacts` value; [] for anything else. */
+function factList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((f): f is string => typeof f === 'string') : [];
+}
+
+/** Extract a readiness flag + counts (+ missing facts) from a blueprint evidence module's detail. */
+function moduleReadiness(detail: unknown): { ready?: boolean; present?: number; total?: number; missingFacts?: string[] } {
   if (!detail || typeof detail !== 'object') return {};
   const d = detail as Record<string, unknown>;
   // Software wraps its assessment.
   const a = (d.assessment && typeof d.assessment === 'object' ? d.assessment : d) as Record<string, unknown>;
-  const out: { ready?: boolean; present?: number; total?: number } = {};
+  const out: { ready?: boolean; present?: number; total?: number; missingFacts?: string[] } = {};
   if (typeof a.ready === 'boolean') out.ready = a.ready;
   if (typeof a.presentCount === 'number') out.present = a.presentCount;
   if (typeof a.totalRequired === 'number') out.total = a.totalRequired;
+  const missingFacts = factList(a.missingFacts);
+  if (missingFacts.length > 0) out.missingFacts = missingFacts;
   return out;
 }
 
@@ -142,17 +188,16 @@ function moduleReadiness(detail: unknown): { ready?: boolean; present?: number; 
  * Whether the blueprint's classification states a class. The MDR/IVDR engine
  * returns `class: null` with `missingFacts` when a deciding fact was not supplied;
  * that object exists but determines nothing, so it is never scored as determined
- * (2026-10-05, after the engine began failing closed in 963c2167). An FDA
- * pathway recommendation has no `class` field and counts when present.
+ * (2026-10-05, after the engine began failing closed in 963c2167). The FDA
+ * engine does the same with `pathway: 'undetermined'`; an FDA answer used to
+ * count whatever its pathway (2026-10-15).
  */
 function classificationStanding(cls: unknown): { classificationKnown: boolean; classificationMissingFacts?: string[] } {
-  if (cls === undefined || cls === null) return { classificationKnown: false };
-  if (typeof cls === 'object' && 'class' in cls) {
-    const c = cls as { class: unknown; missingFacts?: unknown };
-    if (c.class === null || c.class === undefined) {
-      const missing = Array.isArray(c.missingFacts) ? c.missingFacts.filter((f): f is string => typeof f === 'string') : [];
-      return { classificationKnown: false, classificationMissingFacts: missing };
-    }
+  if (cls === undefined || cls === null || typeof cls !== 'object') return { classificationKnown: false };
+  const c = cls as { class?: unknown; pathway?: unknown; missingFacts?: unknown };
+  const stated = 'class' in c ? c.class : c.pathway;
+  if (stated === null || stated === undefined || stated === 'undetermined') {
+    return { classificationKnown: false, classificationMissingFacts: factList(c.missingFacts) };
   }
   return { classificationKnown: true };
 }

@@ -4,28 +4,45 @@ import { drizzleSignatureClient } from './part11/signature-persistence.js';
 import {
   fda510kProjects,
   fda510kDocuments,
-  fda510kStageProgress,
   documentAuditTrail,
   users
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
-import CrossReferenceMapper from './CrossReferenceMapping.js';
+import FDAFormGenerator, {
+  loadFormProjectData,
+  FDA_510K_FORM_TYPES,
+  FORM_NOT_DRAFTED,
+  FORM_NOT_SAVED,
+  formRunMessage,
+} from './FDAFormGenerator';
 
-interface WorkflowData {
-  deviceInfo?: any;
-  regulatoryInfo?: any;
-  predicateComparison?: any;
-  testingData?: any;
-  clinicalData?: any;
-  labelingInfo?: any;
-  qualitySystem?: any;
-  [key: string]: any;
+/** One form the run drafted and saved, as stored in fda510k_documents (plus its completeness). */
+interface GeneratedFormRecord {
+  documentId: string;
+  projectId: number;
+  documentType: string;
+  documentName: string;
+  content: string;
+  version: number;
+  status: string;
+  formData: Record<string, unknown>;
+  complianceScore: number;
+  completeness: number;
+  createdBy: number;
+  updatedBy: number;
+  organizationId: number;
+}
+
+/** One form the run did not produce, with a fixed reason (the error is logged). */
+interface FormNotProduced {
+  formType: string;
+  reason: string;
 }
 
 class DocumentOrchestrationService {
   /**
-   * Main orchestration method - takes workflow data and generates FDA forms.
+   * Main orchestration method - drafts and saves the FDA forms for a project.
    *
    * NOTE (Phase 1 consolidation): this used to also generate a '510k-main'
    * document by filling the eight hardcoded HTML templates in
@@ -35,8 +52,15 @@ class DocumentOrchestrationService {
    * cerv2_510k_sections. What remains here is the FDA form generation
    * (3514/3601/3881/3654) consumed by fda-forms.routes.ts generate-all and
    * documentOrchestrationRoutes.ts.
+   *
+   * `success` is true only when every form was drafted and saved; `failed`
+   * names each one that was not.
    */
-  async orchestrateDocumentGeneration(projectId: string, userId: string, organizationId: string): Promise<any> {
+  async orchestrateDocumentGeneration(
+    projectId: string,
+    userId: string,
+    organizationId: string,
+  ): Promise<{ success: boolean; forms: GeneratedFormRecord[]; failed: FormNotProduced[]; message: string }> {
     try {
       // Keep projectId as number for database queries
       const projectIdNum = parseInt(projectId);
@@ -54,31 +78,27 @@ class DocumentOrchestrationService {
       const userIdNum = parseInt(userIdStr);
       const orgIdNum = parseInt(orgIdStr);
 
-      // 1. Fetch project and all workflow data
+      // 1. Fetch project
       const project = await this.fetchProject(projectIdNum);
       if (!project) throw new Error('Project not found');
 
-      const workflowData = await this.aggregateWorkflowData(projectIdNum);
-
-      // 2. Generate FDA forms
-      const forms = await this.generateFDAForms(
-        project,
-        workflowData,
-        userIdNum,
-        orgIdNum
-      );
+      // 2. Draft and save the FDA forms
+      const { forms, failed } = await this.generateFDAForms(project, userIdNum, orgIdNum);
 
       // 3. Create audit trail - use original string IDs for better tracking
       await this.createAuditTrail(projectIdNum, userIdNum, orgIdNum, 'document_generated', {
         formIds: forms.map(f => f.documentId),
+        notProduced: failed.map(f => f.formType),
         userIdStr,  // Include original string ID for audit
         orgIdStr    // Include original string ID for audit
       });
 
+      // 2026-10-15: always success: true, "FDA forms generated successfully".
       return {
-        success: true,
+        success: failed.length === 0,
         forms,
-        message: 'FDA forms generated successfully'
+        failed,
+        message: formRunMessage(forms.length, failed.map(f => f.formType))
       };
     } catch (error) {
       console.error('Document orchestration error:', error);
@@ -100,142 +120,70 @@ class DocumentOrchestrationService {
   }
 
   /**
-   * Aggregate all workflow data from different stages
-   */
-  private async aggregateWorkflowData(projectId: number): Promise<WorkflowData> {
-    // Fetch all stage progress for this project
-    const stageProgress = await db!
-      .select()
-      .from(fda510kStageProgress)
-      .where(eq(fda510kStageProgress.projectId, projectId));
-
-    // Aggregate data from all stages
-    const workflowData: WorkflowData = {};
-    
-    for (const stage of stageProgress) {
-      if (stage.collectedData) {
-        const stageData = typeof stage.collectedData === 'string' 
-          ? JSON.parse(stage.collectedData) 
-          : stage.collectedData;
-        
-        // Map stage data to workflow sections based on stageName
-        switch (stage.stageName) {
-          case 'setup':
-          case 'device_information':
-            workflowData.deviceInfo = { ...workflowData.deviceInfo, ...stageData };
-            break;
-          case 'strategy':
-          case 'regulatory_strategy':
-            workflowData.regulatoryInfo = { ...workflowData.regulatoryInfo, ...stageData };
-            break;
-          case 'evidence_plan':
-          case 'predicate_comparison':
-            workflowData.predicateComparison = { ...workflowData.predicateComparison, ...stageData };
-            break;
-          case 'data_collection':
-          case 'testing_requirements':
-            workflowData.testingData = { ...workflowData.testingData, ...stageData };
-            break;
-          case 'document_authoring':
-          case 'clinical_data':
-            workflowData.clinicalData = { ...workflowData.clinicalData, ...stageData };
-            break;
-          case 'submission_qa':
-          case 'labeling':
-            workflowData.labelingInfo = { ...workflowData.labelingInfo, ...stageData };
-            break;
-          case 'submission':
-          case 'quality_system':
-            workflowData.qualitySystem = { ...workflowData.qualitySystem, ...stageData };
-            break;
-          default:
-            // Store other data by stageName
-            workflowData[stage.stageName] = stageData;
-        }
-      }
-    }
-
-    return workflowData;
-  }
-
-  /**
-   * Generate FDA forms (3514, 3601, 3881)
+   * Draft and save the four 510(k) forms (3514, 3601, 3881, 3654) with the
+   * canonical builders in FDAFormGenerator, from the org-scoped record they read
+   * (loadFormProjectData) — the builders and record POST
+   * /api/fda-forms/project/:projectId/generate/:formType uses.
+   *
+   * 2026-10-15: drafted by CrossReferenceMapper, a second implementation of the
+   * same four forms (CrossReferenceMapping.ts, deleted), from its own
+   * re-keyed workflow aggregate; a form it could not draft or save was logged and
+   * dropped. Each form not produced is now returned in `failed` with a fixed
+   * reason. Its "smart field links" step went too: it wrote fda_510k_data_mappings
+   * with no organization_id (NOT NULL), so no row was ever stored — field links
+   * are SmartFieldLinking.ts.
    */
   private async generateFDAForms(
-    project: any,
-    workflowData: WorkflowData,
+    project: { id: number; projectId: number },
     userId: number,
     organizationId: number
-  ): Promise<any[]> {
-    const forms = [];
-    const mapper = new CrossReferenceMapper();
+  ): Promise<{ forms: GeneratedFormRecord[]; failed: FormNotProduced[] }> {
+    const projectData = await loadFormProjectData(project.projectId, organizationId);
+    if (!projectData) throw new Error('Project not found');
 
-    // Add organizationId to workflowData for mapper
-    const enrichedWorkflowData = {
-      ...workflowData,
-      organizationId
-    };
+    const generator = new FDAFormGenerator();
+    const forms: GeneratedFormRecord[] = [];
+    const failed: FormNotProduced[] = [];
 
-    // Generate FDA Forms using enhanced CrossReferenceMapper
-    const fdaFormTypes = ['FDA_3514', 'FDA_3601', 'FDA_3881', 'FDA_3654'];
-    
-    for (const formType of fdaFormTypes) {
+    for (const formType of FDA_510K_FORM_TYPES) {
+      let form: Awaited<ReturnType<FDAFormGenerator['generate510kForm']>>;
       try {
-        // Use the new dynamic document assembly
-        const assembledForm = await mapper.assembleDocument(
-          project.id,
-          formType,
-          enrichedWorkflowData
-        );
-
-        // Save the form to database
-        const formData = {
-          documentId: `${formType}_${project.id}_${Date.now()}`,
-          projectId: project.id,
-          documentType: formType,
-          documentName: this.getFDAFormTitle(formType),
-          content: assembledForm.content,
-          version: 1,
-          status: 'draft',
-          completeness: assembledForm.metadata.completeness,
-          formData: assembledForm.metadata,
-          createdBy: userId,
-          updatedBy: userId,
-          organizationId
-        };
-
-        // Save to database
-        await db!.insert(fda510kDocuments).values({
-          ...formData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-
-        forms.push(formData);
-        console.log(`Generated ${formType} with ${assembledForm.metadata.completeness}% completeness`);
+        form = await generator.generate510kForm(formType, projectData);
       } catch (error) {
-        console.error(`Error generating ${formType}:`, error);
+        console.error('Error drafting FDA form:', { formType }, error);
+        failed.push({ formType, reason: FORM_NOT_DRAFTED });
+        continue;
       }
+      if (!form) {
+        failed.push({ formType, reason: FORM_NOT_DRAFTED });
+        continue;
+      }
+
+      const row = {
+        documentId: `${formType}_${project.id}_${Date.now()}`,
+        projectId: project.id,
+        documentType: formType,
+        documentName: form.name,
+        content: form.htmlContent,
+        version: 1,
+        status: 'draft',
+        formData: { ...form.formData, completeness: form.completeness },
+        complianceScore: form.completeness,
+        createdBy: userId,
+        updatedBy: userId,
+        organizationId
+      };
+      try {
+        await db!.insert(fda510kDocuments).values({ ...row, createdAt: new Date(), updatedAt: new Date() });
+      } catch (error) {
+        console.error('Error saving FDA form:', { formType }, error);
+        failed.push({ formType, reason: FORM_NOT_SAVED });
+        continue;
+      }
+      forms.push({ ...row, completeness: form.completeness });
     }
 
-    // Create smart field links for bidirectional synchronization
-    const smartLinks = await mapper.createSmartFieldLinks(project.id, enrichedWorkflowData);
-    console.log(`Created ${smartLinks.bidirectionalLinks.length} smart field links for FDA forms`);
-
-    return forms;
-  }
-  
-  /**
-   * Get FDA form title based on form type
-   */
-  private getFDAFormTitle(formType: string): string {
-    const titles: Record<string, string> = {
-      'FDA_3514': 'FDA Form 3514 - CDRH Premarket Notification Cover Sheet',
-      'FDA_3601': 'FDA Form 3601 - User Fee Cover Sheet',
-      'FDA_3881': 'FDA Form 3881 - Indications for Use',
-      'FDA_3654': 'FDA Form 3654 - Certification/Disclosure Statement'
-    };
-    return titles[formType] || formType;
+    return { forms, failed };
   }
 
   /**

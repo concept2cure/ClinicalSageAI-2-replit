@@ -1,0 +1,155 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total 171ms
+   → Existing clinical engine must bind study, population, total arm and count.: expected 'failed' to be 'passed' // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF02: Randomized count cannot use treated count 16ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF03: Drug arm cannot use placebo count 9ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF04: Incomplete clinical frame 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF05: CMC batch/method result 3ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF06: CMC batch substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF07: CMC method substitution 1ms
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF08: CMC scalar cannot strip criterion bound 2ms
+   → Written <=0.10% is not an exact measured scalar.: expected true to be false // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF09: CMC specification bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF10: Source precision retained 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF11: Device configuration/software result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF12: Device configuration substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF13: Device software substitution 1ms
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF14: Device criterion cannot become measured scalar 1ms
+   → A written >=400 criterion does not state measured 400.: expected true to be false // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF15: Device criterion bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF16: Complete diagnostic sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF17: Diagnostic assay substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF18: Diagnostic specimen substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF19: Diagnostic cutoff substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF20: Diagnostic denominator substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF21: Diagnostic reference substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF22: Diagnostic population substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF23: Comparator agreement remains agreement 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF24: Agreement cannot establish sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF25: Missing diagnostic context 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF26: Analytical LoD design/matrix/lot 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF27: Analytical lot/matrix substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF28: Analytical CV property substitution 7ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF29: Scientific notation cannot be rewritten 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF30: Range preserved 1ms
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF31: Range endpoint cannot establish scalar 1ms
+   → A range endpoint is not the source-stated scalar result.: expected true to be false // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF32: Approximation cannot establish exact scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF33: Approximation preserved 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF34: Remote heading is not a local relation 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF35: Large multi-subject anchor 0ms
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF36: Unsupported Japanese interpretation 1ms
+   → No multilingual qualification or unstated header mapping.: expected false to be true // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF37: OCR remains unqualified context 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-document: Wrong source document 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-bytes: Wrong original-byte hash 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-text: Wrong extraction hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-range: Shifted exact quote range 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-quote: Fabricated exact quote 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF39: Unsupported computed result 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-status: Candidate cannot claim acceptance 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-actor: Candidate cannot supply authority 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-locator: Unsupported fabricated original locator 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total
+AssertionError: Existing clinical engine must bind study, population, total arm and count.: expected 'failed' to be 'passed' // Object.is equality
+
+Expected: "passed"
+Received: "failed"
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:34:54
+     32|       expect(result.candidateSha256).toMatch(/^[a-f0-9]{64}$/);
+     33|       if (item.expected === 'pass') {
+     34|         expect(result.context.state, item.rationale).toBe('passed');
+       |                                                      ^
+     35|       } else if (item.expected === 'not_established') {
+     36|         expect(result.context.state, item.rationale).toBe('not_establi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF08: CMC scalar cannot strip criterion bound
+AssertionError: Written <=0.10% is not an exact measured scalar.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:23:43
+     21|
+     22|       if (item.expected === 'transcription_refused') {
+     23|         expect(result.ok, item.rationale).toBe(false);
+       |                                           ^
+     24|         expect(result.transcription.state, item.rationale).toBe('faile…
+     25|         expect(result.transcription.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF14: Device criterion cannot become measured scalar
+AssertionError: A written >=400 criterion does not state measured 400.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:23:43
+     21|
+     22|       if (item.expected === 'transcription_refused') {
+     23|         expect(result.ok, item.rationale).toBe(false);
+       |                                           ^
+     24|         expect(result.transcription.state, item.rationale).toBe('faile…
+     25|         expect(result.transcription.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF31: Range endpoint cannot establish scalar
+AssertionError: A range endpoint is not the source-stated scalar result.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:23:43
+     21|
+     22|       if (item.expected === 'transcription_refused') {
+     23|         expect(result.ok, item.rationale).toBe(false);
+       |                                           ^
+     24|         expect(result.transcription.state, item.rationale).toBe('faile…
+     25|         expect(result.transcription.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF36: Unsupported Japanese interpretation
+AssertionError: No multilingual qualification or unstated header mapping.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:30:41
+     28|       }
+     29|
+     30|       expect(result.ok, item.rationale).toBe(true);
+       |                                         ^
+     31|       expect(result.transcription.state, item.rationale).toBe('passed'…
+     32|       expect(result.candidateSha256).toMatch(/^[a-f0-9]{64}$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 41 passed (46)
+   Start at  06:23:48
+   Duration  900ms (transform 355ms, setup 69ms, import 369ms, tests 239ms, environment 0ms)
+

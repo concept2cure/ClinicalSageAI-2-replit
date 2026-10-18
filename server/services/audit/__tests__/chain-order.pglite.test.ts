@@ -199,8 +199,12 @@ describe('writer + trigger + verifier', () => {
     await writeInTx(7, 'a');
     const b = await writeInTx(7, 'b');
     await writeInTx(7, 'c');
-    expect(await verifyAuditChainSeals(pglite as unknown as PoolClient)).toEqual({ valid: true, brokenAt: null });
+    expect(await verifyAuditChainSeals(pglite as unknown as PoolClient)).toEqual({
+      valid: true, brokenAt: null, verified: 3, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
     await pglite.query(`UPDATE audit_logs SET payload_hash = 'tampered' WHERE id = $1`, [b]);
-    expect(await verifyAuditChainSeals(pglite as unknown as PoolClient)).toEqual({ valid: false, brokenAt: 1 });
+    expect(await verifyAuditChainSeals(pglite as unknown as PoolClient)).toEqual({
+      valid: false, brokenAt: 1, verified: 1, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
   });
 });

@@ -1,0 +1,66 @@
+{
+  "publishedBase": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "qualification": "Writer production unchanged during both prospective red runs. Initial red contains five fixture-column failures; canonical red follows actual created_by column setup.",
+  "sources": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 35695,
+      "digestAlgorithm": "sha256",
+      "digest": "5448ae167f14e0ec65c175d42f78db6a976d68fe8382d303c0e7b6ed8f6af069"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 402142,
+      "digestAlgorithm": "sha256",
+      "digest": "2b6d619fb6382af4f6d23ddcef055eb601520ce6193541a57fafdd4fdf6a1e1f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8596,
+      "digestAlgorithm": "sha256",
+      "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6142,
+      "digestAlgorithm": "sha256",
+      "digest": "5589334258db59d3989e0d342aacb77671fee3b2bf99cc50301f5bc123c5913c"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "bytes": 39670,
+      "digestAlgorithm": "sha256",
+      "digest": "64eadcd3fae43278855bcac8a5a3c5f9765afd77bbae94fea750b48770f980a9"
+    },
+    {
+      "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "bytes": 38514,
+      "digestAlgorithm": "sha256",
+      "digest": "4d625b81dabc0e1e1584a61a4bd561fff76cb2689c76e079c3e7a985eb280352"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 15011,
+      "digestAlgorithm": "sha256",
+      "digest": "bc8544a570c80a7c4f5c4163e72570fd68ade06b62dfdee2a2d798c037fd1169"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "bytes": 6963,
+      "digestAlgorithm": "sha256",
+      "digest": "57ea90e4126828bcafecf411c2be3ac5145a4c4681e665a3acaacdafd4251395"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "bytes": 14801,
+      "digestAlgorithm": "sha256",
+      "digest": "ff0b2c3b9d0d707342225e19b4de758a728d98c53fcdb091dc2d02c2048374ce"
+    }
+  ]
+}

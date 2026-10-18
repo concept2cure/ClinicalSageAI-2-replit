@@ -1,0 +1,19 @@
+
+/workspace/Concept2Cure/server/routes/c2c/projects.ts
+  704:54  warning  Async arrow function has too many lines (232). Maximum allowed is 100       max-lines-per-function
+  704:54  warning  Async arrow function has a complexity of 53. Maximum allowed is 15          complexity
+  887:7   warning  The value assigned to 'scaffold' is not used in subsequent statements       no-useless-assignment
+  891:1   warning  File has too many lines (1393). Maximum allowed is 500                      max-lines
+  892:7   warning  The value assigned to 'projectAnchor' is not used in subsequent statements  no-useless-assignment
+
+✖ 5 problems (0 errors, 5 warnings)
+
+
+/workspace/Concept2Cure/server/routes/chat/upload.ts
+   60:66  warning  Async arrow function has too many lines (381). Maximum allowed is 100  max-lines-per-function
+   60:66  warning  Async arrow function has a complexity of 75. Maximum allowed is 15     complexity
+  470:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  554:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+
+✖ 4 problems (0 errors, 4 warnings)
+

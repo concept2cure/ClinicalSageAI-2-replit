@@ -1,0 +1,578 @@
+[
+  {
+    "specifier": "@anthropic-ai/sdk",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@aws-sdk/client-s3",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.12,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@aws-sdk/s3-request-presigner",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@google/generative-ai",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@hocuspocus/server",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.16,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@modelcontextprotocol/sdk/server/auth/errors.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@modelcontextprotocol/sdk/server/auth/router.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.18,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@modelcontextprotocol/sdk/server/mcp.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.23,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@modelcontextprotocol/sdk/server/streamableHttp.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.21,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@node-saml/node-saml",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.13,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@sentry/node",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.51,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "@supabase/supabase-js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.14,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "adm-zip",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "archiver",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.23,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "axios",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.2,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "bcryptjs",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "bidi-js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.18,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "bull",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.2,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "bwip-js/node",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.11,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "cheerio",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.28,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "compression",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.05,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "cookie-parser",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "cors",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.03,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "csv-parse/sync",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.03,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "date-fns",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.83,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "diff",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.03,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "docx",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "dotenv",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "drizzle-orm",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.2,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "drizzle-orm/node-postgres",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.34,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "drizzle-orm/node-postgres/migrator",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "drizzle-orm/pg-core",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.3,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "drizzle-zod",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.19,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "exceljs",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.19,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "express",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.09,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "express-rate-limit",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "googleapis",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.89,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "helmet",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.03,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "ioredis",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.1,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "isomorphic-dompurify",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.9,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "js-yaml",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.03,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "jsonwebtoken",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.09,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "jszip",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "mammoth",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.14,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "marked",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "mathjs",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.8,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "multer",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.05,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "nanoid",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.05,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "node-cron",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "node-html-parser",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.09,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "nodemailer",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.18,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "openai",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.14,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "pdf-lib",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.24,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "pdfkit",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.19,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "pg",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.08,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "pino",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "postgres",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "pptxgenjs",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.1,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "prom-client",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.08,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "puppeteer-cluster",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "qrcode",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.07,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "socket.io",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.13,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "stripe",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.15,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "tesseract.js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.09,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "undici",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.16,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "uuid",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "ws",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.08,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "xml2js",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "xmlbuilder2",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.11,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "yjs",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.06,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  },
+  {
+    "specifier": "zod",
+    "status": "initialized",
+    "exitCode": 0,
+    "elapsedSeconds": 0.04,
+    "stdoutBytes": 10,
+    "stderrBytes": 0
+  }
+]

@@ -27,9 +27,10 @@ const GOOD = 'correct horse battery staple';
 const REASON = 'Committee determination recorded after review';
 /** A BLA assessment's id is a uuid (migrations/20260604_bla_workbench.sql). */
 const BLA_ID = '5e1f0c2a-7b3d-4e8f-9a1b-2c3d4e5f6a7b';
+const BLA_PROGRAM = '11111111-1111-4111-8111-111111111111';
 
 const h = vi.hoisted(() => {
-  const state = { log: [] as string[], sigFail: null as unknown };
+  const state = { log: [] as string[], sigFail: null as unknown, blaProgram: '11111111-1111-4111-8111-111111111111' as string | null, programLead: 42, activeMember: true };
   /* The domain writes: each logs DOMAIN, so the order against the ledger and
      the signature is visible. Hoisted because the service mocks call it. */
   const domainWrite = (result: Record<string, unknown> = {}) => async () => {
@@ -43,7 +44,9 @@ const client = {
   query: vi.fn(async (sql: string) => {
     const word = sql.trim().split(/\s+/)[0].toUpperCase();
     if (word === 'BEGIN' || word === 'COMMIT' || word === 'ROLLBACK') h.log.push(word);
-    if (/FROM c2c_bla_assessments/.test(sql) && /FOR UPDATE/.test(sql)) return { rows: [{ id: 5, status: 'computed' }], rowCount: 1 };
+    if (/FROM c2c_bla_assessments/.test(sql) && /FOR UPDATE/.test(sql)) return { rows: [{ id: BLA_ID, status: 'draft', program_id: h.blaProgram, kind: 'comparability', input: { measured: 'actual inputs' }, result: { conclusion: 'actual conclusion' } }], rowCount: 1 };
+    if (/FROM regulatory_programs/.test(sql)) return { rows: [{ id: BLA_PROGRAM, lead_user_id: h.programLead }], rowCount: 1 };
+    if (/FROM organization_users/.test(sql)) return { rows: h.activeMember ? [{ role: 'member' }] : [], rowCount: h.activeMember ? 1 : 0 };
     if (/^\s*UPDATE c2c_bla_assessments/.test(sql)) h.log.push('DOMAIN');
     return { rows: [], rowCount: 0 };
   }),
@@ -60,7 +63,8 @@ vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client }));
 vi.mock('../../middleware/signing-attempt-limiter', () => ({
   signingAttemptLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
-vi.mock('../../middleware/orgMembership', () => ({
+vi.mock('../../middleware/orgMembership', async original => ({
+  ...await original<typeof import('../../middleware/orgMembership')>(),
   requireEditorAccessForWrites: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
@@ -160,18 +164,19 @@ interface SignRoute {
 const ROUTES: SignRoute[] = [
   {
     name: 'IRB approval', mount: '/api/irb', router: irbRouter, path: '/api/irb/submissions/5/reviews',
-    act: { reviewType: 'full_board', outcome: 'approved', reason: REASON }, target: 'irb-submission:5',
-    notASignature: { act: { reviewType: 'full_board', outcome: 'deferred', reason: REASON }, command: 'resolve' },
+    // A determination carries the board's own date (it was stamped as today).
+    act: { reviewType: 'full_board', outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'irb-submission:5',
+    notASignature: { act: { reviewType: 'full_board', outcome: 'deferred', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'IACUC approval', mount: '/api/iacuc', router: iacucRouter, path: '/api/iacuc/protocols/5/reviews',
-    act: { reviewType: 'full_committee_review', outcome: 'approved', reason: REASON }, target: 'iacuc-protocol:5',
-    notASignature: { act: { reviewType: 'full_committee_review', outcome: 'tabled', reason: REASON }, command: 'resolve' },
+    act: { reviewType: 'full_committee_review', reviewerCount: 9, outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'iacuc-protocol:5',
+    notASignature: { act: { reviewType: 'full_committee_review', reviewerCount: 9, outcome: 'tabled', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'IBC approval', mount: '/api/ibc', router: ibcRouter, path: '/api/ibc/registrations/5/reviews',
-    act: { outcome: 'approved', reason: REASON }, target: 'ibc-registration:5',
-    notASignature: { act: { outcome: 'tabled', reason: REASON }, command: 'resolve' },
+    act: { outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'ibc-registration:5',
+    notASignature: { act: { outcome: 'tabled', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'RIM label recorded as approved', mount: '/api/rim', router: rimRouter, path: '/api/rim/products/5/labels',
@@ -213,7 +218,7 @@ const NOTHING_WRITTEN = (log: string[]) => log.filter((e) => e === 'BEGIN' || e 
 
 beforeEach(() => {
   h.log = [];
-  h.sigFail = null;
+  h.sigFail = null; h.blaProgram=BLA_PROGRAM; h.programLead=42; h.activeMember=true;
   vi.clearAllMocks();
 });
 
@@ -379,5 +384,23 @@ describe.each(STATUS_DOORS)('$name status PATCH cannot set what a determination 
     const res = await patch(door.lifecycle);
     expect(res.status).toBe(201);
     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:transition:${door.target}`, 'COMMIT']);
+  });
+});
+
+describe('BLA signature saved program and snapshot',()=>{
+  const route=ROUTES.find(r=>r.name==='BLA assessment sign-off')!;
+  const post=()=>request(appFor(route)).post(route.path).send({reason:REASON,meaning:'review',password:GOOD});
+  it('binds its signature payload to the actual retained input/result, kind and program',async()=>{
+    const res=await post();expect(res.status).toBe(201);
+    expect(recordGovernedAction.mock.calls.at(-1)?.[1]).toMatchObject({payload:{programId:BLA_PROGRAM,kind:'comparability',inputSnapshot:{measured:'actual inputs'},resultSnapshot:{conclusion:'actual conclusion'}}});
+  });
+  it('refuses an unfiled historical assessment and leaves its status unchanged',async()=>{
+    h.blaProgram=null;const res=await post();expect(res.status).toBe(409);expect(codeOf(res.body)).toBe('PROGRAM_REQUIRED');
+    expect(h.log).toEqual(['BEGIN','ROLLBACK']);expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+  });
+  it.each(['other lead','inactive actor'])('refuses %s under current persisted program authority',async mode=>{
+    if(mode==='other lead')h.programLead=99;else h.activeMember=false;
+    const res=await post();expect(res.status).toBe(403);expect(codeOf(res.body)).toBe('FORBIDDEN');
+    expect(h.log).toEqual(['BEGIN','ROLLBACK']);expect(recordGovernedAction).not.toHaveBeenCalled();expect(persistGovernedSignSignature).not.toHaveBeenCalled();
   });
 });

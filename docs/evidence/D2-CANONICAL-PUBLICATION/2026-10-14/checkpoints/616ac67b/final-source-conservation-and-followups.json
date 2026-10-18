@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-14T22:23:25.491451+00:00",
+  "head": "616ac67bfa01b778884f431b790ad83c5cfff733",
+  "broadCheckpoint": "64bdf9cea891d9df5dd090e18aa51de01517f220",
+  "broadResult": [
+    " Test Files  138 passed (138)",
+    "      Tests  3424 passed (3424)",
+    "   Duration  255.57s (transform 17.66s, setup 2.37s, import 112.18s, tests 116.77s, environment 6.25s)"
+  ],
+  "broadUnchangedDuringRun": true,
+  "broadBindings": 324,
+  "currentBindingsIdenticalToBroad": 322,
+  "differences": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "regressionSha256": "3be263b16fc5e49dc378ca7c96b3431438a0784986308812a550ae4030e332c7",
+      "currentSha256": "ef3884db3e24de05b3ab5d53fcd74d0f95ce007fc604b720ac476c29beb93400"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+      "regressionSha256": "e3863f3d8475951f419976b084043782628fe163e42c32efb99514ab7c6cc9a8",
+      "currentSha256": "37399cb3abcc1ed08bdf83d5e69b0d8648b5ab45e3a64bf67c13a9fa110a7866"
+    }
+  ],
+  "followups": {
+    "catalogFixture": {
+      "equivalence": "catalog-capture-final-annotation-equivalence.json",
+      "focusedLog": "catalog-capture-final-annotation-focused.txt",
+      "tests": 69,
+      "files": 4,
+      "productionChanges": false
+    },
+    "authoringMerge": {
+      "evidence": "incoming-authoring-client.json",
+      "tests": 154,
+      "files": 7,
+      "boundFiles": 16
+    },
+    "previousCanonicalProviderAndSubmissionMerge": {
+      "evidence": "incoming-provider-submission.json",
+      "tests": 107,
+      "files": 5,
+      "boundFiles": 18
+    }
+  },
+  "scope": "Checkpoint plus exact unchanged-source conservation, emitted-JavaScript identity for a fixture-only type annotation and focused current-source authoring qualification. Counts overlap; not additive. Mandatory whole-tree type and normal push gates are recorded separately.",
+  "independentCurrentConservation": {
+    "manifest": "independent-final-manifest.json",
+    "bindings": 60,
+    "unchangedAtFinalIntegration": true
+  },
+  "postgresCheckpointConservation": {
+    "manifest": "durable-postgres-observations.json",
+    "bindings": 49,
+    "unchangedAtFinalIntegration": true
+  }
+}

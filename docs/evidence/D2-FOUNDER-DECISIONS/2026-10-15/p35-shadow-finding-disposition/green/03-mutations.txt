@@ -1,0 +1,60 @@
+# Server guard mutations, P-35 — each applied alone, its suite run, the file restored (2026-10-15)
+
+## M1 spending: SHADOW_FINDING_DISPOSITIONED no longer spends the signature
+# mutated server/services/submission-service/submission-service.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a disposition signature is used once, and is its own act > the same signature cannot disposition again, and the attempt does not void it
+Tests  1 failed | 12 passed (13)
+=> RED as expected (target case failed)
+
+## M2 payload binding: the act no longer checks which finding the signature names
+# mutated server/services/submission-service/submission-service.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a signature for finding A cannot disposition finding B, nor give A another disposition
+Tests  1 failed | 12 passed (13)
+=> RED as expected (target case failed)
+
+## M3 fixed eligibility: "fixed" offered without a later completed run
+# mutated server/services/ectd/shadow-finding-disposition.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > 'fixed' needs a completed review after the finding's run > is refused without one — a failed, running or earlier run does not count — and allowed with one
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+Tests  3 failed | 10 passed (13)
+=> RED as expected (target case failed)
+
+## M4 separation of duties: the act no longer re-checks the author
+# mutated server/services/submission-service/submission-service.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > the sequence's author is refused (separation of duties)
+Tests  1 failed | 12 passed (13)
+=> RED as expected (target case failed)
+
+## M5 meaning: approval/responsibility no longer enforced for a disposition
+# mutated server/services/submission-service/submission-service.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a disposition signed as review, not approval or responsibility, is refused
+Tests  1 failed | 12 passed (13)
+=> RED as expected (target case failed)
+
+## M6 AnA reach: an AnA tool handler imports the disposition act
+# mutated server/services/ana/AnaToolExecutor.ts; ran server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts
+× server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts > no AnA tool can disposition a Shadow Review finding > no AnA or MCP source reaches the disposition act
+Tests  1 failed | 1 passed (2)
+=> RED as expected (target case failed)
+
+## M7 void on refusal: a refused disposition no longer voids its signature
+# mutated server/services/submission-service/submission-service.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > voids the signature it was given, and the void signature does not serve a later attempt
+Tests  1 failed | 12 passed (13)
+=> RED as expected (target case failed)
+
+## M8 severity: a non-critical finding becomes disposable
+# mutated server/services/ectd/shadow-finding-disposition.ts; ran server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > accepting a critical > the findings read names who closed it, how, when and why, and offers nothing more on it
+× server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts > a refused disposition > a non-critical, an already closed, or another sequence's finding is not disposable
+Tests  2 failed | 11 passed (13)
+=> RED as expected (target case failed)
+
+## M9 precheck passthrough: the route stops handing findingId and disposition to the step
+# mutated server/routes/submissions.ts; ran submissions-leaf-remove-and-precheck.test.ts + submissions-shadow-finding-disposition.test.ts
+ × server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > accepts the 'shadow-finding-disposition' step with the finding and the disposition, and answers 200 either way
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a finding disposition precheck the finding and the disposition it names (P-35)
+      Tests  3 failed | 10 passed (13)
+=> RED as expected (target cases failed)

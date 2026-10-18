@@ -1,0 +1,11 @@
+{
+  "path": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+  "beforeSha256": "13092a483a25f1fe9e4bd2cfa4e8d2021feb1f4b980cd72b6555b15cc4466296",
+  "afterSha256": "cfec9d71e151d67065d1c538bf3cd79c8d5fdd9a33fe1f02c20013f4dff353e0",
+  "emittedJavaScriptIdentical": true,
+  "emittedJavaScriptSha256": "a7e142ae35a8a3fff3c374e94d2468d488e3e44deb9f3a7af5c111ee72f55b32",
+  "qualification": "One test-helper parameter receives explicit string annotation; identical emitted JavaScript verified. Original137-file/3372 regression manifest remains intact. Current23-case adoption suite and whole repository type gate qualify the annotation.",
+  "changedSinceFullRegression": [
+    "server/routes/c2c/__tests__/projects-adoption-sql.test.ts"
+  ]
+}

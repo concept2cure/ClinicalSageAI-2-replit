@@ -167,7 +167,8 @@ export interface TerminologyMappingResult {
   targetCode: string;
   targetDisplay: string;
   mappingType: TerminologyMappingType;
-  confidenceScore: number;
+  /** The confidence recorded on the mapping row; null when none was recorded. */
+  confidenceScore: number | null;
   requiresReview: boolean;
   fallbackUsed: boolean;
   sourceVersion?: string;
@@ -425,7 +426,9 @@ export interface ExportJob {
   createdBy: string;
   completedBy?: string;
   completionSignatureId?: string;
-  completionSignatureHash?: string;
+  // completionSignatureHash was removed 2026-10-15: the only value ever written
+  // was a hash over path|'system'|clock, signature-shaped and nobody's. Sign
+  // through POST /api/esignature/sign.
 }
 
 export interface TerminologyVersionLock {
@@ -721,7 +724,8 @@ export type ProductType =
   | 'combination_product'
   | 'diagnostic'
   | 'samd';
-export type DeviceClass = 'I' | 'II' | 'III';
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+export type { DeviceClass };
 
 export interface ProductIdentifiers {
   ndc?: string;
@@ -901,12 +905,14 @@ export interface CreateAdverseEventRequest {
   tenantId: string;
   organizationId?: string;
   caseNumber: string;
-  caseType?: CaseType;
-  reportType?: ReportType;
+  // Required since 2026-10-15: intake defaulted them ('spontaneous', 'initial',
+  // not serious), and the exports filed those defaults as recorded facts.
+  caseType: CaseType;
+  reportType: ReportType;
   eventDate: string;
   eventDatePrecision?: DatePrecision;
   receiveDate: string;
-  isSerious?: boolean;
+  isSerious: boolean;
   seriousnessCriteria?: {
     death?: boolean;
     life_threatening?: boolean;
@@ -1021,3 +1027,84 @@ export const CODE_SYSTEMS: Record<string, Record<string, string>> = {
     NZ: 'NZ',
   },
 };
+
+// =============================================================================
+// UNITS — coded from what the case records, or the export is refused
+// =============================================================================
+// 2026-10-15: the E2B generator looked dose units up in ICH_AGE_UNIT, which
+// holds none, so every dose was coded 003 (mg) and a 5 g dose filed as 5 mg;
+// the 3500A generator assumed mg, kg and days. Only codes this engine is sure
+// of are listed. An unlisted unit is an error, never a guess.
+
+/** Dose units: the ICH E2B(R2) unit code (mass and volume, 001-013) and the UCUM code of an HL7 v3 PQ. */
+export const DOSE_UNITS = {
+  kg: { e2bR2: '001', ucum: 'kg' },
+  g: { e2bR2: '002', ucum: 'g' },
+  mg: { e2bR2: '003', ucum: 'mg' },
+  ug: { e2bR2: '004', ucum: 'ug' },
+  ng: { e2bR2: '005', ucum: 'ng' },
+  pg: { e2bR2: '006', ucum: 'pg' },
+  'mg/kg': { e2bR2: '007', ucum: 'mg/kg' },
+  'ug/kg': { e2bR2: '008', ucum: 'ug/kg' },
+  'mg/m2': { e2bR2: '009', ucum: 'mg/m2' },
+  'ug/m2': { e2bR2: '010', ucum: 'ug/m2' },
+  l: { e2bR2: '011', ucum: 'L' },
+  ml: { e2bR2: '012', ucum: 'mL' },
+  ul: { e2bR2: '013', ucum: 'uL' },
+} as const;
+export type DoseUnit = keyof typeof DOSE_UNITS;
+
+/** The DOSE_UNITS entry a recorded spelling names ('mg', 'mcg', 'µg/kg', 'mL', 'mg/m²'), or null. */
+export function doseUnit(recorded: unknown): (typeof DOSE_UNITS)[DoseUnit] | null {
+  if (typeof recorded !== 'string') return null;
+  const key = recorded.trim().toLowerCase().replace(/[µμ]|mc(?=g)/g, 'u').replace(/²/g, '2');
+  return Object.prototype.hasOwnProperty.call(DOSE_UNITS, key) ? DOSE_UNITS[key as DoseUnit] : null;
+}
+
+/** Time units, keyed as in CODE_SYSTEMS.ICH_AGE_UNIT (the E2B(R2) 801-805 codes), with their UCUM code. */
+export const TIME_UNIT_UCUM = { years: 'a', months: 'mo', weeks: 'wk', days: 'd', hours: 'h' } as const;
+export type TimeUnit = keyof typeof TIME_UNIT_UCUM;
+
+const TIME_UNIT_SPELLINGS = new Map<string, TimeUnit>([
+  ['a', 'years'], ['y', 'years'], ['yr', 'years'], ['year', 'years'], ['years', 'years'],
+  ['mo', 'months'], ['month', 'months'], ['months', 'months'],
+  ['wk', 'weeks'], ['week', 'weeks'], ['weeks', 'weeks'],
+  ['d', 'days'], ['day', 'days'], ['days', 'days'],
+  ['h', 'hours'], ['hr', 'hours'], ['hour', 'hours'], ['hours', 'hours'],
+]);
+
+/** The time unit a recorded spelling names ('d', 'day', 'days', 'h', 'wk', ...), or null. */
+export function timeUnit(recorded: unknown): TimeUnit | null {
+  if (typeof recorded !== 'string') return null;
+  return TIME_UNIT_SPELLINGS.get(recorded.trim().toLowerCase()) ?? null;
+}
+
+// =============================================================================
+// CANONICAL CASE READS — shared by the exports. 2026-10-15: the generators read
+// product_name, dose_value, meddra_pt_code and other names no type above
+// defines, so a case recorded through intake lost those facts silently.
+// =============================================================================
+
+/** A recorded dose (SuspectProduct.dose is text) as one plain decimal; null when none is recorded or the text is not one. */
+export function doseNumber(recorded: unknown): string | null {
+  if (typeof recorded === 'number') return Number.isFinite(recorded) && recorded >= 0 ? String(recorded) : null;
+  const text = typeof recorded === 'string' ? recorded.trim() : '';
+  return /^\d+(\.\d+)?$/.test(text) ? text : null;
+}
+
+/**
+ * A recorded term code that is MedDRA's: term_system MEDDRA, or none recorded
+ * (the seeded mapping rules read reaction terms as MedDRA). Null otherwise.
+ */
+export function meddraCode(coded: { term_code?: string; term_system?: string } | undefined): string | null {
+  if (!coded?.term_code) return null;
+  return !coded.term_system || coded.term_system === 'MEDDRA' ? coded.term_code : null;
+}
+
+/** The ICH qualification code (CODE_SYSTEMS.ICH_QUALIFIER) a reporter records: qualification_code, else the qualification named; or null. */
+export function qualificationCode(reporter: Pick<Reporter, 'qualification' | 'qualification_code'> | undefined): string | null {
+  const code = reporter?.qualification_code?.trim() ?? '';
+  if (Object.values(CODE_SYSTEMS.ICH_QUALIFIER).includes(code)) return code;
+  const named = (reporter?.qualification ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return Object.prototype.hasOwnProperty.call(CODE_SYSTEMS.ICH_QUALIFIER, named) ? CODE_SYSTEMS.ICH_QUALIFIER[named] : null;
+}

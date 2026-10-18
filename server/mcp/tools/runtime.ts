@@ -19,12 +19,18 @@ import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/
 import { runWithTenantScope } from '../../db/tenantStore';
 import type { McpConfig, McpScope } from '../config';
 import { principalOf, type McpPrincipal } from '../auth/platform-token';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { LazyRequestDbClient } from '../../middleware/lazyRequestDbClient';
+import { applySessionScope } from '../../db/sessionScope';
 
 export interface ToolRunContext {
   principal: McpPrincipal;
   config: McpConfig;
+  /** Server-owned, pinned to this authenticated tool call; never tool input. */
+  sqlClient?: RequestSqlClient;
   /** The shape AnA's registered handlers take (ToolContext in AnaToolExecutor). */
-  ana: { organizationId: number; userId: number; organizationUuid: string | null };
+  ana: { organizationId: number; userId: number; organizationUuid: string | null;
+    sqlClient?: RequestSqlClient; signal?: AbortSignal };
 }
 
 export type ToolOutcome =
@@ -182,6 +188,27 @@ function render(outcome: ToolOutcome, tool: string): CallToolResult {
   };
 }
 
+/** One lazy physical connection per verified tool call. Identity comes from
+ * the SDK's validated principal, not headers, a fabricated Express request or
+ * an organization/user field supplied to the model's tool arguments. */
+async function createMcpCallSqlClient(principal: McpPrincipal, signal: AbortSignal | undefined): Promise<{
+  sqlClient: RequestSqlClient; release(): Promise<void>;
+}> {
+  const { pool } = await import('../../db');
+  const client = new LazyRequestDbClient(pool, checkedOut => applySessionScope(checkedOut, {
+    tenantId: String(principal.organizationId), role: principal.role, orgUuid: principal.organizationUuid,
+  }));
+  const sqlClient: RequestSqlClient = {
+    async query(text, params) {
+      // Cancellation stops follow-up statements. Never throw after a COMMIT
+      // succeeded and thereby report a persisted action as if it failed.
+      signal?.throwIfAborted();
+      return client.query(text, params);
+    },
+  };
+  return { sqlClient, release: () => client.release() };
+}
+
 export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpConfig): void {
   server.registerTool(
     spec.name,
@@ -192,7 +219,7 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
       annotations: { title: spec.title, ...spec.annotations },
       _meta: { scope: spec.scope, governed: spec.governed, implementation: spec.implementation },
     },
-    async (input: Record<string, unknown>, extra: { authInfo?: import('@modelcontextprotocol/sdk/server/auth/types.js').AuthInfo }) => {
+    async (input: Record<string, unknown>, extra: { authInfo?: import('@modelcontextprotocol/sdk/server/auth/types.js').AuthInfo; signal?: AbortSignal }) => {
       const principal = principalOf(extra.authInfo);
       if (!principal) {
         return render(refused('No authenticated principal on this call; the bearer token did not resolve to a user and organisation.'), spec.name);
@@ -232,44 +259,54 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
               return render(refused(reason), spec.name);
             }
           }
-          const ctx: ToolRunContext = {
-            principal,
-            config,
-            ana: { organizationId: principal.organizationId, userId: principal.userId, organizationUuid: principal.organizationUuid },
-          };
-          let outcome: ToolOutcome;
-          let audited: 'ok' | 'refused' | 'failed' = 'ok';
+          const call = await createMcpCallSqlClient(principal, extra.signal);
           try {
-            outcome = await spec.run(input, ctx);
-            if (outcome.kind === 'refused') audited = 'refused';
-          } catch (err) {
-            audited = 'failed';
-            outcome = refused(`${spec.name} failed: ${errorMessage(err)}`);
-          }
-          const recorded = await writeAudit({
-            principal,
-            tool: spec.name,
-            governed: spec.governed,
-            outcome: audited,
-            durationMs: Date.now() - started,
-            detail: outcome.kind === 'refused' ? outcome.reason : undefined,
-          });
-          if (!recorded && spec.governed && outcome.kind !== 'refused') {
-            // The action ran; its Part 11 record did not. Say exactly that
-            // rather than "ok": the data is returned so nothing is hidden, and
-            // the result is flagged so the client does not treat it as clean.
-            return {
-              isError: true,
-              content: [
-                {
-                  type: 'text',
-                  text: `${spec.name} executed, but its audit record could not be written. Treat this result as unrecorded until the audit service is repaired; the platform logged the failure.`,
-                },
-              ],
-              structuredContent: { tool: spec.name, auditRecorded: false, ...outcome.data },
+            const ctx: ToolRunContext = {
+              principal,
+              config,
+              sqlClient: call.sqlClient,
+              ana: { organizationId: principal.organizationId, userId: principal.userId,
+                organizationUuid: principal.organizationUuid, sqlClient: call.sqlClient, signal: extra.signal },
             };
+            let outcome: ToolOutcome;
+            let audited: 'ok' | 'refused' | 'failed' = 'ok';
+            try {
+              extra.signal?.throwIfAborted();
+              outcome = await spec.run(input, ctx);
+              if (outcome.kind === 'refused') audited = 'refused';
+            } catch (err) {
+              audited = 'failed';
+              outcome = refused(`${spec.name} failed: ${errorMessage(err)}`);
+            }
+            const recorded = await writeAudit({
+              principal,
+              tool: spec.name,
+              governed: spec.governed,
+              outcome: audited,
+              durationMs: Date.now() - started,
+              detail: outcome.kind === 'refused' ? outcome.reason : undefined,
+            });
+            if (!recorded && spec.governed && outcome.kind !== 'refused') {
+              // The action ran; its Part 11 record did not. Say exactly that
+              // rather than "ok": the data is returned so nothing is hidden, and
+              // the result is flagged so the client does not treat it as clean.
+              return {
+                isError: true,
+                content: [
+                  {
+                    type: 'text',
+                    text: `${spec.name} executed, but its audit record could not be written. Treat this result as unrecorded until the audit service is repaired; the platform logged the failure.`,
+                  },
+                ],
+                structuredContent: { tool: spec.name, auditRecorded: false, ...outcome.data },
+              };
+            }
+            return render(outcome, spec.name);
+          } finally {
+            // Wait for the handler to settle before resetting/releasing a
+            // client that may still have a statement or transaction in flight.
+            await call.release();
           }
-          return render(outcome, spec.name);
         },
       );
     },

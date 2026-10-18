@@ -1,0 +1,9 @@
+{
+  "checkpoint": "schema-before-tool-edit",
+  "head": "dbb3de5355e074a79c2e3fe6606ceaf5f4041d31",
+  "files": {
+    "server/services/ana/document-surface-tool-defs.ts": "698887a155fd495471d34b407daa5db50f8350887d99758da7c5c0af9cca8807",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "62037fb8ab5496059ac9d863700eba3a2b830a4771ad395b8031fee1d17171e2"
+  }
+}

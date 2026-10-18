@@ -11,6 +11,9 @@
  * @module server/services/ana-ri/document-routing
  */
 
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis';
+import { soleModule1Placement, type DocumentRole } from '../../../shared/regulatory/regional-module1';
+
 // ─── Document type detection ─────────────────────────────────────────────────
 
 export interface DetectedDocument {
@@ -20,6 +23,59 @@ export interface DetectedDocument {
   title: string;
   module?: string;
   description: string;
+  /** How the platform knows this placement, rendered for the reader. Module 1 rows carry it. */
+  basis?: string;
+}
+
+/*
+ * Module 1 placement comes from the record, not from this file.
+ *
+ * These four rows used to state their own section codes, and three of the four were wrong:
+ * the investigator's brochure at 1.3.3 (US 1.3.3 is DEBARMENT CERTIFICATION, 21 USC 335a, and it
+ * applies to marketing applications — an IND has no such node); Form 1572 at 1.3.1 (which is
+ * Contact/Sponsor/Applicant Information — every FDA transmittal form files under 1.1 Forms); the
+ * cover letter at 1.1 and the table of contents at 1.2, which are swapped, and the table of
+ * contents is not a Module 1 heading at all because the XML backbone IS the table of contents.
+ *
+ * A sponsor at a 40-person biotech does not own a copy of FDA's regional Module 1 controlled
+ * vocabulary; they accept the number this file gives them. So the number is read from
+ * shared/regulatory/regional-module1.ts, which carries each heading with its basis, and the basis
+ * travels with it into the prompt. The identical five rows were already found wrong and deleted
+ * from lumen-context/sections.ts on 2026-10-04 — from a different copy of the same table. This is
+ * that copy.
+ *
+ * The table of contents has NO row: the record holds no Module 1 node for it, and inventing one
+ * is what produced the defect above.
+ */
+const M1: Array<{ pattern: RegExp; role: DocumentRole; description: string }> = [
+  { pattern: /\bcover letter\b/i, role: 'cover_letter', description: 'Submission cover letter addressed to the FDA review division' },
+  { pattern: /\b(?:form 1571|form 1572|form 3674|form 356h)\b/i, role: 'application_form', description: 'FDA transmittal forms filed under the Forms heading (1571, 1572, 3674, 356h)' },
+  { pattern: /\binvestigator.?s? brochure\b/i, role: 'investigators_brochure', description: 'Comprehensive IB with all available nonclinical and clinical data (21 CFR 312.23(a)(5))' },
+];
+
+/**
+ * The Module 1 rows, resolved against the US record for an IND. A role the record holds no single
+ * node for yields no row at all: the detector then finds nothing and the caller says so, which is
+ * the honest answer and strictly better than a confident wrong number.
+ */
+function module1Patterns(): DocumentPattern[] {
+  const out: DocumentPattern[] = [];
+  for (const row of M1) {
+    const place = soleModule1Placement(row.role, 'US', 'ind');
+    if (!place) continue;
+    out.push({
+      pattern: row.pattern,
+      result: {
+        type: 'ctd_section',
+        sectionCode: place.code,
+        title: place.title,
+        module: 'M1',
+        description: row.description,
+        basis: place.basis.map((b) => basisLabel(b)).join('; '),
+      },
+    });
+  }
+  return out;
 }
 
 interface DocumentPattern {
@@ -27,12 +83,9 @@ interface DocumentPattern {
   result: DetectedDocument;
 }
 
-const DOCUMENT_PATTERNS: DocumentPattern[] = [
-  // ── Module 1 ──
-  { pattern: /\b(?:cover letter|form 1571|1\.1)\b/i, result: { type: 'ctd_section', sectionCode: '1.1', title: 'Cover Letter / Form 1571', module: 'M1', description: 'IND cover letter with sponsor info, drug name, phase, protocol list' } },
-  { pattern: /\b(?:table of contents|toc|1\.2)\b/i, result: { type: 'ctd_section', sectionCode: '1.2', title: 'Table of Contents', module: 'M1', description: 'eCTD table of contents per ICH M4' } },
-  { pattern: /\b(?:form 1572|statement of investigator|1\.3\.1)\b/i, result: { type: 'ctd_section', sectionCode: '1.3.1', title: 'Form 1572', module: 'M1', description: 'Statement of Investigator for each site PI' } },
-  { pattern: /\b(?:investigator.?s? brochure|ib|1\.3\.3|1\.14)\b/i, result: { type: 'ctd_section', sectionCode: '1.3.3', title: 'Investigator\'s Brochure', module: 'M1', description: 'Comprehensive IB with all available nonclinical and clinical data' } },
+export const DOCUMENT_PATTERNS: DocumentPattern[] = [
+  // ── Module 1 — from the record (module1Patterns above), never stated here ──
+  ...module1Patterns(),
 
   // ── Module 2 ──
   { pattern: /\b(?:ctd introduction|2\.2)\b/i, result: { type: 'ctd_section', sectionCode: '2.2', title: 'CTD Introduction', module: 'M2', description: 'Brief introduction to the pharmaceutical agent' } },
@@ -53,9 +106,23 @@ const DOCUMENT_PATTERNS: DocumentPattern[] = [
 
   // ── Module 5 ──
   { pattern: /\b(?:tabulated summar|5\.2)\b/i, result: { type: 'ctd_section', sectionCode: '5.2', title: 'Tabulated Summary Data', module: 'M5', description: 'Tabulated study data and graphs' } },
-  { pattern: /\b(?:efficacy study report|5\.3\.1)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.1', title: 'Clinical Efficacy Study Reports', module: 'M5', description: 'Controlled and uncontrolled efficacy studies' } },
-  { pattern: /\b(?:safety study report|5\.3\.3)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.3', title: 'Clinical Safety Study Reports', module: 'M5', description: 'Safety database, AE summaries, lab data' } },
-  { pattern: /\b(?:clinical pharmacology|human pk|5\.3\.5)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.5', title: 'Clinical Pharmacology Study Reports', module: 'M5', description: 'BA/BE, PK/PD, dose-response studies' } },
+  /* These three rows named three different headings and got all three wrong, each in the same
+     way — the number was written here rather than read from ICH M4E(R2):
+       - "efficacy study report" → 5.3.1, which is Reports of BIOPHARMACEUTIC Studies (BA/BE).
+         The row's own description, "controlled and uncontrolled efficacy studies", is 5.3.5.1 and
+         5.3.5.2, so the document was right and the number was wrong.
+       - "safety study report" → 5.3.3, which is Reports of Human PHARMACOKINETIC Studies. Efficacy
+         AND safety share one heading in M4E: 5.3.5. So it merges into the row above.
+       - "clinical pharmacology | human pk" → 5.3.5, the efficacy/safety heading, with a
+         description ("BA/BE, PK/PD, dose-response") naming three headings at once: BA/BE is 5.3.1,
+         PK is 5.3.3, PD is 5.3.4. It is split below; "clinical pharmacology" alone is broader than
+         any one of them and goes to 5.3.3, the heading a clinical pharmacology report most often
+         is, with its scope stated rather than implied.
+     The patterns no longer answer to a bare section number for these: a request naming 5.3.1 is
+     asking for biopharmaceutic studies, and that is now what it gets. */
+  { pattern: /\b(?:bioavailability|bioequivalence|biopharmaceutic|ba\/be|5\.3\.1)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.1', title: 'Reports of Biopharmaceutic Studies', module: 'M5', description: 'BA, comparative BA and BE, in vitro–in vivo correlation, bioanalytical methods' } },
+  { pattern: /\b(?:clinical pharmacology|human pk|pharmacokinetic study report|5\.3\.3)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.3', title: 'Reports of Human Pharmacokinetic (PK) Studies', module: 'M5', description: 'Healthy-subject and patient PK, intrinsic and extrinsic factor PK, population PK (PD reports file at 5.3.4)' } },
+  { pattern: /\b(?:efficacy study report|safety study report|5\.3\.5)\b/i, result: { type: 'ctd_section', sectionCode: '5.3.5', title: 'Reports of Efficacy and Safety Studies', module: 'M5', description: 'Controlled and uncontrolled efficacy and safety studies, and analyses of data from more than one study' } },
 
   // ── Safety Narratives ──
   { pattern: /\b(?:safety narrative|teae narrative|adverse event narrative)\b/i, result: { type: 'safety_narrative', subtype: 'aggregate', title: 'Safety Narrative', description: 'Aggregate TEAE narrative for CSR/IB/CER/DSUR' } },
@@ -121,6 +188,8 @@ export function buildDocumentGenerationContext(doc: DetectedDocument): string {
 
   if (doc.sectionCode) parts.push(`**CTD Section:** ${doc.sectionCode}`);
   if (doc.module) parts.push(`**Module:** ${doc.module}`);
+  // The number arrives with how the platform knows it, so a reader can check it rather than trust it.
+  if (doc.basis) parts.push(`**Placement basis:** ${doc.basis}`);
   parts.push(`**Description:** ${doc.description}`);
 
   parts.push(`\nGenerate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an \`\`\`ana-action block so the platform can propose saving it as a governed artifact; the person confirms before it is saved.`);

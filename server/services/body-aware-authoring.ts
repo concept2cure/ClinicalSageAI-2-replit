@@ -21,7 +21,13 @@ export interface GapItem {
 
 export interface GapAnalysis {
   gaps: GapItem[];
-  overallCompleteness: number;
+  /**
+   * 0–100 over the recorded expectations, or null when none are recorded for
+   * the section: it was 100 then — complete, measured against nothing
+   * (2026-10-15).
+   */
+  overallCompleteness: number | null;
+  requiredLevel: SectionExpectations['requiredLevel'];
 }
 
 import { resolveToDeficiencyType, resolveToRegistryEntry } from '../../shared/regulatory/submission-type-bridge.js';
@@ -247,9 +253,9 @@ export async function detectBodySpecificGaps(
   const weakCount = gaps.filter(g => g.status === 'weak').length;
   const overallCompleteness = total > 0
     ? Math.round(((presentCount + weakCount * 0.5) / total) * 100)
-    : 100;
+    : null;
 
-  return { gaps, overallCompleteness };
+  return { gaps, overallCompleteness, requiredLevel: exp.requiredLevel };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

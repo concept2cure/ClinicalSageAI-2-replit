@@ -1,0 +1,50 @@
+{
+  "sets": [
+    {
+      "name": "root",
+      "checked": 44,
+      "mismatches": []
+    },
+    {
+      "name": "backendSqlFinal",
+      "checked": 26,
+      "mismatches": []
+    },
+    {
+      "name": "anaServer",
+      "checked": 14,
+      "mismatches": []
+    },
+    {
+      "name": "browserProduction",
+      "checked": 23,
+      "mismatches": []
+    },
+    {
+      "name": "browserFixture",
+      "checked": 5,
+      "mismatches": []
+    }
+  ],
+  "historical": [
+    {
+      "receipt": "frontend/summary.json",
+      "checked": 35,
+      "laterRefinedFiles": [
+        "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx"
+      ],
+      "qualification": "Final39 replay and9 browser cases cover the equivalent navigation updater."
+    },
+    {
+      "receipt": "backend/source-pins.json",
+      "checked": 26,
+      "laterRefinedFiles": [
+        "server/services/authoring/authoring-assembly.ts",
+        "server/services/authoring/authoring-assembly-source.ts",
+        "server/services/authoring/authoring-template-sections.ts"
+      ],
+      "qualification": "Final SQL-gate127 replay and26 current pins cover six static query variants."
+    }
+  ],
+  "fixturePathQualification": "Fixture paths resolve relative to canonical-integration/browser; other maps use repository paths."
+}

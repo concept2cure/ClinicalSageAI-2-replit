@@ -24,8 +24,16 @@ import express from 'express';
 import request from 'supertest';
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
-const x = vi.hoisted(() => ({ domain: vi.fn(), segments: vi.fn(), anchor: vi.fn(), dossier: vi.fn() }));
+const x = vi.hoisted(() => ({ domain: vi.fn(), segments: vi.fn(), orgSegments: vi.fn(), anchor: vi.fn(), dossier: vi.fn(), scopeAccess: vi.fn(), accessIds: vi.fn() }));
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: x.accessIds,
+  canAccessReportScope: x.scopeAccess,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -41,6 +49,7 @@ vi.mock('../../services/report-os/research-compliance-report-providers', () => (
 vi.mock('../../services/report-os/segment', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/segment')>()),
   deriveScopeSegments: x.segments,
+  deriveOrgSegments: x.orgSegments,
 }));
 vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: x.anchor }));
 vi.mock('../../services/ana/lineage-dossier.js', async (importOriginal) => ({
@@ -59,7 +68,8 @@ import { reportRuns, reportSnapshots } from '@shared/schema/report-os';
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
-  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
+  (req as unknown as { dbClient: unknown }).dbClient = { query: async (sql: string) => ({ rows: h.respond.fn(sql, false) }) };
+  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: req.get('x-test-role') ?? 'manager', organizationId: 7 };
   next();
 });
 app.use('/api/report-os', reportOsRouter);
@@ -85,14 +95,59 @@ const post = (body: Record<string, unknown>) => request(app).post('/api/report-o
 
 beforeEach(() => {
   resetReportOsHarness(h);
+  x.scopeAccess.mockReset().mockResolvedValue(true);
+  x.accessIds.mockReset().mockResolvedValue([11,12]);
   h.respond.fn = (sql, arrayMode) =>
-    !arrayMode ? [] : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
+    !arrayMode ? (/FROM concept2cure_artifacts s/.test(sql) ? [{ project_id: 11 }] : []) : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true })] : [];
   x.domain.mockReset().mockResolvedValue({
     summary: { studies: 2, byStatus: { completed: 2 }, sendValidated: 1 },
     provider: { provider: 'nonclinical_studies', observedAt: '2026-10-08T06:00:00Z', status: 'ready' },
   });
   x.segments.mockReset().mockResolvedValue(['biotech']);
+  x.orgSegments.mockReset().mockResolvedValue(['academic']);
   x.anchor.mockReset().mockResolvedValue(11);
+});
+
+describe('organization registers', () => {
+  const ADMIN = { ...type('research_admin.scorecard', 'Research Administration Scorecard', 'research_compliance', ['academic']), allowedScopes: ['account'] };
+  it('runs without a project and stores its actual organization scope', async () => {
+    h.queued.select.push([ADMIN]);
+    const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: ADMIN.typeId });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(x.domain).toHaveBeenCalledWith(ADMIN.typeId, 7, expect.objectContaining({ scopeType: 'account', scopeId: '7' }));
+    expect(written()).toMatch(/organization/);
+  });
+  it('refuses an account identity other than the authenticated organization', async () => {
+    h.queued.select.push([ADMIN]);
+    const res = await post({ scopeType: 'account', scopeId: '8', reportTypeId: ADMIN.typeId });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('REPORT_ACCOUNT_SCOPE_MISMATCH');
+    expect(x.domain).not.toHaveBeenCalled();
+    expect(h.statements).toEqual([]);
+  });
+  it('refuses an organization segment outside the register applicability', async () => {
+    x.orgSegments.mockResolvedValue(['device']);
+    h.queued.select.push([ADMIN]);
+    const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: ADMIN.typeId });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('REPORT_TYPE_NOT_APPLICABLE');
+    expect(x.domain).not.toHaveBeenCalled();
+  });
+  it('refuses a report disabled by the registry operator', async () => {
+    h.queued.select.push([{ ...ADMIN, enabled: false }]);
+    const res = await post({ scopeType: 'account', scopeId: '7', reportTypeId: ADMIN.typeId });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('REPORT_TYPE_DISABLED');
+    expect(x.domain).not.toHaveBeenCalled();
+  });
+  it.each(['program', 'submission', 'document', 'study'])('does not store an organization register against an unverified %s identity', async (scopeType) => {
+    h.respond.fn = () => [];
+    h.queued.select.push([{ ...ADMIN, allowedScopes: [scopeType] }]);
+    const res = await post({ scopeType, scopeId: 'foreign', reportTypeId: ADMIN.typeId });
+    expect(res.status).toBe(scopeType === 'study' ? 422 : 404);
+    expect(x.domain).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+  });
 });
 
 describe('a type no engine computes', () => {
@@ -108,13 +163,46 @@ describe('a type no engine computes', () => {
   });
 });
 
+describe('private project access remains required for reporting', () => {
+  it('refuses a project run before reading its evidence or writing a snapshot', async () => {
+    x.scopeAccess.mockResolvedValue(false);
+    h.queued.select.push([DIGEST], [HLV]);
+    const res = await request(app).post('/api/report-os/runs').set('x-test-role', 'member').send({ scopeType: 'project', scopeId: '11', reportTypeId: DIGEST.typeId });
+    expect(res.status).toBe(404);
+    expect(x.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, expect.objectContaining({ scopeType: 'project', scopeId: '11' }), undefined, [11,12]);
+    expect(h.compute).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+  it.each(['rendered', 'seal', 'dependencies', 'export.pdf'])('refuses private run %s before metadata or output leaves', async endpoint => {
+    x.scopeAccess.mockResolvedValue(false);
+    h.queued.select.push([RUN]);
+    const res = await request(app).get(`/api/report-os/runs/52/${endpoint}`).set('x-test-role', 'member');
+    expect(res.status).toBe(404);
+    expect(res.body).not.toHaveProperty('data');
+    expect(res.headers['content-type']).not.toContain('application/pdf');
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+});
+
 describe('a register', () => {
+  it('refuses a registry choice it cannot compute and rejects invalid regional context', async () => {
+    h.queued.select.push([SEND], [HLV]);
+    const res = await post({ scopeType: 'project', scopeId: '11', reportTypeId: SEND.typeId, registryId: 'EU_MAA' });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('REPORT_REGISTRY_CONTEXT_UNSUPPORTED');
+    expect(x.domain).not.toHaveBeenCalled();
+    h.queued.select.push([DIGEST], [HLV]);
+    const invalid = await post({ scopeType: 'project', scopeId: '11', reportTypeId: DIGEST.typeId, registryId: 'INVALID' });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.code).toBe('INVALID_REPORT_REGISTRY');
+    expect(h.compute).not.toHaveBeenCalled();
+  });
   it('runs from its own provider, not the readiness orchestrator', async () => {
     h.queued.select.push([SEND], [HLV]);
     const res = await post({ scopeType: 'project', scopeId: '11', reportTypeId: SEND.typeId });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(h.compute).not.toHaveBeenCalled();
-    expect(x.domain).toHaveBeenCalledWith(SEND.typeId, 7);
+    expect(x.domain).toHaveBeenCalledWith(SEND.typeId, 7, { scopeType: 'project', scopeId: '11', clientWorkspaceId: undefined });
     expect(written()).toMatch(/nonclinical_studies/);
     expect(written()).not.toMatch(/submission_readiness/);
   });
@@ -169,6 +257,34 @@ describe('the run names its scope', () => {
   });
 });
 
+describe('saved report detail and history', () => {
+  it('reads enriched run metadata from the authenticated tenant transaction for a deep link', async () => {
+    h.respond.fn = sql => /WITH matching_runs/.test(sql) ? [{ ...RUN, reportTypeLabel: DIGEST.label, scopeLabel: HLV.name, computedScope: 'project', __total: '1' }] : [];
+    const res = await request(app).get('/api/report-os/runs/52');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ id: 52, reportTypeLabel: DIGEST.label, computedScope: 'project', scopeLabel: HLV.name });
+    const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
+    expect(h.params[index]).toEqual([7, [11,12], true, 52, 1, 0]);
+    expect(h.statements[0]).toBe('BEGIN');
+    expect(h.statements[1]).toMatch(/current_tenant_id/);
+    expect(h.params[1]).toEqual(['7']);
+    expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
+  });
+  it('returns not found when the tenant-scoped query has no record and refuses malformed IDs', async () => {
+    expect((await request(app).get('/api/report-os/runs/999')).status).toBe(404);
+    expect((await request(app).get('/api/report-os/runs/not-a-run')).status).toBe(400);
+  });
+  it('passes search/sort/pagination through the tenant-scoped history reader', async () => {
+    h.respond.fn = sql => /WITH matching_runs/.test(sql) ? [{ id: null, __total: '0' }] : [];
+    const res = await request(app).get('/api/report-os/runs?search=EU&limit=5&offset=10&sortBy=reportType&sortOrder=asc');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ data: [], meta: { limit: 5, offset: 10, total: 0, hasMore: false } });
+    const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
+    expect(h.params[index]).toEqual([7, [11,12], true, '%EU%', 5, 10]);
+    expect(h.statements[index]).toContain('ORDER BY "reportTypeLabel" ASC');
+  });
+});
+
 /*
  * A register with data computes with no blocker, so its run is stored
  * 'completed'. The renderer read 'completed' as a request for final, so the run
@@ -220,6 +336,7 @@ describe('the evidence & provenance trace', () => {
   beforeEach(() => x.dossier.mockReset());
 
   it('its confidence is the document\'s measured provenance completeness, not a count of the records present', async () => {
+    h.respond.fn = (sql, arrayMode) => !arrayMode ? (/FROM concept2cure_artifacts s/.test(sql) ? [{ project_id: 11 }] : []) : /"report_runs"/.test(sql) ? [driverRow(reportRuns, { ...RUN, scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId, confidence: 64 })] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, { id: 3, runId: 52, organizationId: 7, scopeType: 'document', scopeId: 'artifact_abc', snapshotVersion: 1, isLatest: true })] : [];
     x.dossier.mockResolvedValue(dossier({
       percent: 64, contentLength: 1000, attributedChars: 640, unattributedChars: 360, staleChars: 0,
       byKind: { fromSources: 140, authorAsserted: 500, machineDrafted: 0, machineDraftedUnaccepted: 0 },
@@ -228,6 +345,9 @@ describe('the evidence & provenance trace', () => {
     const res = await post({ scopeType: 'document', scopeId: 'artifact_abc', reportTypeId: TRACE.typeId });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(x.dossier).toHaveBeenCalledWith('artifact_abc', 7);
+    // A document is not a project ID, and its trace cannot carry a second
+    // project's readiness observations as its evidence.
+    expect(h.compute).not.toHaveBeenCalled();
     expect(runConfidence()).toBe(64);
   });
 

@@ -5,6 +5,19 @@
 --
 -- This migration implements "30-Year Veteran Intuition" - the ability to detect
 -- subtle patterns that experienced regulatory professionals recognize intuitively.
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no fabricated output):
+-- cortex.generate_intuition_prediction stored fixed priors (approval 0.7, CRL
+-- 0.2, RTF 0.05, shifted by invented weights 0.3 / 0.2) and a constant 0.7
+-- "confidence" as model 'v1.0.0' output; cortex.extract_regulatory_signals
+-- answered "no signals" for an extraction it never performed. Both were
+-- SECURITY DEFINER and nothing calls them. Both now raise feature_not_supported
+-- and run as their caller. Databases installed before this amendment get the
+-- same definitions from migrations/20261015i_cortex_engine_functions_refuse.sql
+-- (deploy set). Section 10 seeded thirteen soft signals as discovered by
+-- 'human_expert', with no expert, source or date recorded; removed, and the
+-- rows an earlier install wrote are withdrawn by
+-- migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql (deploy set).
 
 BEGIN;
 
@@ -530,31 +543,18 @@ CREATE OR REPLACE FUNCTION cortex.extract_regulatory_signals(
 )
 RETURNS TABLE(signal_id UUID, signal_type TEXT, signal_text TEXT, severity TEXT, confidence NUMERIC)
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_content TEXT;
-    v_metadata JSONB;
 BEGIN
-    -- Get document content
-    SELECT content, metadata INTO v_content, v_metadata
-    FROM cortex.atoms WHERE id = p_atom_id;
-
-    IF v_content IS NULL THEN
-        RAISE EXCEPTION 'Atom not found: %', p_atom_id;
-    END IF;
-
-    -- This is a placeholder for AI-powered extraction
-    -- In production, this would call an LLM or specialized NLP model
-    -- For now, return empty set - actual extraction happens in application layer
-    RETURN;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.extract_regulatory_signals extracts no signals: no extractor exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.extract_regulatory_signals IS
-'Extract regulatory signals from a document atom. In production, this integrates
-with LLM-based extraction. Returns extracted signals with type, text, and confidence.';
+'Refuses (feature_not_supported): no signal extractor exists. It used to answer an
+empty set, which read as "no signals", for an extraction it never performed.';
 
 -- Function: Match patterns against submission
 CREATE OR REPLACE FUNCTION cortex.match_rejection_patterns(
@@ -638,74 +638,18 @@ CREATE OR REPLACE FUNCTION cortex.generate_intuition_prediction(
 )
 RETURNS UUID
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_prediction_id UUID;
-    v_pattern_matches RECORD;
-    v_approval_prob NUMERIC := 0.7; -- Base rate
-    v_crl_prob NUMERIC := 0.2;
-    v_rtf_prob NUMERIC := 0.05;
-    v_matched_patterns UUID[] := ARRAY[]::UUID[];
-    v_pattern_scores NUMERIC[] := ARRAY[]::NUMERIC[];
-    v_risk_factors JSONB := '[]'::JSONB;
 BEGIN
-    -- Get pattern matches
-    FOR v_pattern_matches IN
-        SELECT * FROM cortex.match_rejection_patterns(p_submission_id, p_org_id, 0.3)
-    LOOP
-        v_matched_patterns := array_append(v_matched_patterns, v_pattern_matches.pattern_id);
-        v_pattern_scores := array_append(v_pattern_scores, v_pattern_matches.match_score);
-
-        -- Adjust probabilities based on patterns
-        IF v_pattern_matches.predicted_outcome = 'crl' THEN
-            v_crl_prob := v_crl_prob + (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.3);
-            v_approval_prob := v_approval_prob - (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.3);
-        ELSIF v_pattern_matches.predicted_outcome = 'rtf' THEN
-            v_rtf_prob := v_rtf_prob + (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.2);
-            v_approval_prob := v_approval_prob - (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.2);
-        END IF;
-
-        -- Add to risk factors
-        v_risk_factors := v_risk_factors || jsonb_build_object(
-            'factor', v_pattern_matches.pattern_name,
-            'contribution', v_pattern_matches.match_score * v_pattern_matches.outcome_probability,
-            'pattern_id', v_pattern_matches.pattern_id
-        );
-    END LOOP;
-
-    -- Normalize probabilities
-    DECLARE
-        v_total NUMERIC := v_approval_prob + v_crl_prob + v_rtf_prob;
-    BEGIN
-        v_approval_prob := v_approval_prob / v_total;
-        v_crl_prob := v_crl_prob / v_total;
-        v_rtf_prob := v_rtf_prob / v_total;
-    END;
-
-    -- Insert prediction
-    INSERT INTO cortex.intuition_predictions (
-        org_id, submission_id, prediction_type,
-        approval_probability, crl_probability, rtf_probability,
-        matched_pattern_ids, pattern_match_scores, risk_factors,
-        overall_confidence, model_version
-    ) VALUES (
-        p_org_id, p_submission_id, p_prediction_type,
-        LEAST(v_approval_prob, 1.0), LEAST(v_crl_prob, 1.0), LEAST(v_rtf_prob, 1.0),
-        v_matched_patterns, v_pattern_scores, v_risk_factors,
-        0.7, -- Base confidence
-        'v1.0.0'
-    )
-    RETURNING id INTO v_prediction_id;
-
-    RETURN v_prediction_id;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.generate_intuition_prediction computes no prediction: no model exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.generate_intuition_prediction IS
-'Generate a risk prediction for a submission based on matched patterns and signals.
-Returns the ID of the created prediction record.';
+'Refuses (feature_not_supported): no prediction model exists. It used to store fixed
+priors (approval 0.7, CRL 0.2, RTF 0.05) and a 0.7 confidence as a prediction.';
 
 -- Function: Record prediction outcome (for learning)
 CREATE OR REPLACE FUNCTION cortex.record_prediction_outcome(
@@ -802,25 +746,10 @@ CREATE TRIGGER soft_signals_updated_at
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
 -- ============================================================================
--- SECTION 10: SEED INITIAL SOFT SIGNALS
+-- SECTION 10: SEED INITIAL SOFT SIGNALS — REMOVED 2026-10-15
 -- ============================================================================
-
-INSERT INTO cortex.soft_signals (signal_category, signal_name, signal_description, discovered_by, is_active)
-VALUES
-    ('reviewer_word_choice', 'Hedging Language', 'Increased use of words like "may", "could", "potentially" indicating uncertainty', 'human_expert', TRUE),
-    ('reviewer_word_choice', 'Definitive Language', 'Use of "must", "required", "essential" indicating firm positions', 'human_expert', TRUE),
-    ('tone_shift', 'Formality Increase', 'Shift from casual to formal language mid-review', 'human_expert', TRUE),
-    ('tone_shift', 'Urgency Markers', 'Language indicating time pressure or escalation', 'human_expert', TRUE),
-    ('question_depth', 'Follow-up Depth', 'Number of follow-up questions on single topic', 'human_expert', TRUE),
-    ('question_depth', 'Technical Granularity', 'Level of technical detail requested', 'human_expert', TRUE),
-    ('response_timing', 'Rapid Response', 'Unusually quick agency response (within 24-48 hours)', 'human_expert', TRUE),
-    ('response_timing', 'Extended Silence', 'Unusually long gap between communications', 'human_expert', TRUE),
-    ('safety_language_intensity', 'Safety Emphasis', 'Frequency and intensity of safety-related concerns', 'human_expert', TRUE),
-    ('efficacy_skepticism', 'Efficacy Questioning', 'Depth of questioning around efficacy claims', 'human_expert', TRUE),
-    ('statistical_scrutiny', 'Statistical Deep Dive', 'Requests for additional statistical analyses', 'human_expert', TRUE),
-    ('precedent_citation', 'Negative Precedent', 'Citation of cases where similar approaches failed', 'human_expert', TRUE),
-    ('precedent_citation', 'Positive Precedent', 'Citation of successful precedent cases', 'human_expert', TRUE)
-ON CONFLICT DO NOTHING;
+-- Thirteen signals attributed to 'human_expert' with no expert recorded. See
+-- the note at the top of this file.
 
 -- ============================================================================
 -- SECTION 11: COMPLETION

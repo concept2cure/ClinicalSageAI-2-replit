@@ -18,11 +18,28 @@
  * This gate closes that by cross-checking the two files directly.
  *
  * ── What it does NOT claim ───────────────────────────────────────────────────
- * It proves the handler *mentions* each leaf name inside the region that serves
- * that path — not that the value is used correctly, and not that the request
- * would be accepted. That is the job of the route tests. This is the narrow,
- * mechanical check that no key is a dead letter, which is precisely the part
- * humans and types both miss.
+ * It proves the handler *mentions* each leaf name — not that the value is used
+ * correctly, and not that the request would be accepted. That is the job of the
+ * route tests. This is the narrow, mechanical check that no key is a dead
+ * letter, which is precisely the part humans and types both miss.
+ *
+ * ── The handler is the region PLUS the helpers it calls (2026-10-12) ─────────
+ * This read only the source between one `router.<verb>('<path>'` and the next.
+ * `/adaptive/interim` then reported five live fields as dead —
+ * `informationFractions`, `designEffect.standardizedEffect`,
+ * `designEffect.nPerArm`, `prior.mean`, `prior.sd` — every one of which the
+ * route does read, through named validators the route file deliberately keeps
+ * outside the handler: *"Split into named validators so the handler stays a
+ * handler"* (biostat-design-stats.ts:485). `parseInterimLook` calls
+ * `checkInformationFractions`, `resolveDesignDrift` (which destructures
+ * `standardizedEffect` and `nPerArm`) and `resolvePrior`.
+ *
+ * A gate that a tidy refactor turns red is a gate that gets baselined, and this
+ * one has no baseline by design — so the region now carries the bodies of the
+ * module-level functions it calls, followed TRANSITIVELY (the route calls
+ * `parseInterimLook`, which calls the three validators). That follows real call
+ * edges rather than widening to the whole file, which would let a mention
+ * anywhere in a thousand lines satisfy the check and take the teeth out.
  *
  * Zero tolerance: there is no baseline file, because unlike the ratchet gates
  * this has no legitimate exceptions. A key the server does not read is always a
@@ -72,12 +89,91 @@ if (regions.length === 0) {
   process.exit(2);
 }
 
-/** All source for a path (a path may be declared more than once). */
+/**
+ * Module-level `function NAME(...) { … }` bodies, by name, so a handler's
+ * region can be followed into the validators it calls. Brace-matched from the
+ * signature's `{`, which is enough for this file's plain declarations.
+ */
+function moduleFunctions(src) {
+  const out = new Map();
+  const re = /\nfunction\s+([A-Za-z0-9_$]+)\s*(?:<[^>]*>)?\s*\(/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const body = bodyAfterSignature(src, re.lastIndex);
+    if (body) out.set(m[1], body);
+  }
+  return out;
+}
+
+/**
+ * The function BODY that follows a signature, given the index just past the
+ * opening `(` of its parameter list.
+ *
+ * Taking the first `{` is wrong, and wrongly in a way that is silent: for
+ * `function parseInterimLook(b: …): { error: string } | InterimLookRequest {`
+ * the first `{` opens the RETURN TYPE, so the "body" came back as
+ * `{ error: string }` and the walk never reached the validators that function
+ * calls — which is the very thing this follows call edges for. A return-type
+ * object literal is written on one line; a body is not. So: the body is the
+ * first brace-matched span after the parameter list that contains a newline.
+ */
+function bodyAfterSignature(src, afterOpenParen) {
+  // Close the parameter list first — it can hold parens and generics.
+  let depth = 1;
+  let i = afterOpenParen;
+  for (; i < src.length && depth > 0; i++) {
+    if (src[i] === '(') depth++;
+    else if (src[i] === ')') depth--;
+  }
+  for (let open = src.indexOf('{', i); open !== -1; open = src.indexOf('{', open + 1)) {
+    let d = 0;
+    for (let j = open; j < src.length; j++) {
+      if (src[j] === '{') d++;
+      else if (src[j] === '}') {
+        d--;
+        if (d === 0) {
+          const span = src.slice(open, j + 1);
+          if (span.includes('\n')) return span;
+          open = j; // a one-line type literal — keep looking
+          break;
+        }
+      }
+    }
+    if (open >= src.length) break;
+  }
+  return null;
+}
+
+const MODULE_FUNCTIONS = moduleFunctions(routeSrc);
+
+/**
+ * All source for a path (a path may be declared more than once), plus the
+ * bodies of the module-level functions that source calls, transitively. See
+ * the header: the route file keeps its validators outside the handler on
+ * purpose, and the fields are read in them.
+ */
 function handlerFor(path) {
-  return regions
+  const own = regions
     .filter(r => r.path === path)
-    .map(r => routeSrc.slice(r.start, r.end))
-    .join('\n');
+    .map(r => routeSrc.slice(r.start, r.end));
+  if (own.length === 0) return '';
+
+  const parts = [...own];
+  const seen = new Set();
+  const queue = [...own];
+  while (queue.length > 0) {
+    const chunk = queue.shift();
+    for (const call of chunk.matchAll(/\b([A-Za-z0-9_$]+)\s*\(/g)) {
+      const name = call[1];
+      if (seen.has(name)) continue;
+      const body = MODULE_FUNCTIONS.get(name);
+      if (!body) continue;
+      seen.add(name);
+      parts.push(body);
+      queue.push(body);
+    }
+  }
+  return parts.join('\n');
 }
 
 /**

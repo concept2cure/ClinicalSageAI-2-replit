@@ -1,7 +1,7 @@
 # Mutations, S1 set, against the tree at 2026-09-28T04:28:23Z (HEAD cd08aec79 + the S1 working tree; sha256 of every S1 file in tree.sha256). Each mutation is applied, the named test file run, and the file restored.
 == hook accepts any reason: RED ['Tests  3 failed | 3 passed (6)']
     × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count tha
-    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > does not accept the reasons later slices reserve before 
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > does not accept the reasons later slices reserve before
     × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > restores why each turn stopped, and its rounds, from the persisted metadata 4ms
 == done handler drops the ending: RED ['Tests  3 failed | 3 passed (6)']
     × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a round-limit stop and the round count on the turn

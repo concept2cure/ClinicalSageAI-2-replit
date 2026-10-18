@@ -1,0 +1,84 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:49:04.932Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:49:04.933Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:49:04.933Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/review/__tests__/authoring-review-board-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:49:05.108Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in all scope 45ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in mine scope 24ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not disclose a same-tenant private document in requested scope 21ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > a section-only grant cannot disclose the full document review or thread 22ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > never parses an inaccessible private body when assembling an admitted document 33ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses an unsupported admitted full snapshot instead of claiming verified standing 16ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an explicit full-document grant permits the canonical board and selected thread 24ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not let a document ACL bypass private project admission 17ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > retains full-ACL organization-wide documents only in the unfiltered board 34ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses departed actor instead of returning cached private content 5ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-user actor instead of returning cached private content 7ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses inactive-organization actor instead of returning cached private content 6ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses foreign actor instead of returning cached private content 6ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses malformed-id actor instead of returning cached private content 4ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > does not treat a forged reviewer email as the caller assignment 44ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > uses the current authoritative email for sign-off ownership, not the old token label 37ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > an unavailable requested item does not silently substitute another private thread 22ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read document-grant change 23ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read membership change 17ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read project-sharing change 21ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board ACL before private projection > refuses assembled output after a mid-read actor-email change 17ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > retains legacy approval and reason as unbound open work 31ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a current nonempty approval is not returned as open peer work 39ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a second-section change invalidates the full binding while retaining exact prior facts 23ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a document-title change invalidates the full binding while retaining exact prior facts 26ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a section-title change invalidates the full binding while retaining exact prior facts 24ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a version change invalidates the full binding while retaining exact prior facts 23ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a order change invalidates the full binding while retaining exact prior facts 22ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a departed reviewer does not erase their verified unchanged historical verdict 19ms
+ ✓ server/services/review/__tests__/authoring-review-board-access.pglite.test.ts > board saved-content review standing > a stale rejection does not claim the current text is rejected 18ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > one store: the board reads authoring_reviews / authoring_workflow_steps > the read model queries the authoring tables 2ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > one store: the board reads authoring_reviews / authoring_workflow_steps > neither file touches the unified-workflow store the board used to read 1ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > one route, one direction: GET /board, read-only > registers exactly one route and it is GET /board 1ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > one route, one direction: GET /board, read-only > the board-only writes are gone — decisions go through the authoring router 0ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > one route, one direction: GET /board, read-only > writes nothing and signs nothing 1ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > tenant scoping > runs on the request-scoped client, never the shared pool 0ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > tenant scoping > every statement in the read model carries a tenant_id predicate 1ms
+ ✓ server/routes/__tests__/review-board-reads-authoring-store.test.ts > tenant scoping > a program filter is validated as a UUID before it reaches SQL 0ms
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  19:49:02
+   Duration  6.19s (transform 1.47s, setup 168ms, import 2.42s, tests 2.99s, environment 1ms)

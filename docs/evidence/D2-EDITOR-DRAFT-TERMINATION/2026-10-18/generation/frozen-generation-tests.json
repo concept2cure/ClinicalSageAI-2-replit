@@ -1,0 +1,30 @@
+{
+  "frozenAt": "2026-10-18T00:41:52.595973+00:00",
+  "testFile": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+  "testSHA256": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+  "fixtureSnapshot": "frozen-test.ts.txt",
+  "baseline": {
+    "tests": 29,
+    "intendedFailures": 18,
+    "passingControls": 11,
+    "stableBindings": 13,
+    "cutoffBehaviorFailures": 12,
+    "missingStoredMetadataFailures": 6,
+    "fixtureOrImportFailures": 0
+  },
+  "lint": {
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0
+  },
+  "artifactSHA256": {
+    "baseline.json": "dc77e6d9f35772a245e81fee08f2a12de6595d2156621a8b4cec785d9d155afa",
+    "initial-red.txt": "728896ad26f96ee833e2f83475191c205bc67ad8976b87507da4b9a093a82f60",
+    "frozen-test.ts.txt": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "lint-baseline.json": "afb43e8bc8ed90d2602a78d6c91b661d65f0f7c517e6d5d6f02155784e783ea2",
+    "lint-current.json": "afb43e8bc8ed90d2602a78d6c91b661d65f0f7c517e6d5d6f02155784e783ea2",
+    "lint-summary.json": "64674fb3999076b9beda47efe2c550632bd4507bb9e9e1658f23ea6d05474f34"
+  },
+  "scope": "Actual Authoring HTTP and PGlite turn/candidate/section/revision stores with synthetic gateway/retrieval. No provider or external database. Baseline cutoff tests fail at HTTP200-vs422; viable cases fail at missing stored fields. Remaining assertions are frozen for final qualification. No compiler or Git mutation."
+}

@@ -1,0 +1,370 @@
+{
+  "key": "touch-light-ana",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "mode": "ana",
+  "status": "fail",
+  "error": "AssertionError [ERR_ASSERTION]: assembly must not overflow internally\n    at measure (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:74:12)\n    at async runCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:139:19)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs:191:93",
+  "stages": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=home"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=market"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "query": "",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "query": "",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        },
+        "fingerprint": "synthetic-fingerprint-0-document",
+        "reason": "Append missing stability sections for local review."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000182/ai/draft",
+      "query": "",
+      "body": {
+        "tone": "professional",
+        "region": "FDA",
+        "requirements": "Prepare synthetic evidence gaps for a human review."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000183/ai/draft",
+      "query": "",
+      "body": {
+        "tone": "professional",
+        "region": "FDA",
+        "requirements": "Prepare synthetic evidence gaps for a human review."
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "selection": {
+          "target": "document"
+        },
+        "fingerprint": "synthetic-fingerprint-0-document",
+        "reason": "Append missing stability sections for local review."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000182/ai/draft",
+      "body": {
+        "tone": "professional",
+        "region": "FDA",
+        "requirements": "Prepare synthetic evidence gaps for a human review."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000183/ai/draft",
+      "body": {
+        "tone": "professional",
+        "region": "FDA",
+        "requirements": "Prepare synthetic evidence gaps for a human review."
+      }
+    }
+  ],
+  "commits": 1,
+  "previews": 2,
+  "generations": 2,
+  "accepts": 0,
+  "maximumActiveGenerations": 1,
+  "generationEvents": [
+    {
+      "kind": "start",
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+      "count": 1
+    },
+    {
+      "kind": "finish",
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+      "count": 1
+    },
+    {
+      "kind": "start",
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000183",
+      "count": 2
+    },
+    {
+      "kind": "finish",
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000183",
+      "count": 2
+    }
+  ],
+  "savedSections": [
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000181",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.1",
+      "title": "Existing stability summary",
+      "content": "<p>Existing saved stability evidence.</p>",
+      "order_index": 7,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-17T20:00:00.000Z"
+    },
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000182",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.2",
+      "title": "Post-approval stability protocol",
+      "content": "",
+      "order_index": 8,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-17T20:00:00.000Z"
+    },
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000183",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.3",
+      "title": "Stability data",
+      "content": "",
+      "order_index": 9,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-17T20:00:00.000Z"
+    }
+  ],
+  "accepted": [],
+  "drafts": [
+    {
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000182",
+      "content": "Synthetic retained candidate for aaaaaaaa-0000-4000-8000-000000000182.",
+      "draftId": "draft-aaaaaaaa-0000-4000-8000-000000000182",
+      "metadata": {
+        "retrievalStatus": "empty",
+        "sourcesRetrieved": 0,
+        "attributableSources": 0
+      },
+      "check": null
+    },
+    {
+      "sectionId": "aaaaaaaa-0000-4000-8000-000000000183",
+      "content": "Synthetic retained candidate for aaaaaaaa-0000-4000-8000-000000000183.",
+      "draftId": "draft-aaaaaaaa-0000-4000-8000-000000000183",
+      "metadata": {
+        "retrievalStatus": "empty",
+        "sourcesRetrieved": 0,
+        "attributableSources": 0
+      },
+      "check": null
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "unexpected": [],
+  "navigation": []
+}

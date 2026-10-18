@@ -204,7 +204,8 @@ export const DESIGN_CAPA: AnaTool = {
         enum: ['low', 'medium', 'high', 'critical'],
         description:
           'Risk to product quality / patient. Drives CAPA formality and target timeline. ' +
-          'If omitted, inferred from productImpact.',
+          'If omitted and productImpact is true, inferred as high (severityBasis says so); ' +
+          'otherwise not assessed, and formality and the target timeline are undetermined.',
       },
       recurring: {
         type: 'boolean',
@@ -222,11 +223,14 @@ export const DESIGN_CAPA: AnaTool = {
         type: 'boolean',
         description:
           'Whether the failure is systemic (process/system-wide) rather than an isolated single ' +
-          'event. Systemic failures select FMEA and a formal CAPA.',
+          'event. Systemic failures select FMEA and a formal CAPA. If omitted, the extent is ' +
+          'reported as not determined.',
       },
       productImpact: {
         type: 'boolean',
-        description: 'Whether distributed or in-process product is potentially affected.',
+        description:
+          'Whether distributed or in-process product is potentially affected. If omitted, ' +
+          'product impact is reported as not assessed.',
       },
       preferredRootCauseMethod: {
         type: 'string',
@@ -255,7 +259,9 @@ export const CLASSIFY_GMP_DEVIATION: AnaTool = {
     'are major; documentation/training are minor) and escalated by safety impact, confirmed ' +
     'OOS, sterile product, and recurrence. Returns classification with rationale, timeline, ' +
     'product impact, reporting triggers, whether a CAPA is required, and citations (21 CFR ' +
-    '211.100/192/198/22, ICH Q10). Use when the user needs to triage/classify a deviation or ' +
+    '211.100/192/198/22, ICH Q10). A fact left out is not read as false: what it could ' +
+    'change is "undetermined" (see notAssessed); an unknown area is refused. Use when the user ' +
+    'needs to triage/classify a deviation or ' +
     'decide if a field alert or recall evaluation is warranted. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -483,14 +489,17 @@ export const ASSESS_COMPUTER_SYSTEM_VALIDATION: AnaTool = {
         enum: ['infrastructure', 'non_configured', 'configured', 'custom'],
         description:
           'Type of software, mapping to GAMP category: infrastructure→Cat 1, ' +
-          'non_configured→Cat 3, configured→Cat 4, custom→Cat 5.',
+          'non_configured→Cat 3, configured→Cat 4, custom→Cat 5. Any other or missing value ' +
+          'is refused.',
       },
       gxpImpact: {
         type: 'string',
         enum: ['low', 'medium', 'high', 'critical'],
         description:
           'GxP / patient-safety / product-quality impact of the system. Drives the assurance ' +
-          'approach and rigor. If omitted, inferred from directImpact.',
+          'approach and rigor. If omitted: inferred as high when directImpact is true (labelled ' +
+          'inferred), otherwise not assessed, and the approach is "undetermined" unless the ' +
+          'software is custom (Category 5).',
       },
       electronicRecords: {
         type: 'boolean',
@@ -502,7 +511,7 @@ export const ASSESS_COMPUTER_SYSTEM_VALIDATION: AnaTool = {
         type: 'boolean',
         description:
           'Whether the system applies electronic signatures (enables the e-signature Part 11 ' +
-          'controls).',
+          'controls). If omitted, their applicability is "undetermined".',
       },
       directImpact: {
         type: 'boolean',

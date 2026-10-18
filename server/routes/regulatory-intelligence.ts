@@ -6,8 +6,8 @@
  *
  *   POST   /api/regulatory-intelligence/score
  *          Score an in-flight submission draft. Returns rule-based completeness,
- *          predictive CRL/RTF/first-cycle probabilities, and a blended readiness
- *          score with recommendations.
+ *          predictive CRL/RTF/first-cycle probabilities, and the refuse-to-file
+ *          score (refuseToFileScore) with recommendations.
  *
  *   POST   /api/regulatory-intelligence/outcomes/recorded
  *          Notify the layer that one or more submission outcomes have landed.
@@ -38,6 +38,8 @@
 import express, { Router, type Request, type Response, type NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
+import { authedUserId } from '../utils/authedActor.js';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin.js';
 import {
   scoreSubmissionDraft,
   computeReadiness,
@@ -323,9 +325,20 @@ router.get('/agency-requirements', asyncHandler(async (req: Request, res: Respon
   }
   const documentType = typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
   const includeUnvalidated = req.query.includeUnvalidated === 'false' ? false : true;
-  const data = await getAgencyRequirements({ agency, documentType, includeUnvalidated });
+  // Unvalidated rows are this organization's own (2026-10-15: every tenant's).
+  const data = await getAgencyRequirements({ organizationId: guard.orgId, agency, documentType, includeUnvalidated });
   res.json({ success: true, data });
 }));
+
+/** Platform standing that may validate a requirement every tenant is served. */
+const REQUIREMENT_CURATOR_ROLES = ['super_admin', 'platform_admin'] as const;
+
+/** The session user, when they hold platform curator standing; else null. */
+async function requirementCuratorId(req: Request): Promise<number | null> {
+  const userId = authedUserId(req);
+  if (userId === null || !Number.isSafeInteger(userId) || userId < 1) return null;
+  return (await holdsPlatformRole(req, REQUIREMENT_CURATOR_ROLES)) ? userId : null;
+}
 
 router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Response) => {
   const guard = requireAuthedOrgId(req, res);
@@ -338,15 +351,28 @@ router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Resp
   if (typeof body.requirementSummary !== 'string' || body.requirementSummary.trim().length === 0) {
     return res.status(400).json({ error: 'invalid_request', message: 'requirementSummary is required' });
   }
+  /* 2026-10-15: `validateImmediately` and `validatedBy` were taken from the
+     body, so any member of any tenant could record a requirement 'validated'
+     under any name (or "org:N"), and GET /agency-requirements serves it to
+     every tenant. Validating needs platform curator standing; the validator
+     is the session's user. Anyone else's requirement is recorded unvalidated. */
+  const wantsValidation = !!body.validateImmediately;
+  const curatorId = wantsValidation ? await requirementCuratorId(req) : null;
   const result = await promotePatternToRequirement({
+    organizationId: guard.orgId,
     patternId,
     requirementSummary: body.requirementSummary,
     requirementDetail: typeof body.requirementDetail === 'string' ? body.requirementDetail : undefined,
     submissionType: typeof body.submissionType === 'string' ? body.submissionType : undefined,
-    validateImmediately: !!body.validateImmediately,
-    validatedBy: typeof body.validatedBy === 'string' ? body.validatedBy : `org:${guard.orgId}`,
+    curator: curatorId === null ? null : { userId: curatorId },
   });
-  res.status(201).json({ success: true, data: result });
+  res.status(201).json({
+    success: true,
+    data: result,
+    ...(wantsValidation && curatorId === null
+      ? { note: 'Recorded unvalidated: validating an agency requirement, which every tenant is served, needs platform curator standing.' }
+      : {}),
+  });
 }));
 
 // ─── Growth-mindset extensions ──────────────────────────────────────────────

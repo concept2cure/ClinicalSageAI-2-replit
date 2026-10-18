@@ -223,4 +223,3 @@ stdout | server/services/ana/__tests__/submission-center-tools.test.ts
       Tests  179 passed (179)
    Start at  04:29:18
    Duration  6.93s (transform 6.49s, setup 353ms, import 9.25s, tests 4.22s, environment 1ms)
-

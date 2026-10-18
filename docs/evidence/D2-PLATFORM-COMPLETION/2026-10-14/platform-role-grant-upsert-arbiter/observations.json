@@ -1,0 +1,116 @@
+{
+  "workstream": "W1/D2-D3",
+  "status": "source frozen; native mutation/replay pending",
+  "readOnlyQualification": {
+    "localFreshDatabase": "platform_ci_fresh_verify_20261014_beb73055",
+    "planningRefusal": "42P10",
+    "nativeComparisonDatabase": "platform_ci_native_recheck_20261013",
+    "nativeComparison": "named unique arbiter present and identical statement plans",
+    "actualGrantExecuted": false,
+    "hostedDatabaseInspected": false,
+    "inspectorRole": "owner postgres; READ ONLY transactions rolled back"
+  },
+  "staticContract": {
+    "originalRed": {
+      "failed": 3,
+      "passed": 1
+    },
+    "postpatchGuardHarnessFailure": {
+      "failed": 1,
+      "passed": 3,
+      "reason": "unanchored GRANT regex matched error prose; corrected to SQL statement start"
+    },
+    "finalGreen": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 0.591
+    }
+  },
+  "scopedLint": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "migrationGuards": {
+    "dropSafetyExit": 0,
+    "setOrderExit": 0,
+    "baselineChanged": false
+  },
+  "repositoryMutation": "three approved migration/contract/test files only; evidence added",
+  "databaseMutation": false,
+  "nativeReplayExecuted": false,
+  "compilerExecuted": false,
+  "rawFiles": [
+    {
+      "original": "/tmp/platform-role-grant-arbiter-readonly.json",
+      "originalSHA256": "f9b55b0591e8046a31d6946b996233dbb7a3e8bc5504f973de6dbfade53e0d8f",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/readonly-local-fresh-native.json",
+      "copySHA256": "f9b55b0591e8046a31d6946b996233dbb7a3e8bc5504f973de6dbfade53e0d8f",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-readonly.txt",
+      "originalSHA256": "5f5c295f631b6ce8f6a7cde55d1b8379fd088ee8ce935748c0f6f9b26b8836d8",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/readonly-local-fresh-native.log",
+      "copySHA256": "5f5c295f631b6ce8f6a7cde55d1b8379fd088ee8ce935748c0f6f9b26b8836d8",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-source-pins.json",
+      "originalSHA256": "7e7ad9027b69d561fb2fa2c2e9f5701325fdd1934b6d0d83f37e25075eef7367",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/readonly-source-pins.json",
+      "copySHA256": "7e7ad9027b69d561fb2fa2c2e9f5701325fdd1934b6d0d83f37e25075eef7367",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-static-red.txt",
+      "originalSHA256": "46a70b54e39aa2c077f81d6dd9810205993ce09ff0375598a63e9a78e920ac07",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/static-contract-original-red.log",
+      "copySHA256": "46a70b54e39aa2c077f81d6dd9810205993ce09ff0375598a63e9a78e920ac07",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-static-postpatch-guard-harness-failure.txt",
+      "originalSHA256": "508dabab36c60cc014dbdcbb8be606a7f53676e815d86929199b6d7752965a99",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/static-postpatch-guard-harness-failure.log",
+      "copySHA256": "ca25b40784b0384db4a2172715eb6636c9676c9608f7b7eb194228eeac8e0660",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-static-pre-immediate-postcondition-green.txt",
+      "originalSHA256": "000439688dcab4744a12778eb2e27b9d803c6217cbb306c641d0389c770c7a7d",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/static-pre-immediate-postcondition-green.log",
+      "copySHA256": "000439688dcab4744a12778eb2e27b9d803c6217cbb306c641d0389c770c7a7d",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-static-green.txt",
+      "originalSHA256": "6f601972cf5eccda55a87d056079ea90fa81355323bb5f3308b1b62cf48aab3f",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/static-final-green.log",
+      "copySHA256": "6f601972cf5eccda55a87d056079ea90fa81355323bb5f3308b1b62cf48aab3f",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-scoped-lint.txt",
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/scoped-lint.log",
+      "copySHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-drop-safety-final.txt",
+      "originalSHA256": "287a5b69292fe27129e1b4195806d2287860e3283196e7b6bc5017c2a3940149",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/migration-drop-safety.log",
+      "copySHA256": "287a5b69292fe27129e1b4195806d2287860e3283196e7b6bc5017c2a3940149",
+      "normalization": "trailing line whitespace only; originals retained"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-set-order-final.txt",
+      "originalSHA256": "e91a6584b156fa4757d607cc9b6eaacfd52f9c5687d0525505cebba18b478293",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter/migration-set-order.log",
+      "copySHA256": "e91a6584b156fa4757d607cc9b6eaacfd52f9c5687d0525505cebba18b478293",
+      "normalization": "trailing line whitespace only; originals retained"
+    }
+  ]
+}

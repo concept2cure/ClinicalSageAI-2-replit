@@ -1,0 +1,18 @@
+import { defineConfig } from '/workspace/Concept2Cure/node_modules/vitest/dist/config.js';
+
+export default defineConfig({
+  root: '/workspace/scratch',
+  resolve: { alias: { vitest: '/workspace/Concept2Cure/node_modules/vitest/dist/index.js' } },
+  test: {
+    environment: 'node',
+    include: ['/workspace/scratch/processing-recovery.probe.test.ts'],
+    setupFiles: [],
+    pool: 'forks',
+    maxWorkers: 1,
+    fileParallelism: false,
+    hookTimeout: 60000,
+    testTimeout: 10000,
+    reporters: ['verbose'],
+    watch: false,
+  },
+});

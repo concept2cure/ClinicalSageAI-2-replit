@@ -125,13 +125,13 @@ describe('GET /api/cmc/module3-board — a failed question read is not "none ove
     expect(res.body.data.meta.correspondenceProvisioned).toBe(false);
   });
 
-  it('still falls back to the legacy sum when the table is genuinely absent', async () => {
+  it('keeps the overdue count unknown when the real correspondence store is absent', async () => {
     questionsFail(Object.assign(new Error('relation "reg_questions" does not exist'), { code: '42P01' }));
     const res = await request(makeApp()).get('/api/cmc/module3-board');
     expect(res.status).toBe(200);
     expect(res.body.data.meta.correspondenceUnreadable).toBe(false);
     expect(res.body.data.meta.correspondenceProvisioned).toBe(false);
-    // An environment without the store reports the legacy figure, as before.
-    expect(typeof res.body.data.kpis.irOverdue).toBe('number');
+    // Missing legacy storage cannot establish a real count for the canonical portfolio.
+    expect(res.body.data.kpis.irOverdue).toBeNull();
   });
 });

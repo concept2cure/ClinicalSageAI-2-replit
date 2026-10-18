@@ -1,0 +1,250 @@
+TAP version 13
+# Subtest: verified canonical Central download installs readable bytes without using the fallback
+not ok 1 - verified canonical Central download installs readable bytes without using the fallback
+  ---
+  duration_ms: 35.139139
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:91:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    22 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 22
+  operator: 'strictEqual'
+  stack: |-
+    assertPinnedFile (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:81:10)
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:93:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: canonical Central HTTP refusal falls back to the same pinned artifact at official repo1
+not ok 2 - canonical Central HTTP refusal falls back to the same pinned artifact at official repo1
+  ---
+  duration_ms: 33.029487
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:97:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    -   'https://repo.maven.apache.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar',
+        'https://repo1.maven.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'https://repo.maven.apache.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar'
+    1: 'https://repo1.maven.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar'
+  actual:
+    0: 'https://repo1.maven.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:100:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: an interrupted partial download is removed before a verified fallback is installed
+not ok 3 - an interrupted partial download is removed before a verified fallback is installed
+  ---
+  duration_ms: 34.646673
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:103:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:109:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: both official endpoints being unavailable fails closed
+not ok 4 - both official endpoints being unavailable fails closed
+  ---
+  duration_ms: 28.737118
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:112:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:115:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a successful corrupt canonical response fails integrity immediately without falling back
+not ok 5 - a successful corrupt canonical response fails integrity immediately without falling back
+  ---
+  duration_ms: 31.876207
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:118:1'
+  failureType: 'testCodeFailure'
+  error: 'Expected "actual" to be strictly unequal to: 0'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 0
+  operator: 'notStrictEqual'
+  stack: |-
+    assertNoFile (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:87:10)
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:120:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a successful corrupt fallback response is never installed
+not ok 6 - a successful corrupt fallback response is never installed
+  ---
+  duration_ms: 29.02636
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:125:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a rejected payload must never be installed
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    assertNoFile (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:88:10)
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:127:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: transport failure preserves an existing retained destination
+ok 7 - transport failure preserves an existing retained destination
+  ---
+  duration_ms: 28.971593
+  type: 'test'
+  ...
+# Subtest: integrity failure preserves an existing retained destination
+not ok 8 - integrity failure preserves an existing retained destination
+  ---
+  duration_ms: 31.427186
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:138:1'
+  failureType: 'testCodeFailure'
+  error: 'Expected "actual" to be strictly unequal to: 0'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 0
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:141:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: malformed release and checksum pins are refused before any network or file write
+not ok 9 - malformed release and checksum pins are refused before any network or file write
+  ---
+  duration_ms: 30.633997
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:145:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    99 !== 64
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 64
+  actual: 99
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:149:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: both endpoint attempts retain HTTPS restrictions and finite retry and request budgets
+not ok 10 - both endpoint attempts retain HTTPS restrictions and finite retry and request budgets
+  ---
+  duration_ms: 30.532844
+  type: 'test'
+  location: '/tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:154:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    --proto
+    
+    '-fsSL' !== '=https'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '=https'
+  actual: '-fsSL'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///tmp/verapdf-production-fetch-red/scripts/ci/__tests__/verapdf-download.test.mjs:161:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 1
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 381.72779

@@ -1,23 +1,28 @@
 /**
- * 21 CFR Part 11 Compliance Service
+ * 21 CFR Part 11 — the submission release signature.
  *
- * Ensures electronic records and signatures meet FDA requirements
- * for medical device submissions and regulatory documentation
+ * createElectronicSignature applies a §11.50/§11.70/§11.200 signature to the
+ * latest stored version of a document (or a caller's pre-bound release
+ * digest), with its device_audit_trail event in the same transaction, and
+ * records what the signing ceremony verified. computeVersionBindingDigest
+ * re-derives the §11.70 binding for the verifier.
  *
- * Features:
- * - Electronic signature generation and validation
- * - Audit trail for all electronic records
- * - Access control and user authentication
- * - Record integrity verification
- * - Time stamping and sequencing
- * - System validation documentation
+ * REMOVED 2026-10-15 — methods with no caller, each of which wrote or returned
+ * a conclusion nothing had established: generateSystemValidationReport
+ * ("validationStatus: VALIDATED", four tests "PASS", written to the audit trail
+ * as user 0), getSystemValidationStatus ("validated: true", "nextValidation"
+ * in 90 days), checkAccessControl with getRolePermissions (a second, unused
+ * RBAC table that audited denials as entity 0), and verifyDataIntegrity with
+ * createAuditTrail, getAuditTrail and their record readers (integrity checks
+ * audited as user 0 / entity 0 / "Unknown"). The live signature also stopped
+ * writing "Electronic signature complies with 21 CFR Part 11" on every row.
  */
 
 import { db } from '../db';
 import { writeChainedAuditRow } from './auditService.js';
 import { deviceAuditTrail, users } from '../../shared/schema';
-import { documentVersions, documents, submissions } from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { documentVersions } from '../../shared/schema';
+import { eq, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
 import { buildVersionBindingDigest } from './part11/version-binding';
@@ -28,25 +33,6 @@ import {
   persistElectronicSignature,
 } from './part11/signature-persistence';
 
-interface AuditTrailInput {
-  organizationId: number;
-  userId: number | string;
-  action: string;
-  entityType: string;
-  entityId: number | string | null;
-  details: {
-    ipAddress?: string;
-    userAgent?: string;
-    sessionId?: string;
-    userName?: string;
-    userRole?: string;
-    changedFields?: string[];
-    changeReason?: string;
-    [key: string]: any;
-  };
-  previousValue?: any;
-  newValue?: any;
-}
 
 class Part11ComplianceService {
   private signatureAlgorithm: string;
@@ -78,6 +64,7 @@ class Part11ComplianceService {
     boundPayloadDigest: preboundPayloadDigest,
     signerRole,
     transactionalAuditEvent,
+    transactionalGuard,
   }: {
     userId: number;
     organizationId: number;
@@ -103,6 +90,9 @@ class Part11ComplianceService {
      * durable counterpart is the in-transaction device_audit_trail row.
      */
     transactionalAuditEvent?: Parameters<typeof writeChainedAuditRow>[1];
+    /** Optional current-record guard enlisted before any signature INSERT.
+     * The actual signature transaction owns its locks and rollback. */
+    transactionalGuard?: (client: ReturnType<typeof drizzleSignatureClient>) => Promise<void>;
     /**
      * Optional pre-computed §11.70 payload-binding digest (e.g. the submission
      * orchestrator's release digest). When provided it is persisted on the row
@@ -121,6 +111,15 @@ class Part11ComplianceService {
       // result, and this guards a caller that casts around it.
       if (reverified?.ok !== true) {
         throw new Error('Electronic signature refused: the signer was not re-verified (§11.200)');
+      }
+      // The audit event names the signer and the document by id. These were
+      // written as 0 when a caller cast around the types — a §11.10(e) event
+      // attributed to "user 0" about "entity 0". Refused instead.
+      if (!Number.isInteger(userId) || userId <= 0) {
+        throw new Error('Electronic signature refused: no signer id to attribute the record to (§11.50)');
+      }
+      if (!Number.isInteger(documentId) || documentId <= 0) {
+        throw new Error('Electronic signature refused: no document id to bind the signature to (§11.70)');
       }
 
       // Snapshot ONLY the signer-display fields the signature record needs.
@@ -201,8 +200,6 @@ class Part11ComplianceService {
       const signatureManifest = { ...signatureData, boundPayloadDigest };
       const signature = this.generateCryptographicSignature(signatureManifest, userId);
 
-      const resolvedAuditUserId = typeof userId === 'number' ? userId : 0;
-      const resolvedAuditEntityId = typeof documentId === 'number' ? documentId : 0;
       // Atomicity (§11.10(e)): the audit-trail event MUST commit together with
       // the §11.70 signature, or neither does. Previously the signature was
       // inserted and committed on its own and the audit write was a separate,
@@ -211,6 +208,7 @@ class Part11ComplianceService {
       // idempotency pre-check then short-circuited every retry, so the missing
       // event could never be backfilled. One transaction closes that gap.
       const electronicSig = await dbInstance.transaction(async (tx) => {
+      await transactionalGuard?.(drizzleSignatureClient(tx));
       // Ledger L37 — ONE INSERT per substrate. This used to be a second
       // `.insert(electronicSignatures)` builder living here beside the one in
       // services/part11/signature-persistence.ts. Both were conforming, and
@@ -255,7 +253,17 @@ class Part11ComplianceService {
         // by defaulting.
         isValid: true,
         verificationStatus: 'valid',
-        complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
+        // What was applied, in the words the other signing paths use — not a
+        // conclusion. Every row used to read "Electronic signature complies
+        // with 21 CFR Part 11", a determination this code does not make.
+        complianceStatement:
+          'Submission release signature applied after re-verification of the signer ' +
+          `(${reverified.authenticationMethod}${reverified.secondFactorVerified ? ', second factor verified' : ''}) ` +
+          'under 21 CFR Part 11 §11.50/§11.70/§11.200; bound to ' +
+          (preboundPayloadDigest ? 'the release package digest' : 'the signed version\'s content') +
+          (transactionalAuditEvent
+            ? '; ledger-chained to the audit_logs sha256 chain in the same transaction.'
+            : '; recorded in device_audit_trail in the same transaction.'),
         signedAt: timestamp,
         boundPayloadDigest,
         organizationId,
@@ -266,15 +274,15 @@ class Part11ComplianceService {
       // createAuditTrail so it shares the signature's transaction.
       await tx.insert(deviceAuditTrail).values({
         organizationId,
-        userId: resolvedAuditUserId,
+        userId,
         action: 'ELECTRONIC_SIGNATURE_CREATED',
         entityType: documentType,
-        entityId: resolvedAuditEntityId,
+        entityId: documentId,
         previousValues: null,
         newValues: null,
         changedFields: null,
         changeReason: signatureReason,
-        userName: user.name || 'Unknown',
+        userName: user.name,
         userRole: null,
         ipAddress: null,
         userAgent: null,
@@ -306,7 +314,7 @@ class Part11ComplianceService {
       let secondaryAudit: { persisted?: boolean; error?: string } | undefined;
       try {
         secondaryAudit = await auditService.logAction({
-          userId: resolvedAuditUserId,
+          userId,
           action: 'ELECTRONIC_SIGNATURE_CREATED',
           resourceType: documentType,
           details: {
@@ -314,7 +322,6 @@ class Part11ComplianceService {
             reason: signatureReason,
             meaning: signatureMeaning,
             userName: user.name,
-            part11Compliance: true,
           },
         });
       } catch (secondaryErr) {
@@ -370,295 +377,6 @@ class Part11ComplianceService {
     });
   }
 
-  /**
-   * Create comprehensive audit trail
-   */
-  async createAuditTrail({
-    organizationId,
-    userId,
-    action,
-    entityType,
-    entityId,
-    details,
-    previousValue = null,
-    newValue = null,
-  }: AuditTrailInput) {
-    try {
-      const dbInstance = this.getDb();
-      const resolvedUserId = typeof userId === 'number' ? userId : 0;
-      const resolvedEntityId = typeof entityId === 'number' ? entityId : 0;
-
-      const auditEntry = await dbInstance
-        .insert(deviceAuditTrail)
-        .values({
-          organizationId,
-          userId: resolvedUserId,
-          action,
-          entityType,
-          entityId: resolvedEntityId,
-          previousValues: previousValue,
-          newValues: newValue,
-          changedFields: details.changedFields || null,
-          changeReason: details.changeReason || null,
-          userName: details.userName || 'Unknown',
-          userRole: details.userRole || null,
-          ipAddress: details.ipAddress || null,
-          userAgent: details.userAgent || null,
-          sessionId: details.sessionId || null,
-        })
-        .returning();
-
-      // Also log to general audit service
-      await auditService.logAction({
-        userId: resolvedUserId,
-        action,
-        resourceType: entityType,
-        details: {
-          ...details,
-          part11Compliance: true,
-          auditTrailId: auditEntry[0].id,
-        },
-      });
-
-      return auditEntry[0];
-    } catch (error) {
-      console.error('Error creating audit trail:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get audit trail for an entity
-   */
-  async getAuditTrail(entityType: string, entityId: number, organizationId: number) {
-    try {
-      const dbInstance = this.getDb();
-      const auditEntries = await dbInstance
-        .select()
-        .from(deviceAuditTrail)
-        .where(
-          and(
-            eq(deviceAuditTrail.entityType, entityType),
-            eq(deviceAuditTrail.entityId, entityId),
-            eq(deviceAuditTrail.organizationId, organizationId)
-          )
-        )
-        .orderBy(desc(deviceAuditTrail.createdAt));
-
-      return {
-        success: true,
-        count: auditEntries.length,
-        entries: auditEntries,
-      };
-    } catch (error) {
-      console.error('Error retrieving audit trail:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Implement access controls for Part 11
-   */
-  async checkAccessControl(
-    userId: number,
-    resource: string,
-    action: string,
-    organizationId: number
-  ) {
-    try {
-      const dbInstance = this.getDb();
-      // Get user role and permissions
-      const [user] = await dbInstance
-        .select()
-        .from(users)
-        .where(and(eq(users.id, userId), eq(users.defaultOrganizationId, organizationId)))
-        .limit(1);
-
-      if (!user) {
-        return {
-          allowed: false,
-          reason: 'User not found',
-        };
-      }
-
-      // Check if user is active
-      if (user.status !== 'active') {
-        return {
-          allowed: false,
-          reason: 'User account is not active',
-        };
-      }
-
-      // Check role-based permissions
-      const userRole = (user as any).role || 'viewer';
-      const permissions = this.getRolePermissions(userRole);
-      const resourcePermissions = (permissions as Record<string, string[]>)[resource] || [];
-
-      if (!resourcePermissions.includes(action)) {
-        await this.createAuditTrail({
-          organizationId,
-          userId,
-          action: 'ACCESS_DENIED',
-          entityType: resource,
-          entityId: null,
-          details: {
-            attemptedAction: action,
-            userRole: userRole,
-            userName: user.name,
-          },
-        });
-
-        return {
-          allowed: false,
-          reason: 'Insufficient permissions',
-        };
-      }
-
-      return {
-        allowed: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          role: userRole,
-        },
-      };
-    } catch (error) {
-      console.error('Error checking access control:', error);
-      return {
-        allowed: false,
-        reason: 'Access control check failed',
-      };
-    }
-  }
-
-  /**
-   * Verify data integrity for Part 11 compliance
-   */
-  async verifyDataIntegrity(entityType: string, entityId: number, expectedHash: string) {
-    try {
-      // Get the current data
-      let currentData;
-      switch (entityType) {
-        case 'submission':
-          // Get submission data and calculate hash
-          currentData = await this.getSubmissionData(entityId);
-          break;
-        case 'document':
-          // Get document data and calculate hash
-          currentData = await this.getDocumentData(entityId);
-          break;
-        default:
-          throw new Error(`Unknown entity type: ${entityType}`);
-      }
-
-      // Calculate current hash
-      const currentHash = this.calculateHash(currentData);
-
-      // Compare hashes
-      const isValid = currentHash === expectedHash;
-
-      // Log integrity check
-      await this.createAuditTrail({
-        organizationId: currentData.organizationId,
-        userId: 0,
-        action: 'INTEGRITY_CHECK',
-        entityType,
-        entityId,
-        details: {
-          isValid,
-          expectedHash,
-          currentHash: isValid ? currentHash : 'MISMATCH',
-        },
-      });
-
-      return {
-        valid: isValid,
-        entityType,
-        entityId,
-        timestamp: new Date(),
-      };
-    } catch (error) {
-      console.error('Error verifying data integrity:', error);
-      return {
-        valid: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  }
-
-  /**
-   * Generate system validation report
-   */
-  async generateSystemValidationReport(organizationId: number) {
-    try {
-      const report = {
-        timestamp: new Date(),
-        systemVersion: '1.0.0',
-        complianceStandard: '21 CFR Part 11',
-        validationStatus: 'VALIDATED',
-        components: {
-          electronicSignatures: {
-            status: 'OPERATIONAL',
-            algorithm: this.signatureAlgorithm,
-            lastValidated: new Date(),
-          },
-          auditTrail: {
-            status: 'OPERATIONAL',
-            retention: 'INDEFINITE',
-            tamperProof: true,
-          },
-          accessControl: {
-            status: 'OPERATIONAL',
-            authenticationMethod: 'USERNAME_PASSWORD',
-            sessionTimeout: 3600,
-          },
-          dataIntegrity: {
-            status: 'OPERATIONAL',
-            hashAlgorithm: this.hashAlgorithm,
-            checksumVerification: true,
-          },
-        },
-        validationTests: [
-          {
-            test: 'Electronic Signature Generation',
-            result: 'PASS',
-            executedAt: new Date(),
-          },
-          {
-            test: 'Audit Trail Completeness',
-            result: 'PASS',
-            executedAt: new Date(),
-          },
-          {
-            test: 'Access Control Enforcement',
-            result: 'PASS',
-            executedAt: new Date(),
-          },
-          {
-            test: 'Data Integrity Verification',
-            result: 'PASS',
-            executedAt: new Date(),
-          },
-        ],
-      };
-
-      // Store validation report
-      await this.createAuditTrail({
-        organizationId,
-        userId: 0,
-        action: 'SYSTEM_VALIDATION_REPORT',
-        entityType: 'system',
-        entityId: 'validation',
-        details: report,
-      });
-
-      return report;
-    } catch (error) {
-      console.error('Error generating system validation report:', error);
-      throw error;
-    }
-  }
-
   // Helper methods
 
   // verifyUserCredentials lived here until 2026-09-23: a password-only check
@@ -697,167 +415,6 @@ class Part11ComplianceService {
     };
   }
 
-  /**
-   * Get role permissions
-   */
-  getRolePermissions(role: string) {
-    const permissions = {
-      admin: {
-        submission: ['create', 'read', 'update', 'delete', 'sign', 'approve'],
-        document: ['create', 'read', 'update', 'delete', 'sign'],
-        device: ['create', 'read', 'update', 'delete'],
-        audit: ['read'],
-      },
-      manager: {
-        submission: ['create', 'read', 'update', 'sign', 'approve'],
-        document: ['create', 'read', 'update', 'sign'],
-        device: ['create', 'read', 'update'],
-        audit: ['read'],
-      },
-      user: {
-        submission: ['create', 'read', 'update'],
-        document: ['create', 'read', 'update'],
-        device: ['read'],
-        audit: ['read'],
-      },
-      viewer: {
-        submission: ['read'],
-        document: ['read'],
-        device: ['read'],
-        audit: ['read'],
-      },
-    };
-
-    const roleKey = role as keyof typeof permissions;
-    return permissions[roleKey] || permissions.viewer;
-  }
-
-  /**
-   * Get system validation status
-   */
-  async getSystemValidationStatus() {
-    return {
-      validated: true,
-      version: '1.0.0',
-      lastValidated: new Date(),
-      nextValidation: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
-    };
-  }
-
-  /**
-   * Calculate hash for data
-   */
-  calculateHash(data: any) {
-    return crypto.createHash(this.hashAlgorithm).update(JSON.stringify(data)).digest('hex');
-  }
-
-  /**
-   * Produce a deterministic, order-independent serialization of the
-   * integrity-relevant fields of a record. Keys are sorted and Date values
-   * are normalized to ISO strings so the hash is stable across reads and
-   * driver representations, while still detecting any substantive change.
-   */
-  private canonicalize(fields: Record<string, unknown>): string {
-    const normalize = (v: unknown): unknown => {
-      if (v instanceof Date) return v.toISOString();
-      return v ?? null;
-    };
-    const ordered: Record<string, unknown> = {};
-    for (const key of Object.keys(fields).sort()) {
-      ordered[key] = normalize(fields[key]);
-    }
-    return JSON.stringify(ordered);
-  }
-
-  /**
-   * Get submission data for integrity check.
-   *
-   * Fails closed: if the submission does not exist we throw, so
-   * verifyDataIntegrity reports `valid: false` rather than computing a hash
-   * over fabricated (and falsely reassuring) data. The hashed payload covers
-   * the substantive fields only — volatile bookkeeping (updatedAt/deletedAt)
-   * is excluded so a meaningful tamper check is not defeated by routine touches.
-   */
-  async getSubmissionData(
-    submissionId: number
-  ): Promise<{ id: number; organizationId: number; data: string }> {
-    const [row] = await this.getDb()
-      .select()
-      .from(submissions)
-      .where(eq(submissions.id, submissionId))
-      .limit(1);
-
-    if (!row) {
-      throw new Error(`Part 11 integrity check: submission ${submissionId} not found`);
-    }
-
-    return {
-      id: row.id,
-      organizationId: row.organizationId,
-      data: this.canonicalize({
-        id: row.id,
-        organizationId: row.organizationId,
-        title: row.title,
-        productName: row.productName,
-        applicationType: row.applicationType,
-        clientType: row.clientType,
-        primaryRegion: row.primaryRegion,
-        status: row.status,
-        lifecycleStage: row.lifecycleStage,
-        createdBy: row.createdBy,
-        createdAt: row.createdAt,
-      }),
-    };
-  }
-
-  /**
-   * Get document data for integrity check.
-   *
-   * Hashes the content of the document's latest version (the integrity
-   * target). Fails closed if the document does not exist or has no stored
-   * version content, for the same reason as getSubmissionData above.
-   */
-  async getDocumentData(
-    documentId: number
-  ): Promise<{ id: number; organizationId: number; data: string }> {
-    const [doc] = await this.getDb()
-      .select({ id: documents.id, organizationId: documents.organizationId })
-      .from(documents)
-      .where(eq(documents.id, documentId))
-      .limit(1);
-
-    if (!doc) {
-      throw new Error(`Part 11 integrity check: document ${documentId} not found`);
-    }
-
-    const [version] = await this.getDb()
-      .select({
-        id: documentVersions.id,
-        versionNumber: documentVersions.versionNumber,
-        content: documentVersions.content,
-      })
-      .from(documentVersions)
-      .where(eq(documentVersions.documentId, documentId))
-      .orderBy(desc(documentVersions.createdAt))
-      .limit(1);
-
-    if (!version) {
-      throw new Error(
-        `Part 11 integrity check: document ${documentId} has no stored version content`
-      );
-    }
-
-    return {
-      id: doc.id,
-      organizationId: doc.organizationId,
-      data: this.canonicalize({
-        documentId: doc.id,
-        versionId: version.id,
-        versionNumber: version.versionNumber,
-        content: version.content,
-      }),
-    };
-  }
 }
 
 // Export singleton instance

@@ -404,7 +404,6 @@ describe('resolver verdicts become findings', () => {
     expect(f?.message).not.toMatch(/Re-place the leaf to pin/);
   });
 });
-
 describe('required sections, decided per sequence', () => {
   /* QA 2026-10-08 (j7, finding 4). Every missing section was a warning, so a
      one-leaf original IND with no Form 1571, no IB and no general

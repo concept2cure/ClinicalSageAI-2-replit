@@ -1,0 +1,702 @@
+{
+  "first": {
+    "cases": [
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts",
+        "outcome": "passed",
+        "durationMs": 392
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null",
+        "outcome": "passed",
+        "durationMs": 3198
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason",
+        "outcome": "passed",
+        "durationMs": 92
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content",
+        "outcome": "passed",
+        "durationMs": 9038
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states",
+        "outcome": "passed",
+        "durationMs": 76
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit",
+        "outcome": "passed",
+        "durationMs": 50
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page",
+        "outcome": "passed",
+        "durationMs": 47
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope",
+        "outcome": "passed",
+        "durationMs": 45
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from",
+        "outcome": "passed",
+        "durationMs": 21
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread",
+        "outcome": "passed",
+        "durationMs": 75
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable",
+        "outcome": "passed",
+        "durationMs": 16895
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero",
+        "outcome": "passed",
+        "durationMs": 29
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document",
+        "outcome": "passed",
+        "durationMs": 21
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing",
+        "outcome": "passed",
+        "durationMs": 42
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII",
+        "outcome": "passed",
+        "durationMs": 1705
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row",
+        "outcome": "passed",
+        "durationMs": 6560
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate",
+        "outcome": "passed",
+        "durationMs": 18
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall",
+        "outcome": "passed",
+        "durationMs": 508
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden",
+        "outcome": "passed",
+        "durationMs": 3417
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "semantic search over the catalog > D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off",
+        "outcome": "passed",
+        "durationMs": 1532
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "chat-upload discovery > lists the current upload with its reopenable file_id and excludes the superseded one",
+        "outcome": "passed",
+        "durationMs": 118
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter",
+        "outcome": "passed",
+        "durationMs": 237
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "vault passage retrieval — the reader finally has a writer > an embedding failure still indexes every chunk for text search, with no partial set of vectors",
+        "outcome": "passed",
+        "durationMs": 7070
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index",
+        "outcome": "passed",
+        "durationMs": 7107
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable",
+        "outcome": "passed",
+        "durationMs": 303
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing",
+        "outcome": "passed",
+        "durationMs": 11
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve",
+        "outcome": "passed",
+        "durationMs": 54
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tools/list > lists the 19 curated tools with annotations through the SDK client",
+        "outcome": "passed",
+        "durationMs": 272
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s",
+        "outcome": "passed",
+        "durationMs": 309
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document",
+        "outcome": "passed",
+        "durationMs": 241
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence",
+        "outcome": "passed",
+        "durationMs": 4051
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > is denied to a connector token without c2c:file",
+        "outcome": "passed",
+        "durationMs": 98
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org",
+        "outcome": "passed",
+        "durationMs": 94
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer)",
+        "outcome": "passed",
+        "durationMs": 56
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text",
+        "outcome": "passed",
+        "durationMs": 44
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler",
+        "outcome": "passed",
+        "durationMs": 966
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn",
+        "outcome": "passed",
+        "durationMs": 19332
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn",
+        "outcome": "passed",
+        "durationMs": 6
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model",
+        "outcome": "passed",
+        "durationMs": 414
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion",
+        "outcome": "passed",
+        "durationMs": 18
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "the kind is the Vault vocabulary > refuses a kind outside it and writes nothing",
+        "outcome": "passed",
+        "durationMs": 76
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a viewer cannot, and the record is untouched",
+        "outcome": "passed",
+        "durationMs": 50
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a confirmation of a record that changed after it was shown is refused",
+        "outcome": "passed",
+        "durationMs": 4577
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a decision that names no revision is refused",
+        "outcome": "passed",
+        "durationMs": 69
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a member confirms it as written, audited with the proposer",
+        "outcome": "passed",
+        "durationMs": 83
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > only once",
+        "outcome": "passed",
+        "durationMs": 50
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > AnA cannot replace a record a person confirmed",
+        "outcome": "passed",
+        "durationMs": 2337
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > recall says a person confirmed it",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > without a reason, nothing changes",
+        "outcome": "passed",
+        "durationMs": 89
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > a kind outside the vocabulary is refused",
+        "outcome": "passed",
+        "durationMs": 57
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > with a reason, the correction is recorded and audited with it",
+        "outcome": "passed",
+        "durationMs": 92
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > the database refuses a 'corrected' record without a reason",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > new bytes clear the description and its decision",
+        "outcome": "passed",
+        "durationMs": 47
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "case": "catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched",
+        "outcome": "passed",
+        "durationMs": 2671
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "case": "catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way",
+        "outcome": "passed",
+        "durationMs": 17113
+      }
+    ],
+    "perFileCounts": {
+      "tests/db/document-catalog.dbtest.ts": 17,
+      "tests/db/document-catalog-recall.dbtest.ts": 8,
+      "server/mcp/__tests__/mcp-connector.dbtest.ts": 11,
+      "tests/db/document-catalog-governed.dbtest.ts": 17,
+      "tests/db/document-catalog-role.dbtest.ts": 2
+    },
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "131.30s (transform 12.14s, setup 468ms, import 1.87s, tests 127.09s, environment 1ms)",
+    "observedFailedFrontierEmbeddingAuditLines": 10,
+    "observedSuccessfulFrontierEmbeddingAuditLines": 0,
+    "observedSuccessfulLocalEmbeddingAuditLines": 9,
+    "explicitLocalNoEndpointConfigurationRefusals": 0,
+    "qualification": "Assertion pass only; failed frontier transport attempts prevent a no-provider-transport qualification."
+  },
+  "second": {
+    "cases": [
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts",
+        "outcome": "passed",
+        "durationMs": 652
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null",
+        "outcome": "passed",
+        "durationMs": 3050
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason",
+        "outcome": "passed",
+        "durationMs": 43
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content",
+        "outcome": "passed",
+        "durationMs": 9614
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states",
+        "outcome": "passed",
+        "durationMs": 128
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit",
+        "outcome": "passed",
+        "durationMs": 93
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page",
+        "outcome": "passed",
+        "durationMs": 86
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope",
+        "outcome": "passed",
+        "durationMs": 95
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from",
+        "outcome": "passed",
+        "durationMs": 44
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread",
+        "outcome": "passed",
+        "durationMs": 136
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable",
+        "outcome": "passed",
+        "durationMs": 126
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero",
+        "outcome": "passed",
+        "durationMs": 25
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document",
+        "outcome": "passed",
+        "durationMs": 21
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing",
+        "outcome": "passed",
+        "durationMs": 35
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII",
+        "outcome": "passed",
+        "durationMs": 48
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row",
+        "outcome": "passed",
+        "durationMs": 101
+      },
+      {
+        "path": "tests/db/document-catalog.dbtest.ts",
+        "case": "a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate",
+        "outcome": "passed",
+        "durationMs": 18
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn",
+        "outcome": "passed",
+        "durationMs": 4927
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model",
+        "outcome": "passed",
+        "durationMs": 446
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion",
+        "outcome": "passed",
+        "durationMs": 24
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "the kind is the Vault vocabulary > refuses a kind outside it and writes nothing",
+        "outcome": "passed",
+        "durationMs": 45
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a viewer cannot, and the record is untouched",
+        "outcome": "passed",
+        "durationMs": 64
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a confirmation of a record that changed after it was shown is refused",
+        "outcome": "passed",
+        "durationMs": 195
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a decision that names no revision is refused",
+        "outcome": "passed",
+        "durationMs": 40
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > a member confirms it as written, audited with the proposer",
+        "outcome": "passed",
+        "durationMs": 49
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > only once",
+        "outcome": "passed",
+        "durationMs": 52
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > AnA cannot replace a record a person confirmed",
+        "outcome": "passed",
+        "durationMs": 42
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person confirms > recall says a person confirmed it",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > without a reason, nothing changes",
+        "outcome": "passed",
+        "durationMs": 37
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > a kind outside the vocabulary is refused",
+        "outcome": "passed",
+        "durationMs": 45
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > with a reason, the correction is recorded and audited with it",
+        "outcome": "passed",
+        "durationMs": 81
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > the database refuses a 'corrected' record without a reason",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "tests/db/document-catalog-governed.dbtest.ts",
+        "case": "a person corrects, with a reason > new bytes clear the description and its decision",
+        "outcome": "passed",
+        "durationMs": 13
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall",
+        "outcome": "passed",
+        "durationMs": 361
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden",
+        "outcome": "passed",
+        "durationMs": 3384
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "semantic search over the catalog > D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off",
+        "outcome": "passed",
+        "durationMs": 1351
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "chat-upload discovery > lists the current upload with its reopenable file_id and excludes the superseded one",
+        "outcome": "passed",
+        "durationMs": 110
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter",
+        "outcome": "passed",
+        "durationMs": 399
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "vault passage retrieval — the reader finally has a writer > an embedding failure still indexes every chunk for text search, with no partial set of vectors",
+        "outcome": "passed",
+        "durationMs": 7094
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index",
+        "outcome": "passed",
+        "durationMs": 7302
+      },
+      {
+        "path": "tests/db/document-catalog-recall.dbtest.ts",
+        "case": "filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable",
+        "outcome": "passed",
+        "durationMs": 247
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "case": "catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched",
+        "outcome": "passed",
+        "durationMs": 3088
+      },
+      {
+        "path": "tests/db/document-catalog-role.dbtest.ts",
+        "case": "catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way",
+        "outcome": "passed",
+        "durationMs": 136
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve",
+        "outcome": "passed",
+        "durationMs": 40
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tools/list > lists the 19 curated tools with annotations through the SDK client",
+        "outcome": "passed",
+        "durationMs": 259
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s",
+        "outcome": "passed",
+        "durationMs": 377
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document",
+        "outcome": "passed",
+        "durationMs": 266
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence",
+        "outcome": "passed",
+        "durationMs": 3024
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > is denied to a connector token without c2c:file",
+        "outcome": "passed",
+        "durationMs": 83
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org",
+        "outcome": "passed",
+        "durationMs": 75
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer)",
+        "outcome": "passed",
+        "durationMs": 53
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text",
+        "outcome": "passed",
+        "durationMs": 39
+      },
+      {
+        "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+        "case": "model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler",
+        "outcome": "passed",
+        "durationMs": 709
+      }
+    ],
+    "perFileCounts": {
+      "tests/db/document-catalog.dbtest.ts": 17,
+      "tests/db/document-catalog-governed.dbtest.ts": 17,
+      "tests/db/document-catalog-recall.dbtest.ts": 8,
+      "tests/db/document-catalog-role.dbtest.ts": 2,
+      "server/mcp/__tests__/mcp-connector.dbtest.ts": 11
+    },
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "57.69s (transform 12.03s, setup 302ms, import 982ms, tests 54.99s, environment 1ms)",
+    "observedFailedFrontierEmbeddingAuditLines": 0,
+    "observedSuccessfulFrontierEmbeddingAuditLines": 0,
+    "observedSuccessfulLocalEmbeddingAuditLines": 9,
+    "explicitLocalNoEndpointConfigurationRefusals": 10,
+    "qualification": "Existing local/no-endpoint resolver refusal before client construction, except recall explicit localhost transport stub; native assertions passed."
+  }
+}

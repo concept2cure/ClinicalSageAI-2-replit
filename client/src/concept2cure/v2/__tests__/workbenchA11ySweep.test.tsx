@@ -47,44 +47,48 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
 
 const DOCS = {
   success: true,
-  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
+  documents: [{ id: 'dddddddd-0000-4000-8000-000000000001', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
 };
-const SECTION = { id: 'S1', doc_id: 'D1', code: '3.2.S.1', title: 'General Information', content: '<p>The drug substance is a monoclonal antibody.</p>', order_index: 0, comment_count: 0, revision_count: 2, citation_count: 0, updated_at: '2026-07-20T10:00:00Z' };
+const SECTION = { id: 'aaaaaaaa-0000-4000-8000-000000000001', doc_id: 'dddddddd-0000-4000-8000-000000000001', code: '3.2.S.1', title: 'General Information', content: '<p>The drug substance is a monoclonal antibody.</p>', order_index: 0, comment_count: 0, revision_count: 2, citation_count: 0, updated_at: '2026-07-20T10:00:00Z' };
 
 let docAccess: unknown = undefined;
 let ledgerAnswer: () => Response = () => ok({ success: true, intact: true, revisionCount: 2, chainedCount: 2, preLedgerCount: 0, breaks: [] });
 
-/** GET /api/authoring/docs/D1, carrying `access` only when a test set one. */
+/** GET /api/authoring/docs/dddddddd-0000-4000-8000-000000000001, carrying `access` only when a test set one. */
 const docRead = () =>
   ok({ success: true, document: { ...DOCS.documents[0], provenance: null }, ...(docAccess !== undefined ? { access: docAccess } : {}) });
+
+const defaultApiResponse = (url: string) => url.startsWith('/api/c2c/documents/') ? ok({}, 404) : ok({ success: true });
 
 function props() {
   return { surface: { id: 'document-authoring', label: 'Authoring' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
 }
 
 beforeEach(() => {
+  setAuthoringFlowScope();
   docAccess = undefined;
   ledgerAnswer = () => ok({ success: true, intact: true, revisionCount: 2, chainedCount: 2, preLedgerCount: 0, breaks: [] });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1') return docRead();
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok({ success: true, sections: [SECTION] });
-    if (method === 'GET' && url === '/api/authoring/sections/S1/history/verify') return ledgerAnswer();
-    if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return docRead();
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ success: true, sections: [SECTION] });
+    if (method === 'GET' && url === '/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history/verify') return ledgerAnswer();
+    if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history')) return ok({ success: true, revisions: [] });
     if (method === 'GET' && url === '/api/tasks/tasks/by-module/Authoring') return ok({ success: true, data: [] });
-    if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
+    if (method === 'PATCH' && url === '/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001') {
       return ok({ success: true, section: { ...SECTION, code: '3.2.S.1.1', title: 'General Information (revised)' } });
     }
-    return ok({ success: true });
+    return defaultApiResponse(url);
   });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearAuthoringFlowScope(); });
 
 async function mount() {
   render(<DocumentAuthoring {...props()} />);
@@ -96,9 +100,8 @@ function toggle(word: string): HTMLButtonElement {
   const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
   return within(bar).getByRole('button', { name: new RegExp('^\\s*' + word) }) as HTMLButtonElement;
 }
-/** Every open right rail except AnA's. */
-const openRails = () =>
-  Array.from(document.querySelectorAll('aside.ed-comments')).filter(a => a.getAttribute('aria-label') !== 'AnA — document authoring');
+/** Every editor utility rail; AnA uses the canonical conversation. */
+const openRails = () => Array.from(document.querySelectorAll('aside.ed-comments'));
 
 const RAILS = ['Comments', 'History', 'Sources', 'Signatures', 'Audit', 'Exports'];
 
@@ -202,18 +205,21 @@ describe('GA-6: closing the section rename returns focus to Rename', () => {
     await waitFor(() => expect(document.activeElement).toBe(renameBtn()));
   });
 
-  it('an Escape the rename handled does not also close the AnA rail', async () => {
-    // 2026-09-28: the AnA rail's Escape listener did not check whether the key
-    // had already been handled, so leaving the rename also dismissed AnA.
-    await mount();
-    const ana = () => screen.queryByLabelText(/AnA — document authoring/);
-    if (!ana()) fireEvent.click(toggle('AnA'));
-    await waitFor(() => expect(ana()).not.toBeNull());
+  it('an Escape the rename handled keeps the canonical conversation and its composer intact', async () => {
+    render(<CanonicalAuthoringFlow />);
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')?.textContent).toContain('monoclonal antibody'));
+    fireEvent.click(toggle('AnA'));
+    const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    await screen.findByTestId('canonical-conversation');
+    const prompt = composer.value;
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')).toBeTruthy());
     fireEvent.click(renameBtn());
     const group = await screen.findByRole('group', { name: /rename section/i });
     fireEvent.keyDown(within(group).getByLabelText('Section code'), { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('group', { name: /rename section/i })).toBeNull());
-    expect(ana(), 'AnA closed on an Escape the rename already handled').not.toBeNull();
+    expect(screen.getByTestId('canonical-conversation')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'Reply to AnA' })).toBe(composer);
+    expect(composer.value).toBe(prompt);
   });
 
   it('after a successful rename', async () => {

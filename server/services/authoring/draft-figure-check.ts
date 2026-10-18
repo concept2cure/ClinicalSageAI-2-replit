@@ -25,11 +25,13 @@
 import { figureFoundAt, figuresIn, indexNumbers, type FigureKind } from '../ana/answer-check-figures.js';
 import { canonNumber, numbersInText } from '../ana/answer-check-sources.js';
 
-/** One cited excerpt, as the save verified it: the excerpt starts at character 0 of the document's text. */
+/** One cited excerpt, as the save verified it. */
 export interface CitedExcerpt {
   documentId: string;
   contentHash: string;
   text: string;
+  /** Where the excerpt starts in the document's text (S5d); 0, the opening, when absent. */
+  start?: number;
 }
 
 export interface FigureFinding {
@@ -67,6 +69,12 @@ function confirmedOffset(text: string, seen: { pos: number; value: string }): nu
   return raw && canonNumber(raw[0]) === seen.value ? seen.pos : null;
 }
 
+/** The figure's place in the DOCUMENT's text: its place in the excerpt, plus where the excerpt starts. */
+function documentOffset(excerpt: CitedExcerpt, seen: { pos: number; value: string }): number | null {
+  const at = confirmedOffset(excerpt.text, seen);
+  return at === null ? null : at + (excerpt.start ?? 0);
+}
+
 /** The excerpt numbers, indexed per source, so a figure names the source that holds it. */
 function indexExcerpts(excerpts: CitedExcerpt[]) {
   return excerpts.map((e) => ({ excerpt: e, index: indexNumbers(numbersInText(e.text, '', e.documentId, false)) }));
@@ -83,7 +91,7 @@ export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[
       if (!seen) continue;
       finding = {
         text: fig.text, kind: fig.kind, status: 'found',
-        source: { documentId: excerpt.documentId, contentHash: excerpt.contentHash, offset: confirmedOffset(excerpt.text, seen) },
+        source: { documentId: excerpt.documentId, contentHash: excerpt.contentHash, offset: documentOffset(excerpt, seen) },
       };
       break;
     }
@@ -99,4 +107,56 @@ export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[
     figures: kept.slice(0, FINDINGS_KEPT),
     truncated: kept.length > FINDINGS_KEPT,
   };
+}
+
+/** A found figure at its place in the stored section content (the span-lineage coordinate space). */
+export interface FigureSpan {
+  charStart: number;
+  charEnd: number;
+  spanText: string;
+  vaultDocumentId: string;
+  contentHash: string;
+  sourceLocator: string | null;
+}
+
+/** Whether position `i` of HTML `content` is inside a tag (`<...>`). */
+function insideTag(content: string, i: number): boolean {
+  return content.lastIndexOf('<', i) > content.lastIndexOf('>', i);
+}
+
+/** The next occurrence of `needle` in text (not inside a tag) at or after `from`, or -1. */
+function nextInText(content: string, needle: string, from: number): number {
+  for (let i = content.indexOf(needle, from); i !== -1; i = content.indexOf(needle, i + 1)) {
+    if (!insideTag(content, i)) return i;
+  }
+  return -1;
+}
+
+/**
+ * Each found figure of a section's check, placed in the stored content (S5c):
+ * the span the lineage records. A figure is placed only where its text stands
+ * literally in the content's text (not in a tag, an attribute or split by
+ * markup), and a repeated figure takes its occurrences in document order. One
+ * that cannot be placed is left out: the provenance still records it as found,
+ * and the lineage claims no characters it cannot point at.
+ */
+export function figureSpansInContent(content: string, check: SectionFigureCheck | undefined): FigureSpan[] {
+  if (!check || !content) return [];
+  const cursor = new Map<string, number>();
+  const spans: FigureSpan[] = [];
+  for (const f of check.figures) {
+    if (f.status !== 'found' || !f.source || !f.text || /[<>]/.test(f.text)) continue;
+    const at = nextInText(content, f.text, cursor.get(f.text) ?? 0);
+    if (at === -1) continue;
+    cursor.set(f.text, at + f.text.length);
+    spans.push({
+      charStart: at,
+      charEnd: at + f.text.length,
+      spanText: f.text,
+      vaultDocumentId: f.source.documentId,
+      contentHash: f.source.contentHash,
+      sourceLocator: f.source.offset === null ? null : `offset:${f.source.offset}`,
+    });
+  }
+  return spans;
 }

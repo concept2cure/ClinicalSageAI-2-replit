@@ -1,0 +1,637 @@
+diff --git a/server/routes/ivdr-binder-routes.ts b/server/routes/ivdr-binder-routes.ts
+index 75abd0ea..238b5441 100644
+--- a/server/routes/ivdr-binder-routes.ts
++++ b/server/routes/ivdr-binder-routes.ts
+@@ -19,6 +19,14 @@
+ import { Router, Request, Response } from 'express';
+ import { Pool } from 'pg';
+ import { getStorageProvider } from '../services/storage/index.js';
++import { assertStoredContentIntegrity, computeSha256, StorageIntegrityError, type StorageGetResult } from '../services/storage/storage-provider.js';
++import { stableStringify } from '../../shared/canonical-json.js';
++
++// PostgreSQL BIGINT defaults to a decimal string. Normalize only its canonical
++// integer form; malformed/unsafe values are refused by the integrity checker.
++function normalizePackArtifactSize(size: unknown): unknown {
++  return typeof size === 'string' && /^(0|[1-9]\d*)$/.test(size) ? Number(size) : size;
++}
+ 
+ export default function createIVDRBinderRoutes(pool: Pool): Router {
+   const router = Router();
+@@ -44,6 +52,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+ 
+   // ── Safe error response ────────────────────────────────────────────────────
+   function safeError(res: Response, error: any, code: string, label: string): Response {
++    if (error instanceof StorageIntegrityError) {
++      return res.status(409).json({
++        error: 'This pack artifact failed its integrity check. No file was served.',
++        code: 'PACK_ARTIFACT_INTEGRITY_FAILED',
++      });
++    }
+     if (error?.code === '42P01') {
+       console.warn(`[IVDR-Binder] ${label}: table not found — denying until migrated`);
+       return res.status(503).json({
+@@ -919,7 +933,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+       const orgId = getServerOrgId(req);
+       const userId = getUserId(req);
+       const { packId } = req.params;
+-      const format = (req.query.format as string) || 'manifest';
++      const requestedFormat = req.query.format ?? 'manifest';
++      if (typeof requestedFormat !== 'string' || !['pdf', 'docx', 'zip', 'manifest'].includes(requestedFormat)) {
++        return res.status(400).json({ error: 'Choose pdf, docx, zip or manifest.', code: 'PACK_DOWNLOAD_FORMAT_INVALID' });
++      }
++      const format = requestedFormat as 'pdf' | 'docx' | 'zip' | 'manifest';
+ 
+       const packResult = await pool.query(
+         `SELECT id, project_id, pack_type, pack_version, status,
+@@ -927,7 +945,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+                 manifest_vault_version_id,
+                 pdf_vault_version_id,
+                 docx_vault_version_id,
+-                zip_vault_version_id
++                zip_vault_version_id,
++                manifest_sha256, manifest_size_bytes,
++                pdf_sha256, pdf_size_bytes,
++                docx_sha256, docx_size_bytes,
++                zip_sha256, zip_size_bytes
+          FROM ivdr_packs
+          WHERE id = $1 AND organization_id = $2`,
+         [packId, orgId]
+@@ -939,30 +961,40 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+ 
+       const pack = packResult.rows[0];
+ 
+-      // Log download event
+-      await emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
+-        packId,
+-        packVersion: pack.pack_version,
+-        format,
++      // Storage self-consistency is not the approved pack identity: a sidecar
++      // and its file can change together. Bind loaded bytes to this pack's
++      // recorded format receipt, and never audit a refused read as downloaded.
++      const recordDownload = () => emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
++        packId, packVersion: pack.pack_version, format,
+       });
++      const serveStored = async (artifact: StorageGetResult) => {
++        const sizeBytes = normalizePackArtifactSize(pack[`${format}_size_bytes`]);
++        assertStoredContentIntegrity(artifact.bytes, { sha256: pack[`${format}_sha256`], sizeBytes });
++        await recordDownload();
++        res.setHeader('Content-Type', artifact.mime);
++        res.setHeader('Content-Length', String(artifact.bytes.length));
++        res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
++        res.setHeader('X-Content-SHA256', computeSha256(artifact.bytes));
++        return res.send(artifact.bytes);
++      };
+ 
+       // For now, return the manifest JSON from the snapshot
+       if (format === 'manifest') {
+-        // Try vault first, fall back to snapshot table
++        // A recorded original must be served as itself; a missing original
++        // must never be replaced by a different snapshot rendering.
+         if (pack.manifest_vault_version_id) {
+           const vaultResult = await getStorageProvider().get(pack.manifest_vault_version_id, orgId);
+           if (vaultResult) {
+-            res.setHeader('Content-Type', vaultResult.mime);
+-            res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+-            res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+-            res.setHeader('X-Content-SHA256', vaultResult.sha256);
+-            return res.send(vaultResult.bytes);
++            return await serveStored(vaultResult);
+           }
++          return res.status(404).json({ error: 'The recorded manifest file is missing.', code: 'PACK_ARTIFACT_MISSING' });
+         }
+ 
++        // Legacy packs with no original manifest retain their snapshot view,
++        // after its canonical content is checked against both recorded hashes.
+         const snapResult = await pool.query(
+-          `SELECT snapshot_json FROM ivdr_pack_snapshots WHERE pack_id = $1`,
+-          [packId]
++          `SELECT snapshot_json, snapshot_hash_sha256 FROM ivdr_pack_snapshots WHERE pack_id = $1 AND organization_id = $2`,
++          [packId, orgId]
+         );
+ 
+         if (snapResult.rows.length === 0) {
+@@ -971,12 +1003,21 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+             .json({ error: 'Manifest not available', code: 'PACK_NO_MANIFEST' });
+         }
+ 
++        const snapshot = snapResult.rows[0];
++        const canonicalBytes = Buffer.from(stableStringify(snapshot.snapshot_json), 'utf8');
++        for (const digest of [snapshot.snapshot_hash_sha256, pack.snapshot_hash_sha256]) {
++          assertStoredContentIntegrity(canonicalBytes, { sha256: digest, sizeBytes: canonicalBytes.length });
++        }
++        const rendered = Buffer.from(JSON.stringify(snapshot.snapshot_json, null, 2), 'utf8');
++        await recordDownload();
+         res.setHeader('Content-Type', 'application/json');
++        res.setHeader('Content-Length', String(rendered.length));
++        res.setHeader('X-Content-SHA256', computeSha256(rendered));
+         res.setHeader(
+           'Content-Disposition',
+           `attachment; filename="IVDR_Pack_v${pack.pack_version}_manifest.json"`
+         );
+-        return res.send(JSON.stringify(snapResult.rows[0].snapshot_json, null, 2));
++        return res.send(rendered);
+       }
+ 
+       // PDF / DOCX / ZIP — stream from vault
+@@ -1006,11 +1047,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+         });
+       }
+ 
+-      res.setHeader('Content-Type', vaultResult.mime);
+-      res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+-      res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+-      res.setHeader('X-Content-SHA256', vaultResult.sha256);
+-      return res.send(vaultResult.bytes);
++      return await serveStored(vaultResult);
+     } catch (error) {
+       return safeError(res, error, 'PACK_DOWNLOAD_FAILED', 'Download pack');
+     }
+diff --git a/server/services/storage/local-provider.ts b/server/services/storage/local-provider.ts
+index a9caa479..c3c623bc 100644
+--- a/server/services/storage/local-provider.ts
++++ b/server/services/storage/local-provider.ts
+@@ -24,6 +24,7 @@ import {
+   StorageGetResult,
+   StorageSignedUrlResult,
+   computeSha256,
++  assertStoredContentIntegrity,
+   generateVersionId,
+   sanitizeProjectId,
+   buildVaultFileId,
+@@ -142,6 +143,7 @@ export class LocalStorageProvider implements IStorageProvider {
+     if (!fs.existsSync(filePath)) return null;
+ 
+     const bytes = fs.readFileSync(filePath);
++    assertStoredContentIntegrity(bytes, meta);
+     return {
+       bytes,
+       sizeBytes: bytes.length,
+diff --git a/server/services/storage/s3-provider.ts b/server/services/storage/s3-provider.ts
+index 4386d16c..90e5201c 100644
+--- a/server/services/storage/s3-provider.ts
++++ b/server/services/storage/s3-provider.ts
+@@ -20,6 +20,7 @@ import {
+   StorageGetResult,
+   StorageSignedUrlResult,
+   computeSha256,
++  assertStoredContentIntegrity,
+   generateVersionId,
+   sanitizeProjectId,
+   buildVaultFileId,
+@@ -167,6 +168,7 @@ export class S3StorageProvider implements IStorageProvider {
+         this.bucket,
+         this.keyPath(orgId, projectId, vaultVersionId, meta.filename),
+       );
++      assertStoredContentIntegrity(bytes, meta);
+ 
+       return {
+         bytes,
+diff --git a/server/services/storage/storage-provider.ts b/server/services/storage/storage-provider.ts
+index 1ff1de07..a83c81b9 100644
+--- a/server/services/storage/storage-provider.ts
++++ b/server/services/storage/storage-provider.ts
+@@ -76,6 +76,13 @@ export interface IStorageProvider {
+    * A file belonging to another organization must be reported as MISSING (null),
+    * never as forbidden — "403" on a foreign id confirms the id exists, which is
+    * an enumeration oracle. Matches `ana/uploaded-file-access.ts`.
++   *
++   * A successful read verifies loaded bytes against the owned storage record's
++   * SHA-256 and byte length. Parsed metadata with no valid identity, or bytes
++   * that differ from it, throws StorageIntegrityError rather than returning a
++   * missing result or the original digest beside changed content. This verifies
++   * storage identity; a governed caller must also bind it to its authoritative
++   * approved artifact identity before export.
+    */
+   get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null>;
+ 
+@@ -116,6 +123,40 @@ export function computeSha256(data: Buffer): string {
+   return createHash('sha256').update(data).digest('hex');
+ }
+ 
++export type StorageIntegrityFailureReason = 'invalid_metadata' | 'size_mismatch' | 'digest_mismatch';
++
++/** Storage corruption is distinct from a missing or foreign version. */
++export class StorageIntegrityError extends Error {
++  readonly code = 'STORAGE_INTEGRITY_FAILED';
++
++  constructor(readonly reason: StorageIntegrityFailureReason) {
++    const messages: Record<StorageIntegrityFailureReason, string> = {
++      invalid_metadata: 'The stored file has no valid recorded SHA-256 or byte length. No content was returned.',
++      size_mismatch: 'The stored file byte length differs from its recorded identity. No content was returned.',
++      digest_mismatch: 'The stored file SHA-256 differs from its recorded identity. No content was returned.',
++    };
++    super(messages[reason]);
++    this.name = 'StorageIntegrityError';
++  }
++}
++
++/**
++ * Check the bytes actually loaded, after ownership/path checks. Never replace a
++ * missing recorded identity with a hash of the current bytes: that would call
++ * an unverified or altered version its own original. Empty files are valid.
++ */
++export function assertStoredContentIntegrity(
++  bytes: Buffer,
++  recorded: { sha256: unknown; sizeBytes: unknown },
++): void {
++  if (typeof recorded.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(recorded.sha256)
++      || typeof recorded.sizeBytes !== 'number' || !Number.isSafeInteger(recorded.sizeBytes) || recorded.sizeBytes < 0) {
++    throw new StorageIntegrityError('invalid_metadata');
++  }
++  if (bytes.length !== recorded.sizeBytes) throw new StorageIntegrityError('size_mismatch');
++  if (computeSha256(bytes) !== recorded.sha256.toLowerCase()) throw new StorageIntegrityError('digest_mismatch');
++}
++
+ export function generateVersionId(): string {
+   return randomUUID();
+ }
+diff --git a/server/routes/__tests__/ivdr-pack-download-integrity.test.ts b/server/routes/__tests__/ivdr-pack-download-integrity.test.ts
+new file mode 100644
+index 00000000..9487a07a
+--- /dev/null
++++ b/server/routes/__tests__/ivdr-pack-download-integrity.test.ts
+@@ -0,0 +1,225 @@
++/** The actual download route must bind storage bytes to its recorded pack,
++ * not just trust an internally consistent storage sidecar. No live DB or S3. */
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import express, { type Request, type Response, type NextFunction } from 'express';
++import request from 'supertest';
++import { computeSha256, StorageIntegrityError } from '../../services/storage/storage-provider';
++import { stableStringify } from '../../../shared/canonical-json';
++
++const storage = vi.hoisted(() => ({ get: vi.fn() }));
++vi.mock('../../services/storage/index.js', () => ({ getStorageProvider: () => storage }));
++import createIVDRBinderRoutes from '../ivdr-binder-routes';
++
++const ORG = 7;
++const PACK = '11111111-1111-4111-8111-111111111111';
++const GOOD = Buffer.from('{"approved":"artifact"}');
++const CHANGED = Buffer.from('{"modified":"artifact"}');
++const FORMATS = ['pdf', 'docx', 'zip', 'manifest'] as const;
++const versions = Object.fromEntries(FORMATS.map((f, i) => [f, `00000000-0000-4000-8000-00000000000${i}`]));
++let pack: Record<string, unknown>;
++let packExists = true;
++const query = vi.fn(async (sql: string, _params?: unknown[]) => {
++  if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++  return { rows: [] };
++});
++const pool = { query } as unknown as import('pg').Pool;
++
++function app() {
++  const a = express();
++  a.use((req: Request, _res: Response, next: NextFunction) => {
++    (req as any).tenantId = ORG;
++    (req as any).userId = 42;
++    (req as any).ivdrPermissions = new Set(['*']);
++    next();
++  });
++  a.use('/api/ivdr', createIVDRBinderRoutes(pool));
++  return a;
++}
++
++function stored(bytes = GOOD) {
++  return { bytes, sha256: computeSha256(bytes), sizeBytes: bytes.length,
++    mime: 'application/octet-stream', filename: 'artifact.bin' };
++}
++
++function downloaded() {
++  return query.mock.calls.filter(([, params]) => params?.[1] === 'PACK_DOWNLOADED');
++}
++
++beforeEach(() => {
++  query.mockClear();
++  storage.get.mockReset();
++  packExists = true;
++  pack = { id: PACK, project_id: 'programme-a', pack_version: 1, status: 'SUCCEEDED' };
++  for (const f of FORMATS) {
++    pack[`${f}_vault_version_id`] = versions[f];
++    pack[`${f}_sha256`] = computeSha256(GOOD);
++    pack[`${f}_size_bytes`] = GOOD.length;
++  }
++  storage.get.mockResolvedValue(stored());
++});
++
++describe('IVDR stored artifact identity', () => {
++  it.each(FORMATS)('serves an intact recorded %s artifact with its actual digest', async (format) => {
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++    expect(storage.get).toHaveBeenCalledWith(versions[format], ORG);
++    expect(downloaded()).toHaveLength(1);
++  });
++
++  it.each(FORMATS)('refuses an internally consistent replacement %s from the wrong pack identity', async (format) => {
++    // Both file and sidecar changed together: provider self-consistency alone
++    // passes, but the immutable filing identity in ivdr_packs is still GOOD.
++    storage.get.mockResolvedValue(stored(CHANGED));
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(res.headers['x-content-sha256']).toBeUndefined();
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it.each(FORMATS)('refuses %s whose recorded pack byte length was changed', async (format) => {
++    pack[`${format}_size_bytes`] = GOOD.length + 1;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it.each(FORMATS)('refuses %s with no recorded artifact digest', async (format) => {
++    pack[`${format}_sha256`] = null;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++});
++
++describe('IVDR download control flow', () => {
++
++  it('requests authoritative artifact hashes and sizes from the scoped pack row', async () => {
++    await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    const call = query.mock.calls.find(([sql]) => sql.includes('FROM ivdr_packs'));
++    expect(call).toBeDefined();
++    for (const format of FORMATS) {
++      expect(call![0]).toContain(`${format}_sha256`);
++      expect(call![0]).toContain(`${format}_size_bytes`);
++    }
++    expect(call![1]).toEqual([PACK, ORG]);
++  });
++
++  it.each(FORMATS)('accepts the PostgreSQL BIGINT decimal byte length for %s', async (format) => {
++    pack[`${format}_size_bytes`] = String(GOOD.length);
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++  });
++
++  it.each([null, '', ' ', '-1', '1.5', '2e1', '9007199254740993'])('refuses an invalid BIGINT receipt %j', async (value) => {
++    pack.pdf_size_bytes = value;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('reports a provider integrity refusal and records no successful download', async () => {
++    storage.get.mockRejectedValue(new StorageIntegrityError('digest_mismatch'));
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('keeps missing/foreign pack identity absent without reaching storage', async () => {
++    packExists = false;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(404);
++    expect(storage.get).not.toHaveBeenCalled();
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('does not record a successful download when the stored version is missing', async () => {
++    storage.get.mockResolvedValue(null);
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(404);
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('does not emit a provider-supplied digest unrelated to the verified bytes', async () => {
++    storage.get.mockResolvedValue({ ...stored(), sha256: computeSha256(CHANGED) });
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++  });
++
++  it('refuses to substitute a snapshot when the recorded original manifest is missing', async () => {
++    storage.get.mockResolvedValue(null);
++    const snapshot = { source: 'a different rendering' };
++    query.mockImplementation(async (sql: string) => {
++      if (sql.includes('FROM ivdr_packs')) return { rows: [pack] };
++      if (sql.includes('FROM ivdr_pack_snapshots')) return { rows: [{ snapshot_json: snapshot }] };
++      return { rows: [] };
++    });
++    try {
++      const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++      expect(res.status).toBe(404);
++      expect(res.body.code).toBe('PACK_ARTIFACT_MISSING');
++      expect(downloaded()).toHaveLength(0);
++    } finally {
++      query.mockImplementation(async (sql: string) => {
++        if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++        return { rows: [] };
++      });
++    }
++  });
++
++});
++
++describe('legacy snapshot fallback remains an integrity-checked view', () => {
++    const snapshot = { nested: { z: 1, a: 2 }, observations: [3, 4] };
++    const snapshotDigest = computeSha256(Buffer.from(stableStringify(snapshot)));
++    const installSnapshot = (rowHash: unknown = snapshotDigest) => {
++      pack.manifest_vault_version_id = null;
++      pack.snapshot_hash_sha256 = snapshotDigest;
++      query.mockImplementation(async (sql: string) => {
++        if (sql.includes('FROM ivdr_packs')) return { rows: [pack] };
++        if (sql.includes('FROM ivdr_pack_snapshots')) return { rows: [{ snapshot_json: snapshot, snapshot_hash_sha256: rowHash }] };
++        return { rows: [] };
++      });
++    };
++
++    it('verifies canonical nested content and hashes the actual rendered JSON', async () => {
++      installSnapshot();
++      try {
++        const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++        expect(res.status).toBe(200);
++        expect(res.body).toEqual(snapshot);
++        expect(res.headers['x-content-sha256']).toBe(computeSha256(Buffer.from(JSON.stringify(snapshot, null, 2))));
++        expect(storage.get).not.toHaveBeenCalled();
++        expect(downloaded()).toHaveLength(1);
++        const call = query.mock.calls.find(([sql]) => sql.includes('FROM ivdr_pack_snapshots'));
++        expect(call![1]).toEqual([PACK, ORG]);
++        expect(call![0]).toContain('organization_id = $2');
++      } finally { resetQuery(); }
++    });
++
++    it.each(['row', 'pack', 'missing'] as const)('refuses the snapshot when its %s hash does not establish identity', async (which) => {
++      installSnapshot(which === 'row' ? computeSha256(CHANGED) : which === 'missing' ? null : snapshotDigest);
++      if (which === 'pack') pack.snapshot_hash_sha256 = computeSha256(CHANGED);
++      try {
++        const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++        expect(res.status).toBe(409);
++        expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++        expect(downloaded()).toHaveLength(0);
++      } finally { resetQuery(); }
++    });
++});
++
++function resetQuery() {
++  query.mockImplementation(async (sql: string) => {
++    if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++    return { rows: [] };
++  });
++}
+diff --git a/server/services/storage/__tests__/storage-read-integrity.test.ts b/server/services/storage/__tests__/storage-read-integrity.test.ts
+new file mode 100644
+index 00000000..0edbcbd5
+--- /dev/null
++++ b/server/services/storage/__tests__/storage-read-integrity.test.ts
+@@ -0,0 +1,153 @@
++/**
++ * D2: a successful storage read must be the bytes whose identity was recorded.
++ * Same-size corruption defeats a size-only check; metadata defects must not
++ * become an apparently verified read or an ordinary missing-object result.
++ */
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import * as fs from 'node:fs';
++import * as path from 'node:path';
++import { computeSha256, type IStorageProvider, type StoragePutResult } from '../storage-provider';
++
++const s3 = vi.hoisted(() => ({ objects: new Map<string, Buffer>() }));
++vi.mock('../s3-client', () => ({
++  createS3Client: () => ({
++    send: async (command: { input: { Key: string; Body: Buffer } }) => {
++      s3.objects.set(command.input.Key, Buffer.from(command.input.Body));
++      return {};
++    },
++  }),
++  readS3Object: async (_client: unknown, _bucket: string, key: string) => {
++    const bytes = s3.objects.get(key);
++    if (!bytes) throw Object.assign(new Error('Missing object'), { name: 'NoSuchKey' });
++    return Buffer.from(bytes);
++  },
++  listS3Keys: async (_client: unknown, _bucket: string, prefix: string) =>
++    [...s3.objects.keys()].filter(key => key.startsWith(prefix)),
++}));
++
++import { LocalStorageProvider } from '../local-provider';
++import { S3StorageProvider } from '../s3-provider';
++
++const ORG = 901031;
++const PROJECT = 'storage-integrity-test';
++const FILE = 'record.txt';
++const ROOT = path.resolve(process.cwd(), 'storage', 'vault', String(ORG));
++
++interface StoredFixture {
++  result: StoragePutResult;
++  replaceBytes: (bytes: Buffer) => void;
++  replaceMetadata: (meta: Record<string, unknown>) => void;
++  corruptMetadataJson: () => void;
++  metadata: Record<string, unknown>;
++}
++
++async function stored(provider: IStorageProvider, body = Buffer.from('ORIGINAL')): Promise<StoredFixture> {
++  const result = await provider.put({ orgId: ORG, projectId: PROJECT, filename: FILE, bytes: body, mime: 'text/plain' });
++  const localDir = path.join(ROOT, PROJECT, 'versions', result.vaultVersionId);
++  const s3Dir = `${ORG}/${PROJECT}/versions/${result.vaultVersionId}`;
++  const index = `${ORG}/_index/versions/${result.vaultVersionId}.json`;
++  const readMeta = () => provider.name === 'local'
++    ? fs.readFileSync(path.join(localDir, '_meta.json'), 'utf8')
++    : s3.objects.get(index)!.toString('utf8');
++  const replaceRawMetadata = (raw: string) => {
++    if (provider.name === 'local') fs.writeFileSync(path.join(localDir, '_meta.json'), raw);
++    else {
++      s3.objects.set(index, Buffer.from(raw));
++      s3.objects.set(`${s3Dir}/_meta.json`, Buffer.from(raw));
++    }
++  };
++  return {
++    result,
++    metadata: JSON.parse(readMeta()),
++    replaceBytes: bytes => {
++      if (provider.name === 'local') fs.writeFileSync(path.join(localDir, FILE), bytes);
++      else s3.objects.set(`${s3Dir}/${FILE}`, bytes);
++    },
++    replaceMetadata: meta => replaceRawMetadata(JSON.stringify(meta)),
++    corruptMetadataJson: () => replaceRawMetadata('{ not json'),
++  };
++}
++
++for (const backend of ['local', 's3'] as const) {
++  describe(`${backend} storage read integrity`, () => {
++    let provider: IStorageProvider;
++    beforeEach(() => {
++      s3.objects.clear();
++      vi.stubEnv('AWS_S3_BUCKET', 'storage-read-integrity-test');
++      provider = backend === 'local' ? new LocalStorageProvider() : new S3StorageProvider();
++    });
++    afterEach(() => {
++      fs.rmSync(ROOT, { recursive: true, force: true });
++      s3.objects.clear();
++      vi.unstubAllEnvs();
++    });
++
++    it.each([Buffer.from('ORIGINAL'), Buffer.alloc(0)])('reads unchanged bytes, including an empty file', async bytes => {
++      const f = await stored(provider, bytes);
++      await expect(provider.get(f.result.vaultVersionId, ORG)).resolves.toMatchObject({
++        bytes, sizeBytes: bytes.length, sha256: computeSha256(bytes), filename: FILE, mime: 'text/plain',
++      });
++    });
++
++    it('refuses changed bytes even when their size is unchanged', async () => {
++      const f = await stored(provider);
++      f.replaceBytes(Buffer.from('CORRUPT!'));
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'digest_mismatch',
++      });
++    });
++
++    it('refuses bytes whose size no longer matches the record', async () => {
++      const f = await stored(provider);
++      f.replaceBytes(Buffer.from('ORIGINAL with trailing corruption'));
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'size_mismatch',
++      });
++    });
++
++    it('refuses a changed recorded size even when the content digest matches', async () => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, sizeBytes: 9 });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'size_mismatch',
++      });
++    });
++
++    it('refuses a different recorded digest even when the size matches', async () => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, sha256: '0'.repeat(64) });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'digest_mismatch',
++      });
++    });
++
++    it.each([
++      ['missing digest', 'sha256', undefined],
++      ['malformed digest', 'sha256', 'sha256:wrong'],
++      ['missing size', 'sizeBytes', undefined],
++      ['string size', 'sizeBytes', '8'],
++      ['negative size', 'sizeBytes', -1],
++      ['fractional size', 'sizeBytes', 8.5],
++      ['unsafe integer size', 'sizeBytes', Number.MAX_SAFE_INTEGER + 1],
++    ])('refuses %s rather than claiming integrity', async (_label, key, value) => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, [key as string]: value });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'invalid_metadata',
++      });
++    });
++
++    it('preserves the existing malformed-JSON outcome without returning bytes', async () => {
++      const f = await stored(provider);
++      f.corruptMetadataJson();
++      if (backend === 'local') await expect(provider.get(f.result.vaultVersionId, ORG)).resolves.toBeNull();
++      else await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toBeInstanceOf(SyntaxError);
++    });
++
++    it('keeps foreign version IDs indistinguishable from genuinely absent ones', async () => {
++      const f = await stored(provider);
++      expect(await provider.get(f.result.vaultVersionId, ORG + 1)).toBeNull();
++      expect(await provider.get('00000000-0000-4000-8000-000000000000', ORG)).toBeNull();
++    });
++  });
++}

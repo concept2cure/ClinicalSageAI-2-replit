@@ -1,0 +1,138 @@
+{
+  "workstream": "W1 / D2",
+  "scope": "existing Authoring current-organization read-only ceiling and same-account/organization request principal",
+  "baseHead": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "canonicalBranch": "concept2cure-v2",
+  "before": {
+    "testFiles": 2,
+    "passed": 7,
+    "failed": 16,
+    "substantiveBehaviorFailures": 15,
+    "alreadyRefusedFromDraftResponseShapeFailures": 1
+  },
+  "firstFocusedGreen": {
+    "files": 2,
+    "tests": 23,
+    "exitCode": 0
+  },
+  "firstRegression": {
+    "files": 18,
+    "passed": 289,
+    "failed": 2,
+    "failureScope": "existing DocAccess fixture identity model and read-only denial copy"
+  },
+  "finalRegression": {
+    "files": 18,
+    "tests": 291,
+    "passed": 291,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 70.22,
+    "singleCompleteGreenRun": true,
+    "testFiles": [
+      "server/services/authoring/__tests__/authoring-current-role.test.ts",
+      "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "server/services/c2c/__tests__/program-access.test.ts",
+      "server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts",
+      "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "server/routes/__tests__/authoring-atomic-mutations.test.ts",
+      "server/routes/__tests__/authoring-save-governed-write.pglite.test.ts",
+      "server/routes/__tests__/authoring-signing-authority.test.ts",
+      "server/routes/__tests__/authoringPermissionManagement.test.ts",
+      "tests/schema-contract/authoring-auth-parity.contract.test.ts",
+      "tests/schema-contract/authoring-section-permissions.contract.test.ts",
+      "tests/schema-contract/authoring-section-revision-gate.contract.test.ts",
+      "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts"
+    ]
+  },
+  "lint": {
+    "strictFiles": 6,
+    "errors": 0,
+    "warnings": 0,
+    "routerErrors": 0,
+    "routerWarnings": 23,
+    "baselinesChanged": false
+  },
+  "sourcePins": [
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "d2d0dd697ea15fbfac097a5eb45b385562df6d9f35a30987ce8977c9231bfa81"
+    },
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59"
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "4f999eda26c295f4fcf41657d7a95918b7ba5a7c7c5bb0d8c3435cb659446d2e"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-current-role.test.ts",
+      "sha256": "7f7e177d0500eaf0412d82fd91b5af0d3a54969c88e31ddf745ebbbf04f75e85"
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "sha256": "ed67ce3d5d848806cd954266cb727ee352fb7bd2022fc8693e4e44c44f6a0fd7"
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "cb6d5b8ca9d7490917eee3a7361788c37697268dd36979c24117d4337d5cfad9"
+    }
+  ],
+  "proofFiles": [
+    {
+      "path": "access-fixture-after.txt",
+      "sha256": "aeb57877b0502480a3840515bccdabceeaa558be4dfd4fd30717d64e2cf41340",
+      "rawSha256": "333339ff5c01bf328053bf4cc5603f0de2e25efb6e13084927778df15889dd26",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "first-green.txt",
+      "sha256": "cef928d6a17990ea1ee42cb2bf9391edfe72147a674acf9b9674c64354b30c01",
+      "rawSha256": "7ef97cbc57d3a34070174ca7d9a55c7e2b64869c69fbf6d2c70d2c7b229481b3",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "lint.json",
+      "sha256": "72590d36c329352d2ce7c31e196f4ac73ab48ff0cc2fa4c73867752440cf9cda"
+    },
+    {
+      "path": "red-complete.txt",
+      "sha256": "8ce8ef3d35b16a4a49dd93d51dfbc3f3f68fe273de55fb7b194077c9f94d406c",
+      "rawSha256": "90e697a2b278af231af8d2e38f6f3adabda85485bd84a85803fe0a979edd1750",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "regression-before-fixture-alignment.txt",
+      "sha256": "76a1a0cba364529a97bcc81582cb50e098382832e670368a9d6240560ba03e73",
+      "rawSha256": "f2feeaa0cf5ae81b52b196324ea52448379aabdd1847b3275235cfa720ef03bf",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "regression-final.txt",
+      "sha256": "f79ce0a0f4704f9863c8e1de4cbadc63e161855f89a052cb7e5d532b4f018de9",
+      "rawSha256": "0c6d7f7ebae6a0c83d189f07a79628af6eabb60f1f9559b4988cbf3ec232ba37",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "router-lint.json",
+      "sha256": "8e18330241080ba6c14923d7f05c5f801f6645af1beab6d739d81f9eb7404811"
+    }
+  ],
+  "nativeRuntimeProof": "../local-runtime/final-node22/summary.json",
+  "qualifications": [
+    "PGlite test outer auth fixture models current membership with verified JWT and SQL; native app_service/RLS proof is independent.",
+    "All direct production writes remain existing routes/services with existing ACL, signing, tenant and immutable-record gates.",
+    "No provider calls, migrations, production dependencies, new editor, role grants or baseline changes."
+  ],
+  "receiptNormalization": "receipt-normalization.json"
+}

@@ -69,6 +69,7 @@ const fail = (s: number): Response => {
 };
 
 function row(over: Record<string, unknown>) {
+  const status = over.state === 'changes-requested' ? 'changes_requested' : over.state;
   return {
     id: 'doc',
     doc: 'Untitled',
@@ -78,7 +79,8 @@ function row(over: Record<string, unknown>) {
     module: 'M2',
     docStatus: 'IN_REVIEW',
     state: 'in-review',
-    reviews: [],
+    reviews: ['approved', 'changes_requested', 'rejected'].includes(String(status))
+      ? [{ status, standing: 'current' }] : [],
     myReviewId: null,
     myReviewStatus: null,
     awaitingMyReview: false,

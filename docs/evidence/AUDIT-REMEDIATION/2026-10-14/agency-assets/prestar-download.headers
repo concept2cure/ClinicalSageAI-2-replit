@@ -1,0 +1,24 @@
+HTTP/1.1 200 OK
+date: Wed, 14 Oct 2026 02:56:00 GMT
+server: envoy
+
+HTTP/2 200 
+content-type: application/pdf
+content-length: 3803448
+server: envoy
+content-disposition: inline; filename=PreSTAR_3-1.pdf
+content-language: en
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+accept-ranges: bytes
+last-modified: Mon, 21 Sep 2026 13:23:20 GMT
+x-cache-status: MISS
+cache-control: public, max-age=0
+expires: Wed, 14 Oct 2026 02:56:02 GMT
+date: Wed, 14 Oct 2026 02:56:02 GMT
+alt-svc: h3=":443"; ma=93600
+strict-transport-security: max-age=31536000 ; includeSubDomains ; preload
+set-cookie: _abck=EFD2DB9361482F29128ECA9A5185A89E~-1~YAAQCUkVAj9IQh6hAQAAvppWOBALPvRn42HDNf+DxLc/xPSq5/eB6RIXIAkgNJToC2w0trXu9OZiDMbcsNsNq3qDeLIjyT2QUfsqKcOkmwXgNz7tTns4Rf/rOIashFCQjw1TcsuwBDOMPCMwTqYatwKPR5/Nh7oNujBw5X75gaeeTA3tqD+Yiv9uDeQVpduLK/Sh/iS0VGn2aKxbyI7ndSl1h9BJUbRkdZjBgMqEyE8MaTSNBikzJFjwg7Iq/tX+nTpO34mNqoFJjoTG9OWcXMcmUlVjPnm1LmBNghIlYMLz/oyKqVwdTIUml9K4Zw1Jn6xvvtvKBD81e67UwILPYn8kSFoxSD2ySjen2IZLT1CSbhjY0ojFILEWtqjT2vdrqsli+CoRBR8obxgopYw/P/GC1qx998fproMPnKY9MCz7zr4ZMdSnm1KdZ45vCTcWPJc=~-1~-1~-1~-1~-1; Domain=.fda.gov; Path=/; Expires=Thu, 14 Oct 2027 02:56:02 GMT; Max-Age=31536000; Secure
+set-cookie: bm_sz=AD674F5E889309F5FFB59B4A26FCA430~YAAQCUkVAkBIQh6hAQAAvppWOAExHDuMaBiJ/ebi3XORuOsJ+2dOxFq8qHGHRQLVDWmaUA/KVuTtb6zUjj5irIHHwZEz2K8uWlhR69bYE1hu914EatXHRlH79Xk+Th1DbDHGcHxmujVUk9k1qWngcJpdWgbldfAshSQW54l6gMhCyn4KtYdrt4vE8E8+Y0312coSYX+YKD1MdsjFSCY1jJfsTqdBH/6C49EkkLF+jFP/le+ZKq+OGiCcyspg1doB+aEBVbOIvX3lMxQvBJ2TSXxPyzgO920YUBD/mK7IvKjJOMgg02HDlH2ATI2figYObyfABmp0EOgtBcP5xHjSZnwALAopQ+UOi3Z6+YxlcRdNBBaJ~3551300~3223878; Domain=.fda.gov; Path=/; Expires=Wed, 14 Oct 2026 06:56:02 GMT; Max-Age=14400
+x-envoy-upstream-service-time: 1597
+

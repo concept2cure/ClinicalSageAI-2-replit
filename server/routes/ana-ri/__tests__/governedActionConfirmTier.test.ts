@@ -266,6 +266,7 @@ describe('a confirmed tool', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(executed).toHaveLength(0); // not a command
     expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0].ctx.sqlClient).toEqual({ query: expect.any(Function) });
     expect(toolCalls[0]).toMatchObject({
       name: 'save_report_definition',
       input: { title: 'Weekly enrolment report' },

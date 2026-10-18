@@ -6,6 +6,8 @@
  * Consumed by server/routes/ivd-knowledge.ts and the AnA citation tool.
  */
 
+import { createHash } from 'node:crypto';
+
 import {
   IVD_KNOWLEDGE_BASE,
   type KnowledgeEntry,
@@ -48,24 +50,38 @@ export function corpusSize(): number {
   return IVD_KNOWLEDGE_BASE.length;
 }
 
+/** JSON with object keys sorted at every level, so equal content hashes equally. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
 /**
- * Deterministic version stamp for the knowledge corpus. Stamped onto every
- * saved assessment so a regulated computation is reproducible against the exact
- * knowledge snapshot that informed it. Changes whenever an entry id or its
- * lastReviewed date changes. FNV-1a over sorted "id@lastReviewed" pairs.
+ * Version stamp of a knowledge corpus: SHA-256 over the canonical JSON of every
+ * entry, in id order. Stamped onto every saved assessment so a regulated
+ * computation is reproducible against the exact knowledge snapshot that
+ * informed it, and compared by drift detection.
+ *
+ * Until 2026-10-15 it hashed only "id@lastReviewed", so an edit to an entry's
+ * text, criteria or citations without a date bump left the stamp unchanged
+ * and drift detection reported none.
  */
+function versionOf(entries: readonly KnowledgeEntry[]): string {
+  const sorted = [...entries].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const digest = createHash('sha256').update(canonicalJson(sorted)).digest('hex');
+  return `v${entries.length}-${digest.slice(0, 16)}`;
+}
+
 let cachedVersion: string | null = null;
 export function corpusVersion(): string {
   if (cachedVersion) return cachedVersion;
-  const basis = IVD_KNOWLEDGE_BASE.map(e => `${e.id}@${e.lastReviewed}`)
-    .sort()
-    .join('|');
-  let h = 0x811c9dc5;
-  for (let i = 0; i < basis.length; i++) {
-    h ^= basis.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  cachedVersion = `v${IVD_KNOWLEDGE_BASE.length}-${(h >>> 0).toString(16).padStart(8, '0')}`;
+  cachedVersion = versionOf(IVD_KNOWLEDGE_BASE);
   return cachedVersion;
 }
 

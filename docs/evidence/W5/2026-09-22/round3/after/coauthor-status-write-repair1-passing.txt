@@ -572,4 +572,3 @@ stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > l
       Tests  152 passed (152)
    Start at  07:06:47
    Duration  47.65s (transform 3.32s, setup 655ms, import 13.07s, tests 28.64s, environment 2.27s)
-

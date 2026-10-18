@@ -75,4 +75,3 @@ artifactApproval after the lock => {"filable":false,"reason":"edited-after-appro
       Tests  3 passed (3)
    Start at  08:49:39
    Duration  7.66s (transform 1.63s, setup 149ms, import 4.22s, tests 2.93s, environment 0ms)
-

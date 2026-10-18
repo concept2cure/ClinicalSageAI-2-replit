@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+[database] No DATABASE_URL provided, skipping database connection
+
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 10ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry 2ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another organizationId 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 2ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > provides a callback that refuses a source changed during a gateway capacity wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when extraction changes during the provider response wait 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when private-parent changes during the provider response wait 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > pins request identity, context reference and declared project facts before its first await 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source stream before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source tools before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > retains eligible keep_data evidence and discloses the unavailable original 0ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > keeps ordinary no-source streaming/tools available without a source callback 0ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  22:44:36
+   Duration  6.76s (transform 5.06s, setup 0ms, import 6.50s, tests 25ms, environment 0ms)
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+{
+  "timestamp": "2026-10-17T22:44:38.184Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings
+{
+  "timestamp": "2026-10-17T22:44:43.106Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "selected",
+    "err": "SOURCE_UNAVAILABLE"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings
+{
+  "timestamp": "2026-10-17T22:44:43.107Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "selected",
+    "err": "SYNTHETIC_CURRENT_ACTOR_REVOKED_PRIVATE_DETAIL"
+  }
+}
+

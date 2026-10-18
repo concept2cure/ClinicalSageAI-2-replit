@@ -1,0 +1,29 @@
+{
+  "phase": "preproduction new-test typing",
+  "startedAt": "2026-10-17T23:49:28.534634+00:00",
+  "head": "788f8a11865ebebcddba13f0f32cb008a94a7a57",
+  "before": {
+    "client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx": "3eef06dff99fecd2b0ee395a010d5c634984c83db281e08e882e85e6aefdad6c",
+    "server/routes/__tests__/batch-draft-termination-boundary.test.ts": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "1326ccde5f030a50318c2d00e16f8bdf5f9c82008d28c77239d112cb9532579b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf"
+  },
+  "command": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "finishedAt": "2026-10-17T23:50:00.263949+00:00",
+  "exitCode": 0,
+  "after": {
+    "client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx": "3eef06dff99fecd2b0ee395a010d5c634984c83db281e08e882e85e6aefdad6c",
+    "server/routes/__tests__/batch-draft-termination-boundary.test.ts": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "1326ccde5f030a50318c2d00e16f8bdf5f9c82008d28c77239d112cb9532579b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf"
+  },
+  "sourcesUnchangedDuringRun": true
+}
