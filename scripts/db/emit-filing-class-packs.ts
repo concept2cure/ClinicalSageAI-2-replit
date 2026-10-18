@@ -1,18 +1,26 @@
 /**
  * Write migrations/20261018_filing_class_rule_packs.sql from
- * server/services/c2c/filing-class-packs.ts.
+ * server/services/c2c/filing-class-packs.ts — once.
  *
  *   npx tsx scripts/db/emit-filing-class-packs.ts
  *
  * The migration is the only way the packs reach a database (CLAUDE.md Rule 1),
- * and it must hold literal rows, so it is generated rather than hand-copied:
- * tests/schema-contract/c2c-filing-class-packs.contract.test.ts applies the file
- * and holds every pack to the module. Re-running this after a canonical outline
- * changes would rewrite a deployed pack's tree in place, which the file's own
- * assertion refuses on replay (ON CONFLICT DO NOTHING keeps the old row). Mint a
- * new version in FILING_CLASS_PACKS instead.
+ * and it must hold literal rows, so it was generated rather than hand-copied.
+ * Now that the file is on the applier it is frozen. Run again, this script
+ * confirms the file is what the module still produces, and exits 0; if a
+ * canonical outline has changed, it refuses to write and exits 1.
+ *
+ * Why it refuses (review finding, 2026-10-18): rewriting 20261018 to seed a v1.1
+ * in place of its v1.0 passes on a fresh database and breaks every deployed one.
+ * There, v1.0 is still live, v1.1 is inserted live beside it, and the file's
+ * own "exactly one live pack" assertion stops the deploy. A changed outline is a
+ * NEW migration file that inserts the new version and supersedes exactly the
+ * version 20261018 seeded (the 20261005b pma pattern). FILING_CLASS_PACKS then
+ * names the new version, and the contract test adds the new file to its boot
+ * list. tests/schema-contract/c2c-filing-class-packs.contract.test.ts proves
+ * this file replays after such a supersede.
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FILING_DOCUMENT_CLASSES } from '../../shared/regulatory/filing-document-classes';
@@ -197,8 +205,21 @@ ${trees}
 END
 $mig$;
 `;
+  const rel = path.relative(process.cwd(), OUT);
+  if (existsSync(OUT)) {
+    if (readFileSync(OUT, 'utf8') === sql) {
+      console.log(`${rel} is unchanged: it is still what FILING_CLASS_PACKS produces.`);
+      return;
+    }
+    console.error(
+      `REFUSED: ${rel} is on the applier and is not rewritten. The outlines it was ` +
+      'generated from have changed. Mint the changed pack as a new version in a NEW migration ' +
+      'that supersedes exactly the version this file seeded (see this script\'s header).',
+    );
+    process.exit(1);
+  }
   writeFileSync(OUT, sql);
-  console.log(`wrote ${path.relative(process.cwd(), OUT)}: ${packs.length} packs, ${packs.reduce((n, p) => n + p.sections.length, 0)} nodes; doc_type CHECK +${added.length}`);
+  console.log(`wrote ${rel}: ${packs.length} packs, ${packs.reduce((n, p) => n + p.sections.length, 0)} nodes; doc_type CHECK +${added.length}`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

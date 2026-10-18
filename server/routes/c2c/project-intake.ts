@@ -19,7 +19,12 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
-import { filingDocumentClassTypes } from '../../../shared/regulatory/filing-document-classes.js';
+import {
+  filingDocumentClassOf,
+  filingDocumentClassTypes,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '../../../shared/regulatory/filing-document-classes.js';
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE in projects.ts; product types match the store's
@@ -189,13 +194,20 @@ export async function ensureSubmissionSpine(params: {
 export function productTypeForIntake(
   programType: string,
   stated: string,
+  submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
-  const implied = productTypeForFilingType(programType);
+  // A filing document class fixes no class, unless the filing names it: an
+  // sBLA is a biologics licence supplement (filing-document-classes.ts).
+  const byFiling = filingDocumentClassOf(programType) ? productTypeFixedByFiling(submissionTypeId) : null;
+  if (byFiling && stated && stated !== byFiling) {
+    return { refusal: `This filing is for a ${byFiling}, not "${stated}": the class is fixed by the filing chosen.` };
+  }
+  const implied = productTypeForFilingType(programType) ?? byFiling;
   const productType = stated || implied || '';
   if (!productType) {
     return {
       refusal:
-        `State whether the product is a drug or a biologic: a ${programType.toUpperCase()} filing ` +
+        `State whether the product is a drug or a biologic: ${filingTypeInSentence(programType).replace(/^A/, 'a')} filing ` +
         'covers both, and the class is recorded on the program.',
     };
   }
