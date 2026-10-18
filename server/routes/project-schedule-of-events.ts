@@ -25,6 +25,7 @@ import { db, pool } from '../db';
 import { looksLikeProgramUuid } from '../lib/project-id';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
+import { SchedulePreservationConflict } from '../services/projects/schedule-of-events/preservation';
 import {
   getScheduleOfEvents,
   generateProjectSchedule,
@@ -236,11 +237,15 @@ router.post('/projects/:id/schedule-of-events/generate', async (req: Request, re
       baselineDate: parseDate(body.baseline_date),
       targetDate: parseDate(body.target_date),
       goals: parseGoals(body.goals),
+      reason: typeof body.reason === 'string' ? body.reason.trim() || undefined : undefined,
       triggeredBy: 'user',
       createdByAna: false,
     });
     return res.json(view);
   } catch (err: any) {
+    if (err instanceof SchedulePreservationConflict) {
+      return res.status(409).json({ error: err.message, code: err.code });
+    }
     return serverError(res, logger, 'generating schedule of events', err);
   }
 });

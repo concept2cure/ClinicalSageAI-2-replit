@@ -1,0 +1,165 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 33ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 16ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 8ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unanchored program with a named 404 and reads nothing 10ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record"
+{
+  "timestamp": "2026-10-17T23:54:34.724Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409
+{
+  "timestamp": "2026-10-17T23:54:34.762Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "The existing schedule needs review before regeneration: A changed milestone requires explicit review. Nothing was changed.. No schedule changes were saved.",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false)
+{
+  "timestamp": "2026-10-17T23:54:34.769Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true)
+{
+  "timestamp": "2026-10-17T23:54:34.776Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation
+{
+  "timestamp": "2026-10-17T23:54:34.784Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Organization context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 22ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record" 7ms
+ × server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate 19ms
+   → expected "vi.fn()" to be called once with arguments: [ { orgId: 7, projectId: 12, …(7) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -4,10 +4,9 @@
+      "createdByAna": false,
+      "goals": [],
+      "orgId": 7,
+      "projectId": 12,
+      "projectType": "IND",
+-     "reason": "Revised target agreed at the sponsor meeting.",
+      "targetDate": null,
+      "triggeredBy": "user",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from undefined 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "" 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "   " 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from 42 4ms
+ × server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409 6ms
+   → expected 500 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false) 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true) 7ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation 7ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses a project outside the organization before invoking generation 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { orgId: 7, projectId: 12, …(7) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -4,10 +4,9 @@
+      "createdByAna": false,
+      "goals": [],
+      "orgId": 7,
+      "projectId": 12,
+      "projectType": "IND",
+-     "reason": "Revised target agreed at the sponsor meeting.",
+      "targetDate": null,
+      "triggeredBy": "user",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/project-schedule-of-events.test.ts:180:37
+    178|     expect(res.body).toEqual(EMPTY_VIEW);
+    179|     expect(query.mock.calls[0][1]).toEqual([12, 7]);
+    180|     expect(generateProjectSchedule).toHaveBeenCalledExactlyOnceWith({
+       |                                     ^
+    181|       orgId: 7,
+    182|       projectId: 12,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/project-schedule-of-events.test.ts:206:24
+    204|     generateProjectSchedule.mockRejectedValueOnce(conflict);
+    205|     const res = await request(app()).post(endpoint).send({ reason: 'Re…
+    206|     expect(res.status).toBe(409);
+       |                        ^
+    207|     expect(res.body).toEqual({ error: conflict.message, code: 'SCHEDUL…
+    208|     expect(query.mock.calls[0][1]).toEqual([12, 7]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  23:54:33
+   Duration  905ms (transform 186ms, setup 104ms, import 311ms, tests 185ms, environment 0ms)
+

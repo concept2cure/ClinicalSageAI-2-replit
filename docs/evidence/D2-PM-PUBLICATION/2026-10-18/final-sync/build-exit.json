@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 34.86,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings.json"
+}

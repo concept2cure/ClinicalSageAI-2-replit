@@ -2702,6 +2702,7 @@ registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
       baselineDate: parseScheduleDate(input.baseline_date),
       targetDate: parseScheduleDate(input.target_date),
       goals,
+      reason: typeof input.reason === 'string' ? input.reason.trim() || undefined : undefined,
       triggeredBy: 'ana_user',
       createdByAna: true,
     });

@@ -1,0 +1,509 @@
+Merge made by the 'ort' strategy.
+ .../v2/__tests__/authoringAiDraftAssembly.test.tsx |    6 +-
+ .../v2/__tests__/workbenchProjectFiles.test.tsx    |    3 +-
+ .../v2/editor/AssemblySourcesNotice.tsx            |   30 +
+ .../v2/editor/AuthoringAssemblyBuild.tsx           |   22 +-
+ .../v2/editor/DataRoomSourcesPanel.tsx             |   31 +-
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |  105 +-
+ .../concept2cure/v2/editor/ProjectFilesPanel.tsx   |    6 +-
+ .../v2/editor/SourceAssemblyDialog.tsx             |  101 +
+ .../__tests__/authoringAssemblySources.test.tsx    |  116 +
+ .../editor/__tests__/sourceAssemblyEntry.test.tsx  |  256 ++
+ .../__tests__/sourceFirstAssemblyFlow.test.tsx     |  279 ++
+ .../concept2cure/v2/editor/assemblyBuildState.ts   |    8 +-
+ .../v2/editor/assemblyBuildTransport.ts            |    9 +-
+ .../concept2cure/v2/editor/assemblyDraftQueue.ts   |   27 +-
+ .../concept2cure/v2/editor/assemblySourceIntent.ts |   15 +
+ .../v2/editor/assemblySourceSelection.ts           |   16 +
+ .../v2/editor/authoringDraftTransport.ts           |   17 +-
+ .../v2/editor/useAuthoringAssemblyBuild.ts         |   54 +-
+ .../v2/editor/useAuthoringDraftReview.ts           |    5 +-
+ .../v2/editor/useSourceAssemblyTarget.ts           |   95 +
+ .../concept2cure/v2/editor/workbenchLeaveTarget.ts |   26 +
+ client/src/concept2cure/v2/editorTarget.ts         |   32 +-
+ .../src/concept2cure/v2/surfaces/ProjectHome.tsx   |   16 +-
+ client/src/concept2cure/v2/surfaces/Vault.tsx      |    9 +
+ .../design/CATALOGUE_SOURCE_ASSEMBLY_2026-10-17.md |  137 +
+ .../2026-10-17/catalogue-source-assembly/README.md |  114 +
+ .../catalogue-source-assembly/ana-server/README.md |   70 +
+ .../ana-server/final-green.txt                     |  806 ++++
+ .../ana-server/initial-sources-red.txt             |  120 +
+ .../catalogue-source-assembly/ana-server/lint.json |  160 +
+ .../ana-server/proof.json                          |  100 +
+ .../ana-server/typing-remedy-green.txt             |  147 +
+ .../ana-server/typing-remedy-lint.json             |   13 +
+ .../ana-server/typing-remedy-proof.json            |   69 +
+ .../ana-server/uncertain-accept-red.txt            |  166 +
+ .../catalogue-source-assembly/backend/README.md    |   60 +
+ .../backend/compiler-remedy/README.md              |   29 +
+ .../backend/compiler-remedy/final-http.log         |  520 +++
+ .../backend/compiler-remedy/lint.json              |    1 +
+ .../backend/compiler-remedy/source-pins.json       |  156 +
+ .../compiler-remedy/typecheck-initial-red.json     |  102 +
+ .../backend/final-tests.log                        |  626 ++++
+ .../backend/initial-red.log                        |   95 +
+ .../backend/lint-final.json                        |    1 +
+ .../backend/lint-summary.json                      |   69 +
+ .../backend/source-pins.json                       |  143 +
+ .../catalogue-source-assembly/backend/sql-gate.log |   15 +
+ .../catalogue-source-assembly/browser/README.md    |   66 +
+ .../browser/baseline-entry.mjs                     |   39 +
+ .../catalogue-source-assembly/browser/browser.mjs  |  366 ++
+ .../catalogue-source-assembly/browser/cleanup.json |   17 +
+ .../desktop-dark-ana-first-review-edited.json      |  210 ++
+ .../final/desktop-dark-ana-first-review-edited.png |  Bin 0 -> 139274 bytes
+ ...p-dark-ana-one-section-explicitly-accepted.json |  186 +
+ ...op-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 180460 bytes
+ .../browser/final/desktop-dark-ana-results.json    | 1664 +++++++++
+ .../desktop-dark-ana-source-target-dialog.json     |    9 +
+ .../desktop-dark-ana-source-target-dialog.png      |  Bin 0 -> 136406 bytes
+ .../desktop-dark-ana-two-candidates-ready.json     |  200 +
+ .../desktop-dark-ana-two-candidates-ready.png      |  Bin 0 -> 154810 bytes
+ ...top-dark-deterministic-deterministic-built.json |  158 +
+ ...ktop-dark-deterministic-deterministic-built.png |  Bin 0 -> 171837 bytes
+ .../final/desktop-dark-deterministic-results.json  | 1065 ++++++
+ ...-dark-deterministic-single-section-preview.json |  158 +
+ ...p-dark-deterministic-single-section-preview.png |  Bin 0 -> 169880 bytes
+ ...op-dark-deterministic-source-target-dialog.json |    9 +
+ ...top-dark-deterministic-source-target-dialog.png |  Bin 0 -> 136408 bytes
+ ...-dark-deterministic-whole-document-preview.json |  158 +
+ .../desktop-light-ana-first-review-edited.json     |  210 ++
+ .../desktop-light-ana-first-review-edited.png      |  Bin 0 -> 138958 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  186 +
+ ...p-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 178872 bytes
+ .../browser/final/desktop-light-ana-results.json   | 1664 +++++++++
+ .../desktop-light-ana-source-target-dialog.json    |    9 +
+ .../desktop-light-ana-source-target-dialog.png     |  Bin 0 -> 142045 bytes
+ .../desktop-light-ana-two-candidates-ready.json    |  200 +
+ .../desktop-light-ana-two-candidates-ready.png     |  Bin 0 -> 154136 bytes
+ ...op-light-deterministic-deterministic-built.json |  158 +
+ ...top-light-deterministic-deterministic-built.png |  Bin 0 -> 164853 bytes
+ .../final/desktop-light-deterministic-results.json | 1065 ++++++
+ ...light-deterministic-single-section-preview.json |  158 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 168867 bytes
+ ...p-light-deterministic-source-target-dialog.json |    9 +
+ ...op-light-deterministic-source-target-dialog.png |  Bin 0 -> 142045 bytes
+ ...light-deterministic-whole-document-preview.json |  158 +
+ .../browser/final/summary.json                     |   99 +
+ .../final/touch-dark-ana-first-review-edited.json  |  210 ++
+ .../final/touch-dark-ana-first-review-edited.png   |  Bin 0 -> 54578 bytes
+ ...h-dark-ana-one-section-explicitly-accepted.json |  186 +
+ ...ch-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 69477 bytes
+ .../browser/final/touch-dark-ana-results.json      | 1664 +++++++++
+ .../final/touch-dark-ana-source-target-dialog.json |    9 +
+ .../final/touch-dark-ana-source-target-dialog.png  |  Bin 0 -> 47119 bytes
+ .../final/touch-dark-ana-two-candidates-ready.json |  200 +
+ .../final/touch-dark-ana-two-candidates-ready.png  |  Bin 0 -> 60080 bytes
+ ...uch-dark-deterministic-deterministic-built.json |  158 +
+ ...ouch-dark-deterministic-deterministic-built.png |  Bin 0 -> 56145 bytes
+ .../final/touch-dark-deterministic-results.json    | 1065 ++++++
+ ...-dark-deterministic-single-section-preview.json |  158 +
+ ...h-dark-deterministic-single-section-preview.png |  Bin 0 -> 61455 bytes
+ ...ch-dark-deterministic-source-target-dialog.json |    9 +
+ ...uch-dark-deterministic-source-target-dialog.png |  Bin 0 -> 47119 bytes
+ ...-dark-deterministic-whole-document-preview.json |  158 +
+ ...h-dark-deterministic-whole-document-preview.png |  Bin 0 -> 59897 bytes
+ ...h-dark-pending-context-refused-late-handoff.png |  Bin 0 -> 17142 bytes
+ .../final/touch-dark-pending-context-results.json  |  120 +
+ .../final/touch-light-ana-first-review-edited.json |  210 ++
+ .../final/touch-light-ana-first-review-edited.png  |  Bin 0 -> 53534 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  186 +
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 67781 bytes
+ .../browser/final/touch-light-ana-results.json     | 1681 +++++++++
+ .../touch-light-ana-source-target-dialog.json      |    9 +
+ .../final/touch-light-ana-source-target-dialog.png |  Bin 0 -> 47845 bytes
+ .../touch-light-ana-two-candidates-ready.json      |  200 +
+ .../final/touch-light-ana-two-candidates-ready.png |  Bin 0 -> 59357 bytes
+ ...ch-light-deterministic-deterministic-built.json |  158 +
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 55578 bytes
+ .../final/touch-light-deterministic-results.json   | 1065 ++++++
+ ...light-deterministic-single-section-preview.json |  158 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 60654 bytes
+ ...h-light-deterministic-source-target-dialog.json |    9 +
+ ...ch-light-deterministic-source-target-dialog.png |  Bin 0 -> 47845 bytes
+ ...light-deterministic-whole-document-preview.json |  158 +
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 59115 bytes
+ ...h-light-read-only-read-only-build-disabled.json |  158 +
+ ...ch-light-read-only-read-only-build-disabled.png |  Bin 0 -> 67212 bytes
+ .../final/touch-light-read-only-results.json       |  454 +++
+ ...touch-light-read-only-source-target-dialog.json |    9 +
+ .../touch-light-read-only-source-target-dialog.png |  Bin 0 -> 47845 bytes
+ .../browser/fixture-validation.json                |   78 +
+ .../browser/height-probe.mjs                       |  104 +
+ .../catalogue-source-assembly/browser/index.html   |    2 +
+ .../desktop-dark-ana-failure.png                   |  Bin 0 -> 136406 bytes
+ .../desktop-dark-ana-results.json                  |  125 +
+ .../desktop-dark-ana-source-target-dialog.json     |    9 +
+ .../desktop-dark-ana-source-target-dialog.png      |  Bin 0 -> 181021 bytes
+ .../desktop-dark-deterministic-failure.png         |  Bin 0 -> 136406 bytes
+ .../desktop-dark-deterministic-results.json        |  125 +
+ ...op-dark-deterministic-source-target-dialog.json |    9 +
+ ...top-dark-deterministic-source-target-dialog.png |  Bin 0 -> 171596 bytes
+ .../desktop-light-ana-failure.png                  |  Bin 0 -> 142026 bytes
+ .../desktop-light-ana-results.json                 |  125 +
+ .../desktop-light-ana-source-target-dialog.json    |    9 +
+ .../desktop-light-ana-source-target-dialog.png     |  Bin 0 -> 199621 bytes
+ .../desktop-light-deterministic-failure.png        |  Bin 0 -> 142045 bytes
+ .../desktop-light-deterministic-results.json       |  125 +
+ ...p-light-deterministic-source-target-dialog.json |    9 +
+ ...op-light-deterministic-source-target-dialog.png |  Bin 0 -> 141898 bytes
+ .../browser/initial-animation-fixture/summary.json |  108 +
+ .../touch-dark-ana-failure.png                     |  Bin 0 -> 90944 bytes
+ .../touch-dark-ana-results.json                    |  125 +
+ .../touch-dark-ana-source-target-dialog.json       |    9 +
+ .../touch-dark-ana-source-target-dialog.png        |  Bin 0 -> 105965 bytes
+ .../touch-dark-deterministic-failure.png           |  Bin 0 -> 78515 bytes
+ .../touch-dark-deterministic-results.json          |  125 +
+ ...ch-dark-deterministic-source-target-dialog.json |    9 +
+ ...uch-dark-deterministic-source-target-dialog.png |  Bin 0 -> 105965 bytes
+ ...h-dark-pending-context-refused-late-handoff.png |  Bin 0 -> 73246 bytes
+ .../touch-dark-pending-context-results.json        |  120 +
+ .../touch-light-ana-failure.png                    |  Bin 0 -> 89441 bytes
+ .../touch-light-ana-results.json                   |  125 +
+ .../touch-light-ana-source-target-dialog.json      |    9 +
+ .../touch-light-ana-source-target-dialog.png       |  Bin 0 -> 115969 bytes
+ .../touch-light-deterministic-failure.png          |  Bin 0 -> 89441 bytes
+ .../touch-light-deterministic-results.json         |  125 +
+ ...h-light-deterministic-source-target-dialog.json |    9 +
+ ...ch-light-deterministic-source-target-dialog.png |  Bin 0 -> 115969 bytes
+ .../touch-light-read-only-failure.png              |  Bin 0 -> 89441 bytes
+ .../touch-light-read-only-results.json             |  123 +
+ ...touch-light-read-only-source-target-dialog.json |    9 +
+ .../touch-light-read-only-source-target-dialog.png |  Bin 0 -> 115969 bytes
+ .../browser/initial-entry-red/receipt.json         |  103 +
+ .../selected-data-room-before-build-entry.png      |  Bin 0 -> 82865 bytes
+ .../browser/mobile-height-final/after-wheel.png    |  Bin 0 -> 63948 bytes
+ .../browser/mobile-height-final/before-wheel.png   |  Bin 0 -> 56453 bytes
+ .../browser/mobile-height-final/measurement.json   | 3913 ++++++++++++++++++++
+ .../native-editor-after-wheel.png                  |  Bin 0 -> 50605 bytes
+ .../review-heading-after-explicit-open.png         |  Bin 0 -> 61700 bytes
+ .../review-heading-after-wheel.png                 |  Bin 0 -> 62777 bytes
+ .../catalogue-source-assembly/browser/mock-api.mjs |  185 +
+ .../pre-publisher-guard-positive/rollup.json       |   28 +
+ .../pre-publisher-guard-positive/summary.json      |   99 +
+ .../wheel-measurement.json                         | 3913 ++++++++++++++++++++
+ .../catalogue-source-assembly/browser/probe.tsx    |   67 +
+ .../catalogue-source-assembly/browser/rollup.json  |   43 +
+ .../catalogue-source-assembly/browser/server.mjs   |   13 +
+ .../catalogue-source-assembly/entry-ui/README.md   |   70 +
+ .../entry-ui/baseline-red.json                     |    7 +
+ .../entry-ui/first-candidate.json                  |    7 +
+ .../entry-ui/new-cases-final.json                  |    7 +
+ .../entry-ui/pre-publisher-summary.json            |   52 +
+ .../entry-ui/pre-typing-summary.json               |   64 +
+ .../entry-ui/publisher-final.json                  |    6 +
+ .../entry-ui/publisher-first-green.json            |    6 +
+ .../entry-ui/publisher-first-lint.json             |    6 +
+ .../entry-ui/publisher-lint-final.json             |    6 +
+ .../entry-ui/publisher-red-pins.json               |   10 +
+ .../entry-ui/publisher-red.json                    |    6 +
+ .../entry-ui/rail-replay-final.json                |    7 +
+ .../entry-ui/rail-strict-final.json                |    7 +
+ .../entry-ui/regression-initial.json               |    7 +
+ .../entry-ui/strict-final.json                     |    7 +
+ .../entry-ui/summary.json                          |   74 +
+ .../entry-ui/typed-fixture-final.json              |    6 +
+ .../entry-ui/typed-fixture-lint.json               |    6 +
+ .../entry-ui/warning-comparison.json               |  188 +
+ .../independent/README.md                          |   69 +
+ .../independent/bypass-red.txt                     |   36 +
+ .../independent/chooser-query-intermediate.txt     | 3147 ++++++++++++++++
+ .../independent/embedded-red.txt                   | 2275 ++++++++++++
+ .../independent/green-27-before-final-pin.txt      |   35 +
+ .../independent/green-4.txt                        |   12 +
+ .../independent/green-7.txt                        |   15 +
+ .../independent/green.txt                          |   35 +
+ .../independent/lint-before-final-pin.txt          |    0
+ .../catalogue-source-assembly/independent/lint.txt |    0
+ .../independent/receipt-storage.json               |   62 +
+ .../catalogue-source-assembly/independent/red.txt  | 2714 ++++++++++++++
+ .../independent/summary.json                       |   53 +
+ .../orchestration/README.md                        |   71 +
+ .../orchestration/controller-red.json              |    5 +
+ .../orchestration/first-controller-green.json      |    5 +
+ .../orchestration/orchestration-green.json         |    5 +
+ .../orchestration/source-pins.json                 |   18 +
+ .../orchestration/strict-lint-green.json           |    5 +
+ .../orchestration/workbench-lint-comparison.json   |  308 ++
+ .../release/build-before-final-canonical-sync.json |  100 +
+ .../release/build-before-narrowing-remedy.json     |  100 +
+ .../catalogue-source-assembly/release/build.json   |  110 +
+ .../release/canonical-compatibility.json           |   30 +
+ .../release/canonical-incoming-review.json         |    9 +
+ .../release/canonical-precommit-fetch.json         |   34 +
+ .../catalogue-source-assembly/release/checks.json  |  139 +
+ .../release/ci-canvas-path.json                    |   12 +
+ .../release/ci-check-editor-integrity.json         |   12 +
+ .../release/ci-check-phantom-tokens.json           |   12 +
+ .../release/ci-design-system.json                  |   12 +
+ .../release/ci-gateway-bypass.json                 |   12 +
+ .../release/ci-single-native-canvas.json           |   12 +
+ .../release/ci-sql-interpolation.json              |   12 +
+ .../release/ci-token-cascade.json                  |   12 +
+ .../release/ci-token-contrast.json                 |   12 +
+ .../release/evidence-links.json                    |    4 +
+ .../release/evidence-log-storage.json              |   33 +
+ .../release/integration-before-fixture-remedy.json |  119 +
+ .../integration-before-narrowing-remedy.json       |  119 +
+ .../release/integration.json                       |  119 +
+ .../release/static-gates.json                      |   38 +
+ .../typecheck-before-final-canonical-sync.json     |  102 +
+ .../release/typecheck-fixtures-red.json            |  102 +
+ .../release/typecheck-initial-red.json             |  102 +
+ .../release/typecheck.json                         |  112 +
+ .../release/warning-ratchet.json                   |   15 +
+ docs/reports/repo-health-scan-latest.json          |   51 +-
+ docs/reports/repo-health-scan-latest.md            |   12 +-
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |   10 +-
+ .../__tests__/authoring-assembly.pglite.test.ts    |  200 +-
+ .../authoringSelectedSources.pglite.test.ts        |  266 ++
+ server/routes/authoring.router.ts                  |   87 +-
+ .../services/authoring/authoring-assembly-plan.ts  |   10 +-
+ .../authoring/authoring-assembly-sources.ts        |  163 +
+ server/services/authoring/authoring-assembly.ts    |   26 +-
+ .../draft-candidate-store.ts                       |    4 +
+ .../evidence-spine.service.ts                      |    4 +-
+ shared/authoring/assembly-sources.ts               |   90 +
+ shared/authoring/assembly.ts                       |    3 +
+ 266 files changed, 43289 insertions(+), 147 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/assemblySourceIntent.ts
+ create mode 100644 client/src/concept2cure/v2/editor/assemblySourceSelection.ts
+ create mode 100644 client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts
+ create mode 100644 client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts
+ create mode 100644 docs/design/CATALOGUE_SOURCE_ASSEMBLY_2026-10-17.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/final-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/initial-sources-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/typing-remedy-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/typing-remedy-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/typing-remedy-proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/ana-server/uncertain-accept-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/compiler-remedy/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/compiler-remedy/final-http.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/compiler-remedy/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/compiler-remedy/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/compiler-remedy/typecheck-initial-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/final-tests.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/initial-red.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/lint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/lint-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/backend/sql-gate.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/baseline-entry.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/browser.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/cleanup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/desktop-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-pending-context-refused-late-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-dark-pending-context-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-read-only-read-only-build-disabled.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-read-only-read-only-build-disabled.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-read-only-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-read-only-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/final/touch-light-read-only-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/fixture-validation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/height-probe.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/index.html
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-dark-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/desktop-light-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-pending-context-refused-late-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-dark-pending-context-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-ana-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-ana-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-deterministic-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-deterministic-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-read-only-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-read-only-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-read-only-source-target-dialog.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-animation-fixture/touch-light-read-only-source-target-dialog.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-entry-red/receipt.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/initial-entry-red/selected-data-room-before-build-entry.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/before-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/native-editor-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/review-heading-after-explicit-open.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mobile-height-final/review-heading-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/mock-api.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/pre-publisher-guard-positive/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/pre-publisher-guard-positive/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/pre-publisher-guard-positive/wheel-measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/server.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/baseline-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/first-candidate.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/new-cases-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/pre-publisher-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/pre-typing-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-first-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-first-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-lint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-red-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/publisher-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/rail-replay-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/rail-strict-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/regression-initial.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/strict-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/typed-fixture-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/typed-fixture-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/entry-ui/warning-comparison.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/bypass-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/chooser-query-intermediate.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/embedded-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/green-27-before-final-pin.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/green-4.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/green-7.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/lint-before-final-pin.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/lint.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/receipt-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/independent/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/controller-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/first-controller-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/orchestration-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/strict-lint-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/orchestration/workbench-lint-comparison.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/build-before-final-canonical-sync.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/build-before-narrowing-remedy.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/build.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/canonical-compatibility.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/canonical-incoming-review.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/canonical-precommit-fetch.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/checks.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-design-system.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/evidence-links.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/evidence-log-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/integration-before-fixture-remedy.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/integration-before-narrowing-remedy.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/integration.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/static-gates.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/typecheck-before-final-canonical-sync.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/typecheck-fixtures-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/typecheck-initial-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/typecheck.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/release/warning-ratchet.json
+ create mode 100644 server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+ create mode 100644 server/services/authoring/authoring-assembly-sources.ts
+ create mode 100644 shared/authoring/assembly-sources.ts

@@ -20,16 +20,28 @@
  * @module server/services/projects/schedule-of-events/service
  */
 
+import type { PoolClient } from 'pg';
 import { pool } from '../../../db';
 import { createNotification } from '../../notifications/notification-service';
-import { generateSchedule, type GeneratorGoal } from './generator';
+import { generateSchedule, type GeneratedSchedule, type GeneratorGoal } from './generator';
 import {
   assessScheduleHealth,
   type ScheduleHealth,
   type ScheduleStatus,
 } from './health';
+import {
+  isCompletedMilestone,
+  generatedScheduleRevisionDetail,
+  milestoneScheduleStatus,
+  planMilestonePreservation,
+  scheduleMetadata as asObject,
+  SchedulePreservationConflict,
+  type StoredScheduleMilestone,
+  type StoredSchedulePlan,
+} from './preservation';
 
 const SCHEDULE_SOURCE = 'ana_schedule_of_events';
+type ScheduleQuery = Pick<PoolClient, 'query'>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // View shapes (what the API / AnA tools return)
@@ -121,19 +133,6 @@ function toDate(d: unknown): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
-function asObject(v: unknown): Record<string, any> {
-  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, any>;
-  if (typeof v === 'string') {
-    try {
-      const p = JSON.parse(v);
-      return p && typeof p === 'object' ? p : {};
-    } catch {
-      return {};
-    }
-  }
-  return {};
-}
-
 /** Map the richer schedule status onto the platform-standard stage status column. */
 function toColumnStatus(s: ScheduleStatus): string {
   switch (s) {
@@ -155,8 +154,8 @@ function toColumnStatus(s: ScheduleStatus): string {
 // Loaders
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function loadPlan(orgId: number, projectId: number): Promise<SchedulePlanView | null> {
-  const { rows } = await pool.query(
+async function loadPlan(orgId: number, projectId: number, sql: ScheduleQuery = pool): Promise<SchedulePlanView | null> {
+  const { rows } = await sql.query(
     `SELECT * FROM project_schedule_of_events
       WHERE organization_id = $1 AND project_id = $2
       LIMIT 1`,
@@ -182,20 +181,11 @@ async function loadPlan(orgId: number, projectId: number): Promise<SchedulePlanV
   };
 }
 
-interface MilestoneRow {
-  id: number;
-  name: string;
-  description: string | null;
-  order: number;
-  status: string;
-  start_date: Date | null;
-  due_date: Date | null;
-  metadata: unknown;
-}
+type MilestoneRow = StoredScheduleMilestone;
 
 function milestoneFromRow(r: MilestoneRow, now: Date): ScheduleMilestoneView {
   const md = asObject(r.metadata);
-  const status: ScheduleStatus = (md.scheduleStatus as ScheduleStatus) || 'not_started';
+  const status = milestoneScheduleStatus(r);
   const target = toDate(r.due_date);
   let slipDays: number | null = null;
   if (status !== 'completed' && target && target.getTime() < now.getTime()) {
@@ -222,20 +212,27 @@ function milestoneFromRow(r: MilestoneRow, now: Date): ScheduleMilestoneView {
   };
 }
 
-async function loadMilestoneRows(orgId: number, projectId: number): Promise<MilestoneRow[]> {
-  const { rows } = await pool.query<MilestoneRow>(
-    `SELECT id, name, description, "order", status, start_date, due_date, metadata
-       FROM project_workflow_stages
-      WHERE organization_id = $1 AND project_id = $2
-        AND metadata->>'source' = $3
-      ORDER BY "order" ASC, id ASC`,
+async function loadMilestoneRows(orgId: number, projectId: number, sql: ScheduleQuery = pool, lock = false): Promise<MilestoneRow[]> {
+  const statement = lock
+    ? `SELECT *
+         FROM project_workflow_stages
+        WHERE organization_id = $1 AND project_id = $2
+          AND metadata->>'source' = $3
+        ORDER BY "order" ASC, id ASC FOR UPDATE`
+    : `SELECT *
+         FROM project_workflow_stages
+        WHERE organization_id = $1 AND project_id = $2
+          AND metadata->>'source' = $3
+        ORDER BY "order" ASC, id ASC`;
+  const { rows } = await sql.query<MilestoneRow>(
+    statement,
     [orgId, projectId, SCHEDULE_SOURCE],
   );
   return rows;
 }
 
-async function loadGoals(orgId: number, projectId: number): Promise<ScheduleGoalView[]> {
-  const { rows } = await pool.query(
+async function loadGoals(orgId: number, projectId: number, sql: ScheduleQuery = pool): Promise<ScheduleGoalView[]> {
+  const { rows } = await sql.query(
     `SELECT * FROM project_schedule_goals
       WHERE organization_id = $1 AND project_id = $2
       ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
@@ -260,8 +257,9 @@ async function loadRevisions(
   orgId: number,
   projectId: number,
   limit = 25,
+  sql: ScheduleQuery = pool,
 ): Promise<ScheduleRevisionView[]> {
-  const { rows } = await pool.query(
+  const { rows } = await sql.query(
     `SELECT * FROM project_schedule_revisions
       WHERE organization_id = $1 AND project_id = $2
       ORDER BY created_at DESC
@@ -302,8 +300,8 @@ async function recordRevision(params: {
   detail?: unknown;
   triggeredBy?: string;
   createdByAna?: boolean;
-}): Promise<void> {
-  await pool.query(
+}, sql: ScheduleQuery = pool): Promise<void> {
+  await sql.query(
     `INSERT INTO project_schedule_revisions
        (organization_id, project_id, schedule_id, revision_type, summary, detail, triggered_by, created_by_ana)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -334,13 +332,31 @@ export async function getScheduleOfEvents(
   orgId: number,
   projectId: number,
 ): Promise<ScheduleOfEventsView> {
+  return loadScheduleView(orgId, projectId, pool);
+}
+
+/** Generation reads its response on the writing client, before COMMIT. */
+async function loadScheduleView(
+  orgId: number,
+  projectId: number,
+  sql: ScheduleQuery,
+): Promise<ScheduleOfEventsView> {
   const now = new Date();
-  const [plan, milestoneRows, goals, revisions] = await Promise.all([
-    loadPlan(orgId, projectId),
-    loadMilestoneRows(orgId, projectId),
-    loadGoals(orgId, projectId),
-    loadRevisions(orgId, projectId),
-  ]);
+  // Independent pool reads can overlap; one checked-out transaction client
+  // must execute them serially (pg deprecates concurrent client.query calls).
+  const [plan, milestoneRows, goals, revisions] = sql === pool
+    ? await Promise.all([
+        loadPlan(orgId, projectId, sql),
+        loadMilestoneRows(orgId, projectId, sql),
+        loadGoals(orgId, projectId, sql),
+        loadRevisions(orgId, projectId, 25, sql),
+      ])
+    : [
+        await loadPlan(orgId, projectId, sql),
+        await loadMilestoneRows(orgId, projectId, sql),
+        await loadGoals(orgId, projectId, sql),
+        await loadRevisions(orgId, projectId, 25, sql),
+      ] as const;
   const milestones = milestoneRows.map((r) => milestoneFromRow(r, now));
   return { plan, milestones, goals, revisions, health: healthFromMilestones(milestones, now) };
 }
@@ -358,71 +374,32 @@ export interface GenerateScheduleParams {
   goals?: GeneratorGoal[];
   triggeredBy?: string;
   createdByAna?: boolean;
+  /** Optional caller justification; never synthesized as a human approval. */
+  reason?: string;
 }
 
-export async function generateProjectSchedule(
+/** Preserve existing stage identities and insert only genuinely new work. */
+async function writeGeneratedMilestones(
+  sql: ScheduleQuery,
   params: GenerateScheduleParams,
-): Promise<ScheduleOfEventsView> {
+  gen: GeneratedSchedule,
+  preservation: ReturnType<typeof planMilestonePreservation>,
+  scheduleId: number,
+): Promise<void> {
   const { orgId, projectId } = params;
-  const gen = generateSchedule({
-    projectType: params.projectType,
-    baselineDate: params.baselineDate ?? null,
-    targetDate: params.targetDate ?? null,
-    goals: params.goals,
-  });
-
-  // 1. Upsert the plan header (one per project).
-  const { rows: planRows } = await pool.query(
-    `INSERT INTO project_schedule_of_events
-       (organization_id, project_id, status, project_type, regulatory_framework, goals,
-        basis_summary, ana_summary, confidence, version, baseline_date, target_date,
-        generated_by_ana, last_reviewed_by_ana_at, updated_at)
-     VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, now(), now())
-     -- Arbiter MUST name the tenant column. Uniqueness is what ON CONFLICT
-     -- resolves against, so an arbiter of (project_id) alone — against the old
-     -- org-blind unique index — decided whose row this upsert landed on, and
-     -- the DO UPDATE SET list below does not reset organization_id, so an
-     -- overwritten row silently kept the victim's tenant id.
-     -- See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
-     ON CONFLICT (organization_id, project_id) DO UPDATE SET
-        status = 'active',
-        project_type = EXCLUDED.project_type,
-        regulatory_framework = EXCLUDED.regulatory_framework,
-        goals = EXCLUDED.goals,
-        basis_summary = EXCLUDED.basis_summary,
-        ana_summary = EXCLUDED.ana_summary,
-        confidence = EXCLUDED.confidence,
-        version = project_schedule_of_events.version + 1,
-        baseline_date = EXCLUDED.baseline_date,
-        target_date = EXCLUDED.target_date,
-        generated_by_ana = EXCLUDED.generated_by_ana,
-        last_reviewed_by_ana_at = now(),
-        updated_at = now()
-     RETURNING id, version`,
-    [
-      orgId,
-      projectId,
-      gen.projectType,
-      gen.framework,
-      JSON.stringify(params.goals ?? []),
-      gen.basisSummary,
-      gen.basisSummary,
-      gen.confidence,
-      gen.baselineDate,
-      gen.targetDate,
-      params.createdByAna ?? true,
-    ],
-  );
-  const scheduleId: number = planRows[0].id;
-
-  // 2. Replace existing schedule milestones (stored as workflow stages).
-  await pool.query(
-    `DELETE FROM project_workflow_stages
-      WHERE organization_id = $1 AND project_id = $2 AND metadata->>'source' = $3`,
-    [orgId, projectId, SCHEDULE_SOURCE],
-  );
-
   for (const m of gen.milestones) {
+    const previous = preservation.matches.get(m.key);
+    if (previous) {
+      if (!isCompletedMilestone(previous)) {
+        await sql.query(
+          `UPDATE project_workflow_stages SET due_date = $1, metadata = $2, updated_at = now()
+            WHERE id = $3 AND organization_id = $4 AND project_id = $5`,
+          [m.targetDate, JSON.stringify({ ...asObject(previous.metadata), anaRationale: m.anaRationale }),
+            previous.id, orgId, projectId],
+        );
+      }
+      continue;
+    }
     const metadata = {
       source: SCHEDULE_SOURCE,
       scheduleId,
@@ -437,7 +414,7 @@ export async function generateProjectSchedule(
       scheduleStatus: 'not_started' as ScheduleStatus,
       progress: 0,
     };
-    await pool.query(
+    await sql.query(
       `INSERT INTO project_workflow_stages
          (organization_id, project_id, name, description, "order", status,
           start_date, due_date, auto_advance, metadata, created_at, updated_at)
@@ -454,34 +431,143 @@ export async function generateProjectSchedule(
       ],
     );
   }
+}
 
-  // 3. If goals were provided as part of generation, install them as the goal set.
-  if (params.goals && params.goals.length > 0) {
-    await replaceGoals({
+export async function generateProjectSchedule(
+  params: GenerateScheduleParams,
+): Promise<ScheduleOfEventsView> {
+  const { orgId, projectId } = params;
+  const gen = generateSchedule({
+    projectType: params.projectType,
+    baselineDate: params.baselineDate ?? null,
+    targetDate: params.targetDate ?? null,
+    goals: params.goals,
+  });
+
+  // The instrumented checkout preserves the caller's tenant scope at BEGIN.
+  // Lock the parent before taking preservation snapshots. This also serializes
+  // first creation, when there is no schedule header to lock yet.
+  const client = await pool.connect();
+  let began = false;
+  let commitStarted = false;
+  let discard = false;
+  try {
+    await client.query('BEGIN');
+    began = true;
+
+    const ownedProject = await client.query(
+      'SELECT id FROM projects WHERE organization_id = $1 AND id = $2 FOR UPDATE',
+      [orgId, projectId],
+    );
+    if (ownedProject.rows.length !== 1) {
+      throw new SchedulePreservationConflict('the project is not available in this organization');
+    }
+    const { rows: previousPlans } = await client.query<StoredSchedulePlan>(
+      `SELECT * FROM project_schedule_of_events
+        WHERE organization_id = $1 AND project_id = $2 FOR UPDATE`,
+      [orgId, projectId],
+    );
+    const previousPlan = previousPlans[0] ?? null;
+    const previousRows = await loadMilestoneRows(orgId, projectId, client, true);
+    const preservation = planMilestonePreservation(previousPlan, previousRows, gen);
+
+    // 1. Upsert the plan header (one per project).
+    const { rows: planRows } = await client.query(
+      `INSERT INTO project_schedule_of_events
+         (organization_id, project_id, status, project_type, regulatory_framework, goals,
+          basis_summary, ana_summary, confidence, version, baseline_date, target_date,
+          generated_by_ana, last_reviewed_by_ana_at, updated_at)
+       VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, now(), now())
+       -- Arbiter MUST name the tenant column. Uniqueness is what ON CONFLICT
+       -- resolves against, so an arbiter of (project_id) alone — against the old
+       -- org-blind unique index — decided whose row this upsert landed on, and
+       -- the DO UPDATE SET list below does not reset organization_id, so an
+       -- overwritten row silently kept the victim's tenant id.
+       -- See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+       ON CONFLICT (organization_id, project_id) DO UPDATE SET
+          status = 'active',
+          project_type = EXCLUDED.project_type,
+          regulatory_framework = EXCLUDED.regulatory_framework,
+          goals = EXCLUDED.goals,
+          basis_summary = EXCLUDED.basis_summary,
+          ana_summary = EXCLUDED.ana_summary,
+          confidence = EXCLUDED.confidence,
+          version = project_schedule_of_events.version + 1,
+          baseline_date = EXCLUDED.baseline_date,
+          target_date = EXCLUDED.target_date,
+          generated_by_ana = EXCLUDED.generated_by_ana,
+          last_reviewed_by_ana_at = now(),
+          updated_at = now()
+       RETURNING id, version`,
+      [
+        orgId,
+        projectId,
+        gen.projectType,
+        gen.framework,
+        JSON.stringify(params.goals ?? []),
+        gen.basisSummary,
+        gen.basisSummary,
+        gen.confidence,
+        gen.baselineDate,
+        gen.targetDate,
+        params.createdByAna ?? true,
+      ],
+    );
+    const scheduleId: number = planRows[0].id;
+
+    // 2. Keep existing row identity and actuals. Task/evidence references must
+    // survive regeneration; changed requirements were refused before any write.
+    await writeGeneratedMilestones(client, params, gen, preservation, scheduleId);
+
+    // 3. If goals were provided as part of generation, install them as the goal set.
+    if (params.goals && params.goals.length > 0) {
+      await replaceGoals({
+        orgId,
+        projectId,
+        scheduleId,
+        goals: params.goals,
+        rationale: 'Goals set as part of schedule generation.',
+        triggeredBy: params.triggeredBy,
+        createdByAna: params.createdByAna,
+        recordRevisionEntry: false,
+      }, client);
+    }
+
+    // 4. Audit.
+    await recordRevision({
       orgId,
       projectId,
       scheduleId,
-      goals: params.goals,
-      rationale: 'Goals set as part of schedule generation.',
-      triggeredBy: params.triggeredBy,
+      revisionType: 'generated',
+      summary: `Generated ${gen.milestones.length}-milestone ${gen.framework} schedule for ${gen.projectType}.`,
+      detail: generatedScheduleRevisionDetail(
+        { plan: previousPlan, milestones: previousRows }, gen, planRows[0].version, preservation, params.reason,
+      ),
+      triggeredBy: params.triggeredBy ?? 'ana_user',
       createdByAna: params.createdByAna,
-      recordRevisionEntry: false,
-    });
+    }, client);
+
+    // Reading afterward could report a different regeneration, or fail after
+    // committing. Include response loading in the same atomic operation.
+    const view = await loadScheduleView(orgId, projectId, client);
+    commitStarted = true;
+    await client.query('COMMIT');
+    return view;
+  } catch (error) {
+    // A rejected COMMIT can mean its acknowledgement was lost. Even a successful
+    // cleanup cannot prove it rolled back; never return success or reuse that
+    // connection. Preserve the original failure if ROLLBACK also fails.
+    discard = !began || commitStarted;
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      discard = true;
+    }
+    throw error;
+  } finally {
+    if (discard) client.release(true);
+    else client.release();
   }
-
-  // 4. Audit.
-  await recordRevision({
-    orgId,
-    projectId,
-    scheduleId,
-    revisionType: 'generated',
-    summary: `Generated ${gen.milestones.length}-milestone ${gen.framework} schedule for ${gen.projectType}.`,
-    detail: { basisSummary: gen.basisSummary, confidence: gen.confidence, milestoneCount: gen.milestones.length },
-    triggeredBy: params.triggeredBy ?? 'ana_user',
-    createdByAna: params.createdByAna,
-  });
-
-  return getScheduleOfEvents(orgId, projectId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -571,10 +657,10 @@ interface ReplaceGoalsParams {
   recordRevisionEntry?: boolean;
 }
 
-async function replaceGoals(params: ReplaceGoalsParams): Promise<void> {
+async function replaceGoals(params: ReplaceGoalsParams, sql: ScheduleQuery = pool): Promise<void> {
   const { orgId, projectId } = params;
   // Retire the current active goals (kept for history as 'revised').
-  await pool.query(
+  await sql.query(
     `UPDATE project_schedule_goals
         SET status = 'revised', updated_at = now()
       WHERE organization_id = $1 AND project_id = $2
@@ -582,7 +668,7 @@ async function replaceGoals(params: ReplaceGoalsParams): Promise<void> {
     [orgId, projectId],
   );
   for (const g of params.goals) {
-    await pool.query(
+    await sql.query(
       `INSERT INTO project_schedule_goals
          (organization_id, project_id, schedule_id, title, description, target_date,
           status, priority, metric, current_context, last_reset_by_ana_at, ana_rationale, updated_at)
@@ -611,7 +697,7 @@ async function replaceGoals(params: ReplaceGoalsParams): Promise<void> {
       detail: { goals: params.goals, rationale: params.rationale },
       triggeredBy: params.triggeredBy ?? 'ana_user',
       createdByAna: params.createdByAna,
-    });
+    }, sql);
   }
 }
 
