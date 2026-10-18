@@ -38,6 +38,8 @@ token. The selector now:
   1,635 cases that select a relevant window. `compared-files.sha256` pins the
   compared files to the baseline and final source. `diff2.ts` prints the one
   known intentional difference, full-width `！` in text with no Japanese.
+  To re-run, place `old.ts` (`git show 15578388:server/services/ana/draft-source-window.ts`)
+  and `new.ts` (the final file) beside the scripts and run `node diff.ts`.
 - `probe-after.json`: the recorded probe
   (`../../D2-BATCH-CONCURRENCY/2026-10-18/remaining-needs-japanese-probe.mjs`)
   re-run unchanged. Embedded Japanese now selects `[37501, 38001]`, the same
