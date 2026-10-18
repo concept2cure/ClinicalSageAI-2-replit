@@ -1,0 +1,1010 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/88af1304-6d3d-5a3c-af8a-47af5340d126/scratchpad/baseline-export
+
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > copies a page_budget coverage onto the capture 16ms
+   → expected undefined to deeply equal { Object (pageCount, pagesRead, ...) }
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > copies an ocr_failed coverage from a thin text layer 3ms
+   → expected undefined to deeply equal { pageCount: 7, pagesRead: null, …(1) }
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > CONTROL: pageCount is still the number of page spans, not the coverage page count 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > CONTROL: an extraction without coverage yields a capture without coverage 2ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a page_budget read completes with EXTRACTION_PARTIAL and records extractionCoverage 120ms
+   → expected { ok: true, processed: true, …(2) } to match object { ok: true, processed: true, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a time_budget read completes with EXTRACTION_PARTIAL and records extractionCoverage 75ms
+   → expected { ok: true, processed: true, …(2) } to match object { ok: true, processed: true, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a ocr_failed read completes with EXTRACTION_PARTIAL and records extractionCoverage 66ms
+   → expected { ok: true, processed: true, …(2) } to match object { ok: true, processed: true, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a complete OCR read records its coverage and completes with no reasonCode 67ms
+   → expected undefined to deeply equal { pageCount: 3, pagesRead: 3, …(1) }
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > CONTROL: a read with no coverage completes with no reasonCode and no extractionCoverage 66ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a complete read strips a stale extractionCoverage, the way it strips extractionError 45ms
+   → expected { processedBy: 'test', …(5) } to not have property "extractionCoverage"
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a later complete re-read of a partially read capture removes its extractionCoverage 44ms
+   → expected undefined to be 'EXTRACTION_PARTIAL' // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with negative pagesRead is not reused; the bytes are read again 44ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with unknown limitedBy is not reused; the bytes are read again 55ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with string pageCount is not reused; the bytes are read again 50ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with non-object coverage is not reused; the bytes are read again 48ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > CONTROL: a pre-extraction with well-formed coverage is reused without re-reading 43ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a reused well-formed partial pre-extraction completes EXTRACTION_PARTIAL with its coverage recorded 45ms
+   → expected { ok: true, processed: true, …(2) } to match object { status: 'completed', …(1) }
+(10 matching properties omitted from actual)
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards maxPixels = DEFAULT_MAX_PAGE_PIXELS (40_000_000) when the caller sets none
+{
+  "timestamp": "2026-10-18T17:32:05.221Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 1
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards an explicit maxPixels override unchanged
+{
+  "timestamp": "2026-10-18T17:32:05.223Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline already past reads exactly one page and reports time_budget
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 5,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline equal to now still attempts the first page and stops before the second
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline crossed mid-document stops after the page that crossed it
+{
+  "timestamp": "2026-10-18T12:00:03.600Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 6,
+    "confidence": 80,
+    "durationMs": 3600
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline that is never reached reads every selected page (limitedBy null)
+{
+  "timestamp": "2026-10-18T12:00:00.000Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting the selection reports page_budget with the document page count
+{
+  "timestamp": "2026-10-18T17:32:05.232Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting an explicit range is still page_budget
+{
+  "timestamp": "2026-10-18T17:32:05.233Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages equal to the page count cuts nothing (limitedBy null)
+{
+  "timestamp": "2026-10-18T17:32:05.234Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 4,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit firstPage/lastPage range smaller than the document is a request, not a limit
+{
+  "timestamp": "2026-10-18T17:32:05.236Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit page list with a maxPages that does not cut it is not a limit
+{
+  "timestamp": "2026-10-18T17:32:05.239Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 2,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > no limits: every page selected and read, limitedBy null
+{
+  "timestamp": "2026-10-18T17:32:05.240Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stdout | server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > CONTROL: text, pages and page details still carry every page read, in order
+{
+  "timestamp": "2026-10-18T17:32:05.241Z",
+  "level": "info",
+  "message": "[ocr-service] PDF text OCR completed",
+  "context": {
+    "pages": 3,
+    "confidence": 90,
+    "durationMs": 0
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws with a thin text layer: pdf-text, coverage ocr_failed with the pdf-parse page count
+{
+  "timestamp": "2026-10-18T17:32:05.250Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and there is no text at all: none, with the same ocr_failed coverage
+{
+  "timestamp": "2026-10-18T17:32:05.251Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and pdf-parse gave no pages: pageCount is null
+{
+  "timestamp": "2026-10-18T17:32:05.252Z",
+  "level": "warn",
+  "message": "[document-text] pdf-parse failed",
+  "context": {
+    "error": "synthetic pdf-parse failure"
+  }
+}
+
+stderr | server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and pdf-parse gave no pages: pageCount is null
+{
+  "timestamp": "2026-10-18T17:32:05.252Z",
+  "level": "warn",
+  "message": "[document-text] pdf OCR failed",
+  "context": {
+    "error": "synthetic OCR outage"
+  }
+}
+
+ × server/services/ocr/__tests__/ocr-budget.test.ts > pdfRasterizer — one page-pixel cap definition > exports DEFAULT_MAX_PAGE_PIXELS = 40_000_000 11ms
+   → expected undefined to be 40000000 // Object.is equality
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards maxPixels = DEFAULT_MAX_PAGE_PIXELS (40_000_000) when the caller sets none 3ms
+   → expected undefined to be 40000000 // Object.is equality
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards an explicit maxPixels override unchanged 1ms
+   → expected undefined to be 1234567 // Object.is equality
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline already past reads exactly one page and reports time_budget 3ms
+   → expected "vi.fn()" to be called 1 times, but got 5 times
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline equal to now still attempts the first page and stops before the second 1ms
+   → expected "vi.fn()" to be called 1 times, but got 3 times
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline crossed mid-document stops after the page that crossed it 1ms
+   → expected "vi.fn()" to be called 2 times, but got 6 times
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline that is never reached reads every selected page (limitedBy null) 2ms
+   → expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting the selection reports page_budget with the document page count 1ms
+   → expected undefined to deeply equal { pageCount: 12, …(3) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting an explicit range is still page_budget 2ms
+   → expected undefined to deeply equal { pageCount: 20, …(3) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages equal to the page count cuts nothing (limitedBy null) 1ms
+   → expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit firstPage/lastPage range smaller than the document is a request, not a limit 3ms
+   → expected undefined to deeply equal { pageCount: 12, …(3) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit page list with a maxPages that does not cut it is not a limit 1ms
+   → expected undefined to deeply equal { pageCount: 12, …(3) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > no limits: every page selected and read, limitedBy null 1ms
+   → expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > CONTROL: text, pages and page details still carry every page read, in order 1ms
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — automatic PDF OCR budget > exports AUTOMATIC_PDF_OCR_BUDGET = { maxPages: 100, maxDurationMs: 600_000 } 1ms
+   → expected undefined to deeply equal { Object (maxPages, maxDurationMs) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — automatic PDF OCR budget > the thin-text fallback calls ocrPdfToText with maxPages 100 and deadlineAt = now + 600_000 5ms
+   → expected "ocrPdfToText" to be called with arguments: [ Anything, ObjectContaining{…} ]
+
+Received:
+
+  1st ocrPdfToText call:
+
+  [
+-   Anything,
+-   ObjectContaining {
+-     "deadlineAt": Any<Number>,
+-     "maxPages": 100,
++   {
++     "data": [
++       37,
++       80,
++       68,
++       70,
++       45,
++       49,
++       46,
++       55,
++       32,
++       115,
++       121,
++       110,
++       116,
++       104,
++       101,
++       116,
++       105,
++       99,
++       32,
++       98,
++       121,
++       116,
++       101,
++       115,
++       44,
++       32,
++       110,
++       101,
++       118,
++       101,
++       114,
++       32,
++       112,
++       97,
++       114,
++       115,
++       101,
++       100,
++     ],
++     "type": "Buffer",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: method pdf-ocr and coverage copied from OCR (page_budget) 1ms
+   → expected undefined to deeply equal { Object (pageCount, pagesRead, ...) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: time_budget coverage is copied 1ms
+   → expected undefined to deeply equal { pageCount: 40, pagesRead: 17, …(1) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: a complete OCR still records coverage with limitedBy null 1ms
+   → expected undefined to deeply equal { pageCount: 3, pagesRead: 3, …(1) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws with a thin text layer: pdf-text, coverage ocr_failed with the pdf-parse page count 1ms
+   → expected undefined to deeply equal { pageCount: 7, pagesRead: null, …(1) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and there is no text at all: none, with the same ocr_failed coverage 1ms
+   → expected undefined to deeply equal { pageCount: 4, pagesRead: null, …(1) }
+ × server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and pdf-parse gave no pages: pageCount is null 1ms
+   → expected undefined to deeply equal { pageCount: null, …(2) }
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > CONTROL: a text-layer PDF with >= 200 characters has no coverage and never calls OCR 1ms
+ ✓ server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > CONTROL: a non-PDF format has no coverage 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > copies a page_budget coverage onto the capture
+AssertionError: expected undefined to deeply equal { Object (pageCount, pagesRead, ...) }
+
+- Expected:
+{
+  "limitedBy": "page_budget",
+  "pageCount": 250,
+  "pagesRead": 100,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:114:59
+    112|     const captured = await extractCapture(Buffer.from(BODY), 'applicat…
+    113|     expect(captured.text).toBe(BODY);
+    114|     expect((captured as { coverage?: unknown }).coverage).toEqual(PAGE…
+       |                                                           ^
+    115|   });
+    116|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > extractCapture — coverage is copied from the extractor > copies an ocr_failed coverage from a thin text layer
+AssertionError: expected undefined to deeply equal { pageCount: 7, pagesRead: null, …(1) }
+
+- Expected:
+{
+  "limitedBy": "ocr_failed",
+  "pageCount": 7,
+  "pagesRead": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:121:59
+    119|     const captured = await extractCapture(Buffer.from(BODY), 'applicat…
+    120|     expect(captured.method).toBe('pdf-text');
+    121|     expect((captured as { coverage?: unknown }).coverage).toEqual(OCR_…
+       |                                                           ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a page_budget read completes with EXTRACTION_PARTIAL and records extractionCoverage
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a time_budget read completes with EXTRACTION_PARTIAL and records extractionCoverage
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a ocr_failed read completes with EXTRACTION_PARTIAL and records extractionCoverage
+AssertionError: expected { ok: true, processed: true, …(2) } to match object { ok: true, processed: true, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": true,
+    "processed": true,
+-   "reasonCode": "EXTRACTION_PARTIAL",
+    "status": "completed",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:149:18
+    147|     seam.extract.mockResolvedValue({ text: BODY, method: 'pdf-ocr', pa…
+    148|     const done = await processCapturedSource(ORG, id, input(), opts());
+    149|     expect(done).toMatchObject({ ok: true, processed: true, status: 'c…
+       |                  ^
+    150|     expect((done.extracted as { coverage?: unknown } | undefined)?.cov…
+    151|     const row = await state(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a complete OCR read records its coverage and completes with no reasonCode
+AssertionError: expected undefined to deeply equal { pageCount: 3, pagesRead: 3, …(1) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 3,
+  "pagesRead": 3,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:166:61
+    164|     expect(done.status).toBe('completed');
+    165|     expect(done.reasonCode).toBeUndefined();
+    166|     expect((await state(id)).provenance.extractionCoverage).toEqual(CO…
+       |                                                             ^
+    167|   });
+    168|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a complete read strips a stale extractionCoverage, the way it strips extractionError
+AssertionError: expected { processedBy: 'test', …(5) } to not have property "extractionCoverage"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "limitedBy": "page_budget",
+  "pageCount": 250,
+  "pagesRead": 100,
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:188:46
+    186|     expect(done.status).toBe('completed');
+    187|     expect(done.reasonCode).toBeUndefined();
+    188|     expect((await state(id)).provenance).not.toHaveProperty('extractio…
+       |                                              ^
+    189|   });
+    190|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > capture processing — extractionCoverage and EXTRACTION_PARTIAL > a later complete re-read of a partially read capture removes its extractionCoverage
+AssertionError: expected undefined to be 'EXTRACTION_PARTIAL' // Object.is equality
+
+- Expected:
+"EXTRACTION_PARTIAL"
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:194:80
+    192|     const id = await seed('pending');
+    193|     seam.extract.mockResolvedValue({ text: BODY, method: 'pdf-ocr', pa…
+    194|     expect((await processCapturedSource(ORG, id, input(), opts())).rea…
+       |                                                                                ^
+    195|     expect((await state(id)).provenance.extractionCoverage).toEqual(PA…
+    196|     // Re-open the capture for a re-read: an expired running lease wit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with negative pagesRead is not reused; the bytes are read again
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with unknown limitedBy is not reused; the bytes are read again
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with string pageCount is not reused; the bytes are read again
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a pre-extraction with non-object coverage is not reused; the bytes are read again
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:227:26
+    225|     const done = await processCapturedSource(ORG, id, input({ preExtra…
+    226|     expect(done.status).toBe('completed');
+    227|     expect(seam.extract).toHaveBeenCalledTimes(1);
+       |                          ^
+    228|     const row = await state(id);
+    229|     expect(row.extracted_text).toBe(BODY);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/34]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts > boundExtraction — pre-extracted coverage must be well formed > a reused well-formed partial pre-extraction completes EXTRACTION_PARTIAL with its coverage recorded
+AssertionError: expected { ok: true, processed: true, …(2) } to match object { status: 'completed', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reasonCode": "EXTRACTION_PARTIAL",
+    "status": "completed",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-capture-coverage.test.ts:244:18
+    242|     const id = await seed('pending');
+    243|     const done = await processCapturedSource(ORG, id, input({ preExtra…
+    244|     expect(done).toMatchObject({ status: 'completed', reasonCode: 'EXT…
+       |                  ^
+    245|     expect(seam.extract).not.toHaveBeenCalled();
+    246|     expect((await state(id)).provenance.extractionCoverage).toEqual(OC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > pdfRasterizer — one page-pixel cap definition > exports DEFAULT_MAX_PAGE_PIXELS = 40_000_000
+AssertionError: expected undefined to be 40000000 // Object.is equality
+
+- Expected:
+40000000
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:124:44
+    122|   it('exports DEFAULT_MAX_PAGE_PIXELS = 40_000_000', async () => {
+    123|     const actual = await vi.importActual<Record<string, unknown>>('../…
+    124|     expect(actual.DEFAULT_MAX_PAGE_PIXELS).toBe(40_000_000);
+       |                                            ^
+    125|   });
+    126| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards maxPixels = DEFAULT_MAX_PAGE_PIXELS (40_000_000) when the caller sets none
+AssertionError: expected undefined to be 40000000 // Object.is equality
+
+- Expected:
+40000000
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:134:60
+    132|     const calls = rasterizerOptions();
+    133|     expect(calls.length).toBeGreaterThan(0);
+    134|     for (const options of calls) expect(options.maxPixels).toBe(40_000…
+       |                                                            ^
+    135|     // The same one definition, not a second literal.
+    136|     const actual = await vi.importActual<Record<string, unknown>>('../…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — pixel budget is forwarded > forwards an explicit maxPixels override unchanged
+AssertionError: expected undefined to be 1234567 // Object.is equality
+
+- Expected:
+1234567
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:145:60
+    143|     const calls = rasterizerOptions();
+    144|     expect(calls.length).toBeGreaterThan(0);
+    145|     for (const options of calls) expect(options.maxPixels).toBe(1_234_…
+       |                                                            ^
+    146|   });
+    147| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline already past reads exactly one page and reports time_budget
+AssertionError: expected "vi.fn()" to be called 1 times, but got 5 times
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:155:33
+    153|     seam.numPages = 5;
+    154|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { deadline…
+    155|     expect(seam.recognizeImage).toHaveBeenCalledTimes(1);
+       |                                 ^
+    156|     expect(result.pageDetails.map((d) => d.page)).toEqual([1]);
+    157|     expect((result as { coverage?: unknown }).coverage).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline equal to now still attempts the first page and stops before the second
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:170:33
+    168|     seam.numPages = 3;
+    169|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { deadline…
+    170|     expect(seam.recognizeImage).toHaveBeenCalledTimes(1);
+       |                                 ^
+    171|     expect((result as { coverage?: unknown }).coverage).toEqual({
+    172|       pageCount: 3,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline crossed mid-document stops after the page that crossed it
+AssertionError: expected "vi.fn()" to be called 2 times, but got 6 times
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:191:33
+    189|     });
+    190|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { deadline…
+    191|     expect(seam.recognizeImage).toHaveBeenCalledTimes(2);
+       |                                 ^
+    192|     expect(result.pageDetails.map((d) => d.page)).toEqual([1, 2]);
+    193|     expect((result as { coverage?: unknown }).coverage).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — time budget (deadlineAt) > a deadline that is never reached reads every selected page (limitedBy null)
+AssertionError: expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 4,
+  "pagesRead": 4,
+  "pagesSelected": 4,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:207:57
+    205|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { deadline…
+    206|     expect(seam.recognizeImage).toHaveBeenCalledTimes(4);
+    207|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    208|       pageCount: 4,
+    209|       pagesSelected: 4,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting the selection reports page_budget with the document page count
+AssertionError: expected undefined to deeply equal { pageCount: 12, …(3) }
+
+- Expected:
+{
+  "limitedBy": "page_budget",
+  "pageCount": 12,
+  "pagesRead": 4,
+  "pagesSelected": 4,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:221:57
+    219|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { maxPages…
+    220|     expect(seam.recognizeImage).toHaveBeenCalledTimes(4);
+    221|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    222|       pageCount: 12,
+    223|       pagesSelected: 4,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages cutting an explicit range is still page_budget
+AssertionError: expected undefined to deeply equal { pageCount: 20, …(3) }
+
+- Expected:
+{
+  "limitedBy": "page_budget",
+  "pageCount": 20,
+  "pagesRead": 4,
+  "pagesSelected": 4,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:232:57
+    230|     seam.numPages = 20;
+    231|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { firstPag…
+    232|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    233|       pageCount: 20,
+    234|       pagesSelected: 4,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > maxPages equal to the page count cuts nothing (limitedBy null)
+AssertionError: expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 4,
+  "pagesRead": 4,
+  "pagesSelected": 4,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:243:57
+    241|     seam.numPages = 4;
+    242|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { maxPages…
+    243|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    244|       pageCount: 4,
+    245|       pagesSelected: 4,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit firstPage/lastPage range smaller than the document is a request, not a limit
+AssertionError: expected undefined to deeply equal { pageCount: 12, …(3) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 12,
+  "pagesRead": 3,
+  "pagesSelected": 3,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:255:57
+    253|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { firstPag…
+    254|     expect(result.pageDetails.map((d) => d.page)).toEqual([3, 4, 5]);
+    255|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    256|       pageCount: 12,
+    257|       pagesSelected: 3,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > an explicit page list with a maxPages that does not cut it is not a limit
+AssertionError: expected undefined to deeply equal { pageCount: 12, …(3) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 12,
+  "pagesRead": 2,
+  "pagesSelected": 2,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:267:57
+    265|     const result = await ocrService.ocrPdfToText(PDF_BYTES, { pages: […
+    266|     expect(result.pageDetails.map((d) => d.page)).toEqual([2, 7]);
+    267|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    268|       pageCount: 12,
+    269|       pagesSelected: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > ocrService.ocrPdfToText — page budget and caller ranges > no limits: every page selected and read, limitedBy null
+AssertionError: expected undefined to deeply equal { Object (pageCount, pagesSelected, ...) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 3,
+  "pagesRead": 3,
+  "pagesSelected": 3,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:279:57
+    277|     const result = await ocrService.ocrPdfToText(PDF_BYTES);
+    278|     expect(seam.recognizeImage).toHaveBeenCalledTimes(3);
+    279|     expect((result as { coverage?: unknown }).coverage).toEqual({
+       |                                                         ^
+    280|       pageCount: 3,
+    281|       pagesSelected: 3,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — automatic PDF OCR budget > exports AUTOMATIC_PDF_OCR_BUDGET = { maxPages: 100, maxDurationMs: 600_000 }
+AssertionError: expected undefined to deeply equal { Object (maxPages, maxDurationMs) }
+
+- Expected:
+{
+  "maxDurationMs": 600000,
+  "maxPages": 100,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:324:81
+    322| describe('extractDocumentText — automatic PDF OCR budget', () => {
+    323|   it('exports AUTOMATIC_PDF_OCR_BUDGET = { maxPages: 100, maxDurationM…
+    324|     expect((extractModule as Record<string, unknown>).AUTOMATIC_PDF_OC…
+       |                                                                                 ^
+    325|   });
+    326|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — automatic PDF OCR budget > the thin-text fallback calls ocrPdfToText with maxPages 100 and deadlineAt = now + 600_000
+AssertionError: expected "ocrPdfToText" to be called with arguments: [ Anything, ObjectContaining{…} ]
+
+Received:
+
+  1st ocrPdfToText call:
+
+  [
+-   Anything,
+-   ObjectContaining {
+-     "deadlineAt": Any<Number>,
+-     "maxPages": 100,
++   {
++     "data": [
++       37,
++       80,
++       68,
++       70,
++       45,
++       49,
++       46,
++       55,
++       32,
++       115,
++       121,
++       110,
++       116,
++       104,
++       101,
++       116,
++       105,
++       99,
++       32,
++       98,
++       121,
++       116,
++       101,
++       115,
++       44,
++       32,
++       110,
++       101,
++       118,
++       101,
++       114,
++       32,
++       112,
++       97,
++       114,
++       115,
++       101,
++       100,
++     ],
++     "type": "Buffer",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:339:17
+    337|
+    338|     expect(spy).toHaveBeenCalledTimes(1);
+    339|     expect(spy).toHaveBeenCalledWith(expect.anything(), expect.objectC…
+       |                 ^
+    340|     const deadlineAt = (spy.mock.calls[0][1] as { deadlineAt: number }…
+    341|     expect(deadlineAt).toBeGreaterThanOrEqual(now + 600_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: method pdf-ocr and coverage copied from OCR (page_budget)
+AssertionError: expected undefined to deeply equal { Object (pageCount, pagesRead, ...) }
+
+- Expected:
+{
+  "limitedBy": "page_budget",
+  "pageCount": 250,
+  "pagesRead": 100,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:355:57
+    353|     expect(result.method).toBe('pdf-ocr');
+    354|     expect(result.text).toBe(OCR_TEXT);
+    355|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    356|   });
+    357|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: time_budget coverage is copied
+AssertionError: expected undefined to deeply equal { pageCount: 40, pagesRead: 17, …(1) }
+
+- Expected:
+{
+  "limitedBy": "time_budget",
+  "pageCount": 40,
+  "pagesRead": 17,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:365:57
+    363|     const result = await extractDocumentText(PDF_BYTES, 'application/p…
+    364|     expect(result.method).toBe('pdf-ocr');
+    365|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    366|   });
+    367|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR result used: a complete OCR still records coverage with limitedBy null
+AssertionError: expected undefined to deeply equal { pageCount: 3, pagesRead: 3, …(1) }
+
+- Expected:
+{
+  "limitedBy": null,
+  "pageCount": 3,
+  "pagesRead": 3,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:375:57
+    373|     const result = await extractDocumentText(PDF_BYTES, 'application/p…
+    374|     expect(result.method).toBe('pdf-ocr');
+    375|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    376|   });
+    377|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws with a thin text layer: pdf-text, coverage ocr_failed with the pdf-parse page count
+AssertionError: expected undefined to deeply equal { pageCount: 7, pagesRead: null, …(1) }
+
+- Expected:
+{
+  "limitedBy": "ocr_failed",
+  "pageCount": 7,
+  "pagesRead": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:384:57
+    382|     expect(result.method).toBe('pdf-text');
+    383|     expect(result.text).toBe(THIN_TEXT);
+    384|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    385|   });
+    386|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and there is no text at all: none, with the same ocr_failed coverage
+AssertionError: expected undefined to deeply equal { pageCount: 4, pagesRead: null, …(1) }
+
+- Expected:
+{
+  "limitedBy": "ocr_failed",
+  "pageCount": 4,
+  "pagesRead": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:393:57
+    391|     expect(result.method).toBe('none');
+    392|     expect(result.text).toBe('');
+    393|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    394|   });
+    395|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/34]⎯
+
+ FAIL  server/services/ocr/__tests__/ocr-budget.test.ts > extractDocumentText — coverage receipts > OCR throws and pdf-parse gave no pages: pageCount is null
+AssertionError: expected undefined to deeply equal { pageCount: null, …(2) }
+
+- Expected:
+{
+  "limitedBy": "ocr_failed",
+  "pageCount": null,
+  "pagesRead": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ocr/__tests__/ocr-budget.test.ts:401:57
+    399|     const result = await extractDocumentText(PDF_BYTES, 'application/p…
+    400|     expect(result.method).toBe('none');
+    401|     expect((result as { coverage?: unknown }).coverage).toEqual({ page…
+       |                                                         ^
+    402|   });
+    403|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/34]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  34 failed | 7 passed (41)
+   Start at  17:31:59
+   Duration  5.92s (transform 995ms, setup 114ms, import 1.59s, tests 3.79s, environment 0ms)
+
