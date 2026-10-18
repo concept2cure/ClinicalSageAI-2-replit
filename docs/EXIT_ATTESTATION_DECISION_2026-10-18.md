@@ -117,10 +117,22 @@ and the snapshot is there to prove it independently if an inspector asks. For an
 simultaneity; that is exactly why the refusal sits at the **freeze**, before
 anything is sealed, and why increment 1 is the freeze.
 
-**Shipped in this round:** `filingAgreesWithEditing`
-(`server/services/c2c/filing-section-target.ts`) and the freeze refusal, 409
-`FILING_DIVERGED`, naming the keys and the remedy. Evidence:
-`docs/evidence/ANA-REASONING/2026-10-05/r16/p29-filing-agreement-gate/`.
+**Shipped:** `filingAgreesWithEditing`
+(`server/services/c2c/filing-section-target.ts`) and the refusal, 409
+`FILING_DIVERGED`, naming the section and the remedy, at **all three seals** —
+the freeze, `POST /e-sign` as APPROVER, and `POST /sign`. Evidence:
+`docs/evidence/ANA-REASONING/2026-10-05/r16/p29-filing-agreement-gate/` and
+`.../r17/p29-signing-seals/`.
+
+**The correction worth recording.** The freeze shipped first and was the wrong
+seal to stop at. An APPROVER e-signature reaches the same sealed state — status
+APPROVED, `frozen_at`, the snapshot, the signature — and the freeze route's own
+refusal copy directs people to it, so for one round the path a client actually
+uses to approve a document passed no check at all. A gate the product routes
+around is worse than no gate, because it reads as coverage. It was the review's
+own decide phase that found it, after the first increment had already shipped —
+which is the argument for running an adversarial review to completion rather
+than stopping where it confirms the plan.
 
 ## P-29.3 — the device/IVD exit attests to the same thing, and today attests to nothing
 
