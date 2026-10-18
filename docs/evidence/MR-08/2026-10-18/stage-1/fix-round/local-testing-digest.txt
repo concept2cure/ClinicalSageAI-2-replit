@@ -1,0 +1,11 @@
+# Defect 7: docs/LOCAL_TESTING.md no longer hard-codes the scanner digest. 2026-10-18T19:56:34Z
+$ grep -n sha256 docs/LOCAL_TESTING.md   # no literal digest left
+exit=1 (1 = no match)
+
+# The IMAGE= line exactly as the doc gives it, extracted from the doc and run from the repo root:
+$ IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf); echo "$IMAGE"
+clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23
+
+# The same line in ci.yml (production-boot-smoke and production-image-boot), byte-identical after the IMAGE= prefix:
+ci.yml:1981 identical
+ci.yml:2221 identical

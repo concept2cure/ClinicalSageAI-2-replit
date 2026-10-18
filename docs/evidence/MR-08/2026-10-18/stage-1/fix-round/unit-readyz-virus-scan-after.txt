@@ -1,0 +1,18 @@
+# AFTER (this fix round). 2026-10-18T19:53:36Z
+$ npx vitest run server/startup/__tests__/readyz-virus-scan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 2029ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 7ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > reuses one zPING for 30 s: ok after clamd goes away inside the window, down after it 14ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:53:37
+   Duration  2.69s (transform 190ms, setup 82ms, import 293ms, tests 2.06s, environment 0ms)
+
+exit=0

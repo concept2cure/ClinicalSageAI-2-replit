@@ -18,9 +18,19 @@
  *   3. POST /api/auth/mfa/verify with the current RFC 6238 code → an access token.
  *   4. GET  /api/auth/me with that token → the member, in the organisation.
  *   5. A wrong code is refused, so step 3 is not passing on anything.
+ *   6. POST /api/c2c/projects as that person → 201, a project to file into.
+ *   7. POST /api/vault/ingest with the EICAR test file as a .txt → 400
+ *      FILE_SCAN_REJECTED: the upload reached clamd and clamd refused it.
+ *   8. POST /api/vault/ingest with a clean one-page PDF → 201: scanned and filed.
+ *      Together, 7 and 8 prove the shipped image scans uploads (MR-08 stage 1);
+ *      without a scanner, production answers both with 503 FILE_SCAN_UNAVAILABLE.
+ *
+ * Step 1 also gives the organisation its own workspace, as signup does
+ * (services/c2c/organization-default-workspace.ts): a project cannot be created
+ * without one (P-19).
  *
  * Env: DATABASE_URL (owner), BASE_URL, MFA_ENCRYPTION_KEY, SIGNIN_ORIGIN. Exit 0 only when all
- * five hold; every refusal prints the status and body it got.
+ * eight hold; every refusal prints the status and body it got.
  */
 import crypto from 'node:crypto';
 import pg from 'pg';
@@ -120,6 +130,15 @@ async function enrol() {
        ON CONFLICT (user_id, organization_id) DO UPDATE SET role = 'member'`,
       [org.rows[0].id, user.rows[0].id],
     );
+    // The organisation's own workspace, marked as signup marks it
+    // (organization-default-workspace.ts), so a program can anchor its project.
+    await db.query(
+      `INSERT INTO client_workspaces (organization_id, name, slug, description, status, metadata)
+       VALUES ($1, 'Image boot sponsor', 'image-boot-sponsor', 'The organisation''s own workspace.', 'active',
+               '{"defaultForOrganization":true}'::json)
+       ON CONFLICT (organization_id, slug) DO NOTHING`,
+      [org.rows[0].id],
+    );
     return { secret, orgId: Number(org.rows[0].id), userId: Number(user.rows[0].id) };
   } finally {
     await db.end();
@@ -161,3 +180,78 @@ const meText = JSON.stringify(me.json ?? {});
 if (me.status !== 200 || !meText.includes(EMAIL)) fail('/api/auth/me', `${me.status} ${me.text}`);
 console.log(`GET /api/auth/me → 200, signed in as ${EMAIL}`);
 console.log('image sign-in: OK');
+
+// ── Uploads go through the scanner (MR-08 stage 1) ─────────────────────────
+const token = verify.json.accessToken;
+const project = await call(
+  'POST',
+  '/api/c2c/projects',
+  { name: `Image boot upload ${crypto.randomBytes(4).toString('hex')}`, programType: 'ind', productType: 'drug', primaryAgency: 'FDA' },
+  token,
+);
+const programId = project.json?.data?.id ?? project.json?.program?.id;
+if (project.status !== 201 || !programId) fail('project', `expected 201 with a project id; got ${project.status} ${project.text}`);
+console.log(`POST /api/c2c/projects → 201, project ${programId}`);
+
+/** POST one file to /api/vault/ingest as multipart/form-data. */
+async function ingest(fileName, mimeType, bytes, documentCode) {
+  const form = new FormData();
+  form.append('programId', String(programId));
+  form.append('documentCode', documentCode);
+  form.append('documentTitle', `Image boot ${documentCode}`);
+  form.append('documentType', 'OTHER');
+  form.append('file', new Blob([bytes], { type: mimeType }), fileName);
+  const res = await fetch(`${BASE}/api/vault/ingest`, {
+    method: 'POST',
+    headers: { origin: ORIGIN, 'x-forwarded-proto': 'https', authorization: `Bearer ${token}` },
+    body: form,
+    redirect: 'manual',
+  });
+  const text = await res.text();
+  let json = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    /* reported below as text */
+  }
+  return { status: res.status, json, text: text.slice(0, 400) };
+}
+
+// The EICAR anti-virus test string: harmless, and every scanner reports it.
+const EICAR = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+const infected = await ingest('eicar.txt', 'text/plain', Buffer.from(EICAR, 'latin1'), 'IMAGE-BOOT-EICAR');
+if (infected.status !== 400 || infected.json?.error?.code !== 'FILE_SCAN_REJECTED') {
+  fail('EICAR upload', `expected 400 FILE_SCAN_REJECTED; got ${infected.status} ${infected.text}`);
+}
+console.log('POST /api/vault/ingest eicar.txt → 400 FILE_SCAN_REJECTED, refused by the scanner');
+
+/** A one-page PDF with real xref offsets; `marker` makes its bytes unique per run. */
+function onePagePdf(marker) {
+  const text = `Image boot upload ${marker}`;
+  const stream = `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let body = '%PDF-1.4\n';
+  const offsets = [];
+  objects.forEach((o, i) => {
+    offsets.push(Buffer.byteLength(body, 'latin1'));
+    body += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = Buffer.byteLength(body, 'latin1');
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const off of offsets) body += `${String(off).padStart(10, '0')} 00000 n \n`;
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(body, 'latin1');
+}
+
+const clean = await ingest('image-boot.pdf', 'application/pdf', onePagePdf(crypto.randomBytes(8).toString('hex')), `IMAGE-BOOT-PDF-${crypto.randomBytes(3).toString('hex')}`);
+if (clean.status !== 201 || clean.json?.success !== true) {
+  fail('clean PDF upload', `expected 201; got ${clean.status} ${clean.text}`);
+}
+console.log(`POST /api/vault/ingest image-boot.pdf → 201, scanned clean and filed (document ${clean.json?.document?.id ?? '?'})`);
+console.log('image upload through the scanner: OK');

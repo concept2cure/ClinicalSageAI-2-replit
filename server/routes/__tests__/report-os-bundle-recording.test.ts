@@ -65,10 +65,15 @@ describe('saved report packs are complete and atomically recorded', () => {
     expect(h.audit.mock.calls[0]?.[1]).toMatchObject({ tenantId: 7, userId: 5, action: 'report_os.bundle_created',
       details: { projectIds: [11, 12], runIds: [41, 42], byteLength: Buffer.byteLength(stored[0]),
         payloadHash: createHash('sha256').update(stored[0]).digest('hex') } });
-    h.queued.select.push([{ title: `bundle:${result.body.data.bundleId}`, content: stored[0], createdAt: new Date() }]);
+    /* The register read counts the distinct bundles BEFORE it scans the rows
+       (loadBundleRegister), so the count row is queued first. One bundle
+       counted and one decoded means a complete read, and the response carries
+       no `meta` — the truncation note exists only when it is true. */
+    h.queued.select.push([{ n: 1 }], [{ title: `bundle:${result.body.data.bundleId}`, content: stored[0], createdAt: new Date() }]);
     const listed = await request(app).get('/api/report-os/bundles');
     expect(listed.status).toBe(200);
     expect(listed.body.data).toEqual([result.body.data]);
+    expect(listed.body.meta).toBeUndefined();
   });
 
   it('rolls both project copies back when the second write fails, before any success or audit event', async () => {
@@ -99,6 +104,30 @@ describe('saved report packs are complete and atomically recorded', () => {
     expect(h.statements).not.toContain('COMMIT');
   });
 
+
+  it('says the register holds more packs than it read, and only when it does', async () => {
+    /* THE SILENT CAP. loadBundleRegister scans a bounded number of
+       project_memory_entries ROWS, and a bundle is stored once per covered
+       project — so the scan is counted in rows while the register is counted
+       in bundles. Past the bound the oldest packs were simply absent from a
+       list presented as the register.
+
+       Three bundles counted in SQL, one decoded from the scanned rows: the
+       response must carry the register's own count, not the scan's. The count
+       comes from `count(distinct title)` precisely so it cannot agree with a
+       truncated scan by construction. */
+    const bundleId = '00000000-0000-4000-8000-00000000beef';
+    const content = JSON.stringify({ bundleRecord: {
+      bundleId, organizationId: 7, name: 'Only pack read',
+      createdAt: '2026-10-13T12:00:00Z', createdBy: 5, projectIds: [11], runIds: [41], items: [],
+    } });
+    h.queued.select.push([{ n: 3 }], [{ title: `bundle:${bundleId}`, content, createdAt: new Date() }]);
+    const listed = await request(app).get('/api/report-os/bundles');
+    expect(listed.status).toBe(200);
+    expect(listed.body.data).toHaveLength(1);
+    expect(listed.body.meta).toEqual({ truncated: true, registerTotal: 3 });
+  });
+
   it('refuses manifests above the explicit size limit before writes or audit', async () => {
     ready(['x'.repeat(2 * 1024 * 1024)]);
     const result = await post();
@@ -109,7 +138,7 @@ describe('saved report packs are complete and atomically recorded', () => {
   });
 
   it.each(['{"bundleRecord":{"bundleId":', '{"bundleRecord":{"organizationId":99}}'])('refuses corrupt saved pack data instead of an empty register (%s)', async content => {
-    h.queued.select.push([{ title: 'bundle:old-record', content, createdAt: new Date() }]);
+    h.queued.select.push([{ n: 1 }], [{ title: 'bundle:old-record', content, createdAt: new Date() }]);
     const result = await request(app).get('/api/report-os/bundles');
     expect(result.status).toBe(503);
     expect(result.body.error.code).toBe('REPORT_BUNDLE_CORRUPT');

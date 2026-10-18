@@ -68,6 +68,23 @@ export interface StabilityStudyRecord {
   storageCondition: string;
   duration: string;
   timePoints: string;
+  /**
+   * The shelf life the organisation CLAIMS — what §3.2.P.8.1 states and what
+   * ICH Q1E is evaluated against (ich-compliance-q1e.ts). The write-through
+   * emits it as `shelfLifeClaim`; the register's own column is `shelf_life`.
+   * Free text, so the rule parses it and refuses to guess.
+   */
+  shelfLifeClaim: string;
+  /**
+   * Which side the study is evidence for — the write-through resolves it
+   * through the shared vocabulary and emits `stabilityScope`
+   * ('drug_substance' | 'drug_product' | 'both'). Carried because Q1A(R2) and
+   * Q1E judge a substance's re-test period and a product's shelf life
+   * separately, on their own data: without it the Q1E rule saw every study as
+   * one pool and compared a 36-month DS re-test period with the product's
+   * coverage.
+   */
+  scope: string;
   testParameters: string;
   containerClosure: string;
   status: string;
@@ -123,6 +140,8 @@ export function normalizeStabilityPayload(payload: Record<string, unknown>): Sta
     ]),
     duration: pickText(payload, ['duration']),
     timePoints: pickText(payload, ['timePoints', 'time_points']),
+    shelfLifeClaim: pickText(payload, ['shelfLifeClaim', 'shelf_life_claim', 'shelfLife', 'shelf_life']),
+    scope: pickText(payload, ['stabilityScope', 'stability_scope', 'scope']),
     testParameters: pickText(payload, [
       'testParameters', 'test_parameters', 'stabilityParameters',
     ]),

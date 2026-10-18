@@ -895,7 +895,52 @@ async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
   }
 }
 
-async function loadBundlesForOrg(organizationId: number, bundleId?: string, executor: ReportDb = db): Promise<ReportBundleRecord[]> {
+/**
+ * The most `project_memory_entries` ROWS one register read scans.
+ *
+ * It was 1000, bare, and the unit is as much of a problem as the number: a
+ * bundle is stored once PER COVERED PROJECT (see persistBundleRecord), so 1000
+ * rows is 1000 bundles only when every bundle covers exactly one project, and
+ * about 333 when they cover three. The register then returned an unpredictable
+ * number of packs with the oldest missing and nothing saying so — a silent cap
+ * on a governed register, the same failure as the run-history window (C-1) and
+ * the capped portfolio rollup (C-12).
+ *
+ * The bound stays, because an unbounded register read is how one organisation's
+ * history becomes everyone's latency. It is raised, and `registerTotal` below
+ * counts the distinct bundles in SQL so a truncated read is always reportable
+ * rather than invisible.
+ */
+const BUNDLE_ROW_SCAN = 5000;
+
+/** What a register read covered, so a truncated answer can say so. */
+interface BundleRegisterRead {
+  bundles: ReportBundleRecord[];
+  /** Distinct bundles in the register, counted in SQL — never from the rows
+   *  the scan returned, which would agree with a truncated scan by
+   *  construction and could never reveal one. */
+  registerTotal: number;
+  /** Fewer bundles were decoded than the register holds, so older packs are
+   *  missing from `bundles`. */
+  truncated: boolean;
+}
+
+async function loadBundleRegister(
+  organizationId: number,
+  bundleId?: string,
+  executor: ReportDb = db,
+): Promise<BundleRegisterRead> {
+  const where = and(
+    eq(projectMemoryEntries.organizationId, organizationId),
+    eq(projectMemoryEntries.category, 'regulatory'),
+    eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
+    eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE),
+    ...(bundleId ? [eq(projectMemoryEntries.title, `bundle:${bundleId}`)] : []),
+  );
+  const [counted] = await executor
+    .select({ n: sql<number>`count(distinct ${projectMemoryEntries.title})::int` })
+    .from(projectMemoryEntries)
+    .where(where);
   const rows = await executor
     .select({
       title: projectMemoryEntries.title,
@@ -903,17 +948,13 @@ async function loadBundlesForOrg(organizationId: number, bundleId?: string, exec
       createdAt: projectMemoryEntries.createdAt,
     })
     .from(projectMemoryEntries)
-    .where(
-      and(
-        eq(projectMemoryEntries.organizationId, organizationId),
-        eq(projectMemoryEntries.category, 'regulatory'),
-        eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
-        eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE),
-        ...(bundleId ? [eq(projectMemoryEntries.title, `bundle:${bundleId}`)] : []),
-      )
-    )
-    .orderBy(desc(projectMemoryEntries.createdAt))
-    .limit(1000);
+    .where(where)
+    /* `id` is the tiebreaker. Every row of one bundle is written in a single
+       transaction, so a multi-project bundle's rows share a created_at to the
+       microsecond; without it the rows that fall off the scan could differ
+       between two identical reads. */
+    .orderBy(desc(projectMemoryEntries.createdAt), desc(projectMemoryEntries.id))
+    .limit(BUNDLE_ROW_SCAN);
 
   const normalized = rows
     .map(row => {
@@ -924,7 +965,13 @@ async function loadBundlesForOrg(organizationId: number, bundleId?: string, exec
     .filter((row): row is ReportBundleRecord & { id: string } => !!row);
 
   const deduped = dedupeByLatest(normalized).map(({ id: _id, ...rest }) => rest);
-  return deduped;
+  const registerTotal = Number(counted?.n ?? deduped.length);
+  return { bundles: deduped, registerTotal, truncated: deduped.length < registerTotal };
+}
+
+/** The bundles alone, for the callers that need no coverage statement. */
+async function loadBundlesForOrg(organizationId: number, bundleId?: string, executor: ReportDb = db): Promise<ReportBundleRecord[]> {
+  return (await loadBundleRegister(organizationId, bundleId, executor)).bundles;
 }
 
 async function loadBundleById(
@@ -2297,10 +2344,18 @@ router.get('/bundles', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
-    const rows = await loadBundlesForOrg(organizationId);
+    const register = await loadBundleRegister(organizationId);
     const allowed = [];
-    for (const bundle of rows) if (await canReadBundle(req, bundle)) allowed.push(bundle);
-    return res.json({ data: allowed });
+    for (const bundle of register.bundles) if (await canReadBundle(req, bundle)) allowed.push(bundle);
+    /* `registerTotal` is the register's own count, BEFORE the per-project read
+       check above — so it is deliberately not offered as "how many you may
+       see", which would need every bundle loaded to know. It is sent only
+       alongside `truncated`, where the one honest statement is "this register
+       holds more than are shown here". */
+    return res.json({
+      data: allowed,
+      ...(register.truncated ? { meta: { truncated: true, registerTotal: register.registerTotal } } : {}),
+    });
   } catch (error: any) {
     if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     return serverError(res, logger, 'loading bundles', error);
