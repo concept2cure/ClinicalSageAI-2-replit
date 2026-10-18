@@ -1,14 +1,17 @@
 /** Actual authenticated authoring HTTP and canonical SQL/evidence on PGlite.
  * Single-connection execution proves atomicity, not native PostgreSQL concurrency. */
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { AUTHOR, AUTHORING_ACCESS_DDL, ORG, OTHER_PROGRAM, PREREQ, PROGRAM, PROGRAM_B, asToken, makeApp, mint } from './_authoring-canvas-fixture';
+import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
+import { AUTHOR, AUTHORING_ACCESS_DDL, ORG, OTHER_PROGRAM, PREREQ, PROGRAM, PROGRAM_B, VAULT_DDL, asToken, makeApp, mint } from './_authoring-canvas-fixture';
+import { RECORDED_LINEAGE_STORES_DDL } from '../../services/document-data-disposition/__tests__/lineage-stores-fixture';
 import type { AssemblyPlan } from '../../../shared/authoring/assembly';
 import { getIndAuthoringTemplates } from '../../services/authoring/ind-authoring-templates';
 import { builtinAuthoringTemplateId } from '../../services/authoring/builtin-authoring-templates';
+import { readSelectedAuthoringSources } from '../../services/authoring/authoring-assembly-sources';
+import type { AssemblySourceManifest, AssemblySourceSelector } from '../../../shared/authoring/assembly-sources';
 
 const seam = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, sql: [] as string[], fail: '', matches: 0,
   commitFault: '' as '' | 'before' | 'after' | 'revoked', releases: [] as unknown[] }));
@@ -30,7 +33,10 @@ const outline = () => [
 ];
 
 beforeAll(async () => {
-  db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL, migrations: [
+  db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL + RECORDED_LINEAGE_STORES_DDL
+    + extractTableDdl('db/migrations/20260724_clinical_regulatory_evidence_spine.sql', ['cre_evidence_sources'])
+    + 'ALTER TABLE cre_evidence_sources ADD COLUMN created_by integer;'
+    + 'ALTER TABLE concept2cure_artifacts ADD COLUMN artifact_id text, ADD COLUMN content_hash text, ADD COLUMN metadata jsonb;', migrations: [
     'db/migrations/20260725_authoring_document_loop_tables.sql',
     'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
     'db/migrations/20260725_authoring_audit_trail.sql',
@@ -46,13 +52,23 @@ beforeAll(async () => {
     'migrations/20260814d_document_alias_map.sql',
     'migrations/20260921_audit_logs_chain_seq.sql',
     'migrations/20260921_authoring_document_provenance.sql',
+    'migrations/20260905_document_catalog.sql',
+    'migrations/20261008e_document_catalog_attribution.sql',
+    'migrations/20261006_document_data_dispositions.sql',
+    'migrations/20260726_cre_source_program_scope.sql',
+    'migrations/20260829_cre_source_versioning.sql',
+    'migrations/20261008c_data_room_source_text.sql',
   ] });
   seam.db = db.db;
   const query = async (sql: string, values?: unknown[]) => {
     seam.sql.push(sql);
     const writes: Record<string, RegExp> = { revision: /INSERT INTO doc_revisions\b/i,
-      audit: /INSERT INTO authoring_audit_trail\b/i, lineage: /INSERT INTO document_span_lineage\b/i };
-    if (seam.fail && writes[seam.fail].test(sql) && ++seam.matches === 2) throw new Error(`injected second-section ${seam.fail} failure`);
+      audit: /INSERT INTO authoring_audit_trail\b/i, lineage: /INSERT INTO document_span_lineage\b/i,
+      sourceaudit: /INSERT INTO authoring_audit_trail\b/i };
+    if (seam.fail === 'sourceaudit' && writes.sourceaudit.test(sql) && values?.includes('ASSEMBLY_SOURCES')) {
+      seam.matches++; throw new Error('Injected assembly manifest evidence failure');
+    }
+    if (seam.fail && seam.fail !== 'sourceaudit' && writes[seam.fail].test(sql) && ++seam.matches === 2) throw new Error(`injected second-section ${seam.fail} failure`);
     return db.pool.query(sql, values);
   };
   let checkedOut = false;
@@ -122,8 +138,180 @@ async function evidenceCounts() {
     (SELECT count(*)::int FROM authoring_audit_trail WHERE doc_id=$1) AS audits,
     (SELECT count(*)::int FROM document_span_lineage WHERE document_id IN(SELECT id::text FROM authoring_sections WHERE doc_id=$1)) AS lineage`, [docId])).rows[0];
 }
+const sha = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex');
+async function captured(text = 'Captured unfiled protocol: synthetic participant count 12; investigator review required.') {
+  const contentHash = sha(randomUUID());
+  const rows = (await db.pool.query(`INSERT INTO cre_evidence_sources
+    (organization_id,client_program_id,source_type,title,checksum,version,extraction_status,extracted_text,created_by)
+    VALUES($1,$2,'client_document','Captured protocol',$3,'capture-1','extracted',$4,$5) RETURNING id`,
+  [ORG, PROGRAM, contentHash, text, Number(AUTHOR.id)])).rows as Array<{ id: number }>;
+  return { kind: 'data-room' as const, sourceId: rows[0].id, expectedChecksum: contentHash };
+}
+async function vaulted(text = 'Vault source: synthetic treatment exposure and investigator findings.') {
+  const documentId = randomUUID(); const contentHash = sha(documentId);
+  await db.pool.query(`INSERT INTO vault.documents(id,program_id,organization_id,document_code,document_title,document_type,content_hash,extracted_text)
+    VALUES($1::uuid,$2,$3,$1::uuid::text,'Vault protocol','protocol',$4,$5)`, [documentId, PROGRAM, ORG, contentHash, text]);
+  await db.pool.query(`INSERT INTO vault.document_catalog(document_id,content_hash,catalog_status,extraction_method,char_count)
+    VALUES($1,$2,'extracted','plain-text',$3)`, [documentId, contentHash, text.length]);
+  return { kind: 'vault' as const, documentId, expectedChecksum: contentHash };
+}
+const sourceIdentity = () => ({ organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM });
+const readSources = (sources: AssemblySourceSelector[], expectedManifest?: AssemblySourceManifest) =>
+  readSelectedAuthoringSources({ query: async (sql, args) => ({ rows: (await db.pool.query(sql, args)).rows as Array<Record<string, unknown>> }) },
+    sourceIdentity(), sources, { expectedManifest });
+async function withdraw(source: Awaited<ReturnType<typeof captured>>, choice: 'keep_data' | 'remove_data') {
+  await db.pool.query(`INSERT INTO public.document_data_dispositions
+    (organization_id,program_id,captured_source_id,choice,reason,actor_id,source_sha256,preview_hash,linked_ids,impact_snapshot,audit_receipt)
+    VALUES($1,$2,$3,$4,'Governed synthetic source withdrawal for integration verification',$5,$6,$6,$7::jsonb,'{}'::jsonb,$8::jsonb)`,
+  [ORG, PROGRAM, source.sourceId, choice, Number(AUTHOR.id), source.expectedChecksum,
+    JSON.stringify({ capturedSourceIds: [source.sourceId], vaultDocumentIds: [], artifactIds: [], uploadIds: [] }),
+    JSON.stringify({ id: randomUUID(), sha256Chain: 'a'.repeat(64) })]);
+}
+
+describe('catalogue sources through the existing assembly HTTP and SQL', () => {
+  it('previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows', async () => {
+    const sources = [await captured(), await vaulted()];
+    seam.sql.length = 0;
+    const planned = await plan({ sources });
+    expect(planned.sources?.entries.map(entry => entry.source)).toEqual(sources);
+    expect(planned.sources?.entries.map(entry => entry.title)).toEqual(['Captured protocol', 'Vault protocol']);
+    expect(planned.sources?.entries.every(entry => entry.extractedTextSha256.length === 64 && entry.span.sha256.length === 64)).toBe(true);
+    expect(JSON.stringify(planned)).not.toContain('synthetic participant count');
+    expect(seam.sql.some(sql => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(sql))).toBe(false);
+    const verified = await readSources(sources, planned.sources);
+    expect(verified.manifest).toEqual(planned.sources);
+    expect(verified.chunks[0]).toMatchObject({ sourceId: `cre_source:${sources[0].kind === 'data-room' ? sources[0].sourceId : ''}` });
+    expect(verified.chunks[1].sourceId).toBeNull();
+  });
+
+  it('records reference intent even when every selected section is preserved, with no new text or genesis', async () => {
+    const sources = [await captured()]; const selection = { target: 'section', code: '2.5.1' };
+    const planned = await plan({ sources, selection }); const before = await stored();
+    const parent = (await db.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1', [docId])).rows[0];
+    const response = await commit(planned, { sources, selection });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(await stored()).toEqual(before);
+    expect(await evidenceCounts()).toMatchObject({ revisions: 0, audits: 1, lineage: 0 });
+    const audits = (await db.pool.query('SELECT operation_type,section_id,metadata FROM authoring_audit_trail WHERE doc_id=$1', [docId])).rows;
+    expect(audits).toEqual([expect.objectContaining({ operation_type: 'ASSEMBLY_SOURCES', section_id: null,
+      metadata: expect.objectContaining({ assembly: expect.objectContaining({ sources: planned.sources, selection }) }) })]);
+    expect((await db.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1', [docId])).rows[0]).toEqual(parent);
+    expect(seam.sql.some(sql => sql.includes('cre_evidence_sources') && sql.includes('FOR SHARE'))).toBe(true);
+  });
+
+  it('persists the same manifest on appended section evidence and the document assembly event', async () => {
+    const sources = [await captured(), await vaulted()]; const planned = await plan({ sources });
+    const response = await commit(planned, { sources });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(await evidenceCounts()).toMatchObject({ revisions: 2, audits: 3 });
+    const audits = (await db.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1', [docId])).rows as Array<{ metadata: { assembly: { sources: AssemblySourceManifest } } }>;
+    expect(audits.every(row => row.metadata.assembly.sources.fingerprint === planned.sources?.fingerprint)).toBe(true);
+    expect((await stored()).every(row => !String(row.content).includes('synthetic participant count'))).toBe(true);
+  });
+
+  it.each(['data-room', 'vault'] as const)('rejects a same-length %s extraction correction and rolls back the entire source-bound build', async kind => {
+    const source = kind === 'data-room' ? await captured('Observed result 12 participants.') : await vaulted('Observed result 12 participants.');
+    const planned = await plan({ sources: [source] }); const before = await stored(); const counts = await evidenceCounts();
+    if (source.kind === 'data-room') await db.pool.query('UPDATE cre_evidence_sources SET extracted_text=$2 WHERE id=$1', [source.sourceId, 'Observed result 13 participants.']);
+    else await db.pool.query('UPDATE vault.documents SET extracted_text=$2 WHERE id=$1', [source.documentId, 'Observed result 13 participants.']);
+    const response = await commit(planned, { sources: [source] });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.data).toBeUndefined();
+    expect(await stored()).toEqual(before); expect(await evidenceCounts()).toEqual(counts);
+    expect(seam.sql.some(sql => /^ROLLBACK/.test(sql))).toBe(true);
+  });
+
+  it('reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt', async () => {
+    const text = 'Unrelated preamble. '.repeat(800) + 'Captured protocol primary efficacy result. '.repeat(400);
+    const source = await captured(text); const planned = await plan({ sources: [source] });
+    const manifest = planned.sources!;
+    expect(manifest.entries[0].span.end - manifest.entries[0].span.start).toBeLessThanOrEqual(8000);
+    const verified = await readSelectedAuthoringSources({ query: async (sql, args) => ({ rows: (await db.pool.query(sql, args)).rows as Array<Record<string, unknown>> }) },
+      sourceIdentity(), [source], { query: 'unrelated preamble', expectedManifest: manifest });
+    expect(verified.chunks[0].content).toBe(text.slice(manifest.entries[0].span.start, manifest.entries[0].span.end));
+    const forged = globalThis.structuredClone(manifest); forged.entries[0].span.sha256 = 'f'.repeat(64);
+    await expect(readSources([source], forged)).rejects.toMatchObject({ status: 409, code: 'ASSEMBLY_SOURCES_CHANGED' });
+  });
+
+  it('refuses another project source and never reads its body', async () => {
+    const source = await captured();
+    await db.pool.query('UPDATE cre_evidence_sources SET client_program_id=$2 WHERE id=$1', [source.sourceId, PROGRAM_B]);
+    seam.sql.length = 0;
+    const response = await preview({ sources: [source] });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.data).toBeUndefined();
+    expect(seam.sql.some(sql => /^SELECT extracted_text FROM cre_evidence_sources/.test(sql))).toBe(false);
+    expect(seam.sql.some(sql => /SELECT s\.\*,/.test(sql))).toBe(false);
+  });
+
+  it('fails the selected set when one source becomes unreadable instead of silently dropping it', async () => {
+    const sources = [await captured(), await captured('Will become unavailable.')];
+    await db.pool.query("UPDATE cre_evidence_sources SET extracted_text='',extraction_status='failed' WHERE id=$1", [sources[1].sourceId]);
+    const response = await preview({ sources });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error).toBe('ASSEMBLY_SOURCES_UNAVAILABLE');
+    expect(response.body.data).toBeUndefined();
+  });
+});
+
+describe('retained source eligibility and transactional reference evidence', () => {
+  it('allows current verified retained Data Room text while disclosing the unavailable original', async () => {
+    const source = await captured();
+    await withdraw(source, 'keep_data');
+    const planned = await plan({ sources: [source] });
+    expect(planned.sources?.entries[0]).toMatchObject({ originalFileAvailable: false, disposition: 'keep_data' });
+    expect(planned.sources?.limitations.join(' ')).toContain('original file is unavailable');
+    const response = await commit(planned, { sources: [source] });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+  });
+
+  it.each(['withdrawn', 'superseded', 'checksum'] as const)('refuses a %s selected Data Room record without appending anything', async reason => {
+    const source = await captured(); const sources = [source]; const planned = await plan({ sources });
+    const before = await stored(); const counts = await evidenceCounts();
+    if (reason === 'withdrawn') await withdraw(source, 'remove_data');
+    else if (reason === 'superseded') await db.pool.query('UPDATE cre_evidence_sources SET is_current=false WHERE id=$1', [source.sourceId]);
+    else source.expectedChecksum = 'f'.repeat(64);
+    const response = await commit(planned, { sources });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.data).toBeUndefined();
+    expect(await stored()).toEqual(before); expect(await evidenceCounts()).toEqual(counts);
+  });
+
+  it('rolls back all appended text and evidence if recording the source-reference event fails', async () => {
+    const sources = [await captured()]; const planned = await plan({ sources });
+    const before = await stored(); const counts = await evidenceCounts();
+    seam.fail = 'sourceaudit';
+    const response = await commit(planned, { sources });
+    expect(response.status, JSON.stringify(response.body)).toBe(503);
+    expect(seam.matches).toBe(1);
+    expect(await stored()).toEqual(before); expect(await evidenceCounts()).toEqual(counts);
+    expect(seam.sql.some(sql => /^ROLLBACK/.test(sql))).toBe(true);
+  });
+
+  it('rechecks current source-parent access after reading and withholds an asynchronously revoked source', async () => {
+    const sources = [await captured()]; let revoked = false;
+    const q = { query: async (sql: string, args?: unknown[]) => {
+      const result = await db.pool.query(sql, args);
+      if (!revoked && /^SELECT extracted_text FROM cre_evidence_sources/.test(sql)) {
+        revoked = true;
+        await db.pool.query('UPDATE projects SET owner_id=5,created_by_id=5 WHERE id=42');
+        await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+      }
+      return { rows: result.rows as Array<Record<string, unknown>> };
+    } };
+    await expect(readSelectedAuthoringSources(q, sourceIdentity(), sources)).rejects.toMatchObject({ code: 'ASSEMBLY_SOURCES_UNAVAILABLE' });
+    expect(revoked).toBe(true);
+  });
+});
 
 describe('current-document assembly over real HTTP', () => {
+  it('refuses an explicitly empty catalogue selection instead of silently building without its sources', async () => {
+    const response = await preview({ sources: [] });
+    expect(response.status, JSON.stringify(response.body)).toBe(400);
+    expect(response.body.error).toBe('ASSEMBLY_SOURCES_INVALID');
+    expect(seam.sql.some(sql => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(sql))).toBe(false);
+  });
+
   it('previews without writes and preserves normalized existing identities/content/order', async () => {
     const planned = await plan();
     expect(planned.rows.map(row => [row.code, row.disposition, row.ordering])).toEqual([

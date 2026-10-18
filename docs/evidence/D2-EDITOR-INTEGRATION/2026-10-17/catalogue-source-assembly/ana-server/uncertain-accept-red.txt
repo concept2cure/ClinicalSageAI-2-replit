@@ -1,0 +1,166 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:41.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:44.458Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:50:44.459Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:44.459Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+✅ Template tables initialized
+
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {}
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]}
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:50:45.740Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:50:45.746Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "d7f8c101-63ad-4478-be67-684dbd3ef18a",
+    "tenantId": 1,
+    "err": "Synthetic lost COMMIT reply before dispatch"
+  }
+}
+
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 681ms
+   → {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The draft was not saved: its source/author lineage or its audit record could not be written. Saving content without provenance or a record is not permitted."}}: expected 500 to be 503 // Object.is equality
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:50:46.221Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:50:46.225Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "2d8b1d4c-a0a8-4204-b673-41af679eba81",
+    "tenantId": 1,
+    "err": "Synthetic lost COMMIT reply after commit"
+  }
+}
+
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 471ms
+   → {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The draft was not saved: its source/author lineage or its audit record could not be written. Saving content without provenance or a record is not permitted."}}: expected 500 to be 503 // Object.is equality
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4314:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+{
+  "timestamp": "2026-10-17T23:50:46.689Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "2e63f042-6b0a-4df7-a434-a200a61fe4fd",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 464ms
+   → {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The draft was not saved: its source/author lineage or its audit record could not be written. Saving content without provenance or a record is not permitted."}}: expected 500 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+AssertionError: {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The draft was not saved: its source/author lineage or its audit record could not be written. Saving content without provenance or a record is not permitted."}}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/authoringSelectedSources.pglite.test.ts:245:60
+    243|     expect(content).toBe(phase === 'after' ? 'Prepared candidate for h…
+    244|     expect(await parked(draftId)).toBe(phase === 'after' ? 0 : 1);
+    245|     expect(response.status, JSON.stringify(response.body)).toBe(503);
+       |                                                            ^
+    246|     expect(response.body.error.code).toBe('DRAFT_ACCEPT_UNCONFIRMED');
+    247|     expect(response.body.error.message).not.toMatch(/nothing (?:was )?…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+AssertionError: {"success":false,"error":{"code":"LINEAGE_REQUIRED","message":"The draft was not saved: its source/author lineage or its audit record could not be written. Saving content without provenance or a record is not permitted."}}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/authoringSelectedSources.pglite.test.ts:259:60
+    257|     trace.failOn = null; await cleanFixtureTransaction();
+    258|     expect(await parked(draftId)).toBe(1); await unchanged(id);
+    259|     expect(response.status, JSON.stringify(response.body)).toBe(503);
+       |                                                            ^
+    260|     expect(response.body.error.code).toBe('DRAFT_ACCEPT_UNCONFIRMED');
+    261|     expect(h.acceptSql.filter(sql => sql === 'COMMIT')).toHaveLength(0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 skipped (14)
+   Start at  23:50:35
+   Duration  11.05s (transform 4.20s, setup 105ms, import 772ms, tests 9.85s, environment 0ms)

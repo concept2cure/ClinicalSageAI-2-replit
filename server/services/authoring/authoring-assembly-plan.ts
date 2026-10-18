@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json';
 import type { AssemblyPlan, AssemblyPlanRow, AssemblyPreviewInput, AssemblyCommitInput, AssemblySelection } from '../../../shared/authoring/assembly';
 import type { TemplateSectionSeed } from './authoring-template-sections';
+import { readAssemblySourceSelectors, type AssemblySourceManifest } from '../../../shared/authoring/assembly-sources';
 
 export class AssemblyError extends Error {
   constructor(readonly status: 400 | 401 | 403 | 404 | 409 | 503, readonly code: string, message: string) { super(message); }
@@ -30,6 +31,11 @@ export function parseAssemblyInput(raw: unknown, commit = false): AssemblyPrevie
     throw new AssemblyError(400, 'ASSEMBLY_INPUT_INVALID', 'Choose an exact project and template. Nothing was changed.');
   }
   const value: AssemblyPreviewInput = { programId: body.programId.toLowerCase(), templateId: body.templateId.toLowerCase(), selection: parseSelection(body.selection) };
+  if (body.sources !== undefined) {
+    const sources = readAssemblySourceSelectors(body.sources);
+    if (!sources) throw new AssemblyError(400, 'ASSEMBLY_SOURCES_INVALID', 'Choose one to five exact sources from this project. Nothing was changed.');
+    value.sources = sources;
+  }
   return commit ? parseCommit(body, value) : value;
 }
 
@@ -83,7 +89,7 @@ function plannedRow(row: TemplateSectionSeed, saved: AssemblyStoredSection | und
     aiDraftableReason: template.aiDraftableReason, ...(draftingGuidance ? { draftingGuidance } : {}), gaps };
 }
 
-export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStoredSection[], template: AssemblyTemplate, input: AssemblyPreviewInput): AssemblyPlan {
+export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStoredSection[], template: AssemblyTemplate, input: AssemblyPreviewInput, sources?: AssemblySourceManifest): AssemblyPlan {
   const current = currentSections(existing);
   const templateRows = checkedTemplateRows(template);
   const chosen = input.selection.target === 'document' ? templateRows : templateRows.filter(row => assemblyCodeKey(row.code) === assemblyCodeKey(input.selection.target === 'section' ? input.selection.code : ''));
@@ -99,6 +105,6 @@ export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStore
   const base = { version: 1 as const, docId: doc.id, programId: input.programId, templateId: template.id, selection: input.selection,
     targetSnapshot: assemblyHash({ document: doc, sections: existing }), templateSnapshot: template.snapshot,
     templateName: template.name, draftRegion: template.draftRegion, limitations: template.limitations, rows,
-    gaps: rows.flatMap(row => row.gaps.map(gap => `${row.code}: ${gap}`)) };
+    gaps: rows.flatMap(row => row.gaps.map(gap => `${row.code}: ${gap}`)), ...(sources ? { sources } : {}) };
   return { ...base, fingerprint: assemblyHash(base) };
 }

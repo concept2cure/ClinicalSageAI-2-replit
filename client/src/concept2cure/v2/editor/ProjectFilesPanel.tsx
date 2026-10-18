@@ -80,6 +80,8 @@ export interface ProjectFilesPanelProps {
   onInsertReference?: (text: string) => boolean;
   /** The host guards unsaved work before opening the returned exact document. */
   onOpenDocument?: (docId: string) => void;
+  /** External source-library hosts navigate after publishing an assembly target. */
+  onNav?: (id: string) => void;
   /** Uses the host's existing conversation for IND preparation and source study. */
   onAsk?: (text: string) => void;
 }
@@ -551,7 +553,7 @@ export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
 
 function ProjectFilesForProgram({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast,
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav,
 }: ProjectFilesPanelProps) {
   const editorAttached = Boolean(onCite && onInsertReference);
   const { state, vault, readError, load } = useProjectVaultRead(programId);
@@ -605,7 +607,7 @@ function ProjectFilesForProgram({
         <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
       </div>
       </div>
-      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} />}
+      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} onNav={onNav} />}
       {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={onAsk} onOpenDocument={onOpenDocument}
         onFindSources={text => { setQuery(text); setLane('vault'); }} />}
       {lane === 'vault' && <>

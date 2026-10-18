@@ -4,6 +4,7 @@ import type { AssemblyOperation } from './useAuthoringAssemblyBuild';
 import type { AssemblyDraftSlot } from './assemblyBuildState';
 import { inspectAssemblyDocument, normalizedAssemblyCode } from './assemblyBuildTransport';
 import type { AssemblyPlan, AssemblyPlanRow } from '@shared/authoring/assembly';
+import { assemblySelectionKey } from './assemblySourceSelection';
 
 function boundedReferenceText(value: string, encodedLimit: number): string {
   let end = Math.min(value.length, encodedLimit);
@@ -20,13 +21,13 @@ export function assemblyDraftReference(plan: AssemblyPlan, row: AssemblyPlanRow)
   return `BEGIN_TEMPLATE_REFERENCE_JSON\n${JSON.stringify(reference)}\nEND_TEMPLATE_REFERENCE_JSON`;
 }
 
-function updateSlot(operation: AssemblyOperation, id: string, patch: Partial<AssemblyDraftSlot>): void {
-  operation.update({ slots: operation.bucket.state.slots.map(slot => slot.section.id === id ? { ...slot, ...patch } : slot) });
+function updateSlot(operation: AssemblyOperation, original: AssemblyDraftSlot, patch: Partial<AssemblyDraftSlot>): void {
+  operation.update({ slots: operation.bucket.state.slots.map(slot => slot.section.id === original.section.id && slot.sourceSelectionKey === original.sourceSelectionKey ? { ...slot, ...patch } : slot) });
 }
 function retainedCandidateGuard(operation: AssemblyOperation): () => boolean {
-  const { owner, bucket } = operation; const key = owner.key; const revision = owner.contextRevision;
+  const { owner, bucket } = operation; const key = owner.key; const revision = owner.contextRevision; const sourceRevision = bucket.sourceRevision;
   return captureEditorDraftGuard({ docId: operation.options.docId, programId: operation.options.programId,
-    isCurrent: () => owner.alive && owner.key === key && owner.contextRevision === revision && owner.bucket === bucket });
+    isCurrent: () => owner.alive && owner.key === key && owner.contextRevision === revision && owner.bucket === bucket && bucket.sourceRevision === sourceRevision });
 }
 async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, region: string): Promise<boolean> {
   if (!operation.current() || operation.bucket.stopRequested) return false;
@@ -35,28 +36,29 @@ async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, 
   if (!operation.current() || operation.bucket.stopRequested) return false;
   const row = saved?.find(section => section.id === slot.section.id && section.code === slot.section.code);
   if (!row || row.content.trim() !== '') {
-    updateSlot(operation, slot.section.id, { status: 'failed', message: row ? 'Saved text now exists. It was preserved; no new candidate was generated.' : 'The exact saved section could not be confirmed. Check the document before retrying.' });
+    updateSlot(operation, slot, { status: 'failed', message: row ? 'Saved text now exists. It was preserved; no new candidate was generated.' : 'The exact saved section could not be confirmed. Check the document before retrying.' });
     return false;
   }
-  updateSlot(operation, slot.section.id, { status: 'drafting', message: undefined });
+  updateSlot(operation, slot, { status: 'drafting', message: undefined });
   const result = await generateAuthoringDraft({ sectionId: slot.section.id, region,
     context: slot.referenceContext,
+    ...(slot.sources ? { sources: slot.sources } : {}),
     ...(operation.bucket.state.requirements.trim() ? { requirements: operation.bucket.state.requirements.trim() } : {}) },
   operation.current);
   if (!operation.current()) {
-    updateSlot(operation, slot.section.id, { status: 'not-started', message: 'Draft preparation stopped before a candidate could be retained. Retry is explicit.' });
+    updateSlot(operation, slot, { status: 'not-started', message: 'Draft preparation stopped before a candidate could be retained. Retry is explicit.' });
     return false;
   }
   if (!result.ok) {
-    updateSlot(operation, slot.section.id, { status: 'failed', message: result.message }); return false;
+    updateSlot(operation, slot, { status: 'failed', message: result.message }); return false;
   }
-  updateSlot(operation, slot.section.id, { status: 'ready', current: retainedCandidateGuard(operation),
+  updateSlot(operation, slot, { status: 'ready', current: retainedCandidateGuard(operation),
     review: { draft: result.draft, body: result.draft.generated, changeReason: '', refusal: null } });
   return !operation.bucket.stopRequested;
 }
 export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<void> {
   const { bucket } = operation;
-  const pending = bucket.state.slots.filter(slot => ['failed', 'not-started'].includes(slot.status)
+  const pending = bucket.state.slots.filter(slot => slot.sourceSelectionKey === assemblySelectionKey(bucket.state.sourceSelection) && ['failed', 'not-started'].includes(slot.status)
     && (!bucket.state.targetCode || normalizedAssemblyCode(slot.section.code) === normalizedAssemblyCode(bucket.state.targetCode)));
   if (!pending.length) { operation.update({ phase: 'built', message: 'Structure is saved. No selected empty section is eligible for AnA drafting.' }); return; }
   if (pending.some(slot => !slot.draftRegion || !['FDA', 'EMA', 'PMDA', 'Health Canada'].includes(slot.draftRegion))) {
@@ -70,7 +72,8 @@ export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<v
     if (!(await draftSlot(operation, slot, slot.draftRegion!))) break;
   }
   if (bucket.token !== operation.token) return;
-  const ready = bucket.state.slots.filter(slot => slot.status === 'ready').length;
-  const remaining = bucket.state.slots.some(slot => ['not-started', 'failed'].includes(slot.status));
+  const selected = bucket.state.slots.filter(slot => slot.sourceSelectionKey === assemblySelectionKey(bucket.state.sourceSelection));
+  const ready = selected.filter(slot => slot.status === 'ready').length;
+  const remaining = selected.some(slot => ['not-started', 'failed'].includes(slot.status));
   operation.update({ phase: remaining ? 'stopped' : 'built', message: `${ready} candidate${ready === 1 ? '' : 's'} retained for individual review. ${remaining ? 'Preparation stopped; retry failed or not-started sections explicitly.' : 'Review and accept each section separately in the existing editor.'}` });
 }

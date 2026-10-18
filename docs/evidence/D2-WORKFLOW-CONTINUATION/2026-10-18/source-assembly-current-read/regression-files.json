@@ -1,0 +1,12 @@
+[
+  "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
+  "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+  "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx"
+]

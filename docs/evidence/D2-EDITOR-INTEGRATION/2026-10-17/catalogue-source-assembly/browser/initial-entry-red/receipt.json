@@ -1,0 +1,103 @@
+{
+  "status": "RED",
+  "failure": "AssertionError [ERR_ASSERTION]: The actual selected-source Data Room must offer Build in editor\n\n0 !== 1\n\n    at file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/baseline-entry.mjs:28:10",
+  "sourcePath": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+  "sourceSha256": "5b5d472ca881cd327bdb5ef337dc5470e2318525b8468f48e020287f2f491c3d",
+  "sourceFrozenDuringCapture": true,
+  "qualification": "Actual ProjectHome/Data Room with explicit selected source checkboxes and synthetic HTTP. Prefeature entry-contract assertion only; no provider/backend/full-shell qualification.",
+  "sourceTitles": [
+    "Synthetic analytical source A.txt",
+    "Synthetic analytical source B.txt"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/chat/threads",
+      "query": "?program_id=bbbbbbbb-0000-4000-8000-000000000181&limit=9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/concept2cure/projects/bbbbbbbb-0000-4000-8000-000000000181/unified-work",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/records",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/team",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/activity",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/workstreams",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/submissions",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/review/board",
+      "query": "?scope=all&programId=bbbbbbbb-0000-4000-8000-000000000181&limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/project-vault/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/conversation-files",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/source-changes",
+      "query": ""
+    }
+  ],
+  "mutations": [],
+  "unexpected": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

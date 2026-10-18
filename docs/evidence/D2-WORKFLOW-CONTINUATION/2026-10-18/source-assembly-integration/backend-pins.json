@@ -1,0 +1,23 @@
+{
+  "phase": "source-first assembly merged with current-authority Authoring reads",
+  "parents": [
+    "cc1607c3a36d2e4afab96383c96aa5d1702e6821",
+    "e62320e0a9555188a08ce426d7c16c72d372d824"
+  ],
+  "result": "104 tests,5 suites passed,zero skips/failures,42.60s",
+  "sources": {
+    "server/routes/authoring.router.ts": "9a8773867728c01a7848771f982ec364a02b5c71e827821454cfac27187813c1",
+    "server/services/authoring/authoring-document-read.ts": "e51ee0204e9b524ed15a5305f8220c6dff016f6f70d458dd990319bd4428d076",
+    "server/services/authoring/authoring-read-scope.ts": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+    "server/services/authoring/authoring-assembly.ts": "393ebdfb3e28a4d863660a19fd7fed0cf37253bd4c8428526fb0aca80687d114",
+    "server/services/authoring/authoring-assembly-plan.ts": "414b3ad4056a9e3c803aac5149c8c5bcc4a082369cc1944cdc3dd38547560916",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "f5328f518ffd82b581717a86d52a5e9290845dbeca677bdbaf2e8bb916668b9c",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts": "01fdfded891ad72d3e1a70f01cbcd287cae547c69f43d6e641626107ce7951af",
+    "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts": "b505a2563464c32080364c17ef9a8dbde2ed8189171fa58da23337c382c43ad7",
+    "server/routes/__tests__/authoringDocsStatusFilter.test.ts": "1cec547bbe0754bb09cdb4fbe0467478379a326300de2824481ccf54327e36f0",
+    "server/routes/__tests__/authoringDocsByConversation.test.ts": "f761b8ba2043f4df814c9cc71a3eccbd0b5816868c8045e22b0fc9bb830efefa"
+  },
+  "logSha256": "41bb32bbce2f45d7ee8a5d64ae76d2d35d6ece81cafef4cc318d2af9696f358b",
+  "limits": "Actual PGlite request SQL with explicit seams; no native/browser/provider/deployment acceptance. Earlier native37 evidence retains its earlier full router hash; the compositor and three GET handler bodies are unchanged by the incoming assembly routes."
+}

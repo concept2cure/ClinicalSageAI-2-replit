@@ -77,6 +77,9 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { captureAssemblySourceIntent, type AssemblySourceIntent } from './assemblySourceIntent';
+import { assemblySelectionKey } from './assemblySourceSelection';
+import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { TemplateGuidance } from './TemplateGuidance';
@@ -1509,9 +1512,10 @@ export function DocumentWorkbench({
      Peeked in the initializer (pure — safe under StrictMode double-render),
      CLEARED on mount: the channel is one-shot, so a target that isn't honoured
      now can never ambush a later, unrelated visit to the editor. */
-  const [editorTarget, setIncomingEditorTarget] = useState<EditorTarget | null>(() =>
-    consumeDeepLinks ? peekEditorTarget() ?? editorTargetFromSearch(window.location.search) : null,
-  );
+  const [editorTarget, setIncomingEditorTarget] = useState<EditorTarget | null>(() => {
+    const target = peekEditorTarget();
+    return consumeDeepLinks ? target ?? editorTargetFromSearch(window.location.search) : target?.assemblySources ? target : null;
+  });
   /** Where "Back to conversation" goes in the surface host: only what the
    *  sender named. Null means no such control is drawn. */
   const returnTo = editorTarget?.returnTo ?? null;
@@ -1534,7 +1538,7 @@ export function DocumentWorkbench({
   const navSectionCode = navHandOff.sectionCode;
   /** Unified open-on-mount target: a workbench editor-target wins (it carries
    *  the stronger claim); otherwise the navigation directive's section. */
-  const sectionOpenTarget = useMemo(
+  const sectionOpenTarget = useMemo<EditorTarget | null>(
     () =>
       editorTarget ??
       (navSectionCode
@@ -1545,6 +1549,8 @@ export function DocumentWorkbench({
             sectionLabel: null,
             programId: null,
             programTitle: null,
+            returnTo: null,
+            setAt: 0,
           }
         : null),
     [editorTarget, navSectionCode],
@@ -1559,7 +1565,7 @@ export function DocumentWorkbench({
    *  DIFFERENT document must neither consume it nor act on it. */
   const targetSectionRef = useRef<{ docId: string; sectionId: string } | null>(null);
   useEffect(() => {
-    if (consumeDeepLinks) clearEditorTarget();
+    if (consumeDeepLinks || peekEditorTarget()?.assemblySources) clearEditorTarget();
   }, [consumeDeepLinks]);
 
   const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
@@ -1598,30 +1604,41 @@ export function DocumentWorkbench({
      same defect as losing the text, pointed the other way. So the navigation is
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
-  type LeaveTarget =
-    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string; draftReview?: boolean }
-    | { kind: 'document'; id: string; sectionId?: string; module?: string }
-    | { kind: 'external-document'; id: string; module?: string }
-    | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
-    | { kind: 'host-back'; label: string; onContinue: () => void; module?: never }
-    | { kind: 'filter'; status: string; module?: never }
-    | { kind: 'view'; mode: 'section' | 'document'; module?: never }
-    | { kind: 'conversation'; prompt: string; module?: never };
+  type LeaveTarget = WorkbenchLeaveTarget;
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const pendingLeaveRef = useRef(pendingLeave);
   pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
   const navigationSequence = useRef(0);
+  const assemblyReceiver = useRef<{ token: object; target: EditorTarget; intent: AssemblySourceIntent | null } | null>(null);
+  const receiverInitialized = useRef(false);
+  const receiverAlive = useRef(true);
+  const outgoingAssembly = useRef(false);
+  useEffect(() => { receiverAlive.current = true; return () => { receiverAlive.current = false; }; }, []);
+  const captureSourceTarget = useCallback((target: EditorTarget) => {
+    const token = {}; const intent = captureAssemblySourceIntent(target,
+      () => receiverAlive.current && assemblyReceiver.current?.token === token);
+    assemblyReceiver.current = { token, target, intent };
+  }, []);
+  if (!receiverInitialized.current) {
+    receiverInitialized.current = true;
+    if (editorTarget?.assemblySources) captureSourceTarget(editorTarget);
+  }
+  const [acceptedAssemblyIntent, setAcceptedAssemblyIntent] = useState<AssemblySourceIntent | null>(null);
+  const admitAssemblyNavigation = useCallback((intent: AssemblySourceIntent, adopt = true): boolean => {
+    if (!intent.current() || intent.programId !== programId || programSwitchHeld || ceremonyOpen()) {
+      setTargetNotice('The source handoff context changed or a governed form is open. Finish that work, then select these sources again.'); return false;
+    }
+    if (adopt) setAcceptedAssemblyIntent(intent); return true;
+  }, [programId, programSwitchHeld]);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
   const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
   const applyStatusFilter = useCallback((value: string) => onStatusChange?.(value), [onStatusChange]);
   const applyNav = useCallback((target: LeaveTarget, savedVersion?: SavedSectionVersion | null) => {
-    if (target.kind === 'conversation' && programSwitchHeld) {
-      fireToast('Finish the project switch before opening a conversation.', 'error');
-      return;
-    }
+    if (!admitWorkbenchNavigation(target, programSwitchHeld,
+      () => fireToast('Finish the project switch before opening a conversation.', 'error'), admitAssemblyNavigation)) return;
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
@@ -1639,7 +1656,10 @@ export function DocumentWorkbench({
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
     else if (target.kind === 'external-document') {
-      setEditorTarget({ docType: null, docId: target.id, programId });
+      outgoingAssembly.current = true;
+      try { setEditorTarget({ docType: null, docId: target.id, programId,
+        ...(target.assemblyIntent ? { assemblySources: { version: 1 as const, sources: target.assemblyIntent.sources } } : {}) }); }
+      finally { outgoingAssembly.current = false; }
       onNav('document-authoring');
     } else if (target.kind === 'section') {
       if (target.mode) setViewMode(target.mode);
@@ -1651,22 +1671,21 @@ export function DocumentWorkbench({
       if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
       else setActiveDocId(target.id);
     }
-  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast, applyStatusFilter]);
+  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast, applyStatusFilter, admitAssemblyNavigation]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      if (!workbenchAssemblyIntent(target)) assemblyReceiver.current = null;
       if (target.kind === 'conversation' && programSwitchHeld) {
         fireToast('Finish the project switch before opening a conversation.', 'error');
         return false;
       }
       navigationSequence.current += 1;
-      const alreadyThere =
-        target.kind === 'filter' ? target.status === status : target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
-          ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
-          && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
+      const alreadyThere = workbenchAlreadyThere(target, { viewMode, sectionId: activeSectionId, docId: activeDocId, dirty, status });
       if (alreadyThere) {
         if (target.kind === 'section' && target.draftReview) setAiDraftOpen(true);
+        if (target.kind === 'document' && target.assemblyIntent) return admitAssemblyNavigation(target.assemblyIntent);
         return true;
       }
       if (!dirty) {
@@ -1678,7 +1697,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, status]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, status, admitAssemblyNavigation]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -2125,6 +2144,21 @@ export function DocumentWorkbench({
   });
 
   const markAssemblyAccepted = assembly.markAccepted;
+  const assemblySourceScope = assemblySelectionKey(assembly.sourceSelection);
+  const previousAssemblySourceScope = useRef(assemblySourceScope);
+  useEffect(() => {
+    if (previousAssemblySourceScope.current === assemblySourceScope) return;
+    previousAssemblySourceScope.current = assemblySourceScope;
+    setAiDraftOpen(false);
+  }, [assemblySourceScope]);
+  const selectedSourceReviewMissing = !!assembly.sourceSelection && (!activeSectionId || !assembly.reviewSessions[activeSectionId]?.sources);
+  const adoptAssemblySources = assembly.adoptSources;
+  useEffect(() => {
+    const intent = acceptedAssemblyIntent;
+    if (!intent || activeDocId !== intent.docId || programId !== intent.programId) return;
+    if (intent.current() && !programSwitchHeld && !ceremonyOpen()) adoptAssemblySources(intent.sources);
+    setAcceptedAssemblyIntent(null);
+  }, [acceptedAssemblyIntent, activeDocId, programId, programSwitchHeld, adoptAssemblySources]);
   const draftEditorScope = useRef({ docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty });
   draftEditorScope.current = { docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty };
 
@@ -2174,22 +2208,26 @@ export function DocumentWorkbench({
      state write re-ran the effect. `aliveRef` guards only real unmount. */
   const targetAttemptedRef = useRef(false);
   useEffect(() => {
-    if (!consumeDeepLinks) return;
     const handoff = () => {
+      if (outgoingAssembly.current) return;
       const target = peekEditorTarget();
+      if (!consumeDeepLinks && !target?.assemblySources) return;
       clearEditorTarget();
       if (!target) return;
+      assemblyReceiver.current = null;
       if (ceremonyOpen()) {
         setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
         return;
       }
+      if (target.assemblySources) captureSourceTarget(target);
+      else assemblyReceiver.current = null;
       targetAttemptedRef.current = false;
       navigationSequence.current += 1;
       setIncomingEditorTarget(target);
     };
     window.addEventListener(EDITOR_TARGET_EVENT, handoff);
     return () => window.removeEventListener(EDITOR_TARGET_EVENT, handoff);
-  }, [consumeDeepLinks]);
+  }, [consumeDeepLinks, captureSourceTarget]);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
     const sequence = navigationSequence.current;
@@ -2242,6 +2280,13 @@ export function DocumentWorkbench({
        default document before the switch landed). */
     if (t.docId) {
       targetAttemptedRef.current = true;
+      const intent = t.assemblySources ? assemblyReceiver.current?.target === t ? assemblyReceiver.current.intent : null : null;
+      if (t.assemblySources && (!intent || !intent.current())) {
+        setTargetNotice('The selected-source handoff is no longer current. Select those sources again; no document inherited them.'); return;
+      }
+      if (intent && pinnedDocId && t.docId !== pinnedDocId) {
+        requestLeave({ kind: 'external-document', id: t.docId, assemblyIntent: intent }); return;
+      }
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
         if (t.sectionCode) {
@@ -2254,7 +2299,7 @@ export function DocumentWorkbench({
            switch unmounts the section-keyed canvas, and if the author typed
            anything while this resolution was pending, the guard dialog gets
            to hold the navigation (see requestLeave above). */
-        const opened = requestLeave({ kind: 'document', id: linked.id });
+        const opened = requestLeave({ kind: 'document', id: linked.id, ...(intent ? { assemblyIntent: intent } : {}) });
         setTreeScrollNonce(n => n + 1);
         /* "Opened …" used to fire regardless — including when the guard held
            the navigation and the author then cancelled it. */
@@ -2354,6 +2399,7 @@ export function DocumentWorkbench({
     openExactDocumentSection,
     programSwitchHeld,
     readKey, readSession,
+    pinnedDocId,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -4538,11 +4584,13 @@ export function DocumentWorkbench({
                 setAiDraftOpen(o => !o);
               }}
               data-active={(aiDraftOpen && viewMode === 'section') || undefined}
-              disabled={!activeSection || contentReadOnly}
+              disabled={!activeSection || contentReadOnly || selectedSourceReviewMissing}
               data-testid="ai-draft-open"
               title={
                 editRefusal ? editRefusal : docSealed
                   ? 'This document is frozen — its content cannot be edited.'
+                  : selectedSourceReviewMissing
+                    ? 'Build a candidate from these selected sources first, then review it in this editor.'
                   : 'Draft this section from Data Room evidence and accept it with recorded citations.'
               }
             >

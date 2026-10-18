@@ -96,7 +96,7 @@ export function useAuthoringDraftReview(options: Options) {
     attempt.current = token;
     const current = captureEditorDraftGuard({ programId: currentOptions.programId, docId: currentOptions.docId,
       sectionId: currentOptions.sectionId, isCurrent: () => alive.current && scope.current === target && attempt.current === token
-        && latest.current.options.reviewSession?.isCurrent() !== false });
+        && currentOptions.reviewSession?.isCurrent() !== false && latest.current.options.reviewSession?.isCurrent() !== false });
     if (!current()) { attempt.current = null; return null; }
     return { token, current, options: currentOptions };
   };
@@ -110,7 +110,8 @@ export function useAuthoringDraftReview(options: Options) {
     const run = begin(); if (!run) return;
     setGenerating(true); setGeneratingSince(Date.now()); patch({ refusal: null });
     try {
-      const result = await generateAuthoringDraft({ sectionId: run.options.sectionId, ...request }, run.current);
+      const result = await generateAuthoringDraft({ sectionId: run.options.sectionId, ...request,
+        ...(run.options.reviewSession?.sources ? { sources: run.options.reviewSession.sources } : {}) }, run.current);
       if (!run.current() || result.ok === false && result.stale) return;
       if (result.ok) {
         const target = scope.current;
