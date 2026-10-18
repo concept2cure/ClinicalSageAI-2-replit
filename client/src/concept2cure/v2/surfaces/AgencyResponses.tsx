@@ -16,18 +16,26 @@
  *     question and the exact text shown. The person who wrote the text cannot
  *     approve it; the server says so before anyone types a password
  *     (`signRefusal`), and refuses it anyway.
- *   - Record a commitment made in a response (PMR, PMC, REMS…), into the one
- *     commitments register Communication's Commitments tab lists.
+ *   - Record a commitment made in a response (PMR, PMC, REMS…), into the
+ *     project's commitments register under Communication's Meetings & commitments.
+ *   - Withdraw a question recorded in error (governed, with a reason). It stays
+ *     in the record, marked withdrawn, and needs no response.
+ *   - Mark a letter that requires a response as asking nothing, with a reason,
+ *     when no question is recorded on it.
+ *   - Read every text a response has had, who wrote it and why, and the
+ *     signature that approved it, if one did (the history disclosure).
  *   - Download the response package once every response is approved as it
  *     stands. The server assembles it and records the export.
  *
  * This module decides nothing. A response's state (no response, draft,
- * changed after approval, approved), whether this person may sign it, and
- * whether the package is ready are all the server's words, read from the
- * signature table. Nothing here says a response is approved that the server
- * did not say is.
+ * changed after approval, approved, withdrawn), whether this person may write
+ * or sign, why the letter cannot close yet, and whether the package is ready
+ * are all the server's words. Nothing here says a response is approved that
+ * the server did not say is, and no control is offered that the server says
+ * this person would be refused.
  */
 import React from 'react';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { ApiRequestError, apiRequest } from '@/lib/queryClient';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
@@ -38,7 +46,7 @@ import { downloadBlob } from '../download';
 import { I } from '../icons';
 import type { CommRow } from './AgencyInbox';
 
-type ResponseState = 'unanswered' | 'drafted' | 'changed-after-approval' | 'approved';
+type ResponseState = 'unanswered' | 'drafted' | 'changed-after-approval' | 'approved' | 'withdrawn';
 
 interface SignatureView {
   signatureId: number;
@@ -54,6 +62,24 @@ interface CommitmentView {
   dueDate: string | null;
   regulatoryBasis: string | null;
   status: string;
+  /** The register's own reading: past due and not met is overdue. */
+  effectiveStatus: string;
+}
+
+interface RevisionView {
+  revision: number;
+  responseText: string;
+  writtenByName: string | null;
+  writtenAt: string;
+  reason: string;
+  approvedBy: SignatureView | null;
+}
+
+interface ViewerCapabilities {
+  canWrite: boolean;
+  writeRefusal: string | null;
+  canSign: boolean;
+  signAuthorityRefusal: string | null;
 }
 
 export interface AgencyQuestionView {
@@ -70,11 +96,23 @@ export interface AgencyQuestionView {
   approval: SignatureView | null;
   supersededApproval: SignatureView | null;
   signRefusal: { code: string; message: string } | null;
+  withdrawal: { withdrawnAt: string | null; withdrawnByName: string | null; reason: string | null } | null;
+  /** Every text this response has had, newest first. */
+  history: RevisionView[];
   commitments: CommitmentView[];
 }
 
 interface QuestionsPayload {
-  letter: { id: string; communicationType: string; closureStatus: string; dueDate: string | null };
+  letter: {
+    id: string;
+    communicationType: string;
+    closureStatus: string;
+    dueDate: string | null;
+    responseRequired: boolean;
+    /** Why the letter may not be closed now, in the server's words; null when it may. */
+    closeRefusal: string | null;
+  };
+  viewer: ViewerCapabilities;
   questions: AgencyQuestionView[];
   outstanding: Array<{ questionRef: string; state: string }>;
   packageReady: boolean;
@@ -82,7 +120,7 @@ interface QuestionsPayload {
 
 function isQuestionsPayload(v: unknown): v is QuestionsPayload {
   const p = v as QuestionsPayload | null;
-  return Boolean(p && p.letter && Array.isArray(p.questions) && Array.isArray(p.outstanding));
+  return Boolean(p && p.letter && p.viewer && Array.isArray(p.questions) && Array.isArray(p.outstanding));
 }
 
 const STATE_LABEL: Record<ResponseState, string> = {
@@ -90,13 +128,17 @@ const STATE_LABEL: Record<ResponseState, string> = {
   drafted: 'Draft',
   'changed-after-approval': 'Changed after approval',
   approved: 'Approved',
+  withdrawn: 'Withdrawn',
 };
 const STATE_TONE: Record<ResponseState, string> = {
   unanswered: 'idle',
   drafted: 'warn',
   'changed-after-approval': 'err',
   approved: 'ok',
+  withdrawn: 'idle',
 };
+/** Refusals that mean the record moved under this person: show it as it now stands. */
+const STALE_CODES = new Set(['RESPONSE_CHANGED', 'ALREADY_APPROVED', 'NOTHING_TO_SIGN', 'QUESTION_WITHDRAWN', 'LETTER_CLOSED']);
 const COMMITMENT_TYPES = [
   { value: 'pmr', label: 'Postmarketing requirement (PMR)' },
   { value: 'pmc', label: 'Postmarketing commitment (PMC)' },
@@ -128,35 +170,48 @@ function signatureSentence(s: SignatureView): string {
   return `${s.signerName} on ${when(s.signedAt)}${s.meaning ? ` (${s.meaning})` : ''}, signature ${s.signatureId}`;
 }
 
-/** One question: the agency's words, our response, its approval and its commitments. */
+/** One question: the agency's words, our response, its approval, its history and its commitments. */
 function QuestionCard({
   q,
   closed,
   busy,
+  viewer,
   onSave,
   onSign,
   onCommit,
+  onWithdraw,
 }: {
   q: AgencyQuestionView;
   closed: boolean;
   busy: boolean;
-  onSave: (q: AgencyQuestionView, text: string, reason: string) => Promise<boolean>;
+  viewer: ViewerCapabilities;
+  onSave: (q: AgencyQuestionView, baseRevision: number, text: string, reason: string) => Promise<boolean>;
   onSign: (q: AgencyQuestionView) => void;
   onCommit: (q: AgencyQuestionView) => void;
+  onWithdraw: (q: AgencyQuestionView) => void;
 }) {
   const [editing, setEditing] = React.useState(false);
   const [text, setText] = React.useState(q.responseText);
   const [reason, setReason] = React.useState('');
+  /* The revision the edit started from, held for the whole edit: a reload
+     while typing must not quietly move the base under the writer, or their
+     save would overwrite a text they never saw. */
+  const [baseRevision, setBaseRevision] = React.useState(q.responseRevision);
   const textId = React.useId();
   const reasonId = React.useId();
+  const withdrawn = q.state === 'withdrawn';
+  const writable = !closed && !withdrawn && viewer.canWrite;
+  const signable = !closed && (q.state === 'drafted' || q.state === 'changed-after-approval') && viewer.canWrite;
+  const signBlock = q.signRefusal?.message ?? (viewer.canSign ? null : viewer.signAuthorityRefusal);
 
   const startEdit = () => {
     setText(q.responseText);
     setReason('');
+    setBaseRevision(q.responseRevision);
     setEditing(true);
   };
   const save = async () => {
-    if (await onSave(q, text, reason)) setEditing(false);
+    if (await onSave(q, baseRevision, text, reason)) setEditing(false);
   };
 
   return (
@@ -170,6 +225,14 @@ function QuestionCard({
         <span className={'rd-chip tone-' + STATE_TONE[q.state]}>{STATE_LABEL[q.state]}</span>
       </div>
       <blockquote className="cc-q-text">{q.questionText}</blockquote>
+
+      {withdrawn && q.withdrawal && (
+        <p className="cc-q-sig">
+          Withdrawn{q.withdrawal.withdrawnByName ? ` by ${q.withdrawal.withdrawnByName}` : ''}
+          {q.withdrawal.withdrawnAt ? ` on ${when(q.withdrawal.withdrawnAt)}` : ''}
+          {q.withdrawal.reason ? `: ${q.withdrawal.reason}` : ''}. It needs no response and is left out of the package.
+        </p>
+      )}
 
       {editing ? (
         <div className="cc-q-edit">
@@ -186,8 +249,18 @@ function QuestionCard({
           {q.state === 'approved' && (
             <p className="cc-q-note">Saving a change ends this approval. The new text needs its own signature.</p>
           )}
+          {q.responseRevision !== baseRevision && (
+            <p className="cc-q-note" data-tone="err">
+              Someone saved revision {q.responseRevision} while you were editing revision {baseRevision}. Your save will be
+              refused; copy your text, cancel, and start again from the current response.
+            </p>
+          )}
           <div className="cc-comm-foot">
-            <button className="cc-btn sm primary" disabled={busy || reason.trim().length < 8} onClick={() => void save()}>
+            <button
+              className="cc-btn sm primary"
+              disabled={busy || reason.trim().length < GOVERNED_REASON_MIN}
+              onClick={() => void save()}
+            >
               Save response
             </button>
             <button className="cc-btn sm" disabled={busy} onClick={() => setEditing(false)}>
@@ -196,22 +269,25 @@ function QuestionCard({
           </div>
         </div>
       ) : (
-        <div className="cc-q-resp">
-          {q.responseText.trim() ? <p className="cc-q-body">{q.responseText}</p> : <p className="cc-q-note">No response has been written.</p>}
-          {q.responseRevision > 0 && (
-            <p className="cc-q-meta mono">
-              Revision {q.responseRevision}
-              {q.responseUpdatedByName ? `, written by ${q.responseUpdatedByName}` : ''}
-              {q.responseUpdatedAt ? ` on ${when(q.responseUpdatedAt)}` : ''}
-            </p>
-          )}
-        </div>
+        !withdrawn && (
+          <div className="cc-q-resp">
+            {q.responseText.trim() ? <p className="cc-q-body">{q.responseText}</p> : <p className="cc-q-note">No response has been written.</p>}
+            {q.responseRevision > 0 && (
+              <p className="cc-q-meta mono">
+                Revision {q.responseRevision}
+                {q.responseUpdatedByName ? `, written by ${q.responseUpdatedByName}` : ''}
+                {q.responseUpdatedAt ? ` on ${when(q.responseUpdatedAt)}` : ''}
+              </p>
+            )}
+          </div>
+        )
       )}
 
       {q.approval && <p className="cc-q-sig">Approved by {signatureSentence(q.approval)}.</p>}
       {q.state === 'changed-after-approval' && q.supersededApproval && (
         <p className="cc-q-sig" data-tone="err">
           Approved earlier by {signatureSentence(q.supersededApproval)}. The response has changed since, so it needs a new signature.
+          The approved text is kept in the history below.
         </p>
       )}
 
@@ -220,34 +296,62 @@ function QuestionCard({
           {q.commitments.map((c) => (
             <li key={c.id}>
               {c.commitmentType.toUpperCase()}: {c.description}
-              {c.dueDate ? `, due ${c.dueDate}` : ''} ({c.status.replace(/_/g, ' ')})
+              {c.dueDate ? `, due ${c.dueDate}` : ''} (
+              <span data-tone={c.effectiveStatus === 'overdue' ? 'err' : undefined}>{c.effectiveStatus.replace(/_/g, ' ')}</span>)
             </li>
           ))}
         </ul>
       )}
 
-      {!editing && (
+      {q.history.length > 0 && (
+        <details className="cc-q-hist">
+          <summary>
+            History · {q.history.length} text{q.history.length === 1 ? '' : 's'}
+          </summary>
+          <ol className="cc-q-hist-list">
+            {q.history.map((h) => (
+              <li key={h.revision}>
+                <p className="cc-q-meta mono">
+                  Revision {h.revision}
+                  {h.writtenByName ? `, written by ${h.writtenByName}` : ''} on {when(h.writtenAt)}. Reason: {h.reason}
+                </p>
+                <p className="cc-q-body">{h.responseText.trim() ? h.responseText : '(empty)'}</p>
+                <p className="cc-q-meta">{h.approvedBy ? `Approved by ${signatureSentence(h.approvedBy)}.` : 'Not approved.'}</p>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      {!editing && (writable || signable) && (
         <div className="cc-comm-foot">
-          {!closed && (
+          {writable && (
             <button className="cc-btn sm" disabled={busy} onClick={startEdit}>
               {I.penLine} {q.responseText.trim() ? 'Edit response' : 'Write response'}
             </button>
           )}
-          {!closed && q.state !== 'approved' && q.state !== 'unanswered' && (
+          {signable && (
             <button
               className="cc-btn sm primary"
-              disabled={busy || q.signRefusal !== null}
-              aria-describedby={q.signRefusal ? `${textId}-why` : undefined}
+              disabled={busy || signBlock !== null}
+              aria-describedby={signBlock ? `${textId}-why` : undefined}
               onClick={() => onSign(q)}
             >
               {I.check} Approve response
             </button>
           )}
-          <button className="cc-btn sm" disabled={busy} onClick={() => onCommit(q)}>
-            Record commitment
-          </button>
-          {q.signRefusal && q.state !== 'approved' && q.state !== 'unanswered' && (
-            <span id={`${textId}-why`} className="cc-q-note">{q.signRefusal.message}</span>
+          {writable && (
+            <button className="cc-btn sm" disabled={busy} onClick={() => onCommit(q)}>
+              Record commitment
+            </button>
+          )}
+          {writable && q.state !== 'approved' && (
+            <button className="cc-btn sm" disabled={busy} onClick={() => onWithdraw(q)}>
+              Withdraw question
+            </button>
+          )}
+          {signable && signBlock && (
+            <span id={`${textId}-why`} className="cc-q-note">{signBlock}</span>
           )}
         </div>
       )}
@@ -273,8 +377,12 @@ export function AgencyResponses({
   const [busy, setBusy] = React.useState(false);
   const [adding, setAdding] = React.useState(false);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
+  const [withdrawing, setWithdrawing] = React.useState<AgencyQuestionView | null>(null);
+  const [askingNothing, setAskingNothing] = React.useState(false);
   const [signing, setSigning] = React.useState<AgencyQuestionView | null>(null);
-  const signed = React.useRef(false);
+  /* Reload when the signing dialog closes: after a signature, or after a
+     refusal that says the record moved (another save, another approval). */
+  const reloadOnClose = React.useRef(false);
 
   const data = read.data;
   const closed = data?.letter.closureStatus === 'closed';
@@ -299,16 +407,17 @@ export function AgencyResponses({
     }
   };
 
-  const saveResponse = async (q: AgencyQuestionView, text: string, reason: string): Promise<boolean> => {
+  const saveResponse = async (q: AgencyQuestionView, baseRevision: number, text: string, reason: string): Promise<boolean> => {
     setBusy(true);
     try {
-      await apiRequest('PUT', `${base}/questions/${q.id}/response`, { responseText: text, expectedRevision: q.responseRevision, reason });
+      // The revision the writer started from, never the one on screen now.
+      await apiRequest('PUT', `${base}/questions/${q.id}/response`, { responseText: text, expectedRevision: baseRevision, reason });
       fire(`Response to ${q.questionRef} saved, with an audit entry.`);
       reload();
       return true;
     } catch (e) {
       fire(`Response to ${q.questionRef} not saved: ${said(e)}.`, 'error');
-      if (e instanceof ApiRequestError && e.code === 'RESPONSE_CHANGED') reload();
+      if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
       return false;
     } finally {
       setBusy(false);
@@ -336,6 +445,37 @@ export function AgencyResponses({
     }
   };
 
+  const withdraw = async (v: Record<string, string>) => {
+    if (!withdrawing) return;
+    setBusy(true);
+    try {
+      await apiRequest('POST', `${base}/questions/${withdrawing.id}/withdraw`, { reason: v.reason });
+      fire(`Question ${withdrawing.questionRef} withdrawn, with an audit entry. It stays in the record.`);
+      setWithdrawing(null);
+      reload();
+    } catch (e) {
+      fire(`Question ${withdrawing.questionRef} not withdrawn: ${said(e)}.`, 'error');
+      if (e instanceof ApiRequestError && e.code && STALE_CODES.has(e.code)) reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const markNoResponseRequired = async (v: Record<string, string>) => {
+    setBusy(true);
+    try {
+      await apiRequest('POST', `${base}/no-response-required`, { reason: v.reason });
+      fire('Letter marked as needing no response, with an audit entry. It can now be closed.');
+      setAskingNothing(false);
+      reload();
+    } catch (e) {
+      fire(`Letter not changed: ${said(e)}.`, 'error');
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const sign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
     const q = signing!;
     try {
@@ -350,10 +490,16 @@ export function AgencyResponses({
       if (!res.ok || body?.data?.state !== 'approved' || !body.signedAt) {
         throw new Error('Whether the response was approved could not be confirmed. Reload before signing again.');
       }
-      signed.current = true;
+      reloadOnClose.current = true;
       return { meaning: input.meaning, reason: input.reason, signedAt: body.signedAt };
     } catch (e) {
-      if (e instanceof ApiRequestError) throw new Error(`${e.message}`);
+      if (e instanceof ApiRequestError) {
+        if (e.code && STALE_CODES.has(e.code)) {
+          reloadOnClose.current = true;
+          throw new Error(`${e.message} Close this dialog to see the response as it now stands.`);
+        }
+        throw new Error(`${e.message}`);
+      }
       throw e;
     }
   };
@@ -396,7 +542,10 @@ export function AgencyResponses({
   }
 
   const questions = data?.questions ?? [];
-  const approvedCount = questions.filter((q) => q.state === 'approved').length;
+  const viewer: ViewerCapabilities = data?.viewer ?? { canWrite: false, writeRefusal: null, canSign: false, signAuthorityRefusal: null };
+  const asked = questions.filter((q) => q.state !== 'withdrawn');
+  const approvedCount = asked.filter((q) => q.state === 'approved').length;
+  const withdrawnCount = questions.length - asked.length;
 
   return (
     <section className="cc-qs" aria-label={`Questions and responses for ${letter.communicationType}`}>
@@ -404,20 +553,27 @@ export function AgencyResponses({
         <div className="pj-seclbl" style={{ margin: 0 }}>
           Questions and responses{' '}
           <span className="s">
-            · {questions.length} question{questions.length === 1 ? '' : 's'} · {approvedCount} approved
+            · {asked.length} question{asked.length === 1 ? '' : 's'} · {approvedCount} approved
+            {withdrawnCount > 0 ? ` · ${withdrawnCount} withdrawn` : ''}
           </span>
         </div>
-        {!closed && (
+        {!closed && viewer.canWrite && (
           <button className="cc-btn sm" disabled={busy} onClick={() => setAdding(true)}>
             {I.plus} Record question
           </button>
         )}
       </div>
 
+      {!closed && !viewer.canWrite && viewer.writeRefusal && (
+        <p className="cc-q-note" role="note">
+          You can read the questions and responses on this letter. {viewer.writeRefusal}
+        </p>
+      )}
+
       {questions.length === 0 ? (
         <p className="cc-q-note">
-          No questions are recorded on this letter. Record each question as the agency numbered and worded it; each then
-          takes a response and an approval.
+          No questions are recorded on this letter.
+          {!data?.letter.responseRequired && ' Record each question as the agency numbered and worded it; each then takes a response and an approval.'}
         </p>
       ) : (
         <ol className="cc-q-list">
@@ -427,18 +583,33 @@ export function AgencyResponses({
               q={q}
               closed={closed}
               busy={busy}
+              viewer={viewer}
               onSave={saveResponse}
               onSign={(x) => {
-                signed.current = false;
+                reloadOnClose.current = false;
                 setSigning(x);
               }}
               onCommit={setCommitting}
+              onWithdraw={setWithdrawing}
             />
           ))}
         </ol>
       )}
 
-      {questions.length > 0 && (
+      {!closed && data?.letter.closeRefusal && (
+        <p className="cc-q-note" role="note">
+          {data.letter.closeRefusal}
+        </p>
+      )}
+      {!closed && viewer.canWrite && data?.letter.responseRequired && asked.length === 0 && (
+        <div className="cc-comm-foot">
+          <button className="cc-btn sm" disabled={busy} onClick={() => setAskingNothing(true)}>
+            Mark as needing no response
+          </button>
+        </div>
+      )}
+
+      {asked.length > 0 && (
         <div className="cc-comm-foot">
           <button className="cc-btn sm primary" disabled={busy || !data?.packageReady} onClick={() => void download('docx')}>
             {I.download} Response package (.docx)
@@ -476,12 +647,46 @@ export function AgencyResponses({
         />
       )}
 
+      {withdrawing && (
+        <C2CForm
+          config={{
+            eyebrow: `${withdrawing.questionRef} · withdraw`,
+            title: 'Withdraw this question',
+            sub: `Withdraw ${withdrawing.questionRef} only if it was recorded in error. It stays in the record, marked withdrawn, needs no response and is left out of the package. This cannot be undone; record the question again if it is needed.`,
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: 'Withdraw question',
+            fields: [
+              { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recorded twice; the agency asked this once, as Q4', required: true },
+            ],
+          }}
+          onCancel={() => setWithdrawing(null)}
+          onSubmit={(v) => void withdraw(v)}
+        />
+      )}
+
+      {askingNothing && (
+        <C2CForm
+          config={{
+            eyebrow: 'Agency letter · no response',
+            title: 'Mark as needing no response',
+            sub: `${letter.communicationType} is recorded as requiring a response, and no question is recorded on it. If the letter asks nothing of you, say why; it can then be closed without a response package.`,
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: 'Mark as needing no response',
+            fields: [
+              { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Acknowledgement letter; it asks no questions', required: true },
+            ],
+          }}
+          onCancel={() => setAskingNothing(false)}
+          onSubmit={(v) => void markNoResponseRequired(v)}
+        />
+      )}
+
       {committing && (
         <C2CForm
           config={{
             eyebrow: `${committing.questionRef} · commitment`,
             title: 'Record a commitment',
-            sub: `A commitment made in the response to ${committing.questionRef}. It is tracked with its due date under Meetings & commitments.`,
+            sub: `A commitment made in the response to ${committing.questionRef}. It is tracked with its due date under Meetings & commitments, separately from the signed responses.`,
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record commitment',
             fields: [
@@ -509,7 +714,7 @@ export function AgencyResponses({
           requireMfa={authUser?.mfaEnabled === true}
           onClose={() => {
             setSigning(null);
-            if (signed.current) reload();
+            if (reloadOnClose.current) reload();
           }}
           onSign={sign}
         />
