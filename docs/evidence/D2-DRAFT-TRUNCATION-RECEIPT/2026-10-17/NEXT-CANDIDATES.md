@@ -2,6 +2,12 @@
 
 These are audit candidates, not delivered features or closed launch rows. The October 14 data-room strategy/competition research remains in `docs/reports/data-room-research-2026-10-14/`; this bounded D2 delivery does not establish competitor uniqueness or expand the filing launch catalog.
 
+The [October 18 remaining-needs assessment](../../../reports/data-room-research-2026-10-14/remaining-needs-2026-10-18.md) revalidates these candidates against `e62320e0a`, acknowledges delivered selected-source assembly and dataset intake, and separates code defects, design needs, qualification and product expansion.
+
+## Editor candidate termination
+
+Source review at `e62320e0a` found that the actual Authoring generate-draft route parses nonempty gateway content and parks a server-owned candidate without reading the finish reason (`authoring.router.ts:3943`, `:3978`, `:4060`). Current source manifests establish selected-input identity and current use, not completed output. A separate fail-first candidate/accept contract should reuse the canonical classifier and preserve honest failure/turn records. This is separate from the delivered generic BatchDraft handoff. The reachable quick-completion API also drops termination metadata; no current client caller was found. These are source findings, not executed end-to-end qualification.
+
 ## Cancellation propagation
 
 Read-only revalidation on baseline `accf8c6bacfdc2d89b5de9098e22a67fe3f27914` confirms that `ToolContext` already has an abort signal, but the `batch_draft_sections` handler does not pass it into draft requests; the drafting request/gateway construction and wave loop do not propagate it. The parent can stop waiting while background source reads and drafting work continue. A separate increment should propagate the existing trusted signal, stop scheduling after cancellation, suppress late output and preserve already completed siblings with explicit cancelled outcomes. It should reuse existing gateway cancellation/semaphore behavior, not introduce a second execution system or treat cancelled slots as automatic retries. No cancellation change is included here.
