@@ -114,6 +114,31 @@ describe('no register row is inserted outside the recorded path', () => {
   });
 });
 
+/**
+ * The change PROPOSAL register is the documented exception, found by the staff
+ * simulation on 2026-10-18: `cmc_change_controls` (uuid ids) is a SECOND
+ * change-control table beside `cmc_change_control` (serial ids), and it records
+ * its operator in `created_by` rather than on the chain. It is attributable
+ * either way — `register-operators.ts` reads that column for a cited record the
+ * chain does not name — so this names the exception instead of leaving it as a
+ * hole in the gate above.
+ */
+describe('the change proposal register records its operator in a column', () => {
+  it('is written by one service, which sets created_by', () => {
+    const pattern = /INSERT\s+INTO\s+"?cmc_change_controls"?/i;
+    const offenders = sources.filter((s) => pattern.test(s.src)).map((s) => s.file);
+    expect(offenders).toEqual(['server/services/cmc/cmc-change-control-service.ts']);
+    const src = fs.readFileSync(path.join(repoRoot, offenders[0]), 'utf8');
+    expect(src).toContain('created_by');
+  });
+
+  it('is read by the four-eyes check, so a section citing one is attributable', () => {
+    const src = fs.readFileSync(path.join(repoRoot, 'server/services/cmc/register-operators.ts'), 'utf8');
+    expect(src).toContain('cmc_change_controls');
+    expect(src).toContain('change proposals (created_by)');
+  });
+});
+
 describe('cmc.register.create has one writer', () => {
   it('only register-audit.ts writes it', () => {
     const offenders = sources
