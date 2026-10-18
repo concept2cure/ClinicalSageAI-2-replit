@@ -27,6 +27,9 @@ export function registerDraftSourceToolIdentityControls(c: Controls) {
       const changed = c.sourceText.slice(0, index) + 'X' + c.sourceText.slice(index + 1);
       expect(changed.length).toBe(c.sourceText.length);
       const before = await c.counts();
+      // tenant-isolation-safe: tampers with THIS suite's own seeded document by primary key,
+      // in the in-process PGlite fixture, to prove the tool refuses to draft from a source whose
+      // extracted text no longer matches its recorded hash. Restored in the finally below.
       await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [changed, c.sourceId]);
       try {
         const out = JSON.parse(await c.call(c.sourcedInput(reference)));
@@ -34,6 +37,8 @@ export function registerDraftSourceToolIdentityControls(c: Controls) {
         expect(out.saved).toBeUndefined();
         expect(await c.counts()).toEqual(before);
       } finally {
+        // tenant-isolation-safe: restores the same fixture document this test tampered with, by
+        // the same primary key, in the same throw-away PGlite database.
         await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [c.sourceText, c.sourceId]);
       }
     });
