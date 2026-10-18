@@ -15,6 +15,7 @@
 
 import { getGateway } from '../ai-gateway/gateway';
 import { isTruncated } from '../ai-gateway/finish-reason';
+import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from './batch-draft-concurrency';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
 import type { BatchDraftFailure, BatchDraftResult } from './batch-draft-result';
 import { createScopedLogger } from '../../utils/logger';
@@ -766,7 +767,7 @@ export interface VisionAnalysisRequest {
 export interface BatchDocumentRequest {
   /** Array of draft requests to process */
   requests: DocumentDraftRequest[];
-  /** Maximum concurrent requests */
+  /** Positive integer; defaults to 3 and is capped at 5. */
   concurrency?: number;
 }
 
@@ -1146,7 +1147,8 @@ ${documentContent}`,
    * is useful.
    */
   async batchDraft(req: BatchDocumentRequest): Promise<BatchDraftResult[]> {
-    const concurrency = req.concurrency || 3;
+    const concurrency = resolveBatchConcurrency(req.concurrency);
+    if (concurrency === null) throw new RangeError(BATCH_CONCURRENCY_MESSAGE);
     const results: BatchDraftResult[] = [];
 
     // Process in batches
