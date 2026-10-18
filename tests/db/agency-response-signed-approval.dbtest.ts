@@ -48,7 +48,7 @@ let orgId: number;
 let foreignOrgId: number;
 let projectId: number;
 let foreignProjectId: number;
-const users: Record<'author' | 'approver' | 'viewer' | 'foreign', { id: number; token: string }> = {} as never;
+const users: Record<'author' | 'approver' | 'second' | 'viewer' | 'foreign', { id: number; token: string }> = {} as never;
 
 async function mintToken(userId: number, org: number): Promise<string> {
   const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
@@ -153,6 +153,7 @@ beforeAll(async () => {
   orgId = own.org;
   await user('author', orgId, 'admin');
   await user('approver', orgId, 'admin');
+  await user('second', orgId, 'admin');
   await user('viewer', orgId, 'viewer');
   projectId = await own.project(users.author.id);
 
@@ -367,7 +368,9 @@ describe('the package and the close follow the signatures, not a flag', () => {
     const body = res.text;
     expect(body.indexOf('## Q1')).toBeLessThan(body.indexOf('## Q2'));
     expect(body).toContain('_Approved by Agency Approver on ');
-    expect(body).toContain('- Postmarketing commitment: Submit 24-month stability data; due 2027-06-30');
+    // Commitments are no signature's: their own section, after the last signature line.
+    expect(body).toContain('- Q2: Postmarketing commitment: Submit 24-month stability data; due 2027-06-30');
+    expect(body.indexOf('## Commitments recorded against this letter')).toBeGreaterThan(body.lastIndexOf('_Approved by'));
     const audit = await owner.query(
       `SELECT 1 FROM audit_logs WHERE tenant_id = $1 AND action = 'EXPORT_GENERATED' AND new_values::text LIKE $2`,
       [orgId, `%${sha}%`],
@@ -406,6 +409,7 @@ describe('the package and the close follow the signatures, not a flag', () => {
 
 describe('the commitments register (Communication, Commitments tab)', () => {
   let commitmentId: number;
+  const projectCommitments = () => `/api/concept2cure/projects/${projectId}/commitments`;
 
   beforeAll(async () => {
     const letter = await logLetter();
@@ -418,36 +422,52 @@ describe('the commitments register (Communication, Commitments tab)', () => {
     commitmentId = Number(res.body.data.id);
   });
 
-  it('lists the commitment with the letter and question it was made in', async () => {
-    const res = await request(app).get('/api/ha-interactions/commitments').set(as('viewer'));
+  it("lists the commitment under its project, with the letter and question it was made in", async () => {
+    const res = await request(app).get(projectCommitments()).set(as('viewer'));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    const row = res.body.commitments.find((c: { id: number }) => c.id === commitmentId);
-    expect(row).toMatchObject({ commitment_type: 'pmr', project_id: projectId, source_question_id: expect.any(Number), effectiveStatus: 'open' });
+    const row = res.body.data.commitments.find((c: { id: number }) => c.id === commitmentId);
+    expect(row).toMatchObject({ commitment_type: 'pmr', project_id: projectId, source_question_ref: 'Q1', effectiveStatus: 'open' });
   });
 
-  it('a viewer cannot fulfil it', async () => {
-    const res = await request(app)
-      .post(`/api/ha-interactions/commitments/${commitmentId}/fulfill`)
-      .set(as('viewer'))
-      .send({ reason: 'A viewer should not be able to do this.' });
-    expect(res.status).toBe(403);
+  it("the organisation-wide register does not list a project's commitment (project admission applies)", async () => {
+    const res = await request(app).get('/api/ha-interactions/commitments').set(as('viewer'));
+    expect(res.status).toBe(200);
+    expect(res.body.commitments.some((c: { id: number }) => c.id === commitmentId)).toBe(false);
+  });
+
+  it('a viewer cannot fulfil it, through either door', async () => {
+    for (const url of [`/api/ha-interactions/commitments/${commitmentId}/fulfill`, `${projectCommitments()}/${commitmentId}/fulfill`]) {
+      const res = await request(app).post(url).set(as('viewer')).send({ reason: 'A viewer should not be able to do this.' });
+      expect(res.status, url).toBe(403);
+    }
     const st = await owner.query('SELECT status FROM regulatory_commitments WHERE id = $1', [commitmentId]);
     expect(st.rows[0].status).toBe('open');
   });
 
-  it('refuses a fulfilment dated in the future', async () => {
+  it("the organisation's door does not reach a project's commitment, even for an editor", async () => {
     const res = await request(app)
       .post(`/api/ha-interactions/commitments/${commitmentId}/fulfill`)
       .set(as('author'))
-      .send({ fulfilledDate: '2999-01-01', reason: 'Recording the fulfilment date.' });
-    expect(res.status).toBe(400);
+      .send({ reason: 'Trying the organisation door for a project commitment.' });
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
+  });
+
+  it('refuses a fulfilment dated in the future, and a date that does not exist, with a sentence', async () => {
+    for (const fulfilledDate of ['2999-01-01', '2026-02-31']) {
+      const res = await request(app)
+        .post(`${projectCommitments()}/${commitmentId}/fulfill`)
+        .set(as('author'))
+        .send({ fulfilledDate, reason: 'Recording the fulfilment date.' });
+      expect(res.status, fulfilledDate).toBe(400);
+      expect(res.body.error.message).toMatch(/not happened yet|does not exist/);
+    }
     const st = await owner.query('SELECT status FROM regulatory_commitments WHERE id = $1', [commitmentId]);
     expect(st.rows[0].status).toBe('open');
   });
 
-  it('an editor fulfils it under RLS, with its ledger row', async () => {
+  it('an editor fulfils it from its project under RLS, with its ledger row', async () => {
     const res = await request(app)
-      .post(`/api/ha-interactions/commitments/${commitmentId}/fulfill`)
+      .post(`${projectCommitments()}/${commitmentId}/fulfill`)
       .set(as('author'))
       .send({ fulfilledDate: '2026-10-01', reason: 'Final study report submitted in sequence 0042.' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
@@ -456,6 +476,209 @@ describe('the commitments register (Communication, Commitments tab)', () => {
     const ledger = await owner.query(`SELECT command FROM c2c_ana_actions WHERE org_id = $1 AND target = $2 ORDER BY proposed_at`, [orgId, `regulatory-commitment:${commitmentId}`]);
     expect(ledger.rows.map((r) => r.command)).toEqual(['create', 'resolve']);
   });
+
+  it("a commitment from a letter the person may not see is not listed to them", async () => {
+    const res0 = await request(app).post(base()).set(as('author')).send({
+      sourceType: 'uploaded_official_correspondence', communicationType: 'Restricted letter', sourceChannel: 'esg',
+      urgency: 'high', responseRequired: true, visibilityTier: 'restricted_legal_sensitive',
+    });
+    expect(res0.status, JSON.stringify(res0.body)).toBe(200);
+    const letter = String(res0.body.data.id);
+    const qid = Number((await addQuestion(letter, 'L1', 'A legal question.')).body.data.id);
+    const made = await request(app).post(`${base()}/${letter}/questions/${qid}/commitments`).set(as('author'))
+      .send({ commitmentType: 'other', description: 'Restricted commitment', reason: 'Made in a restricted letter.' });
+    expect(made.status, JSON.stringify(made.body)).toBe(201);
+    const asViewer = await request(app).get(projectCommitments()).set(as('viewer'));
+    expect(asViewer.body.data.commitments.some((c: { id: number }) => c.id === made.body.data.id)).toBe(false);
+    const asAdmin = await request(app).get(projectCommitments()).set(as('author'));
+    expect(asAdmin.body.data.commitments.some((c: { id: number }) => c.id === made.body.data.id)).toBe(true);
+  });
+});
+
+describe('what a signature approved can be read back, and who may approve', () => {
+  it('keeps every text: after an edit, the earlier approved text is in the history, with its signature', async () => {
+    const letter = await logLetter();
+    const qid = Number((await addQuestion(letter, 'Q1', 'State the batch size.')).body.data.id);
+    expect((await saveResponse(letter, qid, 'author', 'Batch size is 100 kg.', 0)).status).toBe(200);
+    const signed = await approve(letter, qid, 'approver', 1);
+    expect(signed.status, JSON.stringify(signed.body)).toBe(201);
+    expect((await saveResponse(letter, qid, 'author', 'Batch size is 120 kg.', 1)).status).toBe(200);
+    const view = await read(letter);
+    const q = view.body.data.questions[0];
+    expect(q.state).toBe('changed-after-approval');
+    expect(q.history.map((h: { revision: number; responseText: string }) => [h.revision, h.responseText])).toEqual([
+      [2, 'Batch size is 120 kg.'],
+      [1, 'Batch size is 100 kg.'],
+    ]);
+    expect(q.history[1]).toMatchObject({ reason: 'Drafting the response for review.', approvedBy: { signatureId: signed.body.signatureId } });
+    expect(q.history[0].approvedBy).toBeNull();
+    // The bytes the signature bound are exactly revision 1's.
+    const bound = await owner.query(`SELECT bound_payload_digest FROM electronic_signatures WHERE id = $1`, [signed.body.signatureId]);
+    const r1 = await owner.query(`SELECT response_digest FROM agency_question_response_revisions WHERE question_id = $1 AND revision = 1`, [qid]);
+    expect(bound.rows[0].bound_payload_digest).toBe(r1.rows[0].response_digest);
+  });
+
+  it('the history is append-only for the runtime role', async () => {
+    const runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+    try {
+      for (const sql of ['UPDATE agency_question_response_revisions SET reason = reason WHERE false', 'DELETE FROM agency_question_response_revisions WHERE false']) {
+        await expect(runtime.query(sql)).rejects.toMatchObject({ code: '42501' });
+      }
+    } finally {
+      await runtime.end();
+    }
+  });
+
+  it('nobody who wrote part of the text since the last approval may approve it, not only the last saver', async () => {
+    const letter = await logLetter();
+    const qid = Number((await addQuestion(letter, 'Q1', 'Justify the shelf life.')).body.data.id);
+    expect((await saveResponse(letter, qid, 'author', '24 months, supported by 18 months real time data', 0)).status).toBe(200);
+    expect((await saveResponse(letter, qid, 'approver', '24 months, supported by 18 months real-time data.', 1)).status).toBe(200);
+    const asAuthor = await approve(letter, qid, 'author', 2);
+    expect(asAuthor.status, JSON.stringify(asAuthor.body)).toBe(403);
+    expect(asAuthor.body.error?.code).toBe('SIGNER_WROTE_RESPONSE');
+    expect((await approve(letter, qid, 'approver', 2)).status).toBe(403);
+    expect(await signaturesOn(qid)).toEqual([]);
+    const third = await approve(letter, qid, 'second', 2);
+    expect(third.status, JSON.stringify(third.body)).toBe(201);
+  });
+});
+
+describe('questions recorded in error, and letters that ask nothing', () => {
+  it('a withdrawn question needs no answer, takes no edit, and is left out of the package', async () => {
+    const letter = await logLetter();
+    const q1 = Number((await addQuestion(letter, 'Q1', 'Real question.')).body.data.id);
+    const q2 = Number((await addQuestion(letter, 'Q2', 'Typed in error.')).body.data.id);
+    const w = await request(app).post(`${base()}/${letter}/questions/${q2}/withdraw`).set(as('author')).send({ reason: 'Recorded twice in error.' });
+    expect(w.status, JSON.stringify(w.body)).toBe(200);
+    expect((await saveResponse(letter, q2, 'author', 'Should not save.', 0)).status).toBe(409);
+    expect((await saveResponse(letter, q1, 'author', 'The answer.', 0)).status).toBe(200);
+    expect((await approve(letter, q1, 'approver', 1)).status).toBe(201);
+    const view = await read(letter);
+    expect(view.body.data.packageReady).toBe(true);
+    expect(view.body.data.questions.find((x: { id: number }) => x.id === q2)).toMatchObject({
+      state: 'withdrawn', withdrawal: { reason: 'Recorded twice in error.', withdrawnByName: 'Agency Author' },
+    });
+    const pkg = await request(app).post(`${base()}/${letter}/response-package`).set(as('author')).send({ format: 'md' });
+    expect(pkg.status).toBe(200);
+    expect(pkg.text).not.toContain('## Q2');
+  });
+
+  it('a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does', async () => {
+    const letter = await logLetter();
+    expect((await request(app).patch(`${base()}/${letter}/advance`).set(as('author'))).status).toBe(200);
+    const refused = await request(app).patch(`${base()}/${letter}/advance`).set(as('author'));
+    expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+    expect(refused.body.error.message).toMatch(/requires a response and no question is recorded/);
+    const marked = await request(app).post(`${base()}/${letter}/no-response-required`).set(as('author')).send({ reason: 'An acknowledgement letter; it asks nothing.' });
+    expect(marked.status, JSON.stringify(marked.body)).toBe(200);
+    const closed = await request(app).patch(`${base()}/${letter}/advance`).set(as('author'));
+    expect(closed.status, JSON.stringify(closed.body)).toBe(200);
+    const ledger = await owner.query(`SELECT decision_reason FROM c2c_ana_actions WHERE org_id = $1 AND target = $2`, [orgId, `agency-communication:${letter}`]);
+    expect(ledger.rows).toEqual([{ decision_reason: 'An acknowledgement letter; it asks nothing.' }]);
+  });
+
+  it('a letter with questions recorded cannot be marked as asking nothing', async () => {
+    const letter = await logLetter();
+    expect((await addQuestion(letter, 'Q1', 'A real question.')).status).toBe(201);
+    const marked = await request(app).post(`${base()}/${letter}/no-response-required`).set(as('author')).send({ reason: 'Trying to skip the answer.' });
+    expect(marked.status).toBe(409);
+    expect(marked.body.error.code).toBe('QUESTIONS_RECORDED');
+  });
+
+  it('a letter that requires a response cannot be logged as already closed', async () => {
+    const res = await request(app).post(base()).set(as('author')).send({
+      sourceType: 'uploaded_official_correspondence', communicationType: 'IR', sourceChannel: 'esg', urgency: 'high',
+      responseRequired: true, closureStatus: 'closed', humanReviewStatus: 'actioned', visibilityTier: 'client_internal',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('a close and a new question cannot both land: the close is checked under the letter lock', async () => {
+    for (let i = 0; i < 5; i += 1) {
+      const letter = await logLetter();
+      const q1 = Number((await addQuestion(letter, 'Q1', 'First.')).body.data.id);
+      expect((await saveResponse(letter, q1, 'author', 'Answered.', 0)).status).toBe(200);
+      expect((await approve(letter, q1, 'approver', 1)).status).toBe(201);
+      expect((await request(app).patch(`${base()}/${letter}/advance`).set(as('author'))).status).toBe(200);
+      const [close, added] = await Promise.all([
+        request(app).patch(`${base()}/${letter}/advance`).set(as('author')),
+        addQuestion(letter, 'Q2', 'Arrived in the same moment.'),
+      ]);
+      const st = (await owner.query(`SELECT closure_status FROM concept2cure_agency_communications WHERE event_id = $1`, [letter])).rows[0].closure_status;
+      const q2 = (await owner.query(`SELECT count(*)::int AS n FROM agency_communication_questions WHERE communication_event_id = $1 AND question_ref = 'Q2'`, [letter])).rows[0].n;
+      // Never both: a closed letter holding an unanswered question.
+      expect({ closed: st === 'closed', q2Added: q2 === 1 }, `round ${i}: close ${close.status}, add ${added.status}`).not.toEqual({ closed: true, q2Added: true });
+      expect([close.status, added.status].sort()).toEqual(close.status === 200 ? [200, 409] : [201, 409]);
+    }
+  }, 120_000);
+});
+
+describe('the screen is told what this person may do', () => {
+  it('a viewer may write nothing and sign nothing; an editor with signing authority may', async () => {
+    const letter = await logLetter();
+    expect((await addQuestion(letter, 'Q1', 'Capability probe.')).status).toBe(201);
+    const v = await read(letter, 'viewer');
+    expect(v.body.data.viewer).toMatchObject({ canWrite: false, canSign: false });
+    expect(typeof v.body.data.viewer.writeRefusal).toBe('string');
+    const a = await read(letter, 'approver');
+    expect(a.body.data.viewer).toMatchObject({ canWrite: true, canSign: true, writeRefusal: null });
+  });
+});
+
+describe('the Word package reproduces the signed text line for line', () => {
+  it('each line of a response is its own paragraph, and no Markdown marks are printed', async () => {
+    const letter = await logLetter();
+    const qid = Number((await addQuestion(letter, 'Q1', 'List the batches.')).body.data.id);
+    const text = 'Batch A: 100 kg\nBatch B: 120 kg\n\nBoth released.';
+    expect((await saveResponse(letter, qid, 'author', text, 0)).status).toBe(200);
+    expect((await approve(letter, qid, 'approver', 1)).status).toBe(201);
+    const res = await request(app).post(`${base()}/${letter}/response-package`).set(as('author')).send({ format: 'docx' })
+      .buffer(true).parse((r, cb) => { const chunks: Buffer[] = []; r.on('data', (c: Buffer) => chunks.push(c)); r.on('end', () => cb(null, Buffer.concat(chunks))); });
+    expect(res.status).toBe(200);
+    const JSZip = (await import('jszip')).default;
+    const xml = await (await JSZip.loadAsync(res.body as Buffer)).file('word/document.xml')!.async('string');
+    const paragraphs = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map((m) => [...m[0].matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((t) => t[1]).join(''));
+    const i = paragraphs.indexOf('Batch A: 100 kg');
+    expect(i).toBeGreaterThan(-1);
+    expect(paragraphs.slice(i, i + 4)).toEqual(['Batch A: 100 kg', 'Batch B: 120 kg', '', 'Both released.']);
+    expect(xml).not.toContain('&gt; Batch');
+  });
+});
+
+describe('a tenant that answered an agency can still be erased', () => {
+  it('purge removes the questions, their history and the commitments from them; the signatures stay', async () => {
+    const { purgeTenant } = await import('../../server/services/tenant/tenant-offboarding');
+    const org = Number((await owner.query(`INSERT INTO organizations (name, slug, status) VALUES ($1, $1, 'active') RETURNING id`, [`${PREFIX}-purge`])).rows[0].id);
+    const u = Number((await owner.query(`INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Purge Actor', 'x', 'active') RETURNING id`, [`${PREFIX}-purge@example.invalid`])).rows[0].id);
+    const ws = Number((await owner.query(`INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, $2, $2) RETURNING id`, [org, `${PREFIX}-purge-ws`])).rows[0].id);
+    const pid = Number((await owner.query(`INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, settings) VALUES ($1,$2,$3,'regulatory','active',$4,$4,'{}') RETURNING id`, [org, ws, `${PREFIX}-purge-project`, u])).rows[0].id);
+    const event = `ace_${PREFIX}_purge`;
+    await owner.query(`INSERT INTO concept2cure_agency_communications (event_id, organization_id, project_id, source_type, communication_type, source_channel, urgency, response_required, human_review_status, closure_status, audit_metadata) VALUES ($1,$2,$3,'uploaded_official_correspondence','IR','esg','high',true,'triaged','in_progress','{"visibilityTier":"client_internal"}')`, [event, org, pid]);
+    const qid = Number((await owner.query(`INSERT INTO agency_communication_questions (organization_id, project_id, communication_event_id, question_ref, question_text, response_text, response_revision, response_updated_by, created_by) VALUES ($1,$2,$3,'Q1','Q?','A.',1,$4,$4) RETURNING id`, [org, pid, event, u])).rows[0].id);
+    await owner.query(`INSERT INTO agency_question_response_revisions (organization_id, question_id, revision, response_text, response_digest, written_by, reason) VALUES ($1,$2,1,'A.',$3,$4,'Drafted.')`, [org, qid, 'a'.repeat(64), u]);
+    const cid = Number((await owner.query(`INSERT INTO regulatory_commitments (organization_id, commitment_type, description, status, created_by, project_id, source_communication_event_id, source_question_id) VALUES ($1,'pmc','C','open',$2,$3,$4,$5) RETURNING id`, [org, u, pid, event, qid])).rows[0].id);
+    await owner.query(`INSERT INTO commitment_milestones (organization_id, commitment_id, title, status, created_by) VALUES ($1,$2,'M','pending',$3)`, [org, cid, u]);
+    const sig = Number((await owner.query(
+      `INSERT INTO electronic_signatures (organization_id, signature_type, signature_purpose, signer_id, signer_name, signer_email, authentication_method, authentication_timestamp, signature_hash, signed_target, signature_meaning, bound_payload_digest)
+       VALUES ($1,'part11','Agency response approval',$2,'Purge Actor','purge@example.invalid','password',now(),$3,$4,'approval',$5) RETURNING id`,
+      [org, u, 'b'.repeat(64), `agency-question:${qid}`, 'a'.repeat(64)],
+    )).rows[0].id);
+    await owner.query(`UPDATE organizations SET status = 'pending_deletion', purged_at = NULL, deletion_requested_at = now() - interval '40 days', purge_eligible_at = now() - interval '1 day' WHERE id = $1`, [org]);
+    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by) VALUES ($1, $2, 1, 1, NULL)`, [org, `${PREFIX}-digest`]);
+
+    // As the purge route runs it: the runtime pool, in the platform scope, the full default purge list.
+    const { getPool } = await import('../../server/db/runtime');
+    const { runWithSystemTenantScope } = await import('../../server/db/tenantStore');
+    const purged = await runWithSystemTenantScope('agency-response-signed-approval.dbtest', () =>
+      purgeTenant(getPool(), { organizationId: org, purgedByUserId: u, preconditions: { finalExportDigest: `${PREFIX}-digest` } }));
+    expect(purged.status).toBe('purged');
+    for (const t of ['agency_question_response_revisions', 'agency_communication_questions', 'regulatory_commitments', 'commitment_milestones', 'projects']) {
+      expect((await owner.query(`SELECT count(*)::int AS n FROM ${t} WHERE organization_id = $1`, [org])).rows[0].n, t).toBe(0);
+    }
+    // The signature is a Part 11 record with its own retention; erasing the answer does not erase it.
+    expect((await owner.query(`SELECT signed_target FROM electronic_signatures WHERE id = $1`, [sig])).rows).toEqual([{ signed_target: `agency-question:${qid}` }]);
+  }, 60_000);
 });
 
 describe('tenant isolation', () => {

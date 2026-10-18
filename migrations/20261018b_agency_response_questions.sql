@@ -3,6 +3,24 @@
 -- Correspondence & commitments (row D2, Communication Center; row D5, Part 11).
 -- docs/evidence/D2-CORRESPONDENCE-SIGNED-RESPONSES/2026-10-18/.
 --
+-- AMENDED IN PLACE 2026-10-18 (same day, after the multi-lens review of
+-- 0308ee25; evidence .../2026-10-18-review/). Rule 1: every statement below
+-- re-runs on every deploy, so additions are made here, idempotently, rather
+-- than in a second file. Added:
+--   * agency_question_response_revisions: every text a response has had, with
+--     its digest, writer, time and reason. Saving overwrote response_text in
+--     place, so the exact words a signature approved could not be read back
+--     once edited; only their digest survived on the signature. Append-only by
+--     grant ceiling (APPEND_ONLY_TABLES in scripts/db/provision-app-role.mjs):
+--     the runtime role may INSERT and SELECT. ON DELETE CASCADE from its
+--     question, because a foreign-key action runs as the table owner, so a
+--     tenant purge that deletes the question erases its history through the
+--     ceiling, and nothing else can.
+--   * withdrawn_at / withdrawn_by / withdrawal_reason on the question: a
+--     question recorded in error is withdrawn with a reason, never deleted, and
+--     no longer has to be answered.
+-- Dropped nothing; no constraint another file defines is touched.
+--
 -- An agency letter in the project's inbox (concept2cure_agency_communications,
 -- db/migrations/20260331_communication_center_scaffold.sql) recorded its
 -- questions as a JSON array of strings, so a question had no response, no
@@ -74,6 +92,47 @@ CREATE TABLE IF NOT EXISTS public.agency_communication_questions (
     UNIQUE (communication_event_id, question_ref)
 );
 
+-- Withdrawal (amended 2026-10-18): all three set together, or none.
+ALTER TABLE public.agency_communication_questions
+  ADD COLUMN IF NOT EXISTS withdrawn_at TIMESTAMPTZ;
+ALTER TABLE public.agency_communication_questions
+  ADD COLUMN IF NOT EXISTS withdrawn_by INTEGER REFERENCES public.users(id);
+ALTER TABLE public.agency_communication_questions
+  ADD COLUMN IF NOT EXISTS withdrawal_reason TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'agency_communication_questions_withdrawal_coherent'
+       AND conrelid = 'public.agency_communication_questions'::regclass
+  ) THEN
+    ALTER TABLE public.agency_communication_questions
+      ADD CONSTRAINT agency_communication_questions_withdrawal_coherent
+      CHECK ((withdrawn_at IS NULL) = (withdrawn_by IS NULL)
+         AND (withdrawn_at IS NULL) = (withdrawal_reason IS NULL));
+  END IF;
+END $$;
+
+-- Every text a response has had (amended 2026-10-18). Written by INSERT only.
+CREATE TABLE IF NOT EXISTS public.agency_question_response_revisions (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL REFERENCES public.organizations(id),
+  question_id     INTEGER NOT NULL
+                    REFERENCES public.agency_communication_questions(id) ON DELETE CASCADE,
+  revision        INTEGER NOT NULL CHECK (revision > 0),
+  response_text   TEXT NOT NULL,
+  -- agencyResponseDigest over this text (server/services/agency-responses/response-logic.ts).
+  response_digest TEXT NOT NULL CHECK (response_digest ~ '^[0-9a-f]{64}$'),
+  written_by      INTEGER NOT NULL REFERENCES public.users(id),
+  written_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reason          TEXT NOT NULL CHECK (length(btrim(reason)) > 0),
+  CONSTRAINT agency_question_response_revisions_unique UNIQUE (question_id, revision)
+);
+CREATE INDEX IF NOT EXISTS idx_agency_q_revisions_scope
+  ON public.agency_question_response_revisions (organization_id, question_id);
+CREATE INDEX IF NOT EXISTS idx_agency_q_revisions_digest
+  ON public.agency_question_response_revisions (question_id, response_digest);
+
 CREATE INDEX IF NOT EXISTS idx_agency_comm_questions_scope
   ON public.agency_communication_questions (organization_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_agency_comm_questions_event
@@ -135,4 +194,6 @@ COMMENT ON TABLE public.agency_communication_questions IS
   'Approval is a Part 11 signature on agency-question:<id> whose bound digest '
   'equals the digest of the current response; there is no approval column.';
 COMMENT ON COLUMN public.agency_communication_questions.response_updated_by IS
-  'Who wrote the current response text. That person cannot sign its approval.';
+  'Who wrote the current response text. Anyone who wrote a revision since the last approved one cannot sign its approval.';
+COMMENT ON TABLE public.agency_question_response_revisions IS
+  'Every text an agency response has had. A signature binds one of these by digest; the text it approved is read back here.';

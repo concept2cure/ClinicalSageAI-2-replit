@@ -1,0 +1,130 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > agencyResponseDigest > is stable for the same content and moves with every field a signer approves 6ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > agencyResponseDigest > does not move with revision or author: a signature binds content, not bookkeeping 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > agencyResponseDigest > cannot be forged by moving text between fields 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > questionApproval > a question with no response text is unanswered, whatever signatures exist 3ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > questionApproval > a response nobody has signed is drafted 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > questionApproval > a live signature binding the current text approves it, and names the signature 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > questionApproval > editing after signing leaves the earlier signature standing but not approving 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > questionApproval > a re-signature of the edited text approves it again; the newest matching one is named 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > signRefusal > refuses the person who wrote the current text (separation of duties) 2ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > signRefusal > refuses anyone who wrote part of the text since the last approval, not only the last saver 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > signRefusal > a withdrawn question takes no approval 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > signRefusal > refuses an empty response and an already approved one 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > signRefusal > lets a second person re-approve text changed after an approval 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > authorsSinceLastApproval > counts only the writers after the last approved revision 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > authorsSinceLastApproval > a response saved before revision history existed still names its writer 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > compareQuestionRefs > orders the agency numbering naturally 12ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > a letter that requires no response, with nothing recorded, closes: an acknowledgement asks nothing 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > a letter that requires a response does not close with nothing recorded: nothing recorded is not answered 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > withdrawn questions do not count as recorded, or as outstanding 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > refuses while any response is not approved, naming each in the agency order 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > closeRefusal > allows the close once every response is approved 0ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > refuses with nothing recorded 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > refuses rather than ship a package missing an approved answer 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > assembles in the agency order with each signature manifested and the commitments made 2ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > quotes what a person typed, so a response cannot pass for a signature line 2ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > leaves withdrawn questions out of the package 1ms
+ ✓ server/services/agency-responses/__tests__/response-logic.test.ts > assembleResponsePackage > is deterministic: the same record gives the same bytes 1ms
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+{
+  "timestamp": "2026-10-18T21:50:00.707Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+{
+  "timestamp": "2026-10-18T21:50:02.888Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T21:50:02.889Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts
+{
+  "timestamp": "2026-10-18T21:50:02.889Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts > PATCH agency-communications/:eventId/advance on the deploy path’s table > triages a pending communication, then closes it
+{
+  "timestamp": "2026-10-18T21:50:06.041Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792360206038_01f8494c24d0369e,7,project,proj_42,UPDATE,data-change,,{\"agencyCommunicationEventId\":\"evt-1\",\"humanReviewStatusFrom\":\"pending_review\",\"humanReviewStatusTo\":\"triaged\",\"closureStatusTo\":\"in_progress\"},5,a@b.c,admin,127.0.0.xxx,,,true,{\"integrityHash\":\"c1aad3a282a3ae9cc99c093dff482faea4277c19690540fa6fd833902bacd936\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "proj_42"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts > PATCH agency-communications/:eventId/advance on the deploy path’s table > triages a pending communication, then closes it
+{
+  "timestamp": "2026-10-18T21:50:06.068Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792360206067_dbff1095aef6455f,7,project,proj_42,UPDATE,data-change,,{\"agencyCommunicationEventId\":\"evt-1\",\"humanReviewStatusFrom\":\"triaged\",\"humanReviewStatusTo\":\"actioned\",\"closureStatusTo\":\"closed\"},5,a@b.c,admin,127.0.0.xxx,,,true,{\"integrityHash\":\"83c3f2dbfc1330b7d83de5a5d7222aebe0430b6246c31044f28397d237ed667b\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "proj_42"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts > closing a letter with a recorded question (2026-10-18) > is refused while the response is not approved by signature, and the letter stays open
+{
+  "timestamp": "2026-10-18T21:50:06.086Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792360206085_f968a8d5d3f6fece,7,project,proj_42,UPDATE,data-change,,{\"agencyCommunicationEventId\":\"evt-2\",\"humanReviewStatusFrom\":\"pending_review\",\"humanReviewStatusTo\":\"triaged\",\"closureStatusTo\":\"in_progress\"},5,a@b.c,admin,127.0.0.xxx,,,true,{\"integrityHash\":\"8a0973fdc652ad1e9cbee51f9c05e697766a25b21a0359ce11b9666612604856\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "proj_42"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > PATCH agency-communications/:eventId/advance on the deploy path’s table > triages a pending communication, then closes it 82ms
+stderr | server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > links this project's source
+{
+  "timestamp": "2026-10-18T21:50:06.172Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1792360206171_487999cb33db30ae,7,project,proj_42,CREATE,data-change,,{\"agencyCommunicationEventId\":\"ace_1792360206169_eb3d46f1\",\"sourceType\":\"uploaded_official_correspondence\",\"visibilityTier\":\"shared_client_c2c\"},5,a@b.c,admin,127.0.0.xxx,,,true,{\"integrityHash\":\"ab8a0eea2105b61eb61031ba7fbebe65c65e9d7a174adc8aefd48a8a0924f2ac\"}",
+    "action": "CREATE",
+    "entityType": "project",
+    "entityId": "proj_42"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > closing a letter with a recorded question (2026-10-18) > is refused while the response is not approved by signature, and the letter stays open 35ms
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > refuses cre_source:502 (another tenant) and stores nothing 17ms
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > refuses cre_source:503 (another project) and stores nothing 11ms
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > refuses cre_source:504 (deleted) and stores nothing 10ms
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > refuses cre_source:999 (missing) and stores nothing 12ms
+ ✓ server/routes/c2c/__tests__/communication-advance.pglite.test.ts > POST agency-communications links only a data-room source of this tenant and project > links this project's source 17ms
+
+ Test Files  2 passed (2)
+      Tests  34 passed (34)
+   Start at  21:49:58
+   Duration  7.98s (transform 2.33s, setup 171ms, import 4.38s, tests 2.93s, environment 0ms)
+

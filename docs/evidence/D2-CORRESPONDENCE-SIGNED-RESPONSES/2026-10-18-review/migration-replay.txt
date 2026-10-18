@@ -1,0 +1,65 @@
+### deploy-migrate run 1
+▶ 1/5 Preflight — database already provisioned?
+▶ 2/5 Acquire migration lock
+▶ 3/5 Apply migrations
+  ✓ applied: db/migrations/20260717_agency_meetings_store.sql
+  ✓ applied: migrations/20261015f_coauthor_validation_history_agency_nullable.sql
+  ✓ applied: migrations/20261018b_agency_response_questions.sql
+      [NOTICE] [child-rls] agency_validation_results already policied — leaving it alone
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 34/34 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.ana_source_read_receipts, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.embedding_audit_log, public.ai_provider_audit_log, ai.gateway_audit_log, public.credit_ledger, public.document_audit_trail, public.ectd_submission_status_history, public.specification_audit_log, public.stab_audit, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, regulatory_harmonization.export_job_audit_log, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events, public.agency_question_response_revisions; INSERT too where a store's ceiling is SELECT
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+✅ Schema migration complete — safe to roll services.
+exit 0
+### deploy-migrate run 2
+▶ 1/5 Preflight — database already provisioned?
+▶ 2/5 Acquire migration lock
+▶ 3/5 Apply migrations
+  ✓ applied: db/migrations/20260717_agency_meetings_store.sql
+  ✓ applied: migrations/20261015f_coauthor_validation_history_agency_nullable.sql
+  ✓ applied: migrations/20261018b_agency_response_questions.sql
+      [NOTICE] [child-rls] agency_validation_results already policied — leaving it alone
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 34/34 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.ana_source_read_receipts, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.embedding_audit_log, public.ai_provider_audit_log, ai.gateway_audit_log, public.credit_ledger, public.document_audit_trail, public.ectd_submission_status_history, public.specification_audit_log, public.stab_audit, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, regulatory_harmonization.export_job_audit_log, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events, public.agency_question_response_revisions; INSERT too where a store's ceiling is SELECT
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+✅ Schema migration complete — safe to roll services.
+exit 0
+### the amended tables after both runs
+              relname               | rls | forced |        policies         
+------------------------------------+-----+--------+-------------------------
+ agency_communication_questions     | t   | t      | tenant_isolation_policy
+ agency_question_response_revisions | t   | t      | tenant_isolation_policy
+ regulatory_commitments             | t   | t      | tenant_isolation_policy
+(3 rows)
+
+                          conname                           |                                                  pg_get_constraintdef                                                  
+------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------
+ agency_communication_questions_communication_event_id_fkey | FOREIGN KEY (communication_event_id) REFERENCES concept2cure_agency_communications(event_id)
+ agency_communication_questions_created_by_fkey             | FOREIGN KEY (created_by) REFERENCES users(id)
+ agency_communication_questions_organization_id_fkey        | FOREIGN KEY (organization_id) REFERENCES organizations(id)
+ agency_communication_questions_owner_user_id_fkey          | FOREIGN KEY (owner_user_id) REFERENCES users(id)
+ agency_communication_questions_project_id_fkey             | FOREIGN KEY (project_id) REFERENCES projects(id)
+ agency_communication_questions_question_ref_check          | CHECK ((length(btrim(question_ref)) > 0))
+ agency_communication_questions_question_text_check         | CHECK ((length(btrim(question_text)) > 0))
+ agency_communication_questions_ref_unique                  | UNIQUE (communication_event_id, question_ref)
+ agency_communication_questions_response_attributed         | CHECK (((response_revision = 0) = (response_updated_by IS NULL)))
+ agency_communication_questions_response_revision_check     | CHECK ((response_revision >= 0))
+ agency_communication_questions_response_updated_by_fkey    | FOREIGN KEY (response_updated_by) REFERENCES users(id)
+ agency_communication_questions_severity_check              | CHECK ((severity = ANY (ARRAY['minor'::text, 'major'::text, 'critical'::text])))
+ agency_communication_questions_withdrawal_coherent         | CHECK ((((withdrawn_at IS NULL) = (withdrawn_by IS NULL)) AND ((withdrawn_at IS NULL) = (withdrawal_reason IS NULL))))
+ agency_communication_questions_withdrawn_by_fkey           | FOREIGN KEY (withdrawn_by) REFERENCES users(id)
+ agency_question_response_revisions_organization_id_fkey    | FOREIGN KEY (organization_id) REFERENCES organizations(id)
+ agency_question_response_revisions_question_id_fkey        | FOREIGN KEY (question_id) REFERENCES agency_communication_questions(id) ON DELETE CASCADE
+ agency_question_response_revisions_reason_check            | CHECK ((length(btrim(reason)) > 0))
+ agency_question_response_revisions_response_digest_check   | CHECK ((response_digest ~ '^[0-9a-f]{64}$'::text))
+ agency_question_response_revisions_revision_check          | CHECK ((revision > 0))
+ agency_question_response_revisions_unique                  | UNIQUE (question_id, revision)
+ agency_question_response_revisions_written_by_fkey         | FOREIGN KEY (written_by) REFERENCES users(id)
+(21 rows)
+
+ privilege_type 
+----------------
+ INSERT
+ SELECT
+(2 rows)
+
