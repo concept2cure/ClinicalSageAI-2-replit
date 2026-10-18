@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll,beforeEach,afterAll,describe,it,expect,vi } from 'vitest';
 import type { SubmissionLeaf } from '../../../../shared/types/database';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0}));
 vi.mock('../../../db',()=>({db:{},pool:{query:()=>{throw new Error('Global DB forbidden');}}}));
 vi.mock('../../auditService',()=>({default:{logAction:vi.fn()},writeChainedAuditRow:vi.fn()}));
@@ -44,6 +45,7 @@ beforeAll(async()=>{
     INSERT INTO projects VALUES(11,7,'${P}','active',NULL,5,5,'{}'),(12,7,'${S}','active',NULL,5,5,'{}');
     INSERT INTO project_visibility_settings VALUES(11,7,'private'),(12,7,'private');
   `);
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
 });
 beforeEach(async()=>{
   statements.length=0;h.gets=0;h.bytes=Buffer.from('Verified retained instruction: preserve the original record and document every correction.');
