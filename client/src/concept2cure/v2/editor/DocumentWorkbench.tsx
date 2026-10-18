@@ -2243,21 +2243,25 @@ export function DocumentWorkbench({
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
   }, [programId, linkedReadStillCurrent]);
-  useEffect(() => {
-    if (targetAttemptedRef.current) return;
-    if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
-    const t = sectionOpenTarget;
+  const rejectLinkedTarget = useCallback((target: EditorTarget): boolean => {
     const refusal = linkedTargetRefusal();
     if (refusal) {
       targetAttemptedRef.current = true;
       setTargetNotice(refusal);
-      return;
+      return true;
     }
-    if (t.programId && t.programId !== projectIdForOutline) {
+    if (target.programId && target.programId !== projectIdForOutline) {
       targetAttemptedRef.current = true;
-      setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
-      return;
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different program'}. Open that program and retry.`);
+      return true;
     }
+    return false;
+  }, [linkedTargetRefusal, projectIdForOutline]);
+  useEffect(() => {
+    if (targetAttemptedRef.current) return;
+    if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
+    const t = sectionOpenTarget;
+    if (rejectLinkedTarget(t)) return;
     if (docsState === 'error') {
       /* A failed docs read must NOT spend the one attempt: the ref stays
          unlatched, so when the list does load (a retry, a status-filter
@@ -2398,7 +2402,7 @@ export function DocumentWorkbench({
     programId,
     openExactDocumentSection,
     programSwitchHeld,
-    linkedTargetRefusal,
+    rejectLinkedTarget,
     linkedReadStillCurrent,
     pinnedDocId,
   ]);

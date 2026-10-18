@@ -182,9 +182,7 @@ describe('a changed source selection cannot become broad retrieval', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review 3.2.S.1' }));
     await screen.findByTestId('ai-draft-body');
     handoff([{ kind: 'data-room', sourceId: 13, expectedChecksum: 'f'.repeat(64) }]);
-    await screen.findByText(/Document structure is still being built/i);
-    expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 12');
-    expect(screen.getByTestId('assembly-selected-sources').textContent).not.toContain('Data Room source 13');
+    await waitFor(() => expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 13'));
     if (!screen.queryByTestId('ai-draft-panel')) fireEvent.click(screen.getByTestId('ai-draft-open'));
     const generate = screen.queryByTestId('ai-draft-generate') ?? screen.queryByTestId('ai-draft-regenerate');
     if (generate) fireEvent.click(generate);
@@ -222,7 +220,9 @@ describe('source changes preserve unresolved structural writes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Build document' }));
     await waitFor(() => expect(postCalls('/assembly/commit')).toHaveLength(1));
     handoff([{ kind: 'data-room', sourceId: 13, expectedChecksum: 'f'.repeat(64) }]);
-    await waitFor(() => expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 13'));
+    await screen.findByText(/Document structure is still being built/i);
+    expect(screen.getByTestId('assembly-selected-sources').textContent).toContain('Data Room source 12');
+    expect(screen.getByTestId('assembly-selected-sources').textContent).not.toContain('Data Room source 13');
     await act(async () => { pending.resolve(new Response('unconfirmed response', { status: 502 })); await pending.promise; });
     await screen.findByRole('button', { name: 'Check saved document' });
     fireEvent.click(screen.getByRole('button', { name: 'Clear selected sources' }));
