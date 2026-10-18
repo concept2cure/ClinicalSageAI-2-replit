@@ -21,6 +21,7 @@ const USER = 11;
 const NDA = '11111111-1111-4111-8111-111111111111';
 const IND = '22222222-2222-4222-8222-222222222222';
 const DEVICE = '33333333-3333-4333-8333-333333333333';
+const PAS = '44444444-4444-4444-8444-444444444444';
 const REASON = 'The EU filing starts this quarter';
 
 let jdb: JourneyDb;
@@ -40,6 +41,8 @@ beforeAll(async () => {
       'migrations/20260604_submission_core_canonical.sql',
       'migrations/20260925b_submissions_program_anchor.sql',
       'migrations/20261015e_c2c_documents_filing_scope.sql',
+      // The filing document class packs, so a PAS project has its real home filing.
+      'migrations/20261018_filing_class_rule_packs.sql',
     ],
   });
   await jdb.pool.query(`INSERT INTO organizations (id, name, slug, tier, max_projects) VALUES (${ORG}, 'Org', 'org', 'standard', 10)`);
@@ -63,12 +66,20 @@ beforeEach(async () => {
   await program(NDA, 'nda', 'FDA', 'drug');
   await program(IND, 'ind', 'FDA', 'drug');
   await program(DEVICE, 'maa', 'EMA', 'device');
+  await program(PAS, 'pas', 'FDA', 'biologic');
   // The NDA project's home filing, as intake scaffolds it.
   await jdb.pool.query(
     `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
      SELECT 'doc_home', $1, $2, doc_type, agency, version, 'Home', 'draft', 0
        FROM c2c_rule_packs WHERE doc_type = 'nda' AND agency = 'fda' AND superseded_by IS NULL LIMIT 1`,
     [ORG, NDA],
+  );
+  // The PAS project's home filing, as intake scaffolds a filing document class.
+  await jdb.pool.query(
+    `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
+     SELECT 'doc_pas_home', $1, $2, doc_type, agency, version, 'PAS', 'draft', 0
+       FROM c2c_rule_packs WHERE doc_type = 'pas' AND agency = 'fda' AND superseded_by IS NULL LIMIT 1`,
+    [ORG, PAS],
   );
 });
 
@@ -168,6 +179,9 @@ describe('add a market (F22)', () => {
     // A filing document class is authored, never sequenced: no spine (2026-10-18).
     ['a supplement (a document, not an application)', NDA, 'FDA', 'pas'],
     ['a clinical study report', NDA, 'ICH / Global', 'csr'],
+    // Review finding, 2026-10-18: the project's own class is read, not only the
+    // market's — a PAS project asked for an NDA market was given an NDA spine.
+    ['an application market on a project that is a document class (a PAS)', PAS, 'FDA', 'nda'],
   ])('refuses %s with 422, and writes nothing', async (_label, id, agency, type) => {
     const before = await count(`SELECT count(*) AS n FROM c2c_documents`);
     const err = await add(id, agency, type).catch((e) => e);

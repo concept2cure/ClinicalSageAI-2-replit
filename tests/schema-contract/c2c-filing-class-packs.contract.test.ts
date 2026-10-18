@@ -210,6 +210,37 @@ describe('every filing document class has its own governed outline', () => {
   }, 60_000);
 });
 
+/*
+ * A changed outline is minted in a NEW file that supersedes exactly the version
+ * this one seeded (scripts/db/emit-filing-class-packs.ts refuses to rewrite it).
+ * The deployed-database case: a later v1.1 is live, v1.0 superseded, and every
+ * deploy replays this file. Its assertions must hold — the row it seeded is still
+ * there and unchanged, superseded by a version that exists, and exactly one pack
+ * is live (review finding, 2026-10-18).
+ */
+describe('a later version supersedes this file, and the set still replays', () => {
+  it('pas:fda v1.1 from a later file is the one live pack, and replaying 20261018 changes nothing', async () => {
+    await boot();
+    await pg.exec(`
+      DO $later$
+      BEGIN
+        INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections, effective_from)
+        SELECT doc_type, agency, 'fda-pas-lifecycle-v1.1', label, required_sections, DATE '2026-11-01'
+          FROM c2c_rule_packs WHERE doc_type = 'pas' AND agency = 'fda' AND version = 'fda-pas-lifecycle-v1.0'
+        ON CONFLICT (doc_type, agency, version) DO NOTHING;
+        UPDATE c2c_rule_packs SET superseded_by = 'fda-pas-lifecycle-v1.1'
+         WHERE doc_type = 'pas' AND agency = 'fda' AND version = 'fda-pas-lifecycle-v1.0' AND superseded_by IS NULL;
+      END
+      $later$;`);
+    await expect(pg.exec(read(FILE))).resolves.toBeDefined();
+    for (const f of inSetOrder(true)) await pg.exec(read(f));
+    const live = await pg.query<{ version: string }>(
+      `SELECT version FROM c2c_rule_packs WHERE doc_type = 'pas' AND agency = 'fda' AND superseded_by IS NULL`,
+    );
+    expect(live.rows.map((r) => r.version)).toEqual(['fda-pas-lifecycle-v1.1']);
+  }, 60_000);
+});
+
 describe('the contract is falsifiable', () => {
   it('without the migration, a supplement has no outline to scaffold', async () => {
     await boot(false);

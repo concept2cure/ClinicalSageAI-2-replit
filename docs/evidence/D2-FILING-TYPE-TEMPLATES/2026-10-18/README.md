@@ -108,3 +108,22 @@ byte-identical (sha256 `df0ffb35…`).
 - **Affected suite:** 107 files, 2,129 tests: 2,122 pass, 4 fail and 3 are skipped. The 4
   failures are the three above plus the picker test this change updates, which now passes 13/13.
   The canonical typecheck (`typecheck-no-regression --incremental`) reports 0 errors.
+
+## Adversarial review, and what it changed
+
+A six-lens review ran over the change as pushed: correctness, migration and Rule 1, regulatory
+accuracy, honest state, blast radius, and security / Part 11. Each finding went to three
+skeptics. The findings below were checked against the code and fixed, each shown failing first.
+
+| Finding | Fix | Red → green |
+|---|---|---|
+| **CI red on trunk:** `ci:check-rule-pack-provenance` read attestations from `20260810c` only, so the 14 new pairs read as undeclared (19 > 5). The gate was also blind to every later pack file, and lost tuples after an apostrophe inside a `$pack$` blob. | The gate reads every migration's attestations, requires one per live version, and skips dollar-quoted bodies. Its ceiling is re-based 5 → 1 against the corrected measurement (`cer:ema`). Pushed alone first, in `37977b82`. | `provenance-gate.txt` |
+| A class project could be given an NDA submission spine through "Add a market" with `applicationType: 'nda'`. | `add-project-market.ts` also reads the program's own class. | `add-project-market.pglite.test.ts`: 1 red under the old guard → 12/12 |
+| An FDA or EMA class's market line claimed "Module 1 to the agency's headings… Transmit not proven", and `buildable`, beside an offer saying nothing is built. | `classStatement`: the outline only, no Module 1, no package, no channel. | `market-support-offer.test.ts`: 3 red on the committed code → 52/52 |
+| An sBLA no longer fixed "biologic" and could be recorded as a drug. | `productTypeByFiling` (US_BLA_SUPP → biologic). The wizard does not ask, and the server uses it and refuses a contradiction. US_NDA_SUPP is "NDA/BLA" in the registry, so it still asks. | `project-intake-class.test.ts` |
+| The class question read "A IND_SAFETY_REPORT covers…" (and "a IND filing" on the server, before this change). | `filingTypeInSentence`: "An IND safety report", "An IND". | `project-intake-class.test.ts` |
+| The documented way to change a pack would have rewritten `20261018` and stopped every deploy on an existing database. | The emitter now only confirms the file. On a changed outline it refuses to write and names the new-file path. A contract test applies a later v1.1 in its own file and replays the set. | emitter exit 1 on an edited outline, migration untouched; contract 11/11 |
+
+Declined, with the reason: the assertion's `NOT same` is NULL when a CASE finds no tree. The
+emitter builds the CASE and the expected list from one array, so a generated file cannot reach
+that state. Fixing it would mean amending a pushed migration, and the file is now frozen.
