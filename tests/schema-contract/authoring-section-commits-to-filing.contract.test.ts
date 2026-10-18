@@ -69,7 +69,12 @@ const PROJECT = '9a111111-2222-3333-4444-555555555555';
 const DOC = 'doc_filing_contract';
 
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- organizations.uuid because the APPROVER e-signature path resolves the
+  -- signer's org role through a join that selects it (resolveSignerOrgRole).
+  -- Without the column POST /docs/:docId/e-sign answered 500 in this harness,
+  -- before and independently of anything this file asserts. (No backticks in
+  -- here: PREREQ is a template literal, and one ends it.)
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid TEXT);
   CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
@@ -109,7 +114,7 @@ const PREREQ = `
     ip_address   text,
     user_agent   text
   );
-  INSERT INTO organizations (id, name) VALUES (1, 'contract-org');
+  INSERT INTO organizations (id, name, uuid) VALUES (1, 'contract-org', '00000000-0000-4000-8000-000000000001');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${MEMBERSHIP_ID}, 'member');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
@@ -205,6 +210,21 @@ beforeAll(async () => {
          nothing to restore and would pass for the wrong reason. */
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260926_ana_turn_records.sql',
+      /* doc_permissions / principal_id: the APPROVER e-signature path reads
+         them (grantAuthoringPermission, decideAuthoringPermission). Without
+         this bundle /e-sign answered 500 with `column "principal_id" does not
+         exist` — a harness gap, present before the seal gate this file now
+         asserts, and confirmed by running the same case with the gate stashed. */
+      'db/migrations/20260727_authoring_object_permissions.sql',
+      /* The c2c_ana_actions command vocabulary. 20260527_mutation_primitives
+         ships a narrow CHECK (12 commands, no 'approve'); this file DROPs it
+         and replaces it with the drift-proof bounds constraint. Without it the
+         APPROVER e-signature's governed-action write violated
+         c2c_ana_actions_command_check on command 'approve'
+         (authoring.router.ts, recordGovernedAction) and the route answered
+         500. Another harness gap, not a product defect: the durable applier
+         runs both files. */
+      'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
     ],
   });
   h.db = jdb.db;
@@ -1306,7 +1326,9 @@ describe('a freeze refuses a document whose filed copy is not its text', () => {
     const res = await freezeDoc(docId);
     expect(res.status, 'a document whose filed copy differs was sealed').toBe(409);
     expect(res.body.error?.code).toBe('FILING_DIVERGED');
-    expect(res.body.diverged).toEqual([{ key: '2.5', filed: 'different' }]);
+    expect(res.body.diverged).toEqual([
+      { key: '2.5', filed: 'different', section: { id: expect.any(String), code: '2.5' } },
+    ]);
     // The refusal names the situation and the remedy, not a status code.
     expect(res.body.error?.message).toMatch(/section 2\.5/);
     expect(res.body.error?.message).toMatch(/save/i);
@@ -1346,7 +1368,9 @@ describe('a freeze refuses a document whose filed copy is not its text', () => {
 
     const res = await freezeDoc(docId);
     expect(res.status).toBe(409);
-    expect(res.body.diverged).toEqual([{ key: '2.5', filed: 'different' }]);
+    expect(res.body.diverged).toEqual([
+      { key: '2.5', filed: 'different', section: { id: expect.any(String), code: '2.5' } },
+    ]);
   });
 
   it('a bound document whose filing agrees freezes', async () => {
@@ -1418,5 +1442,139 @@ describe('a freeze reports, without refusing, a filing node its text did not rea
     await addFilingNode(filingId, '2.6', 'Nonclinical summaries');
 
     expect((await freezeDoc(docId)).status).toBe(200);
+  });
+});
+
+describe('the signing seals refuse a document whose filed copy is not its text', () => {
+  /* P-29.2, the correction that matters more than the freeze. An APPROVER
+     e-signature reaches the same sealed state a freeze does — it writes status
+     APPROVED, frozen_at, the snapshot and the signature — and the freeze
+     route's own refusal copy directs people to it. Gating only the freeze left
+     the path a client actually uses to approve a document passing no check at
+     all: a gate the product routes around, which reads as coverage it does not
+     have. */
+
+  const esign = (docId: string, meaning: string) =>
+    as(request(app).post(`/api/authoring/docs/${docId}/e-sign`)).send({
+      password: SIGNER_PASSWORD, meaning, intent: `${meaning} this document`,
+      reason: 'Approving for filing.',
+    });
+
+  const sign = (docId: string) =>
+    as(request(app).post(`/api/authoring/docs/${docId}/sign`)).send({
+      password: SIGNER_PASSWORD, meaning: 'APPROVER', intent: 'Approve this document',
+      reason: 'Approving for filing.',
+    });
+
+  async function sealsRefused(docId: string, res: request.Response) {
+    expect(res.status, 'a document whose filed copy differs was sealed and signed').toBe(409);
+    expect(res.body.error?.code).toBe('FILING_DIVERGED');
+    // NOTHING SEALED AND NOTHING SIGNED.
+    const [doc] = await q<{ status: string }>(
+      `SELECT status FROM authoring_documents WHERE id = $1`, [docId],
+    );
+    expect(String(doc.status).toUpperCase()).not.toBe('APPROVED');
+    const sigs = await q<{ n: string }>(
+      `SELECT count(*)::text AS n FROM authoring_signatures WHERE doc_id = $1`, [docId],
+    );
+    expect(sigs[0].n, 'a signature was written for a refused seal').toBe('0');
+    const frozen = await q<{ n: string }>(
+      `SELECT count(*)::text AS n FROM frozen_documents WHERE document_id = $1`, [docId],
+    );
+    expect(frozen[0].n).toBe('0');
+  }
+
+  it('POST /e-sign as APPROVER refuses, and seals and signs nothing', async () => {
+    const { docId, filingId } = await boundAndSaved('<p>The text the author signed.</p>');
+    await rewriteFiling(filingId, 'Text nobody typed here.');
+    await sealsRefused(docId, await esign(docId, 'APPROVER'));
+  });
+
+  it('POST /sign refuses, and seals and signs nothing', async () => {
+    const { docId, filingId } = await boundAndSaved('<p>The text the author signed.</p>');
+    await rewriteFiling(filingId, 'Text nobody typed here.');
+    await sealsRefused(docId, await sign(docId));
+  });
+
+  it('an agreeing document still e-signs as APPROVER', async () => {
+    // The control. Without it the gate's cost on the ordinary path is unmeasured.
+    const { docId } = await boundAndSaved('<p>Agreed text.</p>');
+    expect((await esign(docId, 'APPROVER')).status).toBe(200);
+  });
+
+  it('is cleared by re-saving the section the refusal names', async () => {
+    const { docId, sectionId, filingId } = await boundAndSaved('<p>First draft.</p>');
+    await rewriteFiling(filingId, 'Text nobody typed here.');
+    expect((await esign(docId, 'APPROVER')).status).toBe(409);
+
+    await as(request(app).patch(`/api/authoring/sections/${sectionId}`)).send({
+      content: '<p>First draft, revised.</p>', changeReason: 'restoring the filed copy',
+    });
+    expect((await esign(docId, 'APPROVER')).status).toBe(200);
+  });
+});
+
+describe('the refusal names a section the author can open', () => {
+  /* A refusal that names only the filing node is a dead end for the shape this
+     product is built around: the 2.5 Clinical Overview is filed as ONE node
+     assembled from 2.5.1 … 2.5.7, so a refusal naming `2.5` sends the author
+     looking for a section whose code no authoring section has. The
+     contributing section's code rides along on the divergence for this. */
+
+  async function assembledNode(text: string) {
+    const filingId = `doc_p29_asm_${++p29Minted}`;
+    const pack = await q<{ version: string }>(
+      `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
+    );
+    await q(
+      `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status, readiness)
+       VALUES ($1, 1, $2, 'ind', 'fda', $3, 'IND', 'draft', 0)`,
+      [filingId, PROJECT, pack[0].version],
+    );
+    // The outline files the Clinical Overview as ONE node, 2.5.
+    await q(
+      `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, status)
+       VALUES ($1, '2.5', 'Clinical overview', 1, 'todo')`,
+      [filingId],
+    );
+    const created = await as(request(app).post('/api/authoring/docs')).send({
+      title: `P-29 assembled ${p29Minted}`, module: 'M2', client_program_id: PROJECT,
+    });
+    const docId = created.body.document.id as string;
+    await q(`UPDATE authoring_documents SET c2c_document_id = $1 WHERE id = $2`, [filingId, docId]);
+    // The document's section is 2.5.1 — an ICH M4E heading INSIDE the overview.
+    const sec = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: docId, code: '2.5.1', title: '2.5.1', content: '', order_index: 1,
+    });
+    const sectionId = sec.body.section.id as string;
+    const saved = await as(request(app).patch(`/api/authoring/sections/${sectionId}`)).send({
+      content: text, changeReason: 'drafting the overview',
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.filing?.partOf, 'the save must reach the filing as part of 2.5').toBe('2.5');
+    return { docId, sectionId, filingId };
+  }
+
+  it('names the contributing section, not only the node it is filed at', async () => {
+    const { docId, filingId } = await assembledNode('<p>Clinical overview prose.</p>');
+    await rewriteFiling(filingId, 'Text nobody typed here.');
+
+    const res = await freezeDoc(docId);
+    expect(res.status).toBe(409);
+    // The node is 2.5; the section the author opens is 2.5.1.
+    expect(res.body.diverged).toEqual([
+      { key: '2.5', filed: 'different', section: { id: expect.any(String), code: '2.5.1' } },
+    ]);
+    expect(res.body.error?.message).toMatch(/2\.5\.1 \(filed at 2\.5\)/);
+  });
+
+  it('says it once when the section IS the node', async () => {
+    const { docId, filingId } = await boundAndSaved('<p>Exact code node.</p>');
+    await rewriteFiling(filingId, 'Text nobody typed here.');
+
+    const res = await freezeDoc(docId);
+    expect(res.status).toBe(409);
+    expect(res.body.error?.message).toMatch(/section 2\.5 is not the text/);
+    expect(res.body.error?.message).not.toMatch(/filed at/);
   });
 });
