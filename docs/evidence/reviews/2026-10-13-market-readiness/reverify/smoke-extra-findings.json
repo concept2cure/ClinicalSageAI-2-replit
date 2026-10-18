@@ -1,0 +1,23 @@
+[
+  {
+    "id": "HT-01",
+    "lane": "smoke",
+    "sevAtBasis": "P1",
+    "workOrder": "MR-15",
+    "depth": "thorough",
+    "title": "Organisations created by scripts/seed-admin.mjs cannot create programs (NO_CLIENT_WORKSPACE) until deploy-migrate runs again",
+    "statusAtHead": "FIXED",
+    "evidenceAtHead": "Observed at aa4ee1e29 (2026-10-18) on a database provisioned from empty: after scripts/seed-admin.mjs (docs/LOCAL_TESTING.md \u00a72) and sign-in, POST /api/c2c/projects returned PROJECT_RECORD_UNAVAILABLE / NO_CLIENT_WORKSPACE; scripts/seed-local-testing.ts did not change that; re-running node scripts/db/deploy-migrate.mjs applied migrations/20260923_organization_default_client_workspace.sql's repair sweep (client_workspaces 0 \u2192 1) and the same request then created the program. See docs/evidence/reviews/2026-10-13-market-readiness/smoke-at-head.md. Fixed 2026-10-18 by 969d1e727: scripts/seed-admin.mjs and scripts/seed-founder.mjs (and the GA demo seeder, which carried its own unmarked INSERT) now execute that same repair migration through scripts/seed/organization-workspace.mjs. Proved on a fresh database at d0cde23b9 plus the fix: POST /api/c2c/projects 409 NO_CLIENT_WORKSPACE with trunk's seed-admin, 201 and anchored with the fixed one (docs/evidence/W1/2026-10-18-seeded-workspace/).",
+    "fixedBy": "969d1e727",
+    "remaining": "",
+    "severityPilot": "P1",
+    "severityRationale": "Does not affect real tenants (signup, first-run setup and the boot seed create the workspace; deploys repair existing organisations), but it stops every human tester who follows the documented local setup at journey 1.",
+    "blocksHumanTesting": "blocks",
+    "humanTestingNote": "Fixed by 969d1e727: on that commit or later, seed-admin gives the organisation its workspace and no extra step is needed. On an older checkout, run `node scripts/db/deploy-migrate.mjs` (owner database URL) once after seeding.",
+    "ownerType": "engineering",
+    "instructions": "1. Red first: add a test that runs scripts/seed-admin.mjs against an empty provisioned database and then calls POST /api/c2c/projects; it fails today with NO_CLIENT_WORKSPACE.\n2. In scripts/seed-admin.mjs, after the organisation and membership are written, create its default client workspace through the canonical writer (server/services/c2c/organization-default-workspace.ts) \u2014 or, if the script cannot import TypeScript, execute migrations/20260923_organization_default_client_workspace.sql (the idempotent repair sweep) as its last step. Do not write a second INSERT into client_workspaces (zero duplication).\n3. Add one line to docs/LOCAL_TESTING.md \u00a72 saying the account step now includes the workspace.",
+    "acceptance": "The new test fails on the current script and passes after the change; a tester following docs/LOCAL_TESTING.md \u00a71\u20133 can create a program with no extra step.",
+    "effort": "S",
+    "dependencies": "none"
+  }
+]

@@ -1,0 +1,5 @@
+$ npx tsx docs/evidence/MR-08/2026-10-18/stage-1/live-ping.mjs   # the real pinned clamd container c2c-clamav (clamav/clamav:1.4.6@sha256:57deb108…) on 127.0.0.1:3310
+pingClamd() against c2c-clamav 127.0.0.1:3310 → true
+pingClamd() against 127.0.0.1:3399 (nothing listening) → false
+pingClamd() with CLAMAV_HOST unset → false
+exit=0

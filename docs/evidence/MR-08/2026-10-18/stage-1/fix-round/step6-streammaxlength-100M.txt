@@ -1,0 +1,40 @@
+# STEP 6 (work order) — the committed StreamMaxLength=100M. 2026-10-18T20:01:13Z
+# Same method as step6-streammaxlength-1M.txt (standalone scanner from the pinned digest, configured as both compose files configure it;
+# this working tree's production bundle, NODE_ENV=production, throwaway TLS Postgres). Only the scanner differs.
+
+$ docker run -d --name c2c-clamav-100m -p 127.0.0.1:3312:3310 -e CLAMD_CONF_StreamMaxLength=100M -e CLAMD_CONF_AlertExceedsMax=yes clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23
+$ docker inspect -f '{{.Image}} {{.State.Health.Status}}' c2c-clamav-100m
+sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23 healthy
+$ docker exec c2c-clamav-100m grep -E 'StreamMaxLength|AlertExceedsMax' /etc/clamav/clamd.conf
+StreamMaxLength 100M
+# When AlertExceedsMax is set, files exceeding the MaxFileSize, MaxScanSize, or
+AlertExceedsMax yes
+
+$ boot dist/index.js with CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3312
+pid=20541
+/readyz=200 after 7s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+
+$ DATABASE_URL=… BASE_URL=http://127.0.0.1:5199 SIGNIN_ORIGIN=https://image-boot.invalid MFA_ENCRYPTION_KEY=… UPLOAD_MB=2,49 node docs/evidence/MR-08/2026-10-18/stage-1/fix-round/upload-sizes.mjs
+enrolled user 1 in organisation 3, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project d1c39912-4102-4278-be01-c0b142f15dd8
+POST /api/vault/ingest mr08-step6-2mb.pdf (2097152 bytes, %PDF-1.4 … %%EOF, sha256 c43a64e0cfabf17c…) → 201 success, document b004fabc-66ef-4ad4-8245-3646cb6f1538 in 1401 ms
+POST /api/vault/ingest mr08-step6-49mb.pdf (51380224 bytes, %PDF-1.4 … %%EOF, sha256 5b67e7aa0b901b7d…) → 201 success, document 3378214c-5d48-4dff-8a60-953c5b88cf5d in 4362 ms
+
+# Both 201. In production a 201 means the scan ran and came back clean: an unscanned upload is refused 503 (uploadSafety.ts), as the 1M run shows.
+# 49 MiB is the largest size this route takes (vault-ingest.ts MAX_FILE_SIZE = VAULT_UPLOAD_MAX_BYTES, 50 MiB), under clamd's 100M stream limit.
+server log, any scanner refusal or bypass during this boot (expect none):
+0
+clamd log, any 'INSTREAM: Size limit' warning (expect none; the 1M run logged one):
+0
+
+# The scanner the earlier evidence used (c2c-clamav, 127.0.0.1:3310), for comparison:
+$ docker exec c2c-clamav grep -E 'StreamMaxLength|AlertExceedsMax' /etc/clamav/clamd.conf
+StreamMaxLength 100M
+# When AlertExceedsMax is set, files exceeding the MaxFileSize, MaxScanSize, or
+AlertExceedsMax yes

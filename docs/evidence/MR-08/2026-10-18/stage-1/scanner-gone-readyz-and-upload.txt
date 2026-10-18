@@ -1,0 +1,31 @@
+# The scanner goes away under a running production server (this change).
+# Stand-in for 'docker compose stop clamav': the server was booted with CLAMAV_PORT=3311, a TCP relay to the pinned
+# clamd on 3310 (the shared c2c-clamav container was not stopped); killing the relay removes the scanner.
+# /readyz turns 503 virusScan=down within the 30 s ping cache, and the next upload is refused 503 FILE_SCAN_UNAVAILABLE.
+
+$ boot dist/index.js with CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3311 (relay up)
+pid=20136
+/readyz=200 after 7s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+
+$ kill <relay>   # the scanner goes away at 19:02:17
++0s /readyz=200 virusScan=ok
++3s /readyz=200 virusScan=ok
++6s /readyz=200 virusScan=ok
++9s /readyz=200 virusScan=ok
++12s /readyz=200 virusScan=ok
++15s /readyz=200 virusScan=ok
++18s /readyz=200 virusScan=ok
++21s /readyz=503 virusScan=down
+{"ready":false,"failed":["virusScan"],"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"down","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"seeded"}
+
+$ node scripts/ci/image-boot-signin.mjs   # the next upload, scanner gone
+enrolled user 1 in organisation 5, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project 3824dc5d-979c-4ff9-a8f7-5a970d01fdf2
+::error::image sign-in FAILED at EICAR upload: expected 400 FILE_SCAN_REJECTED; got 503 {"error":{"code":"FILE_SCAN_UNAVAILABLE","message":"File scanning is temporarily unavailable; upload rejected"}}
+exit=1

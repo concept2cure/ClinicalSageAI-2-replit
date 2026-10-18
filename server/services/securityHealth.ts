@@ -17,11 +17,16 @@
  *
  *   jwt_secret_strength        — JWT_SECRET (or env-variant) ≥32 chars
  *   csp_middleware_active      — helmet emits CSP with a nonce
- *   clamav_connectivity        — clamd reachable + responding (when
- *                                CLAMAV_HOST is set). Sends the EICAR
- *                                test signature and expects a FOUND
- *                                reply, confirming both reachability
- *                                AND detection.
+ *   clamav_connectivity        — clamd reachable + responding. Sends
+ *                                the EICAR test signature and expects a
+ *                                FOUND reply, confirming both
+ *                                reachability AND detection. With
+ *                                CLAMAV_HOST unset: skipped outside
+ *                                production; a critical FAIL in
+ *                                production, which refuses every upload
+ *                                it cannot scan (uploadSafety.ts) and so
+ *                                refuses to boot without a scanner
+ *                                (MR-08).
  *   audit_chain_integrity      — hash chain of audit_events is intact
  *                                from the first row to the latest.
  *   audit_immutability_triggers — every append-only trigger on the audit
@@ -223,6 +228,19 @@ async function checkClamavConnectivity(): Promise<SecurityCheckResult> {
   const start = Date.now();
 
   if (!process.env.CLAMAV_HOST) {
+    // Production refuses every upload it cannot scan (uploadSafety.ts: 503
+    // FILE_SCAN_UNAVAILABLE), so a production process with no scanner would
+    // boot green and refuse every file. It refuses to boot instead
+    // (startup/security-self-test.ts exits on a critical failure). MR-08.
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        name: 'clamav_connectivity',
+        status: 'fail',
+        critical: true,
+        reason: 'CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)',
+        durationMs: Date.now() - start,
+      };
+    }
     return {
       name: 'clamav_connectivity',
       status: 'skipped',

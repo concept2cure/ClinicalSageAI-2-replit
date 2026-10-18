@@ -1,0 +1,7 @@
+# The generator in upload-sizes.mjs (paddedPdf), run standalone to files for validation:
+  MiB, bytes, expected: 2 2097152 2097152
+  MiB, bytes, expected: 49 51380224 51380224
+t2.pdf:  PDF document, version 1.4, 1 page(s)
+t49.pdf: PDF document, version 1.4, 1 page(s)
+t2.pdf: pdf-lib parses it (throwOnInvalidObject), pages = 1
+t49.pdf: pdf-lib parses it (throwOnInvalidObject), pages = 1
