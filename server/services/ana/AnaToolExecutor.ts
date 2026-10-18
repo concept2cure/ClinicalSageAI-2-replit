@@ -15868,7 +15868,9 @@ async function prepareBatchSections(
       failure = { sectionType: request.sectionType, error: 'DRAFT_FAILED',
         message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
     }
-    if (signal?.aborted) {
+    // A source refusal keeps its own classification; only a load that would
+    // otherwise have succeeded is discarded as stopped.
+    if (signal?.aborted && !failure) {
       request.sourceContext = undefined;
       failure = cancelledDraft(request.sectionType);
     }

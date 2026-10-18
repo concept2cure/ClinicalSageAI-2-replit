@@ -92,6 +92,23 @@ describe('batch_draft_sections carries stop into nested work', () => {
     expect(result.sections[2]).toMatchObject({ status: 'cancelled', error: 'DRAFT_CANCELLED' });
   });
 
+  it('keeps a source refusal as failed when stop lands during that read', async () => {
+    const controller = new AbortController();
+    seam.load.mockImplementation(async () => { controller.abort(); throw new Error('catalog refused'); });
+    const result = await run([section('2.5'), section('2.7', true, otherDocumentId)], controller.signal);
+    expect(result).toMatchObject({ status: 'cancelled', failed: 1, cancelled: 1, retryIndices: [0], cancelledIndices: [1] });
+    expect(result.sections[0]).toMatchObject({ status: 'failed', error: 'DRAFT_FAILED' });
+  });
+
+  it('reports a fault after stop as the stop, keeping recorded source refusals', async () => {
+    const controller = new AbortController();
+    seam.load.mockRejectedValueOnce(new Error('catalog refused'));
+    seam.batch.mockImplementation(async () => { controller.abort(); throw new Error('late fault'); });
+    const result = await run([section('2.5'), section('2.6', false)], controller.signal);
+    expect(result).not.toHaveProperty('error');
+    expect(result).toMatchObject({ status: 'cancelled', failed: 1, cancelled: 1, retryIndices: [0], cancelledIndices: [1] });
+  });
+
   it('dispatches nothing when already stopped', async () => {
     const controller = new AbortController();
     controller.abort();

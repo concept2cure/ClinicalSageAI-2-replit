@@ -3,7 +3,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GatewayRequest } from '../../ai-gateway/types';
 
-const seam = vi.hoisted(() => ({ route: vi.fn() }));
+const seam = vi.hoisted(() => ({ route: vi.fn(), recheck: vi.fn() }));
+vi.mock('../draft-project-sources', async original => ({
+  ...(await original<Record<string, unknown>>()), assertDraftSourceContextCurrent: seam.recheck }));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seam.route }),
   GatewayPolicyError: class extends Error {}, GatewayNoProviderError: class extends Error {},
   GatewayAllProvidersFailedError: class extends Error {}, ModelNotApprovedError: class extends Error {},
@@ -22,7 +24,10 @@ const gatewayResponse = (content = 'Generated draft.', finishReason = 'end_turn'
   usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0 }, latencyMs: 1, finishReason });
 const aborted = () => { const c = new AbortController(); c.abort(); return c.signal; };
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  seam.recheck.mockResolvedValue(undefined);
+});
 
 describe('draftDocument honours the trusted stop signal', () => {
   it('never reaches the gateway when stopped before dispatch', async () => {
@@ -48,6 +53,8 @@ describe('draftDocument honours the trusted stop signal', () => {
     });
     await expect(service.draftDocument({ ...section(0), signal: controller.signal }))
       .rejects.toMatchObject({ name: 'DraftCancelledError' });
+    // The pre-dispatch checkpoint ran once; no source recheck starts after stop.
+    expect(seam.recheck).toHaveBeenCalledTimes(1);
   });
 
   it('ignores a signal-shaped value that is not an AbortSignal', async () => {
@@ -60,27 +67,39 @@ describe('draftDocument honours the trusted stop signal', () => {
 });
 
 describe('batchDraft stops dispatching waves after stop', () => {
-  it('keeps wave one, dispatches nothing later, and reports the rest cancelled', async () => {
+  it('keeps a finished wave, rejects the in-flight wave late, and dispatches no later wave', async () => {
     const service = new AnaDocumentDraftingService();
     const controller = new AbortController();
-    const releases: Array<() => void> = [];
+    const held: Array<() => void> = [];
+    const { throwIfDraftCancelled } = await import('../batch-draft-result');
+    // Behaves like the real draftDocument at its boundary: a result that
+    // settles after stop is refused, not returned.
     const draft = vi.spyOn(service, 'draftDocument').mockImplementation(async req => {
-      await new Promise<void>(resolve => releases.push(resolve));
+      if (Number(req.sectionType.split(' ')[1]) >= 3) await new Promise<void>(resolve => held.push(resolve));
+      throwIfDraftCancelled(req.signal);
       return drafted(req.sectionType);
     });
     const requests = Array.from({ length: 7 }, (_, i) => section(i));
     const pending = service.batchDraft({ requests, concurrency: 3, signal: controller.signal });
-    await vi.waitFor(() => expect(draft).toHaveBeenCalledTimes(3));
+    await vi.waitFor(() => expect(draft).toHaveBeenCalledTimes(6));
     controller.abort();
-    releases.splice(0).forEach(release => release());
+    held.splice(0).forEach(release => release());
     const results = await pending;
-    expect(draft).toHaveBeenCalledTimes(3);
+    expect(draft).toHaveBeenCalledTimes(6);
     expect(results).toHaveLength(7);
     expect(results.slice(0, 3).map(r => ('content' in r ? r.content : null)))
       .toEqual(['Draft of Section 0', 'Draft of Section 1', 'Draft of Section 2']);
     expect(results.slice(3)).toEqual(requests.slice(3).map(r => expect.objectContaining({
       error: 'DRAFT_CANCELLED', sectionType: r.sectionType })));
     results.slice(3).forEach(r => expect(r).not.toHaveProperty('content'));
+  });
+
+  it('keeps an abort-shaped failure as failed when nobody stopped', async () => {
+    const service = new AnaDocumentDraftingService();
+    const controller = new AbortController();
+    vi.spyOn(service, 'draftDocument').mockRejectedValue(Object.assign(new Error('timeout'), { name: 'AbortError' }));
+    const results = await service.batchDraft({ requests: [section(0)], signal: controller.signal });
+    expect(results[0]).toMatchObject({ error: 'DRAFT_FAILED' });
   });
 
   it('dispatches nothing when already stopped', async () => {

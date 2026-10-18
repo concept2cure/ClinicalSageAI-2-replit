@@ -913,9 +913,11 @@ export class AnaDocumentDraftingService {
     }
 
     const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
-    await sourceCheckpoint.assertCurrent();
     // A result that settled after stop — including a mid-stream partial the
-    // gateway returns as finishReason 'aborted' — is not offered as a draft.
+    // gateway returns as finishReason 'aborted' — is not offered as a draft,
+    // and no source recheck is started for it.
+    throwIfDraftCancelled(signal);
+    await sourceCheckpoint.assertCurrent();
     throwIfDraftCancelled(signal);
 
     return {
@@ -1184,7 +1186,8 @@ ${documentContent}`,
           results.push(outcome.value);
           return;
         }
-        results.push(isDraftCancellation(outcome.reason)
+        const stopped = signal?.aborted || trustedSignal(batch[j].signal)?.aborted;
+        results.push(stopped && isDraftCancellation(outcome.reason)
           ? cancelledDraft(batch[j].sectionType)
           : describeBatchDraftFailure(batch[j], outcome.reason));
       });
