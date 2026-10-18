@@ -15,7 +15,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
-import { rasterizePdfPages } from '../ocr/pdfRasterizer.js';
+import { DEFAULT_MAX_PAGE_PIXELS, rasterizePdfPages } from '../ocr/pdfRasterizer.js';
 import { pdfPageCount } from '../ocr/pdfInspector.js';
 import { workspaceFileName } from './document-workspace.js';
 
@@ -40,7 +40,7 @@ function pngSize(png: Buffer): { widthPx: number; heightPx: number } {
 }
 
 /** Pixels one rendered page may have: 40 Mpx, about 160 MB of canvas. */
-export const MAX_PAGE_PIXELS = 40_000_000;
+export const MAX_PAGE_PIXELS = DEFAULT_MAX_PAGE_PIXELS;
 
 /**
  * What the file is: by its extension, or — for an upload, which is stored

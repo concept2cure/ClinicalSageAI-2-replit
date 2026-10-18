@@ -1,0 +1,22 @@
+D-29-A — THE TWO REDS AMONG THE DEPENDENTS ARE NOT THIS CHANGE'S
+================================================================
+
+Nine suites that read `computeDocHash` or the digests around it were run. Two
+failed. The same two failed identically with the change stashed, so they are
+trunk reds, attributed and handed on — not fixed here, and not mine.
+
+  WITH the change:        Tests 10 failed | 10 passed | 2 todo (22)
+  WITHOUT the change:     Tests 10 failed | 10 passed | 2 todo (22)
+  (same three named FAIL lines, same two files, both runs)
+
+  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+    "FD5 (c): a sealed Authoring approval carries to its Vault copy" — fails on
+    42703 errorMissingColumn for `vault.documents.supersedes_id` in the
+    currency probe. A schema/harness drift in the vault lane.
+
+  tests/golden-journeys/ind-authoring.journey.test.ts
+    fails at file level (collection), before any case body.
+
+GREEN, both runs: placement-vault-leaf-parity, authoring-signing-authority,
+authoringExportHistory, authoring-content-digests, authoring-snapshot-digest,
+authoring-file-to-vault-snapshot, authoring-section-commits-to-filing.contract.

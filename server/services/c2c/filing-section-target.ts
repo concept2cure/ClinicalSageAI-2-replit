@@ -111,3 +111,109 @@ export async function signedFilingSectionTexts(
   }
   return out;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Does the filing still hold what this document says? (P-29.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One outline node whose filed text is not what this document would write. */
+export interface FilingDivergence {
+  /** The filing outline node's key. */
+  key: string;
+  /** `empty` when the filing holds no text for a node this document has text for. */
+  filed: 'different' | 'empty';
+}
+
+export interface FilingAgreement {
+  /** The bound filing, when this document has one. */
+  documentId: string | null;
+  /** The nodes that disagree, in the order the document's sections reach them. */
+  diverged: FilingDivergence[];
+  /** Why nothing was compared, when nothing was. Absent when a comparison ran. */
+  reason?: string;
+}
+
+/**
+ * Compare the filing's text, node by node, with what every section of this
+ * document would write into it — the one shared check behind the exit refusals
+ * (`docs/EXIT_ATTESTATION_DECISION_2026-10-18.md`, P-29.2).
+ *
+ * It is the approval's own comparison, hoisted so a seal can run it:
+ * `approveBoundFilingSections` already tests `(ds.content ->> 'text') = sig.text`
+ * and *reports* the misses as `notApproved`. The expected side is
+ * `signedFilingSectionTexts` — deliberately, not a second definition of "what
+ * should the filing hold", which the zero-duplication rule forbids and which
+ * would drift from the writer the moment either changed.
+ *
+ * SCOPE, because the wrong scope refuses every seal. Only nodes this document's
+ * sections actually map to are compared. A filing node no section reaches is
+ * not this document's to hold — it may belong to another document of the same
+ * filing — and a section the editor has left empty has nothing to file yet.
+ *
+ * WRITES NOTHING, and takes the caller's EXECUTOR rather than the pool, so the
+ * comparison sees the same snapshot as the seal it guards and cannot be
+ * overtaken between the check and the write.
+ *
+ * Absence is "not applicable", never a refusal: the probe is the one
+ * `commitSectionToFiling` makes, for the same reason — the phase-9 store is
+ * genuinely optional, and in PostgreSQL a failed statement aborts the caller's
+ * whole transaction, so absence has to be detected with a SELECT that cannot
+ * fail before anything is attempted.
+ */
+export async function filingAgreesWithEditing(
+  client: FilingQuery,
+  args: { authoringDocId: string; tenantId: number },
+): Promise<FilingAgreement> {
+  const { authoringDocId, tenantId } = args;
+
+  const capable = await client.query(
+    `SELECT (to_regclass('public.c2c_document_sections') IS NOT NULL
+             AND to_regclass('public.c2c_documents') IS NOT NULL
+             AND EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_schema = 'public'
+                            AND table_name = 'authoring_documents'
+                            AND column_name = 'c2c_document_id')) AS ok`,
+  );
+  if (!capable.rows[0]?.ok) {
+    return { documentId: null, diverged: [], reason: 'The governed document store is not provisioned here, so there is no filing to compare.' };
+  }
+
+  const bound = await client.query(
+    `SELECT d.c2c_document_id FROM authoring_documents d WHERE d.id = $1 AND d.tenant_id = $2 LIMIT 1`,
+    [authoringDocId, tenantId],
+  );
+  if (bound.rows.length === 0) {
+    return { documentId: null, diverged: [], reason: 'The document was not found in this organization.' };
+  }
+  const documentId = bound.rows[0].c2c_document_id ? String(bound.rows[0].c2c_document_id) : null;
+  if (!documentId) {
+    return { documentId: null, diverged: [], reason: 'This document is not bound to a filing, so there is nothing to compare.' };
+  }
+
+  const expected = await signedFilingSectionTexts(client, { authoringDocId, tenantId, documentId });
+  if (expected.length === 0) {
+    return { documentId, diverged: [], reason: 'No section of this document reaches a node of the bound filing.' };
+  }
+
+  // Tenant-scoped through the document, exactly as the expected side is.
+  const filed: { rows: Array<{ section_key: string; text: string | null }> } = await client.query(
+    `SELECT ds.section_key, ds.content ->> 'text' AS text
+       FROM c2c_document_sections ds
+      WHERE ds.document_id = $1
+        AND ds.section_key = ANY($3::text[])
+        AND EXISTS (SELECT 1 FROM c2c_documents d WHERE d.id = ds.document_id AND d.org_id = $2)`,
+    [documentId, tenantId, expected.map((e) => e.key)],
+  );
+  const filedText = new Map(filed.rows.map((r) => [String(r.section_key), r.text ?? '']));
+
+  const diverged: FilingDivergence[] = [];
+  for (const { key, text } of expected) {
+    if (text.trim() === '') continue; // nothing authored for this node yet
+    const held = filedText.get(key);
+    if ((held ?? '').trim() === '') { diverged.push({ key, filed: 'empty' }); continue; }
+    // Exact equality, which is the approval's own test — not a trimmed or
+    // normalised one, because the signature covers the bytes as they are.
+    if (held !== text) diverged.push({ key, filed: 'different' });
+  }
+  return { documentId, diverged };
+}
