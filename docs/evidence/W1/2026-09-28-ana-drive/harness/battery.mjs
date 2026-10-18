@@ -171,9 +171,17 @@ const SCENARIOS = {
   // Acting on a screen the person is not on: the bus heads there and the
   // action arrives while the screen's read is in flight, so the screen holds
   // it until its data settles. Each ask is answered with "Act result: …
-  // Screen: …" (the stand-in's planAct). The Inconsistency overlay is
-  // project-scoped, so a program is opened first; the design needs the local
-  // study design the README names.
+  // Screen: …" (the stand-in's planAct). eCTD Compile is project-scoped, so a
+  // program is opened first; the design needs the local study design the
+  // README names.
+  //
+  // This first check drove the Inconsistency board's FDA/EMA overlay until
+  // upstream a76a50aec6 made that gate the server's alone: no client overlay,
+  // no re-scoring, and inconsistency.set-regulator left the registry with its
+  // handler. The eCTD Region menu is the same shape — a project-scoped
+  // selector whose very presence waits on a read (compilation readiness) — so
+  // it tests the same thing: a held action, sent from another screen, answered
+  // by the screen that holds it.
   async heldAction(page) {
     await goHome(page);
     await ask(page, 'open program BX-301');
@@ -197,15 +205,18 @@ const SCENARIOS = {
 
     let t = Date.now();
     let before = (await actResults()).length;
-    await ask(page, 'act inconsistency.set-regulator regulator=EMA');
-    const overlaySaid = await nextResult(before);
-    const overlayMs = Date.now() - t;
-    const overlay = await selectedText('button.gi-reg-b.on');
-    await page.screenshot({ path: `${SP}/e2e-held-overlay.png` });
+    await ask(page, 'act ectd-compile.set-region region=EMA');
+    const regionSaid = await nextResult(before);
+    const regionMs = Date.now() - t;
+    // Either the menu moved, or the sequence records its own region and the
+    // screen said so — both are the screen's own answer. A timeout ("not
+    // confirmed") or a menu left on FDA with no refusal is the failure.
+    const regionValue = await page.locator('#ectd-region').inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-held-region.png` });
     record(
-      "held action: an overlay switch sent from another screen gets the screen's own answer",
-      /Screen: /.test(overlaySaid) && !/not confirmed/.test(overlaySaid),
-      `${overlaySaid} (overlay ${overlay || 'unchanged'}; answered in ${overlayMs} ms)`,
+      "held action: a region switch sent from another screen gets the screen's own answer",
+      /Screen: /.test(regionSaid) && !/not confirmed/.test(regionSaid) && (regionValue === 'EMA' || /records region/.test(regionSaid)),
+      `${regionSaid} (Region menu: ${regionValue || 'not on screen'}; answered in ${regionMs} ms)`,
     );
 
     t = Date.now();
