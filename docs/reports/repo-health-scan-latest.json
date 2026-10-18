@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T19:07:42.751Z",
+  "generatedAt": "2026-10-18T20:13:35.333Z",
   "git": {
-    "sha": "ea474afcc4324048ff243af2cae1839cb02e7303",
+    "sha": "18c7bc16fade2e086538fb6ab465ad7d3de27fe8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2348,6 +2348,10 @@
         "bytes": 122639
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 121339
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119982
       },
@@ -2356,16 +2360,16 @@
         "bytes": 119713
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 118342
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 117106
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116979
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 116976
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2418,10 +2422,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "bytes": 107786
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 105507
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2582,6 +2582,10 @@
         "lines": 2511
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2429
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2416
       },
@@ -2616,10 +2620,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2239
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2670,8 +2670,16 @@
         "lines": 2095
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "lines": 2093
+      },
+      {
         "file": "server/services/precedent-engine.ts",
         "lines": 2089
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 2068
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2686,10 +2694,6 @@
         "lines": 2053
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 2050
-      },
-      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 2040
       },
@@ -2700,10 +2704,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 2021
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 2020
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",

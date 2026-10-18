@@ -1,5 +1,5 @@
 {
-  "server/api/cmc/routes.ts": 6,
+  "server/api/cmc/routes.ts": 7,
   "server/api/cmc/specificationRoutes.ts": 3,
   "server/api/ectd/routes.ts": 3,
   "server/api/labeling/routes.ts": 8,

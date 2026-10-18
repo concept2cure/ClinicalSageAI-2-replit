@@ -26,17 +26,28 @@ const HEX64 = /^[0-9a-f]{64}$/;
  *   the composition boundary  → { success: false, code, error: <prose>, hint }
  *                               (services/cmc/composition-scope.ts)
  *   the module3-os routes     → { success: false, error: <CODE>, detail }
+ *   the register refusals     → { success: false, error: <prose> }
+ *                               (api/cmc/routes.ts refusesUngovernedQualification;
+ *                                services/cmc/signed-record.ts)
  *
  * So `code` is read FIRST — where it exists it is the machine code, and the
- * prose is in `error`; where it does not, `error` IS the code. The detail is
- * whichever of `detail`, `error` and `hint` carries the sentences.
+ * prose is in `error`; where it does not, `error` is EITHER the code or the
+ * whole sentence, told apart by shape: a code is ONE token, with no spaces
+ * (`LAUNCH_SCOPE`, `SIGNED_RECORD`, `invalid_request`), and a message is a
+ * sentence. The third envelope is why this matters: OQ-CMC-34 read an empty
+ * detail off a register refusal that carried its whole message in `error`, and
+ * reported the refusal as not naming the governed path it did name. Matching on
+ * SCREAMING_SNAKE alone then lost `invalid_request`, which is also a code.
  */
+const CODE_SHAPED = /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/;
 export const dataOf = (r) => r.json?.data ?? r.json ?? {};
-export const errCode = (r) => r.json?.code ?? r.json?.error?.code ?? (typeof r.json?.error === 'string' ? r.json.error : null);
+export const errCode = (r) => r.json?.code ?? r.json?.error?.code
+  ?? (typeof r.json?.error === 'string' && CODE_SHAPED.test(r.json.error) ? r.json.error : null);
 export const errDetail = (r) => {
   const j = r.json ?? {};
   if (typeof j.detail === 'string' && j.detail) return j.detail;
-  const prose = [j.code ? j.error : null, j.hint, j.message].filter((x) => typeof x === 'string' && x);
+  const proseError = typeof j.error === 'string' && !CODE_SHAPED.test(j.error) ? j.error : (j.code ? j.error : null);
+  const prose = [proseError, j.hint, j.message].filter((x) => typeof x === 'string' && x);
   return prose.join(' ');
 };
 

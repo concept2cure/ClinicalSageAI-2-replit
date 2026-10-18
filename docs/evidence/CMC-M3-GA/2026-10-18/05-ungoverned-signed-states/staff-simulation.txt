@@ -1,0 +1,11 @@
+# The staff simulation, with the new ceremonies
+
+$ bash scripts/dev/cmc-staff-simulation.sh
+
+   ✓ a method claiming 'validated' on create is refused, and the refusal names the signature (409)
+   ✓ a method with no ICH Q2 parameters cannot be validated — the signature has nothing to accept (409)
+   ✓ AM-001 validated under signature; the record names who validated it (1)
+   ✓ a validated method is closed to ordinary edits (409)
+   ✓ an assessment claiming 'approved' on create is refused (409)
+   ✓ a validated process's content is closed to an ordinary edit (409)
+════ RESULT: 167 passed, 0 failed ════

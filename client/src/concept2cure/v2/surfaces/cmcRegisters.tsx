@@ -22,7 +22,7 @@ import {
   formulationRecordForm, formulationRecordBody, formulationRecordPatch,
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
-  qualifyForm, qualifyBody,
+  qualifyForm, qualifyBody, SIGNED_ACTS, type SignedWord,
   signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -527,9 +527,25 @@ export function CmMethodLibrary() {
           label: 'Edit',
           subject: 'analytical method',
           form: (r) => methodForm(methodDefaults(r)),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'validated', 'analytical method'),
           path: (r) => `/api/cmc/analytical-methods/${r.id}`,
           toBody: (v, _r, projectId) => methodBody(v, projectId),
         },
+        {
+          label: 'Validate',
+          icon: I.lock,
+          subject: 'method validation',
+          /* The ICH Q2 conclusion, as a Part 11 signature. 'validated' was a
+             dropdown value until 2026-10-18, and three readers take it as a
+             completed exercise: §3.2.S.4.3's Validation Status column, the Q2
+             engine's shortfall check and the contradiction sweep. */
+          when: (r) => String(r.status || '').toLowerCase() !== 'validated',
+          form: (r) => qualifyForm('analytical method', `${r.methodCode} — ${r.title}`, SIGNED_ACTS.validate),
+          path: (r) => `/api/cmc/analytical-methods/${r.id}/validate`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+        retireSignedAction('analytical method', 'validated', 'status', (r) => `${r.methodCode} — ${r.title}`, (r) => `/api/cmc/analytical-methods/${r.id}`),
       ]}
       columns={[
         { header: 'Code', render: (r) => r.methodCode, mono: true, bold: true },
@@ -790,9 +806,25 @@ export function CmComparabilityStudies() {
             methods: (Array.isArray(r.methods) ? r.methods : []).map((m) => String(m)),
             outcome: r.outcome ?? '',
           }),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'approved', 'comparability assessment'),
           path: (r) => `/api/cmc/comparability-studies/${r.id}`,
           toBody: (v, _r, projectId) => comparabilityBody(v, projectId),
         },
+        {
+          label: 'Approve',
+          icon: I.lock,
+          subject: 'comparability approval',
+          /* What justifies a post-change equivalence claim in §3.2.P.8. The
+             section prints the status AND the reviewer, and the reviewer was a
+             free-text field with no user behind it: the signature writes the
+             signer's own id into it. */
+          when: (r) => String(r.status || '').toLowerCase() !== 'approved',
+          form: (r) => qualifyForm('comparability assessment', r.title || 'Untitled assessment', SIGNED_ACTS.approve),
+          path: (r) => `/api/cmc/comparability-studies/${r.id}/approve`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+        retireSignedAction('comparability assessment', 'approved', 'status', (r) => r.title || 'Untitled assessment', (r) => `/api/cmc/comparability-studies/${r.id}`),
       ]}
       columns={[
         { header: 'Assessment', render: (r) => text(r.title, 'Untitled assessment'), bold: true },
@@ -880,9 +912,25 @@ export function CmProcessValidation() {
           icon: I.workflow,
           subject: 'process validation record',
           form: (r) => processValidationForm(pvDefaults(r)),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'approved', 'process validation record'),
           path: (r) => `/api/cmc/process-validation/${r.id}`,
           toBody: (v, _r, projectId) => processValidationBody(v, projectId),
         },
+        {
+          label: 'Approve',
+          icon: I.lock,
+          subject: 'process validation approval',
+          /* The table has carried approved_by and approval_date since it was
+             created and only an ordinary save ever filled them. The composer
+             prints this status as §3.2.S.2 / §3.2.P.3's process-validation
+             statement, so the approval is signed. */
+          when: (r) => String(r.status || '').toLowerCase() !== 'approved',
+          form: (r) => qualifyForm('process validation record', r.processName, SIGNED_ACTS.approve),
+          path: (r) => `/api/cmc/process-validation/${r.id}/approve`,
+          method: 'POST',
+          toBody: (v) => qualifyBody(v),
+        },
+        retireSignedAction('process validation record', 'approved', 'status', (r) => r.processName, (r) => `/api/cmc/process-validation/${r.id}`),
       ]}
       columns={[
         { header: 'Process', render: (r) => r.processName, bold: true },
@@ -1116,7 +1164,7 @@ function elSummary(r: ContainerClosureApiRow): React.ReactNode {
  */
 function retireSignedAction<T extends { id?: unknown }>(
   noun: string,
-  signed: 'qualified' | 'validated',
+  signed: SignedWord,
   field: 'status' | 'validationStatus',
   name: (r: T) => string,
   path: (r: T) => string,

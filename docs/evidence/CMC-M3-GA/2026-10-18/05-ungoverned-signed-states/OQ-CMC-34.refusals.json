@@ -1,0 +1,28 @@
+[
+  {
+    "register": "analytical-methods",
+    "create": 409,
+    "edit": 409,
+    "storedStatus": "development",
+    "id": 95
+  },
+  {
+    "register": "process-validation",
+    "create": 409,
+    "edit": 409,
+    "storedStatus": "planning",
+    "id": 17
+  },
+  {
+    "register": "comparability-studies",
+    "create": 409,
+    "edit": 409,
+    "storedStatus": "draft",
+    "id": "59d18640-bf98-4900-ae47-daac2f903bc8"
+  },
+  {
+    "register": "qc-testing",
+    "create": 409,
+    "code": "REVIEW_IS_A_SECOND_PERSON"
+  }
+]
