@@ -44,7 +44,7 @@ vi.mock('../../services/tenant-export/attestation-report.service', () => ({
   generateAttestation: (...a: any[]) => attestationSvc.generateAttestation(...a),
   AttestationKeyMissingError,
 }));
-vi.mock('../../db', () => ({ pool: {} }));
+vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [{ role: 'admin' }] })), connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [{ id: 7 }] })), release: vi.fn() })) } }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })),
 }));

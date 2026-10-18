@@ -114,6 +114,7 @@ const m3Errors = (a: Awaited<ReturnType<typeof assess>>) =>
 
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
+  await harness.pglite.exec(`CREATE TABLE IF NOT EXISTS organizations(id integer PRIMARY KEY,settings jsonb NOT NULL DEFAULT '{}'); INSERT INTO organizations(id) VALUES(${ORG}),(${OTHER_ORG});`);
   holder.db = harness.db;
 });
 

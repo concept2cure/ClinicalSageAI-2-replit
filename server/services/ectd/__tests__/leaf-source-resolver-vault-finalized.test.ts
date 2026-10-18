@@ -24,6 +24,8 @@ import { readFileSync, promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { createHash, randomUUID } from 'crypto';
+import { syncCompanyLegalRegistry } from '../../company-documents/legal-registry';
+import type { CompanyLegalDocument } from '../../../../shared/company-documents';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
@@ -118,6 +120,9 @@ beforeAll(async () => {
       deleted_at TIMESTAMPTZ
     );
   `);
+  await harness.pglite.exec(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+    CREATE TABLE IF NOT EXISTS vault.legal_holds (organization_id INTEGER, lifted_at TIMESTAMPTZ);`);
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.
@@ -135,10 +140,10 @@ describe('a vault leaf is finalized only when its version is approved, current, 
   it('uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval', async () => {
     const uuid = await seedVersion({ label: 'company-authorization', stage: 'approved' });
     const original = store.objects.get(`ver-${uuid}`)!;
-    const document = { id: uuid, title: 'Company authorization', kind: 'authorization', programId: PROGRAM, vaultDocumentId: uuid,
+    const document: CompanyLegalDocument = { id: uuid, title: 'Company authorization', kind: 'authorization', programId: PROGRAM, vaultDocumentId: uuid,
       contentHash: sha(original), version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['IND'], language: 'en',
       effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: '5' };
-    await harness.pglite.query('UPDATE organizations SET settings=$1::jsonb WHERE id=$2', [JSON.stringify({ companyDocuments: { legalDocuments: [document] } }), ORG]);
+    await syncCompanyLegalRegistry(harness.pglite, ORG, [], [document]);
     try {
       const matching = await run(uuid, { programId: PROGRAM, agency: 'FDA', country: 'US', submissionType: 'IND' });
       expect(matching.unfinalized).toBe(0);
@@ -151,7 +156,7 @@ describe('a vault leaf is finalized only when its version is approved, current, 
       expect((await run(uuid)).unfinalizedSections[0].status).toContain('target program');
       const record = await harness.pglite.query('SELECT stage,content_hash FROM canonical_documents WHERE canonical_id=$1', [`cd-${uuid}`]);
       expect(record.rows[0]).toEqual({ stage: 'approved', content_hash: sha(original) });
-    } finally { await harness.pglite.query("UPDATE organizations SET settings='{}'::jsonb WHERE id=$1", [ORG]); }
+    } finally { await harness.pglite.exec("TRUNCATE company_legal_registry"); }
   });
 
   it('an upload nobody reviewed is not finalized', async () => {

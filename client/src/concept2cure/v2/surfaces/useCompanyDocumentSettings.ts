@@ -1,28 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiRequest, apiUpload, serverMessage } from '@/lib/queryClient';
-import type { CompanyDocumentProfile, CompanyDocumentsResponse, CompanyLegalDocument, CompanyLegalKind } from '@shared/company-documents';
+import type { CompanyDocumentCapabilities, CompanyDocumentProfile, CompanyLegalDocument } from '@shared/company-documents';
 import { normalizeTemplateSpec, type TemplateSpec } from '@shared/templates/template-spec';
-import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
+import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
+import { companyCapabilitiesOf as capabilitiesOf, copyCompanyValue as copy, editableCompanyProfile as editable, companyPresentation as presentation, emptyCompanyLegal as emptyLegal, validCompanyDocumentsResponse as validResponse, companyProtectedPresentationChanged, MUTATION_CAPABILITY, type CompanyMutationMode } from './company-documents/companyDocumentsData';
+import { applyCompanyMutationReceipt, companyMutationFailure } from './company-documents/companySettingsReceipt';
 
 export const COMPANY_DOCUMENTS_PATH = '/api/client-branding/company-documents';
 const PATH = COMPANY_DOCUMENTS_PATH;
-const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
-function validResponse(value: unknown): value is CompanyDocumentsResponse {
-  const v = value as CompanyDocumentsResponse | null;
-  return Boolean(v && typeof v.canManage === 'boolean' && v.data?.version === 1 &&
-    Number.isSafeInteger(v.data.revision) && typeof v.data.companyName === 'string' &&
-    v.data.letterhead?.specVersion === 1 && Array.isArray(v.data.legalDocuments));
-}
-const editable = (p: CompanyDocumentProfile) => ({
-  companyName: p.companyName, address: p.address, contact: p.contact, registrationDetails: p.registrationDetails,
-  letterhead: p.letterhead, importedFrom: p.importedFrom,
-  applyToReports: p.applyToReports, applyToSubmissionCorrespondence: p.applyToSubmissionCorrespondence,
-});
-
-const emptyLegal = () => ({ title: '', kind: 'authorization' as CompanyLegalKind, programId: '', vaultDocumentId: '', agencies: '', countries: '', submissionTypes: '', language: 'en', effectiveOn: '', expiresOn: '' });
-
+const READ_PATH = `${PATH}?includeLegal=false`;
+const NO_CAPABILITIES: CompanyDocumentCapabilities = { manageBrand: false, manageLegal: false, managePermissions: false };
 
 function useCompanyDocumentState() {
   const org = getJwtOrgId();
@@ -33,6 +22,9 @@ function useCompanyDocumentState() {
   const [saved, setSaved] = useState<CompanyDocumentProfile | null>(null);
   const [draft, setDraft] = useState<CompanyDocumentProfile | null>(null);
   const [canManage, setCanManage] = useState(false);
+  const [legalDocumentsIncluded, setLegalDocumentsIncluded] = useState(false);
+  const [capabilities, setCapabilities] = useState(NO_CAPABILITIES);
+  const [legacyDecision, setLegacyDecision] = useState<'replace' | undefined>();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [readError, setReadError] = useState('');
@@ -48,13 +40,14 @@ function useCompanyDocumentState() {
   const [archiveReason, setArchiveReason] = useState('');
   const session = useRef(0);
   const current = useRef(0);
-  const dirty = !!saved && !!draft && JSON.stringify(editable(saved)) !== JSON.stringify(editable(draft));
+  const dirty = !!saved && !!draft && (legacyDecision === 'replace' || JSON.stringify(editable(saved)) !== JSON.stringify(editable(draft)));
+  const designSaveBlocked = Boolean(saved?.brandingApprovalRequired && draft && companyProtectedPresentationChanged(saved, draft));
   const dirtyRef = useRef(false);
   dirtyRef.current = dirty;
 
   const load = async (epoch = session.current, replaceDraft = true) => {
     setLoading(true); setReadError('');
-    const result = await apiCall('GET', PATH);
+    const result = await apiCall('GET', READ_PATH);
     if (epoch !== session.current) return;
     setLoading(false);
     if (!result.ok || !validResponse(result.body)) {
@@ -62,6 +55,8 @@ function useCompanyDocumentState() {
       return;
     }
     setSaved(copy(result.body.data)); setCanManage(result.body.canManage);
+    setLegalDocumentsIncluded(result.body.legalDocumentsIncluded !== false);
+    setCapabilities(capabilitiesOf(result.body));
     if (replaceDraft) setDraft(copy(result.body.data));
     setConflict(false);
   };
@@ -69,6 +64,8 @@ function useCompanyDocumentState() {
     const epoch = ++session.current;
     setViewIdentity(identity);
     setSaved(null); setDraft(null); setCanManage(false); setBusy(false); setNotice(null); setLegal(emptyLegal());
+    setLegalDocumentsIncluded(false);
+    setCapabilities(NO_CAPABILITIES); setLegacyDecision(undefined);
     setReason(''); setLegalReason(''); setWarnings([]); setConflict(false);
     setArchiveId(null); setArchiveReason(''); setShowArchived(false); setTab('identity');
     void load(epoch);
@@ -78,53 +75,28 @@ function useCompanyDocumentState() {
 
   const patch = (values: Partial<CompanyDocumentProfile>) => setDraft(p => p ? { ...p, ...values } : p);
   const spec = (change: (value: TemplateSpec) => TemplateSpec) => setDraft(p => p ? { ...p, letterhead: change(p.letterhead) } : p);
-  return { currentView, saved, setSaved, draft, setDraft, canManage, setCanManage, loading, setLoading, busy, setBusy, readError, setReadError, notice, setNotice, reason, setReason, conflict, setConflict, warnings, setWarnings, legal, setLegal, legalReason, setLegalReason, tab, setTab, showArchived, setShowArchived, archiveId, setArchiveId, archiveReason, setArchiveReason, session, current, dirty, dirtyRef, load, patch, spec };
+  return { currentView, saved, setSaved, draft, setDraft, canManage, setCanManage, legalDocumentsIncluded, setLegalDocumentsIncluded, capabilities, setCapabilities, legacyDecision, setLegacyDecision, loading, setLoading, busy, setBusy, readError, setReadError, notice, setNotice, reason, setReason, conflict, setConflict, warnings, setWarnings, legal, setLegal, legalReason, setLegalReason, tab, setTab, showArchived, setShowArchived, archiveId, setArchiveId, archiveReason, setArchiveReason, session, current, dirty, dirtyRef, designSaveBlocked, load, patch, spec };
 }
-type SettingsState = ReturnType<typeof useCompanyDocumentState>;
-
-type MutationMode = 'design' | 'legal';
-
-function mutationFailure(state: SettingsState, result: ApiResult) {
-  const code = (result.body as { error?: unknown } | null)?.error;
-  const conflict = result.status === 409 && (code === 'REVISION_CONFLICT' || code === 'COMPANY_DOCUMENTS_CONFLICT');
-  state.setBusy(false); state.setConflict(conflict);
-  state.setNotice({ error: true, text: conflict
-    ? 'Another administrator changed this profile. Your draft is kept. Reload the saved profile before applying your changes again.'
-    : apiErrorText(result, 'The change could not be confirmed. Your draft is kept; reload the saved profile before retrying if the connection was interrupted.') });
-}
-
-function applyMutationReceipt(state: SettingsState, receipt: CompanyDocumentsResponse, reread: ApiResult, mode: MutationMode) {
-  const verified = reread.ok && validResponse(reread.body) && reread.body.data.revision === receipt.data.revision;
-  const latest = verified ? reread.body as CompanyDocumentsResponse : receipt;
-  const profile = copy(latest.data);
-  state.setBusy(false); state.setSaved(profile); state.setCanManage(latest.canManage);
-  state.setDraft(previous => mode === 'design' ? copy(profile) : previous ? { ...previous, revision: profile.revision, legalDocuments: profile.legalDocuments } : copy(profile));
-  state.setConflict(!verified);
-  state.setNotice({ error: !verified, text: mutationReceiptMessage(profile.revision, verified, mode) });
-  if (mode === 'design') { state.setReason(''); state.setWarnings([]); }
-  else { state.setLegal(emptyLegal()); state.setLegalReason(''); state.setArchiveId(null); state.setArchiveReason(''); }
-}
-
-function mutationReceiptMessage(revision: number, verified: boolean, mode: MutationMode) {
-  if (!verified) return `The server recorded revision ${revision}, but the latest saved profile could not be verified. Reload before making another change.`;
-  return mode === 'design' ? `Company identity and letterhead saved · revision ${revision}.` : 'Legal document library updated. Source files and their approval records are unchanged.';
-}
+export type CompanyDocumentSettingsState = ReturnType<typeof useCompanyDocumentState>;
+type SettingsState = CompanyDocumentSettingsState;
 
 function useCompanyDocumentMutation(state: SettingsState) {
-  const { saved, draft, canManage, busy, session, current, setBusy, setNotice, reason } = state;
-  const mutation = async (method: 'PUT' | 'POST' | 'DELETE', path: string, values: unknown, mode: MutationMode) => {
-    if (!saved || !draft || !canManage || busy) return;
+  const { saved, draft, capabilities, busy, session, current, setBusy, setNotice, reason } = state;
+  const mutation = async (method: 'PUT' | 'POST' | 'DELETE', path: string, values: unknown, mode: CompanyMutationMode) => {
+    const permitted = capabilities[MUTATION_CAPABILITY[mode]];
+    if (!saved || !draft || !permitted || busy) return;
     const epoch = session.current; const ticket = ++current.current;
     setBusy(true); setNotice(null);
     const result = await apiCall(method, path, values);
     if (epoch !== session.current || ticket !== current.current) return;
-    if (!result.ok || !validResponse(result.body)) { mutationFailure(state, result); return; }
-    const reread = await apiCall('GET', PATH);
+    if (!result.ok || !validResponse(result.body)) { companyMutationFailure(state, result); return; }
+    const reread = await apiCall('GET', READ_PATH);
     if (epoch !== session.current || ticket !== current.current) return;
-    applyMutationReceipt(state, result.body, reread, mode);
+    applyCompanyMutationReceipt(state, result.body, reread, mode);
   };
-  const save = () => draft && saved && mutation('PUT', PATH, { expectedRevision: saved.revision, reason: reason.trim(), ...editable(draft) }, 'design');
-  return { mutation, save };
+  const save = () => draft && saved && mutation('PUT', PATH, { expectedRevision: saved.revision, reason: reason.trim(), ...editable(draft), ...(state.legacyDecision ? { legacyDecision: state.legacyDecision } : {}) }, 'design');
+  const adoptLegacy = (sourceHash: string, adoptionReason: string) => saved && mutation('POST', `${PATH}/legacy-adoption`, { expectedRevision: saved.revision, sourceHash, reason: adoptionReason.trim() }, 'design');
+  return { mutation, save, adoptLegacy };
 }
 
 async function extractCompanyTemplate(file: File) {
@@ -136,9 +108,9 @@ async function extractCompanyTemplate(file: File) {
 }
 
 function useCompanyDocumentFiles(state: SettingsState) {
-  const { canManage, busy, session, current, setBusy, setNotice, patch, setWarnings, spec } = state;
+  const { capabilities, busy, session, current, setBusy, setNotice, patch, setWarnings, spec } = state;
   const importFile = async (file?: File) => {
-    if (!file || !canManage || busy) return;
+    if (!file || !capabilities.manageBrand || busy) return;
     if (!/\.(docx|pdf)$/i.test(file.name) || file.size > 15 * 1024 * 1024) {
       setNotice({ error: true, text: 'Choose a Word (.docx) or PDF file up to 15 MB.' }); return;
     }
@@ -155,7 +127,7 @@ function useCompanyDocumentFiles(state: SettingsState) {
     } finally { if (epoch === session.current) setBusy(false); }
   };
   const uploadLogo = async (file?: File) => {
-    if (!file || !canManage || busy) return;
+    if (!file || !capabilities.manageBrand || busy) return;
     if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type) || file.size > 2 * 1024 * 1024) {
       setNotice({ error: true, text: 'Choose a PNG, JPEG or GIF logo up to 2 MB.' }); return;
     }
@@ -172,35 +144,43 @@ function useCompanyDocumentFiles(state: SettingsState) {
   return { importFile, uploadLogo };
 }
 
+async function requestLetterheadDownload(saved: CompanyDocumentProfile, draft: CompanyDocumentProfile, preview: boolean) {
+  const path = `${PATH}/letterhead/${preview ? 'preview' : 'render'}`;
+  const body = { title: 'Regulatory correspondence', paragraphs: ['Recipient and submission reference', 'Prepare your correspondence here.'], ...(preview ? { profile: presentation(draft) } : {}) };
+  const res = await apiRequest('POST', path, body);
+  if (!res.ok) throw new Error(serverMessage(await res.json()) || 'The download was refused.');
+  const name = safeFileName((preview ? draft : saved).companyName || 'Company');
+  return { blob: await res.blob(), name: `${name}-letterhead${preview ? '-unsaved-proof' : ''}.docx`, message: preview ? 'Unsaved Word proof downloaded for review. The presentation has not been saved or activated.' : `Saved Word letterhead downloaded from revision ${saved.revision}.` };
+}
+
 function useCompanyDocumentDownloads(state: SettingsState) {
-  const { session, setBusy, setNotice, saved } = state;
-  const download = async () => {
-    const epoch = session.current; setBusy(true); setNotice(null);
+  const { session, setBusy, setNotice, saved, draft, capabilities } = state;
+  const downloadPresentation = async (preview: boolean) => {
+    if (!saved || !draft || state.busy || (preview && !capabilities.manageBrand)) return;
+    const epoch = session.current; const token = getAuthToken(); setBusy(true); setNotice(null);
     try {
-      const res = await apiRequest('POST', `${PATH}/letterhead/render`, { title: 'Regulatory correspondence', paragraphs: ['Recipient and submission reference', 'Prepare your correspondence here.'] });
-      if (!res.ok) throw new Error(serverMessage(await res.json()) || 'The download was refused.');
-      const blob = await res.blob();
-      if (epoch !== session.current) return;
-      if (!downloadBlob(`${safeFileName(saved?.companyName || 'Company')}-letterhead.docx`, blob)) throw new Error('The browser could not save the file.');
-      setNotice({ error: false, text: `Saved Word letterhead downloaded from revision ${saved?.revision}.` });
+      const result = await requestLetterheadDownload(saved, draft, preview);
+      if (epoch !== session.current || token !== getAuthToken()) return;
+      if (!downloadBlob(result.name, result.blob)) throw new Error('The browser could not save the file.');
+      setNotice({ error: false, text: result.message });
     } catch (e) { if (epoch === session.current) setNotice({ error: true, text: 'Letterhead download failed. ' + (e instanceof Error ? e.message : '') }); }
     finally { if (epoch === session.current) setBusy(false); }
   };
   const downloadOriginal = async (document: CompanyLegalDocument) => {
-    const epoch = session.current; setBusy(true); setNotice(null);
+    const epoch = session.current; const token = getAuthToken(); setBusy(true); setNotice(null);
     try {
       const path = `/api/c2c/project-vault/${encodeURIComponent(document.programId)}/documents/${encodeURIComponent(document.vaultDocumentId)}/download`;
       const res = await apiRequest('GET', path);
       if (!res.ok) throw new Error(serverMessage(await res.json()) || 'The Vault refused this download.');
       const blob = await res.blob();
-      if (epoch !== session.current) return;
+      if (epoch !== session.current || token !== getAuthToken()) return;
       if (!downloadBlob(`${safeFileName(document.title)}-v${safeFileName(document.version)}.pdf`, blob)) throw new Error('The browser could not save the file.');
       setNotice({ error: false, text: `Original ${document.title}, version ${document.version}, downloaded from Vault.` });
     } catch (e) { if (epoch === session.current) setNotice({ error: true, text: 'Original download failed. ' + (e instanceof Error ? e.message : '') }); }
     finally { if (epoch === session.current) setBusy(false); }
   };
 
-  return { download, downloadOriginal };
+  return { download: () => downloadPresentation(false), downloadProof: () => downloadPresentation(true), downloadOriginal };
 }
 
 export function useCompanyDocumentSettings() {

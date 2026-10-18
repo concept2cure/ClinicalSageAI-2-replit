@@ -27,6 +27,7 @@ import type { PoolClient } from 'pg';
 import { writeChainedAuditRow } from '../auditService';
 import type { ExportReceipt } from '../tenant-export/tenant-full-export.service';
 import type { OffboardingRecord } from './tenant-offboarding';
+import type { CompanyDocumentsExportDescriptor } from '../tenant-export/company-document-envelope';
 
 /** The audit action a purge writes. */
 export const TENANT_PURGED_ACTION = 'tenant_purged';
@@ -53,6 +54,7 @@ export interface PurgeRecord {
   vaultObjectsToErase: number;
   retentionOverrideReason?: string;
   auditContext?: PurgeAuditContext;
+  companyDocumentsDisposition?: CompanyDocumentsExportDescriptor & { disposition: 'erased' | 'absent' };
 }
 
 const isoOrNull = (d: Date | null | undefined): string | null => (d ? new Date(d).toISOString() : null);
@@ -91,6 +93,7 @@ export async function recordPurge(client: PoolClient, purge: PurgeRecord): Promi
       tablesAbsent: purge.tablesAbsent,
       totalRowsDeleted,
       vaultObjectsToErase: purge.vaultObjectsToErase,
+      ...(purge.companyDocumentsDisposition ? { companyDocuments: purge.companyDocumentsDisposition } : {}),
     },
   });
 }

@@ -115,6 +115,7 @@ beforeAll(async () => {
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS company_legal_registry(organization_id integer NOT NULL,id text NOT NULL,document jsonb NOT NULL,PRIMARY KEY(organization_id,id));
     CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}');
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     -- supersedes_id / organization_id / document_code: the family columns the
@@ -147,7 +148,7 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
     const legal = { id: source.uuid, title: 'Company authorization', kind: 'authorization', programId: PROGRAM,
       vaultDocumentId: source.uuid, contentHash: source.hash, version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['510k'],
       language: 'en', effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: String(USER) };
-    const save = (document: typeof legal) => harness.pglite.query('UPDATE organizations SET settings=$1::jsonb WHERE id=$2', [JSON.stringify({ companyDocuments: { legalDocuments: [document] } }), ORG]);
+    const save = (document: typeof legal) => harness.pglite.query('INSERT INTO company_legal_registry(organization_id,id,document) VALUES($1,$2,$3::jsonb) ON CONFLICT(organization_id,id) DO UPDATE SET document=excluded.document', [ORG, document.id, JSON.stringify(document)]);
     try {
       await save(legal);
       const matching = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
@@ -164,7 +165,7 @@ describe('assessSequenceDispatchReadiness — vault-backed leaves resolve', () =
       }
       const record = await harness.pglite.query('SELECT stage,content_hash FROM canonical_documents WHERE canonical_id=$1', [`cd-${source.uuid}`]);
       expect(record.rows[0]).toEqual({ stage: 'approved', content_hash: source.hash });
-    } finally { await harness.pglite.query("UPDATE organizations SET settings='{}'::jsonb WHERE id=$1", [ORG]); }
+    } finally { await harness.pglite.query('DELETE FROM company_legal_registry WHERE organization_id=$1 AND id=$2', [ORG, legal.id]); }
   });
 
   it('resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes', async () => {

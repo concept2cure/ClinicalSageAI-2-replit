@@ -9,6 +9,7 @@
  *
  * @module server/services/submission-gateways/ectd-packager/types
  */
+import type { LeafSourceIntegrity } from '../../ectd/original-pdf-contract';
 
 /** One leaf in the eCTD index — corresponds to one file under one CTD section. */
 export interface EctdLeaf {
@@ -24,6 +25,8 @@ export interface EctdLeaf {
   title: string;
   /** Optional pre-computed checksum; computed if absent. */
   md5?: string;
+  /** Server-derived Vault source identity, verified again before final packaging. */
+  sourceIntegrity?: LeafSourceIntegrity;
   /**
    * Stable cross-sequence identity of the DOCUMENT this leaf carries, when the
    * caller has one. Republished in the bundle's leaf manifest so the next

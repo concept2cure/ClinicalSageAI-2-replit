@@ -90,6 +90,7 @@ export interface AgencyCommunicationEventRecord {
     capturedBy: string;
     capturedAt: string;
     visibilityTier: CommunicationVisibilityTier;
+    companyLegalDocuments?: import('../company-correspondence').CompanyLegalCommunicationLink[];
   };
 }
 

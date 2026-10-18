@@ -63,6 +63,9 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 import type { LegalDocumentContext } from '../../../shared/company-documents';
+import { vaultLeafSourceIntegrity } from './original-pdf-preservation';
+import type { VaultOriginalPdfSourceRow } from './original-pdf-contract';
+import { readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -657,8 +660,9 @@ export async function materializeLeafSources(
       }
 
       const vaultRes = await queryableFromDrizzle(db).query(
-        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name
+        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name, d.program_id
            FROM vault.documents d
+           JOIN organizations o ON o.id=$2
           WHERE d.id = $1::uuid
             AND d.deleted_at IS NULL
             AND ${vaultBinaryAvailableSql('d')}
@@ -671,14 +675,7 @@ export async function materializeLeafSources(
           LIMIT 1`,
         [documentUuid, organizationId],
       );
-      const vaultRow = vaultRes.rows[0] as
-        | {
-            storage_version_id: string | null;
-            storage_provider: string | null;
-            content_hash: string | null;
-            file_name: string | null;
-          }
-        | undefined;
+      const vaultRow = vaultRes.rows[0] as VaultOriginalPdfSourceRow | undefined;
       if (!vaultRow) {
         miss('vault document not found in this organization');
         continue;
@@ -720,6 +717,7 @@ export async function materializeLeafSources(
       // Stage the RAW bytes, never re-rendered: the vault copy IS the governed
       // record, and re-rendering would file something the vault has never seen.
       const vaultFileName = leafFileName(vaultRow.file_name || 'vault', key);
+      const legalOriginals = await readCompanyLegalRegistryForVault(queryableFromDrizzle(db), organizationId, documentUuid);
       const vaultPath = path.join(stageDir, vaultFileName);
       await fs.writeFile(vaultPath, got.bytes);
       byKey.set(key, {
@@ -727,6 +725,7 @@ export async function materializeLeafSources(
         sourcePath: vaultPath,
         md5: createHash('md5').update(got.bytes).digest('hex'),
         sha256: vaultSha,
+        sourceIntegrity: vaultLeafSourceIntegrity(legalOriginals, documentUuid, vaultSha, vaultRow.program_id),
       });
       materialized++;
       // VR-14 (D7, 2026-10-01): staged is not approved. Until now this branch

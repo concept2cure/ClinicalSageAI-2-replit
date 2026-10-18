@@ -31,8 +31,8 @@ const AUDIT_SEAL = 'record-integrity-seal-fixture';
 beforeAll(async () => {
   db = await PGlite.create();
   await db.exec(`
-    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT);
-    INSERT INTO organizations VALUES (${ORG}, 'acme', 'Acme Bio', 'active'), (${OTHER}, 'other', 'Other', 'active');
+    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT, settings JSONB DEFAULT '{}');
+    INSERT INTO organizations (id,slug,name,status) VALUES (${ORG}, 'acme', 'Acme Bio', 'active'), (${OTHER}, 'other', 'Other', 'active');
     CREATE TABLE integration_tokens (
       id SERIAL PRIMARY KEY, organization_id INTEGER, provider TEXT, access_token TEXT, refresh_token TEXT
     );

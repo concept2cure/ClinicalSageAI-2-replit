@@ -22,7 +22,9 @@
  * @module server/services/vault/vault-lifecycle
  */
 import { readPredecessorIds, supersededSql } from './vault-version-family';
-import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type CompanyLegalDocument, type LegalDocumentContext } from '../../../shared/company-documents';
+import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type LegalDocumentContext } from '../../../shared/company-documents';
+import { companyLegalRegistryDocuments, readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
+import { companyLegalCopySourceRefusal } from '../company-documents/company-copy-lineage';
 
 export interface LifecycleQueryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -163,7 +165,8 @@ export async function vaultVersionNotTransmittable(
 ): Promise<string | null> {
   const { rows } = await q.query(
     `SELECT NOT ${supersededSql('d')} AS current, c.stage, c.content_hash,
-            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$2) AS company_legal_documents
+            (SELECT COALESCE(jsonb_agg(r.document),'[]'::jsonb) FROM public.company_legal_registry r
+              WHERE r.organization_id=$2 AND lower(r.document->>'vaultDocumentId')=lower($1)) AS company_legal_documents
        FROM vault.documents d
        LEFT JOIN LATERAL (
          SELECT stage, content_hash FROM canonical_documents
@@ -182,25 +185,30 @@ export async function vaultVersionNotTransmittable(
     return r.stage === 'superseded' ? 'superseded by a later version' : `${r.stage}, not approved`;
   }
   if (!r.content_hash || r.content_hash !== stagedSha256) return 'approved for different content than these bytes';
-  if (r.company_legal_documents != null && !Array.isArray(r.company_legal_documents)) {
+  try {
+    const records = companyLegalRegistryDocuments(r.company_legal_documents);
+    return companyLegalVersionDateRefusal(records, vaultId, stagedSha256) ??
+      (target ? companyLegalVersionTargetRefusal(records, vaultId, target) : null) ??
+      await companyLegalCopySourceRefusal(q, { organizationId, vaultDocumentId: vaultId, contentHash: stagedSha256 });
+  } catch {
     return 'company legal document validity could not be verified';
   }
-  const records = (r.company_legal_documents ?? []) as CompanyLegalDocument[];
-  return companyLegalVersionDateRefusal(records, vaultId, stagedSha256) ??
-    (target ? companyLegalVersionTargetRefusal(records, vaultId, target) : null);
 }
 
 /** Draft placement retains the existing approval workflow, while every Vault
  * placement door applies the company library's server-recorded target scope. */
 export async function companyLegalVaultTargetRefusal(q: LifecycleQueryable, organizationId: number,
-  vaultId: string, target: LegalDocumentContext): Promise<string | null> {
-  const { rows } = await q.query(
-    `SELECT o.settings #> '{companyDocuments,legalDocuments}' AS company_legal_documents
-       FROM organizations o WHERE o.id=$1`, [organizationId],
-  );
-  const records: unknown = rows[0]?.company_legal_documents;
-  if (records != null && !Array.isArray(records)) return 'Company legal document applicability could not be verified.';
-  return companyLegalVersionTargetRefusal((records ?? []) as CompanyLegalDocument[], vaultId, target);
+  vaultId: string, target: LegalDocumentContext, stagedSha256?: string | null): Promise<string | null> {
+  const records = await readCompanyLegalRegistryForVault(q, organizationId, vaultId);
+  const refusal = companyLegalVersionTargetRefusal(records, vaultId, target);
+  if (refusal) return refusal;
+  let contentHash = stagedSha256;
+  if (!contentHash) {
+    const { rows } = await q.query('SELECT content_hash FROM vault.documents WHERE id=$1::uuid AND organization_id=$2 AND deleted_at IS NULL', [vaultId, organizationId]);
+    contentHash = rows[0]?.content_hash;
+  }
+  if (!contentHash) return 'company legal document source could not be verified';
+  return companyLegalCopySourceRefusal(q, { organizationId, vaultDocumentId: vaultId, contentHash });
 }
 
 /** A sign-off as the Vault shows it: who, what it means, and when. */

@@ -289,6 +289,10 @@ async function recordFiling(
       // The exact original dependency survives the new bytes' identity. This
       // receipt is how withdrawal finds a source-derived Vault rendition.
       ...(savedImportSource(doc) ? { importSource: savedImportSource(doc) } : {}),
+      // The canonical renderer verified this immutable presentation before ingest.
+      // Keep the filing/revision/variant link on the existing Vault handoff receipt.
+      ...((doc.provenance as { companyCorrespondence?: unknown } | null)?.companyCorrespondence
+        ? { companyCorrespondence: (doc.provenance as { companyCorrespondence: unknown }).companyCorrespondence } : {}),
     };
     await logExport(client, {
       docId,

@@ -14,8 +14,12 @@ const poolQuery = vi.fn();
 const dbInsert = vi.fn();
 const currentAccess = vi.fn();
 const admission = vi.fn();
+const legalInventory = vi.fn();
 const requestExecutor = { query:vi.fn() };
 vi.mock('../../../db/requestDb', () => ({ requestPgClient:() => requestExecutor }));
+vi.mock('../../../services/company-documents/legal-inventory', async original => ({
+  ...(await original<typeof import('../../../services/company-documents/legal-inventory')>()), readCompanyLegalInventory: legalInventory,
+}));
 vi.mock('../../../services/c2c/current-program-access', () => ({
   requireCurrentProgramAccess:(...args:unknown[]) => currentAccess(...args),
   ProgramReadAccessError:class extends Error {
@@ -100,11 +104,36 @@ beforeEach(() => {
   poolQuery.mockReset();
   currentAccess.mockReset().mockResolvedValue({ projectId:42, actor:{ userId:5, role:"member" } });
   admission.mockClear();
+  requestExecutor.query.mockReset(); legalInventory.mockReset();
   createNotification.mockClear();
   dbInsert.mockReset();
   // logAuditEntry awaits db.insert(...).values(...); the task writer chains .returning().
   const chain = { returning: async () => [{ id: 11 }], then: (r: (v: unknown) => void) => r(undefined) };
   dbInsert.mockReturnValue({ values: () => chain });
+});
+
+describe('project-bound communication legal inventory', () => {
+  const programId = '11111111-1111-4111-8111-111111111111';
+  const empty = { data: [], page: { total: 0, availableTotal: 0, offset: 0, limit: 25, hasMore: false, nextOffset: null }, facets: { agencies: [], languages: [] } };
+  it('derives the program from the admitted communication project before inventory counts and pages', async () => {
+    requestExecutor.query.mockResolvedValue({ rows: [{ program_id: programId }] }); legalInventory.mockResolvedValue(empty);
+    const response = await request(app()).get('/api/concept2cure/projects/42/company-legal-documents?limit=25&includeArchived=true');
+    expect(response.status).toBe(200); expect(response.body).toEqual(empty);
+    expect(legalInventory).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ programId, limit: 25, includeArchived: 'true' }));
+    expect(requestExecutor.query.mock.calls[0][1]).toEqual([42, 7]);
+  });
+
+  it('rejects caller-supplied program identity instead of accepting a different picker scope', async () => {
+    const response = await request(app()).get(`/api/concept2cure/projects/42/company-legal-documents?programId=${programId}`);
+    expect(response.status).toBe(400); expect(legalInventory).not.toHaveBeenCalled(); expect(requestExecutor.query).not.toHaveBeenCalled();
+  });
+
+  it('returns no inventory when the project relationship changes during the read', async () => {
+    requestExecutor.query.mockResolvedValueOnce({ rows: [{ program_id: programId }] }).mockResolvedValueOnce({ rows: [{ program_id: '33333333-3333-4333-8333-333333333333' }] });
+    legalInventory.mockResolvedValue(empty);
+    const response = await request(app()).get('/api/concept2cure/projects/42/company-legal-documents');
+    expect(response.status).toBe(409); expect(response.body.data).toBeUndefined();
+  });
 });
 
 describe('helpers the dead module duplicated', () => {
@@ -151,6 +180,14 @@ describe('GET /projects/:projectId/submission-center/items', () => {
 });
 
 describe('PATCH /projects/:projectId/submission-center/items/:itemId/status', () => {
+  it('refuses caller-authored legal-version snapshots through generic handoff metadata', async () => {
+    wire([tables(ALL_TABLES)]);
+    const response = await request(app()).post('/api/concept2cure/projects/3/submission-center/items').send({
+      title: 'Agency handoff', authority: 'FDA', submissionType: 'IND', metadata: { companyLegalDocuments: [{ vaultDocumentId: 'forged', contentHash: 'a'.repeat(64), version: 'approved' }] },
+    });
+    expect(response.status).toBe(400); expect(poolQuery.mock.calls.some(([sql]) => /INSERT|UPDATE/.test(String(sql)))).toBe(false);
+    expect(dbInsert).not.toHaveBeenCalled();
+  });
   it('refuses an illegal transition with 400 and writes nothing', async () => {
     wire([tables(ALL_TABLES), { rows: [ITEM_ROW] }]);
     const res = await request(app())

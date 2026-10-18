@@ -148,6 +148,9 @@ beforeAll(async () => {
       document_code TEXT
     );
   `);
+  await harness.pglite.exec(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+    CREATE TABLE IF NOT EXISTS vault.legal_holds (organization_id INTEGER, lifted_at TIMESTAMPTZ);`);
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.

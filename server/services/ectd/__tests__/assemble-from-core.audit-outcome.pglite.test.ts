@@ -57,6 +57,7 @@ beforeAll(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'audit-outcome-'));
   process.env.SUBMISSION_BUNDLE_DIR = root;
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  await harness.pglite.exec(`CREATE TABLE IF NOT EXISTS organizations(id integer PRIMARY KEY,settings jsonb NOT NULL DEFAULT '{}'); INSERT INTO organizations(id) VALUES(7);`);
   holder.db = harness.db;
   await harness.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)

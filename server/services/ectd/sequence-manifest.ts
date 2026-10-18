@@ -21,6 +21,7 @@
  */
 
 import type { PriorLeaf } from './lifecycle-operator';
+import type { OriginalPdfProof } from './original-pdf-contract';
 
 /** One published leaf, snapshotted at compile time. */
 export interface SequenceLeafManifestEntry {
@@ -39,6 +40,7 @@ export interface SequenceLeafManifestEntry {
    * the packager converts them. Absent when the shipped bytes are those bytes.
    */
   sourceMd5?: string;
+  originalPdfProof?: OriginalPdfProof;
   /** Lifecycle operation this leaf carried in its own sequence. */
   operation?: string;
   /**
@@ -72,6 +74,7 @@ export interface PublishableLeaf {
   md5: string;
   /** md5 of the bytes handed to the packager, when it changed them. */
   sourceMd5?: string;
+  originalPdfProof?: OriginalPdfProof;
   /** Optional filename; derived from href when absent. */
   fileName?: string;
   operation?: string;
@@ -102,6 +105,7 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
       href: l.href,
       md5: l.md5,
       ...(l.sourceMd5 ? { sourceMd5: l.sourceMd5 } : {}),
+      ...(l.originalPdfProof ? { originalPdfProof: l.originalPdfProof } : {}),
       ...(l.operation ? { operation: l.operation } : {}),
       ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
       ...(l.title ? { title: l.title } : {}),

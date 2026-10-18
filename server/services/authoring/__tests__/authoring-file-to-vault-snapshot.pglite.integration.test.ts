@@ -11,8 +11,11 @@ import type { AuthoringPool } from '../authoring-documents';
 import type { AuthoringAuditContext, AuthoringAuditEntry, Queryable } from '../authoring-evidence';
 import type { CanonicalStoreDb } from '../../regulatory/canonicalDocumentStore';
 import { sectionsDigest, type ExportSectionRow } from '../authoring-export';
+import { normalizeTemplateSpec } from '../../../../shared/templates/template-spec';
+import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
+import { companyProfileHash } from '../../company-documents/provenance';
 
-const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn(), chain: vi.fn(),
+const h = vi.hoisted(() => ({ sql: [] as string[], ingest: vi.fn(), trail: vi.fn(), chain: vi.fn(), history: vi.fn(),
   pdf: vi.fn(async (html: string) => Buffer.from(`%PDF-1.7\n${html}`)) }));
 vi.mock('../../vault/vault-ingest.service', () => ({ ingestVaultDocument: h.ingest }));
 vi.mock('../../vault/vault-placement.service', () => ({ placeVaultDocument: vi.fn() }));
@@ -23,6 +26,7 @@ vi.mock('../../../export/renderers', () => ({
   renderHtmlToPdfTracked: async (html: string) => ({ buffer: await h.pdf(html), usedFallback: false }),
 }));
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: h.chain }));
+vi.mock('../../company-documents/history', () => ({ readCompanyPresentationRevision: h.history }));
 vi.mock('../authoring-evidence', async importOriginal => {
   const actual = await importOriginal<typeof import('../authoring-evidence')>();
   return { ...actual, writeAuthoringAuditTrail: h.trail };
@@ -63,7 +67,7 @@ beforeAll(async () => {
 }, 180_000);
 afterAll(async () => { await harness?.close(); });
 beforeEach(() => {
-  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockClear(); h.trail.mockReset(); h.chain.mockReset();
+  h.sql.length = 0; h.ingest.mockReset(); h.pdf.mockClear(); h.trail.mockReset(); h.chain.mockReset(); h.history.mockReset();
   h.trail.mockImplementation(async (ctx: AuthoringAuditContext, entry: AuthoringAuditEntry) => {
     await entry.executor!.query('INSERT INTO test_filing_audit (tenant_id,operation,entry) VALUES ($1,$2,$3)',
       [ctx.tenantId, entry.operationType, JSON.stringify(entry.metadata)]);
@@ -148,6 +152,23 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('preserves admitted filing and immutable company revision on the existing Vault handoff receipt', async () => {
+    const d = await workingDraft();
+    const presentation: CompanyDocumentProfile = { version: 1, revision: 4, companyName: 'Historical company', address: '', contact: '', registrationDetails: '',
+      letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [] };
+    const projectId = (await d.f.pg.query<{ id: number }>('SELECT id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2', [d.f.org, d.f.program])).rows[0].id;
+    const companyCorrespondence = { version: 1, organizationId: d.f.org, programId: d.f.program, projectId,
+      submissionId: 5, sequenceId: 9, sequenceNumber: '0002', companyDocumentRevision: 4, companyProfileHash: companyProfileHash(presentation), companyBrandingApplied: false };
+    h.history.mockResolvedValue(presentation);
+    await d.f.pg.query('UPDATE authoring_documents SET provenance=$1 WHERE id=$2 AND tenant_id=$3',
+      [JSON.stringify({ source: 'seed', companyCorrespondence }), d.docId, d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
+    const after = await facts(d);
+    expect(after.history[0].metadata?.companyCorrespondence).toEqual(companyCorrespondence);
+    const receipt = (await d.f.pg.query<{ entry: { details: { companyCorrespondence: unknown } } }>('SELECT entry FROM test_filing_audit WHERE tenant_id=$1 AND operation=\'authoring.document.file_to_vault\'', [d.f.org])).rows[0];
+    expect(receipt.entry.details.companyCorrespondence).toEqual(companyCorrespondence);
+  });
   it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
     const d = await workingDraft();
     await d.f.pg.query(`UPDATE authoring_sections SET order_index=1,

@@ -1,0 +1,1284 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:44.058Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:45.072Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:31:45.073Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:45.073Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 1159ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=unknown) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=Reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=reports&content=manifest) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[]=reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[kind]=reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 554ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 188ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > applies the current export plan before any constituent body or seal read 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=reports) 15ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 2ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes
+{
+  "timestamp": "2026-10-18T00:31:49.116Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "33333333-3333-4333-8333-333333333333",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 389ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 439ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses a missing retained row instead of exporting a subset 15ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,42]}) 9ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[],"items":[]}) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,9007199254740992],"items":[{"runId":42,"runUuid":"00000000-0000-4000-8000-000000000042","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":9007199254740992,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":42,"runUuid":"invalid-retained-uuid","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"organizationId":99}) 19ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"runUuid":"other-run"}) 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"reportTypeId":"other.type"}) 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"scopeId":"PRIVATE-SCOPE-MARKER"}) 15ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a mismatched sealed constituent without exporting the other report 16ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event
+{
+  "timestamp": "2026-10-18T00:31:49.712Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "verification database unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 435ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event 26ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 435ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > exports actual retained report bodies and byte-identical signed original members with immutable proof snapshots 534ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {} 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":[]} 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one","one"]} 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one"],"organizationId":99} 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one"],"variantId":""} 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses a missing, foreign or no-longer-approved original without returning a partial archive 356ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses source bytes that differ from their registered exact-version digest 353ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rechecks legal approval/current access after archive rendering and refuses an observed withdrawal 440ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses audit failure before ZIP headers and bytes leave
+{
+  "timestamp": "2026-10-18T00:31:52.246Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "33333333-3333-4333-8333-333333333333",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses audit failure before ZIP headers and bytes leave 402ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > applies an explicitly selected published variant to this export while retaining its unchanged default preferences 466ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > refuses unknown, unpublished or inapplicable explicit variants without default fallback 28ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > refuses retirement observed after archive rendering 430ms
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-18T00:31:55.024Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:31:55.025Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-18T00:31:55.025Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > warns (does not block) when a required flag is set but the bundle has no evidence 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > forwards the selected external descriptor so a matching clean report can pass the required gate 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > reports a matching external error as a failed assessment and blocks required production 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > keeps a clean selected subset from satisfying the required external assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > refuses required external clearance without a trusted descriptor despite a clean engine-named report 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in staging 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps advisory unassessed execution distinct from a clean zero-error assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > surfaces an advisory mismatched report as invalid rather than passed 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > retains valid internal subset error diagnostics without calling them an external assessment 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > preserves low-level enforceExternal=false even when required with no descriptor 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 740ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate 484ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > emits new/replace/delete with modified-file, and omits the deleted leaf from the ZIP 426ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > every modified-file RESOLVES to a leaf the prior sequence actually filed — Module 1 included 557ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing 25ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5 26ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager 129ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it 9ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > package layout — Module 1 leaves reach the regional backbone > ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth 18ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > preserves an admitted registered legal version despite a toolchain that would change it, retaining proof through the persisted manifest 48ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > independently preserves an unregistered PDF with compressed embedded-signature fields without claiming signature trust 25ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > continues normalizing an ordinary unsigned PDF and makes no original-preservation claim 16ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > refuses staged bytes that no longer match the admitted original before invoking conversion 5ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > fails closed when an embedded signature dictionary is malformed 8ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > requires actual validation of the original under mandatory PDF/A, with no preservation exemption 20ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > retains actionable failure evidence for an organization PDF/A policy checked later at transmission 10ms
+ ✓ server/services/submission-gateways/__tests__/original-legal-pdf.test.ts > final eCTD ZIP retains legal and signed originals > verifies extracted final ZIP bytes, refusing a missing or overwritten preserved original 22ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — server-byte exports > downloads the exact server report-pack blob once through the reports selector 301ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — server-byte exports > preserves the default manifest URL and its existing download filename 97ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > disables both controls during a pending reports export and suppresses duplicate dispatch 89ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > disables both controls during a pending manifest export and suppresses duplicate dispatch 84ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > allows a different bundle to export while this bundle is pending 116ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > keeps a pending export disabled when the reader leaves and returns to Bundles 199ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > shows a backend response refusal without downloading, then re-enables both controls 127ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > shows a backend typed-error refusal without downloading, then re-enables both controls 132ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > reports a refused browser download without a success toast 78ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after logout
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > reports a transport failure and permits a retry 106ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after logout
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after logout 133ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after organization-adoption
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after logout 154ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after organization-adoption
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after organization-adoption 209ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after replacement-account
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after organization-adoption 162ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after replacement-account 169ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after replacement-account
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after replacement-account 193ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > discards a body read that completes after organization adoption
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > discards a body read that completes after organization adoption 223ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed error JSON response after logout
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed error JSON response after logout 252ms
+stderr | client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed transport rejection after account replacement
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InsightsLegalPackage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed transport rejection after account replacement 190ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > continues a delayed reports body after automatic bearer refresh in the same revision 130ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > continues a delayed manifest body after automatic bearer refresh in the same revision 180ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 43ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 28ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 3ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf 56ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an not yet effective registered version through generic upsertLeaf and writes no leaf 25ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong agency registered version through generic upsertLeaf and writes no leaf 14ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong country registered version through generic upsertLeaf and writes no leaf 15ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong application type registered version through generic upsertLeaf and writes no leaf 15ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong registered program registered version through generic upsertLeaf and writes no leaf 9ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > permits a matching registered draft for preparation and pins its original hash without claiming approval 15ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > keeps ordinary Vault placement available when a different registered document is expired 12ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > does not apply another organization’s registry metadata to this organization’s Vault version 16ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses re-pointing an existing ordinary leaf at an inapplicable legal version and preserves its old pin 20ms
+stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-18T00:32:16.331Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-18T00:32:16.644Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:32:16.644Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-18T00:32:16.644Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval 68ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an upload nobody reviewed is not finalized 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at authoring is not finalized 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at in_review is not finalized 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at approved is finalized 14ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at placed is finalized 16ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at packaged is finalized 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at submitted is finalized 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version a later one superseded is not finalized for a new assembly 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approval for different bytes is not an approval of these 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > names the leaf by its file, so the refusal says which document 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > transmit, freeze and dispatch refuse it, naming the document and why 4ms
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:32:21.267Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:32:21.268Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:32:21.268Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-18T00:32:23.717Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-18T00:32:23.719Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-10-18T00:32:23.719Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-18T00:32:23.762Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-18T00:32:23.763Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-10-18T00:32:23.763Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 116ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 38ms
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:32:23.913Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:32:23.915Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:32:23.916Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof 202ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-18T00:32:25.090Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:32:25.093Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-18T00:32:25.093Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-18T00:32:25.155Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id
+{
+  "timestamp": "2026-10-18T00:32:26.809Z",
+  "level": "error",
+  "message": "[report-os] report run not recorded on the audit chain; rolled back",
+  "context": {
+    "error": "Report run could not be recorded on the audit chain"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded
+{
+  "timestamp": "2026-10-18T00:32:26.820Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "Failed query: insert into \"report_snapshots\" (\"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, default) returning \"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\"\nparams: 41,7,project,11,1,true,{\"reportTypeId\":\"readiness.executive_digest\",\"providers\":[],\"summary\":{\"scopeLabel\":\"Reporting project\",\"computedScope\":\"project\"},\"confidence\":90},5",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 24ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 22ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 13ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 11ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 604ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 157ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-18T00:32:27.871Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 147ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses unavailable company configuration before sending or recording an export 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 117ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 119ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-18T00:32:28.255Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 142ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 119ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 3ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 3 replace points at the ID 0000 filed that document under, in 0000/index.xml 489ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 1 replace, carried by the regional backbone two folders down, climbs out to 0000/m1/us/us-regional.xml 457ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a delete names the withdrawn leaf the same way, and carries no checksum and no href: it ships no file 436ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the recorded manifest names, for every leaf, the backbone that carries it and the ID it carries there 436ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a withdrawal is recorded with the pointer it filed, so a later sequence still folds it out 426ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a prior leaf recorded without its backbone ID gets no modified-file at all — never a file path 1ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the packager refuses a follow-up replace that names no superseded leaf, as it refuses such a delete 3ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a file path 2ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a file path with a fragment 2ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a same-root pointer 2ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a pointer that climbs back out mid-path 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > preserves valid ordinary unsigned bytes and ignores text that merely names signature keys 22ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > detects indirect signature fields with compressed objects=false without claiming crypto validity 4ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > detects indirect signature fields with compressed objects=true without claiming crypto validity 3ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > does not classify an unfilled signature field as an embedded signature 3ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses a malformed signature hidden entirely inside a compressed object stream 3ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > does not miss lowercase escaped signature keys that pdf-lib leaves noncanonical 1ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 0 with an actionable named error 3ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 1 with an actionable named error 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 2 with an actionable named error 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 3 with an actionable named error 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 4 with an actionable named error 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 5 with an actionable named error 2ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 6 with an actionable named error 3ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 7 with an actionable named error 1ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 8 with an actionable named error 1ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses malformed signature structure 9 with an actionable named error 1ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses ByteRange segments excluding an unrelated token 1ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original PDF signature structure > refuses parser failures rather than treating malformed PDFs as unsigned 0ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > requires an explicit veraPDF compliance result for a byte-identical temporary original 39ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 0 26ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 1 26ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 2 25ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 3 32ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 4 23ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses absent, wrong-profile or noncompliant validation evidence 5 27ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses a failed validator even when its stdout contains a passing report 24ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses a validator that changed the temporary file and keeps caller bytes intact 26ms
+ ✓ server/services/ectd/__tests__/original-pdf-integrity.test.ts > original-byte PDF/A validation > refuses when veraPDF is unavailable 4ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > loads only on request and selects nothing automatically 188ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > posts explicit IDs once and saves the exact server ZIP separately from existing PDF exports 52ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > shows expiry and approval refusals and disables those originals 24ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > refreshes current metadata and clears old selections 54ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > shows a library failure with refresh available and no selectable cached originals 17ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > reports a current server approval refusal without claiming a saved ZIP 36ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > suppresses duplicate dispatch while the archive is pending 30ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > discards delayed ZIP bytes after a session change and clears library selections 75ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > lets the reader explicitly choose published organization-wide stationery without auto-selecting scoped designs 69ms
+stdout | server/services/report-os/__tests__/report-package-legal.test.ts
+{
+  "timestamp": "2026-10-18T00:32:33.255Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:32:33.256Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/report-package-legal.test.ts
+{
+  "timestamp": "2026-10-18T00:32:33.256Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/report-package-legal.test.ts
+[database] Database connection successful
+
+stderr | server/services/report-os/__tests__/report-package-legal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/report-os/__tests__/report-package-legal.test.ts
+{
+  "timestamp": "2026-10-18T00:32:33.294Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > checks the actor’s current project access and records the exact original, registration and approval manifestation 23ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses inaccessible project before loading bytes 3ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses another organization before loading bytes 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses archived selected metadata before storage 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses expired selected metadata before storage 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses not-effective selected metadata before storage 1ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses revoked selected metadata before storage 5ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses approval-withdrawn selected metadata before storage 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses a superseded or repointed exact Vault source 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > rechecks canonical Vault approval independently of a cached library verdict 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses an unretained approval record 1ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses lost objects and byte/hash drift 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > fails closed on malformed embedded signatures rather than packaging an unverifiable original 1ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses a size overflow before object storage is read 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses metadata or approval evidence changed after the original was read 3ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report legal-original admission and immutable inventory > refuses current project access withdrawn after rendering 2ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report archive content and snapshot binding > binds full selected registration/approval metadata and member digests in canonical content evidence 20ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report archive content and snapshot binding > rejects an inconsistent immutable registration fingerprint 3ms
+ ✓ server/services/report-os/__tests__/report-package-legal.test.ts > report archive content and snapshot binding > counts proof metadata toward the governed uncompressed size limit 2ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > snapshots section, filename (from href), href, md5, operation 2ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > preserves an explicit filename and keeps precise sub-sections verbatim 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > keeps the backbone ID and the backbone that carries it — what a later modified-file names 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > buildLeafManifest > skips leaves with no href or no checksum (nothing to diff against) 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > round-trips a manifest into PriorLeaf identity + href 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > is defensive: a non-array or malformed entries yield a filtered list, never a throw 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > carries the recorded backbone ID into the prior leaf 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifestToPriorLeaves > derives fileName from href when the stored entry omits it 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > the pre-normalization digest (sourceMd5) — the core spine's half of comparing like with like > survives buildLeafManifest -> stored JSON -> manifestToPriorLeaves 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > the pre-normalization digest (sourceMd5) — the core spine's half of comparing like with like > drives the diff: an unchanged staged document is unchanged, however the shipped bytes differ 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > the pre-normalization digest (sourceMd5) — the core spine's half of comparing like with like > a manifest filed before the digest was recorded still compares on md5 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > computeSequencePrefix > builds the grouped sibling traversal from the new backbone to the prior sequence 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > computeSequencePrefix > rejects an empty/invalid sequence rather than emitting a same-sequence pointer 1ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > a prior manifest drives a correct replace pointer on the next sequence 0ms
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > precise sub-sections keep distinct identity (no false replace across 3.2.S.1 vs 3.2.S.4.2) 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > nobody chose PDF/A: a production transmit with a plain-PDF leaf goes out 5ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation chose it: refused before the wire, naming the organisation's own setting 1ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the deployment chose it: refused, naming the deployment, whatever the organisation set 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation row cannot be seen: refused before the wire, never taken as not required 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the setting cannot be read: refused before the wire, never sent as plain PDF 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > a test (staging) transmit is never refused for PDF/A 1ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > only the literal boolean true turns the organisation setting on 1ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > the deployment wins when both chose it, without reading the organisation 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > drops the extension, lowercases, and dashes non-alphanumerics 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > falls back to "file" for an empty slug 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > gives leaves in the SAME section distinct IDs (the duplicate-ID bug) 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > dedupes a true collision with a deterministic numeric suffix 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > always produces a valid XML ID token 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > sorts by codepoint, not locale (stable across environments) 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > emits "md5  relPath" lines 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > files an m-prefixed Module 1 leaf under the regional folder, not "mm/" 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > spells a Module 1 leaf the same way whichever form the caller stored 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps a precise Module 3 section precise — 3.2.S.4.2 is not 3.2.S 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > gives one CTD section one folder, whatever case it was typed in 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > a Module 2-5 leaf resolves against the root backbone, not a regional one 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps the per-study subfolder for a study report 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > follows the region for Module 1 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the m-prefixed form every Module 1 filing path writes 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the bare form too 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > is false for Modules 2-5, so they are not swept into the regional backbone 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > an unparseable section belongs to no module — leafPackagePath refuses it by name 1ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 27ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 7ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, no href, no checksum 124ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 7ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 544ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 113ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 3ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 2ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 285ms
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-18T00:32:36.910Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:32:36.911Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager.test.ts
+{
+  "timestamp": "2026-10-18T00:32:36.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/core-to-packager.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > maps core regions to publisher regions 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > throws on an unsupported region 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > maps fields and prefers the resolved md5 over the leaf checksum 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > reads a differently-cased operation as itself 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > builds a PackagerInput from core rows, mapping region and metadata 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > skips leaves whose document does not resolve to a file, and reports them 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > handles an empty product name 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > summarizeSubmissionGrade > counts PDF leaves and flags the unconverted ones 2ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > summarizeSubmissionGrade > reports allPdfA when every PDF converted (non-PDFs ignored) 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > blocks a production package with an unconverted PDF when PDF/A is required 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > does NOT block when PDF/A is not required (graceful-degradation default) 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > does NOT block staging even when PDF/A is required 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > clears a production package when every PDF is PDF/A 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > pdfaRequiredFromEnv > is true only for the literal "true" 0ms
+
+ Test Files  21 passed (21)
+      Tests  301 passed (301)
+   Start at  00:31:42
+   Duration  55.12s (transform 6.16s, setup 423ms, import 21.13s, tests 30.34s, environment 780ms)
+

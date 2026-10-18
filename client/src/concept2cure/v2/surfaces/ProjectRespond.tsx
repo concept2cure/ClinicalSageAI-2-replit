@@ -127,6 +127,7 @@ function InboxStep({ inbox, onAsk, onNav, onAdvance }: {
       <p className="pj-desc">This project's agency inbox, the same one Communication shows. Draft a response with AnA from a letter, then triage it as the work moves.</p>
       <AgencyInboxList
         hasProject={Boolean(inbox.path)}
+        projectId={inbox.path?.split('/')[4]}
         loading={inbox.live.loading}
         error={inbox.live.error}
         rows={open}

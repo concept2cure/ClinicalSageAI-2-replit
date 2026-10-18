@@ -43,10 +43,13 @@ import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
 import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-full-export.service';
+import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
+  type CompanyDocumentsExportDescriptor, type CompanyDocumentsExportRow } from '../tenant-export/company-document-envelope';
 import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
 import { reserveSourceReadReceiptPurge } from './tenant-source-read-receipt-purge';
+import { disposeCompanyDesigns } from '../tenant-export/company-design-disposal';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -759,6 +762,14 @@ async function deleteTenantRows(
   };
   const opened = new Set<string>();
   for (const table of childTables) {
+    if (table === 'company_document_designs') {
+      const disposed = await disposeCompanyDesigns(client, organizationId);
+      if (disposed) {
+        tally.deletedRows.company_document_designs = disposed.designs;
+        tally.deletedRows.c2c_template_specs = disposed.templates;
+      } else tally.tablesAbsent.push(table);
+      continue;
+    }
     // Tables that refuse a plain DELETE from every role go through their door,
     // once per door; the door's counts are its tables' counts.
     const door = PURGE_DOORS.find((d) => (d.tables as readonly string[]).includes(table));
@@ -816,6 +827,8 @@ async function markPurged(
             -- re-billed and cannot hold a slug or API key hostage.
             api_key                = NULL,
             stripe_subscription_id = NULL,
+            settings               = CASE WHEN jsonb_typeof(settings::jsonb)='object'
+                                       THEN (settings::jsonb - 'companyDocuments')::json ELSE settings::json END,
             updated_at             = NOW()
       WHERE id = $1
       RETURNING purged_at`,
@@ -840,6 +853,28 @@ function isDocumentDispositionRetentionConflict(error: unknown): boolean {
   const failure = error as { code?: unknown; message?: unknown };
   return failure.code === '55000' && typeof failure.message === 'string'
     && failure.message.startsWith('DOCUMENT_DISPOSITION_WRITE_REFUSED:');
+}
+
+/** The locked current metadata, not a stale preflight, must match the data return. */
+async function verifyCompanyDocumentReturn(client: PoolClient, organizationId: number,
+  receipt: ExportReceipt): Promise<CompanyDocumentsExportDescriptor> {
+  await client.query("SET LOCAL TIME ZONE 'UTC'");
+  const { rows } = await client.query<CompanyDocumentsExportRow>(
+    `SELECT ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id=$1 FOR UPDATE`, [organizationId],
+  );
+  if (rows.length !== 1) throw new OffboardingStateError('TENANT_NOT_FOUND', 'Organization not found. Nothing was purged.');
+  const envelope = await readCompanyDocumentsExportEnvelope(client, organizationId, rows[0]);
+  const held = await findExportReceipt(client, organizationId, receipt.digest, { hold: true });
+  if (!held || (held.companyDocumentsVersion ?? null) !== (receipt.companyDocumentsVersion ?? null)
+      || (held.companyDocumentsSha256 ?? null) !== (receipt.companyDocumentsSha256 ?? null)) {
+    throw new OffboardingStateError('EXPORT_EVIDENCE_UNVERIFIED', 'The final export receipt changed during this request. Produce a current full export. Nothing was purged.');
+  }
+  if (envelope.present || held.companyDocumentsVersion != null || held.companyDocumentsSha256 != null) {
+    if (held.companyDocumentsVersion !== 1 || held.companyDocumentsSha256 !== envelope.sha256) {
+      throw new OffboardingStateError('COMPANY_DOCUMENTS_EXPORT_UNVERIFIED', 'The current company identity, letterhead and legal registry are not bound to this export receipt. Produce a new full export before purging. Nothing was purged.');
+    }
+  }
+  return companyDocumentsExportDescriptor(envelope);
 }
 
 /**
@@ -872,8 +907,9 @@ async function purgeInOneTransaction(
       });
       await assertRegulatedContentDisposition(client, organizationId);
       await assertNoActiveLegalHold(client, organizationId, receiptPurgeReserved);
+      const companyDocuments = await verifyCompanyDocumentReturn(client, organizationId, input.receipt);
       const tally = await deleteTenantRows(client, organizationId, input.childTables);
-      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest, receiptPurgeReserved);
+      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest, receiptPurgeReserved || companyDocuments.present);
       await recordPurge(client, {
         existing: input.existing,
         receipt: input.receipt,
@@ -884,6 +920,7 @@ async function purgeInOneTransaction(
         vaultObjectsToErase: tally.storedObjects.length,
         retentionOverrideReason: input.preconditions.overrideRetentionWindowReason,
         auditContext: input.auditContext,
+        companyDocumentsDisposition: { ...companyDocuments, disposition: companyDocuments.present ? 'erased' : 'absent' },
       });
       await client.query('COMMIT');
       return tally;
@@ -1028,6 +1065,13 @@ function assertNoRetainedRecords(tables: readonly string[]): void {
  * billing records are needed for revenue recognition after the account closes.
  */
 export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
+  'company_document_designs',
+  'company_legal_registry',
+  // Company presentation snapshots and delegated grants are customer data.
+  // The revision store retains its canonical pending-deletion/hold purge gate.
+  'company_document_revisions',
+  'company_document_grants',
+  'company_document_identity_reviews',
   // Immutable customer admission metadata, erased through its narrow door
   // before the actor/programme/source parents. Its audit/export history stays.
   'ana_source_read_receipts',

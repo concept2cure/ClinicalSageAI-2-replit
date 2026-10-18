@@ -10,6 +10,7 @@ import { approvedToolHandler } from '../../ana/__tests__/support/approved-tool-h
 import { createDocumentFromDraft } from '../authoring-from-draft';
 import { insertDocumentTx, type AuthoringPool, type CreateContext, type DocumentRowSpec } from '../authoring-documents';
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../authoring-create-outcome';
+import type { CompanyCorrespondenceOrigin } from '../../../../shared/company-correspondence';
 
 // Test-only mutation control replays the former rollback/clean-release behavior.
 // Select only the after-commit case when recording its expected failing proof.
@@ -41,6 +42,10 @@ const draft = { programId: PROGRAM, title: 'Synthetic creation outcome', module:
   sections: [{ code: '2.5', title: 'Overview', content: '<p>Saved synthetic content.</p>' }], provenance: { source: 'seed' as const } };
 const ctx = (): CreateContext => ({ pool, tenantId: ORG, actor: { id: String(AUTHOR.id), email: AUTHOR.email },
   audit: { pool, tenantId: ORG, actorId: String(AUTHOR.id), actorEmail: AUTHOR.email, actorRole: 'member', ipAddress: 'test', userAgent: 'test' } });
+const correspondenceOrigin: CompanyCorrespondenceOrigin = { version: 1, organizationId: ORG, programId: PROGRAM, projectId: 42,
+  submissionId: 5, sequenceId: 9, sequenceNumber: '0000', submissionTitle: 'Correspondence filing', applicationType: 'ind', applicationNumber: 'IND123456',
+  applicantName: 'Recorded applicant', country: 'US', agency: 'FDA', recipient: { authority: 'FDA', basis: 'recorded_filing_market' },
+  companyDocumentRevision: 4, companyProfileHash: 'a'.repeat(64), companyBrandingApplied: true };
 
 beforeAll(async () => {
   jdb = await createJourneyDb({ prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
@@ -115,6 +120,33 @@ function checkRecovery(body: Record<string, any>, outcome: 'committed' | 'unconf
 }
 
 describe('canonical authoring creation recovery', () => {
+  it('retains server-only correspondence origin in the canonical draft and genesis audit, without binding the dossier', async () => {
+    const reserve = vi.fn(async (q: { query: (sql: string) => Promise<unknown> }) => { await q.query('SELECT 1'); });
+    const outcome = await createDocumentFromDraft(ctx(), { ...draft, module: 'M1', documentType: 'company_correspondence' },
+      { companyCorrespondence: { origin: correspondenceOrigin, reserve }, changeReason: 'Prepare correspondence for review' });
+    expect(outcome.kind).toBe('created');
+    if (outcome.kind !== 'created') throw new Error('Expected draft');
+    expect(outcome.binding.documentId).toBeNull(); expect(outcome.provenance.companyCorrespondence).toEqual(correspondenceOrigin);
+    expect(reserve).toHaveBeenCalledTimes(1);
+    const provenance = ((await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [outcome.document.id, ORG])).rows[0] as { provenance: { companyCorrespondence: unknown } }).provenance;
+    expect(provenance.companyCorrespondence).toEqual(correspondenceOrigin);
+    const audits = (await jdb.pool.query('SELECT metadata,change_reason FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type=\'CREATE\'', [outcome.document.id, ORG])).rows as Array<{ metadata: unknown; change_reason: string }>;
+    expect(audits).toHaveLength(1); expect(JSON.stringify(audits[0].metadata)).toContain('IND123456');
+    expect(audits[0].change_reason).toBe('Prepare correspondence for review');
+    expect(statements.indexOf('SELECT 1')).toBeLessThan(statements.findIndex(sql => /INSERT INTO authoring_documents/.test(sql)));
+  });
+
+  it('writes no draft when correspondence admission fails inside the canonical create transaction', async () => {
+    const before = ((await jdb.pool.query('SELECT count(*)::int AS count FROM authoring_documents')).rows[0] as { count: number }).count;
+    await expect(createDocumentFromDraft(ctx(), draft, { companyCorrespondence: { origin: correspondenceOrigin, reserve: async () => { throw new Error('Filing identity changed'); } } })).rejects.toThrow('Filing identity changed');
+    expect(((await jdb.pool.query('SELECT count(*)::int AS count FROM authoring_documents')).rows[0] as { count: number }).count).toBe(before);
+    expect(statements).toContain('ROLLBACK'); expect(statements.some(sql => /INSERT INTO authoring_documents/.test(sql))).toBe(false);
+  });
+
+  it('drops public caller assertions of correspondence origin', async () => {
+    const response = await author(request(app).post('/api/authoring/docs/from-draft')).send({ ...draft, provenance: { source: 'seed', companyCorrespondence: correspondenceOrigin } });
+    expect(response.status).toBe(201); expect(response.body.data.doc.provenance.companyCorrespondence).toBeUndefined();
+  });
   it.each(['before-commit', 'after-commit'] as const)('evicts without rollback/retry when %s cannot be confirmed', async fault => {
     mode = fault;
     let error: unknown;

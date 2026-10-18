@@ -22,6 +22,7 @@ const USER = 3;
 
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  await harness.pglite.exec(`CREATE TABLE IF NOT EXISTS organizations(id integer PRIMARY KEY,settings jsonb NOT NULL DEFAULT '{}'); INSERT INTO organizations(id) VALUES(${ORG});`);
   holder.db = harness.db;
 
   await harness.pglite.exec(`

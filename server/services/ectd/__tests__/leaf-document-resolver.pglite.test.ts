@@ -86,6 +86,7 @@ beforeAll(async () => {
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS company_legal_registry(organization_id integer NOT NULL,id text NOT NULL,document jsonb NOT NULL,PRIMARY KEY(organization_id,id));
     CREATE TABLE IF NOT EXISTS regulatory_programs (
       id UUID PRIMARY KEY,
       organization_id INTEGER,

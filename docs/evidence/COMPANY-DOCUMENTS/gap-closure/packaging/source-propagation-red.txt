@@ -1,0 +1,90 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+ ↓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from tenant settings and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:18:06.729Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from tenant settings and preserves its exact source in the final ZIP and governance proof 145ms
+   → expected undefined to match object { …(4) }
+ ↓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved
+ ↓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package
+ ↓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  00:17:51
+   Duration  14.98s (transform 7.15s, setup 317ms, import 10.47s, tests 3.38s, environment 0ms)
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from tenant settings and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:18:06.726Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from tenant settings and preserves its exact source in the final ZIP and governance proof
+{
+  "timestamp": "2026-10-18T00:18:06.728Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > derives registered legal identity from tenant settings and preserves its exact source in the final ZIP and governance proof
+AssertionError: expected undefined to match object { …(4) }
+
+- Expected:
+{
+  "reasons": [
+    "registered-legal",
+  ],
+  "registeredLegalOriginals": [
+    {
+      "contentHash": "10cb2a14d5be902f5e364cce30e288289deb48378c168f45ddf5f65d9c9a5c56",
+      "programId": "11111111-1111-4111-8111-111111111111",
+      "registryId": "legal-source",
+      "version": "1",
+    },
+  ],
+  "shippedSha256": "10cb2a14d5be902f5e364cce30e288289deb48378c168f45ddf5f65d9c9a5c56",
+  "sourceSha256": "10cb2a14d5be902f5e364cce30e288289deb48378c168f45ddf5f65d9c9a5c56",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts:149:39
+    147|     try {
+    148|       const entry = result.bundle.leafManifest!.find(leaf => leaf.orig…
+    149|       expect(entry?.originalPdfProof).toMatchObject({ sourceSha256: ha…
+       |                                       ^
+    150|         registeredLegalOriginals: [{ registryId: 'legal-source', progr…
+    151|       const zip = await JSZip.loadAsync(await fs.readFile(result.bundl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

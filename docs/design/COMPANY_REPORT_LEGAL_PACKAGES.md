@@ -1,0 +1,25 @@
+# Retained report packages with selected legal originals
+
+`POST /api/report-os/bundles/:bundleId/export.zip` accepts a strict body with one to fifty distinct `legalDocumentIds` and an optional published UUID `variantId`. The authenticated organization and actor are server derived. This POST selects a download representation and is available to current viewers; it creates no report, approval, placement or company setting. Normal manifest/report PDF exports retain their existing routes and behavior.
+
+The route reuses the retained complete report-pack reader, current project admission, plan admission, report row reservations, retained seal verification and PDF renderer. It does not recompute report bodies. The resulting PDF retains each constituent's sealed/draft state, signatures, seal disclosure and page ranges. Current report access, plan, source fingerprints and saved packet inputs are checked again after rendering.
+
+Each explicitly selected legal document independently passes canonical library admission, current project access, exact-version/current Vault checks, canonical approval, date/expiry, archive and revocation checks. The original is fetched from its recorded store through the existing verified Vault byte reader. Actual SHA-256 and parsed PDF signature structure must agree with the registered source. Malformed signature structures refuse export. Approval and cryptographic verification remain separate facts: the archive reports structural signature presence and explicitly states that this export performs no cryptographic signature verification.
+
+A report archive has no claimed filing destination. Legal scope metadata is retained rather than interpreted as an agency-specific completeness or acceptance verdict. Legal originals are separate ZIP members; they are never concatenated, watermarked, rendered or converted. Current legal metadata, exact version, approval manifestation and project access are rechecked after archive construction. Size limits cover source bytes, proof metadata and compressed archive bytes.
+
+The ZIP contains:
+
+- `reports/report-pack.pdf`: the canonical retained report-pack PDF.
+- `legal/<selection-index>-<Vault-version-UUID>.pdf`: each selected original, byte for byte.
+- `manifest.json`: export and packet identity, constituent report seal/state/page evidence, full presentation-only snapshot, selected immutable registration and approval snapshots, scopes, language, dates, source/shipped digests and registration digests.
+
+The presentation snapshot excludes the tenant's private legal registry. The package content digest binds canonical export identity, bundle name, presentation snapshot, report digest/constituents and selected legal inventories. Before delivery, the actual compressed ZIP is reopened and every report, legal member and manifest is checked against its expected SHA-256. The exact ZIP digest is recorded in the existing chained export event and returned as `X-Export-Sha256`. It cannot self-embed in the file it hashes. The event contains identifiers and digests, not private legal prose or logo data. An audit write failure refuses delivery before attachment headers or bytes leave.
+
+An explicit published stationery variant is resolved against current membership and admitted bundle context, independently of automatic organization preferences. Only a uniquely mapped single-project packet supplies a program target; market, language and subsidiary facts are never invented. The renderer applies that design to this output while the immutable profile snapshot and organization defaults remain unchanged. Re-resolution after rendering refuses retirement or observed presentation changes. The reporting chooser offers organization-wide unqualified published designs and clearly disables designs requiring context it cannot establish.
+
+The Bundles UI loads the accessible library only on request, initially selects nothing, explains refusal reasons and requires explicit selection before downloading. Refresh clears legal selections. Auth session changes clear the chooser and suppress delayed metadata, errors and ZIP bytes. The browser saves the exact server response using the canonical download helper.
+
+The existing report export audit is the durable delivery record. This feature does not claim server-side retention or byte-identical future redownload of the ZIP. Customers should retain the downloaded archive and its manifest. Current source/approval checks are observed-change checks with existing row reservations; this design does not claim global commit serialization against independent sharing or legal metadata writers.
+
+Tests extract actual ZIP members and parse the real report PDF, verifying signed original equality, presentation snapshot, sealed text/signature/draft disclosure, exact ZIP/audit hashes and current-access/lifecycle refusals. A controlled final-member byte mutation makes the positive artifact regression fail at the archive digest gate; the source is restored before the final green run.

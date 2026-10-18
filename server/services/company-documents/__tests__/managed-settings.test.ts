@@ -1,10 +1,13 @@
 /** Real canonical settings writer: generic settings doors cannot alter the
  * governed company profile, and its authorized write and audit commit together. */
+import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../../shared/canonical-json';
 import type { Request } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
 import { DEFAULT_TEMPLATE_SPEC } from '../../../../shared/templates/template-spec';
-import { companyProfileHash } from '../provenance';
+import { companyProfileHash, companyDocumentsAuditDetails } from '../provenance';
+const digest = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');
 
 const h = vi.hoisted(() => ({
   log: [] as string[], audit: vi.fn(), stored: {} as Record<string, unknown>,
@@ -75,6 +78,18 @@ beforeEach(() => {
 });
 
 describe('companyDocuments is a managed organization setting', () => {
+  it('rolls back settings and audit when a governed before-commit projection fails', async () => {
+    const before = globalThis.structuredClone(h.stored);
+    const projection = vi.fn(async () => { h.log.push('PROJECTION'); throw new Error('Evidence changed before commit'); });
+    await expect(writeTenantSettings(req, 7, change(current => ({ ...current,
+      companyDocuments: { ...original, revision: 5, companyName: 'Would be changed' },
+    }), { companyDocumentsDoor: true, beforeCommit: projection }))).rejects.toThrow('Evidence changed before commit');
+    expect(projection).toHaveBeenCalledWith(client, expect.any(Object), expect.objectContaining({ companyDocuments: expect.objectContaining({ revision: 5 }) }));
+    expect(h.log.indexOf('AUDIT')).toBeLessThan(h.log.indexOf('PROJECTION'));
+    expect(h.log).toContain('ROLLBACK');
+    expect(h.log).not.toContain('COMMIT');
+    expect(h.stored).toEqual(before);
+  });
   it.each([
     ['spoofed revision and approval', (current: Record<string, unknown>) => ({ ...current, companyDocuments: { revision: 999, legalDocuments: [{ approved: true }] } })],
     ['null clearing', (current: Record<string, unknown>) => ({ ...current, companyDocuments: null })],
@@ -99,6 +114,9 @@ describe('companyDocuments is a managed organization setting', () => {
     expect(h.audit).not.toHaveBeenCalled();
   });
 
+});
+
+describe('company profile and canonical registry audit provenance', () => {
   it('allows the governed company door and records changed field names with its supplied reason', async () => {
     const result = await writeTenantSettings(req, 7, change(current => ({
       ...current, companyDocuments: { ...original, revision: 5, companyName: 'Changed sponsor' },
@@ -114,9 +132,11 @@ describe('companyDocuments is a managed organization setting', () => {
       details: { sections: ['companyDocuments'], changedFields: { companyDocuments: ['companyName', 'revision'] } },
     });
     expect(h.audit.mock.calls[0][1].details.values).toEqual({});
-    expect(h.audit.mock.calls[0][1].details.companyDocuments).toEqual({
+    expect(h.audit.mock.calls[0][1].details.companyDocuments).toMatchObject({
       before: { revision: 4, sha256: companyProfileHash(original) },
       after: { revision: 5, sha256: companyProfileHash(result?.companyDocuments as CompanyDocumentProfile) },
+      brandingPolicy: { before: { required: false, approvedDefaultDesignId: null }, after: { required: false, approvedDefaultDesignId: null } },
+      requirements: { beforeSha256: digest([]), afterSha256: digest([]) },
       legalChanges: [],
     });
   });
@@ -128,12 +148,27 @@ describe('companyDocuments is a managed organization setting', () => {
       },
     }), { companyDocumentsDoor: true }));
     const pointer = { vaultDocumentId: original.legalDocuments[0].vaultDocumentId, contentHash: original.legalDocuments[0].contentHash };
-    expect(h.audit.mock.calls[0][1].details.companyDocuments).toEqual({
+    expect(h.audit.mock.calls[0][1].details.companyDocuments).toMatchObject({
       before: { revision: 4, sha256: companyProfileHash(original) },
       after: { revision: 5, sha256: companyProfileHash(result?.companyDocuments as CompanyDocumentProfile) },
-      legalChanges: [{ id: 'legal_1', before: { ...pointer, active: true }, after: { ...pointer, active: false } }],
+      brandingPolicy: { before: { required: false, approvedDefaultDesignId: null }, after: { required: false, approvedDefaultDesignId: null } },
+      requirements: { beforeSha256: digest([]), afterSha256: digest([]) },
+      legalChanges: [{ id: 'legal_1', before: { ...pointer, active: true, sha256: digest(original.legalDocuments[0]) }, after: { ...pointer, active: false, sha256: digest({ ...original.legalDocuments[0], active: false }) } }],
     });
     expect((result?.companyDocuments as CompanyDocumentProfile).legalDocuments[0]).toMatchObject({ ...pointer, active: false });
+  });
+
+  it('records canonical registry proof supplied internally while storing no legal array in settings', async () => {
+    const after = { ...original, revision: 5, legalDocuments: original.legalDocuments.map(document => ({ ...document, active: false })) };
+    const presentation: Partial<CompanyDocumentProfile> = { ...after };
+    delete presentation.legalDocuments;
+    await writeTenantSettings(req, 7, change(current => ({ ...current, companyDocuments: presentation }), {
+      companyDocumentsDoor: true,
+      companyDocumentsAudit: () => companyDocumentsAuditDetails(original, after, 'Sponsor'),
+    }));
+    expect(h.stored.companyDocuments).not.toHaveProperty('legalDocuments');
+    expect(h.audit.mock.calls[0][1].details.companyDocuments.legalChanges[0]).toMatchObject({ id: 'legal_1',
+      before: { active: true, sha256: digest(original.legalDocuments[0]) }, after: { active: false, sha256: digest(after.legalDocuments[0]) } });
   });
 
   it('keeps company prose, legal text and logo bytes out of the append-only audit while retaining provenance', async () => {

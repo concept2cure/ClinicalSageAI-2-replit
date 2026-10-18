@@ -668,7 +668,7 @@ async function admitVaultDocument(
       ctdSection: doc.ctd_section ?? null, placementStatus: doc.placement_status,
       confidence: doc.placement_confidence ?? null, rationale: doc.placement_rationale ?? null,
     };
-    if (!recorded || changes.length > 0) await writeChainedAuditRow(client, {
+    if (!recorded || changes.length > 0 || args.companyLegalSource) await writeChainedAuditRow(client, {
       tenantId: orgId,
       userId: userId ?? undefined,
       action: recorded ? 'vault.document.reupload' : 'vault.document.ingest',

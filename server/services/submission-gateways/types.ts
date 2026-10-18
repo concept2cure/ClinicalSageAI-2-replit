@@ -30,6 +30,7 @@ export {
 };
 
 import type { ResolvedGatewayAccount } from './gateway-accounts';
+import type { OriginalPdfProof } from '../ectd/original-pdf-contract';
 
 export type Region =
   | 'fda'   // US — FDA
@@ -132,6 +133,8 @@ export interface SubmissionBundle {
      *  normalization) — the comparand for the next sequence's "unchanged"
      *  decision. `md5` is the checksum of what shipped. */
     sourceMd5?: string;
+    /** Immutable-original source and final shipping digest, independent of eCTD MD5. */
+    originalPdfProof?: OriginalPdfProof;
   }>;
   /** Optional human-readable display name. */
   displayName?: string;
@@ -150,6 +153,9 @@ export interface SubmissionBundle {
     allPdfA: boolean;
     /** Agency forms shipped as issued; absent on bundles built before 2026-09-22. */
     agencyFormsAsIssued?: string[];
+    /** Preserved originals actually validated by veraPDF without rewriting bytes. */
+    pdfaValidatedOriginals?: string[];
+    originalPdfAValidationFailures?: Array<{ fileName: string; reason: string }>;
   };
   /**
    * Optional eCTD DTD self-containment status: whether every DTD the backbones

@@ -39,6 +39,8 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { CompanyLegalCommunicationLinks } from './CompanyLegalCommunicationLinks';
+import type { CompanyLegalCommunicationLink } from '@shared/company-correspondence';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -106,6 +108,7 @@ type SubmissionItemRow = {
   status: string;
   dispatchReady: boolean;
   updatedAt: string;
+  metadata?: { companyLegalDocuments?: CompanyLegalCommunicationLink[] };
 };
 
 /* Active project id — the runtime channel Projects.tsx sets when a project is
@@ -515,6 +518,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                       <span className="k">Dispatch</span>
                       <span className="v">{it.dispatchReady ? 'ready' : 'not ready'}</span>
                     </div>
+                    {projectId && <CompanyLegalCommunicationLinks projectId={projectId} recordId={it.id} kind="handoff" initial={it.metadata?.companyLegalDocuments} />}
                   </div>
                 ))}
               </div>
@@ -582,6 +586,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           </div>
           <AgencyInboxList
             hasProject={Boolean(projectId)}
+            projectId={projectId}
             loading={liveComms.loading}
             error={liveComms.error}
             rows={shown}

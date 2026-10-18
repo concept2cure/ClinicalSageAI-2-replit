@@ -38,6 +38,8 @@ export interface LeafGradeRecord {
    * not-converted risk set, and listed, never silently dropped. 2026-09-22 W5/D7.
    */
   agencyFormAsIssued?: boolean;
+  /** The preserved original passed veraPDF, with no byte conversion. */
+  originalPdfAValidation?: { valid: boolean; reason: string };
 }
 
 /** Roll-up of submission-grade status across every leaf in a package. */
@@ -58,6 +60,8 @@ export interface SubmissionGradeSummary {
   allPdfA: boolean;
   /** PDF leaves that are agency forms shipped as issued (never converted, by rule). */
   agencyFormsAsIssued: string[];
+  pdfaValidatedOriginals?: string[];
+  originalPdfAValidationFailures?: Array<{ fileName: string; reason: string }>;
 }
 
 export interface SubmissionGradeGateInput {
@@ -84,16 +88,21 @@ export function summarizeSubmissionGrade(leaves: LeafGradeRecord[]): SubmissionG
   const pdf = leaves.filter((l) => l.isPdf);
   const agencyFormsAsIssued = pdf.filter((l) => l.agencyFormAsIssued === true).map((l) => l.fileName).sort();
   const notConverted = pdf
-    .filter((l) => !l.converted && l.agencyFormAsIssued !== true)
+    .filter((l) => !l.converted && l.agencyFormAsIssued !== true && l.originalPdfAValidation?.valid !== true)
     .map((l) => l.fileName)
     .sort();
   return {
     total: leaves.length,
     pdfLeaves: pdf.length,
-    pdfaConverted: pdf.length - notConverted.length - agencyFormsAsIssued.length,
+    pdfaConverted: pdf.filter(l => l.converted).length,
     notConverted,
     allPdfA: notConverted.length === 0,
     agencyFormsAsIssued,
+    ...(pdf.some(l => l.originalPdfAValidation?.valid) ? { pdfaValidatedOriginals: pdf.filter(l => l.originalPdfAValidation?.valid).map(l => l.fileName).sort() } : {}),
+    ...(pdf.some(l => l.originalPdfAValidation && !l.originalPdfAValidation.valid) ? {
+      originalPdfAValidationFailures: pdf.filter(l => l.originalPdfAValidation && !l.originalPdfAValidation.valid)
+        .map(l => ({ fileName: l.fileName, reason: l.originalPdfAValidation!.reason })).sort((a, b) => a.fileName.localeCompare(b.fileName)),
+    } : {}),
   };
 }
 

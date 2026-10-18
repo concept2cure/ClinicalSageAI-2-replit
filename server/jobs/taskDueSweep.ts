@@ -249,6 +249,9 @@ function readIntervalMs(): number {
 async function tick(): Promise<void> {
   try {
     const summary = await runTaskDueSweep();
+    const { runCompanyLegalRenewalSweep } = await import('./companyLegalRenewalSweep');
+    const legal = await runCompanyLegalRenewalSweep();
+    if (legal.errors) logger.warn('company legal renewal sweep needs retry', { errors: legal.errors });
     lastSweep = { at: new Date(), summary };
     if (summary.dueSoonNotified > 0 || summary.overdueNotified > 0) {
       logger.info('sweep notified on due dates', {

@@ -2,6 +2,8 @@
  * Real SQL exercises the generic upsertLeaf path, so the company picker is
  * never the only place an expired or wrong-target legal version is refused. */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { syncCompanyLegalRegistry } from '../../company-documents/legal-registry';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import { VAULT_DDL } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import type { CompanyLegalDocument } from '../../../../shared/company-documents';
@@ -35,7 +37,7 @@ const registered = (overrides: Partial<CompanyLegalDocument> = {}): CompanyLegal
   registeredAt: '2026-01-01T00:00:00.000Z', registeredBy: '9', ...overrides,
 });
 async function library(documents: CompanyLegalDocument[], organizationId = CTX.organizationId) {
-  await q('UPDATE organizations SET settings=$2::jsonb WHERE id=$1', [organizationId, JSON.stringify({ companyDocuments: { version: 1, revision: 1, legalDocuments: documents } })]);
+  await syncCompanyLegalRegistry(harness.pglite, organizationId, [], documents);
 }
 const place = (documentUuid: string, leafId?: number) => upsertLeaf({
   sequenceId, sectionCode: 'm1.2', title: 'Sponsor document',
@@ -51,6 +53,9 @@ beforeAll(async () => {
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params) };
   await harness.pglite.exec(VAULT_DDL);
+  await harness.pglite.exec(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+    CREATE TABLE IF NOT EXISTS vault.legal_holds (organization_id INTEGER, lifted_at TIMESTAMPTZ);`);
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await q("INSERT INTO organizations (id,name) VALUES (1,'Sponsor organization'),(2,'Another organization')");
   await q(`INSERT INTO regulatory_programs (id,organization_id,name,code,program_type,product_name)
     VALUES ($1,1,'IND program','IND-1','ind','Product')`, [PROGRAM]);
@@ -69,8 +74,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await q('DELETE FROM submission_leaves');
-  await library([]);
-  await library([], 2);
+  await harness.pglite.exec('TRUNCATE company_legal_registry');
   logAction.mockClear();
 });
 afterAll(async () => { await harness?.close(); });

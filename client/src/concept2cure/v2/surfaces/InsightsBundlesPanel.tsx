@@ -18,6 +18,7 @@
  * @module client/src/concept2cure/v2/surfaces/InsightsBundlesPanel
  */
 import React, { useMemo, useState } from 'react';
+import { InsightsLegalPackage } from './InsightsLegalPackage';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
@@ -59,6 +60,7 @@ function BundleCard({ bundle, exporting, onExport }: {
           {I.download} Export reports PDF
         </button>
       </div>
+      <InsightsLegalPackage bundleId={bundle.bundleId} disabled={exporting} />
       {exporting && <div className="rl-card-meta" role="status">Preparing PDF…</div>}
     </div>
   );

@@ -15,6 +15,7 @@ const receipt = { organization_id: ORG, digest: DIGEST, table_count: 2, row_coun
 type Options = { present?: boolean; door?: boolean; counts?: any[]; currentStatus?: string; futureRetention?: boolean; lostExport?: boolean; held?: boolean; auditFailure?: boolean; laterRetentionFailure?: boolean; statusRows?: any[]; statusRowCount?: number | null };
 
 function preconditionResponse(via: 'pool' | 'client', sql: string, opts: Options) {
+  if (/AS company_documents_present/.test(sql)) return { rows: [{ company_documents_present: false, company_documents: null }] };
   if (/FROM tenant_export_receipts/.test(sql)) return { rows: opts.lostExport && via === 'client' ? [] : [receipt] };
   if (/FROM organizations/.test(sql)) return { rows: [{ ...row, status: via === 'client' ? opts.currentStatus ?? row.status : row.status,
     purge_eligible_at: via === 'client' && opts.futureRetention ? new Date('2099-01-01') : row.purge_eligible_at }] };

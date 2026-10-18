@@ -42,8 +42,8 @@ beforeAll(async () => {
       id UUID PRIMARY KEY, document_id UUID NOT NULL
     );
     -- The export reads the organization row first, then every tenant-keyed table.
-    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT);
-    INSERT INTO organizations VALUES (${ORG}, 'o', 'Org', 'active'), (${OTHER_ORG}, 'x', 'Other', 'active');
+    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT, settings JSONB DEFAULT '{}');
+    INSERT INTO organizations (id,slug,name,status) VALUES (${ORG}, 'o', 'Org', 'active'), (${OTHER_ORG}, 'x', 'Other', 'active');
   `);
 });
 

@@ -70,6 +70,7 @@ import {
 } from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
 import { readCompanyLegalSubmissionContext } from './company-legal-context';
+import { assessStoredCompanyLegalRequirements, companyLegalRequirementBlockers } from '../company-documents/stored-legal-readiness';
 import {
   evaluateDispatchGate,
   evaluateReleaseApprovalGate,
@@ -878,6 +879,10 @@ export async function assessSequenceDispatchReadiness(
     isOriginalSequence: sequenceOptions.isOriginalSequence === true,
   });
   if (indProgram) appendReadinessFindings(readiness, indProgram.findings);
+  const legalRequirements = await assessStoredCompanyLegalRequirements(queryableFromDrizzle(db), { organizationId, sequenceId, today: asOf });
+  appendReadinessFindings(readiness, companyLegalRequirementBlockers(legalRequirements).map(message => ({
+    severity: 'error' as const, code: 'COMPANY_LEGAL_REQUIREMENT_INCOMPLETE', sectionCode: null, message,
+  })));
 
   // 4. CRITICAL Shadow Review findings that block (server truth): every open
   //    one, and (P-35) every one closed under a signature no longer in force —

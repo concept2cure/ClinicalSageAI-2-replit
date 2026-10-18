@@ -25,9 +25,21 @@
  * the audit row.
  */
 import { createHash } from 'node:crypto';
+import JSZip from 'jszip';
+import { stableStringify } from '../../../shared/canonical-json';
+import { signedPdfFixture } from '../../services/ectd/__tests__/support/signed-pdf-fixture';
+import type { ReportLegalOriginal } from '../../services/report-os/report-package';
+import { ReportPackageError } from '../../services/report-os/report-package';
+import { DEFAULT_TEMPLATE_SPEC, normalizeTemplateSpec } from '../../../shared/templates/template-spec';
+import { CompanyDocumentsError } from '../../services/company-documents/profile';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+
+const variants = vi.hoisted(() => ({ read: vi.fn() }));
+vi.mock('../../services/company-documents/designs', () => ({ readPublishedCompanyVariant: variants.read }));
+const legal = vi.hoisted(() => ({ read: vi.fn(), recheck: vi.fn() }));
+vi.mock('../../services/report-os/report-package-legal', () => ({ readReportPackageLegalOriginals: legal.read, requireReportPackageLegalStillCurrent: legal.recheck }));
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
 
@@ -117,7 +129,7 @@ const pdfBody = (r: request.Test) =>
     res.on('end', () => done(null, Buffer.concat(chunks)));
   });
 
-beforeEach(() => resetReportOsHarness(h));
+beforeEach(() => { resetReportOsHarness(h); legal.read.mockReset(); legal.recheck.mockReset().mockResolvedValue(undefined); variants.read.mockReset(); });
 
 const sealedDocument: RenderedReport = { reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', generatedAt: '2026-09-30T12:00:00.000Z', status: 'final', sections: [] };
 
@@ -388,5 +400,111 @@ describe('retained packet identity and seal integrity', () => {
     expect(text).toContain('Dana Reyes');
     expect(text).not.toContain('Seal verification at export: intact.');
     expect(auditEntry()?.details.constituents[1]).toMatchObject({ runId: 41, sourceDocument: 'retained-run-render', sealVerdict: 'not-verifiable' });
+  });
+});
+
+
+const packagePath = `/api/report-os/bundles/${id}/export.zip`;
+async function packageOriginal(): Promise<ReportLegalOriginal> {
+  const bytes = await signedPdfFixture(true);
+  const sourceSha256 = createHash('sha256').update(bytes).digest('hex');
+  const document = { id: 'legal-sponsor', title: 'Signed sponsor authorization', kind: 'authorization' as const,
+    programId: '11111111-1111-4111-8111-111111111111', vaultDocumentId: '22222222-2222-4222-8222-222222222222',
+    version: '3', contentHash: sourceSha256, agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en',
+    effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-01T00:00:00Z', registeredBy: '9' };
+  return { document, bytes, fingerprint: 'checked-current-registration', inventory: { registryId: document.id,
+    title: document.title, kind: document.kind, programId: document.programId, vaultDocumentId: document.vaultDocumentId,
+    version: document.version, sourceSha256, shippedSha256: sourceSha256,
+    path: `legal/1-${document.vaultDocumentId}.pdf`, byteLength: bytes.length,
+    agencies: document.agencies, countries: document.countries, submissionTypes: document.submissionTypes, language: document.language,
+    effectiveOn: null, expiresOn: null, approval: { verdict: 'current-approved-exact-version', checkedAt: at.toISOString(),
+      canonicalId: 'canonical-authorization', stage: 'approved', signatureRef: null, signedAt: null, manifestation: null },
+    cryptographicSignatureValidation: 'not-performed-by-this-export', embeddedSignature: 'present', registration: document,
+    registrationSha256: createHash('sha256').update(stableStringify(document)).digest('hex') } };
+}
+const exportPackage = (body: Record<string, unknown> = { legalDocumentIds: ['legal-sponsor'] }) =>
+  pdfBody(request(app).post(packagePath).set('x-test-role', 'viewer').send(body));
+
+describe('POST /bundles/:bundleId/export.zip — explicit governed report/legal copies', () => {
+  it('exports actual retained report bodies and byte-identical signed original members with immutable proof snapshots', async () => {
+    prepare(); const original = await packageOriginal(); legal.read.mockResolvedValue([original]);
+    h.company.settings = { companyDocuments: { revision: 9, companyName: 'Package Sponsor', applyToReports: true } };
+    const result = await exportPackage();
+    expect(result.status).toBe(200);
+    expect(result.headers['content-type']).toContain('application/zip');
+    const zip = await JSZip.loadAsync(result.body as Buffer);
+    const manifest = JSON.parse(await zip.file('manifest.json')!.async('string'));
+    const reportBytes = await zip.file('reports/report-pack.pdf')!.async('nodebuffer');
+    const originalBytes = await zip.file(original.inventory.path)!.async('nodebuffer');
+    expect(originalBytes).toEqual(original.bytes);
+    const text = (await parsedPdf(reportBytes)).text.replace(/\s+/g, ' ');
+    expect(text).toContain('SEALED-BODY-41'); expect(text).toContain('PARTIAL-BODY-42');
+    expect(text).toContain('Signed by Dana Reyes as approval'); expect(text).toContain('NOT FINAL (PARTIAL)');
+    expect(text).toContain('Package Sponsor');
+    expect(manifest.branding).toMatchObject({ applied: true, revision: 9, presentation: { companyName: 'Package Sponsor', legalDocuments: [] } });
+    expect(manifest.legalDocuments).toEqual([original.inventory]);
+    expect(manifest.reports.sha256).toBe(createHash('sha256').update(reportBytes).digest('hex'));
+    const hash = createHash('sha256').update(result.body as Buffer).digest('hex');
+    expect(result.headers['x-export-sha256']).toBe(hash);
+    expect(auditEntry()).toMatchObject({ action: 'report_os.bundle_exported', details: { format: 'zip', content: 'report-package',
+      sha256: hash, manifestSha256: createHash('sha256').update(await zip.file('manifest.json')!.async('nodebuffer')).digest('hex'),
+      legalDocuments: [{ registryId: original.document.id, sourceSha256: original.document.contentHash, shippedSha256: original.document.contentHash }] } });
+    expect(legal.recheck).toHaveBeenCalledTimes(1); expect(h.compute).not.toHaveBeenCalled(); expect(h.signature).not.toHaveBeenCalled();
+  });
+  it.each([{}, { legalDocumentIds: [] }, { legalDocumentIds: ['one', 'one'] }, { legalDocumentIds: ['one'], organizationId: 99 },
+    { legalDocumentIds: ['one'], variantId: '' }])('rejects malformed/implicit selection before reading private sources: %j', async body => {
+    prepare(); const result = await exportPackage(body);
+    expect(result.status).toBe(400); expect(h.statements).toEqual([]); expect(legal.read).not.toHaveBeenCalled(); expect(h.audit).not.toHaveBeenCalled();
+  });
+  it('refuses a missing, foreign or no-longer-approved original without returning a partial archive', async () => {
+    prepare(); legal.read.mockRejectedValue(new ReportPackageError(404, 'REPORT_LEGAL_DOCUMENT_NOT_FOUND', 'Selected original unavailable.'));
+    const result = await exportPackage(); expect(result.status).toBe(404); expect(result.headers['content-disposition']).toBeUndefined(); expect(h.audit).not.toHaveBeenCalled();
+  });
+  it('refuses source bytes that differ from their registered exact-version digest', async () => {
+    prepare(); const original = await packageOriginal(); legal.read.mockResolvedValue([{ ...original, bytes: Buffer.concat([original.bytes, Buffer.from('changed')]) }]);
+    const result = await exportPackage(); expect(result.status).toBe(409); expect(json(result).error.code).toBe('REPORT_LEGAL_ORIGINAL_CHANGED'); expect(h.audit).not.toHaveBeenCalled();
+  });
+  it('rechecks legal approval/current access after archive rendering and refuses an observed withdrawal', async () => {
+    prepare(); legal.read.mockResolvedValue([await packageOriginal()]); legal.recheck.mockRejectedValue(new ReportPackageError(409, 'REPORT_LEGAL_CONTEXT_CHANGED', 'Approval was withdrawn.'));
+    const result = await exportPackage(); expect(result.status).toBe(409); expect(h.audit).not.toHaveBeenCalled(); expect(result.headers['content-disposition']).toBeUndefined();
+  });
+  it('refuses audit failure before ZIP headers and bytes leave', async () => {
+    prepare(); legal.read.mockResolvedValue([await packageOriginal()]); auditFails();
+    const result = await exportPackage(); expect(result.status).toBe(503); expect(json(result).error.code).toBe('REPORT_EXPORT_NOT_RECORDED'); expect(result.headers['content-disposition']).toBeUndefined();
+  });
+});
+
+
+describe('report ZIP explicit immutable stationery variants', () => {
+  const variantId = '77777777-7777-4777-8777-777777777777';
+  const profile = { version: 1 as const, revision: 17, variantId, companyName: 'Explicit Published Subsidiary',
+    address: 'Regulatory address', contact: 'Authorized contact', registrationDetails: 'Company registration',
+    letterhead: normalizeTemplateSpec(DEFAULT_TEMPLATE_SPEC), importedFrom: null, applyToReports: false,
+    applyToSubmissionCorrespondence: false, brandingAdopted: true, legalDocuments: [] };
+  it('applies an explicitly selected published variant to this export while retaining its unchanged default preferences', async () => {
+    prepare(); legal.read.mockResolvedValue([await packageOriginal()]); variants.read.mockResolvedValue(profile);
+    const result = await exportPackage({ legalDocumentIds: ['legal-sponsor'], variantId });
+    expect(result.status).toBe(200);
+    const zip = await JSZip.loadAsync(result.body as Buffer);
+    const manifest = JSON.parse(await zip.file('manifest.json')!.async('string'));
+    expect(manifest.branding).toMatchObject({ applied: true, variantId, revision: 17, selection: 'explicit-variant',
+      presentation: { companyName: profile.companyName, applyToReports: false, legalDocuments: [] } });
+    expect((await parsedPdf(await zip.file('reports/report-pack.pdf')!.async('nodebuffer'))).text).toContain(profile.companyName);
+    expect(profile.applyToReports).toBe(false);
+    expect(auditEntry()?.details.companyBranding).toMatchObject({ variantId, explicitSelection: true, revision: 17 });
+    // A multi-project packet cannot invent one program/market target for a scoped design.
+    expect(variants.read.mock.calls[0][3]).toEqual({ userId: 5, programId: null });
+    expect(variants.read).toHaveBeenCalledTimes(2);
+  });
+  it('refuses unknown, unpublished or inapplicable explicit variants without default fallback', async () => {
+    prepare(); variants.read.mockRejectedValue(new CompanyDocumentsError(409, 'COMPANY_VARIANT_NOT_PUBLISHED', 'This variant is not published.'));
+    const result = await exportPackage({ legalDocumentIds: ['legal-sponsor'], variantId });
+    expect(result.status).toBe(409); expect(legal.read).not.toHaveBeenCalled(); expect(h.audit).not.toHaveBeenCalled();
+  });
+  it('refuses retirement observed after archive rendering', async () => {
+    prepare(); legal.read.mockResolvedValue([await packageOriginal()]); variants.read.mockResolvedValueOnce(profile)
+      .mockRejectedValueOnce(new CompanyDocumentsError(409, 'COMPANY_VARIANT_NOT_PUBLISHED', 'This variant was retired.'));
+    const result = await exportPackage({ legalDocumentIds: ['legal-sponsor'], variantId });
+    expect(result.status).toBe(409); expect(h.audit).not.toHaveBeenCalled(); expect(result.headers['content-disposition']).toBeUndefined();
   });
 });

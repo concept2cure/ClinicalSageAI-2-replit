@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { companyLegalDocumentRefusal, type CompanyDocumentsResponse, type CompanyLegalDocument } from '@shared/company-documents';
 import { canonicalRegionOf, toAgency } from '@shared/regulatory/region-identity';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
@@ -8,6 +8,11 @@ import { downloadBlob, safeFileName } from '../download';
 import { isLocked, judgeSectionCode, matchingLeafReceipt, placementAuditWarning, placementReasonOk, PlacementReasonField, vocabularyForApplicationType, type FilingLeafReceipt } from './filingTarget';
 import type { LeafWriteEffect, Notice } from './SubmissionSeqWorkspaces';
 import '../styles/company-documents.css';
+import { CompanyCorrespondenceDraft } from './CompanyCorrespondenceDraft';
+import { CompanyFilingIdentityReview } from './CompanyFilingIdentityReview';
+import { CompanyCorrespondenceVariants } from './CompanyCorrespondenceVariants';
+import { CompanyLegalReadiness } from './company-documents/CompanyLegalReadiness';
+import { useCompanySubmissionLibrary, type CompanyLibrary } from './useCompanySubmissionLibrary';
 
 const PATH = '/api/client-branding/company-documents';
 interface Sequence { id: number; sequenceNumber: string; status: string; region: string }
@@ -25,41 +30,6 @@ function profileResponse(value: unknown): value is CompanyDocumentsResponse {
 function copyRefusal(document: CompanyLegalDocument): string | null {
   return companyLegalDocumentRefusal(document, { programId: document.programId, agency: document.agencies[0], country: document.countries[0], submissionType: document.submissionTypes[0] });
 }
-
-/** Keep every draft and asynchronous receipt scoped to the authenticated filing context. */
-function useCompanyLibrary(owner: string) {
-  const [state, setState] = useState<{ owner: string; loading: boolean; response: CompanyDocumentsResponse | null; error: string }>({ owner: '', loading: true, response: null, error: '' });
-  const [epoch, setEpoch] = useState(0);
-  const [selectedId, setSelectedId] = useState('');
-  const [section, setSection] = useState('');
-  const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<Notice | null>(null);
-  const session = useRef({ generation: 0 });
-  const active = state.owner === owner;
-  const response = active ? state.response : null;
-  useEffect(() => {
-    const currentSession = session.current;
-    const ticket = ++currentSession.generation;
-    setSelectedId(''); setSection(''); setReason(''); setBusy(false); setNote(null);
-    setState({ owner, loading: true, response: null, error: '' });
-    void apiCall('GET', PATH).then(result => {
-      if (ticket !== currentSession.generation) return;
-      if (!result.ok || !profileResponse(result.body)) {
-        setState({ owner, loading: false, response: null, error: apiErrorText(result, 'The company legal document library could not be read. No library entry is available to select.') }); return;
-      }
-      setState({ owner, loading: false, response: result.body, error: '' });
-    });
-    return () => { currentSession.generation++; };
-  }, [owner, epoch]);
-  return {
-    state, active, response, selectedId, section, reason, busy, note, session,
-    setSelectedId, setSection, setReason, setBusy, setNote,
-    retry: () => setEpoch(x => x + 1),
-    setResponse: (next: CompanyDocumentsResponse) => setState({ owner, loading: false, response: next, error: '' }),
-  };
-}
-type CompanyLibrary = ReturnType<typeof useCompanyLibrary>;
 
 function filingContext(seq: Sequence, submission: Submission) {
   const country = canonicalRegionOf(seq.region);
@@ -82,7 +52,7 @@ function companionSelection(library: CompanyLibrary, context: FilingContext, seq
   const copyBlock = selected ? copyRefusal(selected) : null;
   const sectionVerdict = judgeSectionCode(library.section, vocabularyForApplicationType(submission.applicationType));
   const canPlace = () => !!selected && library.active && !library.busy && !locked && !selectedRefusal && sectionVerdict.placeable && placementReasonOk(library.reason);
-  const canCopy = () => !!selected && !!library.response?.canManage && crossProgram && !copyBlock && !!submission.programId && placementReasonOk(library.reason) && !library.busy && !locked;
+  const canCopy = () => !!selected && !!(library.response?.capabilities?.manageLegal ?? library.response?.canManage) && crossProgram && !copyBlock && !!submission.programId && placementReasonOk(library.reason) && !library.busy && !locked;
   return { documents, selected, locked, crossProgram, copyBlock, sectionVerdict, canPlace, canCopy };
 }
 type CompanionSelection = ReturnType<typeof companionSelection>;
@@ -141,7 +111,8 @@ function companionActions(props: CompanionProps, library: CompanyLibrary, select
     library.setBusy(true); library.setNote(null);
     const title = `${submission.title || `Submission ${submission.id}`} — correspondence`;
     try {
-      const result = await apiRequest('POST', `${PATH}/letterhead/render`, { purpose: 'submission', title });
+      const result = await apiRequest('POST', `${PATH}/letterhead/render`, { purpose: 'submission', sequenceId: seq.id,
+        ...(library.variantId ? { variantId: library.variantId } : {}), title });
       if (!result.ok) throw new Error(serverMessage(await result.json().catch(() => null)) || 'The template download was refused.');
       const blob = await result.blob();
       if (ticket !== library.session.current.generation) return;
@@ -162,6 +133,20 @@ function CompanionStatus({ library }: { library: CompanyLibrary }) {
     {active && state.error && <div className="company-notice company-error" role="alert">{state.error} <button className="btn ghost small" type="button" onClick={library.retry}>Retry company library</button></div>}
     {active && note && <div className={`company-notice${note.tone === 'err' ? ' company-error' : ''}`} role={note.tone === 'err' ? 'alert' : 'status'}>{note.text}</div>}
   </>;
+}
+function CompanionLibraryFilters({ library }: { library: CompanyLibrary }) {
+  const page = library.page;
+  return <div className="company-register">
+    <form role="search" onSubmit={event => { event.preventDefault(); library.search(); }}>
+      <label className="company-field"><span>Search company legal documents</span><input value={library.searchText} maxLength={200} onChange={event => library.setSearchText(event.target.value)} /></label>
+      <button type="submit" className="btn small" disabled={library.state.loading}>Search legal inventory</button>
+      <label className="company-check"><input type="checkbox" checked={library.allPrograms} onChange={event => library.setAllPrograms(event.target.checked)} />Include other accessible projects for copying</label>
+    </form>
+    {page && <div><p>{page.total ? `${page.offset + 1}–${Math.min(page.offset + page.limit, page.total)} of ${page.total} matching documents` : 'No matching documents'}</p>
+      <button type="button" className="btn ghost small" disabled={page.offset === 0 || library.state.loading} onClick={() => library.goToOffset(Math.max(0, page.offset - page.limit))}>Previous legal documents</button>
+      <button type="button" className="btn ghost small" disabled={!page.hasMore || library.state.loading} onClick={() => library.goToOffset(page.nextOffset!)}>Next legal documents</button>
+    </div>}
+  </div>;
 }
 function CompanionDocumentCard({ document, seq, submission, library, context }: {
   document: CompanyLegalDocument; seq: Sequence; submission: Submission; library: CompanyLibrary; context: FilingContext;
@@ -185,7 +170,7 @@ function CompanionSelectionEditor({ seq, library, selection, actions }: {
     {crossProgram ? <>
       <p className="company-hint">The original is held by another project. Copy its unchanged bytes into this submission’s project, then review and approve that copy in Vault. Approval does not transfer to a copy.</p>
       {copyBlock && <p className="company-hint">Copy unavailable: {copyBlock}</p>}
-      {!library.response?.canManage && <p className="company-hint">An organization owner or administrator must register this project’s copy.</p>}
+      {!(library.response?.capabilities?.manageLegal ?? library.response?.canManage) && <p className="company-hint">A company legal custodian must register this project’s copy.</p>}
       <button type="button" className="btn small" disabled={!selection.canCopy()} onClick={() => void actions.copyToProgram()}>Copy original to this project for review</button>
     </> : <button type="button" className="btn primary small" disabled={!selection.canPlace()} onClick={() => void actions.place()}>{library.busy ? 'Placing…' : 'Place company document in sequence'}</button>}
   </div>;
@@ -197,7 +182,7 @@ function CompanionLibraryEditor({ props, library, context, selection, actions }:
   const { seq, submission, onNav } = props;
   return <>
     {context.contextRefusal && <p className="company-notice">{context.contextRefusal}</p>}
-    {selection.documents.length === 0 && <p className="company-empty">No active company legal documents are registered. An administrator can register original PDF versions in Admin → Settings → Legal document library.</p>}
+    {selection.documents.length === 0 && <p className="company-empty">No registered company legal documents match these project and search filters. Adjust the filters or register an original PDF in Company documents settings.</p>}
     <fieldset className="company-editor" disabled={library.busy || selection.locked}>
       <div className="company-legal-list">{selection.documents.map(document => <CompanionDocumentCard key={document.id} document={document} seq={seq} submission={submission} library={library} context={context} />)}</div>
       <CompanionSelectionEditor seq={seq} library={library} selection={selection} actions={actions} />
@@ -207,11 +192,23 @@ function CompanionLibraryEditor({ props, library, context, selection, actions }:
   </>;
 }
 
+function CompanyCorrespondenceWorkflows({ props, library, auth }: { props: CompanionProps; library: CompanyLibrary; auth: ReturnType<typeof getAuthToken> }) {
+  const { seq, submission } = props;
+  return <>
+    {library.response && <CompanyCorrespondenceVariants sequenceId={seq.id} value={library.variantId} onChange={library.setVariantId} />}
+    <CompanyCorrespondenceDraft sequenceId={seq.id} programId={submission.programId} submissionTitle={submission.title || `Submission ${submission.id}`} onNav={props.onNav} variantId={library.variantId || undefined} />
+    {library.response && <CompanyFilingIdentityReview sequenceId={seq.id} profileRevision={library.response.data.revision}
+      canReview={library.response.capabilities?.manageLegal ?? library.response.canManage} variantId={library.variantId || undefined} />}
+    {library.response && auth && <CompanyLegalReadiness sequenceId={seq.id} profile={library.response.data} token={auth}
+      canManage={library.response.capabilities?.manageLegal ?? library.response.canManage} onSaved={library.setResponse} />}
+  </>;
+}
+
 export function CompanySubmissionDocuments(props: CompanionProps) {
   const { seq, submission } = props;
   const auth = getAuthToken(); const org = getJwtOrgId();
   const owner = `${org}:${auth}:${seq.id}:${seq.region}:${seq.status}:${submission.id}:${submission.programId}:${submission.applicationType}`;
-  const library = useCompanyLibrary(owner);
+  const library = useCompanySubmissionLibrary(owner, submission.programId);
   const context = filingContext(seq, submission);
   const selection = companionSelection(library, context, seq, submission);
   const actions = companionActions(props, library, selection);
@@ -220,7 +217,9 @@ export function CompanySubmissionDocuments(props: CompanionProps) {
       <p>Select original company documents for {context.agency ?? seq.region} · {context.country ?? 'market not identified'} · {submission.applicationType.toUpperCase()}. The source’s current approval, dates and applicability are verified again when it is placed.</p></div>
       <button type="button" className="btn ghost small" disabled={!library.active || library.busy} onClick={() => void actions.downloadCorrespondence()}>Download correspondence Word template</button></div>
     <p className="company-hint">The correspondence template follows the saved company presentation preference. It is a draft: review its content, then place the reviewed PDF explicitly from Vault. Downloading never attaches it to this sequence.</p>
+    <CompanyCorrespondenceWorkflows props={props} library={library} auth={auth} />
     {selection.locked && <p className="company-notice">This sequence is {seq.status}. Its leaves are immutable; company documents cannot be added.</p>}
+    <CompanionLibraryFilters library={library} />
     <CompanionStatus library={library} />
     <CompanionLibraryEditor props={props} library={library} context={context} selection={selection} actions={actions} />
   </section>;

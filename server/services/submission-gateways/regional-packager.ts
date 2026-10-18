@@ -40,6 +40,8 @@ export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
 import { isPdfLeaf } from '../ectd/pdfa-detect';
 import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
+import { assertLeafSourceIntegrity, prepareOriginalPdf, requireOriginalPdfA, verifyPreservedOriginalsArchive } from '../ectd/original-pdf-preservation';
+import type { LeafSourceIntegrity, OriginalPdfProof } from '../ectd/original-pdf-contract';
 import {
   evaluateSubmissionGrade,
   pdfaRequiredFromEnv,
@@ -224,7 +226,7 @@ async function finalizeLeafBytes(
   buf: Buffer,
   fileName: string,
   region: Region,
-  skipPdfaConversion = false,
+  options: { skipPdfaConversion?: boolean; sourceIntegrity?: LeafSourceIntegrity; originalPdfARequired?: boolean } = {},
 ): Promise<{
   bytes: Buffer;
   md5Override?: string;
@@ -233,7 +235,10 @@ async function finalizeLeafBytes(
   encrypted: boolean;
   securityReason?: string;
   agencyFormAsIssued?: boolean;
+  originalPdfProof?: OriginalPdfProof;
 }> {
+  const { sourceIntegrity } = options;
+  assertLeafSourceIntegrity(buf, fileName, sourceIntegrity);
   const namedPdf = fileName.toLowerCase().endsWith('.pdf');
   /* 2026-09-22 (W5/D7): the security gate keys on the BYTES, not the name.
      It ran only for a name ending .pdf, so secured PDF bytes under any other
@@ -252,18 +257,23 @@ async function finalizeLeafBytes(
   if (security.verdict === 'secured') {
     return { bytes: buf, isPdf: namedPdf, converted: false, encrypted: true, securityReason: security.reason };
   }
-  if (!namedPdf) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
   // An FDA form ships exactly as FDA issued it — never through Ghostscript,
   // which would strip the XFA form and FDA's security settings.
-  if (security.verdict === 'fda-form-as-issued') {
+  if (security.verdict === 'fda-form-as-issued' && !sourceIntegrity?.registeredLegalOriginals.length) {
     return { bytes: buf, isPdf: true, converted: false, encrypted: false, agencyFormAsIssued: true };
   }
+  const originalPdfProof = await prepareOriginalPdf(buf, fileName, sourceIntegrity);
+  if (originalPdfProof) {
+    if (options.originalPdfARequired) requireOriginalPdfA(originalPdfProof, fileName);
+    return { bytes: buf, isPdf: true, converted: false, encrypted: false, originalPdfProof };
+  }
+  if (!namedPdf) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
   // Deterministic path: skip PDF/A normalization so the shipped bytes equal the
   // input bytes exactly. Used for validation-only assembly (e.g. the submission
   // orchestrator) where byte-determinism across re-renders matters more than
   // PDF/A-1b normalization — Ghostscript conversion embeds timestamps and is
   // non-deterministic, which would break a re-derive-and-compare drift check.
-  if (skipPdfaConversion) return { bytes: buf, isPdf: true, converted: false, encrypted: false };
+  if (options.skipPdfaConversion) return { bytes: buf, isPdf: true, converted: false, encrypted: false };
   const result = await finalizePdfA(buf);
   if (!result.converted) return { bytes: buf, isPdf: true, converted: false, encrypted: false };
   const bytes = Buffer.from(result.pdfBytes);
@@ -958,6 +968,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer;
     /** md5 of the bytes this packager was HANDED, when finalization changed them. */
     sourceMd5?: string;
+    originalPdfProof?: OriginalPdfProof;
   }
   const prepared: PreparedLeaf[] = [];
   /** Backbone-only withdrawals: no bytes, but a filing act the manifest records. */
@@ -1050,9 +1061,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
 
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted, encrypted, securityReason, agencyFormAsIssued } =
-      await finalizeLeafBytes(raw, leaf.fileName, region, input.skipPdfaConversion);
-    grades.push({ fileName: leaf.fileName, isPdf, converted, encrypted, ...(agencyFormAsIssued ? { agencyFormAsIssued } : {}) });
+    const { bytes, md5Override, isPdf, converted, encrypted, securityReason, agencyFormAsIssued, originalPdfProof } =
+      await finalizeLeafBytes(raw, leaf.fileName, region, { skipPdfaConversion: input.skipPdfaConversion, sourceIntegrity: leaf.sourceIntegrity,
+        originalPdfARequired: pdfaRequiredFromEnv() && (input.environment ?? 'production') === 'production' });
+    grades.push({ fileName: leaf.fileName, isPdf, converted, encrypted, ...(agencyFormAsIssued ? { agencyFormAsIssued } : {}),
+      ...(originalPdfProof ? { originalPdfAValidation: originalPdfProof.pdfAValidation } : {}) });
     if (encrypted) {
       throw new ValidationError(
         `Leaf '${leaf.fileName}' is an encrypted/secured PDF (${securityReason ?? 'it carries an /Encrypt entry'}); the package cannot ship it.`,
@@ -1082,7 +1095,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     const { relPath, href, backboneDir } = leafPackagePath(leaf, region);
     const ref: LeafRef = { href, md5, backboneDir };
     refByLeaf.set(leaf, ref);
-    prepared.push({ leaf, relPath, ref, bytes, ...(sourceMd5 && sourceMd5 !== md5 ? { sourceMd5 } : {}) });
+    prepared.push({ leaf, relPath, ref, bytes, ...(sourceMd5 && sourceMd5 !== md5 ? { sourceMd5 } : {}),
+      ...(originalPdfProof ? { originalPdfProof } : {}) });
   }
   const resolve = (l: EctdLeaf): LeafRef => {
     const ref = refByLeaf.get(l);
@@ -1322,6 +1336,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   });
   const filename = `${input.applicationId}-${input.sequence}-${region}.zip`;
   const outPath = path.join(input.outputDir, filename);
+  await verifyPreservedOriginalsArchive(buffer, prepared.flatMap(p => p.originalPdfProof ? [{ href: p.relPath, proof: p.originalPdfProof }] : []));
   await fs.writeFile(outPath, buffer);
 
   const format: SubmissionFormat = region === 'pmda' ? 'pmda_ectd' : 'ectd';
@@ -1363,6 +1378,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       md5: p.ref.md5,
       // What the next sequence's diff compares against; see PreparedLeaf.
       ...(p.sourceMd5 ? { sourceMd5: p.sourceMd5 } : {}),
+      ...(p.originalPdfProof ? { originalPdfProof: p.originalPdfProof } : {}),
       ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
       ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
       ...(p.leaf.title ? { title: p.leaf.title } : {}),

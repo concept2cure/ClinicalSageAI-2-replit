@@ -1,0 +1,112 @@
+Controlled mutation: append one byte only in final ZIP member write. Expected positive export test to fail because reopened ZIP digest gate refuses altered original.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:24.388Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:25.050Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:31:25.050Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-18T00:31:25.051Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=unknown)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=Reports)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=reports&content=manifest)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[]=reports)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[kind]=reports)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > applies the current export plan before any constituent body or seal read
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=reports)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest)
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses a missing retained row instead of exporting a subset
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,42]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[],"items":[]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,9007199254740992],"items":[{"runId":42,"runUuid":"00000000-0000-4000-8000-000000000042","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":9007199254740992,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":42,"runUuid":"invalid-retained-uuid","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"organizationId":99})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"runUuid":"other-run"})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"reportTypeId":"other.type"})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"scopeId":"PRIVATE-SCOPE-MARKER"})
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a mismatched sealed constituent without exporting the other report
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts
+ × server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > exports actual retained report bodies and byte-identical signed original members with immutable proof snapshots 1034ms
+   → expected 409 to be 200 // Object.is equality
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {}
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":[]}
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one","one"]}
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one"],"organizationId":99}
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rejects malformed/implicit selection before reading private sources: {"legalDocumentIds":["one"],"variantId":""}
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses a missing, foreign or no-longer-approved original without returning a partial archive
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses source bytes that differ from their registered exact-version digest
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > rechecks legal approval/current access after archive rendering and refuses an observed withdrawal
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > refuses audit failure before ZIP headers and bytes leave
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > applies an explicitly selected published variant to this export while retaining its unchanged default preferences
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > refuses unknown, unpublished or inapplicable explicit variants without default fallback
+ ↓ server/routes/__tests__/report-os-report-pack-export.test.ts > report ZIP explicit immutable stationery variants > refuses retirement observed after archive rendering
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-report-pack-export.test.ts > POST /bundles/:bundleId/export.zip — explicit governed report/legal copies > exports actual retained report bodies and byte-identical signed original members with immutable proof snapshots
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/routes/__tests__/report-os-report-pack-export.test.ts:433:27
+    431|     h.company.settings = { companyDocuments: { revision: 9, companyNam…
+    432|     const result = await exportPackage();
+    433|     expect(result.status).toBe(200);
+       |                           ^
+    434|     expect(result.headers['content-type']).toContain('application/zip'…
+    435|     const zip = await JSZip.loadAsync(result.body as Buffer);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 41 skipped (42)
+   Start at  00:31:22
+   Duration  4.56s (transform 2.06s, setup 69ms, import 3.25s, tests 1.04s, environment 0ms)
+
+
+Mutation test exit code: 1

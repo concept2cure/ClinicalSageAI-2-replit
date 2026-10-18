@@ -14,12 +14,18 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(), update: vi.fn(), register: vi.fn(), archive: vi.fn(),
   render: vi.fn(), logAction: vi.fn(), load: vi.fn(), purpose: vi.fn(),
   storeQuery: vi.fn(), storeInsert: vi.fn(), storeUpdate: vi.fn(),
+  prepare: vi.fn(), current: vi.fn(), createDraft: vi.fn(), context: vi.fn(),
+}));
+vi.mock('../../services/company-documents/correspondence', async original => ({
+  ...(await original<typeof import('../../services/company-documents/correspondence')>()),
+  prepareSubmissionCorrespondence: mocks.prepare, createSubmissionCorrespondenceDraft: mocks.createDraft,
 }));
 
 vi.mock('../../services/company-documents/profile', async () => {
   const { CompanyDocumentsError } = await import('../../services/company-documents/validation');
   return {
     CompanyDocumentsError,
+    context: mocks.context,
     readCompanyDocumentProfile: mocks.read,
     updateCompanyDocumentProfile: mocks.update,
     registerCompanyLegalDocument: mocks.register,
@@ -53,7 +59,7 @@ const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 const profile: CompanyDocumentsResponse = {
   canManage: true,
   data: {
-    version: 1, revision: 4,
+    version: 1, revision: 4, brandingAdopted: true,
     companyName: 'Verified sponsor', address: '123 Main Street',
     contact: 'regulatory@example.test', registrationDetails: 'Company 123',
     letterhead: { ...DEFAULT_TEMPLATE_SPEC, header: { text: 'Saved company header' } },
@@ -61,6 +67,10 @@ const profile: CompanyDocumentsResponse = {
     legalDocuments: [],
   },
 };
+const origin = { version: 1, organizationId: 7, programId: '11111111-1111-4111-8111-111111111111', projectId: 42,
+  submissionId: 5, sequenceId: 9, sequenceNumber: '0001', submissionTitle: 'Recorded filing', applicationType: 'ind', applicationNumber: 'IND123456',
+  applicantName: 'Applicant of record', country: 'US', agency: 'FDA', recipient: { authority: 'FDA', basis: 'recorded_filing_market' },
+  companyDocumentRevision: 4, companyProfileHash: 'a'.repeat(64), companyBrandingApplied: true };
 
 function app(authenticated = true, role = 'admin', legacy = false) {
   const instance = express();
@@ -97,6 +107,8 @@ beforeEach(() => {
   mocks.load.mockResolvedValue(profile.data);
   mocks.purpose.mockResolvedValue(profile.data);
   mocks.storeQuery.mockResolvedValue([]);
+  mocks.prepare.mockResolvedValue({ origin, assertCurrent: mocks.current });
+  mocks.context.mockResolvedValue({ organizationId: 7, userId: 3 });
 });
 
 describe('existing client branding routes adopt the governed company profile', () => {
@@ -142,7 +154,7 @@ describe('existing client branding routes adopt the governed company profile', (
   });
 
   it('retains the existing settings read for organizations that have not adopted a profile', async () => {
-    mocks.load.mockResolvedValue({ ...profile.data, revision: 0 });
+    mocks.load.mockResolvedValue({ ...profile.data, revision: 0, brandingAdopted: false });
     mocks.storeQuery.mockResolvedValue([{ id: 1, companyName: 'Existing legacy company', organizationId: 7 }]);
     const res = await request(app(true, 'admin', true)).get('/api/client-branding/settings');
     expect(res.status).toBe(200);
@@ -155,6 +167,7 @@ describe('company documents HTTP boundary', () => {
   it.each([
     ['get', ''], ['put', ''], ['post', '/legal-documents'],
     ['delete', '/legal-documents/library-entry'], ['post', '/letterhead/render'],
+    ['post', '/letterhead/preview'],
   ] as const)('%s %s refuses a request without authenticated organization context', async (method, path) => {
     const res = await request(app(false))[method](`${BASE}${path}`).send({});
     expect(res.status).toBe(403);
@@ -168,7 +181,7 @@ describe('company documents HTTP boundary', () => {
     expect(res.body).toEqual({ ...profile, canManage: false });
     expect(mocks.read).toHaveBeenCalledWith(expect.objectContaining({
       user: expect.objectContaining({ id: 3, organizationId: 7 }),
-    }));
+    }), true);
   });
 
   it('passes the optimistic revision, change reason and authenticated request to the profile writer', async () => {
@@ -233,12 +246,22 @@ describe('company documents HTTP boundary', () => {
 });
 
 describe('submission correspondence preference', () => {
+  it('applies an explicit published variant to this output while automatic submission branding is disabled', async () => {
+    const variantId = '44444444-4444-4444-8444-444444444444';
+    mocks.purpose.mockResolvedValue(null);
+    mocks.prepare.mockResolvedValue({ origin: { ...origin, variantId, explicitSelection: true },
+      profile: { ...profile.data, variantId, companyName: 'Published subsidiary', applyToSubmissionCorrespondence: false }, assertCurrent: mocks.current });
+    const response = await request(app()).post(`${BASE}/letterhead/render`).send({ purpose: 'submission', sequenceId: 9, variantId });
+    expect(response.status).toBe(200); expect(mocks.purpose).not.toHaveBeenCalled();
+    expect(mocks.render.mock.calls[0][0].brand.organizationName).toBe('Published subsidiary');
+    expect(mocks.logAction.mock.calls[0][0].details.correspondence).toMatchObject({ variantId, explicitSelection: true });
+  });
   it.each([false, true])('applies saved submission correspondence branding only when its preference is %s', async applied => {
     const { renderDocxWithTemplate } = await import('../../services/templates/templateRenderAdapter');
     mocks.render.mockImplementation(renderDocxWithTemplate);
     mocks.purpose.mockResolvedValue(applied ? profile.data : null);
     const res = await request(app()).post(`${BASE}/letterhead/render`)
-      .send({ purpose: 'submission', title: 'Selected submission correspondence' }).buffer(true).parse(binary);
+      .send({ purpose: 'submission', sequenceId: 9, title: 'Selected submission correspondence' }).buffer(true).parse(binary);
     expect(res.status).toBe(200);
     expect(mocks.purpose).toHaveBeenCalledWith(7, 'submission', expect.objectContaining({ query: expect.any(Function) }));
     const archive = new AdmZip(res.body);
@@ -251,11 +274,30 @@ describe('submission correspondence preference', () => {
     expect(xml).toContain('Review the completed draft before filing.');
     const audit = mocks.logAction.mock.calls[0][0].details;
     expect(audit).toMatchObject({ purpose: 'submission', companyBrandingApplied: applied });
+    expect(audit.correspondence).toMatchObject({ submissionId: 5, sequenceId: 9, applicationNumber: 'IND123456', agency: 'FDA', recipient: { authority: 'FDA' } });
+    expect(mocks.prepare).toHaveBeenCalledWith(expect.any(Object), 9, profile.data, undefined);
+    expect(mocks.current).toHaveBeenCalledTimes(1);
     if (applied) expect(audit).toMatchObject({ companyDocumentRevision: 4, companyProfileHash: 'a'.repeat(64) });
     else {
       expect(audit.companyDocumentRevision).toBeUndefined();
       expect(audit.companyProfileHash).toBeUndefined();
     }
+  });
+
+  it('refuses an unbound submission download before reading or rendering', async () => {
+    const response = await request(app()).post(`${BASE}/letterhead/render`).send({ purpose: 'submission', title: 'Letter without filing' });
+    expect(response.status).toBe(400); expect(mocks.read).not.toHaveBeenCalled(); expect(mocks.render).not.toHaveBeenCalled(); expect(mocks.logAction).not.toHaveBeenCalled();
+  });
+
+  it('refuses spoofed filing or recipient facts rather than recording caller assertions', async () => {
+    const response = await request(app()).post(`${BASE}/letterhead/render`).send({ purpose: 'submission', sequenceId: 9, agency: 'EMA', programId: 'foreign', recipient: 'Fictional agency' });
+    expect(response.status).toBe(400); expect(mocks.prepare).not.toHaveBeenCalled(); expect(mocks.render).not.toHaveBeenCalled();
+  });
+
+  it('delivers no bytes when filing access or identity changes during rendering', async () => {
+    mocks.current.mockRejectedValue(new CompanyDocumentsError(409, 'CORRESPONDENCE_CONTEXT_CHANGED', 'The filing changed. Refresh to try again.'));
+    const response = await request(app()).post(`${BASE}/letterhead/render`).send({ purpose: 'submission', sequenceId: 9 });
+    expect(response.status).toBe(409); expect(mocks.logAction).not.toHaveBeenCalled(); expect(response.headers['content-disposition']).toBeUndefined();
   });
 
   it('keeps manual company letterhead independent of the submission preference', async () => {
@@ -269,6 +311,26 @@ describe('submission correspondence preference', () => {
 });
 
 describe('company letterhead download', () => {
+  it('renders an audited unsaved proof through the canonical renderer without saving or claiming a saved revision', async () => {
+    const { renderDocxWithTemplate } = await import('../../services/templates/templateRenderAdapter');
+    mocks.render.mockImplementation(renderDocxWithTemplate);
+    const input = { companyName: 'Unsaved company', address: 'Unsaved address', contact: 'draft@example.test', registrationDetails: '', letterhead: profile.data.letterhead, importedFrom: null };
+    const response = await request(app()).post(`${BASE}/letterhead/preview`).send({ profile: input }).buffer(true).parse(binary);
+    expect(response.status).toBe(200); expect(mocks.context).toHaveBeenCalledWith(expect.any(Object), 'brand');
+    const zip = new AdmZip(response.body);
+    expect(zip.readAsText('word/document.xml')).toContain('UNSAVED LETTERHEAD PREVIEW');
+    expect(zip.getEntries().filter(entry => /^word\/header\d+\.xml$/.test(entry.entryName)).map(entry => entry.getData().toString()).join('\n')).toContain('Unsaved company');
+    expect(mocks.update).not.toHaveBeenCalled(); expect(mocks.read).not.toHaveBeenCalled(); expect(mocks.load).not.toHaveBeenCalled();
+    const audit = mocks.logAction.mock.calls[0][0].details;
+    expect(audit).toMatchObject({ purpose: 'preview', unsaved: true, previewPresentationHash: 'a'.repeat(64) }); expect(audit.companyDocumentRevision).toBeUndefined();
+  });
+
+  it('refuses unsaved proof without current brand-management capability', async () => {
+    mocks.context.mockRejectedValue(new CompanyDocumentsError(403, 'COMPANY_PERMISSION_REQUIRED', 'Brand management permission is required.'));
+    const response = await request(app()).post(`${BASE}/letterhead/preview`).send({ profile: {} });
+    expect(response.status).toBe(403); expect(mocks.render).not.toHaveBeenCalled(); expect(mocks.logAction).not.toHaveBeenCalled();
+  });
+
   it('produces an actual DOCX whose header and correspondence contain the saved branding and supplied text', async () => {
     const { renderDocxWithTemplate } = await import('../../services/templates/templateRenderAdapter');
     mocks.render.mockImplementation(renderDocxWithTemplate);

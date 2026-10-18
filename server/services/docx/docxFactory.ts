@@ -131,7 +131,7 @@ function tableBorder(style: DocxStyle) {
 }
 
 /** Build an ImageRun for a logo, sized to its true aspect ratio within a box. */
-function logoImageRun(logo: DocxLogo, maxWidthPx: number, maxHeightPx: number): ImageRun | null {
+export function logoImageRun(logo: DocxLogo, maxWidthPx: number, maxHeightPx: number): ImageRun | null {
   try {
     const bytes = Buffer.from(logo.dataBase64, 'base64');
     if (bytes.length === 0) return null;
@@ -474,6 +474,82 @@ function buildCoverPage(meta: DocxMetadata, style: DocxStyle): Paragraph[] {
  * @param input - Metadata + sections with paragraphs and tables
  * @returns Buffer + JSON source + suggested filename
  */
+function regulatoryHeaderRuns(style: DocxStyle, metadata: DocxMetadata, pageBanner?: string) {
+  // Running header — optional logo + title line.
+  const headerChildren: (TextRun | ImageRun)[] = [];
+  if (style.logo && style.logo.placement === 'header') {
+    const run = logoImageRun(style.logo, 130, 40);
+    if (!run) throw new Error('The saved letterhead logo could not be rendered. Nothing was exported.');
+    headerChildren.push(run);
+  }
+  if (style.organizationName) headerChildren.push(new TextRun({
+    text: `${headerChildren.length ? '  ' : ''}${style.organizationName}`, font: style.fonts.heading,
+    size: style.fontSizes.heading3, bold: true, color: style.colors.accent ?? style.colors.textDark,
+  }));
+  const headerText = style.headerText ?? `${metadata.title} — ${metadata.submissionType}`;
+  for (const [index, text] of headerText.replace(/\r\n?/g, '\n').split('\n').entries()) {
+    headerChildren.push(new TextRun({
+      text,
+      break: index > 0 || style.organizationName ? 1 : undefined,
+      font: style.fonts.body,
+      size: style.fontSizes.footer,
+      color: style.colors.textMuted,
+    }));
+  }
+
+  if (pageBanner) headerChildren.unshift(new TextRun({ text: pageBanner, bold: true, break: 1 }));
+  return headerChildren;
+}
+
+function regulatoryFooterRuns(style: DocxStyle, correspondence: boolean, pageBanner?: string) {
+  // Running footer — optional label + page numbers.
+  const footerRuns: TextRun[] = [];
+  const footerLabel = style.footerText ?? (correspondence ? '' : 'CONFIDENTIAL');
+  if (footerLabel) {
+    footerRuns.push(
+      new TextRun({
+        text: style.footerShowPageNumbers ? `${footerLabel}  |  ` : footerLabel,
+        font: style.fonts.body,
+        size: style.fontSizes.footer,
+        color: style.colors.textMuted,
+      })
+    );
+  }
+  if (style.footerShowPageNumbers) {
+    const pageNumberChildren = (style.footerPageNumberFormat ?? 'Page {PAGE} of {PAGES}').split(/(\{PAGE\}|\{PAGES\})/)
+      .map(part => part === '{PAGE}' ? PageNumber.CURRENT : part === '{PAGES}' ? PageNumber.TOTAL_PAGES : part);
+    footerRuns.push(
+      new TextRun({
+        children: pageNumberChildren,
+        font: style.fonts.body,
+        size: style.fontSizes.footer,
+        color: style.colors.textMuted,
+      })
+    );
+  }
+
+  if (pageBanner) footerRuns.unshift(new TextRun({ text: `${pageBanner}  `, bold: true }));
+  return footerRuns;
+}
+
+/** Canonical page furniture, reused by rich Authoring correspondence. */
+export function regulatoryLetterheadSection(style: DocxStyle, metadata: DocxMetadata, correspondence = false, pageBanner?: string) {
+  const headerChildren = regulatoryHeaderRuns(style, metadata, pageBanner);
+  const footerRuns = regulatoryFooterRuns(style, correspondence, pageBanner);
+  return {
+    properties: { page: { margin: style.margins, ...(style.page ? { size: style.page } : {}),
+      pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL } } },
+    headers: { default: new Header({ children: [new Paragraph({ children: headerChildren,
+      alignment: style.headerAlignment ?? AlignmentType.RIGHT,
+      ...(style.colors.accent ? { border: { bottom: { color: style.colors.accent, style: BorderStyle.SINGLE, size: 6, space: 4 } } } : {}) })] }) },
+    footers: { default: new Footer({ children: [
+      ...(correspondence && style.confidentialityNotice ? [new Paragraph({ children: [new TextRun({ text: style.confidentialityNotice,
+        font: style.fonts.body, size: style.fontSizes.footer, color: style.colors.textMuted })], alignment: AlignmentType.CENTER })] : []),
+      new Paragraph({ children: footerRuns, alignment: AlignmentType.CENTER }),
+    ] }) },
+  };
+}
+
 export async function generateRegulatory(
   input: DocxInput,
   style: DocxStyle = DEFAULT_DOCX_STYLE,
@@ -562,54 +638,6 @@ export async function generateRegulatory(
     }
   }
 
-  // Running header — optional logo + title line.
-  const headerChildren: (TextRun | ImageRun)[] = [];
-  if (style.logo && style.logo.placement === 'header') {
-    const run = logoImageRun(style.logo, 130, 40);
-    if (!run) throw new Error('The saved letterhead logo could not be rendered. Nothing was exported.');
-    headerChildren.push(run);
-  }
-  if (style.organizationName) headerChildren.push(new TextRun({
-    text: `${headerChildren.length ? '  ' : ''}${style.organizationName}`, font: style.fonts.heading,
-    size: style.fontSizes.heading3, bold: true, color: style.colors.accent ?? style.colors.textDark,
-  }));
-  const headerText = style.headerText ?? `${metadata.title} — ${metadata.submissionType}`;
-  for (const [index, text] of headerText.replace(/\r\n?/g, '\n').split('\n').entries()) {
-    headerChildren.push(new TextRun({
-      text,
-      break: index > 0 || style.organizationName ? 1 : undefined,
-      font: style.fonts.body,
-      size: style.fontSizes.footer,
-      color: style.colors.textMuted,
-    }));
-  }
-
-  // Running footer — optional label + page numbers.
-  const footerRuns: TextRun[] = [];
-  const footerLabel = style.footerText ?? (input.includeCover === false ? '' : 'CONFIDENTIAL');
-  if (footerLabel) {
-    footerRuns.push(
-      new TextRun({
-        text: style.footerShowPageNumbers ? `${footerLabel}  |  ` : footerLabel,
-        font: style.fonts.body,
-        size: style.fontSizes.footer,
-        color: style.colors.textMuted,
-      })
-    );
-  }
-  if (style.footerShowPageNumbers) {
-    const pageNumberChildren = (style.footerPageNumberFormat ?? 'Page {PAGE} of {PAGES}').split(/(\{PAGE\}|\{PAGES\})/)
-      .map(part => part === '{PAGE}' ? PageNumber.CURRENT : part === '{PAGES}' ? PageNumber.TOTAL_PAGES : part);
-    footerRuns.push(
-      new TextRun({
-        children: pageNumberChildren,
-        font: style.fonts.body,
-        size: style.fontSizes.footer,
-        color: style.colors.textMuted,
-      })
-    );
-  }
-
   // Build document
   const doc = new Document({
     numbering: {
@@ -637,38 +665,7 @@ export async function generateRegulatory(
       }]),
       // Content
       {
-        properties: {
-          page: {
-            margin: style.margins,
-            ...(style.page ? { size: style.page } : {}),
-            pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
-          },
-        },
-        headers: {
-          default: new Header({
-            children: [
-              new Paragraph({
-                children: headerChildren,
-                alignment: style.headerAlignment ?? AlignmentType.RIGHT,
-                ...(style.colors.accent ? { border: { bottom: { color: style.colors.accent, style: BorderStyle.SINGLE, size: 6, space: 4 } } } : {}),
-              }),
-            ],
-          }),
-        },
-        footers: {
-          default: new Footer({
-            children: [
-              ...(input.includeCover === false && style.confidentialityNotice ? [new Paragraph({
-                children: [new TextRun({ text: style.confidentialityNotice, font: style.fonts.body, size: style.fontSizes.footer, color: style.colors.textMuted })],
-                alignment: AlignmentType.CENTER,
-              })] : []),
-              new Paragraph({
-                children: footerRuns,
-                alignment: AlignmentType.CENTER,
-              }),
-            ],
-          }),
-        },
+        ...regulatoryLetterheadSection(style, metadata, input.includeCover === false),
         children: contentChildren,
       },
     ],

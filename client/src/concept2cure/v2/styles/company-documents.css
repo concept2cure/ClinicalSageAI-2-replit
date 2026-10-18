@@ -1,4 +1,4 @@
-.company-documents { margin: 24px 0 0; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-050); color: var(--text-100); min-width: 0; }
+.company-documents { margin: 24px 0 0; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-050); color: var(--text-100); min-width: 0; container-type: inline-size; container-name: company-documents; }
 .company-section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .company-section-head h2 { margin: 4px 0 8px; font-size: 19px; line-height: 1.4; font-weight: 650; }
 .company-section-head p, .company-legal-intro p { color: var(--text-300); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
@@ -28,6 +28,7 @@
 .company-preview header strong { display: block; font-size: 15px; }
 .company-preview img { max-height: 45px; max-width: 120px; object-fit: contain; margin-bottom: 6px; }
 .company-preview main { padding: 12px 0; flex: 1; font-size: 10px; }
+.company-preview main p { font-family: inherit; font-size: inherit; line-height: inherit; }
 .company-preview main h3 { font-size: 13px; margin: 5px 0 15px; }
 .company-preview footer { font-size: 7px; white-space: pre-wrap; text-align: center; padding-top: 8px; border-top: 1px solid #ddd; }
 .company-preview-placeholder { color: #999; border: 1px dashed #ddd; padding: 20px 5px; text-align: center; }
@@ -52,5 +53,45 @@
 .company-legal-card dd { font-size: 12px; margin: 3px 0 0; }
 .company-empty { border: 1px dashed var(--border); border-radius: 8px; padding: 22px; color: var(--text-400); font-size: 12px; }
 .company-archive { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+.company-preview-toolbar { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.company-preview-toolbar [role=group] { display: flex; flex-wrap: wrap; gap: 4px; }
+.company-preview-toolbar [aria-pressed=true] { box-shadow: inset 0 -2px var(--accent-strong); }
+.company-preview-viewport { overflow: auto; max-height: 720px; padding: 4px; border: 1px solid var(--border); }
+.company-preview-viewport:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.company-preview-contrast { margin-top: 12px; }
+.company-preview-contrast li { font-size: 12px; line-height: 1.7; }
+.company-text-preview { font-size: 14px; line-height: 1.6; padding: 16px; background: var(--bg-050); border: 1px solid var(--border); border-radius: 8px; }
+.company-text-preview h3 { margin-top: 0; }
+.company-text-preview dt { font-weight: 600; font-size: 12px; color: var(--text-300); }
+.company-text-preview dd { margin: 4px 0 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.company-setup-guide { border: 1px solid var(--border); background: var(--bg-100); border-radius: 8px; padding: 14px; margin: 14px 0; }
+.company-setup-guide > summary { font-size: 13px; font-weight: 600; }
+.company-setup-guide h3 { font-size: 13px; margin-top: 20px; }
+.company-setup-checklist { padding-left: 22px; }
+.company-setup-checklist li { margin: 15px 0; font-size: 13px; line-height: 1.6; }
+.company-setup-checklist strong, .company-setup-checklist span { display: block; margin-bottom: 5px; }
+.company-setup-checklist span { color: var(--text-300); }
+.company-customer-instructions { padding-left: 20px; color: var(--text-300); font-size: 12px; line-height: 1.7; }
+.company-customer-instructions li { margin: 8px 0; }
+.company-inventory-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.company-pagination { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0 4px; font-size: 12px; color: var(--text-300); }
+.company-legacy-adoption { border: 1px solid var(--border); border-left: 3px solid var(--accent-strong); border-radius: 8px; padding: 16px; margin: 14px 0; font-size: 13px; line-height: 1.6; }
+.company-legacy-adoption h3 { margin: 0 0 8px; font-size: 15px; }
+.company-legacy-adoption .company-actions { margin-top: 12px; }
+.company-scope-picker { min-width: 0; border: 1px solid var(--border); border-radius: 7px; padding: 12px; }
+.company-scope-picker legend { padding: 0 5px; font-size: 12px; color: var(--text-200); }
+.company-scope-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 210px; overflow: auto; gap: 0 12px; }
+.company-scope-options .company-check { margin: 4px 0; }
+.company-permission-roster { padding-left: 18px; font-size: 12px; line-height: 1.8; }
+.company-history-list { list-style: none; padding: 0; }
+.company-history-list li { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 12px; }
+.company-history-list span, .company-history-list small { display: block; margin-top: 5px; color: var(--text-400); overflow-wrap: anywhere; }
+.company-history-list p { margin: 5px 0; }
+.company-revision-comparison { font-size: 12px; line-height: 1.7; overflow-x: auto; }
+.company-revision-comparison table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+.company-revision-comparison th, .company-revision-comparison td { border: 1px solid var(--border); text-align: left; vertical-align: top; padding: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 1000px) { .company-design-layout { grid-template-columns: minmax(0, 1fr); } .company-preview-shell { max-width: 430px; } }
 @media (max-width: 600px) { .company-documents { padding: 15px; } .company-fields, .company-legal-card dl { grid-template-columns: minmax(0, 1fr); } .company-wide { grid-column: auto; } .company-section-head { flex-wrap: wrap; } }
+@media (max-width: 700px) { .company-inventory-filters { grid-template-columns: minmax(0, 1fr); } }
+@container company-documents (max-width: 700px) { .company-design-layout { grid-template-columns: minmax(0, 1fr); } .company-preview-shell { max-width: 430px; } }
+@container company-documents (max-width: 600px) { .company-fields, .company-legal-card dl, .company-inventory-filters { grid-template-columns: minmax(0, 1fr); } .company-wide { grid-column: auto; } .company-section-head { flex-wrap: wrap; } }

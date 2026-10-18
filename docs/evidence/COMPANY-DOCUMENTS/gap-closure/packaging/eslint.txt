@@ -1,0 +1,29 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   621:1   warning  File has too many lines (2529). Maximum allowed is 500                         max-lines
+  1501:58  warning  Async arrow function has too many lines (208). Maximum allowed is 100          max-lines-per-function
+  1501:58  warning  Async arrow function has a complexity of 52. Maximum allowed is 15             complexity
+  1905:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  3071:59  warning  Async arrow function has a complexity of 18. Maximum allowed is 15             complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/leaf-source-resolver.ts
+  389:8   warning  Async function 'materializeLeafSources' has too many lines (333). Maximum allowed is 100  max-lines-per-function
+  389:8   warning  Async function 'materializeLeafSources' has a complexity of 79. Maximum allowed is 15     complexity
+  600:11  warning  The value assigned to 'buf' is not used in subsequent statements                          no-useless-assignment
+  773:11  warning  The value assigned to 'bytes' is not used in subsequent statements                        no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts
+  29:79  warning  Arrow function has too many lines (240). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-gateways/pre-transmit-check.ts
+  232:8  warning  Function 'evaluatePreTransmit' has too many lines (145). Maximum allowed is 100  max-lines-per-function
+  232:8  warning  Function 'evaluatePreTransmit' has a complexity of 29. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts
+  542:1  warning  Function 'buildFdaBackbone' has a complexity of 18. Maximum allowed is 15                complexity
+  904:8  warning  Async function 'packageEctdSubmission' has too many lines (352). Maximum allowed is 100  max-lines-per-function
+  904:8  warning  Async function 'packageEctdSubmission' has a complexity of 59. Maximum allowed is 15     complexity
+  912:1  warning  File has too many lines (850). Maximum allowed is 500                                    max-lines
+
+✖ 16 problems (0 errors, 16 warnings)
+

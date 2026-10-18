@@ -89,6 +89,9 @@ beforeAll(async () => {
   holder.db = harness.db;
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
+    CREATE TABLE IF NOT EXISTS organizations(id integer PRIMARY KEY,settings jsonb NOT NULL DEFAULT '{}');
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}';
+    INSERT INTO organizations(id,settings) VALUES(${ORG},'{}') ON CONFLICT(id) DO UPDATE SET settings='{}';
     CREATE TABLE IF NOT EXISTS ectd_compilations (
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()

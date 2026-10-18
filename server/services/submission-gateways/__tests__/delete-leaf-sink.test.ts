@@ -29,8 +29,8 @@ import * as os from 'os';
 import * as path from 'path';
 import JSZip from 'jszip';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
+import { plainPdfFixture as pdf } from '../../ectd/__tests__/support/signed-pdf-fixture';
 
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 async function pkg(work: string, sequence: string, leaves: EctdLeaf[]) {
   return packageEctdSubmission({
@@ -45,8 +45,8 @@ async function withWork<T>(fn: (work: string, cover: string, withdrawn: string) 
   try {
     const cover = path.join(work, 'cover.pdf');
     const withdrawn = path.join(work, 'old-manufacture.pdf');
-    await fs.writeFile(cover, pdf('cover'));
-    await fs.writeFile(withdrawn, pdf('WITHDRAWN DOCUMENT BYTES'));
+    await fs.writeFile(cover, await pdf('cover'));
+    await fs.writeFile(withdrawn, await pdf('WITHDRAWN DOCUMENT BYTES'));
     return await fn(work, cover, withdrawn);
   } finally {
     await fs.rm(work, { recursive: true, force: true });

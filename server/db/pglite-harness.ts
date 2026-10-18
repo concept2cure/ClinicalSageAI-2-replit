@@ -763,7 +763,10 @@ export async function createIndPgliteDb(
   const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
-  if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
+  if (opts.leafSources) {
+    await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
+    await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  }
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);

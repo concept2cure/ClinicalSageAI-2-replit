@@ -14,6 +14,8 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { normalizeTemplateSpec, type TemplateSpec } from './templateSpec';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { writeChainedAuditRow } from '../auditService';
 
 export interface TemplateRecord {
   id: string;
@@ -118,10 +120,10 @@ export interface CreateTemplateInput {
   verified?: boolean;
 }
 
-export async function createTemplate(input: CreateTemplateInput): Promise<TemplateWrite> {
+async function insertTemplate(q: RequestSqlClient, input: CreateTemplateInput): Promise<TemplateRecord> {
   const id = `tpl_${randomUUID().replace(/-/g, '')}`;
   const spec = normalizeTemplateSpec(input.spec);
-  const res = await pool.query(
+  const res = await q.query(
     `INSERT INTO c2c_template_specs
        (id, org_id, project_id, name, description, source_file_name, source_file_type,
         spec, extraction_confidence, extraction_warnings, verified, created_by)
@@ -142,14 +144,28 @@ export async function createTemplate(input: CreateTemplateInput): Promise<Templa
       input.userId,
     ],
   );
+  return rowToRecord(res.rows[0]);
+}
+
+export async function createTemplate(input: CreateTemplateInput): Promise<TemplateWrite> {
+  const record = await insertTemplate(pool, input);
   const auditTrail = await auditTemplate({
     orgId: input.orgId,
     userId: input.userId,
     action: 'c2c.template.create',
-    templateId: id,
+    templateId: record.id,
     reason: `Created template "${input.name}"`,
   });
-  return { record: rowToRecord(res.rows[0]), auditTrail };
+  return { record, auditTrail };
+}
+
+/** Enlist canonical template creation and its mandatory audit in the caller's transaction. */
+export async function createTemplateInTransaction(q: RequestSqlClient, input: CreateTemplateInput, reason: string): Promise<TemplateRecord> {
+  const record = await insertTemplate(q, input);
+  await writeChainedAuditRow(q, { organizationId: input.orgId, userId: input.userId,
+    action: 'c2c.template.create', resourceType: 'c2c_template_specs', resourceId: record.id,
+    reason, details: { templateId: record.id, source: 'company-design' } });
+  return record;
 }
 
 export async function listTemplates(
@@ -170,9 +186,9 @@ export async function listTemplates(
   return res.rows.map(rowToRecord);
 }
 
-export async function getTemplate(orgId: number, id: string): Promise<TemplateRecord | null> {
-  const res = await pool.query(
-    `SELECT * FROM c2c_template_specs WHERE id = $1 AND org_id = $2 AND is_active = true LIMIT 1`,
+export async function getTemplate(orgId: number, id: string, q: RequestSqlClient = pool, forShare = false): Promise<TemplateRecord | null> {
+  const res = await q.query(
+    `SELECT * FROM c2c_template_specs WHERE id = $1 AND org_id = $2 AND is_active = true LIMIT 1${forShare ? ' FOR SHARE' : ''}`,
     [id, orgId],
   );
   return res.rows.length > 0 ? rowToRecord(res.rows[0]) : null;

@@ -21,7 +21,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { exportTenantData } from '../tenant-export.service';
 
-const ORG = { id: 7, slug: 'acme', name: 'Acme Bio', status: 'active' };
+const ORG = { id: 7, slug: 'acme', name: 'Acme Bio', status: 'active', company_documents_present: false, company_documents: null };
 
 /**
  * A pg client stand-in. `failOn` names substrings; a query containing one

@@ -53,6 +53,7 @@ import {
 } from '../services/tenant-export/tenant-full-export.service';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { companyExportSnapshot } from '../services/tenant-export/company-export-snapshot';
 
 const router = Router();
 const log = createScopedLogger('tenant-export');
@@ -65,17 +66,8 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * The gate on every route in this router: admin or owner.
- *
- * It reads AUDIT_ATTEST_ROLES rather than repeating the two role names, so the
- * set the server admits and the permission the session derives
- * (AUDIT_ATTEST_PERMISSION, orgMembership.ts `sessionPermissions`) cannot drift.
- * They drifted before: the Compliance Reports surface offered "Run attestation"
- * on the catalog's READER verdict — owner, admin, manager, approver — and a
- * manager got a 403 from a control the UI had offered (coverage review C-24).
- * One list, two readers.
- */
+/** Audit attestation retains its shared permission policy. Complete tenant
+ * data return separately verifies current owner/admin authority below. */
 function isAdmin(req: Request): boolean {
   const u = (req as any).user;
   if (!u) return false;
@@ -84,6 +76,23 @@ function isAdmin(req: Request): boolean {
     return true;
   }
   return false;
+}
+
+/** Complete data return is tenant-wide authority, distinct from audit attestation. */
+async function mayExportTenantData(req: Request, organizationId: number): Promise<boolean> {
+  const raw = (req as any).user?.id ?? (req as any).user?.userId;
+  const userId = Number(raw);
+  if (!Number.isSafeInteger(userId) || userId <= 0) return false;
+  // Data return remains available during the governed offboarding window.
+  // General project admission requires an active organization and cannot stand
+  // in for this deliberately narrower active-or-pending-deletion operation.
+  const { rows } = await pool.query(`SELECT ou.role FROM organization_users ou
+    JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
+    WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active'
+      AND o.status IN ('active','pending_deletion')`, [organizationId, userId]);
+  if (rows.length !== 1) return false;
+  const role = String(rows[0].role ?? '').trim().toLowerCase();
+  return role === 'owner' || role === 'admin';
 }
 
 /**
@@ -114,12 +123,10 @@ router.get('/', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: 'Organization context required' });
   }
-  if (!isAdmin(req)) {
-    return res.status(403).json({ error: 'Admin role required for tenant export' });
-  }
-
   try {
-    const manifest = await exportTenantData(pool, orgId);
+    if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Current organization owner or administrator authority is required for tenant data return.' });
+    const manifest = await companyExportSnapshot(pool, orgId, client => exportTenantData(client, orgId));
+    if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Tenant export authority changed. No tenant data was returned.' });
 
     /* WO-16C #133. Was `void auditService.logAction({…})`, which discarded the
        one value that says whether the §11.10(e) record of this data egress
@@ -174,13 +181,11 @@ router.get('/full', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: 'Organization context required' });
   }
-  if (!isAdmin(req)) {
-    return res.status(403).json({ error: 'Admin role required for tenant export' });
-  }
-
   try {
-    const payload = await exportTenantFull(pool, orgId);
+    if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Current organization owner or administrator authority is required for tenant data return.' });
+    const payload = await companyExportSnapshot(pool, orgId, client => exportTenantFull(client, orgId));
     const digest = digestOf(payload);
+    if (!await mayExportTenantData(req, orgId)) return res.status(403).json({ error: 'Tenant export authority changed. No tenant data was returned or export receipt recorded.' });
 
     const receipt = await recordExportReceipt(pool, {
       organizationId: orgId,

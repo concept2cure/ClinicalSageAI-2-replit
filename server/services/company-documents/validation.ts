@@ -25,6 +25,7 @@ export const profileUpdateSchema = z.object({
   companyName: text(300), address: text(2000), contact: text(2000), registrationDetails: text(2000),
   letterhead: z.record(z.unknown()), importedFrom: text(500).nullable(),
   applyToReports: z.boolean(), applyToSubmissionCorrespondence: z.boolean(),
+  legacyDecision: z.literal('replace').optional(),
 }).strict();
 
 export const legalRegistrationSchema = z.object({
@@ -39,7 +40,7 @@ export const legalRegistrationSchema = z.object({
 
 export const archiveSchema = z.object({ expectedRevision: revision, reason }).strict();
 
-export function parseCompanyInput<T>(schema: z.ZodType<T>, value: unknown): T {
+export function parseCompanyInput<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success) {
     throw new CompanyDocumentsError(400, 'INVALID_COMPANY_DOCUMENTS', result.error.issues.map(issue => `${issue.path.join('.') || 'request'}: ${issue.message}`).join('; '));

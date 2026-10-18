@@ -43,6 +43,7 @@ function makePool(opts: { refuseAudit?: boolean; deleteError?: Error } = {}) {
   const statements: Statement[] = [];
   const respond = (via: Statement['via']) => async (text: string, params?: unknown[]) => {
     statements.push({ via, text, params });
+    if (/AS company_documents_present/.test(text)) return { rows: [{ company_documents_present: false, company_documents: null }] };
     if (opts.refuseAudit && /INSERT INTO audit_logs/.test(text)) {
       throw Object.assign(new Error('audit store refused the row'), { code: '42501' });
     }

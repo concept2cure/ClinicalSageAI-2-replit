@@ -208,7 +208,7 @@ function checkPdfA(
     // Plain PDF fails this check only where PDF/A was chosen.
     passed: notConverted === 0 || !pdfa.required,
     detail:
-      `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
+      `${grade.pdfaConverted + (grade.pdfaValidatedOriginals?.length ?? 0)}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
       asIssued +
       (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
   };
@@ -217,8 +217,16 @@ function checkPdfA(
     check,
     blocker:
       `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted.slice(0, 3).join(', ')}${notConverted > 3 ? ', …' : ''}), ` +
-      `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.`,
+      `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.` +
+      originalPdfARefusalDetail(grade),
   };
+}
+
+function originalPdfARefusalDetail(grade: NonNullable<SubmissionBundle['submissionGrade']>): string {
+  if (!grade.originalPdfAValidationFailures?.length) return '';
+  return ' Preserved legal or signed originals could not be validated without altering them: ' +
+    grade.originalPdfAValidationFailures.map(item => `${item.fileName}: ${item.reason}`).join('; ') +
+    '. Obtain a compliant original before signing or registering it, or have an authorized administrator review the PDF/A policy. Originals are never converted.';
 }
 
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {

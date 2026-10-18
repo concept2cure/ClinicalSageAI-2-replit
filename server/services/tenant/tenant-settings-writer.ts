@@ -18,6 +18,7 @@ import { organizations } from '../../../shared/schema';
 import { governedActorId } from '../../middleware/orgMembership';
 import { clientIpOf } from '../../utils/client-ip';
 import { requestDb, requestPgClient } from '../../db/requestDb';
+import type { RequestSqlClient } from '../../db/requestDb';
 import { writeChainedAuditRow } from '../auditService';
 import { ConnectorSettingRefusedError, claudeConnectorChanged } from '../../mcp/auth/connector-enablement';
 import { companyDocumentsAuditDetails } from '../company-documents/provenance';
@@ -112,7 +113,7 @@ export interface SettingsWrite {
   /** 'ana_tool_policy.update' is the tool-policy door's (routes/ana-tool-policy.ts), the name audit.explain reads. */
   action: 'tenant_settings_changed' | 'tenant_settings_reset' | 'ana_tool_policy.update';
   /** The settings to store, from those stored now and the tenant's tier. */
-  next: (current: Settings, tier: string) => Settings;
+  next: (current: Settings, tier: string) => Settings | Promise<Settings>;
   /** The sections this write names, given what was stored and what will be. */
   sections: (current: Settings, next: Settings) => string[];
   /**
@@ -130,6 +131,13 @@ export interface SettingsWrite {
   discoveryDoor?: true;
   /** Only the validated company-documents profile/registry writer supplies this. */
   companyDocumentsDoor?: true;
+  /** Internal canonical registry proof captured under the same settings lock.
+   * Never accepted from HTTP input; only the managed company door can use it. */
+  companyDocumentsAudit?: () => ReturnType<typeof companyDocumentsAuditDetails>;
+  /** Internal composition only: runs on the locked settings transaction before
+   * commit. A failed provenance, permission or projection write rolls back the
+   * settings and its audit record together. Never populated from HTTP input. */
+  beforeCommit?: (client: RequestSqlClient, current: Settings, stored: Settings) => Promise<void>;
 }
 
 function managedSnapshot(value: unknown): unknown {
@@ -168,7 +176,7 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // cannot make the before/after comparison accidentally see the same value.
     const discoveryBefore = managedSnapshot(current.onboardingDiscovery);
     const companyDocumentsBefore = managedSnapshot(current.companyDocuments);
-    const next = change.next(current, tenant.tier || 'standard');
+    const next = await change.next(current, tenant.tier || 'standard');
     // The connector for Claude has one door (P1-47 fix round, 2026-10-01,
     // IAM-24). A write from any other door that would change it, on, off, null
     // or removed, is refused here, before anything is written or recorded, so
@@ -203,11 +211,12 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
       details: {
         ...settingsAuditDetails(current, stored, change.sections(current, stored)),
         ...(change.companyDocumentsDoor ? {
-          companyDocuments: companyDocumentsAuditDetails(companyDocumentsBefore, stored.companyDocuments, tenant.name || ''),
+          companyDocuments: change.companyDocumentsAudit?.() ?? companyDocumentsAuditDetails(companyDocumentsBefore, stored.companyDocuments, tenant.name || ''),
         } : {}),
       },
       ...(change.reason ? { reason: change.reason } : {}),
     });
+    if (change.beforeCommit) await change.beforeCommit(client, current, stored);
     await client.query('COMMIT');
     return stored;
   } catch (err) {

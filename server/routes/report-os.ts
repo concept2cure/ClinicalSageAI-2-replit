@@ -43,6 +43,10 @@ import { buildBundlePdf, buildReportPackPdf, type ReportPackPdfItem } from '../s
 import { ReportingPdfError } from '../services/report-os/pdf/writer';
 import { REPORT_PDF_BRANDING_RENDERER } from '../services/report-os/pdf/company-branding';
 import { companyLetterheadForPurpose, companyProfileHash, CompanyDocumentsError } from '../services/company-documents/profile';
+import { companyPresentationSnapshot } from '../services/company-documents/history';
+import { readPublishedCompanyVariant } from '../services/company-documents/designs';
+import { buildReportLegalPackage, reportPackageInputSchema, ReportPackageError, type ReportPackageBranding } from '../services/report-os/report-package';
+import { readReportPackageLegalOriginals, requireReportPackageLegalStillCurrent } from '../services/report-os/report-package-legal';
 import type { CompanyDocumentProfile } from '@shared/company-documents';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
@@ -78,6 +82,7 @@ import {
 } from '../services/report-os/report-engine';
 import { deriveScopeSegments } from '../services/report-os/segment';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { listProgramAnchorCandidates } from '../services/c2c/program-project-anchor';
 import { looksLikeProgramUuid } from '../lib/project-id';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
@@ -120,6 +125,10 @@ async function canReadBundle(req: Request, bundle: ReportBundleRecord): Promise<
   return true;
 }
 router.use(authMiddleware);
+// This POST only selects a read/export representation; it creates no report,
+// approval, placement or settings. Its read admission and plan checks are the
+// same as the viewer-accessible PDF route; all actual writes stay below.
+router.post('/bundles/:bundleId/export.zip', sendReportPackageRoute);
 /* Reporting review 2026-10-01: only finalize asked for a role, so a read-only
    'viewer' could create runs, program groups, snapshots, bundles and
    deliveries. Every write now needs a writing role; finalize keeps its
@@ -507,14 +516,22 @@ async function sendRecordedPdf(
   event: ReportAuditEvent,
   pdf: { filename: string; buffer: Buffer }
 ) {
+  return sendRecordedReportFile(req, res, event, { ...pdf, format: 'pdf', mimeType: 'application/pdf' });
+}
+
+async function sendRecordedReportFile(
+  req: Request, res: Response, event: ReportAuditEvent,
+  file: { filename: string; buffer: Buffer; format: 'pdf' | 'zip'; mimeType: string },
+) {
+  const sha256 = createHash('sha256').update(file.buffer).digest('hex');
   const recorded = await recordReportEvent(req, {
     ...event,
     details: {
       ...event.details,
-      format: 'pdf',
-      filename: pdf.filename,
-      byteLength: pdf.buffer.length,
-      sha256: createHash('sha256').update(pdf.buffer).digest('hex'),
+      format: file.format,
+      filename: file.filename,
+      byteLength: file.buffer.length,
+      sha256,
     },
   });
   if (!recorded) {
@@ -524,9 +541,10 @@ async function sendRecordedPdf(
       'The export was refused because it could not be recorded in the audit trail. Nothing was exported.'
     );
   }
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="${pdf.filename}"`);
-  return res.send(pdf.buffer);
+  res.setHeader('Content-Type', file.mimeType);
+  res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+  res.setHeader('X-Export-Sha256', sha256);
+  return res.send(file.buffer);
 }
 
 /** The printed name of a user as this organisation may see it (public.actor_name), or null. */
@@ -2505,10 +2523,9 @@ async function requireReportPackEntitlement(client: PoolClient, bundle: ReportBu
 /** Reservations conflict with canonical finalization and stay held through
  * rendering and fresh source/access checks. The checked interval ends before
  * durable audit/send; independent sharing writers are not COMMIT serialized. */
-async function sendReportPackPdf(req: Request, res: Response, organizationId: number, bundleId: string) {
-  const exportId = randomUUID();
-  const exportedAt = new Date().toISOString();
-  const { bundle, pdf, companyBranding } = await inTenantTransaction(organizationId, async client => {
+async function prepareReportPack(req: Request, client: PoolClient, organizationId: number, bundleId: string,
+  options: { exportId: string; exportedAt: string; variantId?: string }) {
+    const { exportId, exportedAt, variantId } = options;
     const bundle = await loadBundleById(organizationId, bundleId, onTransaction(client));
     if (!bundle || bundle.organizationId !== organizationId) reportPackNotFound();
     requireCompleteReportPack(bundle);
@@ -2521,13 +2538,42 @@ async function sendReportPackPdf(req: Request, res: Response, organizationId: nu
     const runs = await readReportPackRuns(client, bundle);
     const { items, fingerprints } = await readReportPackSources(client, bundle, runs, types);
     const bundledBy = await actorName(client, bundle.createdBy ?? null);
-    const companyBranding = await companyLetterheadForPurpose(organizationId, 'report', client);
-    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding });
-    await requireCurrentReportPackAccess(client, req, bundle, runs);
-    await requireReportPackEntitlement(client, bundle);
-    await requireReportPackSourcesStillCurrent(client, bundle, fingerprints);
-    await requireReportPackInputsStillCurrent(client, bundle, types, bundledBy);
-    return { bundle, pdf, companyBranding };
+    const companyBranding = await reportPackagePresentation(req, client, bundle, variantId);
+    // An explicit published design applies only to this requested representation.
+    // Its immutable snapshot/hash and organization defaults are not changed.
+    const renderBranding = companyBranding && variantId ? { ...companyBranding, applyToReports: true } : companyBranding;
+    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding: renderBranding });
+    const assertCurrent = async () => {
+      await requireCurrentReportPackAccess(client, req, bundle, runs);
+      await requireReportPackEntitlement(client, bundle);
+      await requireReportPackSourcesStillCurrent(client, bundle, fingerprints);
+      await requireReportPackInputsStillCurrent(client, bundle, types, bundledBy);
+      const current = await reportPackagePresentation(req, client, bundle, variantId);
+      if ((current && companyProfileHash(current)) !== (companyBranding && companyProfileHash(companyBranding))) {
+        throw new ReportPackageError(409, 'REPORT_PRESENTATION_CHANGED', 'The selected presentation changed during export. Refresh before retrying. Nothing was exported.');
+      }
+    };
+    return { bundle, pdf, companyBranding, assertCurrent };
+}
+
+async function reportPackagePresentation(req: Request, client: PoolClient, bundle: ReportBundleRecord, variantId?: string) {
+  if (!variantId) return companyLetterheadForPurpose(bundle.organizationId, 'report', client);
+  const candidates = await listProgramAnchorCandidates(client, { orgId: bundle.organizationId, eligibility: 'non-deleted' });
+  const matching = candidates.filter(candidate => candidate.anchor && bundle.projectIds?.includes(candidate.anchor.id));
+  const unique = matching.length === 1 && bundle.projectIds?.length === 1 &&
+    candidates.filter(candidate => candidate.programId === matching[0].programId).length === 1;
+  return readPublishedCompanyVariant(client, bundle.organizationId, variantId, {
+    userId: getUserId(req)!, programId: unique ? matching[0].programId : null,
+  });
+}
+
+async function sendReportPackPdf(req: Request, res: Response, organizationId: number, bundleId: string) {
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const { bundle, pdf, companyBranding } = await inTenantTransaction(organizationId, async client => {
+    const prepared = await prepareReportPack(req, client, organizationId, bundleId, { exportId, exportedAt });
+    await prepared.assertCurrent();
+    return prepared;
   });
   return sendRecordedPdf(req, res, {
     organizationId, action: 'report_os.bundle_exported', resourceType: 'report_bundle', resourceId: bundleId,
@@ -2537,6 +2583,43 @@ async function sendReportPackPdf(req: Request, res: Response, organizationId: nu
       companyBranding: reportBrandingAudit(companyBranding),
       constituents: pdf.constituents },
   }, { filename: `report-pack-${bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes });
+}
+
+async function sendReportPackageRoute(req: Request, res: Response) {
+  try {
+    const organizationId = authedOrgId(req);
+    if (!organizationId || !getUserId(req)) return res.status(403).json({ error: 'Authenticated tenant context required' });
+    const bundleId = z.string().uuid().safeParse(req.params.bundleId);
+    const input = reportPackageInputSchema.safeParse(req.body);
+    if (!bundleId.success || !input.success) return res.status(400).json({ error: { code: 'INVALID_REPORT_PACKAGE', message: 'A valid bundle and one to fifty distinct legal document IDs are required.' } });
+    const exportId = randomUUID();
+    const exportedAt = new Date().toISOString();
+    const packaged = await inTenantTransaction(organizationId, async client => {
+      const prepared = await prepareReportPack(req, client, organizationId, bundleId.data, { exportId, exportedAt, variantId: input.data.variantId });
+      const originals = await readReportPackageLegalOriginals(req, input.data.legalDocumentIds, organizationId, client, { exportedAt, existingBytes: prepared.pdf.bytes.length });
+      const branding: ReportPackageBranding = { ...reportBrandingAudit(prepared.companyBranding),
+        selection: input.data.variantId ? 'explicit-variant' : 'organization-default',
+        ...(input.data.variantId ? { variantId: input.data.variantId } : {}),
+        ...(prepared.companyBranding ? { presentation: companyPresentationSnapshot(prepared.companyBranding) } : {}) };
+      const archive = await buildReportLegalPackage({ exportId, exportedAt, bundleId: bundleId.data,
+        bundleName: prepared.bundle.name, branding, reportPdf: prepared.pdf.bytes,
+        constituents: prepared.pdf.constituents, legalOriginals: originals });
+      await prepared.assertCurrent();
+      await requireReportPackageLegalStillCurrent(req, originals, organizationId, client);
+      return { ...archive, pdf: prepared.pdf, branding };
+    });
+    return sendRecordedReportFile(req, res, { organizationId, action: 'report_os.bundle_exported',
+      resourceType: 'report_bundle', resourceId: bundleId.data,
+      details: { content: 'report-package', bundleId: bundleId.data, exportId, exportedAt, pages: packaged.pdf.pages,
+        constituents: packaged.pdf.constituents, companyBranding: { ...reportBrandingAudit(packaged.branding.presentation ?? null),
+          variantId: input.data.variantId ?? null, explicitSelection: Boolean(input.data.variantId) },
+        packageContentSha256: packaged.manifest.packageContentSha256, manifestSha256: packaged.manifestSha256,
+        reportSha256: packaged.manifest.reports.sha256,
+        legalDocuments: packaged.manifest.legalDocuments.map(item => ({ registryId: item.registryId, programId: item.programId,
+          vaultDocumentId: item.vaultDocumentId, version: item.version, sourceSha256: item.sourceSha256,
+          shippedSha256: item.shippedSha256, registrationSha256: item.registrationSha256, path: item.path })) } },
+    { filename: `report-package-${bundleId.data.slice(0, 8)}.zip`, buffer: packaged.bytes, format: 'zip', mimeType: 'application/zip' });
+  } catch (error) { return sendBundlePdfError(res, error); }
 }
 
 /** Read raw keys too: Express 5's simple parser retains bracket keys verbatim. */
@@ -2556,7 +2639,7 @@ function sendBundlePdfError(res: Response, error: unknown) {
     const refusal = error.decision;
     return res.status(403).json({ error: `Exporting this bundle requires the ${refusal.requiredTier} plan.`, feature: refusal.feature, requiredTier: refusal.requiredTier, tier: refusal.tier });
   }
-  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError || error instanceof CompanyDocumentsError) {
+  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError || error instanceof CompanyDocumentsError || error instanceof ReportPackageError) {
     return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
   }
   return serverError(res, logger, 'loading export.pdf', error);

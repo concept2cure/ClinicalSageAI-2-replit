@@ -47,7 +47,7 @@ router.use(async (req, res, next) => {
   }
   try {
     const profile = await loadCompanyDocumentProfile(guard.orgId, client as Parameters<typeof loadCompanyDocumentProfile>[1]);
-    if (!profile.revision) return next();
+    if (!profile.brandingAdopted) return next();
     if (req.method !== 'GET') return res.status(409).json({ error: 'COMPANY_DOCUMENTS_MANAGED',
       message: 'Use Company documents to update this organization’s identity and letterhead with its saved revision and a reason.' });
     const logo = profile.letterhead.brand.logo;

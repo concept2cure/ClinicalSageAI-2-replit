@@ -3333,6 +3333,13 @@ export const C2C_MIGRATION_FILES = [
   // four tables, which they give their tenant policy. Drops nothing.
   'migrations/20260610_ha_interactions_commitments.sql',
 
+  // Company-document workflow completion: additive org-keyed tables and receipt
+  // binding, before the canonical isolation sweeps. No destructive replay.
+  'migrations/20261018_company_document_governance.sql',
+  'migrations/20261018_company_document_export_receipts.sql',
+  'migrations/20261018_company_legal_registry.sql',
+  'migrations/20261018_company_document_designs.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

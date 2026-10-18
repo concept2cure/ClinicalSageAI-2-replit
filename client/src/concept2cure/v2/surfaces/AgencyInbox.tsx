@@ -31,6 +31,8 @@ import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
 import type { C2CFormFieldOption } from '../C2CForm';
 import type { SourceRow } from './projectSources';
 import '../styles/commcenter-v2.css';
+import { CompanyLegalCommunicationLinks } from './CompanyLegalCommunicationLinks';
+import type { CompanyLegalCommunicationLink } from '@shared/company-correspondence';
 
 /**
  * GET agency-communications row. The list read does NOT project a top-level
@@ -53,7 +55,7 @@ export interface CommRow {
   extractedIssues: string[];
   humanReviewStatus: string;
   closureStatus: string;
-  auditMetadata?: { visibilityTier?: string | null } | null;
+  auditMetadata?: { visibilityTier?: string | null; companyLegalDocuments?: CompanyLegalCommunicationLink[] } | null;
   taskId?: string | null; // not returned by the list read; never fabricated
   _new?: boolean; // client-only optimistic marker
 }
@@ -229,8 +231,9 @@ export function daysTo(d: string | null | undefined): number | null {
 }
 
 /** One agency communication: what came in, its triage state and its actions. */
-function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
+function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId }: {
   c: CommRow;
+  projectId?: string | null;
   onAdvance: (id: string) => void;
   onAsk: (q: string) => void;
   onOpenTask?: () => void;
@@ -273,6 +276,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
             ))}
           </ul>
         )}
+        {projectId && <CompanyLegalCommunicationLinks projectId={projectId} recordId={c.id} kind="agency" initial={c.auditMetadata?.companyLegalDocuments} />}
         <div className="cc-comm-foot">
           {c.taskId && onOpenTask && (
             <button className="cc-comm-task" onClick={onOpenTask} title="Open in Tasking">
@@ -303,6 +307,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
 /** The inbox cards, with their honest no-project / loading / error / empty states. */
 export function AgencyInboxList({
   hasProject,
+  projectId,
   loading,
   error,
   rows,
@@ -312,6 +317,7 @@ export function AgencyInboxList({
   emptyHint = 'Nothing has been logged for this project. Inbound agency letters, IRs and gateway acks appear here once captured.',
 }: {
   hasProject: boolean;
+  projectId?: string | null;
   loading: boolean;
   error?: string;
   rows: CommRow[];
@@ -352,7 +358,7 @@ export function AgencyInboxList({
   return (
     <div className="cc-comms">
       {rows.map((c) => (
-        <AgencyInboxCard key={c.id} c={c} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} />
+        <AgencyInboxCard key={c.id} c={c} projectId={projectId} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} />
       ))}
     </div>
   );

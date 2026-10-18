@@ -1,0 +1,96 @@
+{
+  "checkedAt": "2026-10-18T00:39:16.833Z",
+  "browser": "Chromium",
+  "mockedRequests": false,
+  "persistedCompanyWrites": [],
+  "checks": {
+    "adminSettingsMounted": true,
+    "previewBody100": {
+      "fontFamily": "\"Times New Roman\"",
+      "fontSize": "9px",
+      "parentFontSize": "9px",
+      "parentFontFamily": "\"Times New Roman\""
+    },
+    "previewBody200": {
+      "fontFamily": "\"Times New Roman\"",
+      "fontSize": "18px"
+    },
+    "previewBodyTypefaceMatches": true,
+    "previewBodyFontScales": true,
+    "zoom200": true,
+    "previewKeyboardFocus": true,
+    "readableTextReflectsDraft": true,
+    "unsavedProof": {
+      "downloaded": true,
+      "bytes": 10778,
+      "sha256": "d8e44bce5060032b8e9845846628797c7b1ec2c815f49db7e388cde12bc89bd6",
+      "visibleUnsavedDraftLabel": true,
+      "noSavedRevisionClaim": true
+    },
+    "permissionsPanelLoaded": true,
+    "historyPanelRead": true,
+    "historyComparison": "Not exercised: this organization has no retained presentation revision records.",
+    "namedDesignsRead": true,
+    "namedDesignProjectSelector": true,
+    "legalInventoryLoaded": true,
+    "inventorySearchStatus": 200,
+    "inventorySearchReturnsHonestEmpty": true,
+    "offlineInventoryFailureShown": true,
+    "offlineFailureDoesNotClaimEmpty": true,
+    "inventoryRetryRecovered": true,
+    "inventoryRetryPreservedQuery": true,
+    "accountDoorMounted": true,
+    "accountLayout": {
+      "clientWidth": 477,
+      "scrollWidth": 477,
+      "overflows": false
+    },
+    "accountDelegatedMember": "Not exercised: admin account only; no separate delegated member credential supplied.",
+    "savedProfileUnchanged": true,
+    "savedRevisionBefore": 2,
+    "savedRevisionAfter": 2,
+    "noPersistedCompanyWrites": true,
+    "expectedAnA503": []
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+    "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+  ],
+  "failedApi": [],
+  "screenshots": [
+    "admin-designer.png",
+    "admin-governance.png",
+    "inventory-offline-refusal.png",
+    "admin-legal-library.png",
+    "account-company-settings.png",
+    "account-letterhead-preview.png"
+  ],
+  "navigations": [
+    {
+      "path": "/concept2cure/admin-console",
+      "at": "2026-10-18T00:39:17.654Z"
+    }
+  ],
+  "failedRequests": [
+    {
+      "url": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+      "deliberateOffline": false
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/client-branding/company-documents/legal-documents",
+      "error": "net::ERR_INTERNET_DISCONNECTED",
+      "deliberateOffline": true
+    }
+  ],
+  "environmentFontFailures": [
+    {
+      "url": "https://fonts.googleapis.com/css2",
+      "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+      "deliberateOffline": false
+    }
+  ],
+  "unexpectedFailedRequests": [],
+  "passed": true
+}

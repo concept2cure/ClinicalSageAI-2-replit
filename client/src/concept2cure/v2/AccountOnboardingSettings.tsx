@@ -14,6 +14,7 @@ import { EmptyState, ErrorState } from './dataConnect';
 import { I } from './icons';
 import { isPersonaRead, reportPersonaKey } from './reportingPersona';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
+import { CompanyDocumentsAccountSection } from './CompanyDocumentsAccountSection';
 
 type Read<T> = { state: 'loading' } | { state: 'ready'; data: T } | { state: 'error'; error: string };
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH';
@@ -253,6 +254,8 @@ export function AccountOnboardingSettings({ userId, organizationId, onClose }: {
       <OrganizationSwitcher userId={userId} organizationId={organizationId} revision={membershipVersion} onClose={onClose} />
       <div className="acct-sep" />
       <ReportingRoleSection userId={userId} organizationId={organizationId} />
+      <div className="acct-sep" />
+      <CompanyDocumentsAccountSection />
     </React.Fragment>
   );
 }

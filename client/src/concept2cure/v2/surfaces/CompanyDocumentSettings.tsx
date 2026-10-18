@@ -1,83 +1,35 @@
-import React, { useState } from 'react';
-import { COMPANY_LEGAL_KINDS, type CompanyDocumentProfile, type CompanyLegalDocument, type CompanyLegalKind } from '@shared/company-documents';
-import { useLiveData } from '../dataConnect';
-import type { LibraryHit, LibraryShape } from './VaultLibraryResults';
+import React from 'react';
+import { getAuthToken } from '@/utils/authToken';
+import { COMPANY_LEGAL_KINDS, companyLegalDocumentRefusal, type CompanyDocumentProfile, type CompanyLegalDocument, type CompanyLegalKind } from '@shared/company-documents';
 import { COMPANY_DOCUMENTS_PATH as PATH, useCompanyDocumentSettings, type CompanyDocumentSettingsModel } from './useCompanyDocumentSettings';
+import { CompanyLetterheadPreview } from './company-documents/CompanyLetterheadPreview';
+import { CompanySetupGuide } from './company-documents/CompanySetupGuide';
+import { CompanyVaultPicker } from './company-documents/CompanyVaultPicker';
+import { CompanyLegalInventory } from './company-documents/CompanyLegalInventory';
+import { CompanyLegacyAdoption } from './company-documents/CompanyLegacyAdoption';
+import { CompanyScopePicker } from './company-documents/CompanyScopePicker';
+import { CompanyPermissionsPanel } from './company-documents/CompanyPermissionsPanel';
+import { CompanyPresentationHistory } from './company-documents/CompanyPresentationHistory';
+import { LegalLifecycleEditor } from './company-documents/LegalLifecycleEditor';
+import { LegalRequirementsEditor } from './company-documents/LegalRequirementsEditor';
+import { CompanyGovernedDesigns } from './company-documents/CompanyGovernedDesigns';
 import '../styles/company-documents.css';
 
 const list = (text: string) => text.split(',').map(x => x.trim()).filter(Boolean);
 const titleOf = (kind: string) => kind.replaceAll('_', ' ').replace(/^./, c => c.toUpperCase());
 const entryStatus = (document: CompanyLegalDocument) => {
-  const today = new Date().toISOString().slice(0, 10);
-  if (!document.active) return 'Archived entries cannot be selected for a new filing.';
-  if (document.effectiveOn && document.effectiveOn > today) return 'Not effective yet. This document cannot be selected for filing before its effective date.';
-  if (document.expiresOn && document.expiresOn < today) return 'Expired. Register a current version before filing.';
-  if (document.transmitRefusal) return document.transmitRefusal;
-  return document.transmitRefusal === null ? 'Current Vault approval verified. Target scope and dates are checked again before filing.' : 'Current Vault approval could not be verified.';
+  return companyLegalDocumentRefusal(document, { agency: document.agencies[0], country: document.countries[0], submissionType: document.submissionTypes[0] }) ||
+    'Current Vault approval verified. Target scope and dates are checked again before filing.';
 };
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return <label className={`company-field${wide ? ' company-wide' : ''}`}><span>{label}</span>{children}</label>;
 }
 
-/** A visual draft of the renderer-neutral spec. Original legal files are never rendered through this preview. */
-function LetterheadPreview({ profile }: { profile: CompanyDocumentProfile }) {
-  const s = profile.letterhead;
-  const ratio = s.page.size === 'a4' ? 210 / 297 : s.page.size === 'legal' ? 8.5 / 14 : 8.5 / 11;
-  return <div className="company-preview-shell">
-    <div className="company-preview-caption">Live design preview · {s.page.size.toUpperCase()} · {s.page.orientation}</div>
-    <article className="company-preview" aria-label="Letterhead preview" style={{
-      aspectRatio: s.page.orientation === 'landscape' ? 1 / ratio : ratio,
-      fontFamily: s.typography.bodyFont, color: `#${s.colors.text}`,
-      padding: `${s.page.marginsInches.top * 25}px ${s.page.marginsInches.right * 25}px ${s.page.marginsInches.bottom * 25}px ${s.page.marginsInches.left * 25}px`,
-    }}>
-      <header style={{ textAlign: s.header?.alignment ?? 'left', borderColor: `#${s.colors.accent}` }}>
-        {s.brand.logo && (s.header?.showLogo || s.brand.logo.placement === 'cover') && <img alt="Company logo preview" src={`data:${s.brand.logo.mimeType};base64,${s.brand.logo.dataBase64}`} />}
-        <strong style={{ color: `#${s.colors.accent}`, fontFamily: s.typography.headingFont }}>{profile.companyName || 'Your company name'}</strong>
-        <div>{profile.address}</div><div>{profile.contact}</div><div>{profile.registrationDetails}</div>
-        {s.header?.text && <div>{s.header.text}</div>}
-      </header>
-      <main style={{ fontSize: Math.max(9, s.typography.bodySizePt * .75), lineHeight: s.typography.lineSpacing }}>
-        <h3 style={{ fontFamily: s.typography.headingFont }}>Regulatory correspondence</h3>
-        <p>Recipient and submission reference</p><p>This space contains the correspondence you prepare for the selected recipient.</p>
-        <p className="company-preview-placeholder">Your document content</p>
-      </main>
-      <LetterheadPreviewFooter profile={profile} />
-    </article>
-    <p className="company-hint">Preview uses sample correspondence. Download the saved Word letterhead to check final pagination. Agency forms and original legal files keep their original format.</p>
-  </div>;
-}
-
-function LetterheadPreviewFooter({ profile }: { profile: CompanyDocumentProfile }) {
-  const s = profile.letterhead;
-  return (<footer style={{ color: `#${s.colors.muted}` }}>
-        <div>{s.brand.confidentialityNotice}</div><div>{s.footer?.text}</div>
-        {s.footer?.showPageNumbers && <div>{(s.footer.pageNumberFormat || 'Page {PAGE} of {PAGES}').replaceAll('{PAGE}', '1').replaceAll('{PAGES}', '1')}</div>}
-      </footer>);
-}
-
-function VaultDocumentPicker({ onChoose, disabled }: { onChoose: (hit: LibraryHit) => void; disabled: boolean }) {
-  const [text, setText] = useState('');
-  const [query, setQuery] = useState('');
-  const path = query ? `/api/c2c/project-vault/search?q=${encodeURIComponent(query)}&limit=25` : null;
-  const state = useLiveData<LibraryShape>(path, [path], (v): v is LibraryShape => {
-    const d = v as LibraryShape | null;
-    return !!d && d.scope === 'verified-accessible-programs' && Array.isArray(d.results) &&
-      d.results.every(h => typeof h.id === 'string' && typeof h.title === 'string' && typeof h.program?.id === 'string');
-  });
-  return <div className="company-vault-search">
-    <div className="company-actions"><Field label="Search your accessible Vaults"><input value={text} onChange={e => setText(e.target.value)} placeholder="Document title or keyword" /></Field>
-      <button className="btn ghost small" type="button" disabled={disabled || !text.trim() || state.loading} onClick={() => setQuery(text.trim())}>Search Vault</button></div>
-    {state.loading && <p role="status">Searching accessible project Vaults…</p>}
-    {state.error && <p role="alert">The Vault search could not be read. Try another search or open Vault.</p>}
-    {!state.loading && state.data && <div className="company-search-results">
-      {state.data.results.length === 0 && <p>No matching documents in your accessible projects.</p>}
-      {state.data.results.map(hit => <div className="company-search-hit" key={hit.id}><span><strong>{hit.title}</strong><small>{hit.program.name || 'Project'} · version {hit.version || 'not recorded'}{hit.current ? '' : ' · earlier version'}</small></span>
-        <button type="button" className="btn ghost small" disabled={disabled || !hit.current} onClick={() => onChoose(hit)}>Select document</button></div>)}
-    </div>}
-  </div>;
-}
-
 type DesignProps = { model: CompanyDocumentSettingsModel; draft: CompanyDocumentProfile };
+const legalWorkflowProps = (model: CompanyDocumentSettingsModel, profile: CompanyDocumentProfile) => ({
+  profile, token: getAuthToken() ?? '', canManage: model.capabilities.manageLegal && !model.busy && !model.conflict,
+  onSaved: () => { void model.load(model.session.current, !model.dirtyRef.current); },
+});
 
 function CompanyIdentityFields({ model, draft }: DesignProps) {
   const { patch, uploadLogo, spec } = model;
@@ -158,42 +110,50 @@ function CompanyPresentationDefaults({ model, draft }: DesignProps) {
 }
 
 function CompanyDesigner({ model, draft }: DesignProps) {
-  const { canManage, busy, loading, conflict, tab, warnings } = model;
+  const { capabilities, busy, loading, conflict, tab, warnings } = model;
   return <>
     <div className="company-design-layout">
-      <fieldset disabled={!canManage || busy || loading || conflict} className="company-editor">
+      <fieldset disabled={!capabilities.manageBrand || busy || loading || conflict} className="company-editor">
         {tab === 'identity' ? <CompanyIdentityFields model={model} draft={draft} /> : <CompanyLetterheadFields model={model} draft={draft} />}
         {warnings.length > 0 && <div className="company-notice"><strong>Extraction warnings</strong><ul>{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></div>}
         <CompanyPresentationDefaults model={model} draft={draft} />
       </fieldset>
-      <LetterheadPreview profile={draft} />
+      <CompanyLetterheadPreview profile={draft} />
     </div>
     <CompanyDesignSaveBar model={model} />
   </>;
 }
 
+function CompanyDraftGuidance({ model }: { model: CompanyDocumentSettingsModel }) {
+  return <>
+    {model.designSaveBlocked && <p className="company-hint" role="status">Independent review is required for this identity or style change. Stage this draft as an organization-wide named design, have another authorized person review it, publish it, then activate it as the organization default. Automatic-use preferences alone may still be saved directly.</p>}
+    {model.capabilities.manageBrand && <p className="company-hint">Use the unsaved proof to review Word layout before saving. It is marked as a draft and does not activate or attach your design.</p>}
+    {model.dirty && <span className="company-hint">Unsaved draft</span>}{model.legacyDecision === 'replace' && <p className="company-hint">Saving will replace the existing legacy branding with this reviewed design.</p>}
+  </>;
+}
 function CompanyDesignSaveBar({ model }: { model: CompanyDocumentSettingsModel }) {
-  const { reason, setReason, canManage, busy, dirty, loading, conflict, save, download } = model;
-  return <div className="company-save-bar"><Field label="Reason for company document change"><input value={reason} disabled={!canManage || busy} onChange={e => setReason(e.target.value)} placeholder="Required for audit trail" maxLength={2000} /></Field>
-        <button className="btn primary small" type="button" disabled={!canManage || !dirty || reason.trim().length < 3 || busy || loading || conflict} onClick={() => void save()}>{busy ? 'Working…' : 'Save company documents'}</button>
+  const { reason, setReason, capabilities, busy, dirty, loading, conflict, designSaveBlocked, save, download, downloadProof } = model;
+  return <div className="company-save-bar"><Field label="Reason for company document change"><input value={reason} disabled={!capabilities.manageBrand || busy} onChange={e => setReason(e.target.value)} placeholder="Required for audit trail" maxLength={2000} /></Field>
+        <button className="btn primary small" type="button" disabled={!capabilities.manageBrand || !dirty || reason.trim().length < 3 || busy || loading || conflict || designSaveBlocked} onClick={() => void save()}>{busy ? 'Working…' : 'Save company documents'}</button>
         <button className="btn ghost small" type="button" disabled={busy || dirty || loading} onClick={() => void download()}>Download saved Word letterhead</button>
-        {dirty && <span className="company-hint">Unsaved draft</span>}</div>;
+        {capabilities.manageBrand && <button className="btn ghost small" type="button" disabled={busy || loading} onClick={() => void downloadProof()}>Download unsaved Word proof</button>}
+        <CompanyDraftGuidance model={model} /></div>;
 }
 
 function CompanyLegalRegistration({ model, saved }: { model: CompanyDocumentSettingsModel; saved: CompanyDocumentProfile }) {
   const { busy, loading, conflict, setLegal, legal, legalReason, setLegalReason, mutation } = model;
   return <details className="company-register"><summary>Register a legal document from Vault</summary>
           <fieldset disabled={busy || loading || conflict} className="company-editor">
-            <VaultDocumentPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.program.id, vaultDocumentId: hit.id }))} />
+            <CompanyVaultPicker disabled={busy || loading || conflict} onChoose={hit => setLegal(p => ({ ...p, title: hit.title, programId: hit.program.id, vaultDocumentId: hit.id }))} />
             <div className="company-fields">
               <Field label="Legal document title" wide><input value={legal.title} onChange={e => setLegal(p => ({ ...p, title: e.target.value }))} /></Field>
               <Field label="Document kind"><select value={legal.kind} onChange={e => setLegal(p => ({ ...p, kind: e.target.value as CompanyLegalKind }))}>{COMPANY_LEGAL_KINDS.map(k => <option key={k} value={k}>{titleOf(k)}</option>)}</select></Field>
               <Field label="Document language"><input value={legal.language} placeholder="en, fr, ja…" onChange={e => setLegal(p => ({ ...p, language: e.target.value }))} /></Field>
               <Field label="Source project UUID"><input value={legal.programId} onChange={e => setLegal(p => ({ ...p, programId: e.target.value }))} /></Field>
               <Field label="Vault document version UUID"><input value={legal.vaultDocumentId} onChange={e => setLegal(p => ({ ...p, vaultDocumentId: e.target.value }))} /></Field>
-              <Field label="Agencies · comma separated"><input value={legal.agencies} placeholder="fda, ema, pmda" onChange={e => setLegal(p => ({ ...p, agencies: e.target.value }))} /></Field>
-              <Field label="Countries or regions · comma separated"><input value={legal.countries} placeholder="US, EU, JP" onChange={e => setLegal(p => ({ ...p, countries: e.target.value }))} /></Field>
-              <Field label="Submission types · comma separated" wide><input value={legal.submissionTypes} placeholder="ind, nda, maa, 510k" onChange={e => setLegal(p => ({ ...p, submissionTypes: e.target.value }))} /></Field>
+              <CompanyScopePicker label="Agencies" kind="agency" value={legal.agencies} onChange={value => setLegal(p => ({ ...p, agencies: value }))} />
+              <CompanyScopePicker label="Countries or regions" kind="country" value={legal.countries} onChange={value => setLegal(p => ({ ...p, countries: value }))} />
+              <CompanyScopePicker label="Submission types" kind="submissionType" value={legal.submissionTypes} onChange={value => setLegal(p => ({ ...p, submissionTypes: value }))} />
               <Field label="Effective date"><input type="date" value={legal.effectiveOn} onChange={e => setLegal(p => ({ ...p, effectiveOn: e.target.value }))} /></Field>
               <Field label="Expiry date"><input type="date" value={legal.expiresOn} onChange={e => setLegal(p => ({ ...p, expiresOn: e.target.value }))} /></Field>
               <Field label="Reason for legal document registration" wide><input value={legalReason} onChange={e => setLegalReason(e.target.value)} /></Field>
@@ -212,35 +172,40 @@ function CompanyLegalArchive({ model, saved, doc }: { model: CompanyDocumentSett
 }
 
 function CompanyLegalCard({ model, saved, doc }: { model: CompanyDocumentSettingsModel; saved: CompanyDocumentProfile; doc: CompanyLegalDocument }) {
-  const { busy, conflict, canManage, archiveId, setArchiveId, setArchiveReason, downloadOriginal } = model;
+  const { busy, conflict, capabilities, archiveId, setArchiveId, setArchiveReason, downloadOriginal } = model;
   return <article className="company-legal-card">
           <div className="company-section-head"><div><h4>{doc.title}</h4><p>{titleOf(doc.kind)} · {doc.language} · version {doc.version} · {doc.active ? 'Active library entry' : 'Archived'}</p></div>
             <div className="company-actions"><button className="btn ghost small" disabled={busy} type="button" onClick={() => void downloadOriginal(doc)}>Download original</button>
-            {canManage && doc.active && <button className="btn ghost small" disabled={busy || conflict} type="button" onClick={() => { setArchiveId(doc.id); setArchiveReason(''); }}>Archive entry</button>}</div></div>
+            {capabilities.manageLegal && doc.active && <button className="btn ghost small" disabled={busy || conflict} type="button" onClick={() => { setArchiveId(doc.id); setArchiveReason(''); }}>Archive entry</button>}</div></div>
           <dl><div><dt>Agency</dt><dd>{doc.agencies.join(', ') || 'Unrestricted'}</dd></div><div><dt>Country / region</dt><dd>{doc.countries.join(', ') || 'Unrestricted'}</dd></div><div><dt>Submission type</dt><dd>{doc.submissionTypes.join(', ') || 'Unrestricted'}</dd></div><div><dt>Effective / expires</dt><dd>{doc.effectiveOn || 'No start date'} / {doc.expiresOn || 'No expiry date'}</dd></div></dl>
           <p className="company-hint">{entryStatus(doc)}</p>
           <details><summary>Original version and provenance</summary><p className="company-hint">Project: {doc.programId}<br />Vault version: {doc.vaultDocumentId}<br />Content hash: {doc.contentHash}<br />Registered by {doc.registeredBy} on {doc.registeredAt}</p></details>
+          <LegalLifecycleEditor document={doc} {...legalWorkflowProps(model, saved)} />
           {archiveId === doc.id && <CompanyLegalArchive model={model} saved={saved} doc={doc} />}
   </article>;
 }
 
 function CompanyLegalLibrary({ model, saved, onNav }: { model: CompanyDocumentSettingsModel; saved: CompanyDocumentProfile; onNav?: (id: string) => void }) {
-  const { canManage, showArchived, setShowArchived } = model;
-  const visibleDocuments = saved.legalDocuments.filter(d => showArchived || d.active);
+  const { capabilities, showArchived, setShowArchived } = model;
   return <>
     <div className="company-legal-intro"><h3>Reusable legal originals</h3><p>Register an exact PDF version from Vault once, then select applicable documents when preparing a submission. Registration does not approve or sign the source document.</p>
       {onNav && <button type="button" className="btn ghost small" onClick={() => onNav('vault')}>Upload and review documents in Vault</button>}</div>
-    {canManage && <CompanyLegalRegistration model={model} saved={saved} />}
+    {capabilities.manageLegal && <CompanyLegalRegistration model={model} saved={saved} />}
+    <LegalRequirementsEditor {...legalWorkflowProps(model, saved)} />
     <label className="company-check"><input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />Show archived library entries</label>
-    {visibleDocuments.length === 0 && <p className="company-empty">No {showArchived ? '' : 'active '}legal documents registered. Your original documents remain in their project Vaults.</p>}
-    <div className="company-legal-list">{visibleDocuments.map(doc => <CompanyLegalCard key={doc.id} model={model} saved={saved} doc={doc} />)}</div>
+    <CompanyLegalInventory includeArchived={showArchived} revision={saved.revision} renderDocument={doc => <CompanyLegalCard model={model} saved={saved} doc={doc} />} />
   </>;
 }
 
 function CompanySettingsContent({ model, draft, saved, onNav }: DesignProps & { saved: CompanyDocumentProfile; onNav?: (id: string) => void }) {
-  const { canManage, tab, setTab } = model;
+  const { capabilities, tab, setTab, dirty } = model;
   return <>
-    {!canManage && <p className="company-hint">Only an organization owner or administrator can change these settings.</p>}
+    {capabilities.manageBrand && saved.brandingAdopted !== true && <CompanyLegacyAdoption model={model} profile={saved} />}
+    <CompanySetupGuide profile={saved} legalDocumentsIncluded={model.legalDocumentsIncluded} dirty={dirty} onSelect={setTab} onNav={onNav} />
+    {capabilities.managePermissions && <CompanyPermissionsPanel model={model} />}
+    <CompanyPresentationHistory model={model} profile={saved} />
+    <CompanyGovernedDesigns model={model} />
+    {!capabilities.manageBrand && !capabilities.manageLegal && <p className="company-hint">Only an organization owner, administrator or assigned company-document custodian can change these settings.</p>}
     <div className="company-tabs" role="group" aria-label="Company document settings">
       {(['identity', 'design', 'legal'] as const).map(id => <button key={id} className={`btn ghost small${tab === id ? ' active' : ''}`} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{id === 'identity' ? 'Company identity' : id === 'design' ? 'Letterhead designer' : 'Legal document library'}</button>)}
     </div>

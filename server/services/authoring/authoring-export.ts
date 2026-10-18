@@ -20,6 +20,10 @@ import { verifySavedDraftSourceReferences } from './draft-source-references';
 import type { AuthoringActor } from './authoring-documents';
 import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
 import { sectionsDigest } from './authoring-content-digests';
+import type { CompanyDocumentProfile } from '../../../shared/company-documents';
+import { correspondenceTemplate, readCorrespondencePresentation } from '../company-documents/correspondence-rendering';
+import type { DocxStyle } from '../docx/docxFactory';
+import type { ISectionOptions, Paragraph as WordParagraph, Table as WordTable } from 'docx';
 // Preserve this service's public API while keeping workflow release checks
 // independent of the renderer's async initialization (production boot).
 export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
@@ -64,6 +68,8 @@ export interface RenderedExport {
 export type ExportRendering = 'formatted' | 'plain-text-fallback';
 
 export interface RenderExportArgs {
+  /** Internal: loaded from the immutable company revision, never the HTTP body. */
+  companyPresentation?: CompanyDocumentProfile | null;
   executor: Queryable;
   tenantId: number;
   doc: ExportDocRow;
@@ -397,6 +403,26 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
 // DOCX
 // ─────────────────────────────────────────────────────────────────────────────
 
+async function companyWordPresentation(args: RenderExportArgs, docxNs: typeof import('docx')) {
+  if (!args.companyPresentation) return { style: null, prefix: [] as WordParagraph[] };
+  const { templateSpecToDocxStyle } = await import('../templates/templateRenderAdapter');
+  const style = templateSpecToDocxStyle(correspondenceTemplate(args.companyPresentation));
+  if (style.logo?.placement !== 'cover') return { style, prefix: [] as WordParagraph[] };
+  const logo = (await import('../docx/docxFactory')).logoImageRun(style.logo, 220, 90);
+  if (!logo) throw new Error('The retained company logo could not be rendered. Nothing was exported.');
+  return { style, prefix: [new docxNs.Paragraph({ children: [logo] })] };
+}
+async function authoringWordSection(args: RenderExportArgs, style: DocxStyle | null,
+  children: Array<WordParagraph | WordTable>, docxNs: typeof import('docx')): Promise<ISectionOptions> {
+  if (style) return { ...(await import('../docx/docxFactory')).regulatoryLetterheadSection(style,
+    { title: args.doc.title, submissionType: 'Correspondence' }, true, args.workingCopy?.banner), children };
+  if (!args.workingCopy) return { children };
+  const bannerText = args.workingCopy.banner;
+  const banner = () => new docxNs.Paragraph({ children: [new docxNs.TextRun({ text: bannerText, bold: true })] });
+  return { headers: { default: new docxNs.Header({ children: [banner()] }) },
+    footers: { default: new docxNs.Footer({ children: [banner()] }) }, children };
+}
+
 async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise<{ content: Buffer; fileName: string; contentType: string }> {
   const { doc } = args;
   /* `await import`, not `require`: package.json declares "type": "module". */
@@ -406,7 +432,8 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
     await import('../../export/authoring-blocks-to-docx.js');
 
   const exportedAt = new Date().toISOString();
-  const children = [];
+  const { style: companyStyle, prefix } = await companyWordPresentation(args, docxNs);
+  const children: Array<WordParagraph | WordTable> = [...prefix];
   children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
   if (args.notice) {
     children.push(new Paragraph({ children: [new TextRun({ text: args.notice, italics: true, bold: true })] }));
@@ -474,6 +501,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
   }
 
   const docxDoc = new Document({
+    ...(companyStyle ? { styles: { default: { document: { run: { font: companyStyle.fonts.body, size: companyStyle.fontSizes.body } } } } } : {}),
     /* Without a declared numbering definition the ordered-list reference is
        inert and numbered steps silently render unnumbered. */
     numbering: orderedListNumbering(docxNs),
@@ -484,17 +512,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
           ),
         }
       : {}),
-    sections: [
-      args.workingCopy
-        ? {
-            /* On every page, top and bottom: a copy that leaves the system
-               says what it is wherever it is read. */
-            headers: { default: new docxNs.Header({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
-            footers: { default: new docxNs.Footer({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
-            children,
-          }
-        : { children },
-    ],
+    sections: [await authoringWordSection(args, companyStyle, children, docxNs)],
   });
   return {
     content: await Packer.toBuffer(docxDoc),
@@ -512,6 +530,15 @@ async function renderPdf(
   shared: SharedRender,
 ): Promise<{ content: Buffer; fileName: string; contentType: string; rendering: ExportRendering }> {
   const { doc } = args;
+  if (args.companyPresentation) {
+    // One rich Authoring DOCX, then the production converter's strict backend.
+    // Never flatten the letterhead, citations or signature statement into a fallback PDF.
+    const source = await renderDocx(args, shared);
+    const { convertDocxToPdf } = await import('../pdf-converter');
+    const converted = await convertDocxToPdf(source.content, { backend: 'libreoffice' });
+    return { content: converted.pdf, fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
+      contentType: 'application/pdf', rendering: 'formatted' };
+  }
   // Real PDF via the platform's HTML→PDF renderer (the same engine the
   // template render path uses). Tracked, so a plain-text fallback is reported
   // on the export record and to the person exporting, not only on page one.
@@ -575,6 +602,8 @@ async function renderPdf(
 
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
+  // Always resolve internally: callers cannot override a historical reference with current branding.
+  args = { ...args, companyPresentation: await readCorrespondencePresentation(args.executor, args.tenantId, args.doc) };
   if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
   await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
   if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {

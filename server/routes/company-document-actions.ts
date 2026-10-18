@@ -66,8 +66,8 @@ router.post('/legal-documents/:id/copy-to-program', requireEditorAccess, async (
   const parsed = copySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'INVALID_COPY', message: parsed.error.issues[0]?.message });
   try {
-    const { document, profile, organizationId, userId, q, canManage } = await readCompanyLegalDocument(req, String(req.params.id));
-    if (!canManage) throw new CompanyDocumentsError(403, 'ADMIN_REQUIRED', 'An administrator must register a company legal copy.');
+    const { document, profile, organizationId, userId, q, capabilities } = await readCompanyLegalDocument(req, String(req.params.id));
+    if (!capabilities.manageLegal) throw new CompanyDocumentsError(403, 'COMPANY_PERMISSION_REQUIRED', 'A company legal custodian must register this copy.');
     if (profile.revision !== parsed.data.expectedRevision) throw new CompanyDocumentsError(409, 'COMPANY_DOCUMENTS_CONFLICT', 'The company library changed. Reload it before copying.');
     const refusal = basicRefusal(document);
     if (refusal) throw new CompanyDocumentsError(409, 'LEGAL_DOCUMENT_NOT_USABLE', refusal);

@@ -52,6 +52,10 @@ import { createNotification } from './notifications';
 import { projectAdmissionMiddleware } from './project-access';
 import { requestPgClient } from '../../db/requestDb';
 import { requireCurrentProgramAccess, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { appendCommunicationLegalLinks } from '../../services/company-documents/communication-links';
+import { companyDocumentsFailure } from '../../services/company-documents/profile';
+import { companyLegalInventoryQuery, readCompanyLegalInventory } from '../../services/company-documents/legal-inventory';
+import { CompanyDocumentsError, parseCompanyInput } from '../../services/company-documents/validation';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -256,7 +260,8 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
     status: z.enum(SUBMISSION_CENTER_ITEM_STATES).default('draft'),
     ectdPath: z.string().optional(),
     dispatchReady: z.boolean().default(false),
-    metadata: z.record(z.string(), z.unknown()).default({}),
+    metadata: z.record(z.string(), z.unknown()).refine(value => !Object.prototype.hasOwnProperty.call(value, 'companyLegalDocuments'),
+      'Link company legal originals through the verified legal-document link action.').default({}),
   });
 
   try {
@@ -902,6 +907,40 @@ router.patch(
     }
   }
 );
+
+for (const target of [
+  { kind: 'agency' as const, path: '/projects/:projectId/agency-communications/:recordId/legal-documents' },
+  { kind: 'handoff' as const, path: '/projects/:projectId/submission-center/items/:recordId/legal-documents' },
+]) router.post(target.path, async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const projectId = await resolveCommunicationProject(req);
+    const result = await appendCommunicationLegalLinks(req, projectId, target.kind, String(req.params.recordId), (tier, currentRole) =>
+      typeof tier === 'string' && canViewVisibilityTier(tier as CommunicationVisibilityTier, currentRole));
+    return sendSuccess(res, result, { auditTrail: { persisted: true, chained: true } });
+  } catch (error) {
+    const failure = companyDocumentsFailure(error);
+    return sendError(res, failure.status, failure.message, undefined, failure.code);
+  }
+});
+
+router.get('/projects/:projectId/company-legal-documents', async (req: Request, res: Response) => {
+  try {
+    const projectId = await resolveCommunicationProject(req), organizationId = getOrganizationId(req), q = requestPgClient(req);
+    const input = parseCompanyInput(companyLegalInventoryQuery.omit({ programId: true }), req.query);
+    const anchorSql = 'SELECT regulatory_program_id::text AS program_id FROM projects WHERE id=$1 AND organization_id=$2';
+    const current = await q.query(anchorSql, [projectId, organizationId]);
+    const programId = current.rows[0]?.program_id;
+    if (current.rows.length !== 1 || typeof programId !== 'string') throw new CompanyDocumentsError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This communication project needs a current program relationship before listing legal documents.');
+    const inventory = await readCompanyLegalInventory(req, { ...input, includeArchived: input.includeArchived ? 'true' : 'false', programId });
+    const after = await q.query(anchorSql, [projectId, organizationId]);
+    if (after.rows.length !== 1 || after.rows[0].program_id !== programId) throw new CompanyDocumentsError(409, 'PROJECT_ANCHOR_CHANGED', 'The communication project changed during this read. Refresh before selecting legal documents.');
+    return res.json(inventory);
+  } catch (error) {
+    const failure = companyDocumentsFailure(error);
+    return sendError(res, failure.status, failure.message, undefined, failure.code);
+  }
+});
 
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {

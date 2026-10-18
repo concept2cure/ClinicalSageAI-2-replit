@@ -36,7 +36,9 @@ vi.mock('../../services/tenant-export/attestation-report.service', () => ({
   generateAttestation: (...args: any[]) => attestationSvc.generateAttestation(...args),
   AttestationKeyMissingError,
 }));
-vi.mock('../../db', () => ({ pool: {} }));
+vi.mock('../../db', () => ({ pool: { query: vi.fn(async () => ({ rows: [{
+  role: authState.user?.role ?? (authState.user?.roles?.includes('admin') ? 'admin' : ''),
+}] })), connect: vi.fn(async () => ({ query: vi.fn(async () => ({ rows: [{ id: 7 }] })), release: vi.fn() })) } }));
 vi.mock('../../services/auditService', () => ({ default: audit }));
 
 let app: express.Express;

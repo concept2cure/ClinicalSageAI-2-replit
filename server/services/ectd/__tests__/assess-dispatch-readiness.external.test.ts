@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import type { SQL } from 'drizzle-orm';
 
 const fixture = vi.hoisted(() => ({
   rows: [] as unknown[][],
@@ -17,7 +19,7 @@ vi.mock('../../../db', () => ({
     return query;
   },
   // The waiver and finding-disposition reads (text SQL): this suite has no Shadow Review records.
-  execute: async () => ({ rows: [] }) },
+  execute: async (statement: SQL) => ({ rows: /SELECT settings FROM organizations/i.test(new PgDialect().sqlToQuery(statement).sql) ? [{ settings: {} }] : [] }) },
 }));
 vi.mock('../leaf-document-resolver', () => ({ resolveLeafDocuments: async () => [] }));
 vi.mock('../dispatch-readiness', () => ({

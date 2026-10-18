@@ -1,7 +1,7 @@
 /**
  * Canonical DOCX → PDF converter.
  *
- * Produces deterministic, audit-bound PDFs from DOCX bytes. This is the
+ * Produces audit-bound PDFs from DOCX bytes. This is the
  * single canonical PDF entry point for the document export pipeline; the
  * ad-hoc /artifacts/export-pdf and ind-pdf routes (pdf-lib, pdfkit raw) are
  * kept for backwards compat but new export surfaces should call this
@@ -13,11 +13,12 @@
  *   2. Fallback — Puppeteer-cluster rendering of an HTML preview (lower
  *                 fidelity but works without LibreOffice in dev environments).
  *
- * Determinism:
- *   PDF metadata fields that change every run (CreationDate, ModDate,
- *   Producer build string, document /ID) are stripped/normalized so the
- *   same DOCX input always yields byte-identical PDF output. This is what
- *   makes the SHA-256 of the PDF a stable artifact ID for the audit chain.
+ * Integrity:
+ *   Volatile Info metadata and the document ID are normalized through the PDF
+ *   parser, which rewrites valid cross-reference offsets. Renderer versions,
+ *   embedded resources and source DOCX metadata can still change output bytes.
+ *   The SHA-256 identifies the exact delivered artifact; a later render is a
+ *   new artifact, not proof that it equals a previously approved PDF.
  *
  * Operator runbook (production):
  *   1. Verify Dockerfile.optimized installs `libreoffice-writer`.
@@ -26,8 +27,8 @@
  *
  * Compliance:
  *   FDA 21 CFR Part 11 §11.10(c) — protect records to enable accurate and
- *   ready retrieval. A deterministic hash means the PDF you exported in
- *   January is provably the same artifact you re-render in July.
+ *   ready retrieval. Retain the delivered PDF and its digest with its source
+ *   provenance when exact historical bytes must be retrieved.
  */
 
 import { spawn } from 'node:child_process';
@@ -35,11 +36,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { PDFDocument as ParsedPdfDocument, PDFHexString } from 'pdf-lib';
 
 export interface PdfConvertResult {
-  /** PDF bytes, deterministic for a given DOCX input. */
+  /** Exact generated PDF bytes, with structurally normalized Info metadata. */
   pdf: Buffer;
-  /** SHA-256 of the deterministic PDF (after metadata stripping). */
+  /** SHA-256 of the exact returned PDF bytes. */
   sha256: string;
   /** Which backend produced the PDF. */
   backend: 'libreoffice' | 'puppeteer-fallback';
@@ -104,7 +107,7 @@ export async function convertDocxToPdf(
   }
 
   const originalBytes = raw.byteLength;
-  const pdf = makeDeterministic(raw);
+  const pdf = await normalizeGeneratedPdf(raw);
   const sha256 = createHash('sha256').update(pdf).digest('hex');
 
   return { pdf, sha256, backend: backendUsed, originalBytes };
@@ -125,6 +128,7 @@ async function runLibreOffice(docx: Buffer, timeout: number): Promise<Buffer> {
     await new Promise<void>((resolve, reject) => {
       const args = [
         '--headless',
+        `-env:UserInstallation=${pathToFileURL(path.join(workDir, 'office-profile')).href}`,
         '--norestore',
         '--nologo',
         '--nofirststartwizard',
@@ -169,6 +173,22 @@ function isLibreOfficeMissing(err: unknown): boolean {
 }
 
 // ============================================================================
+
+/** Newly rendered, unsigned DOCX output only. Original legal PDFs never enter
+ * this converter. Parsing and saving rebuilds the cross-reference table; raw
+ * text substitutions would shift object offsets and damage otherwise valid PDFs. */
+export async function normalizeGeneratedPdf(bytes: Buffer): Promise<Buffer> {
+  const pdf = await ParsedPdfDocument.load(bytes, { updateMetadata: false });
+  pdf.setCreationDate(new Date(0));
+  pdf.setModificationDate(new Date(0));
+  pdf.setProducer('Concept2Cure RI canonical');
+  pdf.setCreator('Concept2Cure RI canonical');
+  pdf.context.trailerInfo.ID = pdf.context.obj([
+    PDFHexString.of('00000000000000000000000000000000'),
+    PDFHexString.of('00000000000000000000000000000000'),
+  ]);
+  return Buffer.from(await pdf.save({ useObjectStreams: false }));
+}
 // Puppeteer fallback (low-fidelity but works in dev without LibreOffice)
 // ============================================================================
 
@@ -206,9 +226,14 @@ const PDF_NORMALIZED_CREATOR = '/Creator (Concept2Cure RI canonical)';
  *   - /Creator                 (renderer build string)
  *   - /ID [<...> <...>]        (the trailer document ID — random per run)
  *
- * Operates on the raw bytes rather than re-parsing the PDF, because
- * re-parsing through pdf-lib would itself introduce non-determinism in
- * cross-reference offsets. PDF tooling tolerates these in-place edits.
+ * Legacy raw metadata substitutions. They do not rebuild cross-references and
+ * are unsuitable for newly rendered DOCX PDFs. Existing PDFKit callers retain
+ * their established byte identities until their own renderer versions migrate.
+ *
+ * @deprecated Retained for existing PDFKit callers whose byte identities are
+ * already governed. New DOCX conversion uses normalizeGeneratedPdf, which
+ * rebuilds valid cross-references. This helper does not establish byte identity
+ * across renderer versions or validate PDF structure.
  */
 export function makeDeterministic(pdf: Buffer): Buffer {
   let text = pdf.toString('binary');

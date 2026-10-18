@@ -63,6 +63,7 @@ function makePool(responses: Array<{ match: RegExp; rows: Row[] }>) {
     query: vi.fn(async (text: string, params?: unknown[]) => {
       statements.push({ text, params });
       const hit = responses.find(r => r.match.test(text));
+      if (/AS company_documents_present/.test(text)) return { rows: [{ company_documents_present: false, company_documents: null }] };
       if (!hit && /SELECT id, status, purged_at FROM organizations/.test(text)) {
         return { rows: responses.find(r => r.match.test('SELECT id, name, status'))?.rows ?? [] };
       }

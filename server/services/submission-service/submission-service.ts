@@ -3505,7 +3505,7 @@ export async function upsertLeaf(
     const country = canonicalRegionOf(seq.region);
     const legalRefusal = await companyLegalVaultTargetRefusal(pool, ctx.organizationId, input.documentUuid, {
       programId: submissionProgramId, country, agency: country ? toAgency(country) : null, submissionType: applicationType,
-    });
+    }, documentContentSha256);
     if (legalRefusal) throw new SubmissionError('VALIDATION', legalRefusal);
   }
   /* What the ledger records about the document placed (LX-11): which document,

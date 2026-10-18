@@ -33,14 +33,15 @@ async function seed(organizationId: number) {
 }
 beforeAll(async () => {
   db = await PGlite.create();
-  await db.exec(`CREATE TABLE organizations (id integer PRIMARY KEY, slug text, name text, status text);
-    INSERT INTO organizations VALUES (42,'synthetic-42','Synthetic tenant','pending_deletion'),(43,'synthetic-43','Foreign fixture','active');
+  await db.exec(`CREATE TABLE organizations (id integer PRIMARY KEY, slug text, name text, status text, settings jsonb DEFAULT '{}');
+    INSERT INTO organizations (id,slug,name,status) VALUES (42,'synthetic-42','Synthetic tenant','pending_deletion'),(43,'synthetic-43','Foreign fixture','active');
     CREATE SCHEMA vault;
     CREATE TABLE vault.legal_holds (id serial PRIMARY KEY, organization_id integer, lifted_at timestamptz);
     CREATE ROLE app_service NOLOGIN NOSUPERUSER NOBYPASSRLS;
     SELECT set_config('app.current_user_role','app_super_admin',false);`);
   await db.exec(readFileSync('migrations/20261014_ana_source_read_receipts.sql', 'utf8'));
   await db.exec(readFileSync('migrations/20260813b_tenant_export_receipts.sql', 'utf8'));
+  await db.exec(readFileSync('migrations/20261018_company_document_export_receipts.sql', 'utf8'));
   await seed(ORG); await seed(FOREIGN);
 }, 60_000);
 afterAll(async () => { await db?.close(); });

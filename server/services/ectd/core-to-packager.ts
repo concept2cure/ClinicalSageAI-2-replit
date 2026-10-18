@@ -25,6 +25,7 @@
 import type { EctdLeaf, PackagerInput } from '../submission-gateways/regional-packager';
 import type { Region } from '../submission-gateways/types';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
+import type { LeafSourceIntegrity } from './original-pdf-contract';
 
 /** Core leaf shape (decoupled from the Drizzle row type so this stays pure). */
 export interface CoreLeaf {
@@ -127,6 +128,8 @@ export interface ResolvedFile {
   sha256?: string;
   /** Identity lineage, recorded in the governance manifest — never in the backbone. */
   lineage?: LeafLineage;
+  /** Exact admitted Vault source; registered legal originals must never be normalized. */
+  sourceIntegrity?: LeafSourceIntegrity;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */
@@ -200,6 +203,7 @@ export function mapCoreLeafToEctdLeaf(leaf: CoreLeaf, resolved: ResolvedFile): E
     // that does not match the shipped bytes. When resolved.md5 is absent, leave
     // md5 undefined; the packager computes it from the actual bytes downstream.
     md5: resolved.md5 ?? undefined,
+    ...(resolved.sourceIntegrity ? { sourceIntegrity: resolved.sourceIntegrity } : {}),
     /* The study and the file-tag the leaf names, carried as written. The
        packager's 1789 check reads them (auditStfCoverage), and the STF
        generator writes them; neither is inferred here, so a leaf that names

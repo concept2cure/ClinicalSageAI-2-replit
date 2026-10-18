@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { CompanyDocumentProfile } from '@shared/company-documents';
 import { normalizeTemplateSpec } from '@shared/templates/template-spec';
 
@@ -12,6 +12,7 @@ import { CompanyDocumentSettings } from '../surfaces/CompanyDocumentSettings';
 import { AdminAccess } from '../surfaces/AdminAccess';
 
 const PATH = '/api/client-branding/company-documents';
+const READ_PATH = `${PATH}?includeLegal=false`;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOCUMENT = '22222222-2222-4222-8222-222222222222';
 const profile = (): CompanyDocumentProfile => ({
@@ -25,22 +26,41 @@ let canManage: boolean;
 let writeStatus: number;
 let readStatus: number;
 let searchStatus: number;
+let capabilities: { manageBrand: boolean; manageLegal: boolean; managePermissions: boolean } | undefined;
+let legacyPreview: { available: boolean; sourceHash: string | null; candidate: unknown; warnings: string[] };
+
+function knownRead(url: string): Response | null {
+    if (url === '/api/mdx/admin') return json({ data: { organizationId: 1, kpis: [], members: [{ id: 'u-1', initials: 'OW', name: 'Org Owner', email: 'owner@example.invalid', role: 'Owner', groups: [], sso: '', mfa: true, lastSeen: '', state: 'active' }], roles: [], grants: [], apiKeys: [], audit: [], settings: [], sso: null } });
+    if (url.includes('/claude-connector')) return json({ connector: { enabled: false, canChange: true } });
+    if (url === `${PATH}/legacy-adoption`) return json(legacyPreview);
+    if (url === READ_PATH) return readStatus === 200 ? json({ data: { ...globalThis.structuredClone(stored), legalDocuments: [] }, canManage, capabilities, legalDocumentsIncluded: false }) : json({ message: 'Settings service unavailable.' }, readStatus);
+    if (url.startsWith(`${PATH}/legal-documents?`)) {
+      const data = stored.legalDocuments.filter(document => document.active || url.includes('includeArchived=true'));
+      return json({ data, page: { total: data.length, availableTotal: data.length, limit: 10, offset: 0, hasMore: false, nextOffset: null }, facets: { agencies: [], languages: [] } });
+    }
+    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', version: '2', current: true, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
+  return null;
+}
 
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); stored = profile(); canManage = true; writeStatus = 200; readStatus = 200; searchStatus = 200;
+  capabilities = undefined;
+  legacyPreview = { available: false, sourceHash: null, candidate: null, warnings: [] };
   apiRequest.mockReset(); apiUpload.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
-    if (url === '/api/mdx/admin') return json({ data: { organizationId: 1, kpis: [], members: [{ id: 'u-1', initials: 'OW', name: 'Org Owner', email: 'owner@example.invalid', role: 'Owner', groups: [], sso: '', mfa: true, lastSeen: '', state: 'active' }], roles: [], grants: [], apiKeys: [], audit: [], settings: [], sso: null } });
-    if (url.includes('/claude-connector')) return json({ connector: { enabled: false, canChange: true } });
-    if (url === PATH && method === 'GET') return readStatus === 200 ? json({ data: globalThis.structuredClone(stored), canManage }) : json({ message: 'Settings service unavailable.' }, readStatus);
+    if (method === 'GET') { const response = knownRead(url); if (response) return response; }
+    if (url === `${PATH}/legacy-adoption` && method === 'POST') {
+      stored = { ...stored, ...(legacyPreview.candidate as Partial<CompanyDocumentProfile>), brandingAdopted: true, revision: stored.revision + 1 };
+      return json({ data: globalThis.structuredClone(stored), canManage, capabilities });
+    }
     if (url === PATH && method === 'PUT') {
       if (writeStatus !== 200) return json({ error: writeStatus === 409 ? 'REVISION_CONFLICT' : 'ADMIN_REQUIRED', message: writeStatus === 409 ? 'Revision conflict.' : 'Only an administrator can change company documents.' }, writeStatus);
       const { expectedRevision, ...settings } = body;
       delete settings.reason;
+      delete settings.legacyDecision;
       stored = { ...stored, ...settings, revision: expectedRevision + 1 };
-      return json({ data: globalThis.structuredClone(stored), canManage });
+      return json({ data: globalThis.structuredClone(stored), canManage, capabilities });
     }
-    if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', version: '2', current: true, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
     if (url === `${PATH}/legal-documents` && method === 'POST') {
       stored = { ...stored, revision: stored.revision + 1, legalDocuments: [{ ...body, id: 'entry-1', contentHash: 'abc123', version: '2', active: true, registeredAt: '2026-10-17T00:00:00Z', registeredBy: 'Owner', transmitRefusal: 'The source document requires approval before filing.' }] };
       return json({ data: globalThis.structuredClone(stored), canManage });
@@ -74,7 +94,7 @@ describe('Company document settings', () => {
     const call = apiRequest.mock.calls.find(([method]) => method === 'PUT');
     expect(call?.[2]).toMatchObject({ expectedRevision: 3, reason: 'Update company letterhead', companyName: 'Northwind Life Sciences' });
     expect(call?.[2]).not.toHaveProperty('legalDocuments');
-    expect(apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === PATH)).toHaveLength(2);
+    expect(apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === READ_PATH)).toHaveLength(2);
   });
 
   it('keeps a refused draft and does not announce it saved', async () => {
@@ -100,7 +120,7 @@ describe('Company document settings', () => {
   it('disables management for a reader and shows a failed read as unavailable', async () => {
     canManage = false; await open();
     expect((screen.getByLabelText('Company legal name').closest('fieldset') as InstanceType<typeof window.HTMLFieldSetElement>).disabled).toBe(true);
-    expect(screen.getByText(/Only an organization owner or administrator/)).toBeTruthy();
+    expect(screen.getByText(/Only an organization owner, administrator or assigned company-document custodian/)).toBeTruthy();
     cleanup(); readStatus = 500; render(<CompanyDocumentSettings />);
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.queryByLabelText('Company legal name')).toBeNull();
@@ -132,12 +152,13 @@ describe('Company letterhead and legal library', () => {
     fireEvent.change(screen.getByLabelText('Search your accessible Vaults'), { target: { value: 'Authorization' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search Vault' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Select document' }));
-    fireEvent.change(screen.getByLabelText('Agencies · comma separated'), { target: { value: 'fda, ema' } });
+    fireEvent.click(within(screen.getByRole('group', { name: 'Agencies' })).getByLabelText('FDA'));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Agencies' })).getByLabelText('EMA'));
     fireEvent.change(screen.getByLabelText('Reason for legal document registration'), { target: { value: 'Register signed sponsor authorization' } });
     fireEvent.click(screen.getByRole('button', { name: 'Register Vault version' }));
     expect(await screen.findByText('The source document requires approval before filing.')).toBeTruthy();
     const call = apiRequest.mock.calls.find(([m, p]) => m === 'POST' && p === `${PATH}/legal-documents`);
-    expect(call?.[2]).toMatchObject({ expectedRevision: 3, programId: PROGRAM, vaultDocumentId: DOCUMENT, agencies: ['fda', 'ema'], title: 'Authorization original' });
+    expect(call?.[2]).toMatchObject({ expectedRevision: 3, programId: PROGRAM, vaultDocumentId: DOCUMENT, agencies: ['FDA', 'EMA'], title: 'Authorization original' });
     expect(call?.[2]).not.toHaveProperty('contentHash'); expect(call?.[2]).not.toHaveProperty('transmitRefusal');
     expect(screen.getByText(/Registration does not approve or sign/)).toBeTruthy();
   });
@@ -147,7 +168,7 @@ describe('Company letterhead and legal library', () => {
     fireEvent.click(screen.getByText('Register a legal document from Vault'));
     fireEvent.change(screen.getByLabelText('Search your accessible Vaults'), { target: { value: 'Authorization' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search Vault' }));
-    expect(await screen.findByText(/Vault search could not be read/)).toBeTruthy();
+    expect(await screen.findByText('Search service unavailable.')).toBeTruthy();
     expect(screen.queryByText('No matching documents in your accessible projects.')).toBeNull();
   });
 
@@ -191,5 +212,56 @@ describe('Company letterhead and legal library', () => {
     expect((screen.getByLabelText('Show archived library entries') as HTMLInputElement).checked).toBe(false);
     expect((screen.getByLabelText('Reason for legal document registration') as HTMLInputElement).value).toBe('');
     expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toHaveLength(0);
+  });
+});
+
+describe('Delegated company capabilities and legacy adoption', () => {
+  it('lets a delegated brand manager edit stationery without legal management controls', async () => {
+    canManage = false; capabilities = { manageBrand: true, manageLegal: false, managePermissions: false };
+    await open();
+    expect((screen.getByLabelText('Company legal name').closest('fieldset') as InstanceType<typeof window.HTMLFieldSetElement>).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Legal document library' }));
+    expect(screen.queryByText('Register a legal document from Vault')).toBeNull();
+  });
+
+  it('lets a delegated legal custodian register originals while company presentation stays read-only', async () => {
+    canManage = false; capabilities = { manageBrand: false, manageLegal: true, managePermissions: false };
+    await open();
+    expect((screen.getByLabelText('Company legal name').closest('fieldset') as InstanceType<typeof window.HTMLFieldSetElement>).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Legal document library' }));
+    expect(screen.getByText('Register a legal document from Vault')).toBeTruthy();
+  });
+
+  it('previews old assets without adopting until an explicit reasoned action', async () => {
+    legacyPreview = { available: true, sourceHash: 'legacy-source-hash', warnings: ['Review extracted fonts.'], candidate: { companyName: 'Legacy Company', address: 'Legacy office', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: 'Legacy branding' } };
+    await open();
+    expect(await screen.findByText('Existing company branding was found')).toBeTruthy();
+    expect((screen.getByLabelText('Company legal name') as HTMLInputElement).value).toBe('Northwind Pharma');
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('Reason for legacy branding adoption'), { target: { value: 'Preserve reviewed existing stationery' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adopt reviewed legacy branding' }));
+    await screen.findByDisplayValue('Legacy Company');
+    expect(apiRequest).toHaveBeenCalledWith('POST', `${PATH}/legacy-adoption`, { expectedRevision: 3, sourceHash: 'legacy-source-hash', reason: 'Preserve reviewed existing stationery' });
+  });
+
+  it('carries an explicit replacement decision only when the user selects it', async () => {
+    legacyPreview = { available: true, sourceHash: 'legacy-hash', candidate: null, warnings: ['The old artwork needs manual review.'] };
+    await open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Use my current design instead' }));
+    fireEvent.change(screen.getByLabelText('Reason for company document change'), { target: { value: 'Replace obsolete stationery after review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save company documents' }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([method]) => method === 'PUT')).toBe(true));
+    expect(apiRequest.mock.calls.find(([method]) => method === 'PUT')?.[2]).toMatchObject({ legacyDecision: 'replace', reason: 'Replace obsolete stationery after review' });
+  });
+});
+
+describe('Legal library lifecycle refusal summaries', () => {
+  it('shows a recorded revocation even while the immutable source still has current Vault approval', async () => {
+    stored.legalDocuments = [{ id: 'revoked-entry', title: 'Revoked authorization', kind: 'authorization', programId: PROGRAM, vaultDocumentId: DOCUMENT, contentHash: 'a'.repeat(64), version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en', effectiveOn: null, expiresOn: null, active: true, registeredAt: '2026-10-17', registeredBy: 'Owner', transmitRefusal: null,
+      workflow: { custodianUserId: null, reminderDays: [], replacementId: null, revokedAt: '2026-10-18T00:00:00Z', revokedBy: 'Owner', revocationReason: 'Authority withdrawn', authority: null, signatureEvidence: null, translationOfId: null, certifiedTranslationEvidence: null, updatedAt: '2026-10-18T00:00:00Z', updatedBy: 'Owner' } }];
+    await open(); fireEvent.click(screen.getByRole('button', { name: 'Legal document library' }));
+    expect(await screen.findByText('This company legal document has been revoked.')).toBeTruthy();
+    expect(screen.queryByText(/Current Vault approval verified/)).toBeNull();
+    expect(screen.queryByText(/No legal documents are available/)).toBeNull();
   });
 });

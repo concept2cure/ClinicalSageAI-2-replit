@@ -5,7 +5,7 @@
  * finalizeLeafBytes discarded, so a secured leaf shipped indistinguishable
  * from any other unconverted PDF.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -13,9 +13,11 @@ import { createHash } from 'crypto';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { computeLifecycleOperations } from '../../ectd/lifecycle-operator';
 import { computeSequencePrefix } from '../../ectd/sequence-manifest';
+import { plainPdfFixture } from '../../ectd/__tests__/support/signed-pdf-fixture';
 
 const md5 = (b: Buffer) => createHash('md5').update(b).digest('hex');
-const plainPdf = Buffer.from('%PDF-1.4\n% plain\ntrailer<< /Root 1 0 R >>\n%%EOF\n', 'utf8');
+let plainPdf: Buffer;
+beforeAll(async () => { plainPdf = await plainPdfFixture('Plain PDF'); });
 const securedPdf = Buffer.from('%PDF-1.4\n% secured\ntrailer<< /Root 1 0 R /Encrypt 5 0 R >>\n%%EOF\n', 'utf8');
 
 async function packageWith(work: string, leaves: Array<{ fileName: string; bytes: Buffer; ctdSection: string; title: string }>) {

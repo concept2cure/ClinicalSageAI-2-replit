@@ -48,6 +48,7 @@ import {
 } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { readCompanyLegalSubmissionContext } from './company-legal-context';
+import { requireStoredCompanyLegalRequirements } from '../company-documents/stored-legal-readiness';
 
 const logger = createScopedLogger('assemble-from-core');
 
@@ -243,6 +244,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
 
   // 1. Tenant-scoped leaves for this sequence. See readSequenceLeaves.
   const leaves = await readSequenceLeaves(sequenceId, organizationId);
+  await requireStoredCompanyLegalRequirements(queryableFromDrizzle(db), { organizationId, sequenceId });
 
   // 2. Materialize every leaf's source document to a deterministic PDF, keyed by
   //    table:id. Every locally-renderable table (coauthor_documents,
@@ -362,12 +364,13 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
         dryRun,
         hashPolicy:
           'md5 = eCTD index (agency requirement), recorded here over the SHIPPED leaf bytes; ' +
-          'sha256 = package governance, package-level only (leaves are normalized to PDF/A after staging)',
+          'sha256 = package governance, with source/shipped SHA-256 proof for preserved legal or signed originals; other leaves may be normalized to PDF/A after staging',
         packageSha256: result.bundle.sha256,
         leaves: (result.bundle.leafManifest ?? []).map((l) => ({
           fileName: l.fileName,
           href: l.href,
           md5: l.md5,
+          ...(l.originalPdfProof ? { originalPdfProof: l.originalPdfProof } : {}),
         })),
         // Where each staged source came from, by identity (the document alias
         // map) — the lineage a filed snapshot used to carry only as prose.
@@ -379,6 +382,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
           key,
           stagedFileName: f.fileName,
           lineage: f.lineage ?? null,
+          ...(f.sourceIntegrity ? { sourceIntegrity: f.sourceIntegrity } : {}),
         })),
       },
       null,

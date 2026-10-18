@@ -15,6 +15,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { plainPdfFixture as pdf } from '../../ectd/__tests__/support/signed-pdf-fixture';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { computeLifecycleOperations } from '../../ectd/lifecycle-operator';
 import {
@@ -23,9 +24,6 @@ import {
   computeSequencePrefix,
 } from '../../ectd/sequence-manifest';
 
-function pdf(label: string): Buffer {
-  return Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
-}
 const md5 = (b: Buffer) => createHash('md5').update(b).digest('hex');
 
 describe('lifecycle packaging — manifest → operator → canonical packager', () => {
@@ -33,8 +31,8 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-lifecycle-'));
     try {
       // --- New sequence (0001) content on disk: a changed doc + a brand-new doc.
-      const generalBytes = pdf('general v2'); // replaces the prior general
-      const newDocBytes = pdf('brand new stability doc');
+      const generalBytes = await pdf('general v2'); // replaces the prior general
+      const newDocBytes = await pdf('brand new stability doc');
       const generalPath = path.join(work, 'general.pdf');
       const newDocPath = path.join(work, 'stability.pdf');
       await fs.writeFile(generalPath, generalBytes);
@@ -143,8 +141,9 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     try {
       const write = async (name: string, body: string) => {
         const p = path.join(work, name);
-        await fs.writeFile(p, pdf(body));
-        return { p, bytes: pdf(body) };
+        const bytes = await pdf(body);
+        await fs.writeFile(p, bytes);
+        return { p, bytes };
       };
       const coverV1 = await write('cover-v1.pdf', 'cover v1');
       const overviewV1 = await write('overview-v1.pdf', 'overview v1');
@@ -217,7 +216,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-manifest-'));
     try {
       const docPath = path.join(work, 'general.pdf');
-      await fs.writeFile(docPath, pdf('general'));
+      await fs.writeFile(docPath, await pdf('general'));
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
         sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
@@ -230,7 +229,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         skipPdfaConversion: true,
         leaves: [{
           ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
-          title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+          title: 'Drug Substance — General Information', md5: md5(await pdf('general')),
         }],
       });
       // The packager exposes the shipped leaf's section + final href + md5.
@@ -239,11 +238,11 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const entry = leafManifest.find((l) => l.ctdSection === '3.2.S.1')!;
       expect(entry).toBeTruthy();
       expect(entry.href).toMatch(/^m3\/.+general\.pdf$/);
-      expect(entry.md5).toBe(md5(pdf('general')));
+      expect(entry.md5).toBe(md5(await pdf('general')));
       // Round-trips: this is exactly what ectd-compile persists as leaf_manifest,
       // and what the NEXT sequence loads to compute replace/append/delete.
       const priors = manifestToPriorLeaves(buildLeafManifest(leafManifest));
-      expect(priors.find((p) => p.ctdSection === '3.2.S.1')?.md5).toBe(md5(pdf('general')));
+      expect(priors.find((p) => p.ctdSection === '3.2.S.1')?.md5).toBe(md5(await pdf('general')));
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
@@ -252,7 +251,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
   it('hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-md5-'));
     try {
-      const bytes = pdf('the real content that ships');
+      const bytes = await pdf('the real content that ships');
       const docPath = path.join(work, 'general.pdf');
       await fs.writeFile(docPath, bytes);
       const bundle = await packageEctdSubmission({
@@ -283,7 +282,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-rootmd5-'));
     try {
       const docPath = path.join(work, 'general.pdf');
-      await fs.writeFile(docPath, pdf('general'));
+      await fs.writeFile(docPath, await pdf('general'));
       const bundle = await packageEctdSubmission({
         region: 'fda',
         applicationId: 'IND000001',
@@ -297,7 +296,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         leaves: [
           {
             ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
-            title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+            title: 'Drug Substance — General Information', md5: md5(await pdf('general')),
           },
         ],
       });
@@ -354,8 +353,8 @@ describe('package layout — Module 1 leaves reach the regional backbone', () =>
   it('ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-m1-layout-'));
     try {
-      const formBytes = pdf('FDA 1571, signed');
-      const specBytes = pdf('impurities specification');
+      const formBytes = await pdf('FDA 1571, signed');
+      const specBytes = await pdf('impurities specification');
       const formPath = path.join(work, 'form-fda-1571.pdf');
       const specPath = path.join(work, 'impurities.pdf');
       await fs.writeFile(formPath, formBytes);

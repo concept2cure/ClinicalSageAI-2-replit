@@ -41,10 +41,12 @@
  * @module server/services/tenant-export/tenant-full-export
  */
 
-import crypto from 'node:crypto';
 import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
+import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
+  validCompanyDocumentsExportDescriptor, type CompanyDocumentsExportDescriptor, type CompanyDocumentsExportEnvelope, type CompanyDocumentsExportRow } from './company-document-envelope';
+export { canonicalize, digestOf } from './canonical-json';
 
 const logger = createScopedLogger('tenant-full-export');
 
@@ -209,6 +211,7 @@ export interface TenantFullExport {
   schemaVersion: '2.0';
   exportedAt: string;
   organization: { id: number; slug: string; name: string; status: string };
+  companyDocuments?: CompanyDocumentsExportEnvelope;
   coverage: {
     tablesDiscovered: number;
     tablesExported: number;
@@ -216,6 +219,7 @@ export interface TenantFullExport {
     tablesFailed: Array<{ table: string; error: string }>;
     totalRows: number;
     truncatedTables: string[];
+    companyDocuments?: CompanyDocumentsExportDescriptor;
   };
   tables: ExportedTable[];
 }
@@ -282,19 +286,6 @@ export async function discoverTenantTables(
  * digests differently between Node versions or driver upgrades, and a receipt
  * stops matching for reasons that have nothing to do with the tenant.
  */
-export function canonicalize(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
-  if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalize(v)}`).join(',')}}`;
-}
-
-export function digestOf(payload: unknown): string {
-  return `sha256:${crypto.createHash('sha256').update(canonicalize(payload)).digest('hex')}`;
-}
-
 /**
  * Dump every tenant-owned row for one organization.
  *
@@ -307,15 +298,17 @@ export async function exportTenantFull(
   client: Pool | PoolClient,
   organizationId: number
 ): Promise<TenantFullExport> {
-  const orgResult = await client.query<{
+  const orgResult = await client.query<CompanyDocumentsExportRow & {
     id: number;
     slug: string;
     name: string;
     status: string;
-  }>(`SELECT id, slug, name, status FROM organizations WHERE id = $1 LIMIT 1`, [organizationId]);
+  }>(`SELECT o.id, o.slug, o.name, o.status, ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id = $1 LIMIT 1`, [organizationId]);
   if (orgResult.rows.length === 0) {
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }
+  const org = orgResult.rows[0];
+  const companyDocuments = await readCompanyDocumentsExportEnvelope(client, organizationId, org);
 
   const discovered = await discoverTenantTables(client);
   const tables: ExportedTable[] = [];
@@ -374,7 +367,8 @@ export async function exportTenantFull(
   return {
     schemaVersion: '2.0',
     exportedAt: new Date().toISOString(),
-    organization: orgResult.rows[0],
+    organization: { id: org.id, slug: org.slug, name: org.name, status: org.status },
+    companyDocuments,
     coverage: {
       tablesDiscovered: discovered.length,
       tablesExported: tables.length,
@@ -382,6 +376,7 @@ export async function exportTenantFull(
       tablesFailed,
       totalRows,
       truncatedTables,
+      companyDocuments: companyDocumentsExportDescriptor(companyDocuments),
     },
     tables,
   };
@@ -394,6 +389,8 @@ export interface ExportReceipt {
   rowCount: number;
   createdAt: Date;
   createdBy: number | null;
+  companyDocumentsVersion?: number | null;
+  companyDocumentsSha256?: string | null;
 }
 
 /**
@@ -445,11 +442,14 @@ export async function recordExportReceipt(
     coverage: {
       tablesFailed: ReadonlyArray<{ table: string } | string>;
       truncatedTables: ReadonlyArray<string>;
+      companyDocuments?: CompanyDocumentsExportDescriptor;
     };
   }
 ): Promise<ExportReceiptOutcome> {
   const tablesFailed = params.coverage.tablesFailed.map((t) => (typeof t === 'string' ? t : t.table));
   const truncatedTables = [...params.coverage.truncatedTables];
+  const companyDocuments = params.coverage.companyDocuments;
+  if (companyDocuments !== undefined && !validCompanyDocumentsExportDescriptor(companyDocuments)) tablesFailed.push('organizations.companyDocuments');
   if (tablesFailed.length > 0 || truncatedTables.length > 0) {
     // No receipt: this digest must not open a purge (tenant-purge.dbtest.ts).
     logger.warn('Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge', {
@@ -463,8 +463,8 @@ export async function recordExportReceipt(
   try {
     const res = await client.query(
       `INSERT INTO tenant_export_receipts
-         (organization_id, digest, table_count, row_count, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+         (organization_id, digest, table_count, row_count, created_by, company_documents_version, company_documents_sha256)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (organization_id, digest) DO NOTHING`,
       [
         params.organizationId,
@@ -472,6 +472,8 @@ export async function recordExportReceipt(
         params.tableCount,
         params.rowCount,
         params.createdBy,
+        companyDocuments?.schemaVersion ?? null,
+        companyDocuments?.sha256 ?? null,
       ]
     );
     // A conflict wrote nothing and is still a receipt-backed digest.
@@ -498,8 +500,10 @@ export async function findExportReceipt(
   opts: { hold?: boolean } = {}
 ): Promise<ExportReceipt | null> {
   const { rows } = await client.query(
-    `SELECT organization_id, digest, table_count, row_count, created_at, created_by
-       FROM tenant_export_receipts
+    `SELECT organization_id, digest, table_count, row_count, created_at, created_by,
+            to_jsonb(r)->'company_documents_version' AS company_documents_version,
+            to_jsonb(r)->>'company_documents_sha256' AS company_documents_sha256
+       FROM tenant_export_receipts r
       WHERE organization_id = $1 AND digest = $2
       LIMIT 1${opts.hold ? ' FOR SHARE' : ''}`,
     [organizationId, digest]
@@ -513,5 +517,7 @@ export async function findExportReceipt(
     rowCount: r.row_count,
     createdAt: r.created_at,
     createdBy: r.created_by,
+    companyDocumentsVersion: r.company_documents_version ?? null,
+    companyDocumentsSha256: r.company_documents_sha256 ?? null,
   };
 }

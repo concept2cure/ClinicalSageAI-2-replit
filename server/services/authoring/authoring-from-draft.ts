@@ -30,6 +30,7 @@ import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImport
 import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
 import { workflowCopySectionContent } from './workflow-copy-content';
+import type { CompanyCorrespondenceOrigin } from '../../../shared/company-correspondence';
 import {
   grantCreatorOwnership,
   insertDocumentTx,
@@ -52,6 +53,8 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 
 /** What `authoring_documents.provenance` holds (migrations/20260921_authoring_document_provenance.sql). */
 export interface DocumentProvenance {
+  /** Admitted filing and immutable company revision; HTTP provenance cannot supply it. */
+  companyCorrespondence?: CompanyCorrespondenceOrigin;
   /** Server-verified original for a source pulled into the one editor. HTTP
    * draft provenance cannot supply this field. The original remains intact. */
   importSource?: AuthoringImportOrigin & { warnings: string[]; reason: string };
@@ -132,7 +135,7 @@ export interface DocumentProvenance {
   recordedAt: string;
 }
 
-export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource'>;
+export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource' | 'companyCorrespondence'>;
 
 /* `model` is NOT here, and that is the point of round 15's change at this door:
    a caller cannot name the model that wrote the draft. It is dropped like any
@@ -359,6 +362,8 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 }
 
 export interface CreateDocumentFromDraftOptions {
+  /** Server-only filing receipt, reverified inside the canonical create transaction. */
+  companyCorrespondence?: { origin: CompanyCorrespondenceOrigin; reserve: (q: Queryable) => Promise<void> };
   /** Internal verified source receipt; public provenance parsing drops it. */
   verifiedImport?: { origin: AuthoringImportOrigin; warnings: string[]; reason: string; reserve: (q: Queryable) => Promise<void>; forceUnbound?: true };
   /** Internal: the reason a person stated for a governed AnA save (save_document_to_vault).
@@ -405,6 +410,20 @@ function draftRowSpec(docId: string, input: CreateDocumentFromDraftInput, bindin
 
 function draftProvenance(value: ProvenanceInput, input: CreateDocumentFromDraftInput, workflowImport: WorkflowImportOrigin | null): DocumentProvenance {
   return { ...value, ...(input.module || workflowImport ? {} : { moduleDefaulted: true }), recordedAt: new Date().toISOString() };
+}
+async function draftBinding(ctx: CreateContext, input: CreateDocumentFromDraftInput, options?: CreateDocumentFromDraftOptions): Promise<Binding> {
+  return options?.verifiedImport?.forceUnbound || options?.companyCorrespondence
+    ? { documentId: null, reason: `${options?.companyCorrespondence ? 'Correspondence' : 'Workflow'} working copy; filing requires an explicit governed action.` }
+    : resolveBinding(ctx.pool, ctx.tenantId, input.programId);
+}
+async function reserveCorrespondence(q: Queryable, ctx: CreateContext, input: CreateDocumentFromDraftInput,
+  provenance: DocumentProvenance, options?: CreateDocumentFromDraftOptions) {
+  if (!options?.companyCorrespondence) return;
+  await options.companyCorrespondence.reserve(q);
+  if (options.companyCorrespondence.origin.organizationId !== ctx.tenantId || options.companyCorrespondence.origin.programId !== input.programId) {
+    throw new Error('Correspondence origin does not match the admitted authoring project');
+  }
+  provenance.companyCorrespondence = globalThis.structuredClone(options.companyCorrespondence.origin);
 }
 
 export async function createDocumentFromDraft(
@@ -458,9 +477,7 @@ export async function createDocumentFromDraft(
   // The same binding rule as POST /docs: the project's filing keeps one editing
   // copy; every further document is created in the project unbound, with the
   // reason stated — so AnA can draft several documents into one program.
-  const resolvedBinding = options?.verifiedImport?.forceUnbound
-    ? { documentId: null, reason: 'Workflow working copy; filing requires an explicit governed action.' }
-    : await resolveBinding(ctx.pool, ctx.tenantId, input.programId);
+  const resolvedBinding = await draftBinding(ctx, input, options);
 
   const inserted = await insertDocumentTx(
     ctx,
@@ -468,6 +485,7 @@ export async function createDocumentFromDraft(
     draftedSectionSeeds(input, storedContent, provenance, options, workflowImport),
     async client => {
       await authorizeAuthoringProgram(client, { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId });
+      await reserveCorrespondence(client, ctx, input, provenance, options);
       await verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance);
       if (options?.verifiedImport) {
         if (provenance.source !== 'import') throw new Error('Verified import requires import provenance');

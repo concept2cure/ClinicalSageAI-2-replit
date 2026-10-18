@@ -9,6 +9,9 @@ const apiRequest = vi.hoisted(() => vi.fn());
 const downloadBlob = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 vi.mock('../download', async original => ({ ...(await original<typeof import('../download')>()), downloadBlob }));
+vi.mock('../surfaces/CompanyFilingIdentityReview', () => ({ CompanyFilingIdentityReview: () => null }));
+vi.mock('../surfaces/CompanyCorrespondenceVariants', () => ({ CompanyCorrespondenceVariants: () => null }));
+vi.mock('../surfaces/company-documents/CompanyLegalReadiness', () => ({ CompanyLegalReadiness: () => null }));
 import { CompanySubmissionDocuments } from '../surfaces/CompanySubmissionDocuments';
 
 const PATH = '/api/client-branding/company-documents';
@@ -34,7 +37,14 @@ beforeEach(() => {
   profile = { canManage: true, data: { version: 1, revision: 2, companyName: 'Sponsor', address: '', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [document()] } };
   actionBody = { id: 10, sequenceId: 7, sectionCode: '1.2', lifecycleOp: 'new', documentTable: 'vault_documents', documentUuid: SOURCE, auditTrail: { persisted: true, chained: true } };
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === PATH) return readStatus === 200 ? json(profile) : json({ message: 'The library is unavailable.' }, readStatus);
+    if (method === 'GET' && url === `${PATH}?includeLegal=false`) return readStatus === 200 ? json({ ...profile, legalDocumentsIncluded: false, data: { ...profile.data, legalDocuments: [] } }) : json({ message: 'The library is unavailable.' }, readStatus);
+    if (method === 'GET' && url.startsWith(`${PATH}/legal-documents?`)) {
+      const params = new URL(url, 'https://example.test').searchParams;
+      const matches = profile.data.legalDocuments.filter(document => document.active && (!params.get('programId') || document.programId === params.get('programId'))
+        && document.title.toLowerCase().includes((params.get('q') ?? '').toLowerCase()));
+      const offset = Number(params.get('offset') ?? 0), limit = Number(params.get('limit') ?? 25);
+      return json({ data: matches.slice(offset, offset + limit), page: { total: matches.length, availableTotal: matches.length, offset, limit, hasMore: offset + limit < matches.length, nextOffset: offset + limit < matches.length ? offset + limit : null }, facets: { agencies: [], languages: [] } });
+    }
     if (url === `${PATH}/letterhead/render`) return templateStatus === 200 ? new Response('word-template', { headers: { 'content-type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' } }) : json({ message: 'The template export could not be recorded.' }, templateStatus);
     return json(actionBody, actionStatus);
   });
@@ -56,7 +66,7 @@ describe('Submission company legal documents', () => {
     await open();
     fireEvent.click(screen.getByRole('button', { name: 'Download correspondence Word template' }));
     await waitFor(() => expect(downloadBlob).toHaveBeenCalledWith('Oncology_IND-correspondence.docx', expect.objectContaining({ size: 13, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })));
-    expect(apiRequest).toHaveBeenCalledWith('POST', `${PATH}/letterhead/render`, { purpose: 'submission', title: 'Oncology IND — correspondence' });
+    expect(apiRequest).toHaveBeenCalledWith('POST', `${PATH}/letterhead/render`, { purpose: 'submission', sequenceId: 7, title: 'Oncology IND — correspondence' });
     expect(await screen.findByText(/Correspondence Word template downloaded using the saved company presentation preference/)).toBeTruthy();
     expect(onDone).not.toHaveBeenCalled();
     expect(apiRequest.mock.calls.some(([, url]) => String(url).endsWith('/place'))).toBe(false);
@@ -113,7 +123,10 @@ describe('Submission company legal documents', () => {
   it('reports the copied-but-unregistered outcome without transferring approval or placing it', async () => {
     profile.data.legalDocuments = [document({ programId: OTHER })];
     actionBody = { document: { id: 'new-copy' }, registered: false, reviewRequired: true, message: 'The bytes were copied, but library registration was not confirmed. Review and register the new version in Vault.' };
-    fireEvent.click(await open());
+    render(<CompanySubmissionDocuments seq={seq} submission={submission} onDone={onDone} />);
+    await screen.findByText('No matching documents');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include other accessible projects for copying' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Sponsor authorization' }));
     fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: 'Reuse original in target program' } });
     fireEvent.click(screen.getByRole('button', { name: 'Copy original to this project for review' }));
     expect(await screen.findByText('The bytes were copied, but library registration was not confirmed. Review and register the new version in Vault.')).toBeTruthy();
@@ -128,6 +141,21 @@ describe('Submission company legal documents', () => {
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByText(/No active company legal documents/)).toBeNull();
+  });
+
+  it('loads a bounded inventory page and searches across later registered versions', async () => {
+    profile.data.legalDocuments = Array.from({ length: 30 }, (_, index) => document({ id: `legal-${index}`, title: `Authorization ${index}` }));
+    render(<CompanySubmissionDocuments seq={seq} submission={submission} onDone={onDone} />);
+    await screen.findByText('1–25 of 30 matching documents');
+    expect(screen.queryByRole('radio', { name: 'Authorization 29' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Next legal documents' }));
+    await screen.findByText('26–30 of 30 matching documents');
+    expect(screen.getByRole('radio', { name: 'Authorization 29' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Search company legal documents'), { target: { value: 'Authorization 29' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Search legal inventory' }));
+    await screen.findByText('1–1 of 1 matching documents');
+    expect(screen.queryByRole('radio', { name: 'Authorization 28' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && String(url).includes('q=Authorization+29') && String(url).includes(`programId=${PROGRAM}`))).toBe(true);
   });
 
   it('ignores a late library response after switching sequence context', async () => {

@@ -15,6 +15,7 @@
  */
 
 import type { Pool, PoolClient } from 'pg';
+import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, type CompanyDocumentsExportEnvelope, type CompanyDocumentsExportRow } from './company-document-envelope';
 
 export interface TenantExportManifest {
   schemaVersion: '1.1';
@@ -46,6 +47,7 @@ export interface TenantExportManifest {
     name: string;
     status: string;
   };
+  companyDocuments?: CompanyDocumentsExportEnvelope;
   counts: {
     programs: number;
     qSubmissions: number;
@@ -106,13 +108,13 @@ export async function exportTenantData(
   client: Pool | PoolClient,
   organizationId: number,
 ): Promise<TenantExportManifest> {
-  const orgResult = await client.query<{
+  const orgResult = await client.query<CompanyDocumentsExportRow & {
     id: number;
     slug: string;
     name: string;
     status: string;
   }>(
-    `SELECT id, slug, name, status FROM organizations WHERE id = $1 LIMIT 1`,
+    `SELECT o.id, o.slug, o.name, o.status, ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id = $1 LIMIT 1`,
     [organizationId],
   );
   if (orgResult.rows.length === 0) {
@@ -257,7 +259,8 @@ export async function exportTenantData(
     schemaVersion: '1.1',
     exportedAt: new Date().toISOString(),
     readFailures,
-    organization: org,
+    organization: { id: org.id, slug: org.slug, name: org.name, status: org.status },
+    companyDocuments: await readCompanyDocumentsExportEnvelope(client, organizationId, org),
     counts: {
       programs: programs.length,
       qSubmissions: qSubmissions.length,

@@ -14,12 +14,18 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
 import { readFileSync, promises as fs } from 'fs';
 import JSZip from 'jszip';
+import { plainPdfFixture } from './support/signed-pdf-fixture';
+import { syncCompanyLegalRegistry } from '../../company-documents/legal-registry';
+import type { CompanyLegalDocument } from '../../../../shared/company-documents';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; }, pool: { query: async () => ({ rows: [] }) } }));
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
-const PDF = Buffer.from('%PDF-1.4\n% clinical study report\ntrailer<< /Root 1 0 R >>\n%%EOF\n');
+let PDF: Buffer;
+vi.mock('../pdfa-pipeline', () => ({ finalizePdfA: vi.fn(async (bytes: Uint8Array) => ({
+  pdfBytes: Buffer.concat([Buffer.from(bytes), Buffer.from('\n% toolchain converted')]), converted: true, pdfaPart: '1', warnings: [],
+})) }));
 vi.mock('../../storage', () => ({
   ...(() => {
     const testProvider = {
@@ -37,6 +43,7 @@ vi.mock('../../storage', () => ({
 }));
 
 import { assembleSequence, assembledTransmitBlockers } from '../assemble-from-core';
+import { finalizePdfA } from '../pdfa-pipeline';
 
 let harness: IndPgliteDb;
 const ORG = 7;
@@ -45,11 +52,12 @@ const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const VAULT_DOC = '33333333-3333-4333-8333-333333333333';
 
 beforeAll(async () => {
+  PDF = await plainPdfFixture('Clinical study report');
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
-    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}'::jsonb);
+    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, name TEXT NOT NULL DEFAULT 'Sponsor organization', settings JSONB NOT NULL DEFAULT '{}'::jsonb);
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT,
@@ -90,6 +98,9 @@ beforeAll(async () => {
   `);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+    CREATE TABLE IF NOT EXISTS vault.legal_holds (organization_id INTEGER, lifted_at TIMESTAMPTZ);`);
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
   await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
 });
 
@@ -125,6 +136,32 @@ describe('assembleSequence — vault leaf by uuid, and what transmit must refuse
       expect(blockers[0]).toMatch(/1 leaf document\(s\) are not approved \(2\.5: draft\)/);
     } finally {
       await r.cleanup();
+    }
+  });
+
+  it('derives registered legal identity from the canonical tenant registry and preserves its exact source in the final ZIP and governance proof', async () => {
+    const hash = createHash('sha256').update(PDF).digest('hex');
+    const document: CompanyLegalDocument = { id: 'legal-source', title: 'Sponsor authorization', kind: 'authorization',
+      vaultDocumentId: VAULT_DOC, programId: PROGRAM, contentHash: hash, version: '1', active: true,
+      agencies: ['FDA'], countries: ['US'], submissionTypes: ['ind'], language: 'en', effectiveOn: null, expiresOn: null,
+      registeredAt: '2026-10-01T00:00:00Z', registeredBy: String(USER) };
+    await syncCompanyLegalRegistry(harness.pglite, ORG, [], [document]);
+    vi.mocked(finalizePdfA).mockClear();
+    const result = await assembleSequence({ sequenceId: 1, organizationId: ORG, userId: USER,
+      applicationId: 'IND-123456', sponsorId: 'S', sponsorName: 'S' });
+    try {
+      const entry = result.bundle.leafManifest!.find(leaf => leaf.originalPdfProof);
+      expect(entry?.originalPdfProof).toMatchObject({ sourceSha256: hash, shippedSha256: hash, reasons: ['registered-legal'],
+        registeredLegalOriginals: [{ registryId: 'legal-source', programId: PROGRAM, version: '1', contentHash: hash }] });
+      const zip = await JSZip.loadAsync(await fs.readFile(result.bundle.path));
+      expect(await zip.file(entry!.href)!.async('nodebuffer')).toEqual(PDF);
+      expect(vi.mocked(finalizePdfA).mock.calls.some(([bytes]) =>
+        Buffer.from(bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes).equals(PDF))).toBe(false);
+      const governance = JSON.parse(await fs.readFile(result.governanceManifestPath, 'utf8'));
+      expect(governance.leaves.find((leaf: { href: string }) => leaf.href === entry!.href).originalPdfProof).toEqual(entry!.originalPdfProof);
+    } finally {
+      await result.cleanup();
+      await harness.pglite.exec("TRUNCATE company_legal_registry");
     }
   });
 });

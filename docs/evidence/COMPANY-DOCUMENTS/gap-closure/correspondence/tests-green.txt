@@ -1,0 +1,135 @@
+Selected final Vitest output; canonical creator, filing, Word artifacts, communication links and UI boundaries.
+Node 22.23.3. All test seams are described in their source files; this is not real agency transmission evidence.
+
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > retains server-only correspondence origin in the canonical draft and genesis audit, without binding the dossier 89ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > writes no draft when correspondence admission fails inside the canonical create transaction 19ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > drops public caller assertions of correspondence origin 98ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > evicts without rollback/retry when before-commit cannot be confirmed 40ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > evicts without rollback/retry when after-commit cannot be confirmed 36ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > retains confirmed identity without private content after readback failure 41ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > retains confirmed identity without private content after revoked failure 37ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > retains confirmed identity without private content after revoked-during-read failure 39ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > draft_authoring_document carries actual creation identity after after-commit without content or retry 61ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > draft_authoring_document carries actual creation identity after readback without content or retry 43ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > save_document_to_vault carries actual creation identity after after-commit without content or retry 35ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > save_document_to_vault carries actual creation identity after readback without content or retry 38ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > /docs returns 503 and real recovery IDs after a committed lost reply 16ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > /docs/from-draft returns 503 and real recovery IDs after a committed lost reply 30ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > rolls back pre-commit failures and discards on rollback failure: false 3ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > rolls back pre-commit failures and discards on rollback failure: true 2ms
+ ✓ server/services/authoring/__tests__/authoring-create-outcome.test.ts > canonical authoring creation recovery > confirmed creation returns the canonical saved record and audited section 35ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > project-bound communication legal inventory > derives the program from the admitted communication project before inventory counts and pages 1202ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > project-bound communication legal inventory > rejects caller-supplied program identity instead of accepting a different picker scope 127ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > project-bound communication legal inventory > returns no inventory when the project relationship changes during the read 107ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > parses project ids with and without the proj_ prefix 128ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > helpers the dead module duplicated > applies visibility-tier gating by role 84ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > lists the project's items with the lifecycle states in meta 98ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > GET /projects/:projectId/submission-center/items > fails closed with 503 naming the missing table, and reads nothing 97ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > refuses caller-authored legal-version snapshots through generic handoff metadata 109ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > refuses an illegal transition with 400 and writes nothing 112ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > 404s an item that is not in this org and project 108ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > PATCH /projects/:projectId/submission-center/items/:itemId/status > applies a legal transition, audits it, and notifies through the one writer only past ready_for_publish 111ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > program UUID communication routing > admits the UUID on the actual request executor before applying the numeric policy 102ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > program UUID communication routing > supplies no communication content when the current private program is refused 117ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > program UUID communication routing > refuses revoked private-program access before any content read 133ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > program UUID communication routing > resolves only through the current organisation anchor 121ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > program UUID communication routing > rejects a program without an anchor and propagates lookup failures 121ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — a linked data-room letter > refuses a cre_source that is not this organisation's source in this project, and writes nothing 120ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — a linked data-room letter > refuses a malformed cre_source reference without looking anything up 130ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — a linked data-room letter > links a source of this project and stores the reference as sent 113ms
+ ✓ server/routes/c2c/__tests__/communication-center.test.ts > POST /projects/:projectId/agency-communications — a linked data-room letter > looks nothing up when no data-room letter is linked 127ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > preserves admitted filing and immutable company revision on the existing Vault handoff receipt 90ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > uses signing order for duplicate section indices in the rendered and retained full snapshot 32ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data 121ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission 30ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission 32ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission 28ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission 26ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > files a stable working snapshot with its canonical digest and locks sections before the final read/history 25ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > retains an exact snapshot and an agency rejection without changing Vault approval 18ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > preserves handoff metadata and appends a later outcome without rewriting the original reference 7ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > writes nothing when source verification fails 5ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > writes nothing when project verification fails 5ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > writes nothing when visibility verification fails 4ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > writes nothing when audit verification fails 5ms
+ ✓ server/services/company-documents/__tests__/communication-links.pglite.test.ts > immutable legal links on existing communication and handoff records > does not accept a client-provided hash, version or approval verdict 4ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > offers this project's sources, marks one already in the inbox, and writes the upload path's reference 329ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > links nothing when no letter is chosen 149ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx > "Log communication" links a letter already in the data room > says the data room could not be read rather than that it holds no letters 75ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > saves the actual sequence and opens only the confirmed canonical Authoring document 215ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > keeps a committed but unconfirmed handoff identifiable and blocks a duplicate create 59ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > ignores a late create receipt after changing the filing 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > uses the selected variant and clears a previous variant’s reviewed difference 22ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > shows actual differences and binds an explicit role review to both current hashes 22ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > does not offer an acknowledgment for missing identity facts 5ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > company legal versions on agency communications > reads only the admitted project inventory and submits IDs and outcome without claiming a hash or approval 76ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > downloads correspondence with the submission presentation preference and explicit draft guidance 202ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not save a browser file when the correspondence download is refused 63ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows exact target scope, approval and expiry refusals and omits archived entries 68ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > places an eligible original with explicit section and reason and signals a confirmed write 78ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not announce placement after refusal or a receipt for another source 86ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > keeps a frozen sequence immutable and never posts a placement 25ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > reports the copied-but-unregistered outcome without transferring approval or placing it 52ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows a library outage without stale entries or an invented empty result 12ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > loads a bounded inventory page and searches across later registered versions 133ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > ignores a late library response after switching sequence context 17ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > reads the saved identity and formatting instead of stale project-memory settings 18ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > patch /settings refuses a competing legacy mutation once the governed profile is adopted 9ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-logo refuses a competing legacy mutation once the governed profile is adopted 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-letterhead refuses a competing legacy mutation once the governed profile is adopted 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > serves original saved logo bytes through the existing logo URL 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > conceals a foreign logo URL before loading any company profile 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > retains the existing settings read for organizations that have not adopted a profile 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > get  refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > put  refuses a request without authenticated organization context 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /legal-documents refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > delete /legal-documents/library-entry refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /letterhead/render refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /letterhead/preview refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns the profile and current management capability without promoting a reader 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > passes the optimistic revision, change reason and authenticated request to the profile writer 6ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 400 service refusal even when the request claims an admin role 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 403 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 409 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > registers a Vault pointer through its service without invoking any document renderer 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > archives the named library entry with its reason and revision 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns a failure rather than an empty profile and does not expose internal errors 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > applies an explicit published variant to this output while automatic submission branding is disabled 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > applies saved submission correspondence branding only when its preference is false 105ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > applies saved submission correspondence branding only when its preference is true 20ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > refuses an unbound submission download before reading or rendering 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > refuses spoofed filing or recipient facts rather than recording caller assertions 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > delivers no bytes when filing access or identity changes during rendering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > keeps manual company letterhead independent of the submission preference 6ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > renders an audited unsaved proof through the canonical renderer without saving or claiming a saved revision 20ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > refuses unsaved proof without current brand-management capability 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > produces an actual DOCX whose header and correspondence contain the saved branding and supplied text 19ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > renders saved letterhead through the existing renderer and audits the exact delivered bytes 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"title":42} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":"a string instead of a list"} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":["Valid",null]} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"letterhead":{"header":{"text":"Injected style"}}} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"purpose":"report"} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > does not render or audit when current organization membership is refused 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > delivers no bytes when the canonical export audit resolves without persisting 2ms
+ ✓ client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx > Communication's draft buttons carry the letter > every draft button is labelled "Draft response with AnA" and pins the letter of its communication 209ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > renders actual Word with the historical logo/header/footer, rich body and mandatory signature statement 111ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > keeps the working-copy banner and excludes signature manifestation while retaining stationery 20ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > keeps a covering internal signature manifestation alongside historical company stationery 14ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > loads an explicitly selected published variant by its immutable key even when automatic application is disabled 13ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > converts the same rich historical Word artifact through strict LibreOffice without a fallback 12ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > fails closed when the strict converter is unavailable instead of dropping the letterhead 10ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > refuses hash mismatches before rendering instead of substituting current branding 1ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > refuses tenant mismatches before rendering instead of substituting current branding 0ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > refuses project mismatches before rendering instead of substituting current branding 1ms
+ ✓ server/services/company-documents/__tests__/correspondence-rendering.test.ts > correspondence uses its retained presentation through canonical Authoring exports > refuses missing revision mismatches before rendering instead of substituting current branding 0ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > derives every filing fact from the admitted sequence and canonical identity reader 5ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > selects only an explicit published variant in the actual admitted market and retains its variant identity 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > refuses a filing identity change during render or before the canonical create transaction 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > saves through the canonical Authoring creator with server origin, sanitized text and explicit reason 2ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > rejects spoofed project, recipient and company presentation fields before creating a draft 1ms
+ ✓ server/services/company-documents/__tests__/correspondence.test.ts > admitted company correspondence > does not substitute company branding for an unknown applicant or application number 0ms
+ Test Files  11 passed (11)
+      Tests  128 passed (128)
+   Start at  00:37:27
+   Duration  32.86s (transform 8.20s, setup 503ms, import 16.17s, tests 13.19s, environment 1.63s)

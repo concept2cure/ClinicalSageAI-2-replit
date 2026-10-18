@@ -26,9 +26,9 @@ import JSZip from 'jszip';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { computeLifecycleOperations, type DesiredLeaf } from '../../ectd/lifecycle-operator';
 import { buildLeafManifest, manifestToPriorLeaves, computeSequencePrefix } from '../../ectd/sequence-manifest';
+import { plainPdfFixture as pdf } from '../../ectd/__tests__/support/signed-pdf-fixture';
 
 const REGIONAL = 'm1/us/us-regional.xml';
-const pdf = (label: string) => Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 let work: string;
 beforeEach(async () => { work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-mf-')); });
@@ -36,7 +36,7 @@ afterEach(async () => { await fs.rm(work, { recursive: true, force: true }); });
 
 async function onDisk(name: string, label: string): Promise<string> {
   const p = path.join(work, name);
-  await fs.writeFile(p, pdf(label));
+  await fs.writeFile(p, await pdf(label));
   return p;
 }
 
