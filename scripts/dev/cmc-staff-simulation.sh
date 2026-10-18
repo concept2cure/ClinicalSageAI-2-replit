@@ -158,8 +158,32 @@ else
 fi
 
 step "4. Analytical development registers the assay method (feeds 3.2.S.4)"
-CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
-[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
+# A method is not born validated. Until 2026-10-18 this step created AM-001 with
+# status 'validated' and a validationDate straight from the body, which is what
+# the §3.2.S.4.3 'Validation Status' column, the ICH Q2 engine and the
+# contradiction sweep all read as a completed Q2 exercise. It is now a signature.
+CODE=$(req methodbad POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-000\",\"title\":\"Self-declared method\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validatedBy\":1,\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 409 ] && ok "a method claiming 'validated' on create is refused, and the refusal names the signature ($CODE)" \
+  || bad "a self-declared method validation was accepted ($CODE): $(head -c300 "$OUT/methodbad.json")"
+CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validation\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered, under validation ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
+
+step "4b. The Q2 validation is a signature, with its own precondition"
+METHODID=$(cat "$OUT/method.json" | JQ '.data.id // .id // empty')
+CODE=$(req methodnoq2 POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-002\",\"title\":\"Method with no Q2 package\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"development\",\"projectId\":\"$PROGRAM\"}")
+NOQ2ID=$(cat "$OUT/methodnoq2.json" | JQ '.data.id // .id // empty')
+CODE=$(req methodv0 POST "/api/cmc/analytical-methods/$NOQ2ID/validate" '{"reason":"Attempting to validate a method with no Q2 parameters on file.","meaning":"approval","reauth":{"password":"pass-word"}}')
+[ "$CODE" = 409 ] && ok "a method with no ICH Q2 parameters cannot be validated — the signature has nothing to accept ($CODE)" \
+  || bad "a method with no Q2 package was validated ($CODE): $(head -c250 "$OUT/methodv0.json")"
+CODE=$(req methodv1 POST "/api/cmc/analytical-methods/$METHODID/validate" '{"reason":"Q2 report AM-RPT-001 accepted; accuracy, precision and specificity met their criteria.","meaning":"approval","reauth":{"password":"pass-word"}}')
+MSTAT=$(cat "$OUT/methodv1.json" | JQ '.data.status // empty')
+MBY=$(cat "$OUT/methodv1.json" | JQ '.data.validatedBy // empty')
+[ "$CODE" = 200 ] && [ "$MSTAT" = "validated" ] && [ -n "$MBY" ] \
+  && ok "AM-001 validated under signature; the record names who validated it ($MBY)" \
+  || bad "the method validation failed ($CODE, status=$MSTAT, validatedBy=$MBY): $(head -c250 "$OUT/methodv1.json")"
+CODE=$(req methodedit PUT "/api/cmc/analytical-methods/$METHODID" '{"title":"Rewritten after the signature"}')
+[ "$CODE" = 409 ] && ok "a validated method is closed to ordinary edits ($CODE)" \
+  || bad "a validated method accepted a content edit ($CODE): $(head -c250 "$OUT/methodedit.json")"
 
 step "5. QC runs the test; a second person reviews (feeds 3.2.S.4)"
 CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"batchNumber\":\"B-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
@@ -385,7 +409,14 @@ CODE=$(req dprstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\"
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product working standard recorded with its CoA ($CODE)" || bad "DP reference standard failed ($CODE): $(head -c200 "$OUT/dprstd.json")"
 CODE=$(req dpstab POST /api/cmc/stability-studies "{\"productName\":\"BX-701 5 mg film-coated tablet\",\"batchNumber\":\"DP-B-001\",\"dosageForm\":\"tablet\",\"scope\":\"DP\",\"climaticZone\":\"II\",\"studyType\":\"long_term\",\"storageConditions\":[\"25C/60%RH\"],\"duration\":24,\"testParameters\":[\"assay\",\"degradant D1\"],\"timePoints\":[\"0\",\"3\",\"6\",\"12\",\"24\"],\"shelfLife\":\"24 months at 25C/60%RH (proposed)\",\"status\":\"ACTIVE\",\"startDate\":\"2026-02-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product stability study registered with its proposed claim ($CODE)" || bad "DP stability failed ($CODE): $(head -c200 "$OUT/dpstab.json")"
-CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"comparable\"}")
+# 'approved' on this register is §3.2.P.8's own Status column, and `reviewed_by`
+# is the 'Reviewed By' name beside it — a free-text field with no user behind it
+# until 2026-10-18. Both are the approval signature's now, so the create records
+# the assessment and the signature concludes it.
+CODE=$(req compbad POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Self-declared comparability\",\"type\":\"process\",\"product\":\"BX-701\",\"status\":\"approved\",\"owner\":\"Dr Nobody\",\"outcome\":\"Comparable\"}")
+[ "$CODE" = 409 ] && ok "an assessment claiming 'approved' on create is refused ($CODE)" \
+  || bad "a self-declared comparability approval was accepted ($CODE): $(head -c250 "$OUT/compbad.json")"
+CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"completed\"}")
 COMPLINK=$(cat "$OUT/comp.json" | JQ '.module3Linked // empty')
 # The register write is only half of it: linkToModule3 never throws and never
 # changes the status code, so a row that reached the table and NOT the canonical

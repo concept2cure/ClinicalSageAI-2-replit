@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-008 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED, NOT EXECUTED** |
 | Parent | VMP-001 §5; requirements URS-007 |
 | Runner (the executable protocol) | `tests/validation/oq/cmc/run.mjs` (steps 19–33 in `tests/validation/oq/cmc/steps-filing.mjs`, which it imports) |
@@ -13,6 +13,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.3 | 2026-10-18 | Claude | OQ-CMC-34 and OQ-CMC-35 added for URS-CMC-023 (the signing ceremony on every register that has a signed state). Four earlier steps corrected: OQ-CMC-26 and OQ-CMC-29 were passing on evidence that observed nothing, and OQ-CMC-04's expected prose did not match what it asserted — see `docs/evidence/CMC-M3-GA/2026-10-18/04-oq-008-runner/`. |
 | 0.2 | 2026-10-18 | Claude | **The runner exists.** `tests/validation/oq/cmc/run.mjs` + `steps-filing.mjs` implement every step below, declaring each step's kind so an execution record prints the kind this protocol declares (`ci:validation-traceability`). Two steps added for the controls landed the same day: OQ-CMC-32 (URS-CMC-021, the §11.10(e) operator on every register create) and OQ-CMC-33 (URS-CMC-022, the approver is not one of the people who entered the records). Still not executed under the W3 posture — see §3 and §4. |
 | 0.1 | 2026-10-12 | Claude | First protocol, written as CMC / Module 3 joined the launch catalog (decision P-28). The steps are drawn from the behaviour the shipped code shows under the staff simulation (`scripts/dev/cmc-staff-simulation.sh`, 158 checks green against a real server on 2026-10-12) and from the slice evidence under `docs/evidence/CMC-M3-GA/`. **No runner exists and nothing here has been executed under the W3 production posture.** |
 
@@ -77,6 +78,8 @@ recomputed from the stored section record and compared with the
 | OQ-CMC-30 | URS-CMC-020 | scripted | an orchestrator run over the programme before approval and after the gate opens; and a run carrying inline CMC data | before: no Module 3, and the run says the gate refused it; after: Module 3 carried; inline data 400 `INLINE_CMC_SOURCES_REFUSED` |
 | OQ-CMC-32 | URS-CMC-021 | scripted | record one row in each register, then read the chained audit trail for the programme | one `cmc.register.create` row per recorded row, naming the operator, the register and the record; none anonymous |
 | OQ-CMC-33 | URS-CMC-022 | scripted | as the author who recorded the registers: approve a section; then with the meaning `authorship` | 403 `SEPARATION_OF_DUTIES` naming why; then 400 `APPROVAL_IS_NOT_AUTHORSHIP`; nothing signed either time |
+| OQ-CMC-34 | URS-CMC-023 | scripted | on each of analytical methods, process validation and comparability: create with the register's signed word (and its signer and date) in the body, then edit an ordinary record into it; then create a QC result already carrying `reviewedBy` | each refused 409 naming the governed path that does record it; nothing written, and no signer or date set |
+| OQ-CMC-35 | URS-CMC-023 | scripted | sign each of the three through the path its refusal named: with no reason, with a reason but no re-authentication, with both but without the thing the signature accepts, then with everything; then edit the signed record | 400, then 401, then 409 naming what is missing, then 200 with the status, the signer and the date set and one `electronic_signatures` row bound to the chained audit row; the edit 409 `SIGNED_RECORD` |
 | OQ-CMC-31 | URS-CMC-001, URS-CMC-022 | ad-hoc | the tester records anything observed that no step above covers | reviewer judgment |
 
 ## 3. Execution record

@@ -61,6 +61,7 @@ import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/pa
 import { clientIpOf } from '../../utils/client-ip';
 import { verifiedReauthFactors } from './cmc-signer';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+import { resolveSignerIdentity } from '../../services/part11/resolve-signer-identity';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { governedActorId } from '../../middleware/orgMembership';
 import {
@@ -69,6 +70,7 @@ import {
   isSigned,
   retireSignedRecord,
   signedRegisterEditRefusal,
+  withoutSignatureFields,
 } from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
@@ -87,9 +89,7 @@ import { createOnConnection, insertRegisterRow } from '../../services/cmc/regist
    live in ONE service, called by these routes and by the guided interview's
    commit projector alike (services/cmc/interview-commit.ts). */
 import {
-  PROCESS_VOCAB,
   PROGRAM_FILED_REGISTERS,
-  QUALIFICATION_VOCAB,
   RegisterWriteRefusal,
   characterizationStudyBody,
   containerClosureBody,
@@ -111,11 +111,9 @@ import {
   projectOnEdit,
   requiredDate,
   ungovernedQualificationRefusal,
-  withoutGovernedFields,
   withoutOrgId,
   withoutProject,
   withoutTenantKey,
-  type QualificationVocab,
 } from '../../services/cmc/register-writes';
 
 const router = express.Router();
@@ -293,7 +291,7 @@ const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).ext
   /* The register's own GET returns qualificationDate as an ISO string, so a
      client that reads a row and writes it back would have been rejected by the
      z.date() drizzle-zod generates for the column. The field is stripped by
-     withoutGovernedFields regardless — the coercion is what stops the whole
+     withoutSignatureFields regardless — the coercion is what stops the whole
      request failing before it gets there. */
   qualificationDate: optionalDate,
 });
@@ -301,15 +299,29 @@ const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchem
   testDate: optionalDate,
 });
 
+const reselectAnalyticalMethod = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(analyticalMethods)
+    .where(and(eq(analyticalMethods.id, parseInt(id, 10)), eq(analyticalMethods.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
 router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = analyticalMethodBody.parse(req.body);
+    /* A method is not born validated. `status: 'validated'` with its own
+       `validatedBy` and `validationDate` was a plain create field until
+       2026-10-18, and the value is read as a completed ICH Q2 exercise by
+       §3.2.S.4.3's 'Validation Status' column, by the Q2 engine's VALIDATED
+       set and by the contradiction sweep's method_validation_gap. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'analytical-methods')) return;
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
     // Zod-validated values to the table insert type at this boundary.
     const method = await insertRegisterRow(orgId, recordedBy(req), 'analytical_method', analyticalMethods, {
-      ...validatedData,
+      ...withoutSignatureFields(SIGNED_REGISTERS.analyticalMethods, validatedData as Record<string, unknown>),
       projectId,
       organizationId: orgId,
     } as typeof analyticalMethods.$inferInsert);
@@ -327,8 +339,15 @@ router.put('/analytical-methods/:id', async (req, res) => {
     const validatedData = analyticalMethodBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.analyticalMethod, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Analytical method not found' });
+    const stored = await reselectAnalyticalMethod(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.analyticalMethods, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectAnalyticalMethod(String(id), orgId),
+      (row) => linkToModule3('write_through_analytical_method', orgId, row, writeThroughAnalyticalMethod, req),
+    )) return;
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'analytical-methods', stored?.status)) return;
     // Strip organizationId so the tenant scope cannot be overridden by the request body.
-    const safeData = withoutProject(withoutOrgId(validatedData as Record<string, unknown>));
+    const safeData = withoutProject(withoutSignatureFields(SIGNED_REGISTERS.analyticalMethods, validatedData as Record<string, unknown>));
     const [method] = await db
       .update(analyticalMethods)
       .set({ ...safeData, ...filing.set, updatedAt: new Date() })
@@ -341,6 +360,47 @@ router.put('/analytical-methods/:id', async (req, res) => {
     return respondWriteError(res, error, 'Failed to update analytical method');
   }
 });
+
+/**
+ * The governed validation of an analytical method (ICH Q2(R2), 21 CFR Part 11).
+ *
+ * The register carried `validated_by` and `validation_date` from the day it
+ * was created and nothing ever signed them: a staffer picked 'validated' from
+ * the status dropdown and the ICH Q2 engine stopped reporting the method as a
+ * shortfall. A method's validation is the conclusion of an exercise — the
+ * protocol executed, the report accepted — so it is signed, with a reason,
+ * like every other register's.
+ *
+ * The precondition is the Q2 record itself: a signature over no validation
+ * parameters attests to an exercise the register does not hold.
+ */
+router.post('/analytical-methods/:id/validate', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    register: SIGNED_REGISTERS.analyticalMethods,
+    target: 'analytical_method',
+    surface: 'cmc-analytical-methods',
+    propagation: 'write_through_analytical_method',
+    reselect: reselectAnalyticalMethod,
+    writeThrough: writeThroughAnalyticalMethod,
+    precondition: (row) => {
+      const q2 = row.ich_q2_parameters;
+      const recorded = q2 && typeof q2 === 'object' && Object.keys(q2 as object).length > 0;
+      return recorded
+        ? null
+        : 'This method records no ICH Q2 validation parameters, so there is nothing to sign: ' +
+          'a validated method states specificity, accuracy, precision, range and the rest of the Q2(R2) package. ' +
+          'Record the parameters on the method first.';
+    },
+  });
+});
+
+const reselectProcessValidation = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(processValidation)
+    .where(and(eq(processValidation.id, parseInt(id, 10)), eq(processValidation.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
 
 // Process Validation Routes
 router.get('/process-validation', async (req, res) => {
@@ -361,9 +421,15 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = processValidationBody.parse(req.body);
+    /* The table has carried `approved_by` and `approval_date` since it was
+       created and nothing but an ordinary write ever filled them. The composer
+       reads this register's status as §3.2.S.2 / §3.2.P.3's process-validation
+       statement, so an approval recorded here is an approval the dossier
+       states. */
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'process-validation')) return;
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     const validation = await insertRegisterRow(orgId, recordedBy(req), 'process_validation', processValidation, {
-      ...validatedData,
+      ...withoutSignatureFields(SIGNED_REGISTERS.processValidation, validatedData as Record<string, unknown>),
       projectId,
       organizationId: orgId,
     } as typeof processValidation.$inferInsert);
@@ -386,9 +452,20 @@ router.put('/process-validation/:id', async (req, res) => {
     const validatedData = processValidationBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.processValidation, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Process validation record not found' });
+    const stored = await reselectProcessValidation(String(id), orgId);
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.processValidation, stored?.status, validatedData as Record<string, unknown>, orgId,
+      () => reselectProcessValidation(String(id), orgId),
+      (row) => linkToModule3('write_through_process_validation', orgId, row, writeThroughProcessValidation, req),
+    )) return;
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'process-validation', stored?.status)) return;
     const [validation] = await db
       .update(processValidation)
-      .set({ ...withoutProject(withoutOrgId(validatedData as Record<string, unknown>)), ...filing.set, updatedAt: new Date() })
+      .set({
+        ...withoutProject(withoutSignatureFields(SIGNED_REGISTERS.processValidation, validatedData as Record<string, unknown>)),
+        ...filing.set,
+        updatedAt: new Date(),
+      })
       .where(and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)))
       .returning();
     if (!validation) return res.status(404).json({ success: false, error: 'Process validation record not found' });
@@ -397,6 +474,35 @@ router.put('/process-validation/:id', async (req, res) => {
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update process validation');
   }
+});
+
+/**
+ * The governed approval of a process-validation record (21 CFR Part 11).
+ *
+ * `approved_by` and `approval_date` existed from the table's creation and only
+ * an ordinary write ever filled them, so the register could name an approver
+ * who never approved anything. The composer reads this register's status as
+ * the process-validation statement of §3.2.S.2 and §3.2.P.3, which is why the
+ * approval is the signed act and not a dropdown value.
+ *
+ * The precondition is the report: FDA's three-stage guidance makes the
+ * approval the acceptance of a validation report, so a record that names none
+ * cannot be approved.
+ */
+router.post('/process-validation/:id/approve', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    register: SIGNED_REGISTERS.processValidation,
+    target: 'process_validation',
+    surface: 'cmc-process-validation',
+    propagation: 'write_through_process_validation',
+    reselect: reselectProcessValidation,
+    writeThrough: writeThroughProcessValidation,
+    precondition: (row) =>
+      String(row.validation_report ?? '').trim()
+        ? null
+        : 'This record names no validation report, so an approval would accept a report that is not identified. ' +
+          'Record the report (and its protocol) on the record first.',
+  });
 });
 
 // Stability Studies Routes
@@ -506,10 +612,45 @@ router.get('/qc-testing', async (req, res) => {
   }
 });
 
+/**
+ * Why a QC result cannot be recorded as already reviewed.
+ *
+ * `reviewed_by` non-null IS the §3.2.S.4.4 / §3.2.P.5.4 second-person review,
+ * and the batch-release gate reads it as such: `reviewed: r.reviewed_by != null`
+ * (services/cmc/batch-release-evidence.ts), and a FULL release is refused while
+ * any result is unreviewed. The PUT has governed that fact since it was written
+ * — the reviewer is the session, never the body, and a reviewer who is the
+ * analyst is refused — but the CREATE spread the whole parsed body into the
+ * insert, so one ordinary POST filed a result already stamped as reviewed and
+ * released, by a colleague who never saw it, and turned a conditional release
+ * into a signed full one. The second-person check was reachable only by callers
+ * who chose to go through the edit.
+ */
+function refusesPreStampedReview(res: express.Response, body: unknown): boolean {
+  const claimed = ['reviewedBy', 'releaseDate'].filter(
+    (k) => (body as Record<string, unknown> | null)?.[k] !== undefined
+      && (body as Record<string, unknown>)[k] !== null
+      && (body as Record<string, unknown>)[k] !== '',
+  );
+  if (claimed.length === 0) return false;
+  res.status(409).json({
+    success: false,
+    code: 'REVIEW_IS_A_SECOND_PERSON',
+    error:
+      'A QC result is recorded by whoever ran the test and reviewed afterwards by somebody else, so it cannot be ' +
+      `created already reviewed (${claimed.join(' and ')}). Record the result, then PUT /api/cmc/qc-testing/:id ` +
+      'with reviewedBy to record the review: the reviewer is the signed-in user, and the analyst who ran the test ' +
+      'is refused.',
+    fields: claimed,
+  });
+  return true;
+}
+
 router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = qcTestingBody.parse(req.body);
+    if (refusesPreStampedReview(res, req.body)) return;
     const test = await insertRegisterRow(orgId, recordedBy(req), 'qc_test', qcTesting, {
       ...validatedData,
       organizationId: orgId,
@@ -838,9 +979,8 @@ function refusesUngovernedQualification(
   status: unknown,
   registerPath: string,
   storedStatus?: unknown,
-  vocab: QualificationVocab = QUALIFICATION_VOCAB,
 ): boolean {
-  const refusal = ungovernedQualificationRefusal(status, registerPath, storedStatus, vocab);
+  const refusal = ungovernedQualificationRefusal(status, registerPath, storedStatus);
   if (!refusal) return false;
   res.status(409).json({ success: false, error: refusal });
   return true;
@@ -907,31 +1047,18 @@ async function qualifyRegisterRecord(
   req: express.Request,
   res: express.Response,
   spec: {
-    table:
-      | 'cmc_container_closures'
-      | 'cmc_reference_standards'
-      | 'cmc_impurity_profiles'
-      | 'cmc_characterization_studies'
-      | 'manufacturing_processes';
+    /**
+     * Which register this is, from the one descriptor table
+     * (services/cmc/signed-record.ts). It supplies the table, the status
+     * column, the signed word, both signature columns, the id shape and the
+     * noun — so a register whose create and edit refuse a word cannot be
+     * signed with a different one, which was possible while each ceremony
+     * declared its own `signing` block.
+     */
+    register: SignedRegister;
     target: string;
     surface: string;
-    subject: string;
     propagation: string;
-    /**
-     * The register's own signing vocabulary and column names. A manufacturing
-     * process is `validated` and records it on validation_status /
-     * validated_by / validation_date; every other register is `qualified` on
-     * status / qualified_by / qualification_date. Defaults are the common case,
-     * so only the process register states them.
-     */
-    signing?: {
-      statusColumn: string;
-      signedValue: string;
-      signedByColumn: string;
-      signedAtColumn: string;
-    };
-    /** manufacturing_processes has a uuid primary key; the rest are serial. */
-    idKind?: 'int' | 'uuid';
     reselect: (id: string, orgId: number) => Promise<Record<string, any> | undefined>;
     writeThrough: WriteThroughFn;
     /**
@@ -948,21 +1075,25 @@ async function qualifyRegisterRecord(
   }
   const { reason, meaning, reauth, idempotencyKey } = parsed.data;
 
-  const signing = spec.signing ?? {
-    statusColumn: 'status',
-    signedValue: 'qualified',
-    signedByColumn: 'qualified_by',
-    signedAtColumn: 'qualification_date',
+  const signing = {
+    statusColumn: spec.register.statusColumn,
+    signedValue: spec.register.signedValue,
+    signedByColumn: spec.register.signedByColumn,
+    signedAtColumn: spec.register.signedAtColumn,
   };
+  /** The act, as the compliance statement and the failure message name it. */
+  const act = { qualify: 'qualification', validate: 'validation', approve: 'approval' }[spec.register.signPath];
+  const subject = spec.register.noun;
+  const table = spec.register.table;
   const rawId = String(req.params.id ?? '').trim();
-  if ((spec.idKind ?? 'int') === 'uuid') {
+  if (spec.register.idKind === 'uuid') {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId)) {
-      return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+      return res.status(400).json({ success: false, error: `A ${subject} id is required` });
     }
   } else if (!Number.isInteger(Number(rawId)) || Number(rawId) <= 0) {
-    return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+    return res.status(400).json({ success: false, error: `A ${subject} id is required` });
   }
-  const id: string | number = (spec.idKind ?? 'int') === 'uuid' ? rawId : parseInt(rawId, 10);
+  const id: string | number = spec.register.idKind === 'uuid' ? rawId : parseInt(rawId, 10);
   let orgId: number;
   try {
     orgId = getOrgId(req);
@@ -988,12 +1119,12 @@ async function qualifyRegisterRecord(
   try {
     await client.query('BEGIN');
     const current = await client.query(
-      `SELECT * FROM ${spec.table} WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      `SELECT * FROM ${table} WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
       [id, orgId],
     );
     if (current.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, error: `${spec.subject} not found` });
+      return res.status(404).json({ success: false, error: `${subject} not found` });
     }
     /* Already signed. Re-signing would stamp a second person over the first and
        lose who actually qualified it, so it is refused with the record's own
@@ -1002,7 +1133,7 @@ async function qualifyRegisterRecord(
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: `This ${spec.subject} is already ${signing.signedValue}`,
+        error: `This ${subject} is already ${signing.signedValue}`,
         qualifiedAt: current.rows[0][signing.signedAtColumn] ?? null,
       });
     }
@@ -1011,17 +1142,26 @@ async function qualifyRegisterRecord(
       await client.query('ROLLBACK');
       return res.status(409).json({ success: false, error: unmet });
     }
+    /* What the signer column holds: a users.id for every register but the
+       comparability one, whose column is the printed name §3.2.P.8 renders.
+       Resolved on THIS client, inside the signing transaction, through the same
+       lookup the §11.50 row uses — so the row and the register cannot name
+       different people, and an unattributable signer fails the whole act
+       rather than writing a number into a name. */
+    const signedBy = spec.register.signedByKind === 'name'
+      ? (await resolveSignerIdentity(client, userId, orgId, 'governed sign')).name
+      : userId;
     /* Every interpolated name here is a literal from this file's own closed
-       set — the table union above and the `signing` defaults — never caller
-       input; the values still travel as parameters. */
+       set — the descriptor table above — never caller input; the values still
+       travel as parameters. */
     await client.query(
-      `UPDATE ${spec.table}
+      `UPDATE ${table}
           SET ${signing.statusColumn} = '${signing.signedValue}',
               ${signing.signedByColumn} = $3,
               ${signing.signedAtColumn} = NOW(),
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2`,
-      [id, orgId, userId],
+      [id, orgId, signedBy],
     );
     const governance = await recordGovernedAction(client, {
       orgId,
@@ -1042,9 +1182,9 @@ async function qualifyRegisterRecord(
       ...verifiedReauthFactors(reauth),
       ipAddress: clientIpOf(req),
       occurredAt: new Date(),
-      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: `No content digest is registered for a ${spec.subject}, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.` },
+      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: `No content digest is registered for a ${subject}, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.` },
       extraManifest: { act: { [signing.statusColumn]: signing.signedValue } },
-      complianceStatement: `${spec.subject} ${signing.signedValue === 'validated' ? 'validation' : 'qualification'} applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.`,
+      complianceStatement: `${subject} ${act} applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.`,
     });
     await client.query('COMMIT');
 
@@ -1064,7 +1204,7 @@ async function qualifyRegisterRecord(
     });
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
-    return respondWriteError(res, error, `Failed to ${signing.signedValue === 'validated' ? 'validate' : 'qualify'} ${spec.subject}`);
+    return respondWriteError(res, error, `Failed to record the ${act} of ${subject}`);
   } finally {
     client.release();
   }
@@ -1124,8 +1264,8 @@ router.put('/container-closures/:id', async (req, res) => {
       (row) => linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, req),
     )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
-    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
-      validatedData as Record<string, unknown>,
+    const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
+      SIGNED_REGISTERS.containerClosures, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcContainerClosures)
@@ -1143,10 +1283,9 @@ router.put('/container-closures/:id', async (req, res) => {
 /** The governed qualification of a container closure system (21 CFR Part 11). */
 router.post('/container-closures/:id/qualify', async (req, res) => {
   return qualifyRegisterRecord(req, res, {
-    table: 'cmc_container_closures',
+    register: SIGNED_REGISTERS.containerClosures,
     target: 'container_closure',
     surface: 'cmc-container-closures',
-    subject: 'container closure system',
     propagation: 'write_through_container_closure',
     reselect: reselectContainerClosure,
     writeThrough: writeThroughContainerClosure,
@@ -1186,7 +1325,7 @@ router.post('/reference-standards', async (req, res) => {
     const validatedData = referenceStandardBody.parse(req.body);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
     const row = await insertRegisterRow(orgId, recordedBy(req), 'reference_standard', cmcReferenceStandards, {
-      ...withoutGovernedFields(validatedData as Record<string, unknown>),
+      ...withoutSignatureFields(SIGNED_REGISTERS.referenceStandards, validatedData as Record<string, unknown>),
       organizationId: orgId,
     } as typeof cmcReferenceStandards.$inferInsert);
     const linkage = await linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req);
@@ -1209,8 +1348,8 @@ router.put('/reference-standards/:id', async (req, res) => {
       (row) => linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req),
     )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
-    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
-      validatedData as Record<string, unknown>,
+    const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
+      SIGNED_REGISTERS.referenceStandards, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcReferenceStandards)
@@ -1228,10 +1367,9 @@ router.put('/reference-standards/:id', async (req, res) => {
 /** The governed qualification of a reference standard (21 CFR Part 11). */
 router.post('/reference-standards/:id/qualify', async (req, res) => {
   return qualifyRegisterRecord(req, res, {
-    table: 'cmc_reference_standards',
+    register: SIGNED_REGISTERS.referenceStandards,
     target: 'reference_standard',
     surface: 'cmc-reference-standards',
-    subject: 'reference standard',
     propagation: 'write_through_reference_standard',
     reselect: reselectReferenceStandard,
     writeThrough: writeThroughReferenceStandard,
@@ -1274,7 +1412,7 @@ router.post('/impurity-profiles', async (req, res) => {
     const validatedData = impurityProfileBody.parse(req.body);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles')) return;
     const row = await insertRegisterRow(orgId, recordedBy(req), 'impurity_profile', cmcImpurityProfiles, {
-      ...withoutGovernedFields(validatedData as Record<string, unknown>),
+      ...withoutSignatureFields(SIGNED_REGISTERS.impurityProfiles, validatedData as Record<string, unknown>),
       organizationId: orgId,
     } as typeof cmcImpurityProfiles.$inferInsert);
     const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req);
@@ -1301,8 +1439,8 @@ router.put('/impurity-profiles/:id', async (req, res) => {
       (row) => linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req),
     )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
-    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
-      validatedData as Record<string, unknown>,
+    const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
+      SIGNED_REGISTERS.impurityProfiles, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcImpurityProfiles)
@@ -1328,10 +1466,9 @@ router.put('/impurity-profiles/:id', async (req, res) => {
  */
 router.post('/impurity-profiles/:id/qualify', async (req, res) => {
   return qualifyRegisterRecord(req, res, {
-    table: 'cmc_impurity_profiles',
+    register: SIGNED_REGISTERS.impurityProfiles,
     target: 'impurity_profile',
     surface: 'cmc-impurity-profiles',
-    subject: 'impurity profile',
     propagation: 'write_through_impurity_profile',
     reselect: reselectImpurityProfile,
     writeThrough: writeThroughImpurityProfile,
@@ -1564,16 +1701,6 @@ const reselectManufacturingProcess = async (id: string, orgId: number) => {
   return row as Record<string, any> | undefined;
 };
 
-/* A process is `validated` under a signature, not by typing the word. Same rule
-   as qualification on the other registers, different vocabulary because this
-   table's lifecycle column is validation_status and its readers already use it. */
-const PROCESS_SIGNING = {
-  statusColumn: 'validation_status',
-  signedValue: 'validated',
-  signedByColumn: 'validated_by',
-  signedAtColumn: 'validation_date',
-} as const;
-
 router.post('/manufacturing-processes', async (req, res) => {
   try {
     const orgId = getOrgId(req);
@@ -1610,7 +1737,7 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
        content is closed, so clearing its status or its steps under the
        signature is refused there. What remains is the transition INTO the
        signed state, which only /validate makes. */
-    if (!clearedStatus && refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
+    if (!clearedStatus && refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus)) {
       return;
     }
     /* The signature columns are written by the governed route only, and the
@@ -1640,13 +1767,10 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
 /** The governed validation of a manufacturing process (21 CFR Part 11). */
 router.post('/manufacturing-processes/:id/validate', async (req, res) => {
   return qualifyRegisterRecord(req, res, {
-    table: 'manufacturing_processes',
+    register: SIGNED_REGISTERS.manufacturingProcesses,
     target: 'manufacturing_process',
     surface: 'cmc-manufacturing-processes',
-    subject: 'manufacturing process',
     propagation: 'write_through_manufacturing_process',
-    signing: PROCESS_SIGNING,
-    idKind: 'uuid',
     reselect: reselectManufacturingProcess,
     writeThrough: writeThroughManufacturingProcess,
     /* A process nobody has described cannot be signed as validated. The
@@ -1712,8 +1836,8 @@ router.put('/characterization-studies/:id', async (req, res) => {
       (row) => linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, req),
     )) return;
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies', stored?.status)) return;
-    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
-      validatedData as Record<string, unknown>,
+    const { projectId: _fixedAtCreation, ...editable } = withoutSignatureFields(
+      SIGNED_REGISTERS.characterizationStudies, validatedData as Record<string, unknown>,
     ) as { projectId?: unknown } & Record<string, unknown>;
     const [row] = await db
       .update(cmcCharacterizationStudies)
@@ -1731,10 +1855,9 @@ router.put('/characterization-studies/:id', async (req, res) => {
 /** The governed qualification of a characterisation study (21 CFR Part 11). */
 router.post('/characterization-studies/:id/qualify', async (req, res) => {
   return qualifyRegisterRecord(req, res, {
-    table: 'cmc_characterization_studies',
+    register: SIGNED_REGISTERS.characterizationStudies,
     target: 'characterization_study',
     surface: 'cmc-characterization-studies',
-    subject: 'characterisation study',
     propagation: 'write_through_characterization_study',
     reselect: reselectCharacterizationStudy,
     writeThrough: writeThroughCharacterizationStudy,
@@ -1750,6 +1873,21 @@ router.post('/characterization-studies/:id/qualify', async (req, res) => {
 // =====================================================
 // Comparability Studies Routes (canonical DB-backed persistence)
 // =====================================================
+
+/* The row shape every comparability endpoint returns — the register table
+   adopts the server row after a write, so the signature's response has to
+   carry the same camelCase projection as the GET. */
+const COMPARABILITY_COLUMNS = `id, project_id, assessment_name as title, changed_element as product,
+         change_type as type, status, created_at as "createdAt", updated_at as "updatedAt",
+         affected_process_parameters as methods, justification as outcome, reviewed_by as owner`;
+
+const reselectComparabilityAssessment = async (id: string, orgId: number) => {
+  const { rows } = await getPool().query(
+    `SELECT ${COMPARABILITY_COLUMNS} FROM cmc_comparability_assessments WHERE id = $1 AND organization_id = $2`,
+    [id, orgId],
+  );
+  return rows[0] as Record<string, any> | undefined;
+};
 
 router.get('/comparability-studies', async (req, res) => {
   try {
@@ -1776,8 +1914,11 @@ router.get('/comparability-studies', async (req, res) => {
 router.post('/comparability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    /* `reviewed_by` is who the body says REVIEWED the assessment. It is not who
-       recorded it, which is what the audit row names. */
+    /* An assessment is not born approved. §3.2.P.8's 'Comparability Assessments
+       (ICH Q5E)' table prints this status and this reviewer, and both were
+       request-body fields: an ordinary create could file an approved assessment
+       naming any reviewer, with no signature and no reason. */
+    if (refusesUngovernedQualification(res, req.body?.status, 'comparability-studies')) return;
     const created = await createOnConnection(
       getPool(),
       {
@@ -1803,7 +1944,11 @@ router.post('/comparability-studies', async (req, res) => {
             req.body.product || '',
             JSON.stringify(req.body.methods || []),
             req.body.outcome || null,
-            req.body.owner || null,
+            /* `reviewed_by` is written by the approval signature only
+               (POST /comparability-studies/:id/approve), which records the
+               signer's own id. Taken from the body it named a reviewer nobody
+               could verify — the column is free TEXT with no FK to users. */
+            null,
             req.body.status || 'draft',
             String(orgId),
           ]
@@ -1820,10 +1965,46 @@ router.post('/comparability-studies', async (req, res) => {
   }
 });
 
+/**
+ * The governed approval of a comparability assessment (ICH Q5E, 21 CFR Part 11).
+ *
+ * This is what justifies a post-change equivalence claim in §3.2.P.8, and the
+ * section prints both the status and the reviewer. Until 2026-10-18 the status
+ * was a dropdown value and the reviewer was a free-text body field with no FK
+ * to users, so an 'approved' row could name a reviewer who does not exist. The
+ * signature writes the signer's own id into `reviewed_by`.
+ *
+ * The precondition is the justification: Q5E comparability is an argument, and
+ * a signature over an assessment that states none approves nothing.
+ */
+router.post('/comparability-studies/:id/approve', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    register: SIGNED_REGISTERS.comparabilityAssessments,
+    target: 'comparability_study',
+    surface: 'cmc-comparability-studies',
+    propagation: 'write_through_comparability',
+    reselect: reselectComparabilityAssessment,
+    writeThrough: writeThroughComparability,
+    precondition: (row) =>
+      String(row.justification ?? '').trim()
+        ? null
+        : 'This assessment states no justification, so there is no comparability argument to approve. ' +
+          'Record the justification — what was compared, against which acceptance criteria, and what it showed.',
+  });
+});
+
 router.put('/comparability-studies/:id', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const pool = getPool();
+    const stored = await reselectComparabilityAssessment(String(req.params.id), orgId);
+    if (!stored) return res.status(404).json({ success: false, error: 'Study not found' });
+    if (await answeredSignedRecordEdit(
+      req, res, SIGNED_REGISTERS.comparabilityAssessments, stored.status, req.body ?? {}, orgId,
+      () => reselectComparabilityAssessment(String(req.params.id), orgId),
+      (row) => linkToModule3('write_through_comparability', orgId, row, writeThroughComparability),
+    )) return;
+    if (refusesUngovernedQualification(res, req.body?.status, 'comparability-studies', stored.status)) return;
     const { rows } = await pool.query(
       `UPDATE cmc_comparability_assessments
        SET assessment_name = COALESCE($1, assessment_name),
@@ -1831,10 +2012,9 @@ router.put('/comparability-studies/:id', async (req, res) => {
            change_type = COALESCE($3, change_type),
            affected_process_parameters = COALESCE($4::jsonb, affected_process_parameters),
            justification = COALESCE($5, justification),
-           reviewed_by = COALESCE($6, reviewed_by),
-           status = COALESCE($7, status),
+           status = COALESCE($6, status),
            updated_at = NOW()
-       WHERE id = $8 AND organization_id = $9
+       WHERE id = $7 AND organization_id = $8
        RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
                  created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
                  justification as outcome, reviewed_by as owner`,
@@ -1844,7 +2024,8 @@ router.put('/comparability-studies/:id', async (req, res) => {
         req.body.type,
         req.body.methods ? JSON.stringify(req.body.methods) : null,
         req.body.outcome,
-        req.body.owner,
+        /* `owner` (reviewed_by) is dropped here for the same reason it is
+           dropped on the create: it is the approver, written by the signature. */
         req.body.status,
         req.params.id,
         orgId,

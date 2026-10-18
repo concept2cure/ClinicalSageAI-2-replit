@@ -1,0 +1,47 @@
+# After — every signed state refused, and the named replacement works
+
+## 1. The create door
+
+$ BASE=http://127.0.0.1:5000 bash probe-signed-states.sh
+
+project: 1ce855f4-d9db-4d1c-8983-3f701edd34ed
+analytical-method      409  Method validation (ICH Q2) is a governed action and is recorded with a signature. POST /api/cmc/analytical-methods/:id/validate with a reason and re-a
+process-validation     409  Approval of a process-validation record is a governed action and is recorded with a signature. POST /api/cmc/process-validation/:id/approve with a rea
+comparability          409  Approval of a comparability assessment (ICH Q5E) is a governed action and is recorded with a signature. POST /api/cmc/comparability-studies/:id/approv
+qc-testing             409  REVIEW_IS_A_SECOND_PERSON - 
+
+## 2. The replacement each refusal names
+
+$ BASE=http://127.0.0.1:5000 SIGNER_PASSWORD=… bash probe-ceremony.sh
+
+create an ordinary method                      200  id=93
+validate with no reason                        400  Invalid input data
+validate, reason, no re-auth                   401  REAUTH_PASSWORD_REQUIRED
+validate, no Q2 parameters recorded            409  This method records no ICH Q2 validation parameters, so there is nothing to sign: a validated method states specificity, accuracy, precision
+record the Q2 package (ordinary edit)          200  status=development validated_by=None validation_date=None approved_by=None reviewed_by=None
+validate with the package + password           200  status=validated validated_by=3 validation_date=2026-10-18 approved_by=None reviewed_by=None
+edit a validated method                        409  This analytical method is validated under a recorded signature, so its content cannot be changed by an ordinary edit: the signature would st
+un-validate by an ordinary edit                409  This analytical method is validated under a recorded signature, so its content cannot be changed by an ordinary edit: the signature would st
+approve a PV record naming no report           409  This record names no validation report, so an approval would accept a report that is not identified. Record the report (and its protocol) on
+approve an assessment stating no case          409  This assessment states no justification, so there is no comparability argument to approve. Record the justification — what was compared, aga
+record the PV report (ordinary edit)           200  status=planning validated_by=None validation_date=None approved_by=None reviewed_by=None
+approve the PV record                          200  status=approved validated_by=None validation_date=None approved_by=3 reviewed_by=None
+record the Q5E justification                   200  status=draft validated_by=None validation_date=None approved_by=None reviewed_by=None
+approve the comparability assessment           200  status=approved validated_by=None validation_date=None approved_by=None reviewed_by=JM Smith
+
+— the 21 CFR Part 11 signature rows these three acts wrote —
+analytical_method:93  meaning=approval  signer=JM Smith  act={"status":"validated"}  auth=password  basis=governed-action-sha256-chain
+comparability_study:4b27f209-ee77-4ec4-bdd8-55b2a7e0c577  meaning=approval  signer=JM Smith  act={"status":"approved"}  auth=password  basis=governed-action-sha256-chain
+process_validation:16  meaning=approval  signer=JM Smith  act={"status":"approved"}  auth=password  basis=governed-action-sha256-chain
+— the chained audit rows the same transactions wrote —
+analytical_method:93  c2c.work.sign  user=3  chain=f5088a242847318b  seq=5902
+process_validation:16  cmc.register.create  user=3  chain=1582953bbe3a286a  seq=5903
+process_validation:16  c2c.work.sign  user=3  chain=5e5606cfe56b50ec  seq=5905
+comparability_study:4b27f209-ee77-4ec4-bdd8-55b2a7e0c577  c2c.work.sign  user=3  chain=d94d3769a9dd97f7  seq=5906
+
+## 3. What §3.2.P.8 will print as 'Reviewed By'
+
+$ psql -c "SELECT id, status, reviewed_by, approved_at IS NOT NULL FROM cmc_comparability_assessments WHERE status='approved'"
+
+4b27f209-ee77-4ec4-bdd8-55b2a7e0c577 | approved | reviewed_by=JM Smith | approved_at set: true
+2269cf2c-3efc-45d7-9c1d-7c1f96679938 | approved | reviewed_by=JM Smith | approved_at set: true
