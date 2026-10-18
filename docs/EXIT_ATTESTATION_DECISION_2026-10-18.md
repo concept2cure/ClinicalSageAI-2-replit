@@ -368,16 +368,32 @@ capability.
 
 ## Open, and deliberately not decided here
 
-- **Handed on for verification, not filed as fact:** a reported collision
-  between a seeded 510(k) template's section codes and the eSTAR outline's own
-  keys, where the code→key join compares no labels. The specific claim named
-  the disk templates, and `loadTemplates` reads only `server/templates/m3/`,
-  which holds two single-section files — so the claim as stated does not hold
-  there and must be re-checked against `intelligence.document_templates`, which
-  is what document genesis resolves. If it holds anywhere, it is more serious
-  than anything else in this document: it ends with a section's prose filed
-  under another section's regulatory heading. Making the join label-aware in
-  `shared/regulatory/filing-section-key.ts` is the fix either way.
+- **VERIFIED 2026-10-18, and it is the worst thing in this family.** The
+  reported collision between a seeded 510(k) template's section codes and the
+  eSTAR outline's keys **holds**. Not where the review said — the on-disk
+  templates `loadTemplates` reads are two single-section files — but in the
+  store document genesis actually resolves: `intelligence.template_sections`,
+  seeded at startup by `server/services/intelligence/template-seeds.ts`. The
+  template `fda_510k_se` carries codes `D1, SE1, SE2, B1, B2, S1, L1, C1`; the
+  shipped `fda-estar-510k-v1.1` outline uses `A…G2`. Four collide under
+  different labels — **B1 "Bench testing" files into "Device description and
+  principles of operation", and B2 "Biocompatibility (ISO 10993)" files into
+  "Indications for use statement"** — and the other four, including the
+  predicate identification and the SE comparison matrix, reach no node at all.
+
+  **No cross-store gate can catch this, including the one shipped today.** After
+  the mis-keyed write the two copies *agree*: the filing node holds exactly the
+  text the editing layer holds for that code, so `filingAgreesWithEditing`, the
+  approval's text-equality comparison and every digest in the signing chain all
+  pass. The defect is not a divergence between stores; it is both stores
+  agreeing on the wrong heading. Only a check on the **vocabulary** sees it.
+
+  Finding filed at
+  `docs/evidence/ANA-REASONING/2026-10-05/r16/template-outline-code-collision/`.
+  The fix is under adversarial review before anything changes: re-coding seeded
+  regulatory reference data, deciding what is owed to a database that already
+  holds the wrong codes, and choosing a guard that does not refuse an ordinary
+  section rename, are not changes to make from one reading.
 - **Also handed on:** whether `PATCH /api/c2c/documents/:id/sections/:key`
   inserts outline nodes keyed by whatever the caller sends. It no longer writes
   content, but it still has an INSERT branch on the status path, and the panes
