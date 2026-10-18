@@ -65,6 +65,55 @@ function expectProtected(
 
 
 
+/**
+ * The three chains the migration leaves deliberately deny-all — they need a
+ * nested predicate through a second parent (csr_endpoint_results ->
+ * csr_endpoints -> csr_studies, and the ctd_documents -> ctd_module_sections ->
+ * ctd_submissions -> ctd_programs chain), which its single-level spec cannot
+ * express. None is referenced by server code, so deny-all costs nothing today.
+ * Asserted rather than left implicit: policying one of them is a decision
+ * someone should make on purpose, and this is where they will be told.
+ *
+ * ── Why FORCE is asserted too (2026-10-13, D3) ──────────────────────────────
+ * This checked `policied === false` alone, and passed — while all three sat
+ * with row security ENABLED and NOT FORCED, which is what
+ * migrations/0005_csr_knowledge_database.sql's loop leaves behind. That state
+ * denies to the runtime role but exempts the table OWNER, which read every
+ * tenant's rows; `policied === false` is equally true of it, of real deny-all,
+ * and of row security off altogether, so the assertion could not tell the safe
+ * state from either unsafe one. Hence all three columns.
+ *
+ * Module scope, like `expectProtected` above, because inlining it took the
+ * suite's describe body past the 100-line lint ceiling.
+ */
+async function expectDenyAll(scratch: ScratchSchema): Promise<void> {
+  const { rows } = await scratch.ownerPool.query(
+    `SELECT c.relname AS table_name, c.relrowsecurity, c.relforcerowsecurity,
+            EXISTS (SELECT 1 FROM pg_policies p
+                     WHERE p.schemaname='public' AND p.tablename=c.relname) AS policied
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid=c.relnamespace AND n.nspname='public'
+      WHERE c.relname = ANY($1::text[])`,
+    [STILL_DENY_ALL],
+  );
+  for (const row of rows) {
+    expect(
+      row.policied,
+      `${row.table_name} gained a policy — update STILL_DENY_ALL and say why`,
+    ).toBe(false);
+    expect(
+      row.relrowsecurity,
+      `${row.table_name} has no policy AND row security off — that denies ` +
+        `nothing to anybody, it is not the deny-all this list claims`,
+    ).toBe(true);
+    expect(
+      row.relforcerowsecurity,
+      `${row.table_name} is deny-all but not FORCEd — the table owner is ` +
+        `exempt from it and reads every tenant's rows`,
+    ).toBe(true);
+  }
+}
+
 const ORG_A = 91001;
 const ORG_B = 91002;
 /** Unique per run, so a previous run's rows can never satisfy this one. */
@@ -168,30 +217,8 @@ describe('child tables are scoped to their parent row’s tenant', () => {
     });
   }
 
-  it('leaves the three chained tables deny-all, deliberately and visibly', async () => {
-    // These need a nested predicate through a second parent
-    // (csr_endpoint_results -> csr_endpoints -> csr_studies, and the
-    // ctd_documents -> ctd_module_sections -> ctd_submissions -> ctd_programs
-    // chain), which this migration's single-level spec cannot express. None is
-    // referenced by server code, so deny-all costs nothing today.
-    //
-    // Asserted rather than left implicit: policying one of them is a decision
-    // someone should make on purpose, and this is where they will be told.
-    const { rows } = await scratch.ownerPool.query(
-      `SELECT c.relname AS table_name,
-              EXISTS (SELECT 1 FROM pg_policies p
-                       WHERE p.schemaname='public' AND p.tablename=c.relname) AS policied
-         FROM pg_class c
-         JOIN pg_namespace n ON n.oid=c.relnamespace AND n.nspname='public'
-        WHERE c.relname = ANY($1::text[])`,
-      [STILL_DENY_ALL],
-    );
-    for (const row of rows) {
-      expect(
-        row.policied,
-        `${row.table_name} gained a policy — update STILL_DENY_ALL and say why`,
-      ).toBe(false);
-    }
+  it('leaves the three chained tables deny-all against every role, deliberately and visibly', async () => {
+    await expectDenyAll(scratch);
   });
 
   it('the policy is inert when enforcement is off, exactly like its siblings', async () => {

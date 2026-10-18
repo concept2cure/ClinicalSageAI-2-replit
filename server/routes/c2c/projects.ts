@@ -48,6 +48,7 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
@@ -1935,6 +1936,8 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
     origin: prov.origin ?? null,
     fileUploadId: prov.fileUploadId ?? null,
     extractionMethod: prov.extractionMethod ?? null,
+    // How much of a scanned PDF OCR read; null when not recorded or malformed.
+    extractionCoverage: readExtractionCoverage(prov.extractionCoverage),
     evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
   };
 }

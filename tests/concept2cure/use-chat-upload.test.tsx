@@ -71,6 +71,60 @@ describe('readyAttachmentLabel', () => {
   });
 });
 
+/* D2 Amendment A (B5): the upload said nothing when OCR stopped at its page or
+   time budget, so a 12-of-40-page read was shown exactly like a whole read.
+   The label states the pages OCR read, or that the scanned pages were not
+   read, and is unchanged when coverage is absent or unlimited. */
+describe('attachment labels with extraction coverage', () => {
+  const pageBudget = { pageCount: 40, pagesRead: 12, limitedBy: 'page_budget' } as const;
+  const timeBudget = { pageCount: 40, pagesRead: 7, limitedBy: 'time_budget' } as const;
+  const ocrFailed = { pageCount: 40, pagesRead: null, limitedBy: 'ocr_failed' } as const;
+
+  it('is byte-identical to the two-argument label when coverage is absent or unlimited', () => {
+    const unlimited = { pageCount: 40, pagesRead: 40, limitedBy: null } as const;
+    for (const [m, w] of [['pdf-ocr', 87], ['pdf-text', 310], ['utf8', 1], [null, 0], ['pdf-ocr', undefined]] as const) {
+      for (const c of [undefined, null, unlimited]) {
+        expect(attachmentReadLabel(m, w, c)).toBe(attachmentReadLabel(m, w));
+        expect(readyAttachmentLabel(m, w, c)).toBe(readyAttachmentLabel(m, w));
+      }
+    }
+  });
+
+  it('states the pages OCR read when a page or time budget stopped it', () => {
+    expect(attachmentReadLabel('pdf-ocr', 3120, pageBudget)).toBe('text extracted via OCR from 12 of 40 pages · 3,120 words');
+    expect(readyAttachmentLabel('pdf-ocr', 3120, timeBudget)).toBe('text extracted via OCR from 7 of 40 pages · 3,120 words');
+  });
+
+  it('says the OCR read was partial when either page number is missing', () => {
+    expect(attachmentReadLabel('pdf-ocr', 87, { pageCount: null, pagesRead: 12, limitedBy: 'page_budget' }))
+      .toBe('text extracted via OCR from part of the document · 87 words');
+    expect(readyAttachmentLabel('pdf-ocr', 87, { pageCount: 40, pagesRead: null, limitedBy: 'time_budget' }))
+      .toBe('text extracted via OCR from part of the document · 87 words');
+  });
+
+  it('does not credit OCR with text the thin text layer supplied', () => {
+    expect(attachmentReadLabel('pdf-text', 310, pageBudget)).toBe('text layer only; OCR covered 12 of 40 pages · 310 words');
+  });
+
+  it('says a budget-limited read with no text covered only part of the document', () => {
+    expect(attachmentReadLabel('none', 0, pageBudget)).toBeNull();
+    expect(readyAttachmentLabel('none', 0, pageBudget)).toBe('no text extracted; OCR covered 12 of 40 pages');
+  });
+
+  it('says the scanned pages were not read when OCR failed', () => {
+    expect(attachmentReadLabel('pdf-text', 310, ocrFailed)).toBe('text layer only; scanned pages not read · 310 words');
+    expect(attachmentReadLabel('none', 0, ocrFailed)).toBeNull();
+    expect(readyAttachmentLabel('none', 0, ocrFailed)).toBe('no text extracted; scanned pages not read');
+  });
+
+  it('never renders a limited read as the whole-document label', () => {
+    for (const c of [pageBudget, timeBudget, ocrFailed]) {
+      expect(attachmentReadLabel('pdf-ocr', 87, c)).not.toBe(attachmentReadLabel('pdf-ocr', 87));
+      expect(readyAttachmentLabel('none', 0, c)).not.toBe('no text extracted');
+    }
+  });
+});
+
 describe('composeTurn', () => {
   const ready = { id: 'a1', name: 'Protocol v3.pdf', status: 'ready' as const, fileId: 'file_1', extractionWords: 40 };
   const failed = { id: 'a2', name: 'broken.pdf', status: 'error' as const, error: 'unreadable' };
@@ -135,6 +189,31 @@ describe('useChatUpload', () => {
     // projectId was sent in the multipart body.
     const form = (globalThis.fetch as any).mock.calls[0][1].body as FormData;
     expect(form.get('projectId')).toBe('proj_12');
+  });
+
+  it('keeps the validated extraction coverage on the ready attachment and announces it', async () => {
+    mockFetchOnce({
+      fileId: 'file_3', extractionMethod: 'pdf-ocr', extractionWords: 3120,
+      extractionCoverage: { pageCount: 40, pagesRead: 12, limitedBy: 'page_budget', extra: 'dropped' },
+    });
+    const { result } = renderHook(() => useChatUpload());
+    act(() => result.current.addFiles([file('scan.pdf', 'application/pdf')]));
+    await waitFor(() => expect(result.current.uploading).toBe(false));
+
+    expect(result.current.attachments[0].extractionCoverage).toEqual({ pageCount: 40, pagesRead: 12, limitedBy: 'page_budget' });
+    expect(result.current.statusMessage).toBe('scan.pdf: text extracted via OCR from 12 of 40 pages · 3,120 words');
+  });
+
+  it('stores null coverage when the upload sends none or a malformed one', async () => {
+    for (const extractionCoverage of [undefined, null, { pageCount: '40', pagesRead: 12, limitedBy: 'page_budget' }, { pageCount: 4, pagesRead: 1, limitedBy: 'quota' }]) {
+      mockFetchOnce({ fileId: 'file_4', extractionMethod: 'pdf-ocr', extractionWords: 87, extractionCoverage });
+      const { result, unmount } = renderHook(() => useChatUpload());
+      act(() => result.current.addFiles([file('scan.pdf', 'application/pdf')]));
+      await waitFor(() => expect(result.current.uploading).toBe(false));
+      expect(result.current.attachments[0].extractionCoverage).toBeNull();
+      expect(result.current.statusMessage).toBe('scan.pdf: text extracted via OCR · 87 words');
+      unmount();
+    }
   });
 
   it('marks an attachment as error and announces failure on a bad response', async () => {
