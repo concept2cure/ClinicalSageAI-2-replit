@@ -1,0 +1,3 @@
+sha256	path
+f1e38bf0c8b42def36fd2ecf1ec6db0979a20fa68166bd2c1f8a091bbab44084	scripts/ci/audit-requestdb-coverage.mjs
+4a2dde99dd19da3ed938fd84088bb80b95f39e0485d07d2f281dc4923f90d139	docs/reports/requestdb-coverage-baseline.json

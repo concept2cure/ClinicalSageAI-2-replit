@@ -1,0 +1,110 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/authoring.router.ts
+server/routes/chat/send-message.ts
+server/services/advancedRAGPipeline.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  client/src/concept2cure/quality/ChangeControl.tsx (503 lines)
+  client/src/concept2cure/quality/SopRegister.tsx (585 lines)
+  client/src/concept2cure/v2/AccountPanel.tsx (573 lines)
+  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx (638 lines)
+  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx (505 lines)
+  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx (546 lines)
+  client/src/concept2cure/v2/editor/DocumentCanvas.tsx (690 lines)
+  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx (6141 lines)
+  client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx (658 lines)
+  client/src/concept2cure/v2/editor/RichSectionEditor.tsx (3001 lines)
+  client/src/concept2cure/v2/editor/SendForReviewDialog.tsx (659 lines)
+  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx (607 lines)
+  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx (639 lines)
+  client/src/concept2cure/v2/editor/suggestions.ts (2161 lines)
+  client/src/concept2cure/v2/surfaces/AdminAccess.tsx (747 lines)
+  client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx (3826 lines)
+  client/src/concept2cure/v2/surfaces/Insights.tsx (2176 lines)
+  client/src/concept2cure/v2/surfaces/Onboarding.tsx (1354 lines)
+  client/src/concept2cure/v2/surfaces/ProjectHome.tsx (2058 lines)
+  client/src/concept2cure/v2/surfaces/Projects.tsx (1444 lines)
+  client/src/concept2cure/v2/surfaces/Review.tsx (822 lines)
+  client/src/concept2cure/v2/surfaces/Vault.tsx (2220 lines)
+  client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts (551 lines)
+  client/src/services/portal/authService.tsx (1402 lines)
+  server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts (679 lines)
+  server/middleware/__tests__/authoringObjectAuthorization.test.ts (526 lines)
+  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts (532 lines)
+  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts (606 lines)
+  server/routes/__tests__/organizations-profile-settings.test.ts (627 lines)
+  server/routes/__tests__/protocol-signatures.routes.test.ts (508 lines)
+  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts (543 lines)
+  server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts (634 lines)
+  server/routes/ana-ri/__tests__/live-drive-turn.test.ts (627 lines)
+  server/routes/ana-ri/stream.ts (3817 lines)
+  server/routes/ana-ri/utility.ts (764 lines)
+  server/routes/authoring.router.ts (8524 lines)
+  server/routes/c2c/project-vault.ts (2380 lines)
+  server/routes/c2c/projects.ts (2196 lines)
+  server/routes/chat/send-message.ts (1369 lines)
+  server/routes/insights-canvas-routes.ts (674 lines)
+  server/routes/mdx-qms.ts (1633 lines)
+  server/routes/organizations-routes.ts (578 lines)
+  server/routes/protocol-development.ts (568 lines)
+  server/routes/report-os.ts (3027 lines)
+  server/routes/tenant-config.ts (525 lines)
+  server/routes/tenant-users.ts (681 lines)
+  server/services/advancedRAGPipeline.ts (2122 lines)
+  server/services/ana-platform-controller.ts (717 lines)
+  server/services/ana/AnaToolExecutor.ts (21863 lines)
+  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts (523 lines)
+  server/services/ana/__tests__/sub-agent.test.ts (511 lines)
+  server/services/ana/document-catalog-tools.ts (679 lines)
+  server/services/ana/step-presentation.ts (517 lines)
+  server/services/ana/sub-agent.ts (512 lines)
+  server/services/ana/submission-center-tool-defs.ts (974 lines)
+  server/services/authoring/__tests__/peer-review.pglite.integration.test.ts (536 lines)
+  server/services/authoring/authoring-documents.ts (645 lines)
+  server/services/authoring/authoring-export.ts (669 lines)
+  server/services/authoring/authoring-file-to-vault.ts (560 lines)
+  server/services/authoring/authoring-read-render.ts (529 lines)
+  server/services/authoring/nonclinical-study-report-builder.ts (573 lines)
+  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts (644 lines)
+  server/services/clinical-regulatory-evidence/evidence-spine.service.ts (885 lines)
+  server/services/clinical-regulatory-evidence/source-usage.service.ts (767 lines)
+  server/services/enhancedEmbeddingService.ts (754 lines)
+  server/services/governance/separation-of-duties.ts (538 lines)
+  server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts (534 lines)
+  server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts (550 lines)
+  server/services/qms/__tests__/training.pglite.integration.test.ts (547 lines)
+  server/services/qms/document-approval-signature.ts (563 lines)
+  server/services/report-os/regional/filing-readiness.ts (534 lines)
+  server/services/review/authoring-review-board.ts (667 lines)
+  server/services/session-inactivity.ts (507 lines)
+  server/services/vault/__tests__/vault-ingest-storage.test.ts (504 lines)
+  server/services/vault/document-catalog-governance.service.ts (595 lines)
+  server/services/vault/document-catalog.service.ts (679 lines)
+  server/services/vault/vault-filing.service.ts (545 lines)
+  server/services/vault/vault-ingest.service.ts (793 lines)
+  shared/constants/ui-surface-registry.ts (1173 lines)
+  tests/db/protocol-finalization-concurrency.dbtest.ts (526 lines)
+  tests/golden-journeys/cer-eu-mdr.journey.test.ts (818 lines)
+  tests/golden-journeys/device-510k-estar.journey.test.ts (1377 lines)
+  tests/schema-contract/tenant-isolation-sweep.contract.test.ts (522 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3238 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 261cdb6ca] Integrate Data Room and AnA safeguards with current canonical access controls

@@ -1,0 +1,120 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:17.880Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:21.414Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:46:21.415Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:21.415Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+✅ Template tables initialized
+
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 137ms
+   → {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"bc56d5c8-0602-469a-b8ac-7eefa80af279","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"0ccc81d2-ebc3-42f4-8b89-eb4e456aada1","sha256":"d075498f36483961a27903aa644d21e5717be9f6dd56976e24b64b18561db60f","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.190Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 36ms
+   → {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"f84f8500-3094-49ad-aebf-5f1742091ae1","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"d72a1748-1ad4-4683-8253-44dcd0ad5204","sha256":"14e14dfd116b9eab48da3032c0e90884c5a51d561f64dbf41e66703b0a3daeb7","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.237Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 20ms
+   → {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"2115b546-043a-4ad4-b0ac-ffc083441f1a","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"8a59fb91-42d8-47f6-8937-4c14972bb071","sha256":"af3c0320be65cd6ef8ecb5d9810778ea837bab89b71ce067e6078a679b71a034","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.258Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control
+ ↓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null
+AssertionError: {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"bc56d5c8-0602-469a-b8ac-7eefa80af279","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"0ccc81d2-ebc3-42f4-8b89-eb4e456aada1","sha256":"d075498f36483961a27903aa644d21e5717be9f6dd56976e24b64b18561db60f","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.190Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoringSelectedSources.pglite.test.ts:123:60
+    121|   it.each([null, {}, { version: 1, entries: [] }])('a malformed source…
+    122|     const id = await section(); const response = await generate(id, { …
+    123|     expect(response.status, JSON.stringify(response.body)).toBe(400);
+       |                                                            ^
+    124|     expect(response.body.error.code).toBe('ASSEMBLY_SOURCES_INVALID');
+    125|     expect(h.prompts).toEqual([]); expect(h.broad).not.toHaveBeenCalle…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {}
+AssertionError: {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"f84f8500-3094-49ad-aebf-5f1742091ae1","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"d72a1748-1ad4-4683-8253-44dcd0ad5204","sha256":"14e14dfd116b9eab48da3032c0e90884c5a51d561f64dbf41e66703b0a3daeb7","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.237Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoringSelectedSources.pglite.test.ts:123:60
+    121|   it.each([null, {}, { version: 1, entries: [] }])('a malformed source…
+    122|     const id = await section(); const response = await generate(id, { …
+    123|     expect(response.status, JSON.stringify(response.body)).toBe(400);
+       |                                                            ^
+    124|     expect(response.body.error.code).toBe('ASSEMBLY_SOURCES_INVALID');
+    125|     expect(h.prompts).toEqual([]); expect(h.broad).not.toHaveBeenCalle…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]}
+AssertionError: {"success":true,"source":"model","draft":{"content":"Prepared candidate for human review.","draftId":"2115b546-043a-4ad4-b0ac-ffc083441f1a","check":{"engine":"answer-check/2","basis":"no_sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":[],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"8a59fb91-42d8-47f6-8937-4c14972bb071","sha256":"af3c0320be65cd6ef8ecb5d9810778ea837bab89b71ce067e6078a679b71a034","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T23:46:22.258Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":0,"attributableSources":0,"retrievalStatus":"empty","retrievalError":null,"retrievalScope":{"kind":"project","programId":"11111111-1111-4111-8111-111111111111","projectId":42}}},"message":"AI draft generated with no Data Room sources above the relevance threshold"}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoringSelectedSources.pglite.test.ts:123:60
+    121|   it.each([null, {}, { version: 1, entries: [] }])('a malformed source…
+    122|     const id = await section(); const response = await generate(id, { …
+    123|     expect(response.status, JSON.stringify(response.body)).toBe(400);
+       |                                                            ^
+    124|     expect(response.body.error.code).toBe('ASSEMBLY_SOURCES_INVALID');
+    125|     expect(h.prompts).toEqual([]); expect(h.broad).not.toHaveBeenCalle…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 skipped (11)
+   Start at  23:46:10
+   Duration  11.81s (transform 5.56s, setup 104ms, import 789ms, tests 10.56s, environment 0ms)

@@ -37,4 +37,3 @@ AssertionError: expected [] to include 'WO03 vanishing-leaver'
       Tests  1 failed | 4 skipped (5)
    Start at  17:39:53
    Duration  3.01s (transform 1.49s, setup 73ms, import 2.27s, tests 378ms, environment 0ms)
-

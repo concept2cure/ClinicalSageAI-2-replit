@@ -8,11 +8,10 @@
  * on the right — replacing the old workbench-tab body this surface
  * originally shipped with.
  *
- * Data: useVault(programId) against GET /api/mdx/vault with fixture
- * fallback per the SampleDataBanner contract; version history for the
- * selected artifact is live (useVaultVersions) with fixture fallback,
- * and its provenance marker derives from the same value that picks the
- * list. Folder selection validates at render — a folder absent from the
+ * Data: useVault(programId) against GET /api/mdx/vault — live rows or an
+ * honest empty; version history for the selected artifact is live
+ * (useVaultVersions), and its provenance marker derives from the same value
+ * that picks the list. Folder selection validates at render — a folder absent from the
  * current data set falls back to 'root' with no state-sync effect.
  */
 
@@ -115,28 +114,16 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
   /* The shared ingest path, not a second copy of it — see ../../v2/useVaultUpload. */
   const { uploading, note, clearNote, upload } = useVaultUpload(program?.id ?? null);
 
-  /* THE GATE, and why it is `useSampleRows` and not a truthiness check.
+  /* Live rows or nothing.
    *
-   * This read was `const usingSample = !live.files || live.files.length === 0`,
-   * which is not a sample-mode gate at all — it is the `live ?? FIXTURE`
-   * pattern `../lib/useSampleRows` exists to eliminate, spelled differently.
-   * It fires on exactly the occasions a user cannot detect: an empty tenant, an
-   * expired token, a 500, a fetch that has not started.
-   *
-   * On this surface that mattered more than on most. `VAULT_FILES` carries
-   * `hash: 'a91e…4f02'` and `esig: true` on 14 rows; `fileToDoc` above turns
-   * `esig` into `esigState: 'signed'` plus a `signedBy` assembled from the
-   * fixture's author and date, and the detail pane renders `{sel.hash}` under
-   * the literal label SHA-256 — all of it beneath a page subtitle that reads
-   * "21 CFR Part 11 audit trail · SHA-256 chained". So a tenant with an empty
-   * vault, or one whose token had expired, was shown fourteen invented
-   * documents with invented content hashes and invented signatures, in the one
-   * surface whose entire claim is that those three things are real.
-   *
-   * `useSampleRows` returns the fixture only when the user has explicitly
-   * turned sample mode on — impossible in a production build — and otherwise
-   * returns the live rows or an honest empty. `SampleDataBanner` below still
-   * marks the sample case; the banner was never the missing piece. */
+   * This read was once `const usingSample = !live.files || live.files.length
+   * === 0`, the `live ?? FIXTURE` pattern spelled differently: it fired on
+   * exactly the occasions a user cannot detect — an empty tenant, an expired
+   * token, a 500, a fetch that has not started — and showed `VAULT_FILES`,
+   * fourteen invented documents with invented SHA-256 hashes and `esig: true`
+   * signatures, under a subtitle reading "21 CFR Part 11 audit trail · SHA-256
+   * chained". The fixtures were deleted first, then the sample mode that could
+   * still reach them (2026-10-14). */
   const live = useVault(program?.id ?? null);
   const liveFiles = live.files && live.files.length ? (live.files as VaultFile[]) : null;
   /* Live or nothing. VAULT_FILES and VAULT_VERSIONS are deleted — see the

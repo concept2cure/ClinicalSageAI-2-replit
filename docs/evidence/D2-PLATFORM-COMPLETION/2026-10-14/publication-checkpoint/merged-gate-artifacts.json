@@ -1,0 +1,60 @@
+{
+  "publication": "pending",
+  "phase": "b50b33097 canonical merge before commit",
+  "artifacts": [
+    {
+      "rawPath": "/tmp/project-vault-ind-merged-typecheck-final.txt",
+      "rawSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+      "rawBytes": 204,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-ind-merged-typecheck-final.txt",
+      "filedSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+      "filedBytes": 204,
+      "projection": "trailing blank lines removed; one final newline"
+    },
+    {
+      "rawPath": "/tmp/project-vault-ind-merged-build-final.txt",
+      "rawSha256": "b5b2a33f29f5c009e3539f17a2c63872875c4d9bc8072dc0f28f3870b340930e",
+      "rawBytes": 14419,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-ind-merged-build-final.txt",
+      "filedSha256": "b5b2a33f29f5c009e3539f17a2c63872875c4d9bc8072dc0f28f3870b340930e",
+      "filedBytes": 14419,
+      "projection": "trailing blank lines removed; one final newline"
+    },
+    {
+      "rawPath": "/tmp/project-vault-ind-merged-sql.txt",
+      "rawSha256": "ddf1fe94b23bfd0c15df244640fce6cfaebce0d82b7d7044b97f370228f733a9",
+      "rawBytes": 149,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-ind-merged-sql.txt",
+      "filedSha256": "ddf1fe94b23bfd0c15df244640fce6cfaebce0d82b7d7044b97f370228f733a9",
+      "filedBytes": 149,
+      "projection": "trailing blank lines removed; one final newline"
+    },
+    {
+      "rawPath": "/tmp/project-vault-ind-merged-tenant.txt",
+      "rawSha256": "bfe8f3572cf796a230023112b3df978fee6553b3b6fb2b4fe7046bc5bb59e4c2",
+      "rawBytes": 190,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-ind-merged-tenant.txt",
+      "filedSha256": "bfe8f3572cf796a230023112b3df978fee6553b3b6fb2b4fe7046bc5bb59e4c2",
+      "filedBytes": 190,
+      "projection": "trailing blank lines removed; one final newline"
+    },
+    {
+      "rawPath": "/tmp/project-vault-ind-security-contract.txt",
+      "rawSha256": "b18cb23135b67262d27c3452813536ad761ea5a149814a26f774979eea0590b1",
+      "rawBytes": 1789,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-ind-security-contract.txt",
+      "filedSha256": "076f98542716b3a3eba37cb70aa06701cdc41ed3a93994f587347ce2e8f5b8f1",
+      "filedBytes": 1788,
+      "projection": "trailing blank lines removed; one final newline"
+    },
+    {
+      "rawPath": "/tmp/c2c-section-schema-latest-merge-tests.txt",
+      "rawSha256": "ef0afb96b9aca05ba540211df6f193526cfc226ff2c32079a376e4445cc42636",
+      "rawBytes": 31138,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/c2c-section-schema-latest-merge-tests.txt",
+      "filedSha256": "7239f2f41fcf6f4ffbde548c1f61cb1d9541d72e18aceb0eb386048af89b7f92",
+      "filedBytes": 31137,
+      "projection": "trailing blank lines removed; one final newline"
+    }
+  ]
+}

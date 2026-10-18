@@ -1,0 +1,93 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 162ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 57ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 47ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 31ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 19ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 41ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > says "on your clipboard" when the copy succeeded 32ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 35ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 20ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > uses explicit least-access scope choices and the authenticated organization 193ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > requires at least one scope and never creates a broad default key 44ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > preserves the one-time key until stored and reports manual copy when clipboard refuses 85ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > reports refusal, keeps the form open, and never shows a fabricated key 69ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > clears the raw key when unmounted and never restores it from browser storage 52ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/ApiKeyCreate.test.tsx > organization API key creation > retains the one-time issued key when its audit record could not be persisted 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 72ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 24ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 26ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 28ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 146ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 15ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 60ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 17ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps every selectable archetype into the PATCH /api/mdx/industry-profile enum 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps the specific archetype semantics 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > falls back to biotech_pharma for unknown archetypes 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > maps every wizard-selectable platform role into the POST /api/tenant-users enum 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > down-scopes business-tier roles to org admin and support to member 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > fails closed to least-privilege member for unknown roles 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > uses the email local part as the provisional display name 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > always satisfies the endpoint min-length of 2 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes DTC paid tiers to POST /api/billing/dtc-checkout with a schema-valid body 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes per-user (b2b) paid tiers to POST /api/billing/checkout with seats 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > clamps seats to a positive integer (schema requires min 1) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > normalizes any non-annual cycle to monthly (schema enum) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > reports enterprise as unavailable — custom pricing has no self-service checkout 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > sends the DTC free tier to checkout like any other self-service tier 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > still refuses enterprise on the DTC path — custom pricing has no checkout 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > reads runtime-backed keys and ignores obsolete sessionTimeout and unsupported flags 116ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > sends only the two enforced keys and an audited reason to the JWT organization 63ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > requires a reason and valid integers before making a governed change 54ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > does not display platform defaults as loaded organization policy after a failed read 16ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > retains unsaved edits on audit-write refusal and never claims save success 37ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > keeps changes unconfirmed when the returned policy does not match the requested values 36ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > accepts only the selected invitation and keeps the current workspace active 125ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > declines explicitly without creating membership 23ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > keeps an invitation pending after quota refusal and shows the server reason 23ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > reports a failed read with retry, preserving the distinction from an empty inbox 10ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > does not permit acceptance until the organization is identified by name 11ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationInbox.test.tsx > personal organization invitation inbox > does not treat malformed or success:false responses as accepted 17ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > opens the canonical account dialog and restores focus on close 115ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > routes administrators to the existing membership, setup and identity screens 23ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/OnboardingSecurity.test.tsx > onboarding security handoffs > gives nonadministrators the personal-account flow and a truthful admin handoff 8ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 77ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 20ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 39ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 9ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 10ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 12ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryProjectPrefill.test.tsx > copies only user-stated context when the user chooses it and never picks a filing 95ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryProjectPrefill.test.tsx > does not offer fabricated project details on a missing or unreadable record 3ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > keeps every link visible and copies only the person selected 114ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > preserves the visible link and announces manual copy when clipboard permission is refused 14ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/InvitationResults.test.tsx > private invitation results > shows consent and failed activation explicitly without offering a nonexistent link 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > shows guidance for a newcomer and keeps comma-separated domains editable 54ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > asks predicate questions only for a device and clears answers when the product changes 28ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryQuestionnaire.test.tsx > discovery questions adapt to the client’s own answers > offers launch-scoped uses and explains the CMC scope when selected 14ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/DiscoveryReview.test.tsx > states missing context honestly and renders human input as text 25ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > keeps an individually shareable setup link when no invitation email went out 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > counts a created account with failed activation as recorded but not usable 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > does not claim that a 202 consent request added membership or sent an email 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > identifies delivered email without granting immediate access to a new account 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > retains the stored role for a replacement invitation and explains invalidation 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > confirms immediate access only when an existing account was actually added 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > never invents delivery from a missing or inconsistent success payload 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link javascript:alert(1) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link data:text/html,secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://c2c.test/wrong?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://admin:secret@c2c.test/concept2cure/password-reset?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > renders the server refusal while stripping infrastructure details 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > handles network uncertainty honestly without exposing raw exceptions 0ms
+
+ Test Files  13 passed (13)
+      Tests  85 passed (85)
+   Start at  03:22:35
+   Duration  9.56s (transform 504ms, setup 531ms, import 2.00s, tests 2.73s, environment 3.31s)

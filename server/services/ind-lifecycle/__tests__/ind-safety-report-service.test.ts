@@ -18,7 +18,7 @@ import {
   buildAmendmentIntent,
   assembleIndSafetyReport,
   isSuspected,
-  isUnexpected,
+  expectednessDetermination,
   unstatedSafetyReportFields,
 } from '../ind-safety-report-service';
 import type {
@@ -109,7 +109,7 @@ describe('classifyIndSafetyReport — 21 CFR 312.32', () => {
 
   it('NOT reportable: EXPECTED reaction (listed in the IB), even if serious/fatal', () => {
     const c = classifyIndSafetyReport(
-      makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected (listed in IB)' }),
+      makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected' }),
     );
     expect(c.obligation).toBe('NOT_REPORTABLE');
     expect(c.reportingWindowDays).toBeNull();
@@ -143,7 +143,7 @@ describe('classifyIndSafetyReport — 21 CFR 312.32', () => {
 
   it('NOT reportable: a recorded "expected" determination is reported as such', () => {
     const c = classifyIndSafetyReport(
-      makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected (listed in IB)' }),
+      makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected' }),
     );
     expect(c.determinations.expectednessRecorded).toBe(true);
     expect(c.rationale).toMatch(/event is expected/);
@@ -265,12 +265,15 @@ describe('suspectedness / expectedness derivation', () => {
     expect(isSuspected('unrelated')).toBe(false);
   });
 
-  it('expectedness wording: "unexpected"/"not listed" => unexpected; else expected', () => {
-    expect(isUnexpected('unexpected')).toBe(true);
-    expect(isUnexpected('Not listed in IB')).toBe(true);
-    expect(isUnexpected('expected')).toBe(false);
-    expect(isUnexpected(null)).toBe(false);
-    expect(isUnexpected(undefined)).toBe(false);
+  // 2026-10-15: this read free text ("Not listed in IB" => unexpected, anything
+  // else => expected). The vocabulary is closed now; see
+  // ind-safety-report-expectedness-closed-vocabulary.test.ts.
+  it('expectedness: "unexpected" / "expected" are the determinations; anything else is not assessed', () => {
+    expect(expectednessDetermination('unexpected')).toBe('unexpected');
+    expect(expectednessDetermination('Not listed in IB')).toBe('not_assessed');
+    expect(expectednessDetermination('expected')).toBe('expected');
+    expect(expectednessDetermination(null)).toBe('not_assessed');
+    expect(expectednessDetermination(undefined)).toBe('not_assessed');
   });
 });
 
@@ -428,7 +431,7 @@ describe('nothing regulated is assumed — the engine refuses, naming the fields
     expect(assessment).toContain('Expectedness: not recorded');
     expect(assessment).not.toMatch(/Expectedness: expected/);
     // A recorded determination still reads as recorded.
-    const recorded = assembleIndSafetyReport(makeEvent({ expectedness: 'expected (listed in IB)' }));
+    const recorded = assembleIndSafetyReport(makeEvent({ expectedness: 'expected' }));
     expect(recorded.document.sections.find((s) => s.key === 'assessment')!.body).toMatch(/Expectedness: expected/);
   });
 });

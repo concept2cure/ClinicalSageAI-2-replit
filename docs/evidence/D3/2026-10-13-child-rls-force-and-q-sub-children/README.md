@@ -1,4 +1,17 @@
-# D3 — the four children a blank install refuses, and a deny-all that exempted the owner
+# D3 — a deny-all that exempted the table owner, and the test that could not see it
+
+> **What landed from this, and what did not.** The chained-list half below —
+> `capa_actions` and the three `q_sub_*` children, plus `q_sub_commitments` —
+> was reached independently by another session on the same day and landed
+> first, as `docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/`. Its spec
+> entries are identical, so there was nothing to merge but prose; the merge
+> keeps that session's narrative and adds the reader survey and the measured
+> before/after below, which it did not carry. **What is new here is the second
+> defect: the deny-all exemption excluded the table OWNER, and the test
+> asserting it could not tell the safe state from the unsafe one.** That half
+> is unique to this change. The first section is kept because the measurement
+> and the FK survey stand on their own, and because the two findings share one
+> cause.
 
 Found by running `scripts/db/install-fresh.mjs` against a blank PostgreSQL 16
 rather than against a database that already existed. Its final step runs this
@@ -163,11 +176,28 @@ from the other direction.
 ## Files
 
 - `db/migrations/20260813_child_table_parent_scoped_rls.sql` — amended in place
-  per CLAUDE.md Rule 1 (171 lines added, none removed): five chained entries,
-  the ENABLE+FORCE deny-all block, and the dated header note.
+  per CLAUDE.md Rule 1, nothing removed: the ENABLE+FORCE deny-all block, the
+  dated header note for it, and the reader survey and measurement beside the
+  chained entries the other session landed.
 - `tests/db/child-table-parent-scoped-rls.cases.ts` — the `q_sub_questions`
-  isolation case, the five names in `ALL_CHILD_TABLES`, bare-CI declarations
-  for the three new children.
+  isolation case (a key shape no existing case covered: a grandchild of a
+  TEXT-program-id child, so the delegation has to survive two hops of
+  different kinds), bare-CI declarations for its tables, and the rewritten
+  `STILL_DENY_ALL` contract.
 - `tests/db/child-table-parent-scoped-rls.dbtest.ts` — the deny-all assertion
   that can tell the three states apart.
 - `measured.txt` — the raw before/after output.
+
+## Not recorded as a finding
+
+Two things this investigation turned up and deliberately did **not** file:
+
+- `coauthor_document_versions` with row security off. An artefact of the
+  pgvector-less cluster described above — `coauthor_documents` carries a
+  `vector(1536)` column, so `drizzle-kit push` never created the parent and
+  the child shipped without it. On a faithful database both are `t / t / 1`.
+- The C-1 run-history fix this session also carried. Another session landed a
+  better one first (`server/services/report-os/run-history.ts`: search and
+  sort in SQL *and* a real `offset`, so the panel paginates instead of
+  describing a window). This session's inline version was withdrawn rather
+  than merged — one canonical implementation per capability.

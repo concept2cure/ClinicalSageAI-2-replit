@@ -1,0 +1,8 @@
+{
+  "disposablePostgresContainer": "c2c-pm-postgres",
+  "stopped": true,
+  "autoRemoved": true,
+  "nativeTestsAlreadyPassed": 29,
+  "productionDataUsed": false,
+  "observedAt": "2026-10-18T00:17:47.832184+00:00"
+}

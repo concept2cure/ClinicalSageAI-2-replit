@@ -36,7 +36,7 @@ describe('AI safety: AnA input guard (prompt-injection coverage)', () => {
     delete process.env.PROMPT_INJECTION_ENCAPSULATE;
     // Audit writes go through the mocked pg pool in tests; stub logAction so we
     // can assert it fires without depending on DB internals.
-    auditSpy = vi.spyOn(auditService, 'logAction').mockResolvedValue(undefined);
+    auditSpy = vi.spyOn(auditService, 'logAction').mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
   });
 
   afterEach(() => {
@@ -89,6 +89,25 @@ describe('AI safety: AnA input guard (prompt-injection coverage)', () => {
     expect(warnSpy).toHaveBeenCalled();
 
     warnSpy.mockRestore();
+  });
+
+  it.each([
+    { persisted: false, chained: false, tamperProof: false, error: 'internal database detail' },
+    { persisted: true, chained: false, tamperProof: true },
+  ])('carries the actual audit receipt without changing the inspected input or default enforcement', async outcome => {
+    auditSpy.mockResolvedValue(outcome);
+    const result = await guardUserInput(INJECTION, { organizationId: 42, userId: 7 });
+    expect(result.text).toBe(INJECTION);expect(result.enforced).toBe(false);
+    expect(result.auditTrail).toMatchObject(outcome.persisted ? { persisted: true, chained: false } : { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(JSON.stringify(result.auditTrail)).not.toContain('internal database detail');
+  });
+
+  it('keeps audit failure observable when the injection policy blocks the turn', async () => {
+    process.env.PROMPT_INJECTION_ENFORCE = 'true';auditSpy.mockRejectedValue(new Error('private audit outage'));
+    const error = await guardUserInput(INJECTION, { organizationId: 42, userId: 7 }).catch(value => value);
+    expect(error).toBeInstanceOf(PromptInjectionError);
+    expect(error.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(JSON.stringify(error.auditTrail)).not.toContain('private audit outage');
   });
 
   it('with PROMPT_INJECTION_ENFORCE=true → throws PromptInjectionError on the payload', async () => {

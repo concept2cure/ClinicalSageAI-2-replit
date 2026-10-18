@@ -171,6 +171,20 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
   const out: string[] = [];
   for (const n of nodes) {
     const code = normalize(n.code);
+    /* A Module 1 document filed OUTSIDE Module 1. This loop used to skip every non-Module-1 code,
+       so the contract could not see the error the global document registry names in its own
+       comment: "was M5, which is where the CLINICAL STUDY REPORTS live; an M5 assignment puts it
+       in the wrong backbone node and the sequence does not validate"
+       (shared/regulatory/global-document-registry.ts:271). Four copies filed an Investigator's
+       Brochure at 5.3, 5.3.5.4 or module-5 and every Module 1 check passed them, because they were
+       not Module 1 codes. Only rules with a real heading count: a rule whose `under` is null says
+       the document is not a Module 1 section at all (the table of contents), and CTD 2.1 is the
+       Module 2 table of contents, which is right. */
+    if (/^[2-5]\./.test(code) || /^[2-5]$/.test(code)) {
+      for (const rule of PLACEMENT_RULES.filter((r) => r.under !== null && r.title.test(n.title))) {
+        out.push(`${n.code} "${n.title}" — ${rule.label} is a Module 1 document; it files under ${headingsOf(rule).join(' or ')}, not in Module ${code[0]}`);
+      }
+    }
     if (!isModule1(code)) continue;
     if (!isFdaModule1Placement(code)) {
       out.push(`${n.code} "${n.title}" is not an FDA Module 1 heading (nor an ancestor/descendant of one)`);
@@ -179,6 +193,15 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
     // A node naming documents FDA files under different headings is a
     // container for them; it may sit at an ancestor of each one's heading.
     const naming = new Set(matched.filter((r) => r.under !== null).map((r) => headingsOf(r).join('|')));
+    /* A node that NAMES the child heading in its own title is a container for it, even when only
+       one rule matches. `{ code: '1.3', title: 'Administrative Information (1.3.1 contact/sponsor;
+       1.3.4 financial certification)' }` is right: 1.3 IS Administrative Information, and the
+       title is listing what sits beneath it, with the codes written out. Reading that as "financial
+       disclosure files under 1.3.4, not 1.3" is reading the title as a claim about the node's own
+       content, which it is not. Without this, the only way to state a container honestly would be
+       to stop naming its children. */
+    const namesItsChild = (rule: PlacementRule): boolean =>
+      headingsOf(rule).some((h) => h.startsWith(`${code}.`) && new RegExp(`(?<![0-9.])${h.replace(/\./g, '\\.')}(?![0-9])`).test(n.title));
     const container = naming.size > 1;
     for (const rule of matched) {
       if (rule.under === null) {
@@ -186,7 +209,7 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
         continue;
       }
       const headings = headingsOf(rule);
-      if (!headings.some((h) => sitsUnder(code, h, rule.ancestorOk === true || container))) {
+      if (!headings.some((h) => sitsUnder(code, h, rule.ancestorOk === true || container || namesItsChild(rule)))) {
         out.push(`${n.code} "${n.title}" — ${rule.label} files under ${headings.join(' or ')}`);
       }
     }

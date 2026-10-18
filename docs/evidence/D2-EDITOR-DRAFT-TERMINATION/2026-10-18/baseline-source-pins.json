@@ -1,0 +1,10 @@
+{
+  "baseline": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "files": {
+    "server/routes/authoring.router.ts": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7"
+  }
+}

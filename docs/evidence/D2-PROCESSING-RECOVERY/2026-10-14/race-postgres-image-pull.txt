@@ -1,0 +1,66 @@
+16: Pulling from library/postgres
+ecc510c1e359: Pulling fs layer
+79faf13a8736: Pulling fs layer
+6456bfbf35e7: Pulling fs layer
+b353db459ed1: Pulling fs layer
+99f49de4fe2b: Pulling fs layer
+83d1a2a3917c: Pulling fs layer
+b353db459ed1: Waiting
+99f49de4fe2b: Waiting
+83d1a2a3917c: Waiting
+715ea0948cb1: Pulling fs layer
+486e8305f56f: Pulling fs layer
+715ea0948cb1: Waiting
+e7d675f11ded: Pulling fs layer
+c49864c27f35: Pulling fs layer
+770ef8b308ea: Pulling fs layer
+486e8305f56f: Waiting
+e7d675f11ded: Waiting
+c49864c27f35: Waiting
+50c25daa0302: Pulling fs layer
+8309db3ae5b6: Pulling fs layer
+9731e27f2541: Pulling fs layer
+770ef8b308ea: Waiting
+50c25daa0302: Waiting
+8309db3ae5b6: Waiting
+9731e27f2541: Waiting
+79faf13a8736: Verifying Checksum
+79faf13a8736: Download complete
+6456bfbf35e7: Verifying Checksum
+6456bfbf35e7: Download complete
+b353db459ed1: Verifying Checksum
+b353db459ed1: Download complete
+83d1a2a3917c: Verifying Checksum
+83d1a2a3917c: Download complete
+99f49de4fe2b: Verifying Checksum
+99f49de4fe2b: Download complete
+715ea0948cb1: Download complete
+486e8305f56f: Verifying Checksum
+486e8305f56f: Download complete
+ecc510c1e359: Download complete
+770ef8b308ea: Verifying Checksum
+770ef8b308ea: Download complete
+c49864c27f35: Verifying Checksum
+c49864c27f35: Download complete
+ecc510c1e359: Pull complete
+79faf13a8736: Pull complete
+50c25daa0302: Download complete
+8309db3ae5b6: Download complete
+6456bfbf35e7: Pull complete
+b353db459ed1: Pull complete
+9731e27f2541: Verifying Checksum
+9731e27f2541: Download complete
+99f49de4fe2b: Pull complete
+83d1a2a3917c: Pull complete
+715ea0948cb1: Pull complete
+486e8305f56f: Pull complete
+e7d675f11ded: Download complete
+e7d675f11ded: Pull complete
+c49864c27f35: Pull complete
+770ef8b308ea: Pull complete
+50c25daa0302: Pull complete
+8309db3ae5b6: Pull complete
+9731e27f2541: Pull complete
+Digest: sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+Status: Downloaded newer image for postgres:16
+docker.io/library/postgres:16

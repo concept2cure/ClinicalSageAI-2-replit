@@ -1,0 +1,9 @@
+{
+  "method": "POST",
+  "path": "/api/authoring/docs",
+  "status": 201,
+  "documentId": "f1d75fc2-ae4f-4ef1-9381-20135e0d2a2c",
+  "module": null,
+  "programId": "3a27db9b-c7de-4e93-8b34-ac4438fec36d",
+  "qualification": "New synthetic QA metadata only; no clinical text, provider call or signature; historical rows preserved."
+}

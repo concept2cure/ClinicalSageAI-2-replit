@@ -10,8 +10,8 @@ vault.document_chunks | t | f | t
 vault.documents | t | f | t
 (5 rows)
 policyname | cmd | qual | with_check
-org_relationships_party_read | SELECT | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid) OR (delegate_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | 
-org_relationships_sponsor_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | 
+org_relationships_party_read | SELECT | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid) OR (delegate_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) |
+org_relationships_sponsor_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) |
 org_relationships_sponsor_insert | INSERT |  | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid))
 org_relationships_sponsor_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid))
 (4 rows)
@@ -35,4 +35,3 @@ BEGIN
   );
 END;
 $function$
-

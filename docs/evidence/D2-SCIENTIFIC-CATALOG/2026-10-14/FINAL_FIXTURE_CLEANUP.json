@@ -1,0 +1,21 @@
+{
+  "dockerServerVersion": "28.4.0",
+  "exactOwnedFixtures": [
+    {
+      "name": "c2c-catalog-race-9d0556ea-42c",
+      "phase": "failed",
+      "verifiedAbsent": true
+    },
+    {
+      "name": "c2c-catalog-race-34a72289-571",
+      "phase": "cleaned",
+      "verifiedAbsent": true
+    },
+    {
+      "name": "c2c-catalog-race-08f1cbcd-421",
+      "phase": "cleaned",
+      "verifiedAbsent": true
+    }
+  ],
+  "otherContainersChanged": false
+}

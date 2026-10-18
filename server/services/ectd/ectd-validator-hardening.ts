@@ -25,6 +25,7 @@ import {
 } from './ectd4-validator.js';
 import {
   validateRegionalPackage,
+  isRegionalRulePackEncoded,
   type RegionalContext,
   type RegionalFinding,
   type RegionalLeafRef,
@@ -73,7 +74,13 @@ export interface HardenedValidationResult extends ValidationResult {
   dtd: DtdFinding[];
   /** Composite score across structural + regional + sequence + dtd */
   hardenedScore: number;
-  /** True iff zero blocker errors across all categories */
+  /**
+   * False when the region's own rules are not encoded: its regional findings
+   * cover only the universal invariants, and a REGION_RULES_NOT_ENCODED finding
+   * says what was not assessed.
+   */
+  regionalRulesAssessed: boolean;
+  /** True iff zero blocker errors across all categories and the region's own rules were assessed */
   gatewayReady: boolean;
 }
 
@@ -218,11 +225,16 @@ export async function validateEctdPackageHardened(
     dtdFindings.filter(f => f.severity === 'warning').length;
   const hardenedScore = Math.max(0, 100 - errorCount * 12 - warningCount * 3);
 
+  // 2026-10-15: a region with no encoded rules of its own (UK, AU, CH, BR, IN,
+  // SG; CN and KR check only the same two invariants) came back gatewayReady
+  // with none of its rules applied. No findings there is not a clean result.
+  const regionalRulesAssessed = isRegionalRulePackEncoded(context.region);
   const gatewayReady =
     errorCount === 0 &&
     structural.summary.errors === 0 &&
     !regionalFindings.some(f => f.severity === 'error') &&
-    !sequenceFindings.some(f => f.severity === 'error');
+    !sequenceFindings.some(f => f.severity === 'error') &&
+    regionalRulesAssessed;
 
   return {
     valid: structural.valid && gatewayReady,
@@ -239,6 +251,7 @@ export async function validateEctdPackageHardened(
     sequence: sequenceFindings,
     dtd: dtdFindings,
     hardenedScore,
+    regionalRulesAssessed,
     gatewayReady,
   };
 }

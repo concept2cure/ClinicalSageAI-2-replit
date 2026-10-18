@@ -1,0 +1,19 @@
+[selftest] the gate is ALREADY failing before any fixture was written.
+           Fix that first — these cases cannot be interpreted otherwise.
+[ci:unkeyed-request-tables] 1082 tables created; 599 read by a per-request path; 102 of those carry NO tenant column; 101 baselined, 0 still unreviewed
+
+🚫 Table(s) a per-request path reads with NO tenant column:
+
+  report_program_group_projects
+      created in : migrations/0014_report_os_foundation.sql
+      read by    : server/services/report-os/project-access.ts, server/services/report-os/run-history.ts, server/services/report-os/scope-ownership.ts
+
+  Every RLS sweep here keys off organization_id / org_id / tenant_id, so a
+  table with none is outside all of them — and outside every gate that looks
+  for a tenant-keyed table missing a policy. It is not protected in depth;
+  it is protected only by whatever predicate each query happens to carry.
+
+  Fix: give it a tenant column (RULE 1 — amend the creating migration in
+  place), or scope it through a parent that has one, or record it in the
+  baseline with a reason: global | derived | exempt.
+    npm run ci:unkeyed-request-tables:write-baseline

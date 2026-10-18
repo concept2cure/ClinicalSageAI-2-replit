@@ -21,7 +21,7 @@ import { createHash } from 'node:crypto';
 import type express from 'express';
 import type { PoolClient } from 'pg';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown, put: vi.fn(),
@@ -77,7 +77,9 @@ let author: (r: request.Test) => request.Test;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ + VAULT_DDL,
+    // The current member and project anchor the authoring access gate reads
+    // (authorizeAuthoringProgram, 0e4ccf46f): active user/org, one anchor, sharing.
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -235,7 +237,16 @@ describe('POST /docs/:docId/file-to-vault', () => {
   it('refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not', async () => {
     const docId = await draftDocument('Drafted by a member, filed by a viewer');
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
-    const res = await author(request(viewerApp).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    // Since 14362ef00 the Vault write decides on the CURRENT organization_users
+    // role it reads on the writer's own transaction, not the request scope's
+    // copy, so the author is a viewer in the store as well as in the scope.
+    await jdb.pool.query(`UPDATE organization_users SET role = 'viewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, Number(AUTHOR.id)]);
+    let res: request.Response;
+    try {
+      res = await author(request(viewerApp).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    } finally {
+      await jdb.pool.query(`UPDATE organization_users SET role = 'member' WHERE organization_id = $1 AND user_id = $2`, [ORG, Number(AUTHOR.id)]);
+    }
     expect(res.status, JSON.stringify(res.body)).toBe(403);
     expect(res.body.error.code).toBe('VAULT_WRITE_ROLE_REQUIRED');
     const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');

@@ -48,14 +48,50 @@ const setTenantContext = (req: any, res: any, next: any) => {
 // Apply tenant context middleware to all routes
 router.use(setTenantContext);
 
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /**
  * Register a document in the unified system
  * POST /api/module-integration/register-document
+ *
+ * 2026-10-15: this spread req.body into registerDocument, so created_by on the
+ * document, its first version and its audit row — and the initial status —
+ * were whatever the body said, and no user was required. The actor and tenant
+ * are the session's and the status is the service's; the body supplies only
+ * the document.
  */
 router.post('/register-document', asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const { title, documentType, moduleType, originalId, content, metadata } = req.body ?? {};
+  if (
+    !nonEmptyString(title) ||
+    !nonEmptyString(documentType) ||
+    !isModuleType(moduleType) ||
+    !nonEmptyString(originalId) ||
+    (metadata !== undefined && !isPlainObject(metadata))
+  ) {
+    return res.status(400).json({
+      error: 'title, documentType, moduleType (a valid module) and originalId are required; metadata, when sent, is an object',
+    });
+  }
   const document = await moduleIntegrationService.registerDocument({
-    ...req.body,
-    organizationId: getSecureOrgId(req),
+    title,
+    documentType,
+    moduleType,
+    originalId,
+    content,
+    metadata,
+    createdBy: String(userId),
+    organizationId: Number(getSecureOrgId(req)),
   });
   res.status(201).json(document);
 }));
@@ -122,13 +158,38 @@ router.get('/document/:id', asyncHandler(async (req, res) => {
 /**
  * Update a document
  * PATCH /api/module-integration/documents/:id
+ *
+ * 2026-10-15: this passed req.body to updateDocument as it came, so updated_by
+ * and every audit row's performed_by were whatever the body said, the body
+ * could set status, created_by, latest_version and organization_id, and no
+ * user was required. The actor is the session's; the body may change only
+ * title, documentType, metadata and content.
  */
 router.patch('/documents/:id', asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const { title, documentType, metadata, content } = req.body ?? {};
+  if (title === undefined && documentType === undefined && metadata === undefined && content === undefined) {
+    return res.status(400).json({
+      error: 'Nothing to update: send title, documentType, metadata or content. Status, authorship and organization are not set through this route.',
+    });
+  }
+  if (
+    (title !== undefined && !nonEmptyString(title)) ||
+    (documentType !== undefined && !nonEmptyString(documentType)) ||
+    (metadata !== undefined && !isPlainObject(metadata))
+  ) {
+    return res.status(400).json({
+      error: 'title and documentType, when sent, are non-empty strings; metadata is an object',
+    });
+  }
   try {
     const { id } = req.params;
     const document = await moduleIntegrationService.updateDocument(
       parseInt(String(id), 10),
-      req.body,
+      { title, documentType, metadata, content, updatedBy: String(userId) },
       Number(getSecureOrgId(req))
     );
     res.json(document);

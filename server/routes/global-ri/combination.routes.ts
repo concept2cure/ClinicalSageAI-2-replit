@@ -18,7 +18,8 @@ router.get('/combination/framework/:region', limiter, requireRole(AUTHOR), (req:
 
 /**
  * Classify a combination product to its lead authority / regulatory route.
- * Body: { region, primaryModeOfAction?, integral? }.
+ * Body: { region, primaryModeOfAction?, integral? } — integral is required for EU
+ * (the engine refuses without it; returned as 400 naming the input).
  */
 router.post('/combination/classify', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;

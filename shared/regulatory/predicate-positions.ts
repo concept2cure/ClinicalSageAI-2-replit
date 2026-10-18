@@ -62,14 +62,14 @@ const POSITIONS: readonly PredicatePosition[] = [
     value: 'multiple_predicates',
     label: 'A primary predicate and additional predicates',
     commits:
-      'A primary predicate for the intended use, with further predicates for separate technological features — each of which must itself have the same intended use. It widens what you may rely on and widens what FDA will compare.',
+      'Two cases the 2014 guidance allows: a device with more than one intended use, each supported by its own predicate, or one intended use with features taken from several predicates that share it. What it does not allow is taking the indications from one and the technology from another. It widens what you may rely on and widens what FDA will compare.',
     authority: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014), § V',
   },
   {
     value: 'split_predicate',
     label: 'A split predicate — indications from one device, technology from another',
     commits:
-      'FDA does not accept this. The 2014 substantial-equivalence guidance states that a split predicate is not a permissible basis, so naming one invites a Refuse to Accept decision or a finding of not substantially equivalent. If the indications and the technology come from different devices, the honest readings are a De Novo or a new intended use.',
+      'FDA does not accept this. The 2014 substantial-equivalence guidance states that a split predicate \u2014 the indications for use from one device and the technological characteristics from another \u2014 is not a permissible basis, so a submission resting on one invites a finding of not substantially equivalent. If the indications and the technology come from different devices, the honest readings are a De Novo or a 510(k) for the new intended use.',
     authority: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014) — split predicates not permitted',
   },
   {
@@ -84,14 +84,20 @@ const POSITIONS: readonly PredicatePosition[] = [
     label: 'There is no legally marketed device to compare to',
     commits:
       'A 510(k) is a comparison, so with nothing to compare to there is no 510(k) to make. This is the first of the two conditions for a De Novo request, which asks FDA to classify the device and to hold it to special controls you propose.',
-    authority: 'FD&C Act 513(f)(2)(A)(i); 21 CFR 860.220(a)',
+    /* The DIRECT De Novo — a request without a 510(k) first — is the (ii)
+       condition. This cited (i), which is the post-NSE route, and cited
+       860.220(a), which is the request's content and format rather than who
+       may make one; the regulation is cited at subpart level because this
+       module will not state a section it has not verified. */
+    authority: 'FD&C Act 513(f)(2)(A)(ii); 21 CFR 860 Subpart D',
   },
   {
     value: 'nse_received',
     label: 'FDA has already found the device not substantially equivalent',
     commits:
       'An NSE determination on a 510(k) you have filed is the second condition for a De Novo request. The 510(k) is closed; what follows is the classification request, and the NSE letter is part of its record.',
-    authority: 'FD&C Act 513(f)(2)(A)(ii); 21 CFR 860.220(a)',
+    /* An NSE determination on a 510(k) already filed is the (i) condition. */
+    authority: 'FD&C Act 513(f)(2)(A)(i); 21 CFR 860 Subpart D',
   },
 ];
 

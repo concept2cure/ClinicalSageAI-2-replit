@@ -1,0 +1,146 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-domain-writerless-final.json",
+    "sha256": "c56588ea1aa7030b6ad7933e6f92e9fd5903a5f112116e7fe42b63c5623766fc",
+    "bytes": 46368
+  },
+  "success": true,
+  "passedCases": 115,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 11,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/reviewer-simulation-packet-store-not-available.pglite.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/reviewer-simulation-route-reads-records.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/external-control-arm-claims.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/external-control-arm-reports-only-what-it-computed.test.ts",
+      "status": "passed",
+      "cases": 20,
+      "counts": {
+        "passed": 20,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts",
+      "status": "passed",
+      "cases": 24,
+      "counts": {
+        "passed": 24,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana-ri/__tests__/reviewer-simulation-run-takes-no-model-supplied-facts.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/intelligence-engine/__tests__/reviewer-simulation-reads-facts-from-records.test.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/living-file/__tests__/reviewer-run-fresh-only-when-an-assessment-ran.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T21:16:09.182Z","pid":88532,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:16:09.186Z","pid":88532,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:16:09.186Z","pid":88532,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T21:16:10.272Z', poolSize: 1 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T21:16:11.840Z', poolSize: 2 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T21:16:11.868Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > reports commit-after uncertainty without false rollback and recovers by exact read
+[database] Database connection successful { timestamp: '2026-10-14T21:16:12.274Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T21:16:12.473Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T21:16:13.039Z', poolSize: 4 }
+
+{"level":50,"time":"2026-10-14T21:16:13.295Z","pid":88532,"hostname":"a5f657cec57d","context":{"err":"Synthetic audit INSERT failure","correlationId":null,"code":null},"msg":"[cerv2-documents] recording the screening decision failed"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > keeps screening commit-after uncertainty and exact readback distinct
+[database] Database connection successful { timestamp: '2026-10-14T21:16:13.437Z', poolSize: 4 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > refuses foreign corpus/programmes, private programme access and viewers before a decision is written
+[database] Database connection successful { timestamp: '2026-10-14T21:16:13.564Z', poolSize: 4 }
+
+{"level":40,"time":"2026-10-14T21:16:13.584Z","pid":88532,"hostname":"a5f657cec57d","context":{"code":"ENTRY_NOT_IN_CORPUS","reason":"PMID 6235412308 — that article is not in this organization's literature corpus — record it to the corpus before screening it, so the decision has something durable to attach to"},"msg":"[cerv2-documents] Refused a literature screening decision"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T21:16:13.918Z', poolSize: 5 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T21:16:13.942Z', poolSize: 6 }
+
+ ✓ tests/db/wave3-critical-history.dbtest.ts (17 tests) 5448ms
+     ✓ filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge  776ms
+{"level":30,"time":"2026-10-14T21:16:15.383Z","pid":88598,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:16:15.387Z","pid":88598,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:16:15.387Z","pid":88598,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.748Z', poolSize: 1 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.748Z', poolSize: 2 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.849Z', poolSize: 3 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.875Z', poolSize: 4 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.875Z', poolSize: 5 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.876Z', poolSize: 6 }
+
+stdout | server/routes/__tests__/defense-shadow-binding.dbtest.ts > Shadow bindings on actual migration-backed tables > reads canonical packet freshness and actual status changes through the mounted graph route
+[database] Database connection successful { timestamp: '2026-10-14T21:16:16.876Z', poolSize: 7 }
+
+ ✓ server/routes/__tests__/defense-shadow-binding.dbtest.ts (18 tests) 3014ms
+     ✓ reads canonical packet freshness and actual status changes through the mounted graph route  529ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  21:16:06
+   Duration  12.13s (transform 3.62s, setup 94ms, import 3.13s, tests 8.46s, environment 0ms)
+

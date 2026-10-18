@@ -23,7 +23,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -47,6 +47,17 @@ function ok(data: unknown, status = 200) {
 }
 function fail(status: number, error?: string) {
   return { ok: false, status, json: async () => ({ success: false, error }) } as Response;
+}
+/* The authoring store's receipts. Since 9bd3ee734 the canonical writer
+   (authoringHandoff.saveToAuthoring) proceeds only on a confirmed receipt:
+   `success: true` and a row echoing the request's identity — a document's
+   title and client_program_id, a section's doc_id and code. A bare `{ id }`
+   is an unconfirmed outcome, and nothing is written after it. */
+function docReceipt(id: string, req: any) {
+  return { ok: true, status: 200, json: async () => ({ success: true, document: { id, title: req.title, client_program_id: req.client_program_id } }) } as Response;
+}
+function sectionReceipt(id: string, req: any) {
+  return { ok: true, status: 200, json: async () => ({ success: true, section: { id, doc_id: req.doc_id, code: req.code, title: req.title } }) } as Response;
 }
 const props = () => ({ surface: { id: 'biostat-workbench', label: 'Biostat' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
@@ -103,9 +114,12 @@ describe('BiostatWorkbench — real statistical engine', () => {
   // model's score. The form sends the engine's inputs; the card renders its verdict.
   it('sends the engine its inputs and renders the deterministic verdict', async () => {
     render(<BiostatWorkbench {...props()} />);
-    fill(/^Indication$/, 'NSCLC');
-    fill(/^Effect size/, '0.5');
-    fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
+    // The knowledge panel also has an Indication field; this request belongs
+    // to the existing reviewer-risk assessment card.
+    const assessment = within(screen.getByText('Statistical defensibility').closest<HTMLElement>('.pj-card')!);
+    fireEvent.change(assessment.getByLabelText(/^Indication$/), { target: { value: 'NSCLC' } });
+    fireEvent.change(assessment.getByLabelText(/^Effect size/), { target: { value: '0.5' } });
+    fireEvent.click(assessment.getByRole('button', { name: /Assess defensibility/ }));
 
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/statistical-defensibility/assess');
@@ -464,7 +478,7 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
   const FULL_HASH = 'a'.repeat(64);
 
   it('Insert into document writes the tabulated result plus the FULL provenance hash', async () => {
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
+    apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
       if (url === '/api/biostat/assurance') {
         return ok({
           assurance: 0.771146,
@@ -476,12 +490,8 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
         });
       }
       // The authoring routes answer with a top-level envelope, not {data}.
-      if (url === '/api/authoring/docs') {
-        return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-1' } }) } as Response;
-      }
-      if (url === '/api/authoring/sections') {
-        return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-1' } }) } as Response;
-      }
+      if (url === '/api/authoring/docs') return docReceipt('doc-1', body);
+      if (url === '/api/authoring/sections') return sectionReceipt('sec-1', body);
       return ok({});
     });
 
@@ -528,9 +538,15 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
 
+    // A 5xx can follow a committed write, so since 9bd3ee734 the writer reports
+    // the outcome as unconfirmed — neither "saved" nor "nothing was saved".
+    // (A 4xx refusal is the "Couldn’t create the document" case.)
     await waitFor(() => {
-      expect(screen.getByText(/Couldn’t create the document/)).toBeTruthy();
+      expect(screen.getByText(/Could not confirm whether the document was saved/)).toBeTruthy();
     });
+    const toast = document.querySelector('.de-toast');
+    expect(toast?.getAttribute('data-tone')).toBe('error');
+    expect(document.body.textContent ?? '').not.toMatch(/Saved to the authoring store|Nothing was saved/);
     // No section write was attempted after the document create failed.
     expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')).toBeFalsy();
     // The create that failed was the one bound to the open project.
@@ -545,7 +561,7 @@ describe('D4 — structured scientific result fidelity in Authoring', () => {
   const FULL_HASH = 'a'.repeat(64);
 
   it('files every displayed result table, later-row columns and all rows with the full stamp', async () => {
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
+    apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
       if (url === '/api/biostat/assurance') {
         return ok({
           assurance: 0.72,
@@ -557,8 +573,8 @@ describe('D4 — structured scientific result fidelity in Authoring', () => {
           provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', inputsSha256: FULL_HASH, reproducible: true },
         });
       }
-      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-grid' } }) } as Response;
-      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-grid' } }) } as Response;
+      if (url === '/api/authoring/docs') return docReceipt('doc-grid', body);
+      if (url === '/api/authoring/sections') return sectionReceipt('sec-grid', body);
       return ok({});
     });
 
@@ -586,10 +602,10 @@ describe('D4 — structured scientific result fidelity in Authoring', () => {
   });
 
   it('can file a table-only result with heterogeneous and null rows', async () => {
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
+    apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
       if (url === '/api/biostat/assurance') return ok({ grid: [{ drift: 0 }, null, { power: 0.987654321012345 }], provenance: { inputsSha256: FULL_HASH } });
-      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-table' } }) } as Response;
-      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-table' } }) } as Response;
+      if (url === '/api/authoring/docs') return docReceipt('doc-table', body);
+      if (url === '/api/authoring/sections') return sectionReceipt('sec-table', body);
       return ok({});
     });
     render(<BiostatWorkbench {...props()} />);

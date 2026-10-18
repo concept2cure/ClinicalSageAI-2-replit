@@ -277,7 +277,10 @@
   --dur-normal:              200ms;
   --dur-slow:                300ms;
   --dur-slower:              500ms;
-  --ease:                    cubic-bezier(0.4, 0, 0.2, 1);
+  /* 2026-10-15: was cubic-bezier(0.4, 0, 0.2, 1), an ease-in-out, under a
+     comment that says ease-out (filing-spine design review, item 11;
+     tests/ui/motion-token.test.ts). */
+  --ease:                    cubic-bezier(0, 0, 0.2, 1);
   --ease-spring:             cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Tailwind motion aliases — tailwind.config.ts references these names for

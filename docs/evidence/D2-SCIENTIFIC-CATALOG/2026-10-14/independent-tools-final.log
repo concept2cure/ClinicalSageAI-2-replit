@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > JSON Schema interoperates with both explicit preview and default legacy description 57ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > an acceptance-like operation is outside both schema and registered parser 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > a near-matching mode cannot silently become legacy persistence 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > facts without explicit preview refuse on both schema and registered handler 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > mixed preview actor refuses before any service call 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > mixed preview organization_id refuses before any service call 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > mixed preview summary refuses before any service call 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > mixed preview accepted refuses before any service call 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > diagnostic context failure remains source preview without review or persistence 2ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > full-read refusal is preserved as a failed result with its actual coverage 1ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > flag-off refuses before preview source access 0ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts > independent registered catalog transport checks > default legacy result discloses value-only scope while preserving suggestion state 0ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  06:58:03
+   Duration  2.93s (transform 1.45s, setup 0ms, import 2.40s, tests 66ms, environment 0ms)
+

@@ -1,0 +1,38 @@
+× client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > reopens a completely rejected application and gives the explicit retry another receipt 226ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps a partial rejection pending until every application mark is gone 89ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps any accepted part settled after the remaining part is rejected 79ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > retains acceptance after all proposal marks disappear 78ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after accept 74ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after reject 61ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > notifies content and decision subscribers and honors unsubscribe 66ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > does not infer absence before hydration, then notifies readiness on the clean baseline 5059ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > waits for explicit Discard before an older-instance receipt becomes absent 5260ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > cannot infer rejection from a restored modified draft without its marks 191ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads restored application marks as pending and complete rejection as absent 5197ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads application marks from a saved redline after remount without enabling a duplicate 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > keeps source-mode and destroyed editor receipts unavailable 79ms
+ × client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > returns the UUID carried by every real mark without changing the source turn 104ms
+ × client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > preserves distinct adjacent same-turn applications when serialized and reopened 23ms
+ × client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > keeps actual adjacent deletion proposals separate within one turn and minute 22ms
+ × client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > gives reject/reapply/accept distinct decision IDs even in the same minute 22ms
+ × client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > includes application identity in decision IDs while preserving legacy typing grouping 12ms
+AssertionError: the applied redline has no durable application identity: expected 'object' to be 'string' // Object.is equality
+AssertionError: expected [ [ 'alphaBeta', undefined ] ] to deeply equal [ [ 'alpha', …(1) ], [ 'Beta', …(1) ] ]
+AssertionError: two independent applications merged into one review decision: expected [ 'alphaBeta' ] to deeply equal [ 'alpha', 'Beta' ]
+AssertionError: retry would overwrite the rejected decision projection: expected [ 'deletion:e9c87ec419e100da', …(1) ] to not deeply equal [ 'deletion:e9c87ec419e100da', …(1) ]
+AssertionError: independent applications share the same decision identity: expected 'insertion:050c8e65bbfa58a3' not to be 'insertion:050c8e65bbfa58a3' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: expected 'unavailable' to be 'settled' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: a real pending proposal did not notify its remedy card: expected "vi.fn()" to be called at least once
+AssertionError: expected 'unavailable' to be 'absent' // Object.is equality
+AssertionError: expected 'unavailable' to be 'absent' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+AssertionError: expected 'unavailable' to be 'pending' // Object.is equality
+ Test Files  2 failed (2)
+      Tests  16 failed | 2 passed (18)
+   Start at  06:32:38
+   Duration  19.41s (transform 649ms, setup 220ms, import 997ms, tests 16.77s, environment 1.04s)

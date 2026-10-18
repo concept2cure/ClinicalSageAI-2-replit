@@ -36,6 +36,10 @@ const catalogAttribution = fs.readFileSync(
 );
 
 const DDL = `
+  CREATE TABLE organizations (id integer PRIMARY KEY, status text);
+  CREATE TABLE users (id integer PRIMARY KEY, status text);
+  CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
+  INSERT INTO users VALUES (42,'active'),(99,'active');
   CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, lead_user_id integer, deleted_at timestamptz);
   CREATE TABLE cre_evidence_sources (
     id serial PRIMARY KEY, organization_id integer NOT NULL, client_program_id uuid,
@@ -45,12 +49,16 @@ const DDL = `
   );
   CREATE SCHEMA vault;
   CREATE TABLE vault.documents (
-    id uuid PRIMARY KEY, organization_id integer, program_id uuid, document_title text,
+    id uuid PRIMARY KEY, organization_id integer, program_id uuid, document_title text, document_code text,
     content_hash text, processing_status text, extracted_text text, supersedes_id uuid,
     retention_until date, deleted_at timestamptz, updated_at timestamptz DEFAULT now()
   );
   CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer NOT NULL, checksum_sha256 text, storage_path text, status text);
-  CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid);
+  CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, regulatory_program_id uuid,
+    client_workspace_id integer, status text DEFAULT 'active', owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}');
+  CREATE TABLE project_visibility_settings (organization_id integer, project_id integer, visibility text);
+  CREATE TABLE project_members (organization_id integer, project_id integer, user_id integer, role text, status text);
+  CREATE TABLE concept2cure_review_assignments (organization_id integer, artifact_id integer, reviewer_id integer, status text);
   CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, organization_id integer NOT NULL, project_id integer,
     artifact_id text, content_hash text, content text, status text, metadata json);
   CREATE TABLE lumen_data_atoms (id serial PRIMARY KEY, organization_id integer NOT NULL,
@@ -61,6 +69,9 @@ const DDL = `
   CREATE TABLE vault.document_catalog (document_id uuid PRIMARY KEY, key_data jsonb, content_hash CHAR(64) NOT NULL);
   CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer, status text, approved_at timestamptz, frozen_at timestamptz, locked_at timestamptz,
     client_program_id uuid, provenance jsonb);
+  CREATE TABLE authoring_export_history (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),document_id uuid,
+    export_type text,doc_sha256 text,exported_by text,file_name text,file_size bigint,metadata jsonb,
+    tenant_id integer,exported_at timestamptz DEFAULT now());
   CREATE TABLE authoring_sections (id uuid PRIMARY KEY, doc_id uuid, tenant_id integer);
   CREATE TABLE authoring_citations (id uuid PRIMARY KEY, section_id uuid, tenant_id integer, source text, reference_id text);
   CREATE TABLE c2c_documents (id text PRIMARY KEY, org_id integer, project_id uuid, status text);
@@ -106,6 +117,9 @@ export async function createDispositionHarness() {
     const upload = randomUUID();
     const artifactNativeId = randomUUID();
     let currentTime = new Date(DISPOSITION_TEST_CLOCK);
+    await pg.query("INSERT INTO organizations VALUES ($1,'active')",[org]);
+    await pg.query("INSERT INTO organization_users (organization_id,user_id,role) VALUES ($1,42,'manager')",[org]);
+    await pg.query("INSERT INTO organization_users (organization_id,user_id,role) VALUES ($1,99,'viewer')",[org]);
     await pg.query('INSERT INTO regulatory_programs VALUES ($1,$2,42,NULL)', [program, org]);
     await pg.query('INSERT INTO file_uploads VALUES ($1,$2,$3,$4,\'processed\')', [upload, org, HASH, `uploads/org-${org}/${upload}.pdf`]);
     const capture = (await pg.query<{ id: number }>(`INSERT INTO cre_evidence_sources
@@ -114,7 +128,8 @@ export async function createDispositionHarness() {
     [org, program, HASH, JSON.stringify({ fileUploadId: upload })])).rows[0].id;
     await pg.query(`INSERT INTO vault.documents (id,organization_id,program_id,document_title,content_hash,processing_status,extracted_text,retention_until)
       VALUES ($1,$2,$3,'Study PDF',$4,'INDEXED','Extracted study values','2030-12-31')`, [vault, org, program, HASH]);
-    const project = (await pg.query<{ id: number }>('INSERT INTO projects (organization_id,regulatory_program_id) VALUES ($1,$2) RETURNING id', [org, program])).rows[0].id;
+    const project = (await pg.query<{ id: number }>('INSERT INTO projects (organization_id,regulatory_program_id,owner_id,created_by_id) VALUES ($1,$2,42,42) RETURNING id', [org, program])).rows[0].id;
+    await pg.query("INSERT INTO project_visibility_settings VALUES ($1,$2,'org_public')",[org,project]);
     const artifact = (await pg.query<{ id: number }>(`INSERT INTO concept2cure_artifacts
       (organization_id,project_id,artifact_id,content_hash,content,status,metadata)
       VALUES ($1,$2,$3,$4,'Extracted authored rendition','draft',$5) RETURNING id`,

@@ -484,4 +484,3 @@ export function normalizePremortemFindings(raw: unknown): AnticipatedChallenge[]
    into which the caller's real product name was substituted. Only the
    question list was bannered as sample; the invented clinical history read as
    the product's own. The test data for this module lives in its test. */
-

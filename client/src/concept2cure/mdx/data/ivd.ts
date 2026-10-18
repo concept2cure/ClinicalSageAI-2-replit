@@ -110,4 +110,3 @@ export const IVD_STAGES: IvdStage[] = [
  * (/api/ivdr/gspr-checklist/:id/matrix returns the chapters and their labels),
  * which is where a regulatory schedule belongs.
  */
-

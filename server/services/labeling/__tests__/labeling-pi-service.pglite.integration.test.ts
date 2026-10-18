@@ -73,12 +73,13 @@ beforeEach(async () => { await pglite.exec(`DELETE FROM labeling_pi_sections; DE
 
 describe('labeling-pi-service', () => {
   it('records sections and lists them in USPI document order (HL, BW, then numeric)', async () => {
-    await upsertLabelingPiSection(ORG, { sectionNo: '10', label: 'Overdosage' });
-    await upsertLabelingPiSection(ORG, { sectionNo: '2', label: 'Dosage and administration', status: 'review' });
-    await upsertLabelingPiSection(ORG, { sectionNo: 'BW', label: 'Boxed warning', status: 'negotiation', flag: 'agency' });
+    await upsertLabelingPiSection(ORG, { sectionNo: '10', label: 'Overdosage', createdBy: 42 });
+    await upsertLabelingPiSection(ORG, { sectionNo: '2', label: 'Dosage and administration', status: 'review', createdBy: 42 });
+    await upsertLabelingPiSection(ORG, { sectionNo: 'BW', label: 'Boxed warning', status: 'negotiation', flag: 'agency', createdBy: 42 });
     await upsertLabelingPiSection(ORG, {
       sectionNo: 'HL', label: 'Highlights', status: 'review',
       content: { heading: 'Highlights of prescribing information', body: ['See full prescribing information.'], hl: true },
+      createdBy: 42,
     });
 
     const rows = await listLabelingPiSections(ORG);
@@ -93,6 +94,7 @@ describe('labeling-pi-service', () => {
     const second = await upsertLabelingPiSection(ORG, {
       sectionNo: '1', label: 'Indications and usage', status: 'negotiation', flag: 'agency',
       negotiation: { round: 'Labeling round 2', cycle: 'FDA — day 312', sponsor: 's', agency: 'a', rationale: 'r' },
+      createdBy: 42,
     });
     expect(second.id).toBe(first.id);                       // same live row
     expect(second.status).toBe('negotiation');
@@ -101,18 +103,18 @@ describe('labeling-pi-service', () => {
   });
 
   it('rejects invalid section numbers, unknown status/flag, and malformed payloads', async () => {
-    await expect(upsertLabelingPiSection(ORG, { sectionNo: 'XX', label: 'x' })).rejects.toBeInstanceOf(LabelingPiValidationError);
-    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: '' })).rejects.toBeInstanceOf(LabelingPiValidationError);
-    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', status: 'nope' })).rejects.toBeInstanceOf(LabelingPiValidationError);
-    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', flag: 'sponsor' })).rejects.toBeInstanceOf(LabelingPiValidationError);
+    await expect(upsertLabelingPiSection(ORG, { sectionNo: 'XX', label: 'x', createdBy: 42 })).rejects.toBeInstanceOf(LabelingPiValidationError);
+    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: '', createdBy: 42 })).rejects.toBeInstanceOf(LabelingPiValidationError);
+    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', status: 'nope', createdBy: 42 })).rejects.toBeInstanceOf(LabelingPiValidationError);
+    await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', flag: 'sponsor', createdBy: 42 })).rejects.toBeInstanceOf(LabelingPiValidationError);
     await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', content: { heading: 'h', body: [1] } })).rejects.toBeInstanceOf(LabelingPiValidationError);
     await expect(upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'x', negotiation: { round: 'r' } })).rejects.toBeInstanceOf(LabelingPiValidationError);
     expect(await listLabelingPiSections(ORG)).toEqual([]);
   });
 
   it('is strictly tenant-scoped and soft-delete aware', async () => {
-    await upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'Mine' });
-    await upsertLabelingPiSection(OTHER, { sectionNo: '1', label: 'Theirs' });
+    await upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'Mine', createdBy: 42 });
+    await upsertLabelingPiSection(OTHER, { sectionNo: '1', label: 'Theirs', createdBy: 42 });
 
     expect((await listLabelingPiSections(ORG)).map((r) => r.label)).toEqual(['Mine']);
     expect(await getLabelingPiSection(OTHER, '1')).toMatchObject({ label: 'Theirs' });
@@ -121,7 +123,7 @@ describe('labeling-pi-service', () => {
     expect(await listLabelingPiSections(ORG)).toEqual([]);   // soft-deleted excluded
     expect(await getLabelingPiSection(ORG, '1')).toBeNull();
     // A fresh record after soft-delete creates a new live row (partial unique index).
-    const fresh = await upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'Mine again' });
+    const fresh = await upsertLabelingPiSection(ORG, { sectionNo: '1', label: 'Mine again', createdBy: 42 });
     expect(fresh.label).toBe('Mine again');
   });
 });

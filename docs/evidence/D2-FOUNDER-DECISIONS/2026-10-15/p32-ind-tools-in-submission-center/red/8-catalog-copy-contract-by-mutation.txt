@@ -1,0 +1,17 @@
+# red, by mutation: db/migrations/20260823_module_catalog_customer_copy.sql as at 18d58cbb2 (no ind-checklist row, HAQ 'signed responses')
+# npx vitest run --config vitest.config.ts tests/schema-contract/catalog-module-claims.contract.test.ts
+ ✓ Apps catalog module descriptions > replays every catalog writer in the deploy set, in deploy order 2ms
+ ✓ Apps catalog module descriptions > seeds a non-trivial catalog (guards against asserting over zero rows) 0ms
+ ✓ Apps catalog module descriptions > shares its rules with the source gate rather than restating them 1ms
+ ✓ Apps catalog module descriptions > makes no unsupported compliance claim in any module description or name 4ms
+ ✓ Apps catalog module descriptions > states what the authoring-engine page is, since it reads no program data 0ms
+ ✓ Apps catalog module descriptions > states no fixed count of report types — the registry grows 0ms
+ ✓ Apps catalog module descriptions > describes batch-draft to a customer, not by its function names 0ms
+ ✓ Apps catalog module descriptions > describes document-authoring by what it does, not by an internal handoff note 0ms
+ × Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds 6ms
+   → expected 'IND checklist, forms (1571/1572/3674)…' not to match /autodraft|master data/i
+ × Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature 1ms
+   → expected 'Health-authority questions — agency i…' not to match /\bsign(ed|ature)/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)

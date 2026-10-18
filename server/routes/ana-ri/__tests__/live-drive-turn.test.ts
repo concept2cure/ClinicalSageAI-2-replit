@@ -232,6 +232,8 @@ app.use(express.json());
 app.use((req, _res, next) => {
   (req as any).tenantId = 7;
   (req as any).user = { id: 3, organizationId: 7 };
+  // The host passes its request executor to source tools and title reads.
+  (req as any).dbClient = h.pool;
   next();
 });
 const router = express.Router();

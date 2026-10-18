@@ -27,9 +27,10 @@ vi.mock('../../services/c2c/program-project-anchor', () => ({
 }));
 
 const getScheduleOfEvents = vi.fn();
+const generateProjectSchedule = vi.fn();
 vi.mock('../../services/projects/schedule-of-events', () => ({
   getScheduleOfEvents: (...a: unknown[]) => getScheduleOfEvents(...(a as [])),
-  generateProjectSchedule: vi.fn(),
+  generateProjectSchedule: (...a: unknown[]) => generateProjectSchedule(...a),
   amendMilestone: vi.fn(),
   resetProjectGoals: vi.fn(),
   reviewScheduleHealth: vi.fn(),
@@ -40,6 +41,7 @@ vi.mock('../../services/unified-work/unified-work-view', () => ({
 }));
 
 import router from '../project-schedule-of-events';
+import { SchedulePreservationConflict } from '../../services/projects/schedule-of-events/preservation';
 
 const EMPTY_VIEW = { plan: null, milestones: [], goals: [], revisions: [], health: {} };
 
@@ -58,6 +60,8 @@ beforeEach(() => {
   query.mockReset();
   getScheduleOfEvents.mockReset();
   getScheduleOfEvents.mockResolvedValue(EMPTY_VIEW);
+  generateProjectSchedule.mockReset();
+  generateProjectSchedule.mockResolvedValue(EMPTY_VIEW);
   resolveProgramProjectAnchor.mockReset();
   loadUnifiedWork.mockReset();
   loadUnifiedWork.mockResolvedValue({ items: [], summary: { total: 0 }, sources: {} });
@@ -148,6 +152,7 @@ describe('program UUID → anchored project (schedule and unified work)', () => 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('PROGRAM_UNANCHORED');
     expect(query).not.toHaveBeenCalled();
+    expect(generateProjectSchedule).not.toHaveBeenCalled();
   });
 
   it('a lookup that could not complete is a 500, never "no project record"', async () => {
@@ -156,5 +161,81 @@ describe('program UUID → anchored project (schedule and unified work)', () => 
     expect(res.status).toBe(500);
     expect(res.body.code).not.toBe('PROGRAM_UNANCHORED');
     expect(getScheduleOfEvents).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /projects/:id/schedule-of-events/generate — preservation contract', () => {
+  const endpoint = '/api/concept2cure/projects/12/schedule-of-events/generate';
+
+  it('forwards the trimmed caller reason after the existing organization gate', async () => {
+    query.mockResolvedValueOnce({ rows: [{ type: 'IND', metadata: {} }] });
+    const res = await request(app()).post(endpoint).send({
+      reason: '  Revised target agreed at the sponsor meeting.  ',
+      organizationId: 99,
+      projectId: 99,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(EMPTY_VIEW);
+    expect(query.mock.calls[0][1]).toEqual([12, 7]);
+    expect(generateProjectSchedule).toHaveBeenCalledExactlyOnceWith({
+      orgId: 7,
+      projectId: 12,
+      projectType: 'IND',
+      baselineDate: null,
+      targetDate: null,
+      goals: [],
+      reason: 'Revised target agreed at the sponsor meeting.',
+      triggeredBy: 'user',
+      createdByAna: false,
+    });
+  });
+
+  it.each([undefined, '', '   ', 42])('does not invent a reason from %j', async reason => {
+    query.mockResolvedValueOnce({ rows: [{ type: 'IND', metadata: {} }] });
+    const res = await request(app()).post(endpoint).send({ reason });
+    expect(res.status).toBe(200);
+    expect(generateProjectSchedule).toHaveBeenCalledOnce();
+    expect(generateProjectSchedule.mock.calls[0][0].reason).toBeUndefined();
+  });
+
+  it('returns the actionable preservation conflict as 409', async () => {
+    query.mockResolvedValueOnce({ rows: [{ type: 'IND', metadata: {} }] });
+    const conflict = new SchedulePreservationConflict('A changed milestone requires explicit review. Nothing was changed.');
+    generateProjectSchedule.mockRejectedValueOnce(conflict);
+    const res = await request(app()).post(endpoint).send({ reason: 'Requested date update' });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: conflict.message, code: 'SCHEDULE_REVIEW_REQUIRED' });
+    expect(query.mock.calls[0][1]).toEqual([12, 7]);
+    expect(generateProjectSchedule).toHaveBeenCalledOnce();
+  });
+
+  it.each([false, true])('keeps unexpected generation failures internal (conflict-shaped code: %s)', async shaped => {
+    query.mockResolvedValueOnce({ rows: [{ type: 'IND', metadata: {} }] });
+    const failure = new Error('Unexpected storage failure');
+    if (shaped) Object.assign(failure, { code: 'SCHEDULE_REVIEW_REQUIRED' });
+    generateProjectSchedule.mockRejectedValueOnce(failure);
+    const res = await request(app()).post(endpoint).send({});
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(res.body).not.toHaveProperty('code', 'SCHEDULE_REVIEW_REQUIRED');
+    expect(JSON.stringify(res.body)).not.toContain(failure.message);
+  });
+
+  it('refuses missing organization context before invoking generation', async () => {
+    const res = await request(app(null)).post(endpoint).send({ reason: 'A reason grants no access' });
+    // The existing tenant helper throws when its upstream context is absent.
+    // Preserve that fail-closed internal error instead of bypassing admission.
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(query).not.toHaveBeenCalled();
+    expect(generateProjectSchedule).not.toHaveBeenCalled();
+  });
+
+  it('refuses a project outside the organization before invoking generation', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).post(endpoint).send({ reason: 'A reason grants no access' });
+    expect(res.status).toBe(404);
+    expect(query.mock.calls[0][1]).toEqual([12, 7]);
+    expect(generateProjectSchedule).not.toHaveBeenCalled();
   });
 });

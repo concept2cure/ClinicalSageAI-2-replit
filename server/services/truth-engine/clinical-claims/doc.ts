@@ -111,6 +111,36 @@ function juxtaposed(text: string): string[][] {
 
 const DOSE = String.raw`\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|ug|g|mL|mg\/kg)(?:\/day)?`;
 
+/**
+ * A roster key as a regex fragment: metacharacters escaped, runs of whitespace
+ * made flexible.
+ *
+ * ── Why this is one function and not three inline expressions (2026-10-13) ───
+ * It was three, and they disagreed. `armSource` below escaped the
+ * metacharacters; `armRef`'s pattern and the dose loop in `rosterOf` applied
+ * only the `\s+` normalisation and interpolated the key raw. All three consume
+ * THE SAME roster, whose keys come from `rosterOf(text)` — document text.
+ *
+ * Nothing was exploitable, and the reason is worth writing down because it is
+ * not local to any of the three call sites: the capture class
+ * `W = (Drug\s+[A-Z]|[A-Za-z][a-z]{4,}|[A-Z]{5,})` admits letters and one
+ * space, so a key cannot contain `(`, `[`, `*` or `\` today. That is an
+ * invariant enforced ~90 lines away from two of the three consumers, and those
+ * two consumers disagreed about whether to rely on it — which is exactly the
+ * state in which widening `W` (to admit a hyphen, a digit, a parenthesised
+ * synonym) turns a vocabulary change into a `SyntaxError` on a legitimate
+ * document, or a catastrophic pattern on a hostile one.
+ *
+ * Semgrep flagged all three (rule `detect-non-literal-regexp`). Routing them
+ * through one escaping helper is the honest answer; suppressing two of them
+ * would have pinned the asymmetry in place. The two call sites still pass a
+ * VALUE rather than a literal, so the rule still fires there and each carries
+ * its own suppression naming this helper — escaping makes the argument correct,
+ * not literal, and the rule is about the latter.
+ */
+export const rosterKeyPattern = (k: string): string =>
+  k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+
 /** Candidate arm names: words in arm-shaped contexts. */
 function rosterOf(text: string): Map<string, RosterArm> {
   const roster = new Map<string, RosterArm>();
@@ -156,6 +186,7 @@ function rosterOf(text: string): Map<string, RosterArm> {
         const word = norm(g);
         const key = word.toLowerCase();
         if (NOT_AN_ARM.has(key) || ENDPOINTISH.test(word)) continue;
+        // nosemgrep: detect-non-literal-regexp -- `r.re` is a module-constant RegExp in vocabulary.ts; this anchors its own source. `word` is the data, and it is the input, not the pattern
         if (ENDPOINT_ROWS.some((r) => new RegExp(`^(?:${r.re.source})$`, 'i').test(word))) continue;
         if (/^(?:Trial|Study|Studies|Table|Phase|Pool|Part|Week|Month|Level|Grade)$/i.test(word)) continue;
         if (/^[A-Z]{5,}$/.test(word) && /^(?:FEV|HBA|MADRS|RECIST|CTCAE|SMPC|USPI|BICR|NCT|PFS)/.test(word)) continue;
@@ -165,7 +196,8 @@ function rosterOf(text: string): Map<string, RosterArm> {
   }
   // Doses written with each arm.
   for (const arm of roster.values()) {
-    const re = new RegExp(String.raw`\b${arm.drug.replace(/\s+/g, '\\s+')}\s+(${DOSE})`, 'gi');
+    // nosemgrep: detect-non-literal-regexp -- the key goes through rosterKeyPattern above, so it is metacharacter-escaped; pinned by __tests__/roster-key-pattern.test.ts
+    const re = new RegExp(String.raw`\b${rosterKeyPattern(arm.drug)}\s+(${DOSE})`, 'gi');
     let m: RegExpExecArray | null;
     while ((m = re.exec(text)) !== null) arm.doses.add(doseKey(m[1]));
   }
@@ -180,7 +212,7 @@ export function doseKey(d: string): string {
 function armSource(roster: Map<string, RosterArm>): string {
   const heads = [...roster.keys()]
     .sort((a, b) => b.length - a.length)
-    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
+    .map(rosterKeyPattern);
   const words = heads.length ? heads.join('|') : 'placebo';
   return String.raw`(?:${words})(?:\s+${DOSE})?(?:\s+(?:once\s+weekly|once\s+daily|Q\dW|every\s+\d+\s+weeks))?(?:\s*\+\s*metformin)?`;
 }
@@ -201,7 +233,8 @@ export function armRef(phrase: string, doc: DocInfo): ArmRef | null {
   if (listed) {
     return { kind: 'combined', drug: listed[1].toLowerCase(), doses: [doseKey(listed[2]), doseKey(listed[3])].sort().join('+'), label: p };
   }
-  const m = new RegExp(String.raw`^(?:the\s+)?(${[...doc.roster.keys()].sort((a, b) => b.length - a.length).map((k) => k.replace(/\s+/g, '\\s+')).join('|') || 'placebo'})(?:\s+(${DOSE}))?`, 'i').exec(p);
+  // nosemgrep: detect-non-literal-regexp -- the keys go through rosterKeyPattern, so they are metacharacter-escaped; this line LACKED that escape until 2026-10-13 and the rule was right to flag it
+  const m = new RegExp(String.raw`^(?:the\s+)?(${[...doc.roster.keys()].sort((a, b) => b.length - a.length).map(rosterKeyPattern).join('|') || 'placebo'})(?:\s+(${DOSE}))?`, 'i').exec(p);
   if (!m) return null;
   const drug = m[1].toLowerCase().replace(/\s+/g, ' ');
   return m[2] ? { kind: 'arm', drug, dose: doseKey(m[2]), label: p } : { kind: 'arm', drug, label: p };

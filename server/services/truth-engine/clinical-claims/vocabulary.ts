@@ -12,6 +12,7 @@ export interface Row<K extends string = string> {
   key: K;
 }
 
+// nosemgrep: detect-non-literal-regexp -- every caller passes a String.raw literal; a readability wrapper over this file's own patterns, never given data
 const ci = (src: string) => new RegExp(src, 'gi');
 
 // ── Study and pool identifiers (C1, C16) ────────────────────────────────────

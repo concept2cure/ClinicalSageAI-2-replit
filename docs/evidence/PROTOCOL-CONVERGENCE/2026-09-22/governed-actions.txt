@@ -54,9 +54,8 @@ decision_reason | Persisting the demo programme's study design so the protocol c
 
 
 ### the link on the record
- id | organization_id | protocol_number |           study_design_id           | study_design_linked_by |    study_design_linked_at     
+ id | organization_id | protocol_number |           study_design_id           | study_design_linked_by |    study_design_linked_at
 ----+-----------------+-----------------+-------------------------------------+------------------------+-------------------------------
-  1 |               2 | WI-SMOKE-001    |                                     |                        | 
+  1 |               2 | WI-SMOKE-001    |                                     |                        |
   2 |               2 | C2C-101-201     | sd_cf7dfded17fb4c60a1344648fec9c0f9 |                      1 | 2026-09-22 03:50:34.550656+00
 (2 rows)
-

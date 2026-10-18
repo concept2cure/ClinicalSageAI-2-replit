@@ -3,7 +3,7 @@ tests/boot_contract.tftest.hcl... in progress
   run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 305, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
 │  305:     condition = (
 │  306:       one(one(aws_s3_bucket_server_side_encryption_configuration.vault.rule).apply_server_side_encryption_by_default).sse_algorithm == "aws:kms" &&
@@ -14,7 +14,7 @@ tests/boot_contract.tftest.hcl... in progress
 │     │ aws_kms_key.vault.arn is "arn:aws:kms:us-east-1:123456789012:key/mock"
 │     │ aws_kms_key.vault.enable_key_rotation is true
 │     │ aws_s3_bucket_server_side_encryption_configuration.vault.rule is set of object with 1 element
-│ 
+│
 │ The vault bucket must encrypt under its own rotating KMS key.
 ╵
   run "production_names_are_the_ones_the_deploy_workflow_targets"... pass

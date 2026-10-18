@@ -51,4 +51,3 @@ AssertionError: expected 'IND · 21 CFR 312  3 documents' to match /\b1 document
       Tests  1 failed | 20 skipped (21)
    Start at  17:59:40
    Duration  1.60s (transform 601ms, setup 142ms, import 733ms, tests 106ms, environment 467ms)
-

@@ -57,4 +57,3 @@ AssertionError: complaints: tenant B can read tenant A's row: expected 1 to be +
       Tests  2 failed | 6 passed (8)
    Start at  19:50:27
    Duration  1.10s (transform 111ms, setup 76ms, import 86ms, tests 648ms, environment 0ms)
-

@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "capturedUtc": "2026-10-14T09:10:19.577477+00:00",
+  "branch": "concept2cure-v2",
+  "phase": "CI current request-context fixture repair",
+  "qualification": [
+    "Selected exact source pins are bounded and do not assert a complete transitive dependency closure.",
+    "Native18 is actual local restricted-runtime QA evidence; hosted setup had zero executed assertions.",
+    "Readiness303 uses the existing mocked post-admission core seam; no native/provider/admission claim.",
+    "Copied new logs are normalized/sanitized; original private raw bytes are preserved.",
+    "Prior sealed evidence remains unchanged; no compiler/whole-CI/COMMIT concurrency/regulatory qualification."
+  ],
+  "sources": [
+    {
+      "path": "tests/routes/ana-ri-health.test.ts",
+      "bytes": 15439,
+      "digestAlgorithm": "sha256",
+      "digest": "0aab1eb38f42d86bff1cf897393e659d6b04c7f77234d6c228057f150224be0d"
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "bytes": 25932,
+      "digestAlgorithm": "sha256",
+      "digest": "84b4a5a27e0dffd5d5b901e4dfa4122d1dccc9a391051f8bbbb1349f079d07e2"
+    },
+    {
+      "path": "docs/design/CI_CURRENT_REQUEST_CONTEXT_FIXTURES.md",
+      "bytes": 6505,
+      "digestAlgorithm": "sha256",
+      "digest": "4c20cb9508c0aa524b79caf70920441c27e0d80e18c73f8799f21d504f0ff682"
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "bytes": 5959,
+      "digestAlgorithm": "sha256",
+      "digest": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+    },
+    {
+      "path": "server/middleware/tenantContext.ts",
+      "bytes": 17106,
+      "digestAlgorithm": "sha256",
+      "digest": "bfe6a2b5188021194449ad1ccfad71b0009c468d7293d1953259a039d7d8169e"
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "bytes": 195159,
+      "digestAlgorithm": "sha256",
+      "digest": "6f9c923288d86f935ee7c392b052988e09c3f7ea9fc934cf102333546f618d84"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 402665,
+      "digestAlgorithm": "sha256",
+      "digest": "18ed2f0b503a27cae5596665a5bfde7b0f8166041809d37c2849d7421bb148d1"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8596,
+      "digestAlgorithm": "sha256",
+      "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+      "bytes": 3008,
+      "digestAlgorithm": "sha256",
+      "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+    },
+    {
+      "path": "package.json",
+      "bytes": 49201,
+      "digestAlgorithm": "sha256",
+      "digest": "2af3c3089bbe1de45af981e29b0e96b4c5050031aa6feea07d20299a1d152372"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "bytes": 4073,
+      "digestAlgorithm": "sha256",
+      "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 142643,
+      "digestAlgorithm": "sha256",
+      "digest": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/README.md",
+      "bytes": 4358,
+      "digestAlgorithm": "sha256",
+      "digest": "71db42decda6351b7e78b263e93fee45d1856e54a86d2788129f21e7523fa483"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/ana-readiness-303.txt",
+      "bytes": 110779,
+      "digestAlgorithm": "sha256",
+      "digest": "f95e5580cc9817cace15d87e33c1d17ad02fa3c13eb946afe3463cbc5a3cc36a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/isolated-selector-12.json",
+      "bytes": 1536,
+      "digestAlgorithm": "sha256",
+      "digest": "ff2f4c719a37a3565684555ab3aba4258fcb11b3ceba63b33f2fdffaa9432c88"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/lint-baseline-comparison.json",
+      "bytes": 654,
+      "digestAlgorithm": "sha256",
+      "digest": "05f057269344792ad6843d77847093368bbf16653662c4ed242752228e9ade98"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/scoped-lint-summary.json",
+      "bytes": 435,
+      "digestAlgorithm": "sha256",
+      "digest": "a9f2ec5ef0d5011803962694a0bd3cb0f53d5dbcfa3bd6785aef2aefe36b2202"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/secondary-native-18.txt",
+      "bytes": 4810,
+      "digestAlgorithm": "sha256",
+      "digest": "dfabd7510879e40dcf9f3fe963ff65138e7c12c707e6d1907061c8f29cac6b4d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/green/source-phase-comparison.json",
+      "bytes": 7901,
+      "digestAlgorithm": "sha256",
+      "digest": "966adaa1a41715a22c0856520976da7f4adef9327f51422c44c778d316f3a09b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/red/ana-deterministic-stream-original.txt",
+      "bytes": 4306,
+      "digestAlgorithm": "sha256",
+      "digest": "9ab6e8e057e74037419d6ad253ddf8c6930dd28d6246b997deb896ccc4a6999d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/red/hosted-ana-failure-excerpt.txt",
+      "bytes": 3269,
+      "digestAlgorithm": "sha256",
+      "digest": "9c6a242ee3e414d83561825d65a588e55037eae636180d4ec86c910eeb64eeb2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/red/hosted-secondary-selector.json",
+      "bytes": 558,
+      "digestAlgorithm": "sha256",
+      "digest": "2782c18c26ebfd33c1ed974e07617ede26e2a2fde716401560602aa9d2896612"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/red/local-source-snapshot.json",
+      "bytes": 2879,
+      "digestAlgorithm": "sha256",
+      "digest": "f14af6968a84aaabf88663f6dd4b08e2ee629046f39d779536dadef46dce4b9b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-current-request-context/red/readiness-wrapper-path.txt",
+      "bytes": 352,
+      "digestAlgorithm": "sha256",
+      "digest": "1731e6bacf3c30ded17b3af0f9c42618f79a61a4b378d201a5cbfc280b34cf20"
+    }
+  ],
+  "rawEvidence": [
+    {
+      "path": "/tmp/project-vault-ana-readiness-current-context-red.txt",
+      "bytes": 4307,
+      "digestAlgorithm": "sha256",
+      "digest": "78d4b3ef0d431e0eae1dd38740564cf076db2e0b849b4a43417bf0d5b2e6a439"
+    },
+    {
+      "path": "/tmp/project-vault-ana-readiness-current-context-wrapper-failure.txt",
+      "bytes": 381,
+      "digestAlgorithm": "sha256",
+      "digest": "2a8c1832a197b659373806b54b7265d311032dad62b0896ed34d11f6ca658911"
+    },
+    {
+      "path": "/tmp/project-vault-ana-readiness-current-context-green.txt",
+      "bytes": 110809,
+      "digestAlgorithm": "sha256",
+      "digest": "1629ef8255a70884b10048bc9956f027701669aba9e34a0357b281adfb684283"
+    },
+    {
+      "path": "/tmp/project-vault-secondary-ci-selector-native-green.txt",
+      "bytes": 4811,
+      "digestAlgorithm": "sha256",
+      "digest": "f7c7a4e5fa2cc02e0a55995eca48340b244cf7e27dfac94de3555e6575797407"
+    },
+    {
+      "path": "/tmp/project-vault-native-secondary-guard-static.txt",
+      "bytes": 1536,
+      "digestAlgorithm": "sha256",
+      "digest": "ff2f4c719a37a3565684555ab3aba4258fcb11b3ceba63b33f2fdffaa9432c88"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-scoped-lint.json",
+      "bytes": 16591,
+      "digestAlgorithm": "sha256",
+      "digest": "a0b0da9a8291bca6a5b6efa725e68bc7e55c538d94fe8450dc3ee1e46b1519ca"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-scoped-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-health-baseline-lint.json",
+      "bytes": 16070,
+      "digestAlgorithm": "sha256",
+      "digest": "aa05b0a9ba4f04da2b788ace868e05b08be1fe2415d1edc0c7840a383a39b20e"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-health-baseline-lint.stderr.txt",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-scoped-lint-summary.json",
+      "bytes": 435,
+      "digestAlgorithm": "sha256",
+      "digest": "a9f2ec5ef0d5011803962694a0bd3cb0f53d5dbcfa3bd6785aef2aefe36b2202"
+    },
+    {
+      "path": "/tmp/project-vault-ci-current-context-lint-baseline-comparison.json",
+      "bytes": 654,
+      "digestAlgorithm": "sha256",
+      "digest": "05f057269344792ad6843d77847093368bbf16653662c4ed242752228e9ade98"
+    },
+    {
+      "path": "/tmp/project-vault-hosted-ci-115722968401-failure-excerpt.txt",
+      "bytes": 3278,
+      "digestAlgorithm": "sha256",
+      "digest": "99e8f675531454fdcbe80daf6979b2dff39fcd67d5deb61c819c8fa3d2b81069"
+    },
+    {
+      "path": "/tmp/project-vault-hosted-native-failure-census.json",
+      "bytes": 29829,
+      "digestAlgorithm": "sha256",
+      "digest": "a3f5d5bd0767a6c89800fc24eccaa953c312b07895f4a927492506d00f236f85"
+    },
+    {
+      "path": "/tmp/project-vault-ana-current-context-red-source-pins.json",
+      "bytes": 2879,
+      "digestAlgorithm": "sha256",
+      "digest": "f14af6968a84aaabf88663f6dd4b08e2ee629046f39d779536dadef46dce4b9b"
+    },
+    {
+      "path": "/tmp/project-vault-ana-health-current-context-before.ts",
+      "bytes": 15183,
+      "digestAlgorithm": "sha256",
+      "digest": "2850ac9ddcff980a7e7616f2003310459600e3659b3372b980ede26c1e8606f4"
+    },
+    {
+      "path": "/tmp/project-vault-native-secondary-guard-static.mjs",
+      "bytes": 2994,
+      "digestAlgorithm": "sha256",
+      "digest": "d0f8e08d585193123fba82dbbaf2d2dedc1f655c983a56294a3e2727c176fa79"
+    },
+    {
+      "path": "/tmp/project-vault-ana-node22-path.env.sh",
+      "bytes": 132,
+      "digestAlgorithm": "sha256",
+      "digest": "0b5b02b68278372939aeaed13e094814b1533933e470eef75782bf41a8064679"
+    },
+    {
+      "path": "/tmp/run-project-vault-secondary-ci-selector-native.py",
+      "bytes": 1963,
+      "digestAlgorithm": "sha256",
+      "digest": "7336b2261bba763b4028f7711a471f4379195f2485557cf7f105ec459e118e89"
+    }
+  ]
+}

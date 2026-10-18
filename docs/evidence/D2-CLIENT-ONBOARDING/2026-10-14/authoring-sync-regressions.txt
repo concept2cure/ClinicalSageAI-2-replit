@@ -1,0 +1,7 @@
+Concurrent IND template integration; Node 22.23.3
+Exit code: 0
+Selected files: 19
+
+ Test Files  19 passed (19)
+      Tests  301 passed (301)
+   Duration  103.57s (transform 8.58s, setup 695ms, import 19.89s, tests 77.20s, environment 2.41s)

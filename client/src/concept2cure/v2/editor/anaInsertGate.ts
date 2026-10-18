@@ -100,7 +100,11 @@ export function answerUnfinished(turn: AnaChatMessage): boolean {
     turn.interrupted === true ||
     progressCutShort(turn) ||
     turn.stoppedReason === 'cancelled' ||
-    turn.stoppedReason === 'answer_cut_off'
+    turn.stoppedReason === 'answer_cut_off' ||
+    /* The connection dropped mid-answer, and the server saved what had
+       streamed (stream.ts persistStoppedAnswer). Live, the same turn reads as
+       interrupted; reloaded, this reason is all that says so. */
+    turn.stoppedReason === 'client_disconnected'
   );
 }
 

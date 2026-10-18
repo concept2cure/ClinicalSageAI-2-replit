@@ -6,7 +6,8 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -377,6 +378,8 @@ type DocState =
 /* ════ Biostatistics surface ════ */
 
 export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const ask = onAsk;
   const live = connected();
   const [preset, setPreset] = useState('survival');
@@ -546,105 +549,48 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const placement = placementForDoc(loadedDesign, docType);
   const filingModule = placement?.module ?? 'M5';
 
-  /*
-   * "Open in editor" — a real handoff.
-   *
-   * WHAT IT USED TO BE. `localStorage.setItem('c2c_biostat_doc', {title, md})`
-   * followed by a navigation. Nothing in this repository has ever read that key
-   * — no getItem, in any file, in any commit — so the editor opened on whatever
-   * it would have opened on anyway and the named document never travelled.
-   *
-   * WHY IT COULD NOT BE "RECONNECTED". The payload is CONTENT — a title and a
-   * markdown body — not an identifier. There is no row to point at, so honouring
-   * the intent means CREATING one: POST the document, POST the section that
-   * holds the prose, and only then navigate. That is what happens below, through
-   * the same two endpoints AuthoringCreateExport's createDoc/createSection
-   * already use (the governed authoring store: tenant-scoped, JWT-attributed,
-   * and the section create writes a genesis revision plus a Part 11 audit row
-   * server-side).
-   *
-   * WHY NO RUNTIME CHANNEL. The editor does not need to be told which document
-   * to open. DocumentAuthoring mounts fresh on navigation (V2App keys the body
-   * by surface id), its loadDocs lists `status=draft` scoped to
-   * window.C2C_PROJECT — and GET /api/authoring/docs orders by
-   * `d.updated_at DESC` — then it selects the first row and that row's first
-   * section. A document created a moment ago IS the most recently updated draft,
-   * and the create below sets the same project scope, so the editor lands on it.
-   *
-   * FAILURE. Nothing is announced that did not happen and nothing is lost. If
-   * the document create fails we do NOT navigate — the draft stays on screen
-   * with an honest reason. If the document is created but its text fails to
-   * save, we do not navigate either: leaving for an editor that would show an
-   * empty document is the same silent loss wearing a different hat.
-   */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
-  const attachingRef = useRef(false);
-  const [attaching, setAttaching] = useState(false);
+  /* Save the engine's document through the shared writer, then open its exact
+     confirmed document/project/section through the existing editor target.
+     Unconfirmed writes keep the document on this surface with an honest notice. */
+  const opening = handoff.state?.phase === 'pending';
+  const attaching = opening;
 
   const openEditor = async () => {
-    if (openingRef.current) return; // a second click must not create a second document
+    if (handoff.blocked) return;
     const title = docDef?.label || 'Statistical document';
     if (!md.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
-    openingRef.current = true; setOpening(true);
-    try {
-      // Statistical documentation files under Module 5; the server would
-      // default to M3.
-      const r = await saveToAuthoring({
-        title, module: filingModule, code: docDef?.id || 'statistical_document',
-        content: md, subject: 'the document',
-      });
-      // Navigate only on a clean write. On a half-failure the document exists
-      // but is empty, so going there would show the user an editor without
-      // their work — stay put and say so.
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      if (onNav) onNav('document-authoring');
-      else fireToast(r.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
+    // Statistical documentation files under Module 5; the server would
+    // default to M3.
+    const r = await saveToAuthoring({
+      title, module: filingModule, code: docDef?.id || 'statistical_document',
+      content: md, subject: 'the document',
+    });
+    // Navigate only on a clean write. On a half-failure the document exists
+    // but is empty, so going there would show the user an editor without
+    // their work — stay put and say so.
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    if (onNav) openSavedAuthoring(r, onNav);
+    else fireToast(r.message);
   };
-  /**
-   * File the document to the dossier — which is what this control does, and
-   * what it says.
-   *
-   * It used to fire `'<Label> attached to dossier'` with the default 'ok' tone,
-   * i.e. the green success tick, SYNCHRONOUSLY and BEFORE `ask(...)` was even
-   * called. At the instant that tick painted, not one byte had left the browser.
-   * And nothing was attached even after it did: `ask()` returns void — it
-   * streams a natural-language sentence into the AnA conversation.
-   *
-   * `saveToAuthoring` is the real filing path and the sibling button beside
-   * this one already uses it: it POSTs /api/authoring/docs with
-   * window.C2C_PROJECT.id as client_program_id, which is what binds the
-   * document to the project's dossier, then writes the content. Same call,
-   * same module, same failure reporting — the only difference from "Open in
-   * editor" is that this one does not navigate away.
-   */
+  /** Save a working document without leaving this surface. The server reports
+   * governed filing binding separately; an unbound working copy stays unbound
+   * and its reason remains visible in the shared confirmation. */
   const attach = async () => {
+    if (handoff.blocked) return;
     const label = docDef?.label || 'Document';
     if (!md.trim()) {
       fireToast('Nothing to file yet — the engine has not returned the document.', 'error');
       return;
     }
-    if (attachingRef.current) return; // a second click must not file a second copy
-    attachingRef.current = true;
-    setAttaching(true);
-    try {
-      const r = await saveToAuthoring({
-        title: label, module: filingModule, code: docDef?.id || 'statistical_document',
-        content: md, subject: 'the document',
-      });
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      fireToast(
-        placement && placement.required === 'not_applicable'
-          ? label + ' saved under ' + filingModule + ' as an internal design document — it is not a submission document for this filing.'
-          : label + ' filed to the dossier under Module ' + filingModule.slice(1) + (placement?.code ? ' (' + placement.code + ')' : '') + ' — open it from Document authoring.',
-      );
-    } finally {
-      attachingRef.current = false;
-      setAttaching(false);
-    }
+    const r = await saveToAuthoring({
+      title: label, module: filingModule, code: docDef?.id || 'statistical_document',
+      content: md, subject: 'the document',
+    });
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    fireToast(r.message + (placement?.required === 'not_applicable'
+      ? ' This is an internal design document, not a submission document for this filing.' : ''));
   };
   const groups = DOC_REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   /* 'insufficient_information' is the engine's third state — a dimension it had
@@ -777,6 +723,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
+      <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
       <div className="bs-doc-layout">
         {/* Left: the study, what to produce, design inputs, the assessment */}
         <div className="bs-side">
@@ -890,7 +837,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ' — v' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' — ' + doc.status : ''}</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+              <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
             </div>
           </div>
           <div className="bs-doc-page">

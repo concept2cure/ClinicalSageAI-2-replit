@@ -91,7 +91,8 @@ describe('GET /api/nonclinical-summary', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.provisioned).toBe(false);
     expect(res.body.data.m26.find((s: { n: string }) => s.n === '2.6.6').st).toBe('missing');
-    expect(res.body.data.m26.find((s: { n: string }) => s.n === '2.6.1').st).toBe('complete');
+    // Was pinned 'complete' for an org with no studies; nothing records 2.6.1 written (2026-10-15).
+    expect(res.body.data.m26.find((s: { n: string }) => s.n === '2.6.1').st).toBe('not_assessed');
     expect(res.body.meta.provisioned).toBe(false);
   });
 

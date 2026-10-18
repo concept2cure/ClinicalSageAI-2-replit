@@ -29,11 +29,14 @@
  * @module server/services/ana/intelligence-questions/governed-options
  */
 
+import { OTHER_POSITION } from '../../../../shared/types/intelligence-questions.js';
 import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
 import { IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { MODALITY_FRAME, MODALITY_LABEL } from '../../../../shared/regulatory/modality.js';
 import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification.js';
+import { basisLabel } from '../../../../shared/regulatory/regulatory-basis.js';
 import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
+import { AGENCY_FIELDS } from './programme-facts.js';
 import {
   pathwayOptions,
   pathwayRegionOf,
@@ -61,13 +64,42 @@ function deviceDomainOf(input: GovernedOptionInput): PathwayDomain {
   return 'medical_devices';
 }
 
+/**
+ * Whose routes a list belongs to, in the words that are true of it.
+ *
+ * For a medicine the regulator IS the agency: EMA grants a marketing
+ * authorisation. For a device or a diagnostic in the EU it is not — the MDR
+ * and IVDR routes are assessed by a notified body, and EMA has no part in
+ * them beyond the companion-diagnostic consultation. Saying "these are EMA's
+ * routes" over the MDR class routes is a deterministic sentence that is
+ * simply false, which a review caught (founder's directive, 2026-10-12).
+ */
+function euRoutesAre(domain: PathwayDomain): string {
+  if (domain === 'pharma_biotech') return `These are ${agencyFor('EU')}’s routes.`;
+  const regulation = domain === 'diagnostics_ivd' ? 'IVDR' : 'MDR';
+  return (
+    `These are the EU ${regulation} conformity assessment routes. A notified body assesses them — ` +
+    `${agencyFor('EU')} has no part in them, beyond the companion-diagnostic consultation.`
+  );
+}
+
 /** Whose routes a list belongs to, said plainly, including when it was assumed. */
-function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note: string } {
+function whoseRoutes(
+  facts: ProgrammeFacts,
+  domain: PathwayDomain,
+  /** The person named an agency AnA does not hold, in their own words. */
+  agencyInOwnWords: boolean,
+): { region: 'US' | 'EU' | null; note: string } {
   const named = facts.primaryRegion;
   if (!named) {
     return {
       region: 'US',
-      note: 'No primary agency has been named yet, so these are FDA’s routes. Name the agency and AnA offers that regulator’s instead.',
+      /* "No agency has been named" is false where they named one AnA does not
+         hold: she was told, she could not place it, and saying otherwise
+         contradicts the person's own answer (2026-10-12 review). */
+      note: agencyInOwnWords
+        ? 'AnA does not hold the agency you named, so she cannot offer its routes — these are FDA’s. If you are filing elsewhere, describe the route you are taking and she will record it in your words.'
+        : 'No primary agency has been named yet, so these are FDA’s routes. Name the agency and AnA offers that regulator’s instead.',
     };
   }
   const region = pathwayRegionOf(named);
@@ -80,7 +112,9 @@ function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note:
         'Describe the route you are taking and she will record it in your words.',
     };
   }
-  return { region, note: `These are ${agencyFor(named)}’s routes.` };
+  /* FDA regulates medicines and devices alike, so its name is right for both;
+     only the EU splits the two. */
+  return { region, note: region === 'EU' ? euRoutesAre(domain) : `These are ${agencyFor(named)}’s routes.` };
 }
 
 /**
@@ -123,7 +157,14 @@ function ivdrClassOptions(): Array<{ value: string; label: string; commits: stri
       value: cls,
       label: `Class ${cls} — ${route.notifiedBodyRequired ? 'notified body' : 'no notified body'}`,
       commits: route.summary,
-      authority: `IVDR (EU) 2017/746 Art 48; ${route.annexes}`,
+      /* The route's OWN basis, rendered by the one renderer that never
+         presents recall as checked regulator text. These routes are a
+         paraphrase from recall, corroborated by secondary extracts and with a
+         verbatim re-read owed — and the citation line said
+         'IVDR Art 48; <annexes>' flat, which reads as checked. The platform
+         keeps a `basis` for exactly this, and discarding it was the defect
+         (2026-10-12 review). */
+      authority: basisLabel(route.basis),
     };
   });
 }
@@ -165,7 +206,10 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
   if (field.optionsFrom === 'ivdr_class_positions') {
     return { ...field, options: ivdrClassOptions() };
   }
-  const { region, note } = whoseRoutes(input.facts);
+  const domain: PathwayDomain =
+    field.optionsFrom === 'medicine_pathway_positions' ? 'pharma_biotech' : deviceDomainOf(input);
+  const agencyInOwnWords = AGENCY_FIELDS.some(f => input.answers[f] === OTHER_POSITION);
+  const { region, note } = whoseRoutes(input.facts, domain, agencyInOwnWords);
   const said = (reason: string) => (field.helpText ? `${field.helpText} ${reason}` : reason);
   /* No positions, and the reason in their place. The escape hatch is the
      answer here, so it is never dropped. */
@@ -173,7 +217,7 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
   const options =
     field.optionsFrom === 'medicine_pathway_positions'
       ? medicineOptions(input, region)
-      : pathwayOptions({ domain: deviceDomainOf(input), region });
+      : pathwayOptions({ domain, region });
   /* A regulator this catalogue covers, and still nothing for this programme —
      an empty select would say "choose one of none". */
   if (options.length === 0) return withoutOptions(field, said(nothingToOffer(input)));

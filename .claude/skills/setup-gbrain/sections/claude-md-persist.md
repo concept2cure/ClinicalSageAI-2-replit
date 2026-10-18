@@ -1,0 +1,1 @@
+/root/.gstack/render/installs/claude-618674374/setup-gbrain/sections/claude-md-persist.md

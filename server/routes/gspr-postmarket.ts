@@ -38,8 +38,8 @@ import {
   computeCoverage,
   listCatalog,
   listProgramMappings,
+  loadGsprProgramProfile,
   upsertMapping,
-  type GsprProgramProfile,
 } from '../services/gspr-postmarket/gspr.service';
 import {
   approveDocument,
@@ -227,28 +227,42 @@ router.post(
   }
 );
 
+/** Device facts the coverage report reads from the program record, never from the request. */
+const PROFILE_QUERY_FACTS = [
+  'productType',
+  'deviceClass',
+  'isSoftware',
+  'isAiMl',
+  'isIvd',
+  'isSterile',
+  'isImplantable',
+  'hasPatientContact',
+] as const;
+
 router.get(
   '/programs/:programId/coverage',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
-    const profile = req.query as Record<string, string | undefined>;
-    if (!profile.regulation || (profile.regulation !== 'MDR' && profile.regulation !== 'IVDR')) {
+    const regulation = req.query.regulation;
+    if (regulation !== 'MDR' && regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation query param must be MDR or IVDR' });
     }
-    const built: GsprProgramProfile = {
-      regulation: profile.regulation,
-      productType: profile.productType ?? 'device',
-      deviceClass: profile.deviceClass ?? null,
-      isSoftware: profile.isSoftware === 'true',
-      isAiMl: profile.isAiMl === 'true',
-      isIvd: profile.isIvd === 'true',
-      isSterile: profile.isSterile === 'true',
-      isImplantable: profile.isImplantable === 'true',
-      hasPatientContact: profile.hasPatientContact === 'true',
-    };
+    // 2026-10-15: the profile was built from this query string, an absent fact
+    // read as false, and the client sends only `regulation` — so sterile-only,
+    // implantable-only and product-type-scoped clauses left the gate unexamined.
+    // The facts are the program record's; one supplied here is refused, not used.
+    const supplied = PROFILE_QUERY_FACTS.filter((key) => req.query[key] !== undefined);
+    if (supplied.length) {
+      return res.status(422).json({
+        error: `${supplied.join(', ')} cannot be supplied: the device facts are read from the program record`,
+      });
+    }
     try {
-      const report = await computeCoverage(orgId, String(req.params.programId), built);
+      const programId = String(req.params.programId);
+      const profile = await loadGsprProgramProfile(orgId, programId, regulation);
+      if (!profile) return res.status(404).json({ error: 'Program not found' });
+      const report = await computeCoverage(orgId, programId, profile);
       res.json(report);
     } catch (err: any) {
       return serverError(res, logger, 'loading coverage', err);
@@ -506,8 +520,8 @@ function booleanFact(value: unknown): boolean | null | 'invalid' {
 // Honest post-market documentation status for a program: per-type presence,
 // lifecycle status and validation-gate result, with what the device owes
 // decided by EU_POSTMARKET_OBLIGATIONS from the regulation, the class and the
-// stated implantable / customMade facts (mirroring isImplantable on /coverage).
-// An unstated fact is passed as unknown, never as false. Not a readiness score.
+// stated implantable / customMade facts. An unstated fact is passed as unknown,
+// never as false. Not a readiness score.
 postMarketRouter.get(
   '/programs/:programId/documentation-status',
   requireProgramAccess,

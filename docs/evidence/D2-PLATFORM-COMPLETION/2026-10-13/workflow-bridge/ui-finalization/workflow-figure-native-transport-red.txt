@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx > figure hydration and saves cannot start native API image requests > loads the figure through the authenticated node view without creating a live API img during hydration
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/authoring/images/file_933_abcdef",
++   "/api/authoring/images/file_933_abcdef",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx:37:29
+     35|     await waitFor(() => expect(document.querySelector('.rse-img img')?…
+     36|     expect(apiRequest).toHaveBeenCalledWith('GET', REF);
+     37|     expect(liveApiImages()).toEqual([]);
+       |                             ^
+     38|   });
+     39|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx > figure hydration and saves cannot start native API image requests > serializes real edits without a native fetch and retains the original figure reference in saved HTML
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/authoring/images/file_933_abcdef",
++   "/api/authoring/images/file_933_abcdef",
++   "/api/authoring/images/file_933_abcdef",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/richSectionEditorFigureTransport.test.tsx:51:29
+     49|     expect(save.mock.calls[0][0]).toContain('alt="Stored figure"');
+     50|     expect(save.mock.calls[0][0]).toContain('A deliberate edit.');
+     51|     expect(liveApiImages()).toEqual([]);
+       |                             ^
+     52|   });
+     53| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  22:20:49
+   Duration  2.91s (transform 782ms, setup 170ms, import 1.12s, tests 336ms, environment 702ms)

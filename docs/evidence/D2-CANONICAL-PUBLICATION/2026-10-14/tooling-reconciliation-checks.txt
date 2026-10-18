@@ -1,0 +1,1 @@
+{"syntaxCheckedFiles":19,"archiveHashChecks":19,"ansiUpdatedRunners":11,"stdoutCases":4,"counterfactualsRejected":2}

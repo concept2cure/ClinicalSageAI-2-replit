@@ -65,11 +65,13 @@ export function trainingStatus(
   return 'current';
 }
 
-/** A research activity profile, projected to CITI's relevant inputs. */
+/** A research activity profile, projected to CITI's relevant inputs. null (or an omitted gene-transfer fact) is not stated. */
 export interface CitiActivityProfile {
-  involvesHumanSubjects: boolean;
-  involvesAnimals: boolean;
-  involvesRecombinantDNA: boolean;
+  involvesHumanSubjects: ActivityProfile['involvesHumanSubjects'];
+  involvesAnimals: ActivityProfile['involvesAnimals'];
+  involvesRecombinantDNA: ActivityProfile['involvesRecombinantDNA'];
+  /** Decides biosafety training when recombinant DNA is not involved. */
+  involvesHumanGeneTransfer?: ActivityProfile['involvesHumanGeneTransfer'];
   fundingSource: ActivityProfile['fundingSource'];
 }
 
@@ -77,21 +79,28 @@ export interface CitiActivityProfile {
  * The training types required for an activity profile. REUSES the shared
  * compliance-checklist engine (resolveComplianceChecklist) as the single,
  * regulation-cited source of truth and projects its requiredTraining[] down to a
- * de-duplicated TrainingType[]. Pure.
+ * de-duplicated TrainingType[]. Pure. Throws when a fact that was not stated
+ * leaves a training requirement undetermined, naming it.
  *
  * The engine yields, among others: human subjects -> citi_human_subjects (+
- * citi_gcp for non-internal funding); animals -> citi_animal; recombinant DNA ->
- * biosafety; NIH/NSF funding -> citi_rcr.
+ * citi_gcp for non-internal funding); animals -> citi_animal; recombinant DNA or
+ * human gene transfer -> biosafety; NIH/NSF funding -> citi_rcr.
  */
 export function REQUIRED_TRAINING_BY_ACTIVITY(profile: CitiActivityProfile): TrainingType[] {
+  // 2026-10-15: human gene transfer was passed as false and region as 'us', so
+  // biosafety training that gene transfer requires was dropped unasked. Unstated
+  // stays null, and a list the stated facts do not determine is refused.
   const checklist = resolveComplianceChecklist({
     involvesHumanSubjects: profile.involvesHumanSubjects,
     involvesAnimals: profile.involvesAnimals,
     involvesRecombinantDNA: profile.involvesRecombinantDNA,
-    involvesHumanGeneTransfer: false,
+    involvesHumanGeneTransfer: profile.involvesHumanGeneTransfer ?? null,
     fundingSource: profile.fundingSource,
-    region: 'us',
+    region: null,
   });
+  if (checklist.undeterminedTraining.length > 0) {
+    throw new Error(`Required training is not determined. ${checklist.undeterminedTraining.map((u) => `${u.trainingType}: ${u.reason}`).join(' ')}`);
+  }
   const seen = new Set<TrainingType>();
   const out: TrainingType[] = [];
   for (const t of checklist.requiredTraining) {

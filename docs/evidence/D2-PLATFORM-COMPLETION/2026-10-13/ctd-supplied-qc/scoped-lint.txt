@@ -1,0 +1,2 @@
+Scoped ESLint run: exit 0, zero errors, zero warnings.
+(No diagnostics.)

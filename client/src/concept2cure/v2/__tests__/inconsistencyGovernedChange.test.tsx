@@ -46,7 +46,7 @@ const PROGRAM = {
   stage: 'Phase 2', indication: 'NSCLC', app: null, filing: null,
 };
 
-/** dosage_conflict defaults to blocks_promotion — this is the blocking finding. */
+/** Recorded with blocks_promotion (the engine's default for a dosage conflict) — the blocking finding. */
 const BLOCKING = {
   id: 'f-1', projectId: 9, contradictionType: 'dosage_conflict',
   severity: 'critical', title: 'Starting dose disagrees across the dossier',
@@ -57,6 +57,7 @@ const BLOCKING = {
   description: 'The protocol states 400 mg BID; the Investigator Brochure states 200 mg BID.',
   deterministicRule: 'DOSE_XREF', consequenceType: 'blocks_promotion',
   reviewState: 'unresolved', detectedBy: 'engine', factId: null,
+  authorityState: 'blocks_promotion',
 };
 
 /** advisory_only — present so the blocking one is not the only card on screen. */
@@ -66,6 +67,7 @@ const ADVISORY = {
   title: 'Enrolment window dates differ by one day',
   description: 'A one-day discrepancy between the SAP and the protocol.',
   deterministicRule: null, consequenceType: 'advisory_only',
+  authorityState: 'advisory_only',
 };
 
 const ASSUMPTION = {
@@ -74,8 +76,15 @@ const ASSUMPTION = {
   title: 'Starting dose', source: 'Protocol §6.1',
 };
 
+/** The gate the server counts for those two (ProjectGate). */
+const GATE = {
+  total: 2, open: 2, resolved: 0, superseded: 0,
+  blocking: 1, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 1, unrecognized: 0,
+  blocked: true,
+};
+
 const board = (over: Record<string, unknown> = {}) => ({
-  program: PROGRAM, findings: [ADVISORY, BLOCKING], assumptions: [ASSUMPTION],
+  program: PROGRAM, gate: GATE, findings: [ADVISORY, BLOCKING], assumptions: [ASSUMPTION],
   decisions: [], checks: [], ...over,
 });
 

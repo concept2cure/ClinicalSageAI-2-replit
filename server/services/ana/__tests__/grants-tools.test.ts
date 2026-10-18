@@ -76,6 +76,12 @@ describe('eGrants AnA tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('screen_subaward')!({ subaward_id: 1, screen_status: 'maybe' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/screen_status \(cleared\|excluded\)/);
   });
+  // It defaulted the source to 'sam_exclusions' (2026-10-15). An exclusion is
+  // the result AnA may record (a clean screen is a person's determination).
+  it('screen_subaward refuses a result that names no source', async () => {
+    const out = JSON.parse(await getToolHandler('screen_subaward')!({ subaward_id: 1, screen_status: 'excluded' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
+    expect(out.error).toMatch(/screen_source/);
+  });
   it('execute_subaward refuses to sign, whatever the input', async () => {
     const out = JSON.parse(await getToolHandler('execute_subaward')!({}, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out).toMatchObject({ ok: false, signatureRequired: true });

@@ -1,3 +1,41 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Reconcile the Apps catalog with the apps the product ships.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none (Apps catalog copy shown to customers)
+--   - Integrity Risk Addressed: a representation about the system, made to the
+--     person buying it, that the system does not support
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Descriptions only; no module, entitlement or price changes.
+--   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
+-- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1) ══════════════════════════
+-- WHAT CHANGED: three descriptions in step 2's upsert.
+--   - authoring-engine: "An AI system per document type (no hallucinations,
+--     every required element) ... GxP automations whose non-AI validation logic
+--     runs as intended 100% of the time" -> the text
+--     migrations/20260814m_catalog_honest_module_descriptions.sql sets.
+--   - batch-draft: function names (batch_draft_sections, saveSection,
+--     streamDraft SSE) -> what a customer gets.
+--   - insights: "(30 report types)" and an internal contract reference -> no
+--     count (the report-type registry seeds 61; a number here goes stale).
+-- WHY: 20260814m rewrote authoring-engine honestly, but it runs BEFORE this
+-- file in scripts/db/migration-set.mjs, and this upsert sets description =
+-- EXCLUDED.description on every deploy — so every deployed catalog showed
+-- the three absolutes again. tests/schema-contract/catalog-module-claims
+-- .contract.test.ts was meant to catch it and replayed a hand-written list of
+-- five files in the wrong order (this file first); it now replays every
+-- catalog writer in C2C_MIGRATION_FILES order.
+-- CHANGED BY: the D2 no-example-data change, session …01TzCCfqi5RbiwzZyfYxyBpX.
+-- ═════════════════════════════════════════════════════════════════════════════
 -- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: 'ectd-publishing' added to step 1's keep-list, and a heal step
 -- (step 1b) that clears the `deprecated` flag this file had been setting on it.
@@ -247,8 +285,8 @@ UPDATE available_modules
 
 -- 2) Upsert one row per real app, keyed by the surface id.
 INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES
-  ('authoring-engine', 'AnA Authoring Engine', 'End-to-end document suite for the whole CTD pyramid, raw data to final draft. An AI system per document type (no hallucinations, every required element), multi-modal (text/tables/figures/graphs), template-learning, and GxP automations whose non-AI validation logic runs as intended 100% of the time.', 'Author & assemble', '/concept2cure/authoring-engine', 'sparkles', 10, '{"tiers": [], "industries": []}'::json),
-  ('batch-draft', 'Parallel drafting', 'AnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana). Fans out concurrent streamDraft SSE calls over the live per-section route.', 'Author & assemble', '/concept2cure/batch-draft', 'sparkles', 20, '{"tiers": [], "industries": []}'::json),
+  ('authoring-engine', 'AnA Authoring Engine', 'Capability overview of the CTD authoring engine: the raw-data-to-draft pipeline, the drafting system for each document type, and the deterministic post-checks that run before a draft is promoted. This page describes coverage and does not read your programs — the document editor is where authoring happens.', 'Author & assemble', '/concept2cure/authoring-engine', 'sparkles', 10, '{"tiers": [], "industries": []}'::json),
+  ('batch-draft', 'Parallel drafting', 'AnA drafts several dossier sections in parallel. Each section arrives as its own draft for you to accept, and an accepted draft is saved through the same governed section save as an edit you make yourself.', 'Author & assemble', '/concept2cure/batch-draft', 'sparkles', 20, '{"tiers": [], "industries": []}'::json),
   ('cmc', 'CMC / Module 3', 'Module 3 operating system: blueprint, specifications, stability, batch records, convergence.', 'Author & assemble', '/concept2cure/cmc', 'beaker', 30, '{"tiers": [], "industries": []}'::json),
   ('csr-workflow', 'CSR workflow', 'ICH E3 CSR builder + intelligence library.', 'Author & assemble', '/concept2cure/csr-workflow', 'fileText', 40, '{"tiers": [], "industries": []}'::json),
   ('device-510k', '510(k) workbench', 'eSTAR section tree · content editor · predicate/SE intelligence panel. In progress.', 'Author & assemble', '/concept2cure/device-510k', 'fileCheck', 50, '{"tiers": [], "industries": []}'::json),
@@ -277,7 +315,7 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('device-software', 'Software lifecycle', 'IEC 62304 software lifecycle and completeness summary. The only implementation in the product.', 'Evidence & data', '/concept2cure/device-software', 'code', 280, '{"tiers": [], "industries": []}'::json),
   ('device-vault', 'Device artifact vault', 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.', 'Evidence & data', '/concept2cure/device-vault', 'vault', 290, '{"tiers": [], "industries": []}'::json),
   ('evidence-search', 'Evidence search (RAG)', 'Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.', 'Evidence & data', '/concept2cure/evidence-search', 'search', 300, '{"tiers": [], "industries": []}'::json),
-  ('insights', 'Reporting & analytics', 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model (30 report types), per-segment catalog, entitlement tiers, best-practice packs. Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts', 'Evidence & data', '/concept2cure/insights', 'barChart', 310, '{"tiers": [], "industries": []}'::json),
+  ('insights', 'Reporting & analytics', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.', 'Evidence & data', '/concept2cure/insights', 'barChart', 310, '{"tiers": [], "industries": []}'::json),
   ('vault', 'Vault (DMS)', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
   ('device-submission', 'Device submission packages', 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.', 'Submit & file', '/concept2cure/device-submission', 'rocket', 330, '{"tiers": [], "industries": []}'::json),
   ('device-validation', 'Submission blockers', 'Open blockers across programs. The only blockers view in the product.', 'Submit & file', '/concept2cure/device-validation', 'shieldAlert', 340, '{"tiers": [], "industries": []}'::json),

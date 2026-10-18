@@ -55,16 +55,27 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { CanonicalAuthoringFlow, sendAuthoringPrefill, sentAuthoringTurns, clearAuthoringFlowScope } from './canonicalAuthoringFlow';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
-const SEC = 'ssssssss-ssss-4sss-8sss-ssssssssssss';
+const SEC = 'aaaaaaaa-0000-4000-8000-000000000001';
 
 function ok(data: unknown) {
   return { ok: true, status: 200, json: async () => data } as Response;
 }
 function fail(status: number, body: unknown = {}) {
   return { ok: false, status, json: async () => body } as Response;
+}
+function sourcePage(sources: Array<{ id: number; title: string; extractionStatus: string }>) {
+  // The fields GET /:id/sources answers (shapeSource). Citing requires
+  // textAvailable to be positively true (sourceHasGroundingText, 9c266724f);
+  // an absent one is unknown, and unknown never grounds.
+  return { projectId: PID, sources: sources.map(source => ({ ...source,
+    isCurrent: true, dataEligible: true, originalFileAvailable: true, disposition: null,
+    textAvailable: source.extractionStatus === 'extracted' })),
+    total: sources.length, currentTotal: sources.length,
+    page: { limit: 200, offset: 0 }, window: { shown: sources.length, truncated: false } };
 }
 
 function citation(over: Record<string, unknown> = {}) {
@@ -108,6 +119,9 @@ function mockApi(routes: Routes = {}) {
         ],
       });
     }
+    if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
+    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
     if (url === `/api/authoring/docs/${DOC}/sections`) {
       return ok({
         sections: [
@@ -119,8 +133,8 @@ function mockApi(routes: Routes = {}) {
     if (url === `/api/authoring/sections/${SEC}/sources`) {
       return (routes.sections ?? (() => ok({ sources: [] })))();
     }
-    if (url === `/api/c2c/projects/${PID}/sources`) {
-      return (routes.projectSources ?? (() => ok({ sources: [] })))();
+    if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) {
+      return (routes.projectSources ?? (() => ok(sourcePage([]))))();
     }
     if (method === 'POST' || method === 'DELETE') return ok({ success: true });
     return ok({});
@@ -138,10 +152,12 @@ async function openSourcesRail() {
 
 afterEach(() => {
   cleanup();
-  delete (window as any).C2C_PROJECT;
+  clearAuthoringFlowScope();
+  vi.unstubAllGlobals();
 });
 beforeEach(() => {
-  (window as any).C2C_PROJECT = { id: PID };
+  window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
 });
 
 describe('DocumentAuthoring — the Sources rail', () => {
@@ -163,25 +179,22 @@ describe('DocumentAuthoring — the Sources rail', () => {
     expect(screen.getByText(/Ask what changed/)).toBeTruthy();
   });
 
-  /*
-   * This used to assert that the button called the shell's `onAsk`. The editor
-   * is registered `ownsConversation: true` — it needs the rail's column for its
-   * own third track — so that call went into a rail this screen never renders.
-   * The ask opens the editor's own AnA pane now; the prompt is unchanged.
-   */
-  it('asks AnA what changed, in the editor’s own pane, rather than redrafting on the spot', async () => {
+  it('asks AnA what changed in the canonical conversation without redrafting on the spot', async () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
-    const p = props();
-    render(<DocumentAuthoring {...p} />);
+    render(<CanonicalAuthoringFlow segment="biopharma" />);
     await screen.findAllByText('Composition');
     fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
     fireEvent.click(await screen.findByText(/Ask what changed/));
-
-    // The pane opens with the question in it — not a rail somewhere else.
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
-    await waitFor(() => expect(pane.textContent).toMatch(/no longer matches/));
-    expect(pane.textContent).toMatch(/Do not rewrite it yet/);
-    expect(p.onAsk).not.toHaveBeenCalled();
+    const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    expect(composer.value).toMatch(/no longer matches/);
+    expect(composer.value).toMatch(/Do not rewrite it yet/);
+    expect(sentAuthoringTurns()).toHaveLength(0);
+    await sendAuthoringPrefill();
+    await waitFor(() => expect(sentAuthoringTurns()).toHaveLength(1));
+    expect(sentAuthoringTurns()[0].message).toMatch(/Do not rewrite it yet/);
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ documentId: DOC, sectionId: SEC, savedRecordOnly: true, evidenceSourceIds: ['5'] });
+    expect(sentAuthoringTurns()[0].authoring_context).toMatchObject({ artifactId: DOC, sectionId: SEC });
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 
   it('makes no claim about a citation with no recorded checksum', async () => {
@@ -196,7 +209,8 @@ describe('DocumentAuthoring — the Sources rail', () => {
     // the first is the one worth surfacing.
     mockApi({ sections: () => ok({ sources: [citation({ state: 'unresolved', source: null })] }) });
     await openSourcesRail();
-    expect(await screen.findByText('Source no longer available')).toBeTruthy();
+    expect(await screen.findByText('Source unavailable with current access')).toBeTruthy();
+    expect(screen.queryByText(/may have been deleted/)).toBeNull();
   });
 
   it('distinguishes a failed read from a section that cites nothing', async () => {
@@ -217,12 +231,10 @@ describe('DocumentAuthoring — recording a source', () => {
   it('offers the project data room, and refuses an unreadable document', async () => {
     mockApi({
       projectSources: () =>
-        ok({
-          sources: [
-            { id: 11, title: 'good.pdf', extractionStatus: 'extracted' },
-            { id: 22, title: 'scanned.pdf', extractionStatus: 'failed' },
-          ],
-        }),
+        ok(sourcePage([
+          { id: 11, title: 'good.pdf', extractionStatus: 'extracted' },
+          { id: 22, title: 'scanned.pdf', extractionStatus: 'failed' },
+        ])),
     });
     await openSourcesRail();
     fireEvent.click(await screen.findByText(/Record a source/));
@@ -236,7 +248,7 @@ describe('DocumentAuthoring — recording a source', () => {
 
   it('posts the chosen source id and reloads the rail', async () => {
     mockApi({
-      projectSources: () => ok({ sources: [{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }] }),
+      projectSources: () => ok(sourcePage([{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }])),
     });
     await openSourcesRail();
     fireEvent.click(await screen.findByText(/Record a source/));
@@ -257,7 +269,8 @@ describe('DocumentAuthoring — recording a source', () => {
   it('says so when there is no project data room to pick from', async () => {
     // With no project in context there is nothing to offer. Listing every source
     // in the organization instead would attach documents the project does not own.
-    delete (window as any).C2C_PROJECT;
+    clearAuthoringFlowScope();
+  vi.unstubAllGlobals();
     mockApi();
     await openSourcesRail();
     fireEvent.click(await screen.findByText(/Record a source/));
@@ -277,18 +290,21 @@ describe('DocumentAuthoring — recording a source', () => {
 
   it('surfaces the server’s refusal instead of reporting success', async () => {
     mockApi({
-      projectSources: () => ok({ sources: [{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }] }),
+      projectSources: () => ok(sourcePage([{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }])),
     });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
-      if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
+      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
+    if (url === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [] });
-      if (url === `/api/c2c/projects/${PID}/sources`) {
-        return ok({ sources: [{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }] });
+      if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) {
+        return ok(sourcePage([{ id: 11, title: 'good.pdf', extractionStatus: 'extracted' }]));
       }
       if (method === 'POST' && url.endsWith('/cite-source')) {
         return fail(400, { error: 'source not found in this organization' });
@@ -311,7 +327,10 @@ describe('DocumentAuthoring — re-reading a source', () => {
       if (url.startsWith('/api/authoring/docs?')) {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
-      if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
+      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
+    if (url === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 1, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [citation({ state: 'changed' })] });
@@ -334,7 +353,10 @@ describe('DocumentAuthoring — re-reading a source', () => {
       if (url.startsWith('/api/authoring/docs?')) {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
-      if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
+      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
+    if (url === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 1, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [citation()] });

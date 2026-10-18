@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:41:00.434Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:41:00.435Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:41:00.435Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:41:00.616Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+{
+  "timestamp": "2026-10-17T22:41:00.617Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary request shape unavailable",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 54ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work 1ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  22:40:58
+   Duration  2.12s (transform 1.03s, setup 73ms, import 1.72s, tests 80ms, environment 0ms)
+

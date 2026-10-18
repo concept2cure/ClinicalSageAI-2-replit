@@ -16,9 +16,9 @@
  *                              (honestly labeled), and the file_id that
  *                              reopens a chat upload.
  *   read_project_document    — the extracted text, windowed to RESULT_BUDGET;
- *                              a window the model receives whole is recorded
- *                              as a read receipt against the exact bytes it
- *                              came from (read-receipts.ts), and only then.
+ *                              its exact source snapshot defers a legacy span
+ *                              receipt until unchanged host-budget admission
+ *                              and a guarded write (read-receipts.ts).
  *   catalog_project_document — the comprehension record (kind / purpose /
  *                              summary / key data), REFUSED until the receipts
  *                              cover the entire text. A sampled page cannot be
@@ -41,6 +41,8 @@
  * default, fails closed; ANA_DOCUMENT_CATALOG_FORCE_ON overrides).
  */
 
+import { createHash } from 'node:crypto';
+import { LEGACY_CATALOG_VERIFICATION_SCOPE } from '../../../shared/ana/catalog-facts.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
 import {
@@ -56,10 +58,12 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
-import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary, sourceReadInput } from './catalog-scope.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 import { RESULT_BUDGET } from './agentic-loop.js';
 import { canDeferReadReceipt, coverageAfter, deferReadReceipt, fitReadWindow } from './read-receipts.js';
+import { parseCatalogInput, handleCatalogPreview } from './document-catalog-input.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -76,7 +80,7 @@ import { canDeferReadReceipt, coverageAfter, deferReadReceipt, fitReadWindow } f
  * "not yet studied", a figure that is wrong in both directions at once.
  */
 function listMessage(page: ProjectDocumentPage): string {
-  if (page.total === 0) return 'No documents in the vault for this scope.';
+  if (page.total === 0) return 'No Vault documents with verified access in this scope.';
   const shown =
     page.withheld > 0
       ? `${page.total} document(s); ${page.documents.length} listed here, ${page.withheld} not ` +
@@ -105,19 +109,18 @@ function listMessage(page: ProjectDocumentPage): string {
  */
 async function chatUploadsFor(
   svc: CatalogService,
-  orgId: number,
-  programId: string | null,
+  actor: Parameters<CatalogService['listChatUploadsForActor']>[0],
   limit: number | undefined,
 ): Promise<{
-  uploads: Awaited<ReturnType<CatalogService['listChatUploads']>>['uploads'] | null;
+  uploads: Awaited<ReturnType<CatalogService['listChatUploadsForActor']>>['uploads'] | null;
   hasMore: boolean;
   error: string | null;
 }> {
   try {
-    const page = await svc.listChatUploads(orgId, programId, Math.min(200, limit ?? 100));
+    const page = await svc.listChatUploadsForActor(actor, { limit: Math.min(200, limit ?? 100) });
     return { uploads: page.uploads, hasMore: page.hasMore, error: null };
-  } catch (err) {
-    return { uploads: null, hasMore: false, error: err instanceof Error ? err.message : String(err) };
+  } catch {
+    return { uploads: null, hasMore: false, error: 'Current actor-accessible chat uploads could not be checked.' };
   }
 }
 
@@ -135,24 +138,28 @@ async function handleListProjectDocuments(
   ctx?: ToolContext,
 ): Promise<string> {
   const gate = await requireDocumentAccess(ctx, 'list_project_documents');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { svc, orgId } = gate;
 
   const scope = await catalogScope(
     ctx,
     orgId,
-    typeof input.program_id === 'string' && input.program_id ? input.program_id : null,
+    input.program_id == null ? null : typeof input.program_id === 'string' ? input.program_id : '',
     'read',
   );
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
   const { programId } = scope;
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
-  const page = await svc.listProjectDocuments(orgId, { programId, limit });
-  const chat = await chatUploadsFor(svc, orgId, programId, limit);
+  const actor = sourceReadInput(ctx, orgId, programId);
+  const page = await svc.listProjectDocumentsForActor(actor, { limit });
+  const chat = await chatUploadsFor(svc, actor, limit);
+  await svc.revalidateActorSourceScope(actor, scope.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId }, scope.accessibleScope);
 
   return JSON.stringify({
     ok: true,
-    scope: programId ? { programId } : { organizationWide: true },
+    scope: programId ? { programId, actorFiltered: true } : scope.admittedScope.projectId !== null
+      ? { openProject: true, programId: null, actorFiltered: true } : { accessibleProjects: true, actorFiltered: true },
     // `returned` is the page; `total` is the scope. They were one field named
     // `count`, which made the page the answer to both questions.
     returned: page.documents.length,
@@ -165,54 +172,12 @@ async function handleListProjectDocuments(
     chatUploads: chat.uploads,
     ...(chat.hasMore ? { chatUploadsTruncated: true } : {}),
     ...(chat.error ? { chatUploadsError: `Chat uploads could not be listed: ${chat.error}` } : {}),
-    message: listMessage(page) + chatUploadNote(chat.uploads, chat.hasMore),
+    message: 'This listing covers the current actor’s accessible project sources. ' + listMessage(page) + chatUploadNote(chat.uploads, chat.hasMore),
   });
-}
-
-/**
- * Backfill the extraction tier for a document that predates the catalog, so
- * legacy uploads join the same read → catalog flow. Returns the tier it wrote.
- */
-async function backfillExtractionTier(
-  svc: CatalogService,
-  doc: { id: string; contentHash: string },
-  text: string,
-): Promise<NonNullable<import('../vault/document-catalog.service.js').CatalogDocumentRow['catalog']>> {
-  const { pool } = await import('../../db.js');
-  const outcome = svc.buildExtractionOutcome(
-    text.trim().length > 0
-      ? { text, method: 'stored' }
-      : {
-          text: null,
-          method: 'none',
-          error:
-            'No extracted text is stored for this document (ingested before extraction existed, or extraction failed unrecorded).',
-        },
-  );
-  await svc.recordExtractionOutcome(pool, {
-    documentId: doc.id,
-    contentHash: doc.contentHash,
-    outcome,
-  });
-  return {
-    status: outcome.status,
-    contentHash: doc.contentHash,
-    extractionMethod: outcome.method,
-    extractionConfidence: outcome.confidence,
-    extractionError: outcome.error,
-    charCount: outcome.charCount,
-    wordCount: outcome.wordCount,
-    pageCount: null,
-    documentKind: null,
-    purpose: null,
-    summary: null,
-    keyData: null,
-    catalogedAt: null,
-  };
 }
 
 /** The honest refusal for a document with nothing readable behind it. */
-function unreadableResponse(doc: { id: string; fileName: string }, reason: string | null): string {
+function unreadableResponse(doc: { id: string; fileName: string | null }, reason: string | null): string {
   return JSON.stringify({
     ok: false,
     documentId: doc.id,
@@ -241,18 +206,23 @@ function readWindowBounds(input: Record<string, unknown>, charCount: number) {
 }
 
 /**
- * Ensure the document has a readable extraction tier (backfilling a legacy
- * row); returns the honest refusal payload when there is nothing to read.
+ * Present an existing extraction tier, or label unrecorded legacy metadata
+ * without writing it; return an honest refusal when there is nothing to read.
  */
 async function ensureReadable(
   svc: CatalogService,
-  doc: NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForOrg']>>>,
+  doc: NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForActor']>>>,
   text: string,
 ): Promise<string | null> {
   const versionRefusal = catalogVersionRefusal(doc);
   if (versionRefusal) return JSON.stringify({ ok: false, code: 'SOURCE_VERSION_CHANGED', documentId: doc.id, error: versionRefusal });
   if (!doc.catalog) {
-    doc.catalog = await backfillExtractionTier(svc, doc, text);
+    const outcome = svc.buildExtractionOutcome(text.trim() ? { text, method: 'stored' } : { text: null, method: 'none', error: 'No extracted text is stored for this legacy source.' });
+    // Legacy reads present stored text without repairing regulated rows.
+    doc.catalog = { status: outcome.status, contentHash: doc.contentHash, extractionMethod: outcome.method,
+      extractionConfidence: outcome.confidence, extractionError: outcome.error, charCount: text.length,
+      wordCount: outcome.wordCount, pageCount: null, documentKind: null, purpose: null, summary: null, keyData: null, catalogedAt: null };
+    doc.sourceAccess = { ...doc.sourceAccess, receiptEligible: false, notice: doc.sourceAccess.notice + ' Extraction metadata is unrecorded; this read did not backfill or save it.' };
   }
   if (doc.catalog.status === 'extraction_failed' || text.trim().length === 0) {
     return unreadableResponse(doc, doc.catalog.extractionError);
@@ -266,9 +236,9 @@ function coverageMessage(
   end: number,
 ): string {
   if (coverage.complete) {
-    return 'You have now read the entire document. Record what it is with catalog_project_document.';
+    return 'The prospective legacy byte-bound span history covers the document after this window, if host admission and the receipt write succeed. It is not current-actor, extraction-specific or provider-served proof.';
   }
-  return `Keep reading — ${charCount - coverage.coveredChars} characters remain. Continue with offset=${
+  return `Prospective legacy byte-bound span history leaves ${charCount - coverage.coveredChars} characters uncovered. Continue with offset=${
     coverage.uncovered[0]?.start ?? end
   }. catalog_project_document will refuse until coverage is complete.`;
 }
@@ -294,7 +264,7 @@ function ocrCaveat(catalog: { extractionMethod: string | null; extractionConfide
   );
 }
 
-type LoadedDocument = NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForOrg']>>>;
+type LoadedDocument = NonNullable<Awaited<ReturnType<CatalogService['loadDocumentForActor']>>>;
 type Catalog = NonNullable<LoadedDocument['catalog']>;
 
 /**
@@ -310,7 +280,7 @@ function comprehensionOf(catalog: Catalog) {
   const { documentKind, purpose, summary, catalogedAt } = catalog;
   // Whose it is (S4): her own unconfirmed suggestion, or a person's decision.
   const state = catalog.state ?? 'suggested';
-  return { documentKind, purpose, summary, keyData: catalog.keyData ?? null, catalogedAt, state };
+  return { documentKind, purpose, summary, keyData: catalog.keyData ?? null, catalogedAt, state, checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE };
 }
 
 /** Below this much text a window gives the comprehension record's room back to the document. */
@@ -319,17 +289,17 @@ const COMPREHENSION_WITHHELD =
   'What was recorded about this document is too long to send beside a useful window of its text, so it is left ' +
   'out of this read. Its kind and purpose are in list_project_documents.';
 const NOT_RECORDED =
-  ' This window is not recorded as read: it was not served in a turn that confirms what the model received, so ' +
-  'the coverage above does not count it.';
+  ' No new legacy receipt is deferred for this window; the coverage above contains only existing byte-bound history. It does not establish current-actor, extraction-specific or provider-served delivery.';
 
 interface ReadWindow {
   span: { start: number; end: number };
   text: string;
   charCount: number;
   coverage: Awaited<ReturnType<CatalogService['getReadCoverage']>>;
-  /** True when the receipt waits on delivery, so the coverage counts this window. */
+  /** Prospective only: host admission and the receipt write are still pending. */
   recorded: boolean;
   comprehension: ReturnType<typeof comprehensionOf> | 'withheld';
+  extractedTextSha256: string;
 }
 
 /** One read's result, serialized: the measure fitReadWindow holds to RESULT_BUDGET. */
@@ -339,9 +309,12 @@ function readResult(doc: LoadedDocument, catalog: Catalog, w: ReadWindow): strin
   return JSON.stringify({
     ok: true,
     documentId: doc.id,
+    contentHash: doc.contentHash,
+    extractedTextSha256: w.extractedTextSha256,
     fileName: doc.fileName,
     documentTitle: doc.documentTitle,
     ...sourceAvailabilityPresentation(doc),
+    sourceAccess: doc.sourceAccess,
     extractionMethod: catalog.extractionMethod,
     ...comprehension,
     /* An OCR'd scan is not the same evidence as a born-digital text layer, and
@@ -353,11 +326,40 @@ function readResult(doc: LoadedDocument, catalog: Catalog, w: ReadWindow): strin
     window: { start: w.span.start, end: w.span.end, text: w.text },
     totalChars: w.charCount,
     coverage: {
+      scope: 'legacy_byte_history',
+      prospective: w.recorded,
+      currentActorExtractionProof: false,
+      providerServedProof: false,
       coveredChars: w.coverage.coveredChars,
       complete: w.coverage.complete,
       uncoveredRanges: w.coverage.uncovered.slice(0, 10),
     },
-    message: coverageMessage(w.coverage, w.charCount, w.span.end) + (w.recorded ? '' : NOT_RECORDED) + ocrCaveat(catalog),
+    message: doc.sourceAccess.notice + ' ' + coverageMessage(w.coverage, w.charCount, w.span.end) + (w.recorded ? ' This is prospective coverage; no receipt write is acknowledged by this result.' : NOT_RECORDED) + ocrCaveat(catalog),
+  });
+}
+
+/** Source eligibility is separate from the metadata/body delivery projection. */
+function sourceReadMatches(before: LoadedDocument, after: LoadedDocument | null, textHash: string, storedStatus: string | null): boolean {
+  if (!after) return false;
+  return after.id === before.id && after.programId === before.programId && after.contentHash === before.contentHash &&
+    after.extractedTextSha256 === textHash && after.isCurrent === before.isCurrent && after.disposition === before.disposition &&
+    after.originalFileAvailable === before.originalFileAvailable && after.sourceAccess.currentUseEligible === before.sourceAccess.currentUseEligible &&
+    storedCatalogStatus(after) === storedStatus;
+}
+function storedCatalogStatus(doc: LoadedDocument): string | null { return doc.catalog?.status ?? null; }
+function fitDocumentReadWindow(catalog: Catalog, render: (size: number, comprehension: ReadWindow['comprehension']) => string, asked: number) {
+  const fit = fitReadWindow(size => render(size, comprehensionOf(catalog)), asked);
+  return comprehensionOf(catalog) && fit.size < Math.min(asked, COMPREHENSION_GIVES_WAY_BELOW)
+    ? fitReadWindow(size => render(size, 'withheld'), asked) : fit;
+}
+function deferDocumentWindow(ctx: ToolContext | undefined, doc: LoadedDocument, window: { extractedTextSha256: string; charCount: number; offset: number; size: number; result: string }): void {
+  const { extractedTextSha256, charCount, offset, size, result } = window;
+  deferReadReceipt(ctx, {
+    sourceSnapshot: { organizationId: doc.admittedScope.organizationId, userId: doc.admittedScope.userId,
+      programId: doc.programId, documentId: doc.id, contentHash: doc.contentHash, extractedTextSha256, totalChars: charCount,
+      span: { start: offset, end: offset + size }, threadId: ctx?.threadId ?? null },
+    documentId: doc.id, contentHash: doc.contentHash, span: { start: offset, end: offset + size },
+    readBy: doc.admittedScope.userId, result,
   });
 }
 
@@ -366,27 +368,32 @@ async function handleReadProjectDocument(
   ctx?: ToolContext,
 ): Promise<string> {
   const gate = await requireDocumentAccess(ctx, 'read_project_document');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { svc, orgId } = gate;
 
   const documentId = typeof input.document_id === 'string' ? input.document_id : '';
   if (!documentId) {
     return JSON.stringify({ error: 'read_project_document requires document_id (string).' });
   }
-  const doc = await svc.loadDocumentForOrg(documentId, orgId, { includeText: true });
+  if (CHAT_UPLOAD_ID.test(documentId)) return unknownDocumentRefusal(documentId, 'read_project_document');
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
+  const actor = sourceReadInput(ctx, orgId);
+  const doc = await svc.loadDocumentForActor({ ...actor, documentId }, { includeText: true });
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
-  // The open project's documents only (PF-10 S7): checked before any text is served or receipt written.
-  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
-  if (outOfScope) return outOfScope;
+  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  if (boundary) return boundary;
 
+  const sourceCatalogStatus = storedCatalogStatus(doc);
   const text = doc.extractedText ?? '';
+  const extractedTextSha256 = createHash('sha256').update(text).digest('hex');
   const unreadable = await ensureReadable(svc, doc, text);
   if (unreadable) return unreadable;
 
   const catalog = doc.catalog!;
-  const charCount = catalog.charCount || text.length;
+  const charCount = text.length;
   const { offset, asked } = readWindowBounds(input, charCount);
   if (offset >= charCount) {
     return JSON.stringify({
@@ -395,58 +402,26 @@ async function handleReadProjectDocument(
     });
   }
 
-  /* The receipt is not written here. It waits on delivery (read-receipts.ts):
-     the loop host writes it only if the model is sent this result unchanged,
-     so the coverage below is "after this window", true exactly when the
-     result reaches the model. Outside such a host nothing is recorded, and
-     the result says so. */
-  const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
-  const recorded = canDeferReadReceipt(ctx);
+  /* Existing byte-bound receipts are aggregate history. This window's
+     coverage is prospective until host admission and a source-snapshot-checked
+     write. No result attests to provider delivery or extraction-specific durable
+     coverage; historical reads earn no new current-source receipt. */
+  const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount, scope.executor);
+  const recorded = doc.sourceAccess.receiptEligible && canDeferReadReceipt(ctx);
   const window = (size: number, comprehension: ReadWindow['comprehension']): string => {
     const span = { start: offset, end: offset + size };
     const coverage = recorded ? coverageAfter(before, span, charCount) : before;
-    return readResult(doc, catalog, { span, text: text.slice(span.start, span.end), charCount, coverage, recorded, comprehension });
+    return readResult(doc, catalog, { span, text: text.slice(span.start, span.end), charCount, coverage, recorded, comprehension, extractedTextSha256 });
   };
-  let fit = fitReadWindow(size => window(size, comprehensionOf(catalog)), asked);
-  if (comprehensionOf(catalog) && fit.size < Math.min(asked, COMPREHENSION_GIVES_WAY_BELOW)) {
-    fit = fitReadWindow(size => window(size, 'withheld'), asked);
+  const fit = fitDocumentReadWindow(catalog, window, asked);
+  const final = await svc.loadDocumentForActor({ ...actor, documentId });
+  if (!sourceReadMatches(doc, final, extractedTextSha256, sourceCatalogStatus)) {
+    return JSON.stringify({ ok: false, code: 'SOURCE_CHANGED_DURING_READ', error: 'The source changed during this read. No source text or new receipt was returned; read its current version again.' });
   }
-  deferReadReceipt(ctx, {
-    documentId: doc.id,
-    contentHash: doc.contentHash,
-    span: { start: offset, end: offset + fit.size },
-    readBy: ctx?.userId ?? null,
-    result: fit.result,
-  });
+  await svc.revalidateActorSourceScope(actor, doc.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId: scope.programId }, scope.accessibleScope);
+  if (recorded) deferDocumentWindow(ctx, doc, { extractedTextSha256, charCount, offset, ...fit });
   return fit.result;
-}
-
-interface CatalogInput {
-  documentId: string;
-  documentKind: string;
-  purpose: string;
-  summary: string;
-  keyData: Record<string, unknown> | null;
-}
-
-/** Validate the catalog write's inputs; a miss is a structured error, not a throw. */
-function parseCatalogInput(input: Record<string, unknown>): CatalogInput | { error: string } {
-  const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
-  const documentId = typeof input.document_id === 'string' ? input.document_id : '';
-  const documentKind = str(input.document_kind);
-  const purpose = str(input.purpose);
-  const summary = str(input.summary);
-  if (!documentId || !documentKind || !purpose || !summary) {
-    return {
-      error:
-        'catalog_project_document requires document_id, document_kind, purpose and summary (non-empty strings).',
-    };
-  }
-  const keyData =
-    input.key_data && typeof input.key_data === 'object' && !Array.isArray(input.key_data)
-      ? (input.key_data as Record<string, unknown>)
-      : null;
-  return { documentId, documentKind, purpose, summary, keyData };
 }
 
 /** Who wrote the description, from the tool context (S4): the record names it. */
@@ -465,6 +440,7 @@ function catalogRefusal(result: Awaited<ReturnType<CatalogService['completeCatal
     ok: false,
     refused: true,
     reason: result.refusal,
+    ...(result.code ? { code: result.code } : {}),
     uncoveredRanges: result.coverage?.uncovered.slice(0, 10),
     // A key_data refusal names every value the text does not state, by path,
     // so the correction is to those values and nothing else.
@@ -477,7 +453,7 @@ async function handleCatalogProjectDocument(
   ctx?: ToolContext,
 ): Promise<string> {
   const gate = await requireCatalog(ctx, 'catalog_project_document');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { svc, orgId } = gate;
   /* The comprehension record is a write, and a shared one: its purpose line is
      in every member's session recall and its summary in every read. So the role
@@ -485,27 +461,33 @@ async function handleCatalogProjectDocument(
      scopes by program, not role). Checked here because this handler is
      completeCatalog's only caller; the Vault write services check the same way
      (server/services/vault/vault-write-authority.ts). */
-  const roleRefusal = vaultWriteRefusal();
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
+  const roleRefusal = vaultWriteRefusal(scope.accessibleScope.actor.role);
   if (roleRefusal) return JSON.stringify({ ok: false, refused: true, reason: roleRefusal.message });
 
   const parsed = parseCatalogInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
+  if (parsed.recordType === 'verification_preview') return handleCatalogPreview(parsed, svc, orgId, ctx);
   // Told apart before the round trip: a chat upload has no vault row, and the
   // service's "not found" would read as absence for a file we just listed.
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
   }
   // The open project's documents only (PF-10 S7), before the shared record is written.
-  const target = await svc.loadDocumentForOrg(parsed.documentId, orgId);
-  if (target) {
-    const outOfScope = await documentScopeRefusal(ctx, orgId, target.programId);
-    if (outOfScope) return outOfScope;
-  }
+  const target = await svc.loadDocumentForActor({ ...sourceReadInput(ctx, orgId), documentId: parsed.documentId });
+  if (!target) return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
+  const boundary = catalogDocumentBoundary(scope, target.programId);
+  if (boundary) return boundary;
+  const expectedProgramId = target.programId;
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
+    expectedProgramId,
     // The person on whose behalf she acts; `proposer` says who wrote it (S4).
-    userId: ctx?.userId ?? null,
+    userId: scope.accessibleScope.actor.userId,
+    executor: scope.executor,
+    programId: scope.programId ?? undefined,
     proposer: catalogProposer(ctx, orgId, parsed.purpose),
   });
   if (!result.ok) return catalogRefusal(result);
@@ -514,11 +496,12 @@ async function handleCatalogProjectDocument(
     documentId: parsed.documentId,
     embeddingStatus: result.embeddingStatus,
     catalogState: 'suggested',
+    checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE,
     message:
       `Recorded as a suggestion, not yet confirmed by a person. Kind, purpose, summary and key data are ` +
       `attributed to AnA and this turn, and future sessions recall them as unconfirmed.${
         result.embeddingStatus === 'embedded' ? ' They are semantically searchable.' : ''
-      } Tell the user what you recorded and where the file is filed, and that a person confirms or corrects ` +
+      } Automatic key-data checking covers value presence; labels and context are not verified. Scientific qualification is unassessed. Tell the user what you recorded and where the file is filed, and that a person confirms or corrects ` +
       `the record in the Vault (the document's Catalog record panel).`,
   });
 }
@@ -528,7 +511,7 @@ async function handleSearchProjectDocuments(
   ctx?: ToolContext,
 ): Promise<string> {
   const gate = await requireDocumentAccess(ctx, 'search_project_documents');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { svc, orgId } = gate;
 
   const query = typeof input.query === 'string' ? input.query.trim() : '';
@@ -536,32 +519,32 @@ async function handleSearchProjectDocuments(
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
   const limit = Math.min(Math.max(typeof input.limit === 'number' ? Math.floor(input.limit) : 8, 1), 25);
-  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  // The open project only; with none open, the actor’s accessible library.
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
 
   // Text always (no key, no flag); meaning when the catalog and an embedding provider allow.
-  const { pool } = await import('../../db.js');
   const { searchVaultForAssistant } = await import('../vault/vault-assistant-search.js');
-  const result = await searchVaultForAssistant(pool, {
-    organizationId: orgId,
+  const result = await searchVaultForAssistant(scope.executor, {
+    organizationId: orgId, userId: scope.accessibleScope.actor.userId,
     programId: scope.programId,
     query,
     limit,
     catalogEnabled: await svc.isDocumentCatalogEnabled(orgId),
+    sourceReadScope: scope.admittedScope,
   });
 
   const list = result.hits;
   return JSON.stringify({
     ok: true,
     query,
+    scope: { actorFiltered: true, ...(scope.programId ? { programId: scope.programId } : scope.admittedScope.projectId !== null ? { openProject: true, programId: null } : { accessibleProjects: true }) },
     hits: list,
     textMatches: result.textMatches,
     semantic: result.semantic,
     message:
       list.length === 0
-        ? 'No Vault document matched by its title, file name or text. Absence here means no word of the query ' +
-          'appears in a current document; try other terms, or list_project_documents to browse.'
+        ? 'No current actor-accessible Vault document matched this query. Try other terms, or list_project_documents to browse; this miss does not establish absence of evidence.'
         : `${list.length} document(s) matched. Text matching finds documents that use the query's words; ` +
           'read_project_document before relying on one.',
   });
@@ -629,7 +612,7 @@ async function handleFileChatUploadToVault(
   ctx?: ToolContext,
 ): Promise<string> {
   const gate = await requireCatalog(ctx, 'file_chat_upload_to_vault');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { orgId } = gate;
 
   const parsed = parseFilingInput(input);
@@ -683,14 +666,14 @@ export function registerDocumentCatalogHandlers(register: RegisterFn): void {
     'file_chat_upload_to_vault',
     withCaughtErrors('file_chat_upload_to_vault', handleFileChatUploadToVault),
   );
-  register('list_project_documents', withCaughtErrors('list_project_documents', handleListProjectDocuments));
-  register('read_project_document', withCaughtErrors('read_project_document', handleReadProjectDocument));
+  register('list_project_documents', withCaughtErrors('list_project_documents', handleListProjectDocuments, { safeOutcome: true }));
+  register('read_project_document', withCaughtErrors('read_project_document', handleReadProjectDocument, { safeOutcome: true }));
   register(
     'catalog_project_document',
-    withCaughtErrors('catalog_project_document', handleCatalogProjectDocument),
+    withCaughtErrors('catalog_project_document', handleCatalogProjectDocument, { safeOutcome: true }),
   );
   register(
     'search_project_documents',
-    withCaughtErrors('search_project_documents', handleSearchProjectDocuments),
+    withCaughtErrors('search_project_documents', handleSearchProjectDocuments, { safeOutcome: true }),
   );
 }

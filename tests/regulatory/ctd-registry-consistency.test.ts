@@ -46,6 +46,11 @@ import { getAllINDSections } from '../../services/regulatory/ind-ectd-sections';
 import { DOCUMENT_TEMPLATES } from '../../server/services/ana-ri/document-templates';
 import { getWorkflow } from '../../server/services/ana-ri/workflow-orchestration';
 import { getRequiredArtifacts } from '../../server/services/regulatory/requiredArtifactMatrix';
+import { DOCUMENT_PATTERNS } from '../../server/services/ana-ri/document-routing';
+import { SECTION_PATTERNS } from '../../server/services/ctd-ingestion-service';
+import { TEXT_RULES } from '../../server/services/vault/vault-filing.service';
+import { IND_IB_SCAFFOLD_ROWS } from '../../server/routes/mission-control';
+import { buildIndPyramid } from '../../services/regulatory/pyramids/ind-pyramid';
 
 const FDA_M1_HELD_BY = 'tests/regulatory/fda-module1-numbering.test.ts';
 
@@ -110,6 +115,62 @@ const REGISTRIES: CtdRegistry[] = [
       ['US_IND', 'US_IND_AMENDMENT', 'US_NDA', 'US_BLA'].flatMap((registry) =>
         getRequiredArtifacts(registry).flatMap((a) => a.sectionCodes.map((code) => ({ code, title: a.label }))),
       ),
+  },
+  /* The five copies the Module 1 placement step (2026-10-12) brought onto the record. They were
+     the reason tests/regulatory/ctd-registry/m1-placement.consistency.test.ts exists; that file
+     keeps the assertions the contract alone cannot make (a null is an answer; the backbone is the
+     table of contents), and the copies are registered here so the shared contract holds them from
+     now on. Their Module 1 rows are held here, not by FDA_M1_HELD_BY: these copies state Module 1
+     themselves. */
+  {
+    // The router states BOTH regional Module 1 trees, tagged M1 and M1-EU. Read as one US registry
+    // it would fail on EU 1.8.2 (Risk Management Plan), which is right for the EU and has no US
+    // counterpart; so the EU rows are their own entry and the FDA Module 1 contract does not reach
+    // them. EU Module 1 has no contract here yet — `region: 'EU'` means its Module 1 is unchecked,
+    // not that it is held.
+    name: "AnA's document router (the /draft path)",
+    ownerPath: 'server/services/ana-ri/document-routing.ts',
+    region: 'US',
+    read: () =>
+      DOCUMENT_PATTERNS.filter((p) => p.result.module !== 'M1-EU').map((p) => ({ code: p.result.sectionCode, title: p.result.title })),
+  },
+  {
+    name: "AnA's document router — EU regional rows",
+    ownerPath: 'server/services/ana-ri/document-routing.ts',
+    region: 'EU',
+    read: () =>
+      DOCUMENT_PATTERNS.filter((p) => p.result.module === 'M1-EU').map((p) => ({ code: p.result.sectionCode, title: p.result.title })),
+  },
+  {
+    name: 'CTD ingestion filename detector',
+    ownerPath: 'server/services/ctd-ingestion-service.ts',
+    region: 'US',
+    read: () => SECTION_PATTERNS.map((p) => ({ code: p.section ?? undefined, title: p.title })),
+  },
+  {
+    name: 'Vault body-text filing rules',
+    ownerPath: 'server/services/vault/vault-filing.service.ts',
+    region: 'US',
+    read: () => TEXT_RULES.filter((r) => r.view === 'ctd').map((r) => ({ code: r.ctdSection, title: r.label.replace(/ body$/, '') })),
+  },
+  {
+    name: 'Mission Control IND scaffold',
+    ownerPath: 'server/routes/mission-control.ts',
+    region: 'US',
+    read: () => IND_IB_SCAFFOLD_ROWS.map((r) => ({ code: r.section, title: r.title })),
+  },
+  {
+    // Read from the BUILT pyramid, not from the exported const the tasks are assembled out of: a
+    // task that stops using the const and writes its own number back is exactly the regression
+    // this registry exists to catch, and reading the const would not see it.
+    name: 'IND pyramid document bindings',
+    ownerPath: 'services/regulatory/pyramids/ind-pyramid.ts',
+    region: 'US',
+    read: () =>
+      buildIndPyramid()
+        .phases.flatMap((p) => p.tasks)
+        .flatMap((t) => t.documentBindings ?? [])
+        .map((b) => ({ code: b.ctdSection, title: b.sectionTitle })),
   },
 ];
 
@@ -297,5 +358,63 @@ describe('the check is live — a wrong 2.7.3 is caught wherever 2.7.3 is named'
       };
       expect(registryViolations(wrong).join('\n'), r.name).toMatch(/2\.7\.3 .*contradicts the record/);
     }
+  });
+});
+
+describe('the check is live — each Module 1 placement this step fixed fails if it comes back', () => {
+  /* The 2.7.3 mutation above proves the Module 2–5 half. This proves the Module 1 half, over the
+     five copies registered on 2026-10-12, by putting each copy's OWN former value back. These are
+     not invented wrong answers: every one is the literal the file carried before the step, so a
+     revert of the fix — by a merge, by a session that does not know this record exists, by a
+     well-meant "the number looked close" — is caught here and named. */
+  const reverted = (name: string, swap: (n: TreeNode) => TreeNode): CtdRegistry => {
+    const base = REGISTRIES.find((r) => r.name === name);
+    if (!base) throw new Error(`no registered copy named "${name}"; the mutation proves nothing`);
+    return { ...base, read: () => base.read().map(swap) };
+  };
+
+  it.each([
+    [
+      "AnA's document router (the /draft path)",
+      "the IB back at 1.3.3 (Debarment Certification, marketing-only)",
+      (n: TreeNode) => (n.title === "Investigator's Brochure" ? { ...n, code: '1.3.3' } : n),
+      /1\.3\.3 .*investigator'?s brochure files under 1\.14\.4\.1/i,
+    ],
+    [
+      "AnA's document router (the /draft path)",
+      'the cover letter back at 1.1 (Forms)',
+      (n: TreeNode) => (/cover letter/i.test(n.title) ? { ...n, code: '1.1' } : n),
+      /1\.1 .*cover letter files under 1\.2/i,
+    ],
+    [
+      'CTD ingestion filename detector',
+      'patent information back at 1.3.1 (Contact/Sponsor/Applicant Information)',
+      (n: TreeNode) => (/patent/i.test(n.title) ? { ...n, code: '1.3.1' } : n),
+      /1\.3\.1 .*patent/i,
+    ],
+    [
+      'Vault body-text filing rules',
+      'the IB back at 5.3 (where the clinical study reports live)',
+      (n: TreeNode) => (/investigator'?s brochure/i.test(n.title) ? { ...n, code: '5.3' } : n),
+      /5\.3 .*investigator'?s brochure is a Module 1 document; it files under 1\.14\.4\.1, not in Module 5/i,
+    ],
+    [
+      'Mission Control IND scaffold',
+      'the IB scaffold row back at 1.3.3',
+      (n: TreeNode) => (/investigator'?s brochure/i.test(n.title) ? { ...n, code: '1.3.3' } : n),
+      /1\.3\.3 .*investigator'?s brochure files under 1\.14\.4\.1/i,
+    ],
+    [
+      'IND pyramid document bindings',
+      'the IB task binding back at 1.3.3',
+      (n: TreeNode) => (/investigator'?s brochure/i.test(n.title) ? { ...n, code: '1.3.3' } : n),
+      /1\.3\.3 .*investigator'?s brochure files under 1\.14\.4\.1/i,
+    ],
+  ] as const)('%s — %s', (name, _what, swap, message) => {
+    const r = reverted(name, swap);
+    expect(r.read().length, `${name} yields no entries`).toBeGreaterThan(0);
+    expect(registryViolations(r).join('\n'), name).toMatch(message);
+    // …and the real copy, unmutated, is clean — so the failure is the mutation, not the copy.
+    expect(registryViolations(REGISTRIES.find((x) => x.name === name)!), name).toEqual([]);
   });
 });

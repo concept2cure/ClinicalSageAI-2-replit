@@ -1,0 +1,107 @@
+{
+  "command": "node node_modules/eslint/bin/eslint.js [seven assessor/presentation implementation and fixture paths] --format json",
+  "before": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+      "errors": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DispatchReadiness' has too many lines (246). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'DispatchReadiness' has a complexity of 36. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/programSequence.ts",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/ectd/assess-dispatch-readiness.ts",
+      "errors": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'assessSequenceDispatchReadiness' has too many lines (143). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (503). Maximum allowed is 500."
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+      "errors": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DispatchReadiness' has too many lines (246). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "message": "Function 'DispatchReadiness' has a complexity of 35. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/programSequence.ts",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts",
+      "errors": 0,
+      "warnings": []
+    },
+    {
+      "file": "server/services/ectd/assess-dispatch-readiness.ts",
+      "errors": 0,
+      "warnings": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'assessSequenceDispatchReadiness' has too many lines (137). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (571). Maximum allowed is 500."
+        }
+      ]
+    }
+  ],
+  "comparison": "No errors; four warning instances were already present (DispatchReadiness complexity 36→35, lines 246→246; assessor function lines 143→137, file lines 503→571). No new warning categories or functions."
+}

@@ -1,0 +1,21 @@
+{
+  "commit": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c",
+  "fixture": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/api-contract.json",
+  "fixtureBytes": 2517,
+  "fixtureSha256": "3b78ffb48cbaadd0977fea1f22a0342e8421c95342a129a4fcbffa45e5b68f63",
+  "matches": [
+    {
+      "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-summary.json",
+      "field": "apiContractSha256",
+      "recordedSha256": "3b78ffb48cbaadd0977fea1f22a0342e8421c95342a129a4fcbffa45e5b68f63",
+      "matchesCommittedFixture": true
+    },
+    {
+      "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-initial-failure/browser-original-summary.json",
+      "field": "apiContractSha256",
+      "recordedSha256": "3b78ffb48cbaadd0977fea1f22a0342e8421c95342a129a4fcbffa45e5b68f63",
+      "matchesCommittedFixture": true
+    }
+  ],
+  "qualification": "Exact same-commit SHA-256 of synthetic API contract bytes, not an authentication key; no evidence files modified."
+}

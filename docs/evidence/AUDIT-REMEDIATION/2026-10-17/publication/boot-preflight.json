@@ -1,0 +1,11 @@
+{
+  "database": "c2c_audit_oct17_boot_tls",
+  "role": "app_service",
+  "rolsuper": false,
+  "rolbypassrls": false,
+  "tls": true,
+  "tamper_rows": 0,
+  "audit_rows": 0,
+  "certificateAuthorized": true,
+  "noNativeFixturesWritten": true
+}

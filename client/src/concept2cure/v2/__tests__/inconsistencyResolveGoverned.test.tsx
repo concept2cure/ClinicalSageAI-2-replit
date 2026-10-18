@@ -53,13 +53,29 @@ const REVIEW_PATH = '/api/governed-intelligence/contradictions/f-1/review';
 const REASON = 'IB §5.3 corrected to 400 mg BID to match the protocol';
 const RESOLVED_AT = '2026-09-23T14:02:00.000Z';
 
+/* The finding as the server has it recorded. A committed decision changes it,
+   and the board is re-read after one (the gate is the server's count), so
+   the mocked store has to keep what was written. */
+let recorded: Record<string, unknown> = FINDING;
+
+/** The board for that record, with the gate the server would count for it. */
+function boardNow() {
+  const open = recorded.reviewState !== 'approved_resolution';
+  return {
+    program: PROGRAM,
+    gate: {
+      total: 1, open: open ? 1 : 0, resolved: open ? 0 : 1, superseded: 0,
+      blocking: open ? 1 : 0, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 0, unrecognized: 0,
+      blocked: open,
+    },
+    findings: [recorded], assumptions: [], decisions: [], checks: [],
+  };
+}
+
 function routeReads() {
   apiRequest.mockImplementation(async (method: string, path: string) => {
     if (method === 'GET' && path === BOARD_PATH) {
-      return {
-        ok: true, status: 200,
-        json: async () => ({ data: { program: PROGRAM, findings: [FINDING], assumptions: [], decisions: [], checks: [] } }),
-      };
+      return { ok: true, status: 200, json: async () => ({ data: boardNow() }) };
     }
     throw new Error('unrouted ' + method + ' ' + path);
   });
@@ -72,8 +88,9 @@ function routeWrite(handler: (method: string, path: string, body: unknown) => un
   );
 }
 
-/** What the server returns for a committed resolution. */
+/** What the server returns for a committed resolution — and now holds. */
 function committed(resolvedBy = '7') {
+  recorded = { ...FINDING, reviewState: 'approved_resolution', resolvedBy, resolvedAt: RESOLVED_AT };
   return {
     ok: true, status: 200,
     json: async () => ({
@@ -101,6 +118,7 @@ function submitReason(reason: string) {
 
 beforeEach(() => {
   apiRequest.mockReset();
+  recorded = FINDING;
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 9 };
 });
 afterEach(() => {
@@ -271,32 +289,24 @@ describe('a refusal reads as a refusal', () => {
 
 describe('re-opening, and outcomes this screen cannot confirm', () => {
   function routeResolvedBoard() {
-    apiRequest.mockImplementation(async (method: string, path: string) => {
-      if (method === 'GET' && path === BOARD_PATH) {
-        return {
-          ok: true, status: 200,
-          json: async () => ({ data: {
-            program: PROGRAM,
-            findings: [{ ...FINDING, reviewState: 'approved_resolution', resolvedBy: '7', resolvedAt: RESOLVED_AT }],
-            assumptions: [], decisions: [], checks: [],
-          } }),
-        };
-      }
-      throw new Error('unrouted ' + method + ' ' + path);
-    });
+    recorded = { ...FINDING, reviewState: 'approved_resolution', resolvedBy: '7', resolvedAt: RESOLVED_AT };
+    routeReads();
   }
   const boardReads = () => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === BOARD_PATH).length;
 
   it('re-open asks for its own reason, POSTs unresolved with it, and the resolver line goes', async () => {
     routeResolvedBoard();
-    routeWrite(() => ({
+    routeWrite(() => {
+      recorded = { ...FINDING, reviewState: 'unresolved', resolvedBy: null, resolvedAt: null };
+      return {
       ok: true, status: 200,
       json: async () => ({
         finding: { ...FINDING, reviewState: 'unresolved', resolvedBy: null, resolvedAt: null },
         previousReviewState: 'approved_resolution',
         governance: { command: 'reopen', actionId: 'act_2', auditId: 'aud-2', sha256Chain: 'beef' },
       }),
-    }));
+      };
+    });
     render(<Surface onAsk={() => {}} onNav={() => {}} />);
     await waitFor(() => expect(card()?.textContent).toMatch(/Resolved by user 7/));
     fireEvent.click(within(card()).getByRole('button', { name: /Re-open/ }));

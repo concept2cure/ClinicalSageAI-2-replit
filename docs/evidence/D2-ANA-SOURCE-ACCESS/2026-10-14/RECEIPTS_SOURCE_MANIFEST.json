@@ -1,0 +1,23 @@
+{
+  "scope": "receipt owner final 44-test green, settlement-refusal and multi-read stop follow-ups, selected TypeScript and zero-warning lint",
+  "provider_invoked": false,
+  "schema_changed": false,
+  "files": [
+    {
+      "path": "server/services/ana/read-receipts.ts",
+      "sha256": "785124d4f12f69f9c3d558820c2cd4a505404c3b690ee223e7c3c80474ced3af"
+    },
+    {
+      "path": "server/services/ana/source-read-receipt.ts",
+      "sha256": "5d7e6ce80b72120b4d7a24b866b2a1dc4fa0269f39b6bb5d42e09e0c0ac1968f"
+    },
+    {
+      "path": "server/services/ana/__tests__/read-receipts.test.ts",
+      "sha256": "d52cd2c34e896d5112dba429d5fef1e3816a7e22fd91bde697b3d77dc280112d"
+    },
+    {
+      "path": "server/services/ana/__tests__/read-receipt-snapshots.test.ts",
+      "sha256": "5b46838fd9f3d377555863a31532cc6b83f7208f70a8b1966b396b6fb5141a8f"
+    }
+  ]
+}

@@ -41,6 +41,9 @@ export class EudamedConnector implements DataConnector {
       manufacturer: query.sponsor,
       pageSize: query.limit,
     });
+    // 2026-10-15: an unavailable result was mapped to [], so a failed search
+    // read as "no matches". It is an error.
+    if (result.status !== 'ok') throw new Error(result.message ?? 'EUDAMED search failed');
     return result.devices.map((device, i) => ({
       id: `eudamed:${device.basicUdiDi || i}`,
       sourceConnector: this.id,

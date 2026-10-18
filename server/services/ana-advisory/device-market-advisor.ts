@@ -9,7 +9,8 @@
  *
  * NO LLM, NO fabrication. Every finding, blocker and action is derived from the
  * underlying registries/readiness logic. `canTransmit` is carried straight from
- * the registry — true for the 11 markets with live gateways, false otherwise.
+ * the registry, which reads it from regulatory/market-support.ts: false for
+ * every market today.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.
  *
@@ -23,7 +24,7 @@ import {
   getMarket,
   listMarkets,
 } from '../global-markets/market-registry';
-import type { MarketId } from '../global-markets/types';
+import type { MarketDescriptor, MarketId, MarketReadinessResult } from '../global-markets/types';
 
 import type {
   AdvisoryFinding,
@@ -197,8 +198,11 @@ export function adviseDeviceReadiness(
  * Produce a ranked market-entry advisory for a device / IVD profile against a set
  * of candidate markets. Ranking reflects readiness score (descending), with
  * platform-assemble capability and fewer hard blockers breaking ties. Honest:
- * `transmitCapableMarkets` lists markets with live gateways; markets without
- * gateways carry the standing cannot-transmit blocker.
+ * `transmitCapableMarkets` lists the markets the registry says the platform
+ * transmits to (none today); every other market carries the cannot-transmit
+ * blocker. The fixed sentences below that say the platform transmits to no
+ * authority hold only while that list is empty; the test
+ * transmit-capability-is-stated-by-market-support.test.ts pins the two together.
  */
 export function adviseGlobalMarketStrategy(
   input: GlobalMarketAdviceInput,
@@ -231,7 +235,7 @@ export function adviseGlobalMarketStrategy(
       localRepresentativeRequired: market.localRepresentativeRequired,
       missingElements: readiness.missingElements,
       blockers: readiness.blockers,
-      summary: summariseMarket(market.name, market.authorityShort, readiness.score, readiness.band, market.canAssemble),
+      summary: summariseMarket(market, readiness),
     });
   }
 
@@ -397,16 +401,17 @@ function summariseTopBlockers(blockers: string[], limit = 2): string {
 }
 
 function summariseMarket(
-  name: string,
-  authority: string,
-  score: number,
-  band: string,
-  canAssemble: boolean,
+  market: Pick<MarketDescriptor, 'name' | 'authorityShort' | 'canAssemble' | 'canTransmit'>,
+  readiness: Pick<MarketReadinessResult, 'score' | 'band'>,
 ): string {
-  const assembleNote = canAssemble
+  const authority = market.authorityShort;
+  const assembleNote = market.canAssemble
     ? 'the platform can assemble its dossier'
     : 'the platform cannot assemble its dossier (manual / out of scope)';
-  return `${name} (${authority}): ${score}% ready (${band}); ${assembleNote}; the platform cannot transmit to ${authority}.`;
+  // 2026-10-15: said "cannot transmit" for every market while canTransmit read
+  // true for eleven; it now states the field, so the two cannot disagree.
+  const transmitNote = market.canTransmit ? 'the platform can transmit to' : 'the platform cannot transmit to';
+  return `${market.name} (${authority}): ${readiness.score}% ready (${readiness.band}); ${assembleNote}; ${transmitNote} ${authority}.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,5 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+  141:45  warning  Arrow function has too many lines (104). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)

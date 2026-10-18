@@ -44,6 +44,10 @@ import {
   type BuiltDocument, type ListFocus, type ListScope,
 } from '../editor/CanvasDocumentList';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
+import { AuthoringRemedies } from '../editor/AuthoringRemedies';
+import { parseRemedyAnswer } from '../editor/authoringRemedies';
+import type { AskOrigin } from '../editor/askAnaToDraft';
+import { readOriginDocument, originTurnContext, editorScopeRefusal, snapshotEditorOrigin, type OriginDocumentRead } from '../editor/authoringConversationOrigin';
 import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
@@ -128,6 +132,7 @@ function toTurn(m: AnaChatMessage): CtTurn {
        canvas beneath the turn is rendered from THIS, not from the draft's
        inline content (docs/design/ANA_DOCUMENT_CANVAS.md). */
     authoringDoc: authoringDoc ?? undefined,
+    suggestedActions: nonEmpty(m.suggestedActions),
   };
 }
 
@@ -152,11 +157,16 @@ export function authoringDocOf(
   return authoringDocFromTrace(m.toolCalls);
 }
 
+/** The AnA tools that create an authoring document. save_document_to_vault is
+ *  the single-body form of draft_authoring_document (2026-10-17, document store
+ *  consolidation step 2) and writes the same store. */
+const AUTHORING_DRAFT_TOOLS: ReadonlySet<string> = new Set(['draft_authoring_document', 'save_document_to_vault']);
+
 function authoringDocFromTrace(
   calls: AnaChatMessage['toolCalls'],
 ): { docId: string; programId: string | null; title: string | null } | null {
   for (const call of calls ?? []) {
-    if (call.name !== 'draft_authoring_document' || typeof call.result !== 'string') continue;
+    if (!AUTHORING_DRAFT_TOOLS.has(call.name) || typeof call.result !== 'string') continue;
     const found = authoringDocFromToolResult(call.result);
     if (found) return found;
   }
@@ -202,6 +212,7 @@ interface InsertTarget {
   open: boolean;
   reopen: () => void;
   fireToast: FireToast;
+  refusal?: string;
 }
 
 /**
@@ -216,13 +227,14 @@ interface InsertTarget {
 function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
   // One id per offer, above the early returns (round 13: every turn without a record id shared one).
   const refusalId = `ct-insert-refusal-${React.useId()}`;
-  if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
+  if (!target || !turn.settled || !turn.answer?.trim()) return null;
+  if (parseRemedyAnswer(turn.answer).hasRemedies) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
   const { bridge, open, reopen, fireToast } = target;
   /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
      does not admit wrote is not offered as an insert. The offer stays, disabled,
      with the reason beside it (GE-P-3); the bridge checks again. */
-  const refusal = anaInsertRefusal(turn.turnRecord, turn.unfinished === true);
+  const refusal = bridge.insertRefusal ?? target.refusal ?? (!bridge.editable ? 'This document is read-only or frozen.' : anaInsertRefusal(turn.turnRecord, turn.unfinished === true));
   const insert = () => {
     if (refusal) return;
     /* A suggestion lands only where the person can see it: a closed editor is
@@ -289,7 +301,7 @@ function TurnQuestion({
 
 interface AnaTurnProps {
   turn: CtTurn;
-  onRefine: () => void;
+  onAsk: (text: string) => void;
   onNav: (id: string) => void;
   /** Starts a demonstration from a "Start demonstration" chip — on every turn,
    *  not only the ones that drafted a document (which is all `canvas` covers). */
@@ -307,13 +319,15 @@ interface AnaTurnProps {
     conversationId: string | null;
     expanded: boolean;
     onExpandedChange: (expanded: boolean) => void;
-    onAsk: (text: string) => void;
+    onAsk: (text: string, savedOrigin?: AskOrigin) => void;
     fireToast: FireToast;
     liveDrive?: OwnedSurfaceViewProps['liveDrive'];
     /** The pane beside the conversation the expanded editor renders into. */
     paneEl?: HTMLElement | null;
     /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
     refreshKey?: number;
+    focusSectionId?: string;
+    focusOnOpen?: boolean;
     /** Told the open section of this document's editor, and whether it is on screen. */
     onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
     /** "← Documents (n)" in the editor's bar: close it and show the list. */
@@ -357,7 +371,22 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
   );
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, onAnswer, busy, canvas, insertTarget, after }: AnaTurnProps) {
+function TurnAnswer({ turn }: { turn: CtTurn }) {
+  return turn.answer ? <AnaMarkdown text={parseRemedyAnswer(turn.answer).prose} className="ct-ana-text ana-md" /> : null;
+}
+
+function TurnRemedies({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
+  return <AuthoringRemedies text={turn.answer ?? ''} settled={turn.settled === true} record={turn.turnRecord} unfinished={turn.unfinished === true}
+    target={target ? { ...target.bridge, open: target.open, reopen: target.reopen, refusal: target.bridge.insertRefusal ?? target.refusal ?? undefined,
+      ...(target.refusal ? { openSection: undefined } : {}) } : undefined} />;
+}
+
+function TurnSuggestions({ prompts, busy, onAsk }: { prompts?: string[]; busy?: boolean; onAsk: (text: string) => void }) {
+  if (!prompts?.length) return null;
+  return <div className="ct-refs">{prompts.map((prompt, index) => <button key={index} type="button" className="ct-ref" disabled={busy} onClick={() => onAsk(prompt)}><span className="ct-ref-ic">{I.sparkles}</span><span className="ct-ref-l">{prompt}</span></button>)}</div>;
+}
+
+function AnaTurn({ turn, onAsk, onNav, onStartDemo, onContinue, onSummary, onAnswer, busy, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -413,7 +442,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, on
             reached the reader as `##`, `**` and `-`. AnaMarkdown is the ONE
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
-        {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        <TurnAnswer turn={turn} />
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
@@ -425,6 +454,8 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, on
             the document canvas, whose drafted figures it does not check. */}
         {turn.settled && <AnaGrounding evidence={turn.evidence} />}
         <InsertIntoOpenSection turn={turn} target={insertTarget} />
+        <TurnRemedies turn={turn} target={insertTarget} />
+        <TurnSuggestions prompts={turn.suggestedActions} busy={busy} onAsk={onAsk} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
         {turn.authoringDoc && canvas && (
@@ -442,6 +473,8 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, on
             liveDrive={canvas.liveDrive}
             paneEl={canvas.paneEl}
             refreshKey={canvas.refreshKey}
+            focusSectionId={canvas.focusSectionId}
+            focusOnOpen={canvas.focusOnOpen}
             onEditorBridge={canvas.onEditorBridge}
             onShowList={canvas.onShowList}
             listCount={canvas.listCount}
@@ -1024,11 +1057,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onOpenAsDocument, project
 }
 
 /** Where a handed-over question was asked: the screen, by id and name, and what it showed. */
-export interface AskOrigin {
-  surfaceId: string;
-  label: string;
-  moduleContext?: Record<string, unknown> | null;
-}
+export type { AskOrigin } from '../editor/askAnaToDraft';
 
 /* ---- Conversation thread (main export) ---- */
 
@@ -1066,6 +1095,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      returns to where it was asked. Consumed once: the effect below records the
      arrival as the conversation in progress. */
   const [askOrigin, setAskOrigin] = useState<AskOrigin | null>(() => asked.origin ?? null);
+  const arrivedOriginRef = useRef(asked.origin ?? null);
+  const originRemovedRef = useRef(false);
+  const originOmissionSpentRef = useRef(false);
+  const originGenerationRef = useRef(0);
+  const [originDocumentRead, setOriginDocumentRead] = useState<OriginDocumentRead>(
+    () => asked.origin?.authoringDocument ? { state: 'loading' } : { state: 'none' },
+  );
+  const [originRetry, setOriginRetry] = useState(0);
   const arrivedPrefill = typeof asked.prefill === 'string' && asked.prefill.trim() ? asked.prefill : null;
   /* With the shell's chat, a "new" that carries nothing to ask is the
      conversation in progress. It used to be read as "start over": the mount
@@ -1115,6 +1152,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     initialThreadId: shellChat || isNew || isCurrent ? null : sel.id,
     screenName: 'conversation-thread',
     projectId: shellProjectId,
+    moduleContext: { surface: 'conversation-thread', projectId: shellProjectId },
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
@@ -1142,25 +1180,26 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setEditor(prev => (bridge ? { bridge, open } : prev?.bridge.docId === docId ? null : prev));
   }, []);
   /* Only an editor on screen is named on turns (step 5). */
-  const editorBridge = editor?.open ? editor.bridge : null;
+  const editorRefusal = editor ? editorScopeRefusal(editor.bridge, shellProjectId) : null;
+  const editorBridge = editor?.open && !editorRefusal ? editor.bridge : null;
   const insertTarget = editor
-    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast }
+    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast, ...(editorRefusal ? { refusal: editorRefusal } : {}) }
     : undefined;
   /* While a document is open beside the conversation, every turn sent from
      here names it: the document, the section and its module, through the
      same authoring context the editor's own chat sends (2026-10-01). The
      shell's chat this thread runs on was created without one. */
-  const turnOpts = editorBridge?.authoringContext ? { authoringContext: editorBridge.authoringContext } : undefined;
+  const omittedOriginEditor = originRemovedRef.current && !originOmissionSpentRef.current && editorBridge?.docId === arrivedOriginRef.current?.authoringDocument?.docId;
+  const turnOpts = editorBridge && !omittedOriginEditor ? { authoringContext: editorBridge.authoringContext, moduleContext: editorBridge.moduleContext } : undefined;
   /* With nothing open a turn is sent exactly as before; the third argument
      only when there is a document to name. */
   const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {
     /* The screen a handed-over question came from rides on the turn that
        sends it, once. */
-    const fromOrigin = askOrigin
-      ? { moduleContext: askOrigin.moduleContext ?? null, screenName: askOrigin.surfaceId }
-      : null;
+    const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId, omittedOriginEditor ? null : editor?.bridge, editor?.open === true);
     if (fromOrigin) setAskOrigin(null);
     const opts = turnOpts || fromOrigin ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}) } : undefined;
+    originOmissionSpentRef.current = true;
     if (opts) return anaChat.send(text, files, opts);
     return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
   };
@@ -1238,7 +1277,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      the whole screen there): in both cases a notice offers it instead. */
   const streamedIdsRef = useRef<Set<string>>(new Set());
   const autoOpenedRef = useRef<Set<string>>(new Set());
-  const [readyDoc, setReadyDoc] = useState<{ docId: string; title: string } | null>(null);
+  const [readyDoc, setReadyDoc] = useState<{ docId: string; title: string; fromHandoff?: boolean } | null>(null);
   const lastMsg = anaChat.messages[anaChat.messages.length - 1];
   if (busy && lastMsg && lastMsg.role !== 'user') streamedIdsRef.current.add(lastMsg.id);
   const liveDoc = (() => {
@@ -1323,7 +1362,44 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   /* A document opened from the list that has no card in this transcript
      (another conversation's, or one whose turn lost its id) is mounted here
      with no card, and opens in the same editor beside the conversation. */
-  const [listOpened, setListOpened] = useState<Record<string, { docId: string; programId: string | null; title: string; fromThisConversation: boolean }>>({});
+  const [listOpened, setListOpened] = useState<Record<string, { docId: string; programId: string | null; title: string; fromThisConversation: boolean; focusSectionId?: string; fromHandoff?: boolean }>>({});
+  /* A saved editor handoff uses the same cardless canvas as an inventory row.
+     Only a real project inventory read can register it; the canvas then reads
+     the exact document and sections. On phones its existing open offer keeps
+     the composer visible until the person chooses the editor. */
+  useEffect(() => {
+    const origin = arrivedOriginRef.current;
+    if (!origin?.authoringDocument) return;
+    let cancelled = false;
+    const generation = originGenerationRef.current;
+    setOriginDocumentRead({ state: 'loading' });
+    const targetId = origin.authoringDocument.docId;
+    // Existing canvases retain their buffer during verification or a project
+    // switch. Their context and mutation offers remain scope checked above.
+    setExpandedDocId(previous => previous === targetId ? null : previous);
+    setReadyDoc(previous => previous?.docId === targetId ? null : previous);
+    void readOriginDocument(origin, shellProjectId).then(read => {
+      if (cancelled || originRemovedRef.current || generation !== originGenerationRef.current) return;
+      setOriginDocumentRead(read);
+      if (read.state !== 'ready') return;
+      const document = read.document;
+      setListOpened(prev => ({ ...prev, [document.docId]: {
+        docId: document.docId, programId: document.programId, title: document.title,
+        fromThisConversation: false, focusSectionId: document.sectionId, fromHandoff: true,
+      } }));
+      if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 1100px)').matches) {
+        setReadyDoc({ docId: document.docId, title: document.title, fromHandoff: true });
+      } else setExpandedDocId(document.docId);
+    });
+    return () => { cancelled = true; };
+  }, [shellProjectId, originRetry]);
+  const lastCanvasProject = useRef(shellProjectId);
+  useEffect(() => {
+    if (lastCanvasProject.current === shellProjectId) return;
+    lastCanvasProject.current = shellProjectId;
+    setExpandedDocId(null);
+    setReadyDoc(null);
+  }, [shellProjectId]);
   const cardDocIds = new Set(turns.map((t) => t.authoringDoc?.docId).filter((x): x is string => !!x));
   const openFromList = (doc: BuiltDocument) => {
     if (!cardDocIds.has(doc.id)) {
@@ -1391,12 +1467,20 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      editor is open (authoring-v2.css), so the ask closes the editor first:
      the prefilled message is then on screen, never typed behind the document
      or behind the list. */
-  const canvasAsk = (text: string) => {
+  const canvasAsk = (text: string, savedOrigin?: AskOrigin) => {
+    const snapshot = snapshotEditorOrigin(shellProjectId, savedOrigin, editor?.bridge);
+    originGenerationRef.current += 1;
+    arrivedOriginRef.current = snapshot.origin;
+    originRemovedRef.current = false;
+    originOmissionSpentRef.current = false;
+    setAskOrigin(snapshot.origin);
+    setOriginDocumentRead(snapshot.read);
     if (narrowNow()) closeDocument('composer');
     prefillComposer(text);
   };
   const historyFailed = loadErr || !!anaChat.threadLoadError;
-  const historyUnavailable = anaChat.isLoadingThread || historyFailed;
+  const originUnavailable = !!askOrigin?.authoringDocument && (originDocumentRead.state !== 'ready' || askOrigin.authoringDocument.programId !== shellProjectId);
+  const historyUnavailable = anaChat.isLoadingThread || historyFailed || originUnavailable;
   /* The one turn Continue may be offered on: the latest, settled, with nothing
      in flight. It sends a new turn on this conversation; the stopped run is
      over, so there is nothing to resume. */
@@ -1595,7 +1679,25 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     // The query and hash are the shell's (the open program, `?program=`): kept.
     if (here !== want) navigate(want + window.location.search + window.location.hash, { replace: true });
   }, [shownThreadId, navigate]);
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
+  const wasBusyForScrollRef = useRef(false);
+  useEffect(() => {
+    const completed = wasBusyForScrollRef.current && !busy;
+    wasBusyForScrollRef.current = busy;
+    const el = scrollRef.current;
+    if (!el) return;
+    if (completed) {
+      const answers = el.querySelectorAll<HTMLElement>('.ct-ana');
+      const newest = answers[answers.length - 1];
+      if (newest) {
+        const spacing = Number.parseFloat(globalThis.getComputedStyle(el).getPropertyValue('--space-2')) || 0;
+        const top = Math.max(0, el.scrollTop + newest.getBoundingClientRect().top - el.getBoundingClientRect().top - spacing);
+        if (typeof el.scrollTo === 'function') el.scrollTo({ top });
+        else el.scrollTop = top;
+        return;
+      }
+    }
+    el.scrollTop = el.scrollHeight;
+  }, [turns.length, busy]);
   /* Follow the work. The effect above fires on turn count and busy only, and
      a run's phase line and tool rows land on the LAST turn — below the fold
      once a few have arrived — so what the activity record makes visible could
@@ -1630,7 +1732,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      §4.2): the composer does not steer it — only the person who asked can —
      and it says so rather than taking text it cannot send. */
   const adminFollowing = anaChat.followScope === 'cancel';
-  const steering = busy && !!anaChat.runStatus && !adminFollowing;
+  // A saved-record handoff waits for this run to finish; its scoped context
+  // belongs to the next explicit turn, not a words-only steer of another run.
+  const steering = busy && !!anaChat.runStatus && !adminFollowing && !askOrigin?.authoringDocument;
   const manualHold = anaChat.runStatus === 'paused' && anaChat.runHold?.reason === 'manual';
   const steerHelp = steering && anaChat.runStatus ? steerHelpFor(manualHold, anaChat.turnRunPolicy, anaChat.runStatus) : null;
   const [steerBusy, setSteerBusy] = useState(false);
@@ -1791,7 +1895,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             streaming={anaChat.isStreaming}
             runStatus={anaChat.runStatus}
             runHold={anaChat.runHold}
-            open={dock.open && !listShown}
+            open={dock.open && !listShown && !expandedDocId}
             onToggle={toggleProgress}
             controls={dock.panelId}
           />
@@ -1839,7 +1943,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                   <AnaTurn
                     key={i}
                     turn={t}
-                    onRefine={() => { void sendTurn('Refine that — keep it tighter and more declarative.'); }}
+                    onAsk={text => { void sendTurn(text); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
                     onContinue={i === continueAt ? continueTurn : undefined}
@@ -1856,6 +1960,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                       liveDrive,
                       paneEl: canvasPaneEl,
                       refreshKey: turnsSettled,
+                      focusSectionId: originDocumentRead.state === 'ready' && originDocumentRead.document.docId === t.authoringDoc.docId ? originDocumentRead.document.sectionId : undefined,
+                      focusOnOpen: narrowCanvas || !(originDocumentRead.state === 'ready' && originDocumentRead.document.docId === t.authoringDoc.docId),
                       onEditorBridge,
                       onShowList: showListFromCanvas,
                       listCount,
@@ -1910,7 +2016,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                   type="button"
                   className="ct-ready-doc-x"
                   aria-label={`Do not send what ${askOrigin.label} shows with this question`}
-                  onClick={() => setAskOrigin(null)}
+                  onClick={() => { originRemovedRef.current = true; setAskOrigin(null); }}
                 >
                   {'×'}
                 </button>
@@ -1920,12 +2026,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               </button>
             </div>
           )}
+          {askOrigin?.authoringDocument && originDocumentRead.state === 'loading' && <p role="status" className="scaf-note">Verifying the saved document in this project…</p>}
+          {askOrigin?.authoringDocument && originDocumentRead.state === 'error' && <div className="scaf-note"><p role="alert">{originDocumentRead.message}</p><button type="button" className="ct-head-open" onClick={() => setOriginRetry(previous => previous + 1)}>Try again</button></div>}
           {/* Announced, never focus-stealing: the person may be typing. */}
           <div className="ct-ready-doc" role="status" aria-live="polite">
             {readyDoc && (
               <>
                 <span className="ct-ready-doc-t">
-                  AnA built <b>{readyDoc.title}</b>
+                  {readyDoc.fromHandoff ? 'Saved document ready to open: ' : 'AnA built '}<b>{readyDoc.title}</b>
                 </span>
                 <button type="button" className="btn ghost" data-testid="ct-ready-doc-open" onClick={openReadyDoc}>
                   Open
@@ -1965,7 +2073,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 aria-invalid={(steering && steerRefused) || undefined}
                 aria-describedby={steering ? [steerRefused ? 'ct-steer-err' : '', steerHelp ? 'ct-steer-help' : ''].filter(Boolean).join(' ') || undefined : undefined}
                 value={draft}
-                aria-autocomplete="list" aria-controls={mentions.open ? 'ct-mentions' : undefined} aria-expanded={mentions.open}
+                aria-autocomplete="list" aria-haspopup="listbox" aria-controls={mentions.open ? 'ct-mentions' : undefined}
                 onChange={e => { setDraft(e.target.value); mentions.sync(e.currentTarget); if (steerRefused) setSteerRefused(false); }}
                 onSelect={e => mentions.sync(e.currentTarget)}
                 onBlur={() => mentions.close()}
@@ -2108,6 +2216,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               conversationId={conversationId}
               fromThisConversation={d.fromThisConversation}
               draftTitle={d.title}
+              focusSectionId={d.focusSectionId}
+              focusOnOpen={!d.fromHandoff || narrowCanvas}
               expanded={expandedDocId === d.docId}
               onExpandedChange={(open) => (open ? setExpandedDocId(d.docId) : closeDocument())}
               onNav={onNav}

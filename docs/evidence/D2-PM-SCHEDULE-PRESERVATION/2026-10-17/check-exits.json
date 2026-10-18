@@ -1,0 +1,42 @@
+[
+  {
+    "command": [
+      "bash",
+      "scripts/ai/verify-tests.sh"
+    ],
+    "exitCode": 0
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "ci:db-test-isolation"
+    ],
+    "exitCode": 0
+  },
+  {
+    "command": [
+      "npx",
+      "eslint",
+      "server/services/projects/schedule-of-events/service.ts",
+      "server/services/projects/schedule-of-events/preservation.ts",
+      "server/services/projects/schedule-of-events/__tests__/preservation.test.ts",
+      "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts",
+      "server/routes/project-schedule-of-events.ts",
+      "server/routes/__tests__/project-schedule-of-events.test.ts",
+      "server/services/ana/AnaToolExecutor.ts",
+      "server/services/ana/discovery-cheminformatics-tool-defs.ts",
+      "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+      "tests/db/project-schedule-atomic.dbtest.ts"
+    ],
+    "exitCode": 0
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0
+  }
+]

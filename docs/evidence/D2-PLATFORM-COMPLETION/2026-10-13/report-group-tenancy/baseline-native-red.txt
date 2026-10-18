@@ -1,0 +1,4 @@
+PASS: same-organization link is accepted on the installed canonical table.
+EXPECTED RED: a group in organization A accepted a project in organization B; Missing expected rejection.
+EXPECTED RED: the installed link table has no organization_id integer NOT NULL column.
+Baseline: one positive control; 2 expected failures. All fixture writes rolled back.

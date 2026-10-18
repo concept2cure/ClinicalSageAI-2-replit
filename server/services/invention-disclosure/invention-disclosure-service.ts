@@ -45,9 +45,28 @@ export async function createDisclosureTx(client: Queryable, orgId: number, userI
   const { rows } = await client.query(
     `INSERT INTO invention_disclosures (organization_id, grant_proposal_id, title, inventors, funding_source, federal_funding, federal_award, disclosure_date, status, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'submitted',$9) RETURNING id`,
-    [orgId, input.grantProposalId ?? null, input.title.trim(), input.inventors ?? null, input.fundingSource ?? null, input.federalFunding === true, input.federalAward ?? null, input.disclosureDate ?? null, userId],
+    // 2026-10-15: an omitted federalFunding was written as false ("not federally
+    // funded"); it is NULL — not recorded — until someone answers it.
+    [orgId, input.grantProposalId ?? null, input.title.trim(), input.inventors ?? null, input.fundingSource ?? null, fundingAnswer(input.federalFunding), input.federalAward ?? null, input.disclosureDate ?? null, userId],
   );
   return { id: Number(rows[0].id) };
+}
+
+/** The recorded federal-funding answer, or null when none was recorded (never coerced to false). */
+function fundingAnswer(v: unknown): boolean | null {
+  return typeof v === 'boolean' ? v : null;
+}
+
+/**
+ * A DATE column as yyyy-mm-dd, or null. 2026-10-15: read as String(v).slice(0, 10),
+ * but node-postgres returns a Date at local midnight, whose string "Thu Jan 01"
+ * Date.parse reads as 2001 — every recorded clock ran from 2001 and read overdue.
+ */
+function isoDay(v: unknown): string | null {
+  if (typeof v === 'string') return /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null;
+  if (!(v instanceof Date) || !Number.isFinite(v.getTime())) return null;
+  if (v.getHours() + v.getMinutes() + v.getSeconds() + v.getMilliseconds() !== 0) return v.toISOString().slice(0, 10);
+  return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
 }
 
 async function loadDisclosure(client: Queryable, orgId: number, id: number): Promise<any> {
@@ -100,9 +119,9 @@ export async function getCompliance(orgId: number, id: number, asOf?: string): P
   const d = await loadDisclosure(pool, orgId, id);
   const today = asOf ?? new Date().toISOString().slice(0, 10);
   return evaluateBayhDoleCompliance({
-    federalFunding: d.federal_funding === true,
-    disclosureDate: d.disclosure_date ? String(d.disclosure_date).slice(0, 10) : null,
-    electionDate: d.election_date ? String(d.election_date).slice(0, 10) : null,
+    federalFunding: fundingAnswer(d.federal_funding),
+    disclosureDate: isoDay(d.disclosure_date),
+    electionDate: isoDay(d.election_date),
     patentFiled: d.status === 'patent_filed' || d.status === 'licensed',
     asOf: today,
   });
@@ -113,8 +132,8 @@ export async function getReadiness(orgId: number, id: number): Promise<Disclosur
   const d = await loadDisclosure(pool, orgId, id);
   return evaluateDisclosureReadiness({
     title: d.title, inventors: d.inventors, fundingSource: d.funding_source,
-    federalFunding: d.federal_funding === true, federalAward: d.federal_award,
-    disclosureDate: d.disclosure_date ? String(d.disclosure_date).slice(0, 10) : null,
+    federalFunding: fundingAnswer(d.federal_funding), federalAward: d.federal_award,
+    disclosureDate: isoDay(d.disclosure_date),
   });
 }
 
@@ -123,8 +142,8 @@ export async function submitDisclosureTx(client: Queryable, orgId: number, userI
   const d = await loadDisclosure(client, orgId, id);
   const readiness = evaluateDisclosureReadiness({
     title: d.title, inventors: d.inventors, fundingSource: d.funding_source,
-    federalFunding: d.federal_funding === true, federalAward: d.federal_award,
-    disclosureDate: d.disclosure_date ? String(d.disclosure_date).slice(0, 10) : null,
+    federalFunding: fundingAnswer(d.federal_funding), federalAward: d.federal_award,
+    disclosureDate: isoDay(d.disclosure_date),
   });
   if (!readiness.readyToSubmit) throw new InventionDisclosureError('INVALID_STATE', `Cannot submit — ${readiness.blockers.join(' ')}`);
   await client.query(`UPDATE invention_disclosures SET status = 'under_review', reviewed_by = $3, reviewed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2`, [id, orgId, userId]);

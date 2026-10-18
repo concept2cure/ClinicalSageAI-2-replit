@@ -3,6 +3,7 @@ import type { Queryable } from '../../vault/document-catalog.service';
 const m = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: m.load }));
 import { withSavedDraftSourceReservation } from '../draft-source-references';
+import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
 
 const program = '20000000-0000-4000-8000-000000000001';
 const sourceId = '10000000-0000-4000-8000-000000000001';
@@ -70,5 +71,25 @@ describe('source reservations contain new rendition receipts', () => {
     expect(await withSavedDraftSourceReservation({}, h.pool, 7, h.work)).toBe(h.pool);
     expect(h.pool.connect).not.toHaveBeenCalled();
     expect(m.load).not.toHaveBeenCalled();
+  });
+  it('pins V2 saved references before a connection await and preserves the same reservation through commit', async () => {
+    const h = harness(); const selected = globalThis.structuredClone(doc);
+    const span = { start: 0, end: 20, totalChars: 20 };
+    const group = { ...selected.provenance.projectSourceReferences[0], sourceReferenceVersion: 2,
+      sources: [{ ...selected.provenance.projectSourceReferences[0].sources[0], ...draftSourceIdentityForText('Exact study evidence', span) }] };
+    const exact = { client_program_id: program, provenance: { projectSourceReferences: [group] } };
+    const pending = withSavedDraftSourceReservation(exact, h.pool, 7, h.work);
+    group.sources[0].extractedTextSha256 = 'f'.repeat(64); group.sources[0].span.start = 5;
+    expect(await pending).toBe(h.q); expect(h.events.at(-1)).toBe('COMMIT'); expect(h.work).toHaveBeenCalledOnce();
+  });
+  it('a same-length correction after save refuses under the held source stores and rolls back without a rendition', async () => {
+    const h = harness(); const span = { start: 0, end: 20, totalChars: 20 };
+    const source = { ...doc.provenance.projectSourceReferences[0].sources[0], ...draftSourceIdentityForText('Exact study evidence', span) };
+    const exact = { client_program_id: program, provenance: { projectSourceReferences: [{ ...doc.provenance.projectSourceReferences[0], sourceReferenceVersion: 2, sources: [source] }] } };
+    m.load.mockResolvedValue({ id: sourceId, programId: program, contentHash: 'a'.repeat(64), extractedText: 'Xxact study evidence',
+      catalog: { contentHash: 'a'.repeat(64), status: 'extracted' } });
+    await expect(withSavedDraftSourceReservation(exact, h.pool, 7, h.work)).rejects.toMatchObject({ code: 'SOURCE_REFERENCES_UNAVAILABLE' });
+    expect(h.events.some(sql => sql.startsWith('LOCK TABLE'))).toBe(true);
+    expect(h.work).not.toHaveBeenCalled(); expect(h.events.at(-1)).toBe('ROLLBACK');
   });
 });

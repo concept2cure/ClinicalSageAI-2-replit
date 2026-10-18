@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-17T22:22:14.153334+00:00",
+  "finishedAt": "2026-10-17T22:22:15.391463+00:00",
+  "node": "v22.23.3",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format=json",
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts",
+    "server/services/ana/document-surface-tool-defs.ts",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts"
+  ],
+  "exitCode": 0,
+  "before": {
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "0955073bc241ea3c22a064cf7e7b17177bbbaeee653bcdc15277d2a0f0e84ed6",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "e3ef5b72e7bb37c09184f9d9c59c9595273e15f83bf8e0fa2da0694ec26b1564",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "after": {
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "0955073bc241ea3c22a064cf7e7b17177bbbaeee653bcdc15277d2a0f0e84ed6",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "e3ef5b72e7bb37c09184f9d9c59c9595273e15f83bf8e0fa2da0694ec26b1564",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "errors": 0,
+  "warnings": 1
+}

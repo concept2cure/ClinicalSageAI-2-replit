@@ -212,7 +212,32 @@ export function summarizeRecalls(recalls: DeviceRecall[]): RecallSummary {
 
 // ── openFDA fetch seam ───────────────────────────────────────────────────────
 
-export type Fetcher = (url: string) => Promise<{ json: () => Promise<unknown> }>;
+export type Fetcher = (url: string) => Promise<{ ok?: boolean; status?: number; json: () => Promise<unknown> }>;
+
+/**
+ * The body of an openFDA reply — or an error when there is none to read.
+ *
+ * Both fetchers read `res.json()` without looking at the status, so a 429
+ * (openFDA's rate limit) or a 5xx normalised to an empty result: AnA's
+ * search_device_recalls reported "no recalls" for a device it never got an
+ * answer about (2026-10-15). openFDA answers a search with no matches as
+ * 404 with error.code NOT_FOUND; that one is a true zero.
+ */
+async function openFdaBody<T>(
+  res: Awaited<ReturnType<Fetcher>>,
+  what: string,
+): Promise<{ results?: T[] }> {
+  const body = (await res.json().catch(() => null)) as
+    | { results?: T[]; error?: { code?: string; message?: string } }
+    | null;
+  if (res.ok === false) {
+    if (res.status === 404 && body?.error?.code === 'NOT_FOUND') return { results: [] };
+    const detail = body?.error?.message ? `: ${body.error.message}` : '';
+    throw new Error(`openFDA ${what} request failed (HTTP ${res.status ?? 'unknown'}${detail})`);
+  }
+  if (!body || typeof body !== 'object') throw new Error(`openFDA ${what} reply could not be read`);
+  return body;
+}
 
 const OPENFDA_BASE = 'https://api.fda.gov/device';
 
@@ -231,8 +256,7 @@ export async function fetchMaudeEvents(
 ): Promise<MaudeEvent[]> {
   const fetcher = opts.fetcher ?? ((url: string) => fetch(url));
   const res = await fetcher(buildUrl('event', search, opts.limit ?? 100));
-  const json = (await res.json()) as { results?: OpenFdaEventRecord[] };
-  return normalizeMaudeResponse(json);
+  return normalizeMaudeResponse(await openFdaBody<OpenFdaEventRecord>(res, 'adverse event'));
 }
 
 /** Fetch + normalize device recalls for a device search expression. */
@@ -242,6 +266,5 @@ export async function fetchDeviceRecalls(
 ): Promise<DeviceRecall[]> {
   const fetcher = opts.fetcher ?? ((url: string) => fetch(url));
   const res = await fetcher(buildUrl('recall', search, opts.limit ?? 100));
-  const json = (await res.json()) as { results?: OpenFdaRecallRecord[] };
-  return normalizeRecallResponse(json);
+  return normalizeRecallResponse(await openFdaBody<OpenFdaRecallRecord>(res, 'recall'));
 }

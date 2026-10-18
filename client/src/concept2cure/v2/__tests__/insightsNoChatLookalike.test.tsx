@@ -78,7 +78,7 @@ function bareAsterisks(): Element[] {
 
 const EDITOR = { id: 3, permissions: ['governed:write'] };
 const VIEWER = { id: 2, permissions: [] as string[] };
-const RENDERED = { status: 'partial', sections: [{ id: 's1', title: 'Readiness', blocks: [] }] };
+const RENDERED = { status: 'partial', generatedAt: '2026-10-13T08:00:00Z', sections: [{ id: 's1', title: 'Readiness', blocks: [] }] };
 
 let runs: Array<(r: Response) => void> = [];
 beforeEach(() => {

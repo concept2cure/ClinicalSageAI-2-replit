@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "ci:db-test-isolation"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 2.32,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings-before-test-global.json"
+}

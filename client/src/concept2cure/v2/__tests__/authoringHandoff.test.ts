@@ -42,6 +42,9 @@ const HANDOFF = {
 
 /** The open project: a document is created in it (PF-07). */
 const PROGRAM = '0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a';
+const DOC = '7b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a';
+const document = { id: DOC, title: HANDOFF.title, client_program_id: PROGRAM };
+const section = { id: '8b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a', doc_id: DOC, code: HANDOFF.code, title: HANDOFF.title };
 const openProject = (p: unknown) => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p;
 };
@@ -54,13 +57,13 @@ beforeEach(() => {
 describe('saveToAuthoring', () => {
   it('writes the document and its section, then reports ok', async () => {
     apiRequest
-      .mockResolvedValueOnce(res(200, { document: { id: 4711 } }))
-      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+      .mockResolvedValueOnce(res(200, { success: true, document }))
+      .mockResolvedValueOnce(res(200, { success: true, section }));
 
     const r = await saveToAuthoring(HANDOFF);
 
     expect(r.ok).toBe(true);
-    expect(r.ok && r.docId).toBe('4711');
+    expect(r.ok && r.docId).toBe(DOC);
 
     // Both POSTs, in order, with the section carrying the user's text and
     // pointing at the document that was just created.
@@ -71,7 +74,7 @@ describe('saveToAuthoring', () => {
 
     const [m2, u2, b2] = apiRequest.mock.calls[1];
     expect([m2, u2]).toEqual(['POST', '/api/authoring/sections']);
-    expect(b2).toMatchObject({ doc_id: '4711', code: HANDOFF.code, content: HANDOFF.content });
+    expect(b2).toMatchObject({ doc_id: DOC, code: HANDOFF.code, content: HANDOFF.content });
   });
 
   it('says so when the new document is not bound to a filing', async () => {
@@ -81,10 +84,10 @@ describe('saveToAuthoring', () => {
     // think you are writing" are different facts.
     apiRequest
       .mockResolvedValueOnce(res(200, {
-        document: { id: 4711 },
+        success: true, document,
         governance: { bound: false, reason: 'This project has no governed document yet.' },
       }))
-      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+      .mockResolvedValueOnce(res(200, { success: true, section }));
 
     const r = await saveToAuthoring(HANDOFF);
 
@@ -98,10 +101,10 @@ describe('saveToAuthoring', () => {
   it('stays quiet when the document IS bound', async () => {
     apiRequest
       .mockResolvedValueOnce(res(200, {
-        document: { id: 4711 },
+        success: true, document,
         governance: { bound: true, c2cDocumentId: 'doc_ind_7' },
       }))
-      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+      .mockResolvedValueOnce(res(200, { success: true, section }));
 
     const r = await saveToAuthoring(HANDOFF);
     expect(r.ok && r.message).not.toMatch(/Not bound/);
@@ -111,8 +114,8 @@ describe('saveToAuthoring', () => {
     // An older server that does not send `governance` has not told us the
     // document is unbound. Warning from silence would be its own dishonesty.
     apiRequest
-      .mockResolvedValueOnce(res(200, { document: { id: 4711 } }))
-      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+      .mockResolvedValueOnce(res(200, { success: true, document }))
+      .mockResolvedValueOnce(res(200, { success: true, section }));
 
     const r = await saveToAuthoring(HANDOFF);
     expect(r.ok && r.message).not.toMatch(/Not bound/);
@@ -120,7 +123,7 @@ describe('saveToAuthoring', () => {
 
   it('reports NOT ok when the section write fails, even though the document exists', async () => {
     apiRequest
-      .mockResolvedValueOnce(res(200, { document: { id: 4711 } }))
+      .mockResolvedValueOnce(res(200, { success: true, document }))
       .mockResolvedValueOnce(res(500, { error: 'section insert failed' }));
 
     const r = await saveToAuthoring(HANDOFF);
@@ -128,19 +131,21 @@ describe('saveToAuthoring', () => {
     // The whole point. A document was created, so a naive implementation has a
     // doc id in hand and every reason to feel successful — and navigating on it
     // is how the user's text disappears.
-    expect(r.ok).toBe(false);
-    expect(r.message).toMatch(/didn’t save/);
-    expect(r.message).toMatch(/Staying here/);
+    expect(r).toMatchObject({ ok: false, phase: 'unknown', docId: DOC });
+    expect(r.message).toMatch(/could not be confirmed/);
+    expect(r.message).not.toMatch(/Nothing was saved/);
+    expect(r.message).toMatch(/the document is still here/);
   });
 
-  it('reports NOT ok when the document write fails, and never attempts the section', async () => {
+  it('reports an unknown document outcome after a server failure and never attempts the section', async () => {
     apiRequest.mockResolvedValueOnce(res(500, { error: 'no' }));
 
     const r = await saveToAuthoring(HANDOFF);
 
     expect(r.ok).toBe(false);
     expect(apiRequest).toHaveBeenCalledTimes(1);
-    expect(r.message).toMatch(/Nothing was saved; the document is still here/);
+    expect(r.message).toMatch(/could not|Could not/);
+    expect(r.message).not.toMatch(/Nothing was saved/);
   });
 
   it('names the 401 as a session problem rather than a server error', async () => {
@@ -164,14 +169,14 @@ describe('saveToAuthoring', () => {
     const r = await saveToAuthoring(HANDOFF);
 
     expect(r.ok).toBe(false);
-    expect(r.message).toMatch(/offline/);
-    expect(r.message).toMatch(/Nothing was saved/);
+    expect(r.message).toMatch(/could not|Could not/);
+    expect(r.message).not.toMatch(/Nothing was saved/);
   });
 
   it('creates the document in the open project', async () => {
     apiRequest
-      .mockResolvedValueOnce(res(200, { document: { id: 1 } }))
-      .mockResolvedValueOnce(res(200, { section: { id: 1 } }));
+      .mockResolvedValueOnce(res(200, { success: true, document }))
+      .mockResolvedValueOnce(res(200, { success: true, section }));
     await saveToAuthoring(HANDOFF);
     expect(apiRequest.mock.calls[0][2]).toMatchObject({ client_program_id: PROGRAM });
   });

@@ -150,4 +150,3 @@ Received: "relation "cmc_source_objects" does not exist"
       Tests  5 failed | 8 passed (13)
    Start at  13:10:45
    Duration  2.97s (transform 2.55s, setup 180ms, import 2.65s, tests 2.03s, environment 0ms)
-

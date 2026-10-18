@@ -75,4 +75,3 @@ LOCKED uppercase => {"filable":true}
       Tests  3 passed (3)
    Start at  08:47:33
    Duration  7.67s (transform 1.48s, setup 112ms, import 4.20s, tests 3.02s, environment 0ms)
-

@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: one document at a time > shows one Details block, for the document selected, however many documents were opened 211ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a saved change > shows the server confirmation, and still shows it after the Vault has re-read the save and settled 255ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a removal decision > shows the recorded decision after the Vault has re-read the document and settled 949ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault document history > shows the reason recorded with a change, not only its event name 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict 146ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden, at the entry the server names 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a break in another organisation's row is reported without naming it 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > nothing to verify reads as not verified, with the reason: neither verified nor failed 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a valid generic relationship description retains its recorded hash, row and actual chain verdict 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > an empty history does not claim that the document has no recorded events 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a truncated history labels its returned accessible window without claiming a global history count 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a malformed history row is a failed read, not an empty history or a render crash 54ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  01:12:21
+   Duration  8.17s (transform 1.89s, setup 516ms, import 2.55s, tests 2.08s, environment 1.89s)

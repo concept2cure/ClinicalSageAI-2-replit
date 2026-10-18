@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH01: Repeated equal values still have different assays
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH02: Repeated equal values still have different configurations
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH03: Source software qualifier cannot be silently omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH04: Restricted population cannot inherit its broader label
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH05: Duplicate assay labels remain ambiguous
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH06: Clipped value anchor cannot borrow remote context
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH07: An extra source qualifier cannot be discarded
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH08: A negative value cannot supply a positive scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH09: A scientific exponent cannot be clipped
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH10: Upper range endpoint cannot supply a scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH11: Decimal digits cannot bind an integer result
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH12: Clipping a bound marker cannot establish a scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH13: Clipping a unit cannot establish unit binding
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH14: A witness with a different byte hash refuses
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH15: Server source object must bind its actual text hash
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH16: Unsupported semantic witness paths refuse
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH17: Earlier scalar occurrence cannot erase the named result bound
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH18: Source instrument cannot be omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH19: Source reagent version cannot be omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH20: Source analytical lot cannot be omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH21: Source device test condition cannot be omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH22: Remote clinical frame with equal count cannot supply local study
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH23: An earlier cutoff bound cannot erase an exact named result 10ms
+   → The named sensitivity result is exact; an unrelated bound in the contextual cutoff is not its written kind.: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH23: An earlier cutoff bound cannot erase an exact named result
+AssertionError: The named sensitivity result is exact; an unrelated bound in the contextual cutoff is not its written kind.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:25:43
+     23|         expect(result.context.state).not.toBe('passed');
+     24|       } else {
+     25|         expect(result.ok, item.rationale).toBe(true);
+       |                                           ^
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         if (item.expected === 'pass') {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)
+   Start at  06:32:19
+   Duration  736ms (transform 412ms, setup 71ms, import 421ms, tests 13ms, environment 0ms)
+

@@ -128,8 +128,8 @@ export const SCREEN_SUBAWARD: AnaTool = {
     "Record the restricted-party screening result for a subaward's subrecipient (2 CFR 200.214). Use screen_restricted_party first to perform the live SAM.gov exclusions lookup, then record 'cleared' or 'excluded' here. Optionally set the risk level. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: STATED_REASON_INPUT },
-    required: ['subaward_id', 'screen_status'],
+    properties: { subaward_id: { type: 'number' }, screen_status: { type: 'string', enum: ['cleared', 'excluded'] }, screen_source: { type: 'string', description: 'The source this screen was run against, as performed (e.g. the SAM.gov exclusions lookup and its receipt). Required: it is never assumed.' }, risk_level: { type: 'string', enum: ['low', 'medium', 'high'] }, reason: STATED_REASON_INPUT },
+    required: ['subaward_id', 'screen_status', 'screen_source'],
   },
 };
 

@@ -26,6 +26,7 @@ import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
+import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
 import {
   csrBuildJobs,
   csrSectionOutputs,
@@ -47,6 +48,8 @@ import {
 export interface CSRBuildJobContext {
   organizationId: number;
   projectId?: number;
+  programId?: string;
+  clientWorkspaceId?: number;
   requestedBy?: number;
 }
 
@@ -129,6 +132,7 @@ export async function enqueueCSRBuildJob(
   ctx: CSRBuildJobContext
 ): Promise<EnqueueResult> {
   const d = requireDb();
+  const scope = await resolveCsrBuildContext(d, req, ctx);
 
   // Preserve the caller's intent: NULL == "full build", a non-empty array
   // == "draft only these sections". We deliberately do NOT expand to
@@ -150,7 +154,7 @@ export async function enqueueCSRBuildJob(
     .insert(csrBuildJobs)
     .values({
       organizationId: ctx.organizationId,
-      projectId: ctx.projectId ?? null,
+      projectId: scope.projectId ?? null,
       // studyId is non-null in the schema; protocolNumber is the natural key
       // we have in CSRBuildRequest. Fall back to a stable synthetic id if it
       // is missing so the insert never throws on the not-null constraint.
@@ -159,7 +163,7 @@ export async function enqueueCSRBuildJob(
       progress: 0,
       sectionsToGenerate,
       studyInfoSnapshot: snapshot as unknown as Record<string, unknown>,
-      requestedBy: ctx.requestedBy ?? null,
+      requestedBy: scope.requestedBy ?? null,
     })
     .returning({ id: csrBuildJobs.id });
 
@@ -203,6 +207,20 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       `[csr-job-runner] Job ${jobId} is in state '${job.status}', not runnable; skipping`
     );
     return;
+  }
+
+  // Permission is checked again when work starts, not retained from enqueue.
+  // Refuse before section/source reads or AI calls; preserve prior outputs.
+  if (job.projectId != null) {
+    try {
+      await resolveCsrScope(d, job.organizationId, { projectId: job.projectId }, { actorUserId: job.requestedBy ?? undefined });
+    } catch (error) {
+      await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
+        reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
+        code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
+      } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+      return;
+    }
   }
 
   // 3. Transition queued|failed -> drafting
@@ -396,6 +414,18 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         updatedAt: new Date(),
       })
       .where(eq(csrBuildJobs.id, jobId));
+    // Continue dependent submission work only after the CSR completion is durable.
+    // This callback has its own failure boundary: a release/readiness refusal
+    // must never relabel successfully generated CSR sections as a failed job.
+    try {
+      const { continueOrchestratorRunsForCsrJob } = await import('../submission-orchestrator-continuation.js');
+      const outcomes = await continueOrchestratorRunsForCsrJob(jobId, job.organizationId);
+      for (const outcome of outcomes) {
+        if (outcome.continuation === 'retry-required') console.warn('[csr-job-runner] Submission continuation needs retry', { jobId, organizationId: job.organizationId, ...outcome });
+      }
+    } catch {
+      console.warn('[csr-job-runner] CSR completed; submission continuation is temporarily unavailable', { jobId, organizationId: job.organizationId });
+    }
   } catch (err) {
     // 7. Failure — record the failing section + message ONLY (never payload content)
     const message = err instanceof Error ? err.message : String(err);

@@ -76,6 +76,13 @@ export interface IStorageProvider {
    * A file belonging to another organization must be reported as MISSING (null),
    * never as forbidden — "403" on a foreign id confirms the id exists, which is
    * an enumeration oracle. Matches `ana/uploaded-file-access.ts`.
+   *
+   * A successful read verifies loaded bytes against the owned storage record's
+   * SHA-256 and byte length. Parsed metadata with no valid identity, or bytes
+   * that differ from it, throws StorageIntegrityError rather than returning a
+   * missing result or the original digest beside changed content. This verifies
+   * storage identity; a governed caller must also bind it to its authoritative
+   * approved artifact identity before export.
    */
   get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null>;
 
@@ -114,6 +121,40 @@ export interface IStorageProvider {
 
 export function computeSha256(data: Buffer): string {
   return createHash('sha256').update(data).digest('hex');
+}
+
+export type StorageIntegrityFailureReason = 'invalid_metadata' | 'size_mismatch' | 'digest_mismatch';
+
+/** Storage corruption is distinct from a missing or foreign version. */
+export class StorageIntegrityError extends Error {
+  readonly code = 'STORAGE_INTEGRITY_FAILED';
+
+  constructor(readonly reason: StorageIntegrityFailureReason) {
+    const messages: Record<StorageIntegrityFailureReason, string> = {
+      invalid_metadata: 'The stored file has no valid recorded SHA-256 or byte length. No content was returned.',
+      size_mismatch: 'The stored file byte length differs from its recorded identity. No content was returned.',
+      digest_mismatch: 'The stored file SHA-256 differs from its recorded identity. No content was returned.',
+    };
+    super(messages[reason]);
+    this.name = 'StorageIntegrityError';
+  }
+}
+
+/**
+ * Check the bytes actually loaded, after ownership/path checks. Never replace a
+ * missing recorded identity with a hash of the current bytes: that would call
+ * an unverified or altered version its own original. Empty files are valid.
+ */
+export function assertStoredContentIntegrity(
+  bytes: Buffer,
+  recorded: { sha256: unknown; sizeBytes: unknown },
+): void {
+  if (typeof recorded.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(recorded.sha256)
+      || typeof recorded.sizeBytes !== 'number' || !Number.isSafeInteger(recorded.sizeBytes) || recorded.sizeBytes < 0) {
+    throw new StorageIntegrityError('invalid_metadata');
+  }
+  if (bytes.length !== recorded.sizeBytes) throw new StorageIntegrityError('size_mismatch');
+  if (computeSha256(bytes) !== recorded.sha256.toLowerCase()) throw new StorageIntegrityError('digest_mismatch');
 }
 
 export function generateVersionId(): string {

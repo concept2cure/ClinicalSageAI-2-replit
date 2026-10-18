@@ -40,6 +40,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // load; their factories close over these references.
 
 const hoisted = vi.hoisted(() => ({
+  inputRows: new Map<string, { organizationId: number; inputs: unknown; outputs?: unknown }>(),
   // ── Pool query mock ────────────────────────────────────────────────────────
   // Per-row capture so a test can assert that a CHECK violation is re-thrown
   // by inspecting both the rejection AND the parameters the orchestrator
@@ -267,6 +268,16 @@ function defaultPoolQuery(
   params?: unknown[],
 ): Promise<{ rows: unknown[]; rowCount?: number }> {
   const p = params ?? [];
+  if (/INSERT INTO submission_orchestrator_inputs/i.test(sql)) {
+    hoisted.inputRows.set(String(p[0]), { organizationId: Number(p[1]), inputs: JSON.parse(String(p[3])) });
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+  if (/UPDATE submission_orchestrator_inputs/i.test(sql)) {
+    const row = hoisted.inputRows.get(String(p[0]));
+    if (!row || row.organizationId !== Number(p[1]) || row.outputs) return Promise.resolve({ rows: [], rowCount: 0 });
+    row.outputs = JSON.parse(String(p[2]));
+    return Promise.resolve({ rows: [{ run_id: p[0] }], rowCount: 1 });
+  }
   // INSERT runs (or ON CONFLICT UPDATE)
   if (/INSERT INTO submission_orchestrator_runs/i.test(sql)) {
     const [
@@ -335,6 +346,7 @@ beforeEach(() => {
   hoisted.poolQuery.mockReset();
   hoisted.poolQuery.mockImplementation(defaultPoolQuery);
   hoisted.runRows.clear();
+  hoisted.inputRows.clear();
   hoisted.buildModule3WithNarrative.mockReset();
   hoisted.launchCSRBuildAsync.mockReset();
   hoisted.getCSRBuildJobStatus.mockReset();

@@ -1,0 +1,80 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 67ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 44ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 47ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 60ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 65ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 47ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 47ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 54ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > keeps a citation visible when its source no longer resolves 5012ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > states the contract honestly when nothing is recorded yet 5008ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0} 5006ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0,"scope":"organization-wide"} 5018ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":{},"total":0,"scope":"verified-accessible-authoring-sections"} 5011ms
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > publishes the verified accessible scope without claiming the organization has no citations 5006ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:267:19
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:276:19
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:309:19
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0}
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0}
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0}
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2}
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:323:19
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > keeps a citation visible when its source no longer resolves
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:123:25
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > states the contract honestly when nothing is recorded yet
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:148:25
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0}
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0,"scope":"organization-wide"}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:168:25
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":{},"total":0,"scope":"verified-accessible-authoring-sections"}
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:168:25
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > publishes the verified accessible scope without claiming the organization has no citations
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:177:18
+TypeError: sections.find is not a function
+ ❯ SourceTracer client/src/concept2cure/v2/surfaces/SourceTracer.tsx:125:24
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+ Test Files  2 failed (2)
+      Tests  14 failed | 24 passed (38)
+     Errors  1 error
+   Start at  00:53:35
+   Duration  35.56s (transform 1.27s, setup 252ms, import 1.69s, tests 32.13s, environment 1.14s)

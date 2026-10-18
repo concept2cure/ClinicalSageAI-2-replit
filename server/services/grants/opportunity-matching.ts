@@ -41,7 +41,12 @@ export interface OpportunityMatch {
   externalId: string;
   title: string;
   fitScore: number; // 0–100
-  eligible: boolean;
+  /**
+   * A verdict only when the opportunity's eligible-applicant list was retrieved
+   * and the profile states an institution type; null = not checked (an
+   * 'eligibility' reason says why).
+   */
+  eligible: boolean | null;
   keywordHits: string[];
   agencyMatch: boolean;
   mechanismMatch: boolean;
@@ -114,7 +119,7 @@ const DEADLINE_WINDOW_DAYS = 180;
 
 /**
  * Score one opportunity against a funding profile. Returns an explainable fit
- * score (0–100), eligibility verdict, and per-factor reasons. Pure; `today` is
+ * score (0–100), eligibility verdict (null when not checked), and per-factor reasons. Pure; `today` is
  * passed so the deadline factor is deterministic.
  */
 export function scoreOpportunity(profile: FundingProfile, opp: MatchableOpportunity, today: string): OpportunityMatch {
@@ -161,25 +166,37 @@ export function scoreOpportunity(profile: FundingProfile, opp: MatchableOpportun
 
   // Award-size fit.
   let awardPts = 0;
-  if (opp.awardCeiling != null && (profile.minAward != null || profile.maxAward != null)) {
-    const aboveMin = profile.minAward == null || opp.awardCeiling >= profile.minAward;
-    const belowMax = profile.maxAward == null || opp.awardCeiling <= profile.maxAward;
-    if (aboveMin && belowMax) {
-      awardPts = W_AWARD;
-      reasons.push({ factor: 'award', points: awardPts, detail: `Award ceiling ${opp.awardCeiling} fits the profile's range.` });
+  if (profile.minAward != null || profile.maxAward != null) {
+    if (opp.awardCeiling == null) {
+      reasons.push({ factor: 'award', points: 0, detail: 'Award-size fit not assessed: no award ceiling is available for this opportunity.' });
+    } else {
+      const aboveMin = profile.minAward == null || opp.awardCeiling >= profile.minAward;
+      const belowMax = profile.maxAward == null || opp.awardCeiling <= profile.maxAward;
+      if (aboveMin && belowMax) {
+        awardPts = W_AWARD;
+        reasons.push({ factor: 'award', points: awardPts, detail: `Award ceiling ${opp.awardCeiling} fits the profile's range.` });
+      }
     }
   }
 
-  // Eligibility gate (only when the opportunity declares eligibilities and the profile sets an institution type).
-  let eligible = true;
-  if (profile.institutionType && Array.isArray(opp.eligibilities) && opp.eligibilities.length > 0) {
+  // Eligibility gate. 2026-10-15: this started from `eligible = true`, so a list
+  // never retrieved (or a profile with no institution type) read as eligible.
+  let eligible: boolean | null = null;
+  if (!profile.institutionType) {
+    reasons.push({ factor: 'eligibility', points: 0, detail: 'Eligibility not checked: the funding profile states no institution type.' });
+  } else if (!Array.isArray(opp.eligibilities)) {
+    reasons.push({ factor: 'eligibility', points: 0, detail: "Eligibility not checked: the opportunity's eligible-applicant list was not retrieved." });
+  } else if (opp.eligibilities.length === 0) {
+    reasons.push({ factor: 'eligibility', points: 0, detail: 'Eligibility not checked: the retrieved opportunity detail lists no eligible applicant types.' });
+  } else {
     const want = norm(profile.institutionType.replace(/_/g, ' '));
     eligible = opp.eligibilities.some((e) => norm(e).includes(want) || want.includes(norm(e)));
     if (!eligible) reasons.push({ factor: 'eligibility', points: 0, detail: `Institution type "${profile.institutionType}" is not in the opportunity's eligible applicants.` });
   }
 
   const raw = keywordPts + (agencyMatch ? W_AGENCY : 0) + (mechanismMatch ? W_MECHANISM : 0) + deadlinePts + awardPts;
-  const fitScore = eligible ? Math.min(100, raw) : Math.max(0, Math.round(raw * 0.25));
+  // Not checked (null) is not discounted: the score covers the assessed factors.
+  const fitScore = eligible === false ? Math.max(0, Math.round(raw * 0.25)) : Math.min(100, raw);
 
   return {
     externalId: opp.externalId,
@@ -192,6 +209,14 @@ export function scoreOpportunity(profile: FundingProfile, opp: MatchableOpportun
     daysToDeadline,
     reasons,
   };
+}
+
+/** Fit score at or above which a match whose eligibility was confirmed is "strong". */
+export const STRONG_FIT_THRESHOLD = 70;
+
+/** Strong = fit >= STRONG_FIT_THRESHOLD and eligibility checked and met; an unchecked match never counts. */
+export function isStrongMatch(m: Pick<OpportunityMatch, 'fitScore' | 'eligible'>): boolean {
+  return m.eligible === true && m.fitScore >= STRONG_FIT_THRESHOLD;
 }
 
 /** Score and rank opportunities by fit (descending), tie-broken by nearest deadline. Pure. */

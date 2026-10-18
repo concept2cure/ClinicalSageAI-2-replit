@@ -1,0 +1,89 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 77ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 41ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 21ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 55ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 55ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 36ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 35ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 24ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 14ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 20ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 20ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 20ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 19ms
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+{
+  "timestamp": "2026-10-13T21:01:44.558Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 56ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > keeps ordinary signed export manifestations while caller-executor content-only export excludes them 31ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 30ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 51ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 38ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 23ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 24ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 38ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 21ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 21ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 19ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 25ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 27ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 22ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 23ms
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:01:48.309Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 76ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 37ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 36ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 17ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 16ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 32ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 28ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 20ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 19ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 26ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 9ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 25ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 16ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 11ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 3ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 9ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > keeps genuine organization-wide builds when no target was supplied 4ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 9ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 14ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 3ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > assembleProtocolExport + renderProtocolMarkdown > assembles ordered parts and renders markdown with all sections 2ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > maps to PRS elements and is ready when primary outcome + eligibility + synopsis present 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > flags missing primary outcome 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > marks observational study type 0ms
+
+ Test Files  6 passed (6)
+      Tests  59 passed (59)
+   Start at  21:01:36
+   Duration  18.41s (transform 3.02s, setup 190ms, import 5.92s, tests 11.17s, environment 1ms)

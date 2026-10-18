@@ -1,0 +1,46 @@
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 1232ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 558ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 676ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 836ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 654ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 479ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 1392ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 171ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 338ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 323ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 810ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 318ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 314ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 492ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 1395ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 656ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 2937ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 353ms
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 73ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 45ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 25ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 35ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 11ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 7ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 1380ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 266ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 178ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 254ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 163ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 4ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 492ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 104ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 1464ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 422ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 15ms
+ Test Files  4 passed (4)
+      Tests  41 passed (41)
+   Start at  22:51:47
+   Duration  29.34s (transform 4.27s, setup 249ms, import 7.40s, tests 18.92s, environment 1ms)

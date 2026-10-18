@@ -1,15 +1,18 @@
 /**
  * External eCTD validator — seam types (P0-4: external eValidator dry-run gate).
  *
- * Agencies validate eCTD packages with LORENZ eValidator (FDA's published
- * criteria), not our internal validators. This is the stable interface an external
- * validator engine drops in behind — mirroring the fail-closed pattern of the
- * PDF/A and DTD gates. See EVALIDATOR_INTEGRATION_SPEC.md.
+ * This seam can run a configured external adapter, an internal criteria subset,
+ * or no validator. These have different coverage: a subset never satisfies the
+ * external-engine requirement. An external report is not agency acceptance or
+ * proof of licensed/qualified coverage. See EVALIDATOR_INTEGRATION_SPEC.md.
  *
  * @module server/services/ectd/external-validator/types
  */
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
+
+/** Server-selected adapter classification, never authority supplied by a report. */
+export type ExternalValidatorKind = 'external_engine' | 'internal_subset' | 'unavailable' | 'unknown';
 
 export type EctdRegion = 'fda' | 'ema' | 'pmda';
 
@@ -25,7 +28,7 @@ export interface ExternalValidationFinding {
 }
 
 export interface ExternalValidationReport {
-  /** Engine id, e.g. 'lorenz-evalidator' | 'noop' | 'fda-criteria'. */
+  /** Reported id, e.g. 'lorenz-evalidator' | 'noop' | 'fda-criteria-subset'; not authority. */
   validator: string;
   /** Validation profile / region, e.g. 'FDA eCTD 3.2.2'. */
   profile: string;
@@ -36,7 +39,7 @@ export interface ExternalValidationReport {
   /** Findings with severity 'error'. */
   errorCount: number;
   warningCount: number;
-  /** errorCount === 0 AND the engine actually ran. */
+  /** Declared run result: errorCount === 0 AND ran; not qualified coverage or acceptance. */
   passed: boolean;
 }
 
@@ -50,7 +53,8 @@ export interface ValidateArgs {
 
 export interface ExternalValidator {
   readonly name: string;
-  /** True when the engine binary/endpoint + license are configured. */
+  readonly kind: ExternalValidatorKind;
+  /** A path/endpoint or subset option is available; not proof of licence or qualification. */
   isConfigured(): Promise<boolean>;
   /** Validate an unzipped package directory against a region profile. */
   validate(args: ValidateArgs): Promise<ExternalValidationReport>;

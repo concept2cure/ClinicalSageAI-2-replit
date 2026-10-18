@@ -39,11 +39,13 @@ describe('getSafetyReportingTimelines', () => {
 
 describe('classifySafetyReport — FDA', () => {
   it('serious + unexpected + suspected (not fatal) → reportable, IND safety report, 15 days', () => {
+    // States "not fatal": an unstated fatalOrLifeThreatening no longer picks the 15-day clock (2026-10-15).
     const r = classifySafetyReport({
       region: 'FDA',
       serious: true,
       unexpected: true,
       suspectedCausality: true,
+      fatalOrLifeThreatening: false,
     });
     expect(r.reportable).toBe(true);
     expect(r.reportType).toBe('IND safety report');
@@ -83,6 +85,7 @@ describe('classifySafetyReport — EU', () => {
       serious: true,
       unexpected: true,
       suspectedCausality: true,
+      fatalOrLifeThreatening: false,
     });
     expect(r.reportable).toBe(true);
     expect(r.timelineDays).toBe(15);
@@ -127,9 +130,11 @@ describe('classifySafetyReport — not individually reportable', () => {
     expect(r.rationale).toContain('no suspected causal relationship');
   });
 
-  it('omitted flags default to not reportable', () => {
+  it('omitted flags are not assessed, not "not reportable"', () => {
+    // Pinned reportable:false until 2026-10-15 — a verdict about a case nobody assessed.
     const r = classifySafetyReport({ region: 'FDA' });
-    expect(r.reportable).toBe(false);
+    expect(r.reportable).toBe('not_assessed');
+    expect(r.missing).toEqual(['serious', 'unexpected', 'suspectedCausality']);
     expect(r.timelineDays).toBeNull();
   });
 });

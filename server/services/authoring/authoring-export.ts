@@ -17,6 +17,12 @@ import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
 import { describeSignatureMethod } from '../../../shared/part11/signature-method';
 import { verifySavedDraftSourceReferences } from './draft-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
+import { sectionsDigest } from './authoring-content-digests';
+// Preserve this service's public API while keeping workflow release checks
+// independent of the renderer's async initialization (production boot).
+export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -29,6 +35,7 @@ export interface ExportDocRow {
   created_at?: unknown;
   provenance?: unknown;
   client_program_id?: string | null;
+  created_by?: unknown;
 }
 
 export interface ExportSectionRow {
@@ -62,6 +69,7 @@ export interface RenderExportArgs {
   doc: ExportDocRow;
   sections: ExportSectionRow[];
   format: ExportFormat;
+  actor?: AuthoringActor;
   /**
    * A statement rendered before the content — e.g. that this is a working
    * draft and not a sealed record. Absent on the export route.
@@ -240,7 +248,8 @@ async function prepareShared(args: RenderExportArgs) {
 
   const { resolveAuthoringImages } = await import('../../export/authoring-images.js');
   const exportImages = binary
-    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId)
+    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId,
+      args.actor ? { userId: Number(args.actor.id) } : undefined)
     : new Map();
 
   const { crossReferenceLookupFor, crossReferenceAnchorId } = await import('@shared/authoring/cross-references');
@@ -257,16 +266,18 @@ async function prepareShared(args: RenderExportArgs) {
   const captionTargets = parsedSections.flatMap((p) => collectCaptionTargets(p.blocks, captionDirectory));
   const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
 
-  const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
-  const citationSources = citedSourceIds.length
-    ? await (async () => {
-        const { listCitationSources } = await import(
-          '../../services/clinical-regulatory-evidence/source-usage.service.js'
-        );
-        return listCitationSources(tenantId, citedSourceIds);
-      })()
-    : [];
+  const { listCitationSources } = await import('../../services/clinical-regulatory-evidence/source-usage.service.js');
+  const citationSourcesBySection = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
+  for (const { section, blocks } of parsedSections) {
+    citationSourcesBySection.set(String(section.id), await listCitationSources(tenantId, collectCitedSourceIds(blocks),
+      { documentId: String(doc.id), sectionId: String(section.id), userId: args.actor ? Number(args.actor.id) : undefined }, executor));
+  }
+  const citationSources = [...citationSourcesBySection.values()].flat();
   const citations = makeCitationRegistry(citationLookupFor(citationSources));
+  const citationsForSection = (sectionId: string): typeof citations => {
+    const allowed = new Set((citationSourcesBySection.get(sectionId) ?? []).map(source => source.id));
+    return { cite: id => id && allowed.has(id) ? citations.cite(id) : { found: false }, entries: citations.entries };
+  };
 
   let pendingIns = 0;
   let pendingDel = 0;
@@ -282,6 +293,7 @@ async function prepareShared(args: RenderExportArgs) {
     crossRefs,
     crossReferenceAnchorId,
     citations,
+    citationsForSection,
     makeCaptionNumbering,
     pendingIns,
     pendingDel,
@@ -440,7 +452,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
         revisionDate: exportedAt,
         footnoteSink,
         crossRefs: shared.crossRefs,
-        citations: shared.citations,
+        citations: shared.citationsForSection(String(section.id)),
         captions,
       }),
     );
@@ -513,7 +525,7 @@ async function renderPdf(
   const pdfSections = shared.parsedSections.map(({ section: s, blocks }) => {
     const body = blocksToHtml(blocks, shared.exportImages, {
       crossRefs: shared.crossRefs,
-      citations: shared.citations,
+      citations: shared.citationsForSection(String(s.id)),
       captions: pdfCaptions,
     });
     // The heading is the anchor a resolved cross-reference links to.
@@ -564,7 +576,22 @@ async function renderPdf(
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
   if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
-  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
+  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
+  if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {
+    organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+  });
+  else {
+    const workflow = await verifyWorkflowImportWorkingCopy(args.executor, {
+      organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+    });
+    if (workflow) args = { ...args,
+      workingCopy: { banner: `${args.workingCopy.banner} · workflow qualification not established` },
+      notice: `Workflow review copy — NOT FINAL. Original authorship remains as recorded. ` +
+        `Model qualification and scientific source support are not established by this import. ` +
+        `${workflow.knownMachineRemains ? 'Stored machine content remains on release hold. ' : 'Human review and explicit adoption are required before release. '}` +
+        `Retained source ${workflow.origin.kind} ${workflow.origin.id}, fingerprint ${workflow.origin.fingerprint}.`,
+    };
+  }
   const shared = await prepareShared(args);
   const out: { content: Buffer; fileName: string; contentType: string; rendering?: ExportRendering } =
     args.format === 'xml'
@@ -597,18 +624,6 @@ export async function computeDocHash(
     [docId, tenantId],
   );
   return sectionsDigest(sections.rows);
-}
-
-/**
- * The digest itself, over rows already in hand and already in `order_index`
- * order. computeDocHash is this plus a read; the export manifest calls it on
- * the rows it is rendering so its verdict describes those exact bytes. ONE
- * implementation — the signing routes store its output as `content_hash`, so a
- * second copy that drifted would turn every verdict into a false mismatch.
- */
-export function sectionsDigest(rows: ReadonlyArray<{ code: string; content: string | null }>): string {
-  const content = rows.map((s) => `${s.code}:${s.content}`).join('|||');
-  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

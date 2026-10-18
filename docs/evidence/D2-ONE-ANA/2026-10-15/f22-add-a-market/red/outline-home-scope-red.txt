@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > the editor's outline is the home filing (F22) > asks for the project documents scoped to home 25ms
+   → expected '/api/c2c/documents?projectId=22222222…' to be '/api/c2c/documents?projectId=22222222…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > the editor's outline is the home filing (F22) > asks for the project documents scoped to home
+AssertionError: expected '/api/c2c/documents?projectId=22222222…' to be '/api/c2c/documents?projectId=22222222…' // Object.is equality
+
+Expected: "/api/c2c/documents?projectId=22222222-2222-4222-8222-222222222222&scope=home"
+Received: "/api/c2c/documents?projectId=22222222-2222-4222-8222-222222222222"
+
+ ❯ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx:32:41
+     30|     render(<Probe pid="22222222-2222-4222-8222-222222222222" />);
+     31|     await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+     32|     expect(apiRequest.mock.calls[0][1]).toBe('/api/c2c/documents?proje…
+       |                                         ^
+     33|   });
+     34| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  05:54:29
+   Duration  1.31s (transform 226ms, setup 161ms, import 299ms, tests 29ms, environment 594ms)
+

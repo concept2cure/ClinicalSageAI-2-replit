@@ -61,4 +61,3 @@ AssertionError: tenant A's item must not reference tenant B's QMP: expected 12 t
       Tests  2 failed (2)
    Start at  17:31:45
    Duration  2.95s (transform 1.03s, setup 84ms, import 1.94s, tests 644ms, environment 0ms)
-

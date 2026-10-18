@@ -39,4 +39,3 @@ AssertionError: expected { findings: [], summary: { …(3) } } to be an instance
       Tests  2 failed | 1 passed (3)
    Start at  08:25:43
    Duration  340ms (transform 129ms, setup 75ms, import 83ms, tests 10ms, environment 0ms)
-

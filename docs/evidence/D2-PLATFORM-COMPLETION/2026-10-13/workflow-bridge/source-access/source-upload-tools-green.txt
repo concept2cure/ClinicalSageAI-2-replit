@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+{
+  "timestamp": "2026-10-13T20:49:35.369Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 754ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 1289ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 87ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 51ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-13T20:49:37.208Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "64bea518-7e56-47c6-bae2-0ce2548aff0a",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 182ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 163ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 55ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 63ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool 35ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_uploaded_document refuses a private upload before file content can reach the tool 78ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > ocr_document_pages refuses a private upload before file content can reach the tool 86ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_spreadsheet refuses a private upload before file content can reach the tool 219ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > search_large_document refuses a private upload before file content can reach the tool 253ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 23ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 16ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 112ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 72ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 88ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 74ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  20:48:51
+   Duration  47.40s (transform 27.68s, setup 215ms, import 34.99s, tests 11.62s, environment 0ms)

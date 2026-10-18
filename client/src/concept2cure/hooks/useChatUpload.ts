@@ -7,11 +7,12 @@
  * (artifact + embedded atom) so AnA can retrieve the content.
  */
 
-import type { CSSProperties } from 'react';
-import { useCallback, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { createElement, Fragment, useCallback, useRef, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
+import { archiveSummary, expandArchive, isArchiveName } from './archive-intake';
 
 export interface ChatAttachment {
   id: string;
@@ -23,6 +24,12 @@ export interface ChatAttachment {
   extractionMethod?: string | null;
   /** Word count extracted into project memory. */
   extractionWords?: number;
+  /**
+   * The Data Room source the upload recorded (`cre_evidence_sources.id`), as
+   * the upload answered it; null when no project was open. Respond links the
+   * agency's letter to its agency communication by this id (AgencyInbox.tsx).
+   */
+  sourceId?: number | null;
 }
 
 /**
@@ -148,28 +155,83 @@ export const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
+export function ChatAttachmentList({
+  attachments,
+  onRemove,
+  statusMessage,
+  icon,
+}: {
+  attachments: ChatAttachment[];
+  onRemove?: (id: string) => void;
+  statusMessage?: string;
+  icon?: ReactNode;
+}) {
+  if (attachments.length === 0 && !statusMessage) return null;
+
+  const items = attachments.map(attachment => {
+    const read = attachmentReadLabel(attachment.extractionMethod, attachment.extractionWords);
+    const label =
+      attachment.status === 'uploading'
+        ? `Uploading ${attachment.name}…`
+        : attachment.status === 'error'
+          ? `${attachment.name} — ${attachment.error || 'Upload failed'}`
+          : read
+            ? `${attachment.name} · ${read}`
+            : attachment.name;
+
+    return createElement(
+      'span',
+      { key: attachment.id, className: `ana-file ana-file-${attachment.status}`, title: label },
+      icon && createElement('span', { className: 'ico', 'aria-hidden': true }, icon),
+      createElement('span', null, label),
+      onRemove &&
+        createElement(
+          'button',
+          {
+            type: 'button',
+            'aria-label': `Remove ${attachment.name}`,
+            onClick: () => onRemove(attachment.id),
+          },
+          '×',
+        ),
+    );
+  });
+
+  return createElement(
+    Fragment,
+    null,
+    attachments.length > 0 &&
+      createElement('div', { className: 'ana-files', 'aria-label': 'Attached files' }, items),
+    statusMessage &&
+      createElement('span', { 'aria-live': 'polite', style: SR_ONLY_STYLE }, statusMessage),
+  );
+}
+
 export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload {
   const { projectId } = options;
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
 
+  const refuse = useCallback((name: string, error: string) => {
+    const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    setAttachments((prev) => [...prev, { id: localId, name, status: 'error', error }]);
+  }, []);
+
+  /** `label` names the chip when it is not the file's own name: an entry of an archive. */
   const uploadOne = useCallback(
-    async (file: File) => {
+    async (file: File, label: string = file.name) => {
       const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       // Client-side gate: reject oversized / unsupported / empty files before the
       // network round-trip, surfaced as an error chip with a clear reason.
       const validationError = validateUploadFile(file);
       if (validationError) {
-        setAttachments((prev) => [
-          ...prev,
-          { id: localId, name: file.name, status: 'error', error: validationError },
-        ]);
-        setStatusMessage(`${file.name} rejected: ${validationError}`);
+        refuse(label, validationError);
+        setStatusMessage(`${label} rejected: ${validationError}`);
         return;
       }
 
-      setAttachments((prev) => [...prev, { id: localId, name: file.name, status: 'uploading' }]);
+      setAttachments((prev) => [...prev, { id: localId, name: label, status: 'uploading' }]);
       setStatusMessage(`Uploading ${file.name}…`);
       try {
         const form = new FormData();
@@ -199,10 +261,12 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         const data = await res.json();
         const method: string | null = data.extractionMethod ?? null;
         const words: number = typeof data.extractionWords === 'number' ? data.extractionWords : 0;
+        const sourceId: number | null =
+          Number.isSafeInteger(data.sourceId) && data.sourceId > 0 ? data.sourceId : null;
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === localId
-              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words }
+              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words, sourceId }
               : a,
           ),
         );
@@ -220,15 +284,40 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         setStatusMessage(`${file.name} failed to upload`);
       }
     },
-    [projectId],
+    [projectId, refuse],
+  );
+
+  /** Archives open one after another, so two dropped together never hold both in memory at once. */
+  const archiveQueue = useRef<Promise<void>>(Promise.resolve());
+
+  /** A .zip: opened here, and each file inside sent as its own upload, one at a time (archive-intake.ts). */
+  const openArchive = useCallback(
+    async (file: File) => {
+      setStatusMessage(`Opening ${file.name}…`);
+      const opened = await expandArchive(file).catch(() => ({ ok: false as const, reason: 'it could not be opened.' }));
+      if (!opened.ok) {
+        refuse(file.name, `Not opened: ${opened.reason}`);
+        setStatusMessage(`${file.name} not opened: ${opened.reason}`);
+        return;
+      }
+      for (const r of opened.refused) refuse(`${file.name} › ${r.path}`, `Not opened: ${r.reason}`);
+      for (const entry of opened.files) await uploadOne(entry.file, `${file.name} › ${entry.path}`);
+      setStatusMessage(archiveSummary(file.name, opened));
+    },
+    [uploadOne, refuse],
+  );
+  const addArchive = useCallback(
+    // A failure is reported on its own chip; it never stops the archives queued behind it.
+    (file: File) => { archiveQueue.current = archiveQueue.current.then(() => openArchive(file)).catch(() => undefined); },
+    [openArchive],
   );
 
   const addFiles = useCallback(
     (files: FileList | File[] | null) => {
       if (!files) return;
-      Array.from(files).forEach((file) => void uploadOne(file));
+      Array.from(files).forEach((file) => void (isArchiveName(file.name) ? addArchive(file) : uploadOne(file)));
     },
-    [uploadOne],
+    [uploadOne, addArchive],
   );
 
   const removeAttachment = useCallback(

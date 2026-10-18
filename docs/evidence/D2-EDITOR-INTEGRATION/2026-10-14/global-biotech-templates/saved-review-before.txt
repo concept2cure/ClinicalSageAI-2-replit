@@ -1,0 +1,39 @@
+Local deterministic JWT/HTTP/PGlite evaluation. Full raw log: /workspace/scratch/global-biotech-review-before.log
+Raw initial result 12 failed / 2 passed. Eleven failures concern actual missing/invalid/conflicting recorded context. One failing empty-array parameter was boxed before final evaluation because Vitest expanded [] into undefined; that initial harness case is not substantive product evidence.
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'US' filing context independently of a renamed title 142ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'CA' filing context independently of a renamed title 90ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'EU' filing context independently of a renamed title 77ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'JP' filing context independently of a renamed title 66ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'GLOBAL' filing context independently of a renamed title 67ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > invalidates pinned continuation when only the recorded regional context changes 49ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses section CREATE context that conflicts with the saved document context 39ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: null 39ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: undefined 44ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":17,"region":"EU","agency":"EMA"} 37ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":"EU_CTA","region":"EMEA","agency":"EMA"} 37ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":"EU_CTA","region":"EU","agency":""} 41ms
+ × server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"region":"EU","agency":"EMA"} 35ms
+ ✓ server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > preserves old recorded sources that never carried optional filing context 47ms
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'US' filing context independently of a renamed title
+AssertionError: expected [ …(14) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'CA' filing context independently of a renamed title
+AssertionError: expected [ …(14) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'EU' filing context independently of a renamed title
+AssertionError: expected [ …(14) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'JP' filing context independently of a renamed title
+AssertionError: expected [ …(14) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > retains recorded 'GLOBAL' filing context independently of a renamed title
+AssertionError: expected [ …(14) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses section CREATE context that conflicts with the saved document context
+AssertionError: expected undefined to be type of 'string'
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: null
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: undefined
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":17,"region":"EU","agency":"EMA"}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":"EU_CTA","region":"EMEA","agency":"EMA"}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"registryId":"EU_CTA","region":"EU","agency":""}
+ FAIL  server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts > saved regional template references remain exact through review and paging > refuses malformed present filing context instead of silently discarding it: {"region":"EU","agency":"EMA"}
+AssertionError: expected undefined to be type of 'string'
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)
+   Start at  20:33:18
+   Duration  6.56s (transform 1.85s, setup 81ms, import 2.70s, tests 3.49s, environment 0ms)

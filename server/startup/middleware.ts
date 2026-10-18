@@ -160,6 +160,7 @@ export function applyAuthBoundary(app: Express): void {
   app.use('/api', validateTenantContext);
   // Only a session that passed the boundary gets fifty megabytes read for it.
   mountConcept2cureBodyParser(app);
+  mountReportSnapshotBodyParser(app);
   createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
     modeAtBoot: resolveAuthBoundaryMode(),
   });
@@ -167,6 +168,12 @@ export function applyAuthBoundary(app: Express): void {
 
 /** The largest body a signed-in Concept2Cure request may carry (base64 document bodies). */
 export const CONCEPT2CURE_BODY_LIMIT = '50mb';
+/** A bounded retained report envelope, including escaped multilingual JSON data. */
+export const REPORT_SNAPSHOT_BODY_LIMIT = '10mb';
+
+function isReportSnapshotConversion(req: Request): boolean {
+  return req.method === 'POST' && req.originalUrl.split('?')[0].replace(/\/+$/, '') === '/api/audit/reports/convert';
+}
 
 /**
  * The parsers that run before the auth boundary: 2 MB JSON and urlencoded for
@@ -178,7 +185,7 @@ export function mountPreAuthBodyParsers(app: Express): void {
   const unlessConcept2cure =
     (parser: RequestHandler): RequestHandler =>
     (req, res, next) =>
-      isConcept2cureApiRoute(req) ? next() : parser(req, res, next);
+      isConcept2cureApiRoute(req) || isReportSnapshotConversion(req) ? next() : parser(req, res, next);
   app.use('/api', unlessConcept2cure(express.json({ limit: '2mb' })));
   app.use('/api', unlessConcept2cure(express.urlencoded({ extended: true, limit: '2mb' })));
 }
@@ -193,6 +200,11 @@ export function mountConcept2cureBodyParser(app: Express): void {
   app.use('/api/concept2cure', express.json({ limit: CONCEPT2CURE_BODY_LIMIT }));
   app.use('/api/concept2cure', express.urlencoded({ extended: true, limit: '2mb' }));
   app.use('/api/concept2cure', sanitizeInput);
+}
+
+/** Read the larger sealed snapshot only after the authenticated /api boundary. */
+export function mountReportSnapshotBodyParser(app: Express): void {
+  app.post('/api/audit/reports/convert', express.json({ limit: REPORT_SNAPSHOT_BODY_LIMIT }), sanitizeInput);
 }
 
 // Append-only trails protected by the 21 CFR Part 11 immutability policy. A

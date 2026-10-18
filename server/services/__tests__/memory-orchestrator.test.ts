@@ -50,7 +50,11 @@ describe('memory-orchestrator', () => {
       expect(scoreAtom(a)).toBeCloseTo(0.75, 10);
     });
 
-    it('treats missing similarity/confidence as zero', () => {
+    // 2026-10-15: was titled "treats missing similarity/confidence as zero". A
+    // missing confidence is no longer scored as zero (see
+    // memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts);
+    // an atom with no similarity and no verification still scores zero.
+    it('scores an atom with no similarity, verification or confidence as zero', () => {
       expect(scoreAtom(atom({ layer: 'project_memory' }))).toBe(0);
     });
   });

@@ -1,0 +1,85 @@
+{
+  "scope": "Only the19 reviewed file counts; fixed SQL structure and generated bind placeholders, never runtime data allowances. Gate/selftest unchanged. See six peer audits and PUSH_GATE_RECONCILIATION_CONTRACT.md.",
+  "sourceCheckpointBeforeReconciliation": "24a4f940b89782f9af549597ea74b43be9cdc4b2",
+  "baselineBeforeSha256": "7e00c90cdd76558de35529fe4ffe5386fd37d19891c6187c8d760ca7ce294658",
+  "baselineAfterSha256": "6fa7ddd2b5fb106843906204ae078243d98f7bfe518097eee3b6d7acc25c9b5c",
+  "changes": {
+    "server/services/advancedRAGPipeline.ts": {
+      "before": 37,
+      "after": 44
+    },
+    "server/services/ana/source-admission-receipt-history.ts": {
+      "before": 0,
+      "after": 1
+    },
+    "server/services/ana/source-admission-receipt-store.ts": {
+      "before": 0,
+      "after": 1
+    },
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": {
+      "before": 0,
+      "after": 3
+    },
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": {
+      "before": 0,
+      "after": 9
+    },
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": {
+      "before": 0,
+      "after": 4
+    },
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": {
+      "before": 7,
+      "after": 8
+    },
+    "server/services/document-data-disposition/service.ts": {
+      "before": 1,
+      "after": 2
+    },
+    "server/services/tenant-export/tenant-full-export.service.ts": {
+      "before": 8,
+      "after": 9
+    },
+    "server/services/vault/document-catalog-actor-captures.ts": {
+      "before": 0,
+      "after": 8
+    },
+    "server/services/vault/document-catalog-admission.ts": {
+      "before": 0,
+      "after": 1
+    },
+    "server/services/vault/document-catalog-document.ts": {
+      "before": 7,
+      "after": 14
+    },
+    "server/services/vault/document-catalog-governance.service.ts": {
+      "before": 0,
+      "after": 3
+    },
+    "server/services/vault/document-catalog-search-query.ts": {
+      "before": 0,
+      "after": 7
+    },
+    "server/services/vault/document-catalog-write-integrity.ts": {
+      "before": 0,
+      "after": 3
+    },
+    "server/services/vault/document-catalog.service.ts": {
+      "before": 3,
+      "after": 4
+    },
+    "server/services/vault/document-passage-search.ts": {
+      "before": 1,
+      "after": 3
+    },
+    "server/services/vault/retrieval-source-access.ts": {
+      "before": 0,
+      "after": 2
+    },
+    "server/services/vault/document-catalog-search.ts": {
+      "before": 5,
+      "after": 0
+    }
+  },
+  "unreviewedEntriesUnchanged": true
+}

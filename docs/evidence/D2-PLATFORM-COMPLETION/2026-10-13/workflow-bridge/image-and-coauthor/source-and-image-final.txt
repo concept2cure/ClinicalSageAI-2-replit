@@ -1,0 +1,985 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T22:03:18.989Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T22:03:19.195Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction
+{
+  "timestamp": "2026-10-13T22:03:19.197Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 2,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction 1163ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the capture seam fails 190ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the audit seam fails 104ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > refuses a withdrawn source using the real disposition eligibility SQL 151ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rejects another tenant’s project using the canonical ownership query before writes 53ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T22:03:20.548Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T22:03:20.548Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data
+{
+  "timestamp": "2026-10-13T22:03:20.549Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 12,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed 269ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data 580ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+{
+  "timestamp": "2026-10-13T22:03:38.003Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 231ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 46ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 24ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 34ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-13T22:03:38.177Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "4d9e1691-13ee-4822-aaf2-392c645e96f0",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 30ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 19ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 16ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool 26ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_uploaded_document refuses a private upload before file content can reach the tool 151ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > ocr_document_pages refuses a private upload before file content can reach the tool 27ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_spreadsheet refuses a private upload before file content can reach the tool 17ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > search_large_document refuses a private upload before file content can reach the tool 46ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 16ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 20ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 35ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 17ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 17ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 19ms
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known
+{
+  "timestamp": "2026-10-13T22:03:40.654Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-13T22:03:40.656Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-13T22:03:40.656Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload
+{
+  "timestamp": "2026-10-13T22:03:40.657Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads
+{
+  "timestamp": "2026-10-13T22:03:40.658Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned
+{
+  "timestamp": "2026-10-13T22:03:40.659Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column
+{
+  "timestamp": "2026-10-13T22:03:40.660Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch
+{
+  "timestamp": "2026-10-13T22:03:40.661Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 2,
+    "denied": 1
+  }
+}
+
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns a file the caller's organization owns, with the checksum recorded at upload 1710ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > never queries for an empty or non-string id list 1ms
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts
+{
+  "timestamp": "2026-10-13T22:03:42.698Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > atomically captures upload + exact document/program source + both real chained audit records 150ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document undefined before bytes 8ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document bad-id before bytes 6ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects missing/malformed/foreign document e5b80abc-b55d-492d-9848-d9e109dfb027 before bytes 6ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > ignores browser admin claims and rejects an unassigned private-project member 13ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rejects readonly upload and immutable document despite project membership 10ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rechecks revocation after preflight on the actual capture transaction before filesystem writes 22ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rolls back all rows and compensates only the new bytes when the final chained audit INSERT fails 45ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > retains document-object permission as well as project access on every captured-image read 58ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > selected source IDs also retain the captured document object permission 59ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > rechecks revoked authoring grants on the actual transaction, without trusting request roles/email 20ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > fails closed when document/project permission cannot be read before capture 8ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > refuses creator bytes after project revocation or actor suspension; ownership cannot override captured scope 62ms
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied
+{
+  "timestamp": "2026-10-13T22:03:46.373Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1791929025982_0k5u11",
+    "reason": "You do not have current access to the selected source."
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied
+{
+  "timestamp": "2026-10-13T22:03:46.382Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1791929025982_0k5u11",
+    "reason": "You do not have current access to this project."
+  }
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > permits an authorized current reviewer only after a real immutable insertion and audit-chain verification
+{
+  "timestamp": "2026-10-13T22:03:46.390Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 112b5ebd-0433-4395-85ac-c92aa590efc5 by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > a mutable/new reference inserted by another editor never grants access to someone else’s unbound image
+{
+  "timestamp": "2026-10-13T22:03:46.437Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 78190cf8-fcfd-442c-9b6d-dad7c65871f3 by a***@example.test",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > figures are captured against the actual current authoring parent > exports the same reader-accessible bytes, and prints a placeholder when the actor is absent or denied 413ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > permits an authorized current reviewer only after a real immutable insertion and audit-chain verification 49ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > a mutable/new reference inserted by another editor never grants access to someone else’s unbound image 13ms
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses tampered chain details, even if the mutable current document would display the image
+{
+  "timestamp": "2026-10-13T22:03:46.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 3775b968-df9d-4d14-bcb9-76eb4a0c35e2 by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained sha256_chain proof, rather than trusting trail content alone
+{
+  "timestamp": "2026-10-13T22:03:46.562Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc 8fa70bd5-4fec-4480-93c9-1fb9758266be by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained hmac_seal proof, rather than trusting trail content alone
+{
+  "timestamp": "2026-10-13T22:03:46.589Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc f34ae2ba-0584-43fb-98bf-967c2b36378f by a***@example.test",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > cannot use a valid legacy insertion to bypass another original historical source parent
+{
+  "timestamp": "2026-10-13T22:03:46.614Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: update on doc bb9063f7-cbbd-41d7-a2c0-7ce7c92d711d by a***@example.test",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses a retained uploader insertion whose chained proof is missing, while the uploader can repair through existing upload 85ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses tampered chain details, even if the mutable current document would display the image 27ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained sha256_chain proof, rather than trusting trail content alone 26ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > refuses invalid retained hmac_seal proof, rather than trusting trail content alone 25ms
+ ✓ server/services/authoring/__tests__/authoring-image-access.pglite.test.ts > legacy sharing rests on retained original-uploader evidence > cannot use a valid legacy insertion to bypass another original historical source parent 16ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T22:03:47.024Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T22:03:47.040Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original
+{
+  "timestamp": "2026-10-13T22:03:47.041Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T22:03:47.057Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T22:03:47.057Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111)
+{
+  "timestamp": "2026-10-13T22:03:47.058Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T22:03:47.064Z",
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T22:03:47.064Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum
+{
+  "timestamp": "2026-10-13T22:03:47.065Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room capture not processed; left pending for the sweep",
+  "context": {
+    "sourceId": 77,
+    "err": "[vitest] No \"pool\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-13T22:03:47.066Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-13T22:03:47.067Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791929027067_ir43om",
+    "bytes": 5
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original 214ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > persists lineage but explicitly does not capture a conversation-only edit 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses a requested foreign/missing project before storing bytes or rows 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses if the source bytes no longer match the bytes that were edited 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rechecks source eligibility on the transaction before an edited copy is written 6ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111) 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits () 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if capture fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if audit fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > requires an identified tenant and actor for a derivation receipt 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > never removes source or derived bytes after an ambiguous COMMIT failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 364ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 13ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 6ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 4ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline WebP, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an external address, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > no src at all 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > never carries a data: payload, whatever its length 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a duplicated src: the browser shows the first, the parser files the last: nothing from the section is filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > the same, where the second is also shown elsewhere in the section: nothing from the section is filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a bogus comment: nothing from the section is filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a processing-instruction-shaped comment: nothing from the section is filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a textarea: nothing from the section is filed 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside an xmp: nothing from the section is filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a template: nothing from the section is filed 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > in a table but in no cell: nothing from the section is filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a governed reference behind a duplicated src is not even loaded 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a source hidden or swapped in one section is filed for no other section of the export 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a section both readers read alike still files every figure (guard) 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a typeless data: URI is named without its payload > 0 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a typeless data: URI is named without its payload > 1 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a typeless data: URI is named without its payload > 2 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a typeless data: URI is named without its payload > 3 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a <pre> is read as markup by the export > a figure inside one is a figure: filed, and its payload never printed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a <pre> is read as markup by the export > a <code> inside one prints its text, not its tags 0ms
+stdout | server/export/__tests__/authoring-image-export.test.ts
+{
+  "timestamp": "2026-10-13T22:03:50.210Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:03:50.211Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/export/__tests__/authoring-image-export.test.ts
+{
+  "timestamp": "2026-10-13T22:03:50.212Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/export/__tests__/authoring-image-export.test.ts
+[database] Database connection successful
+
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > an <img> becomes an image block instead of vanishing (the old failure) 8ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > image-only content is not dropped by the whitespace filter (the trap) 4ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > collectImageSrcs > finds and deduplicates refs across sections 2ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > sniffImageDimensions > reads PNG, GIF and JPEG headers; refuses garbage 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > embeds the resolved figure as a data URI with its caption 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > states an unresolved figure instead of dropping it 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > the figure is REALLY in the filed .docx — a drawing plus its media part 59ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > an unresolved figure files a stated placeholder, never silence 21ms
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.372Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../unscoped/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.376Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../../outside for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.377Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-70/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.378Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/. for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.378Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.379Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../org-7/file_1 for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.380Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../file_legacy for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.381Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../../outside for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.382Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/. for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-13T22:03:53.383Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.387Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../unscoped/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.388Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../../outside for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.389Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-70/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.389Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/. for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.390Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.391Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../org-7/file_1 for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.392Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../file_legacy for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.392Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../../outside for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.393Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/. for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-13T22:03:53.394Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the digest-mismatch refusal for an otherwise contained path
+{
+  "timestamp": "2026-10-13T22:03:53.398Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_1",
+    "recordedSha256": "0cf2b41e3f24e0a4a61aa8ba7a2846062fdd2e563ce7b69721bc541968b13566",
+    "actualSha256": "a0bc30835b2409ff84d7ddc1a4fbca79b5d553fdd20dcb2a3fa5cffecabc95da",
+    "recordedSize": 25,
+    "actualSize": 23
+  }
+}
+
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows 5ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../unscoped/file_1 for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../../outside for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-70/file_1 for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/. for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../org-7/file_1 for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../file_legacy for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../../outside for caller null, including pre-migration rows 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/. for caller null, including pre-migration rows 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/file_1 for caller 7 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/nested/../file_1 for caller 7 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/org-7/file_1 for caller 7 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/unscoped/file_1 for caller null 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > retains uploads/file_legacy for caller null 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../unscoped/file_1 for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../../outside for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-70/file_1 for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/. for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../org-7/file_1 for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../file_legacy for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../../outside for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/. for caller null as an indistinguishable missing upload 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/file_1 for caller 7 and verifies actual loaded bytes 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/nested/../file_1 for caller 7 and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/org-7/file_1 for caller 7 and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/unscoped/file_1 for caller null and verifies actual loaded bytes 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > retains uploads/file_legacy for caller null and verifies actual loaded bytes 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the digest-mismatch refusal for an otherwise contained path 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the missing-byte refusal for an otherwise contained path 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves honest unverifiable status when the legacy upload has no recorded checksum 1ms
+stdout | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-13T22:03:55.306Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:03:55.307Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-13T22:03:55.307Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/saved-draft-source-export.test.ts
+{
+  "timestamp": "2026-10-13T22:03:55.821Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence null 4ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"remove_data"} 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"supersede"} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extraction_failed","extractionMethod":"pdf-text"}} 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"shorter","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > keeps valid retained data usable and verifies through the caller executor 19ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not invent source qualification for legacy or manually authored documents 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not discard malformed persisted source groups or a conflicting saved source scope 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > fails closed when the current source read fails 1ms
+stdout | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+{
+  "timestamp": "2026-10-13T22:03:58.008Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:03:58.009Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+{
+  "timestamp": "2026-10-13T22:03:58.009Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > passes the actual source hash, normalized edits, created sheets and active actor/project, never input overrides 27ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (undefined) 2ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (  report.csv  ) 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > saves CSV-derived bytes with honest XLSX naming (  report.XLSX  ) 4ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — canonical derivation handoff > relays conversation-only status with no project, despite a model-supplied project override 9ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > returns an error, not a successful capture, if the canonical save refuses or fails 3ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > does not edit or save when canonical source access refuses 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > does not save if the canonical workbook edit fails 1ms
+ ✓ server/services/ana/__tests__/edit-spreadsheet-provenance.test.ts > confirmed edit_spreadsheet — failure and authority boundaries > keeps confirmation in active context: an input flag cannot authorize an unconfirmed edit 2ms
+stdout | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-13T22:04:05.084Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:04:05.088Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-13T22:04:05.090Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/saved-draft-source-reservation.test.ts
+{
+  "timestamp": "2026-10-13T22:04:05.372Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > reserves predecessor/successor writes before reading sources and keeps the receipt inside the same transaction 5ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a source made unavailable before reservation produces no rendition receipt 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > refused source-store locking fails closed before work 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a failed renderer or receipt rolls back and preserves the failure 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a legacy/manual rendition uses the existing path without claiming a source reservation 1ms
+stdout | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-13T22:04:07.109Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:04:07.111Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-13T22:04:07.111Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/import-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/import-source-references.test.ts
+{
+  "timestamp": "2026-10-13T22:04:07.492Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > verifies vault imports even with no model excerpt receipts 7ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > verifies data-room imports even with no model excerpt receipts 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > refuses withdrawn or changed originals (false) 6ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > refuses withdrawn or changed originals (true) 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > does not silently ignore malformed saved source identities 1ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > holds exact source rows through the rendition receipt without a global table lock 4ms
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts > exact imported origins remain dependencies of the authored document > an unavailable exact import source produces no rendition or receipt 1ms
+
+ Test Files  12 passed (12)
+      Tests  183 passed (183)
+   Start at  22:03:08
+   Duration  58.76s (transform 13.55s, setup 429ms, import 37.28s, tests 18.29s, environment 1ms)

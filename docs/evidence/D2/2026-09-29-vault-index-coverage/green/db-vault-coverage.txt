@@ -10,4 +10,3 @@
       Tests  1 passed (1)
    Start at  21:07:42
    Duration  3.15s (transform 1.34s, setup 129ms, import 35ms, tests 2.58s, environment 0ms)
-

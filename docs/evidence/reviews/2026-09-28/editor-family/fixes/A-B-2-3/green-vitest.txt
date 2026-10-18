@@ -9,7 +9,7 @@ $ npx vitest run <the 22 test files that import the comment anchor, the cross-re
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #1: an <h6> — above the schema ceiling — silently beco
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #2: a definition list — no schema node — is flagged 38
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #3: a header row written with <td> in <thead> is demoted t
-✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema 
+✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 26ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 11ms
 ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs
@@ -66,7 +66,7 @@ $ npx vitest run <the 22 test files that import the comment anchor, the cross-re
 ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId target opens the EXACT document — no search, not the default 349ms
 ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision 958ms
 ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content 346ms
-✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId not in scope lands on the default view with an honest miss — never a near-miss open 
+✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > a docId not in scope lands on the default view with an honest miss — never a near-miss open
 ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded) 126ms
 ✓ client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > DocumentAuthoring — editor deep-link target > shows the honest miss notice and falls back to the default view when nothing matches 201ms
 ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened 139ms
@@ -87,7 +87,7 @@ $ npx vitest run <the 22 test files that import the comment anchor, the cross-re
 ✓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the o
 ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > stores the source’s identity and the pinpoint, not the number on screen 611ms
-✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions 
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > records the section→source link the platform already keeps 257ms
 ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > stores the target’s identity, not the number on screen 578ms
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > offers the document’s sources to pick from, and no field to type a number in 129ms
@@ -108,14 +108,14 @@ $ npx vitest run <the 22 test files that import the comment anchor, the cross-re
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > says an unknown source is unknown, in place, and gives it no number 122ms
 ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > says a dangling reference is dangling, in place 149ms
 ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > still allows rich editing of a section that holds a reference 54ms
-✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not 
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > the assistant control no longer claims to cite 105ms
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > asks for a source instead of claiming to have cited one 77ms
 ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 184ms
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > still allows rich editing of a section that holds a citation 45ms
 ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 81ms
 ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no d
-✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft 
+✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft
 ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 164ms
 ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 94ms
 ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 25ms

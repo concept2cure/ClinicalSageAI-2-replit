@@ -468,8 +468,15 @@
 .c2c-v2 .de-x:hover{background:var(--bg-100);color:var(--text-200);}.c2c-v2 .de-x svg{width:16px;height:16px;}
 .c2c-v2 .de-body{flex:1;overflow-y:auto;padding:18px 20px;}
 .c2c-v2 .de-field{margin-bottom:15px;}
-.c2c-v2 .de-field.half{display:inline-block;width:calc(50% - 6px);}
-.c2c-v2 .de-field.half:nth-of-type(odd){margin-right:12px;}
+/* 2026-10-15 (filing-spine design review, item 4): the gap went on
+   :nth-of-type(odd), which counts every div in the body, so a pair after an
+   odd number of fields lost its gap; and baseline alignment dropped a field
+   beside one with a hint. A pair is now two adjacent halves, whatever precedes
+   them; a third consecutive half starts the next row. */
+.c2c-v2 .de-field.half{display:inline-block;width:calc(50% - 6px);vertical-align:top;}
+.c2c-v2 .de-field.half+.de-field.half{margin-left:12px;}
+.c2c-v2 .de-field.half+.de-field.half+.de-field.half{margin-left:0;}
+.c2c-v2 .de-field.half+.de-field.half+.de-field.half+.de-field.half{margin-left:12px;}
 .c2c-v2 .de-label{display:block;font-size:12px;font-weight:600;color:var(--text-200);margin-bottom:6px;}
 .c2c-v2 .de-label .req{color:var(--accent-200);margin-left:3px;}
 .c2c-v2 .de-desc{font-size:11px;color:var(--text-400);margin-bottom:6px;line-height:1.4;}

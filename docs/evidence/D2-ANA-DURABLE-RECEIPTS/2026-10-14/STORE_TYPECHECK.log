@@ -1,0 +1,7 @@
+Scope: 4 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana/source-admission-receipt-store.ts: 0 target diagnostics
+server/services/ana/source-admission-receipt-history.ts: 0 target diagnostics
+server/services/ana/__tests__/source-admission-receipt-store.test.ts: 0 target diagnostics
+server/services/ana/__tests__/source-admission-receipt-history.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 1428
+Total selected-scope diagnostics: 0

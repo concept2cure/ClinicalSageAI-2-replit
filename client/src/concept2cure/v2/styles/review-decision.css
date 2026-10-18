@@ -1,0 +1,13 @@
+.c2c-v2 .rv-decision-dialog{width:min(880px,94vw);max-height:92dvh;display:flex;flex-direction:column;}
+.c2c-v2 .rv-decision-dialog .esign-h h2{margin:0;font-weight:600;}
+.c2c-v2 .rv-decision-body{overflow-y:auto;min-height:0;}
+.c2c-v2 .rv-decision-read{margin-bottom:var(--space-6);overflow-wrap:anywhere;}
+.c2c-v2 .rv-decision-read h3{margin:0 0 var(--space-2);}
+.c2c-v2 .rv-decision-read>p{color:var(--text-300);}
+.c2c-v2 .rv-decision-section{padding:var(--space-4) 0;border-top:1px solid var(--border-100);}
+.c2c-v2 .rv-decision-section h4{margin:0 0 var(--space-3);text-transform:none;letter-spacing:var(--tracking-normal);}
+.c2c-v2 .rv-decision-section table{display:block;max-width:100%;overflow-x:auto;}
+.c2c-v2 .rv-decision-section img{max-width:100%;height:auto;}
+.c2c-v2 .rv-decision-receipt{padding:var(--space-4) 0;border-top:1px solid var(--border-100);}
+.c2c-v2 .rv-decision-actions{flex-wrap:wrap;gap:var(--space-2);}
+@media(max-width:600px){.c2c-v2 .rv-decision-dialog{width:96vw;max-height:96dvh;}.c2c-v2 .rv-decision-actions .btn{flex:1 1 auto;}}

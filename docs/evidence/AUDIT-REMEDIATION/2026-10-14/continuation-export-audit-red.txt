@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ❯ client/src/lib/__tests__/audit-row-not-persisted.test.ts (10 tests | 1 failed) 93ms
+     ✓ finds the outcome at the top level, under meta, under details, and nested in data 2ms
+     ✓ reads the header pair a 204 or a proxied body carries 1ms
+     ✓ stays silent for a persisted row, a true header, and an unrelated `persisted: false` 0ms
+     ✓ terminates on a cyclic body 0ms
+     ✓ a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 6ms
+     ✓ a 204 DELETE carrying the header raises it 1ms
+     × a completed audited GET export raises the header warning without consuming its bytes 6ms
+     ✓ an export with a persisted audit row and a failed GET raise no completed-request audit notice 2ms
+     ✓ an upload whose row was lost raises it 51ms
+     ✓ a persisted row, and a GET, raise nothing 22ms
+ ❯ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx (3 tests | 1 failed) 139ms
+     ✓ shows a notice that says the request completed and its audit entry was not written 27ms
+     ✓ shows one notice for a repeated request, and removes it on dismiss 101ms
+     × shows the actual GET export transport warning while the caller receives the CSV 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a completed audited GET export raises the header warning without consuming its bytes
+AssertionError: expected [] to deeply equal [ { method: 'GET', …(3) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "code": "AUDIT_ROW_NOT_PERSISTED",
+-     "correlationId": "export-audit-123",
+-     "method": "GET",
+-     "path": "/api/admin/business/export.csv",
+-   },
+- ]
++ []
+
+ ❯ client/src/lib/__tests__/audit-row-not-persisted.test.ts:142:20
+    140|     const response = await apiRequest('GET', '/api/admin/business/expo…
+    141|     await expect(response.text()).resolves.toBe(csv);
+    142|     expect(events).toEqual([{
+       |                    ^
+    143|       method: 'GET', path: '/api/admin/business/export.csv', code: 'AU…
+    144|     }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows the actual GET export transport warning while the caller receives the CSV
+TestingLibraryElementError: Unable to find an element by: [data-testid="global-audit-row-notice"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx:72:27
+     70|       expect(await response.text()).toBe('period,total\n2026-10,42\n');
+     71|     });
+     72|     const notice = screen.getByTestId('global-audit-row-notice');
+       |                           ^
+     73|     expect(notice.textContent).toContain('export-audit-123');
+     74|     expect(notice.textContent).toContain('could not write the audit-tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 11 passed (13)
+   Start at  19:28:44
+   Duration  1.76s (transform 149ms, setup 217ms, import 243ms, tests 232ms, environment 855ms)
+

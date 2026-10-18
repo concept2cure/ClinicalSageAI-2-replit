@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > its headings are the M11 front matter and level-1 headings, in order 4ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > cites the M11 basis 1ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > keeps its phase 1 drafting guidance (dose escalation, DLT) on the M11 sections it belongs to 1ms
+ × tests/regulatory/chat-protocol-m11.test.ts > the medical-writing advisor gives the M11 protocol structure > lists the M11 level-1 headings and names ICH M11 among the governing standards 40ms
+   → expected [ 'Synopsis', …(12) ] to deeply equal [ '1. PROTOCOL SUMMARY', …(13) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/chat-protocol-m11.test.ts > the medical-writing advisor gives the M11 protocol structure > lists the M11 level-1 headings and names ICH M11 among the governing standards
+AssertionError: expected [ 'Synopsis', …(12) ] to deeply equal [ '1. PROTOCOL SUMMARY', …(13) ]
+
+- Expected
++ Received
+
+  [
+-   "1. PROTOCOL SUMMARY",
+-   "2. INTRODUCTION",
+-   "3. TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS",
+-   "4. TRIAL DESIGN",
+-   "5. TRIAL POPULATION",
+-   "6. TRIAL INTERVENTION AND CONCOMITANT THERAPY",
+-   "7. PARTICIPANT DISCONTINUATION OF TRIAL INTERVENTION AND DISCONTINUATION OR WITHDRAWAL FROM TRIAL",
+-   "8. TRIAL ASSESSMENTS AND PROCEDURES",
+-   "9. ADVERSE EVENTS, SERIOUS ADVERSE EVENTS, PRODUCT COMPLAINTS, PREGNANCY AND POSTPARTUM INFORMATION, AND SPECIAL SAFETY SITUATIONS",
+-   "10. STATISTICAL CONSIDERATIONS",
+-   "11. TRIAL OVERSIGHT AND OTHER GENERAL CONSIDERATIONS",
+-   "12. APPENDIX: SUPPORTING DETAILS",
+-   "13. APPENDIX: GLOSSARY OF TERMS AND ABBREVIATIONS",
+-   "14. APPENDIX: REFERENCES",
++   "Synopsis",
++   "Background & rationale",
++   "Objectives & estimands",
++   "Endpoints",
++   "Study design & schema",
++   "Eligibility (in/exclusion)",
++   "Treatments & dosing",
++   "Assessments & schedule of activities",
++   "Statistical considerations (sample size, analysis sets, methods)",
++   "Safety reporting",
++   "Ethics & informed consent",
++   "Data management & QC",
++   "References",
+  ]
+
+ ❯ tests/regulatory/chat-protocol-m11.test.ts:41:25
+     39|     const { getDocumentTypeStandard } = await import('../../server/ser…
+     40|     const p = getDocumentTypeStandard('protocol')!;
+     41|     expect(p.structure).toEqual(m11Level1.filter((s) => s.number).map(…
+       |                         ^
+     42|     expect(p.governingStandards.join(' ')).toMatch(/M11/);
+     43|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  17:24:13
+   Duration  8.39s (transform 3.10s, setup 205ms, import 3.23s, tests 142ms, environment 0ms)
+

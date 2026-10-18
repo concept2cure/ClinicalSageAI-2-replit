@@ -25,6 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 const SELF = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(SELF), '..', '..');
@@ -33,12 +34,17 @@ const GATE = process.env.SELFTEST_GATE_PATH
   ? path.resolve(process.env.SELFTEST_GATE_PATH)
   : path.join(repoRoot, 'scripts', 'ci', 'check-sql-interpolation.mjs');
 const LIB = path.join(repoRoot, 'scripts', 'ci', 'lib', 'strip-comments.mjs');
+const PREDICATES = path.join(repoRoot, 'scripts', 'ci', 'lib', 'approved-sql-predicates.mjs');
+const TYPESCRIPT = path.dirname(createRequire(import.meta.url).resolve('typescript/package.json'));
 
 const Q = '.query(';
 const BT = '`';
 const I = (expr) => '$' + '{' + expr + '}';
 /** A one-line query call whose SQL text interpolates each of `exprs`. */
 const call = (...exprs) => `await pool${Q}${BT}SELECT * FROM t WHERE ${exprs.map((e, i) => `c${i} = ${I(e)}`).join(' AND ')}${BT});\n`;
+const CSR_CALLER = 'server/services/csr/vault-source-input.ts';
+const ELIGIBILITY_IMPORT = "import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';\n";
+const SUPERSEDED_IMPORT = "import { supersededSql } from '../vault/vault-version-family.js';\n";
 
 function run(files, baseline) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sqli-gate-'));
@@ -46,6 +52,9 @@ function run(files, baseline) {
     fs.mkdirSync(path.join(root, 'scripts', 'ci', 'lib'), { recursive: true });
     fs.copyFileSync(GATE, path.join(root, 'scripts', 'ci', 'check-sql-interpolation.mjs'));
     fs.copyFileSync(LIB, path.join(root, 'scripts', 'ci', 'lib', 'strip-comments.mjs'));
+    fs.copyFileSync(PREDICATES, path.join(root, 'scripts', 'ci', 'lib', 'approved-sql-predicates.mjs'));
+    fs.mkdirSync(path.join(root, 'node_modules'), { recursive: true });
+    fs.symlinkSync(TYPESCRIPT, path.join(root, 'node_modules', 'typescript'), 'dir');
     fs.writeFileSync(path.join(root, 'scripts', 'ci', 'sql-interpolation-baseline.json'), JSON.stringify(baseline));
     for (const [rel, text] of Object.entries(files)) {
       fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
@@ -123,6 +132,82 @@ const cases = [
     baseline: { 'server/routes/report.ts': 2 },
     expectExit: 0,
     expectIn: ['OK — no new value interpolated into SQL text. 2 baselined interpolation(s) in 1 file(s)'],
+  },
+  {
+    name: 'quiet — all three exact canonical predicates in the reviewed source caller',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + SUPERSEDED_IMPORT + call("vaultDataEligibleSql('d')", "vaultBinaryAvailableSql('d')", "supersededSql('d')") },
+    baseline: {}, expectExit: 0,
+    expectIn: ['3 fixed canonical predicate(s) proved separately', '0 baselined interpolation(s) in 0 file(s)', "vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js"],
+  },
+  {
+    name: 'quiet — the second reviewed caller uses the same canonical binding',
+    files: { 'server/services/csr/source-receipt-eligibility.ts': ELIGIBILITY_IMPORT + call('vaultDataEligibleSql("d")') },
+    baseline: {}, expectExit: 0, expectIn: ['1 fixed canonical predicate(s)', '0 baselined interpolation(s)'],
+  },
+  {
+    name: 'RED — a same-named helper imported from another module receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT.replace('../document-data-disposition/eligibility.js', '../unreviewed/eligibility.js') + call("vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a request value beside the approved helper remains counted',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + call("vaultDataEligibleSql('d')", 'req.query.name') },
+    baseline: {}, expectExit: 1, expectIn: ['1 fixed canonical predicate(s)', `${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a request-controlled helper argument receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + call('vaultDataEligibleSql(req.query.alias)') },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a SQL-bearing literal alias receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + call("vaultDataEligibleSql('d; DROP TABLE users')") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a parameter shadowing the canonical import receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + `async function bad(vaultDataEligibleSql) { ${call("vaultDataEligibleSql('d')")} }` },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a block-local replacement of the imported name receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + `{ const vaultDataEligibleSql = req.query.helper; ${call("vaultDataEligibleSql('d')")} }` },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a destructured parameter replacing the helper receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + `async function bad({ vaultDataEligibleSql }) { ${call("vaultDataEligibleSql('d')")} }` },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — a property call is not the canonical imported binding',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + call("untrusted.vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — wrapping the helper result in another call receives no proof',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + call("transform(vaultDataEligibleSql('d'))") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — another caller does not inherit the reviewed caller allowance',
+    files: { 'server/services/csr/unreviewed.ts': ELIGIBILITY_IMPORT + call("vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: ['server/services/csr/unreviewed.ts: 1 value(s)'],
+  },
+  {
+    name: 'RED — a type-only import cannot prove a runtime builder',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT.replace('import {', 'import type {') + call("vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — sql.raw still counts even when passed a canonical predicate',
+    files: { [CSR_CALLER]: ELIGIBILITY_IMPORT + "db.execute(sql.raw(vaultDataEligibleSql('d')));" },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — conditional SQL strings are not approved canonical calls',
+    files: { [CSR_CALLER]: call("options.lock ? 'FOR SHARE' : ''") },
+    baseline: {}, expectExit: 1, expectIn: [`${CSR_CALLER}: 1 value(s)`],
   },
 ];
 

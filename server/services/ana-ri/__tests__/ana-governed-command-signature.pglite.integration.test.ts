@@ -306,6 +306,22 @@ describe('create_submission_package signs the creation decision', () => {
     });
   });
 
+  it('records who created the package, so separation of duties can name its author at transmit', async () => {
+    // AnA's insert omitted created_by_id (the HTTP route sets it), so every
+    // package AnA created read "no creator recorded" and its transmit to the
+    // agency was refused for everyone. The author lookup here and below runs on
+    // this real table, through the transmit's own check.
+    const { createSubmissionPackage } = await import('../command-executor');
+    const r = await createSubmissionPackage(ctxWith(signoff()) as never, params);
+    expect(r.success).toBe(true);
+    const [pkg] = await q(`SELECT id, created_by_id FROM c2c_submission_packages`);
+    expect(pkg.created_by_id, 'the package records no creator').toBe(SIGNER);
+
+    const { transmitIndependenceOf } = await import('../../submission-gateways/governed-transmit-checks');
+    expect(await transmitIndependenceOf(Number(pkg.id), ORG, SIGNER), 'its creator may transmit it').toBe('author');
+    expect(await transmitIndependenceOf(Number(pkg.id), ORG, SIGNER + 1), 'a colleague may not transmit it').toBe('independent');
+  });
+
   it("another organization's project is refused before anything is written, signature included (PF-03)", async () => {
     await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT + 1}, ${OTHER_ORG}, 'Their IND') ON CONFLICT DO NOTHING`);
     const { createSubmissionPackage } = await import('../command-executor');

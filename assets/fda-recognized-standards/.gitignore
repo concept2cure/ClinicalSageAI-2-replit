@@ -1,4 +1,4 @@
-# The vendored FDA recognition-list export is NOT committed by default.
+# New FDA recognition-list exports are NOT committed by default.
 #
 # It is a bulk agency export superseded on every new FDA Recognition List, and
 # keeping it out of git means a hand-written list of standards cannot arrive as
@@ -7,6 +7,11 @@
 # README.md "Vendoring policy".
 fda-recognized-consensus-standards.json
 *.json
+
+# The complete 2026-10-14 official acquisition is deliberately vendored.
+# Its pinned bytes and all 1,738 SIS provenance records are documented under
+# docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/recognized-standards.
+!fda-recognized-consensus-standards.json
 
 # Everything else here IS committed.
 !.gitignore

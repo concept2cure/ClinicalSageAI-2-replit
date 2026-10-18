@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction 92ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result 104ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction/profile failure cannot replace B completion or reintroduce an error 157ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims 50ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession or live-project deletion while extraction runs refuses stale completion 59ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text 152ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable 82ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal 82ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and exact upload file/path/name/MIME association cannot change during an attempt 251ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely 110ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading 39ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal 111ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction 86ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep 392ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes 318ms
+ ✓ independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result 251ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  04:54:29
+   Duration  6.27s (transform 520ms, setup 0ms, import 643ms, tests 5.29s, environment 0ms)
+

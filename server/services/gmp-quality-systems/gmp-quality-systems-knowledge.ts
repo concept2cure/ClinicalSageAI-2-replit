@@ -3,7 +3,9 @@
  * ─────────────────────────────────────────────────────────────────────
  *
  * Pure, closed-form, reproducible regulatory-science engine. NO LLM, NO
- * network, NO database, NO imports from other services. Every output is a
+ * network, NO database. The one import from another service is
+ * ComputationRefusal, thrown when a required input is missing or cannot be
+ * used, so that AnA relays it as needs_parameters. Every output is a
  * deterministic function of its inputs and the citation-backed knowledge
  * tables encoded in this module and its sibling citation registry
  * (`gmp-quality-systems-citations.ts`, same service, same purity contract).
@@ -39,6 +41,7 @@
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
+import { ComputationRefusal } from '../ana-biostats/computation-engine.js';
 import { cites } from './gmp-quality-systems-citations.js';
 import type { Citation } from './gmp-quality-systems-citations.js';
 
@@ -70,6 +73,34 @@ function round(value: number, decimals: number): number {
 /** Clamp a number into [min, max]. */
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+/** Whether a fact was left out (undefined or null). Absent and false are different facts. */
+function unstated(value: unknown): boolean {
+  return value === undefined || value === null;
+}
+
+/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
+function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => f === true)) return true;
+  return facts.some(unstated) ? undefined : false;
+}
+
+/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
+function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => !unstated(f) && f !== true)) return false;
+  return facts.some(unstated) ? undefined : true;
+}
+
+/** Refuse a required enum input that is missing or not one the engine knows; never substitute a default. */
+function refuseUnknown(field: string, value: unknown, allowed: readonly string[]): never {
+  throw new ComputationRefusal(
+    unstated(value) ? 'missing_input' : 'invalid_input',
+    unstated(value)
+      ? `${field} is required (one of ${allowed.join(', ')}).`
+      : `${field} must be one of ${allowed.join(', ')} (got ${JSON.stringify(value)}).`,
+    field,
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -649,15 +680,21 @@ export interface EffectivenessCheck {
 export interface CapaPlan {
   problemStatement: string;
   source: CapaSourceType;
-  severity: RiskBand;
-  formality: 'streamlined' | 'standard' | 'formal';
+  /** 'not_assessed' unless supplied, or inferred as high from stated product impact (see severityBasis). */
+  severity: RiskBand | 'not_assessed';
+  severityBasis: 'stated' | 'inferred_from_product_impact' | 'not_assessed';
+  /** 'undetermined' while an unstated severity or extent (systemic) could change it. */
+  formality: 'streamlined' | 'standard' | 'formal' | 'undetermined';
   qrmFormalityRationale: string;
   rootCause: RootCausePlan;
   alternativeRootCauseMethods: RootCauseMethod[];
   actions: CapaAction[];
   effectivenessChecks: EffectivenessCheck[];
-  recommendedTargetDays: number;
+  /** null until severity is assessed. */
+  recommendedTargetDays: number | null;
   closureConditions: string[];
+  /** Inputs the plan depends on that were not supplied. */
+  notAssessed: Array<keyof DesignCapaParams>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -771,15 +808,29 @@ function selectRootCauseMethod(params: DesignCapaParams): RootCauseMethod {
  * correction/corrective/preventive actions, and effectiveness checks per ICH Q10.
  */
 export function designCAPA(params: DesignCapaParams): CapaPlan {
-  const severity: RiskBand = params.severity ?? (params.productImpact === true ? 'high' : 'medium');
+  // 2026-10-15: severity used to default to 'medium' and the problem statement
+  // printed "failure appears isolated; no product impact identified" for facts
+  // nobody supplied. Those are now said to be not assessed, and the formality
+  // and target timeline they decide are left undetermined.
+  const severityBasis: CapaPlan['severityBasis'] = !unstated(params.severity)
+    ? 'stated'
+    : params.productImpact === true
+      ? 'inferred_from_product_impact'
+      : 'not_assessed';
+  const severity: RiskBand | 'not_assessed' = params.severity ?? (params.productImpact === true ? 'high' : 'not_assessed');
+  const decidingFacts: Array<keyof DesignCapaParams> = ['severity', 'systemic', 'productImpact', 'recurring'];
+  if (unstated(params.preferredRootCauseMethod)) decidingFacts.push('contributingFactorCount');
+  const notAssessed = decidingFacts.filter((k) => unstated(params[k]));
 
   // QRM-proportionate formality (ICH Q9(R1) §5.2)
-  const formality: 'streamlined' | 'standard' | 'formal' =
+  const formality: CapaPlan['formality'] =
     severity === 'critical' || severity === 'high' || params.systemic === true
       ? 'formal'
-      : severity === 'medium'
-        ? 'standard'
-        : 'streamlined';
+      : severity === 'not_assessed' || unstated(params.systemic)
+        ? 'undetermined'
+        : severity === 'medium'
+          ? 'standard'
+          : 'streamlined';
 
   const method = selectRootCauseMethod(params);
   const spec =
@@ -799,14 +850,30 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
   ).map((s: RootCauseSpec): RootCauseMethod => s.method);
 
   // Build problem statement (objective, measurable, no embedded cause/solution)
+  const severityText =
+    severityBasis === 'stated'
+      ? `Severity assessed as ${severity}`
+      : severityBasis === 'inferred_from_product_impact'
+        ? 'Severity not assessed; inferred as high from potential product impact'
+        : 'Severity not assessed';
+  const extentText =
+    params.systemic === true
+      ? '; failure appears SYSTEMIC'
+      : params.systemic === false
+        ? '; failure appears isolated'
+        : '; extent (isolated vs systemic) not determined';
+  const productImpactText =
+    params.productImpact === true
+      ? '; potential impact to distributed/in-process product.'
+      : params.productImpact === false
+        ? '; no product impact identified at this stage.'
+        : '; product impact not assessed.';
   const problemStatement =
     `Problem: ${params.problemDescription} (source: ${params.source}). ` +
-    `Severity assessed as ${severity}` +
+    severityText +
     (params.recurring === true ? '; event is RECURRING' : '') +
-    (params.systemic === true ? '; failure appears SYSTEMIC' : '; failure appears isolated') +
-    (params.productImpact === true
-      ? '; potential impact to distributed/in-process product.'
-      : '; no product impact identified at this stage.');
+    extentText +
+    productImpactText;
 
   // Actions: correction (immediate), corrective (eliminate root cause),
   // preventive (prevent occurrence elsewhere). ICH Q10 §3.2.2.
@@ -845,7 +912,9 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
       timing:
         formality === 'formal'
           ? 'Review at 3 and 6 months post-implementation.'
-          : 'Review at the next periodic trend review (within ~3 months).',
+          : formality === 'undetermined'
+            ? 'Set with the formality (undetermined): 3 and 6 months post-implementation if formal, else the next periodic trend review (within ~3 months).'
+            : 'Review at the next periodic trend review (within ~3 months).',
       acceptanceCriterion: 'Zero recurrences of the same root-caused failure in the review window.',
     },
     {
@@ -866,7 +935,7 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
 
   // Recommended timeline (commensurate with risk)
   const recommendedTargetDays =
-    severity === 'critical' ? 30 : severity === 'high' ? 45 : severity === 'medium' ? 60 : 90;
+    severity === 'critical' ? 30 : severity === 'high' ? 45 : severity === 'medium' ? 60 : severity === 'low' ? 90 : null;
 
   const closureConditions: string[] = [
     'Root cause identified and supported by objective evidence.',
@@ -879,19 +948,23 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
     problemStatement,
     source: params.source,
     severity,
+    severityBasis,
     formality,
     qrmFormalityRationale:
       'Formality, effort and documentation are scaled to risk per ICH Q9(R1): ' +
-      `severity=${severity}` +
+      `severity=${severity === 'not_assessed' ? 'not assessed' : severity}` +
       (params.systemic === true ? ', systemic failure' : '') +
       (params.recurring === true ? ', recurring' : '') +
-      ` → ${formality} CAPA.`,
+      (formality === 'undetermined'
+        ? ' → formality undetermined until severity and extent (isolated vs systemic) are assessed.'
+        : ` → ${formality} CAPA.`),
     rootCause,
     alternativeRootCauseMethods,
     actions,
     effectivenessChecks,
     recommendedTargetDays,
     closureConditions,
+    notAssessed,
     citations: cites([
       'q10_capa',
       'q10_effectiveness',
@@ -946,16 +1019,18 @@ export interface ClassifyDeviationParams {
 }
 
 export interface ProductImpactAssessment {
-  potentiallyImpacted: boolean;
+  /** null when not assessed: no stated fact establishes or rules out an impact. */
+  potentiallyImpacted: boolean | null;
   rationale: string;
   dispositionGuidance: string;
   citations: Citation[];
 }
 
 export interface RegulatoryReportingTrigger {
-  fieldAlertReportEvaluation: boolean;
+  /** 'undetermined' while an unstated fact could trigger it. */
+  fieldAlertReportEvaluation: boolean | 'undetermined';
   fieldAlertRationale: string;
-  recallEvaluation: boolean;
+  recallEvaluation: boolean | 'undetermined';
   recallRationale: string;
   citations: Citation[];
 }
@@ -963,14 +1038,18 @@ export interface RegulatoryReportingTrigger {
 export interface DeviationClassification {
   description: string;
   area: DeviationArea;
-  classification: DeviationClass;
+  /** 'undetermined' while an unstated fact could still escalate it (see notAssessed). */
+  classification: DeviationClass | 'undetermined';
   classificationRationale: string;
-  initialResponseHours: number;
+  /** null until the class is determined. */
+  initialResponseHours: number | null;
   investigationTargetDays: number;
   productImpact: ProductImpactAssessment;
   reporting: RegulatoryReportingTrigger;
-  requiresCapa: boolean;
-  qualityUnitDispositionRequired: boolean;
+  requiresCapa: boolean | 'undetermined';
+  qualityUnitDispositionRequired: boolean | 'undetermined';
+  /** Facts the classification, impact and reporting depend on that were not stated. */
+  notAssessed: Array<keyof ClassifyDeviationParams>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -1012,6 +1091,92 @@ function maxClass(a: DeviationClass, b: DeviationClass): DeviationClass {
 }
 
 /**
+ * The class reached when `holds` says which escalating facts apply: "stated
+ * true" gives the class the facts establish, "true or unstated" the highest
+ * class still open.
+ */
+function deviationClassFor(
+  params: ClassifyDeviationParams,
+  spec: DeviationAreaSpec,
+  holds: (fact: boolean | undefined) => boolean,
+  rationale: string[] = [],
+): DeviationClass {
+  let classification: DeviationClass = spec.baseClass;
+  if (holds(params.patientSafetyImpact)) {
+    classification = maxClass(classification, 'critical');
+    rationale.push('Potential patient-safety impact → critical.');
+  }
+  if (holds(params.outOfSpecConfirmed)) {
+    classification = maxClass(classification, 'major');
+    rationale.push('Confirmed out-of-specification of a quality attribute → at least major.');
+  }
+  if (spec.safetyCritical && holds(params.sterileProduct)) {
+    classification = maxClass(classification, 'critical');
+    rationale.push('Sterile product with safety-critical area → critical.');
+  }
+  if (holds(params.recurring)) {
+    classification = escalateClass(classification, 1);
+    rationale.push('Recurring deviation escalated one class.');
+  }
+  return clampClass(classification);
+}
+
+/** The product-impact block: "not assessed", and no release decision, while no stated fact settles it. */
+function productImpactFor(impacted: boolean | undefined, notStated: string[]): ProductImpactAssessment {
+  return {
+    potentiallyImpacted: impacted ?? null,
+    rationale:
+      impacted === true
+        ? 'Deviation may affect a CQA / safety of the affected batch(es); a documented product ' +
+          'impact assessment and disposition by the quality unit is required.'
+        : impacted === false
+          ? 'No direct CQA / safety impact identified; document the rationale and trend the event.'
+          : `Product impact not assessed: ${notStated.join(', ')} not stated. A documented product ` +
+            'impact assessment by the quality unit is required.',
+    dispositionGuidance:
+      impacted === true
+        ? 'Quarantine affected and associated batches pending investigation; the quality unit ' +
+          'must approve or reject based on the completed investigation (21 CFR 211.192).'
+        : impacted === false
+          ? 'Batch may proceed subject to routine release controls; record the justified deviation.'
+          : 'Disposition not determined: no release decision until the quality unit has assessed ' +
+            'product impact and reviewed the investigation (21 CFR 211.192).',
+    citations: cites(['cfr211_192', 'cfr211_22', 'cfr211_100']),
+  };
+}
+
+/** Field-alert and recall triggers; 'undetermined' while an unstated fact could trigger them. */
+function reportingFor(
+  fieldAlert: boolean | undefined,
+  recall: boolean | undefined,
+  notStated: string[],
+): RegulatoryReportingTrigger {
+  const open = `${notStated.join(', ')} not stated; reassess when they are known.`;
+  return {
+    fieldAlertReportEvaluation: fieldAlert ?? 'undetermined',
+    fieldAlertRationale:
+      fieldAlert === true
+        ? 'A distributed batch with a confirmed/potential quality or safety problem triggers ' +
+          'evaluation of a Field Alert Report for an NDA/ANDA product (21 CFR 314.81(b)(1)) — ' +
+          'submit within 3 working days of becoming aware if criteria are met.'
+        : fieldAlert === false
+          ? 'Field Alert Report not triggered on the current information (not distributed and/or no ' +
+            'confirmed quality defect); reassess if new information emerges.'
+          : `Field Alert Report evaluation undetermined: ${open}`,
+    recallEvaluation: recall ?? 'undetermined',
+    recallRationale:
+      recall === true
+        ? 'A distributed, critically deviating or safety-impacting batch requires a documented ' +
+          'recall (health-hazard) evaluation; classify and notify per the recall procedure / FDA ' +
+          '21 CFR Part 7 if a recall is warranted.'
+        : recall === false
+          ? 'Recall evaluation not triggered on the current information; document the rationale.'
+          : `Recall evaluation undetermined: ${open}`,
+    citations: cites(['cfr211_198', 'cfr211_192', 'q10_capa']),
+  };
+}
+
+/**
  * Classify a GMP deviation (critical / major / minor), assign a handling
  * timeline, assess product impact, and determine whether a field alert /
  * recall evaluation is triggered.
@@ -1019,91 +1184,64 @@ function maxClass(a: DeviationClass, b: DeviationClass): DeviationClass {
 export function classifyGMPDeviation(
   params: ClassifyDeviationParams,
 ): DeviationClassification {
+  // 2026-10-15: an area outside the enum used to be classified silently as
+  // 'other', and every escalating fact was read with `=== true`, so a
+  // deviation given only its area read as final at the area baseline, with "No
+  // direct CQA / safety impact identified … Batch may proceed". An unknown area
+  // is now refused; the class is 'undetermined' while an unstated fact could
+  // escalate it, product impact is null until assessed, and notAssessed lists
+  // the facts.
   const areaSpec =
     DEVIATION_AREA_SPECS.find((s: DeviationAreaSpec): boolean => s.area === params.area) ??
-    DEVIATION_AREA_SPECS[DEVIATION_AREA_SPECS.length - 1];
+    refuseUnknown('area', params.area, DEVIATION_AREA_SPECS.map((s: DeviationAreaSpec): string => s.area));
+  const notAssessed = (['patientSafetyImpact', 'outOfSpecConfirmed', 'recurring', 'batchDistributed'] as const).filter(
+    (k) => unstated(params[k]),
+  );
 
-  let classification: DeviationClass = areaSpec.baseClass;
+  // The unstated facts that can escalate the class (batchDistributed only bears on reporting).
+  const escalators = notAssessed.filter((k) => k !== 'batchDistributed');
+
   const rationale: string[] = [`Area "${params.area}" baseline classification: ${areaSpec.baseClass}.`];
-
-  if (params.patientSafetyImpact === true) {
-    classification = maxClass(classification, 'critical');
-    rationale.push('Potential patient-safety impact → critical.');
-  }
-  if (params.outOfSpecConfirmed === true) {
-    classification = maxClass(classification, 'major');
-    rationale.push('Confirmed out-of-specification of a quality attribute → at least major.');
-  }
-  if (params.sterileProduct === true && areaSpec.safetyCritical) {
-    classification = maxClass(classification, 'critical');
-    rationale.push('Sterile product with safety-critical area → critical.');
-  }
-  if (params.recurring === true) {
-    classification = escalateClass(classification, 1);
-    rationale.push('Recurring deviation escalated one class.');
+  const floor = deviationClassFor(params, areaSpec, (f) => f === true, rationale);
+  const ceiling = deviationClassFor(params, areaSpec, (f) => f === true || unstated(f));
+  const classification: DeviationClass | 'undetermined' = floor === ceiling ? floor : 'undetermined';
+  if (classification === 'undetermined') {
+    rationale.push(`Class undetermined: at least ${floor}; ${escalators.join(', ')} not stated and could escalate it.`);
   }
   if (params.batchDistributed === true && classification === 'critical') {
     rationale.push('Affected batch already distributed — heightens urgency of disposition.');
   }
-  classification = clampClass(classification);
 
   // Handling timeline
   const initialResponseHours =
-    classification === 'critical' ? 24 : classification === 'major' ? 48 : 72;
+    classification === 'critical' ? 24 : classification === 'major' ? 48 : classification === 'minor' ? 72 : null;
   const investigationTargetDays =
     classification === 'critical' ? 30 : classification === 'major' ? 30 : 30;
   // Note: 21 CFR 211.192 investigations are generally expected to close within 30 days,
   // with documented justification/extension for complex critical investigations.
 
   // Product impact
-  const potentiallyImpacted =
-    params.outOfSpecConfirmed === true ||
-    params.patientSafetyImpact === true ||
-    classification === 'critical' ||
-    (params.sterileProduct === true && areaSpec.safetyCritical);
-  const productImpact: ProductImpactAssessment = {
-    potentiallyImpacted,
-    rationale: potentiallyImpacted
-      ? 'Deviation may affect a CQA / safety of the affected batch(es); a documented product ' +
-        'impact assessment and disposition by the quality unit is required.'
-      : 'No direct CQA / safety impact identified; document the rationale and trend the event.',
-    dispositionGuidance: potentiallyImpacted
-      ? 'Quarantine affected and associated batches pending investigation; the quality unit ' +
-        'must approve or reject based on the completed investigation (21 CFR 211.192).'
-      : 'Batch may proceed subject to routine release controls; record the justified deviation.',
-    citations: cites(['cfr211_192', 'cfr211_22', 'cfr211_100']),
-  };
+  const isCritical = floor === 'critical' ? true : ceiling === 'critical' ? undefined : false;
+  const atLeastMajor = floor !== 'minor' ? true : ceiling !== 'minor' ? undefined : false;
+  const potentiallyImpacted = anyOf(
+    params.outOfSpecConfirmed,
+    params.patientSafetyImpact,
+    isCritical,
+    allOf(areaSpec.safetyCritical, params.sterileProduct),
+  );
+  const productImpact = productImpactFor(potentiallyImpacted, escalators);
 
   // Reporting triggers
   const usMarketed = params.usMarketed !== false; // default to true (conservative)
-  const fieldAlert =
-    usMarketed &&
-    (params.batchDistributed === true || params.outOfSpecConfirmed === true) &&
-    (classification === 'critical' ||
-      params.outOfSpecConfirmed === true ||
-      params.patientSafetyImpact === true);
-  const recall =
-    (params.batchDistributed === true && classification === 'critical') ||
-    params.patientSafetyImpact === true;
+  const fieldAlert = allOf(
+    usMarketed,
+    anyOf(params.batchDistributed, params.outOfSpecConfirmed),
+    anyOf(isCritical, params.outOfSpecConfirmed, params.patientSafetyImpact),
+  );
+  const recall = anyOf(allOf(params.batchDistributed, isCritical), params.patientSafetyImpact);
+  const reporting = reportingFor(fieldAlert, recall, notAssessed);
 
-  const reporting: RegulatoryReportingTrigger = {
-    fieldAlertReportEvaluation: fieldAlert,
-    fieldAlertRationale: fieldAlert
-      ? 'A distributed batch with a confirmed/potential quality or safety problem triggers ' +
-        'evaluation of a Field Alert Report for an NDA/ANDA product (21 CFR 314.81(b)(1)) — ' +
-        'submit within 3 working days of becoming aware if criteria are met.'
-      : 'Field Alert Report not triggered on the current information (not distributed and/or no ' +
-        'confirmed quality defect); reassess if new information emerges.',
-    recallEvaluation: recall,
-    recallRationale: recall
-      ? 'A distributed, critically deviating or safety-impacting batch requires a documented ' +
-        'recall (health-hazard) evaluation; classify and notify per the recall procedure / FDA ' +
-        '21 CFR Part 7 if a recall is warranted.'
-      : 'Recall evaluation not triggered on the current information; document the rationale.',
-    citations: cites(['cfr211_198', 'cfr211_192', 'q10_capa']),
-  };
-
-  const requiresCapa = classification === 'critical' || classification === 'major' || params.recurring === true;
+  const requiresCapa = anyOf(atLeastMajor, params.recurring);
 
   return {
     description: params.description,
@@ -1114,8 +1252,9 @@ export function classifyGMPDeviation(
     investigationTargetDays,
     productImpact,
     reporting,
-    requiresCapa,
-    qualityUnitDispositionRequired: potentiallyImpacted || classification !== 'minor',
+    requiresCapa: requiresCapa ?? 'undetermined',
+    qualityUnitDispositionRequired: anyOf(potentiallyImpacted, atLeastMajor) ?? 'undetermined',
+    notAssessed,
     citations: cites([
       'cfr211_100',
       'cfr211_192',
@@ -1746,17 +1885,19 @@ export interface GampClassification {
 }
 
 export interface AssuranceApproach {
-  approach: 'csa_unscripted' | 'csa_risk_based_scripted' | 'traditional_scripted_csv';
+  /** 'undetermined' while the GxP / direct impact it depends on is not assessed. */
+  approach: 'csa_unscripted' | 'csa_risk_based_scripted' | 'traditional_scripted_csv' | 'undetermined';
   approachLabel: string;
   rationale: string;
   testingEmphasis: string;
-  documentationBurden: 'low' | 'moderate' | 'high';
+  documentationBurden: 'low' | 'moderate' | 'high' | null;
   citations: Citation[];
 }
 
 export interface Part11Control {
   control: string;
-  applicable: boolean;
+  /** 'undetermined' when the input that decides it was not stated. */
+  applicable: boolean | 'undetermined';
   expectation: string;
   citations: Citation[];
 }
@@ -1774,6 +1915,8 @@ export interface CsvAssessment {
   part11Controls: Part11Control[];
   validationDeliverables: ValidationDeliverable[];
   riskBasedScalingNote: string;
+  /** Inputs the assessment depends on that were not stated. */
+  notAssessed: Array<keyof AssessCsvParams>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -1827,31 +1970,34 @@ const GAMP_CATEGORY_SPECS: GampCategorySpec[] = [
 ];
 
 /**
- * Assess computer system validation per GAMP 5 (2nd ed): determine the GAMP
- * category, recommend a CSV-vs-CSA risk-based assurance approach, map the
- * applicable 21 CFR Part 11 controls, and list validation deliverables.
+ * Assurance approach — CSA critical thinking (GAMP 5 2nd ed / FDA CSA draft) —
+ * from the GAMP category, GxP impact and direct impact. 'undetermined' while
+ * an unstated impact could change it.
  */
-export function assessComputerSystemValidation(params: AssessCsvParams): CsvAssessment {
-  const spec =
-    GAMP_CATEGORY_SPECS.find(
-      (s: GampCategorySpec): boolean => s.softwareType === params.softwareType,
-    ) ?? GAMP_CATEGORY_SPECS[1];
+function assuranceFor(
+  category: GampCategory,
+  gxpImpact: RiskBand | undefined,
+  directImpact: boolean | undefined,
+): AssuranceApproach {
+  const level = gxpImpact === undefined ? undefined : riskIndex(gxpImpact);
+  const critical = level === undefined ? undefined : level === RISK_ORDER.indexOf('critical');
+  const isDirect = anyOf(directImpact, level === undefined ? undefined : level >= RISK_ORDER.indexOf('high'));
+  const standardSoftware = category === '1' || category === '3';
 
-  const gampClassification: GampClassification = {
-    category: spec.category,
-    categoryLabel: spec.label,
-    novelty: spec.novelty,
-    description: spec.description,
-    citations: cites(['gamp5_categories', 'gamp5_riskbased']),
-  };
-
-  // Assurance approach — CSA critical thinking (GAMP 5 2nd ed / FDA CSA draft).
-  const gxpImpact: RiskBand = params.gxpImpact ?? (params.directImpact === true ? 'high' : 'medium');
-  const isDirect = params.directImpact === true || gxpImpact === 'critical' || gxpImpact === 'high';
-
-  let assurance: AssuranceApproach;
-  if (!isDirect && (spec.category === '1' || spec.category === '3')) {
-    assurance = {
+  if (category === '5' || critical === true) {
+    return {
+      approach: 'traditional_scripted_csv',
+      approachLabel: 'Risk-based scripted CSV (full lifecycle, custom/high-risk)',
+      rationale:
+        'Custom (Category 5) and/or critical direct-impact systems warrant full-lifecycle, ' +
+        'scripted verification with design review and (for custom code) structural testing.',
+      testingEmphasis: 'Scripted/robust testing of high-risk, direct-impact functions plus design review.',
+      documentationBurden: 'high',
+      citations: cites(['gamp5_riskbased', 'gamp5_csa', 'annex11_validation']),
+    };
+  }
+  if (standardSoftware && isDirect === false) {
+    return {
       approach: 'csa_unscripted',
       approachLabel: 'CSA — unscripted / exploratory testing, leverage supplier activities',
       rationale:
@@ -1862,19 +2008,9 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
       documentationBurden: 'low',
       citations: cites(['gamp5_csa', 'gamp5_riskbased']),
     };
-  } else if (spec.category === '5' || gxpImpact === 'critical') {
-    assurance = {
-      approach: 'traditional_scripted_csv',
-      approachLabel: 'Risk-based scripted CSV (full lifecycle, custom/high-risk)',
-      rationale:
-        'Custom (Category 5) and/or critical direct-impact systems warrant full-lifecycle, ' +
-        'scripted verification with design review and (for custom code) structural testing.',
-      testingEmphasis: 'Scripted/robust testing of high-risk, direct-impact functions plus design review.',
-      documentationBurden: 'high',
-      citations: cites(['gamp5_riskbased', 'gamp5_csa', 'annex11_validation']),
-    };
-  } else {
-    assurance = {
+  }
+  if (critical === false && (!standardSoftware || isDirect === true)) {
+    return {
       approach: 'csa_risk_based_scripted',
       approachLabel: 'CSA — risk-based mix of scripted (direct-impact features) and unscripted',
       rationale:
@@ -1886,10 +2022,63 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
       citations: cites(['gamp5_csa', 'gamp5_riskbased']),
     };
   }
+  return {
+    approach: 'undetermined',
+    approachLabel: 'Not determined — GxP / direct impact not assessed',
+    rationale:
+      'For this GAMP category the assurance approach depends on whether the system has direct ' +
+      'product-quality / patient-safety impact and whether its GxP impact is critical; state ' +
+      'gxpImpact and directImpact to select it.',
+    testingEmphasis: 'Set once GxP impact is assessed.',
+    documentationBurden: null,
+    citations: cites(['gamp5_riskbased', 'gamp5_csa']),
+  };
+}
+
+/**
+ * Assess computer system validation per GAMP 5 (2nd ed): determine the GAMP
+ * category, recommend a CSV-vs-CSA risk-based assurance approach, map the
+ * applicable 21 CFR Part 11 controls, and list validation deliverables.
+ */
+export function assessComputerSystemValidation(params: AssessCsvParams): CsvAssessment {
+  // 2026-10-15: an unknown or missing softwareType used to fall back silently to
+  // GAMP Category 3; an unstated gxpImpact (directImpact not true) became
+  // 'medium', printed as "GxP impact medium" and used to pick the approach; and
+  // an unstated electronicSignatures made the e-signature controls not
+  // applicable. The first is now refused, the others are 'undetermined'.
+  const spec =
+    GAMP_CATEGORY_SPECS.find(
+      (s: GampCategorySpec): boolean => s.softwareType === params.softwareType,
+    ) ??
+    refuseUnknown(
+      'softwareType',
+      params.softwareType,
+      GAMP_CATEGORY_SPECS.map((s: GampCategorySpec): string => s.softwareType),
+    );
+
+  const gampClassification: GampClassification = {
+    category: spec.category,
+    categoryLabel: spec.label,
+    novelty: spec.novelty,
+    description: spec.description,
+    citations: cites(['gamp5_categories', 'gamp5_riskbased']),
+  };
+
+  // GxP impact as stated, or inferred as high from stated direct impact (documented); else not assessed.
+  const gxpImpact: RiskBand | undefined = params.gxpImpact ?? (params.directImpact === true ? 'high' : undefined);
+  const gxpImpactText = !unstated(params.gxpImpact)
+    ? `${gxpImpact}`
+    : gxpImpact === undefined
+      ? 'not assessed'
+      : 'high (inferred from direct impact; not assessed)';
+  const assurance = assuranceFor(spec.category, gxpImpact, params.directImpact);
+  const notAssessed = (['gxpImpact', 'directImpact', 'electronicSignatures'] as const).filter((k) => unstated(params[k]));
 
   // Part 11 controls
   const hasERecords = params.electronicRecords !== false;
-  const hasESig = params.electronicSignatures === true;
+  const hasESig: boolean | 'undetermined' = unstated(params.electronicSignatures)
+    ? 'undetermined'
+    : params.electronicSignatures === true;
   const part11Controls: Part11Control[] = [
     {
       control: 'Validation of the computerised system',
@@ -2001,8 +2190,9 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
     validationDeliverables,
     riskBasedScalingNote:
       'GAMP 5 (2nd ed) and CSA scale assurance effort to system risk, complexity, and novelty: ' +
-      `GAMP Category ${spec.category}, GxP impact ${gxpImpact} → ${assurance.approachLabel}. ` +
+      `GAMP Category ${spec.category}, GxP impact ${gxpImpactText} → ${assurance.approachLabel}. ` +
       'Critical-thinking and supplier leveraging reduce duplicated effort on lower-risk features.',
+    notAssessed,
     citations: cites([
       'gamp5_categories',
       'gamp5_riskbased',

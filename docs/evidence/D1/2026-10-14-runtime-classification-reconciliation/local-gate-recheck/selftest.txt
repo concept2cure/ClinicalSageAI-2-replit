@@ -1,0 +1,14 @@
+ok   — intact fixture passes, the unbundled module's unclassified read ignored (exit 0)
+ok   — the production stage does not COPY a shipped path (the U7 acroforms defect): exit 1, 1 finding(s)
+ok   — the COPY exists, but in another stage than the one that ships: exit 1, 1 finding(s)
+ok   — .dockerignore keeps the source out of the build context: exit 1, 1 finding(s)
+ok   — the COPY source does not exist in the repository: exit 1, 1 finding(s)
+ok   — a new run-time read in a shipped module, unclassified: exit 1, 1 finding(s)
+ok   — a bundle-relative __dirname read: dist/ in the image, not the source directory: exit 1, 1 finding(s)
+ok   — a module-relative read spelled dirname(fileURLToPath(import.meta.url)) inline: exit 1, 1 finding(s)
+ok   — an exact root entry does not classify a new read beneath it: exit 1, 1 finding(s)
+ok   — a classification no shipped module uses any more: exit 1, 1 finding(s)
+ok   — a known gap the image now covers, left unreclassified: exit 1, 1 finding(s)
+ok   — a classification with no written reason: exit 1, 1 finding(s)
+
+[image-runtime-assets:selftest] the gate fails on all 11 cuts and passes the intact fixture.

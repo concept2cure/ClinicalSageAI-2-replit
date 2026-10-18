@@ -24,6 +24,9 @@ describe('assembleRightOfReferenceStatement (m1.4.2)', () => {
     referencedFileNumber: '012345',
     subjectName: 'C2C-001 drug substance',
     indNumber: '123456',
+    // 2026-10-15: stated, because an unstated scope used to read "covering the
+    // file in its entirety" (see ind-reference-scope-not-invented.test.ts).
+    authorizedSections: ['3.2.S'],
     signatoryName: 'Dana Holder',
   };
 
@@ -35,7 +38,7 @@ describe('assembleRightOfReferenceStatement (m1.4.2)', () => {
     expect(stmt).toContain('Acme Therapeutics');
     expect(stmt).toContain('DMF 012345');
     expect(stmt).toContain('IND 123456');
-    expect(stmt).toContain('in its entirety');
+    expect(stmt).toContain('covering 3.2.S');
   });
 
   it('reports gaps and places at m1.4.2', () => {

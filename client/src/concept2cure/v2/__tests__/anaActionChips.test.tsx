@@ -302,10 +302,13 @@ describe('the conversation thread renders AnA’s actions as controls', () => {
 describe('every chat that shows AnA’s actions uses the one renderer', () => {
   /* Carriage guard. The docks that run their own conversation are heavy to
      mount; a hand-rolled chip map in any of them is how the thread went inert,
-     so the cheap check is that each one imports the canonical renderer. */
+     so the cheap check is that each one imports the canonical renderer.
+     editor/DocumentWorkbench.tsx left this list on 2026-10-13 (0bf71a61e): it
+     no longer runs a chat of its own — every editor ask goes to
+     ConversationThread (listed here), whose DocumentCanvas mounts the same
+     workbench. The guard below keeps it from growing a private chat again. */
   const FILES = [
     'client/src/concept2cure/v2/surfaces/ConversationThread.tsx',
-    'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx',
     'client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx',
     'client/src/concept2cure/v2/surfaces/RbmSurfaces.tsx',
   ];
@@ -316,4 +319,11 @@ describe('every chat that shows AnA’s actions uses the one renderer', () => {
       expect(src).toMatch(/<AnaActionChips?\b/);
     });
   }
+
+  it('DocumentWorkbench runs no chat of its own: its asks go to the one conversation', () => {
+    const src = fs.readFileSync(path.join(REPO, 'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx'), 'utf8');
+    expect(src).not.toMatch(/import\s*\{[^}]*\buseAnaChat\b[^}]*\}\s*from\s*'\.\.\/\.\.\/components\/ana\/useAnaChat'/);
+    expect(src).not.toMatch(/<AnaActionChips?\b/);
+    expect(src).toMatch(/import\s*\{[^}]*\bopenConversationWithPrompt\b[^}]*\}\s*from\s*'\.\/askAnaToDraft'/);
+  });
 });

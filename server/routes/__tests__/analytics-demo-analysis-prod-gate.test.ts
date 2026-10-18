@@ -86,7 +86,7 @@ describe('demo-analysis production gate', () => {
     process.env.NODE_ENV = 'production';
     const res = await post();
     expect(res.status).toBe(404);
-    // 404, not 403, and the same body as server/routes/seed-demo.ts: a route
+    // 404, not 403, and the same body the (since deleted) demo seeder used: a route
     // that should not exist in production must not advertise that it does.
     expect(res.body).toEqual({ error: 'Not found' });
   });

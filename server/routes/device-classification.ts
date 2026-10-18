@@ -7,10 +7,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireRole } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger.js';
-import {
-  categorizeSamd,
-  classifyIec62304,
-} from '../services/regulatory/samd-classification';
+import { categorizeSamd } from '../services/regulatory/samd-classification';
+import { classifySoftware } from '../services/market-specs/software-lifecycle';
 
 const logger = createScopedLogger('device-classification');
 const router = Router();
@@ -46,16 +44,37 @@ router.post(
   )
 );
 
+const iec62304Schema = z.object({
+  canContributeToHazard: z.boolean(),
+  harmSeverityAfterExternalControls: z.enum(['none', 'non-serious', 'serious-or-death']),
+});
+
+/**
+ * The route's two answers as classifySoftware's harm facts, both judged after
+ * external risk controls: software that cannot contribute to a hazardous
+ * situation contributes to no injury; otherwise the residual harm says which.
+ */
+function harmFacts(input: z.infer<typeof iec62304Schema>): Parameters<typeof classifySoftware>[0] {
+  if (!input.canContributeToHazard) {
+    return { canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: false };
+  }
+  switch (input.harmSeverityAfterExternalControls) {
+    case 'serious-or-death':
+      return { canContributeToDeathOrSeriousInjury: true };
+    case 'non-serious':
+      return { canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: true };
+    case 'none':
+      return { canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: false };
+  }
+}
+
+// 2026-10-15: this ran classifyIec62304 (regulatory/samd-classification.ts), a
+// third IEC 62304 classifier with its own rationale and response shape. It now
+// answers from the canonical engine (market-specs/software-lifecycle.ts).
 router.post(
   '/iec62304-class',
   author,
-  handle(
-    z.object({
-      canContributeToHazard: z.boolean(),
-      harmSeverityAfterExternalControls: z.enum(['none', 'non-serious', 'serious-or-death']),
-    }),
-    input => classifyIec62304(input)
-  )
+  handle(iec62304Schema, input => classifySoftware(harmFacts(input)))
 );
 
 logger.info('Device classification routes initialised');

@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > reads the deployed type when a scheduled caller omits its declaration 1922ms
+   → usa_fda.nda_bla_filing_readiness declares region none, which is not the US Module 1 record this assessment reads. No market readiness was assessed.
+ ✓ server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > retains a supplied declaration and refuses its wrong region 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/__tests__/compute-run-regional.test.ts > shared regional dispatch > reads the deployed type when a scheduled caller omits its declaration
+ReportTypeNotComputed: usa_fda.nda_bla_filing_readiness declares region none, which is not the US Module 1 record this assessment reads. No market readiness was assessed.
+ ❯ regionalRun server/services/report-os/compute-run.ts:172:13
+    170|   } catch (error) {
+    171|     if (error instanceof Error && error.name === 'RegionalNotComputed'…
+    172|       throw new ReportTypeNotComputed(error.message);
+       |             ^
+    173|     }
+    174|     throw error;
+ ❯ Module.computeRunForType server/services/report-os/compute-run.ts:185:24
+ ❯ server/services/report-os/__tests__/compute-run-regional.test.ts:27:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  18:44:47
+   Duration  2.29s (transform 1.77s, setup 132ms, import 80ms, tests 1.93s, environment 0ms)

@@ -67,8 +67,10 @@ describe('composeE2bR3Icsr', () => {
     expect(byId['E.i.7']).toContain('3'); // not_recovered
   });
 
-  it('maps the reporter qualification (investigator → physician)', () => {
-    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+  // 2026-10-15: this pinned "investigator → physician", a qualification
+  // inferred from the reporter type. C.2.r.4 is now emitted only as stated.
+  it('maps a stated reporter qualification (C.2.r.4 code 1 → Physician)', () => {
+    const { icsr } = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reporterQualification: '1' } });
     const qual = icsr.primarySource.find((e) => e.id === 'C.2.r.4');
     expect(qual?.value).toContain('Physician');
   });
@@ -99,7 +101,8 @@ describe('composeE2bR3Icsr', () => {
   });
 
   it('reports completeness = 1 and no gaps when all mandatory elements are present', () => {
-    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, studyRegistrationNumber: 'IND 123456' } as any });
+    // The qualification is stated: it was complete here only because C.2.r.4 was inferred (to 2026-10-15).
+    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, studyRegistrationNumber: 'IND 123456', reporterQualification: '1' } as any });
     expect(gaps).toEqual([]);
     expect(completeness).toBe(1);
   });

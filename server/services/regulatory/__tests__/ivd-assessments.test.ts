@@ -37,7 +37,7 @@ describe('corpusVersion', () => {
     const v1 = corpusVersion();
     const v2 = corpusVersion();
     expect(v1).toBe(v2);
-    expect(v1).toMatch(/^v\d+-[0-9a-f]{8}$/);
+    expect(v1).toMatch(/^v\d+-[0-9a-f]{16}$/);
   });
 
   it('encodes the corpus entry count', () => {

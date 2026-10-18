@@ -328,4 +328,3 @@ stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.
       Tests  22 passed | 67 skipped (89)
    Start at  04:36:41
    Duration  5.55s (transform 1.47s, setup 78ms, import 2.47s, tests 2.74s, environment 0ms)
-

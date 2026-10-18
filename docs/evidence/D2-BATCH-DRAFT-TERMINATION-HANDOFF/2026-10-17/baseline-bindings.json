@@ -1,0 +1,11 @@
+{
+  "recordedAt": "2026-10-17T23:46:59.052061+00:00",
+  "baseline": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "1326ccde5f030a50318c2d00e16f8bdf5f9c82008d28c77239d112cb9532579b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/routes/batch-draft-routes.ts": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b"
+  },
+  "sync": "Fast-forwarded metadata-only45fbf8d8f before contract; current runtime spec86 enforced unrestricted, no configured secrets/identities; no model/network API work."
+}

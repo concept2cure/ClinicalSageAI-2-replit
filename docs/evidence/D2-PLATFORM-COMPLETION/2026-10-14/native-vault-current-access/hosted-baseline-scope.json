@@ -1,0 +1,99 @@
+{
+  "qualification": "Complete uploaded fa39 native step only. Pending cases were not passed. This bounded historical baseline is separate from the new local native execution; complete private archive/result/census remains private.",
+  "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "runId": 38625681016,
+  "artifactId": 11924713848,
+  "wholeNativeCounts": {
+    "failed": 107,
+    "passed": 1609,
+    "pending": 110,
+    "total": 1826,
+    "distinctFailedFiles": 31,
+    "nestedFailedSuites": 70
+  },
+  "scopeCounts": {
+    "failed": 11,
+    "passed": 14,
+    "pending": 22,
+    "total": 47
+  },
+  "files": [
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "caseCounts": {
+        "passed": 13,
+        "failed": 1
+      },
+      "failedAssertions": 1,
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected undefined to be 'WO03 displays-leaver' // Object.is equality",
+      "executedSource": {
+        "path": "tests/db/actor-displays.dbtest.ts",
+        "bytes": 16389,
+        "digestAlgorithm": "sha256",
+        "digest": "01a2085ccb4dba4520d05dff7be94ee969665bd21fc0744434ffd8aaf01cf38f"
+      }
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "caseCounts": {
+        "failed": 10,
+        "passed": 1
+      },
+      "failedAssertions": 10,
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "executedSource": {
+        "path": "tests/db/vault-version-checkin.dbtest.ts",
+        "bytes": 15269,
+        "digestAlgorithm": "sha256",
+        "digest": "66a3f93e83ef47fef65a73ba3213d0f63f186326a810d1babec307ca552be1ff"
+      }
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "caseCounts": {
+        "skipped": 4
+      },
+      "failedAssertions": 0,
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "executedSource": {
+        "path": "tests/db/vault-version-compare.dbtest.ts",
+        "bytes": 8305,
+        "digestAlgorithm": "sha256",
+        "digest": "fcca545a63e6a598aeeb87d83b43299c55f1a2062ab7f399e3fa91381185f0f4"
+      }
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "caseCounts": {
+        "skipped": 10
+      },
+      "failedAssertions": 0,
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "executedSource": {
+        "path": "tests/db/vault-versions.dbtest.ts",
+        "bytes": 13746,
+        "digestAlgorithm": "sha256",
+        "digest": "fa9c4cd96217be575339d858d8e710e838fa77c7e628e64ee15da5d753e20810"
+      }
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "caseCounts": {
+        "skipped": 8
+      },
+      "failedAssertions": 0,
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "executedSource": {
+        "path": "tests/db/vault-where-used.dbtest.ts",
+        "bytes": 18060,
+        "digestAlgorithm": "sha256",
+        "digest": "f46c9bc91136a1074c26d210ff4a717f60c72157b09d4ada07129365f7f5d496"
+      }
+    }
+  ]
+}

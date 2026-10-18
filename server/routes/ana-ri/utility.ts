@@ -37,7 +37,7 @@ import {
   recordApprovalDecision,
 } from '../../services/ana/run-control.js';
 import { resolveOrgId } from '../../types/auth-request.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import { governedActionTrace, recordGovernedExecution, withAuditTrail } from './governed-execution-audit.js';
@@ -239,9 +239,9 @@ async function runConfirmedTool(
   name: string,
   params: Record<string, unknown>,
   held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
-  organizationId: number,
-  userId: number,
+  principal: { organizationId: number; userId: number; sqlClient: RequestSqlClient },
 ): Promise<unknown> {
+  const { organizationId, userId, sqlClient } = principal;
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not an available tool`);
@@ -249,6 +249,7 @@ async function runConfirmedTool(
   // conversation, turn and model the dispatch would have named (PF-10 S5).
   const out = await handler(params, {
     ...confirmedToolContext(held.toolContext, organizationId, userId),
+    sqlClient,
     humanConfirmed: true,
   });
   try {
@@ -729,7 +730,7 @@ export function mountUtilityRoutes(router: Router): void {
     };
     const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, { organizationId: numericOrgId, userId, sqlClient: requestPgClient(req) })] : await executeCommands([{ command, params } as any], ctx);
       const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command

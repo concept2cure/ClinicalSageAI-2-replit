@@ -1,10 +1,11 @@
 /**
  * Word (.docx) → authoring sections, with the structure kept.
  *
- * ── Why this is not one of the four mammoth calls already in the repo ────────
- * Four services already read .docx: projects/extract-text, ocr/
- * extractDocumentText, memory/document-text-extraction and
- * DocumentDataCenterService. Every one of them calls `extractRawText`, which
+ * ── Why this is not one of the three mammoth calls already in the repo ───────
+ * Three services already read .docx: projects/extract-text, ocr/
+ * extractDocumentText and DocumentDataCenterService (a fourth,
+ * memory/document-text-extraction, was a duplicate of ocr/extractDocumentText
+ * and was deleted on 2026-10-15). Every one of them calls `extractRawText`, which
  * returns a flat string. That is the right answer for search and retrieval,
  * which is what they do, and the wrong one here: a regulatory author importing
  * a technical file needs the TABLES — a predicate comparison, a GSPR matrix, a

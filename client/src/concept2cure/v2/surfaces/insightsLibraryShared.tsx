@@ -43,6 +43,31 @@ export interface LibraryReportType {
   runnable: boolean;
   entitled?: boolean;
   requiredTier?: string;
+  region?: string | null;
+  allowedPersonas?: string[];
+  /** The records actually counted, which can differ from the run's filing scope. */
+  computedScope?: string | null;
+  availabilityReason?: string | null;
+  reasonCode?: string | null;
+  availabilityState?: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered' | 'filing-context-required' | 'not-applicable' | 'context-unavailable';
+  runScopeType?: string | null;
+  runScopeId?: string | null;
+}
+
+/** Counts refer to this authorized applicable catalog, never the global seed. */
+export function catalogCapabilityCounts(types: readonly LibraryReportType[]) {
+  return {
+    defined: types.length,
+    engineBacked: types.filter(type => type.computedScopes.length > 0).length,
+    available: types.filter(type => type.runnable && type.entitled !== false).length,
+    locked: types.filter(type => type.runnable && type.entitled === false).length,
+    contextRequired: types.filter(type => type.availabilityState === 'scope-required').length,
+    disabled: types.filter(type => type.availabilityState === 'disabled').length,
+    unregistered: types.filter(type => type.availabilityState === 'unregistered').length,
+    predictionUnavailable: types.filter(type => type.family === 'prediction' && !type.runnable).length,
+    uncomputed: types.filter(type => type.family !== 'prediction' && !type.runnable &&
+      (type.availabilityState === 'not-computed' || (!type.availabilityState && !type.computedScopes.length))).length,
+  };
 }
 
 export function PanelHead({
@@ -81,11 +106,8 @@ export function StatusTag({ status }: { status: string }) {
 /**
  * What a schedule actually does, shown wherever one is created or listed.
  *
- * The sweep computes the report and applies the delivery gate, then only logs
- * it (`services/report-os/scheduling/worker-register.ts`). Promising a
- * delivered file would be a claim the platform does not keep, so this note is
- * not optional decoration — `insightsLibraryReachesBackend.test.tsx` fails
- * without it.
+ * The sweep persists a governed run and notifies its authorized recipients.
+ * Delivery does not finalize a report or grant permission to its recipients.
  */
 export function ScheduleTruthNote() {
   return (
@@ -133,36 +155,6 @@ export function rowsOf<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
   const inner = (data as { data?: unknown } | null)?.data;
   return Array.isArray(inner) ? (inner as T[]) : [];
-}
-
-/**
- * A paged list read's `matched`/`returned`/`limit`, or null when the route did
- * not send them.
- *
- * Takes `DataState.meta` — the envelope `meta` `liveGetOrNull` already
- * extracts (dataConnect.tsx: `envelopeMeta`) — rather than digging into the
- * payload a second time. One extractor for the envelope, one validator for
- * this particular meta's shape.
- *
- * VALIDATED, not cast. This meta decides whether a panel tells the reader
- * their page is the whole answer, so a malformed one must read as "not
- * stated" rather than as a number: `{matched: "many"}` cast to a number would
- * compare false against `returned` and silently claim completeness. Every
- * field has to be a non-negative integer or the whole object is refused.
- *
- * Returning null for a missing `meta` is the point of the type — an older
- * server, or a page whose count query failed, is distinguishable from a page
- * where nothing matched. Callers must not read null as zero.
- */
-export function pageMetaOf(meta: unknown): { matched: number; returned: number; limit: number } | null {
-  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
-  const whole = (v: unknown): number | null =>
-    typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null;
-  const matched = whole((meta as Record<string, unknown>).matched);
-  const returned = whole((meta as Record<string, unknown>).returned);
-  const limit = whole((meta as Record<string, unknown>).limit);
-  if (matched == null || returned == null || limit == null) return null;
-  return { matched, returned, limit };
 }
 
 /**

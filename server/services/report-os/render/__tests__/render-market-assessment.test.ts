@@ -44,7 +44,7 @@ const marketRun = (over: {
       filing: 'New Drug Application',
       applicationKind: 'nda',
       module1Spec: 'FDA eCTD Module 1 controlled vocabulary v4',
-      line: 'Structured Module 1; the FDA gateway is wired and unproven.',
+      line: 'Module 1 to the agency\'s headings; the FDA gateway is wired and unproven.',
       offer: { tier: 'build_and_sequence', label: 'Build and sequence', reason: 'Authored, built and frozen here as an eCTD sequence for FDA.', appliesTo: null },
       ...over.market,
     },
@@ -78,7 +78,7 @@ describe('a market assessment states its own market, not a readiness', () => {
   it("prints the canonical market statement verbatim, and the specification its heading numbers follow", () => {
     const r = renderReport(marketRun());
     const summary = JSON.stringify(r.sections[0].blocks);
-    expect(summary).toContain('Structured Module 1; the FDA gateway is wired and unproven.');
+    expect(summary).toContain('Module 1 to the agency\'s headings; the FDA gateway is wired and unproven.');
     expect(summary).toContain('Authored, built and frozen here as an eCTD sequence for FDA.');
     expect(summary).toContain('FDA eCTD Module 1 controlled vocabulary v4');
     expect(summary).toContain('New Drug Application');

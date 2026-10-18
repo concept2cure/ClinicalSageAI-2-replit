@@ -497,7 +497,12 @@
   "answer_intelligence_question": {
    "class": "self",
    "writes": "AnA interview session state (tenant record written by commit_intelligence_flow)",
-   "site": "AnaToolExecutor.ts:19109"
+   "site": "AnaToolExecutor.ts:19109",
+   "present": {
+    "verb": "record",
+    "object": "an answer in the questioning flow",
+    "source": "project"
+   }
   },
   "apply_fact_change": {
    "class": "confirm",
@@ -1404,17 +1409,32 @@
   "assess_recorded_batch_poolability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16625"
+   "site": "AnaToolExecutor.ts:16625",
+   "present": {
+    "verb": "check",
+    "object": "whether the recorded batches can be pooled",
+    "source": "engine"
+   }
   },
   "assess_recorded_process_capability": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16524"
+   "site": "AnaToolExecutor.ts:16524",
+   "present": {
+    "verb": "compute",
+    "object": "the process capability of recorded batches",
+    "source": "engine"
+   }
   },
   "assess_recorded_stability_trend": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16472"
+   "site": "AnaToolExecutor.ts:16472",
+   "present": {
+    "verb": "assess",
+    "object": "the recorded stability trend",
+    "source": "engine"
+   }
   },
   "assess_regulatory_landscape": {
    "class": "read",
@@ -2170,7 +2190,12 @@
    "class": "conditional",
    "writes": "creates CMC register records + audit",
    "site": "AnaToolExecutor.ts:19244",
-   "rule": "input.dry_run === true -> read; else confirm"
+   "rule": "input.dry_run === true -> read; else confirm",
+   "present": {
+    "verb": "record",
+    "object": "the flow's answers in the CMC registers",
+    "source": "project"
+   }
   },
   "compare_document_versions": {
    "class": "read",
@@ -2205,7 +2230,12 @@
   "compare_recorded_dissolution": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16321"
+   "site": "AnaToolExecutor.ts:16321",
+   "present": {
+    "verb": "compare",
+    "object": "the recorded dissolution profiles",
+    "source": "engine"
+   }
   },
   "compare_statistical_scenarios": {
    "class": "read",
@@ -3307,7 +3337,12 @@
   "estimate_recorded_shelf_life": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16416"
+   "site": "AnaToolExecutor.ts:16416",
+   "present": {
+    "verb": "estimate",
+    "object": "the shelf life from recorded stability data",
+    "source": "engine"
+   }
   },
   "estimate_sample_size": {
    "class": "read",
@@ -4446,7 +4481,12 @@
   "list_cmc_registers": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:16128"
+   "site": "AnaToolExecutor.ts:16128",
+   "present": {
+    "verb": "list",
+    "object": "the CMC registers",
+    "source": "project"
+   }
   },
   "list_demo_scripts": {
    "class": "read",
@@ -5578,7 +5618,12 @@
   "resume_intelligence_flow": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:19204"
+   "site": "AnaToolExecutor.ts:19204",
+   "present": {
+    "verb": "open",
+    "object": "a questioning flow in progress",
+    "source": "project"
+   }
   },
   "retire_qms_document": {
    "class": "refuse",
@@ -6152,12 +6197,12 @@
   },
   "save_document_to_vault": {
    "class": "confirm",
-   "writes": "new governed artifact + version + governed-action row",
-   "site": "AnaToolExecutor.ts:19670",
+   "writes": "creates a one-section authoring document, revision + audit (not the Vault)",
+   "site": "authoring/authoring-draft-tool.ts saveDocumentToVaultTool",
    "present": {
     "verb": "save",
-    "object": "a document to the Vault",
-    "source": "vault",
+    "object": "an AnA draft in the editor",
+    "source": "authoring",
     "preview": [
      "title"
     ]
@@ -6860,7 +6905,12 @@
   "start_intelligence_flow": {
    "class": "self",
    "writes": "INSERT cmc_interview_sessions (AnA interview state)",
-   "site": "AnaToolExecutor.ts:19066"
+   "site": "AnaToolExecutor.ts:19066",
+   "present": {
+    "verb": "start",
+    "object": "a questioning flow",
+    "source": "project"
+   }
   },
   "start_legacy_import": {
    "class": "confirm",

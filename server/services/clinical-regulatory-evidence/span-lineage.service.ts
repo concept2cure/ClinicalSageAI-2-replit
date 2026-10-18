@@ -70,7 +70,7 @@ export interface Queryable {
  *  that mocks `../db` without a `pool` export (the CMC route suites mock only
  *  `getPool`) died at import with "No pool export is defined on the mock".
  *  Four suites were red on the trunk for exactly that. */
-const defaultExec: Queryable = {
+export const defaultExec: Queryable = {
   query: (sql, params) => (pool as unknown as Queryable).query(sql, params),
 };
 
@@ -110,7 +110,12 @@ export type SpanProvenanceKind =
   | 'cre_evidence_source'
   | 'author_assertion'
   | 'accepted_machine_draft'
-  | 'machine_draft';
+  | 'machine_draft'
+  /** A drafted figure the cited Vault version states (S5c; span-lineage-vault.ts). */
+  | 'vault_document';
+
+/** The kinds that cite external content, and so can go stale. */
+const SOURCE_KINDS = new Set<string>(['cre_evidence_source', 'vault_document']);
 
 /** The two machine-authored kinds, discriminated by whether anyone accepted. */
 export type MachineSpanKind = 'accepted_machine_draft' | 'machine_draft';
@@ -188,6 +193,8 @@ export interface LiveMachineSpan {
   assertedAt: Date | null;
   signatureId: string | null;
   createdBy: string | null;
+  usage?: SpanUsage;
+  confidence?: number | null;
 }
 
 export interface SpanLineageRow {
@@ -218,7 +225,7 @@ export function hashSpanText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
-function assertSpan(charStart: number, charEnd: number): void {
+export function assertSpan(charStart: number, charEnd: number): void {
   if (!Number.isInteger(charStart) || !Number.isInteger(charEnd)) {
     throw new SpanLineageError('charStart and charEnd must be integers');
   }
@@ -657,7 +664,7 @@ export async function recordMachineSpan(
       orgId,
       // Who asked, when nobody has accepted. Never a stand-in for an asserter:
       // the asserted_by column above is NULL and the CHECK requires it to be.
-      p.createdBy ?? assertedBy,
+      p.createdBy === undefined ? assertedBy : p.createdBy,
     ],
   );
 
@@ -690,9 +697,11 @@ export async function listLiveMachineSpans(
     asserted_at: Date | string | null;
     signature_id: string | null;
     created_by: string | null;
+    usage: SpanUsage;
+    confidence: number | null;
   }>(
     `SELECT char_start, char_end, span_text_sha256, provenance_kind, machine_author_id,
-            asserted_by, asserted_at, signature_id, created_by
+            asserted_by, asserted_at, signature_id, created_by, usage, confidence
        FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
         AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
@@ -712,6 +721,8 @@ export async function listLiveMachineSpans(
       : null,
     signatureId: r.signature_id ?? null,
     createdBy: r.created_by ?? null,
+    usage: r.usage,
+    confidence: r.confidence == null ? null : Number(r.confidence),
   }));
 }
 
@@ -740,6 +751,7 @@ export async function replaceMachineSpans(
     assertedAt?: Date;
     signatureId?: string | null;
     usage?: SpanUsage;
+    confidence?: number | null;
     createdBy?: string | null;
   }>,
   p: { createdBy: string },
@@ -760,9 +772,10 @@ export async function replaceMachineSpans(
         assertedAt: s.assertedAt,
         signatureId: s.signatureId ?? null,
         usage: s.usage,
+        confidence: s.confidence,
         // The original requester survives a carry-forward; only a save that
         // introduces the span falls back to this save's actor.
-        createdBy: s.createdBy ?? p.createdBy,
+        createdBy: s.createdBy === undefined ? p.createdBy : s.createdBy,
       },
       exec,
     );
@@ -810,11 +823,13 @@ export async function replaceMachineSpans(
  * stored), so a moved quote is a retired quote, and the author gate then
  * covers it as the author's assertion.
  */
+/** Retire one source kind's spans (spine by default; a Vault figure's for S5c) whose text has moved. */
 export async function retireStaleSourceSpans(
   orgId: number,
   ref: { documentTable: string; documentId: string },
   content: string,
   exec: Queryable = pool as unknown as Queryable,
+  kind: 'cre_evidence_source' | 'vault_document' = 'cre_evidence_source',
 ): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
   const { rows } = await exec.query<{
     id: string;
@@ -827,9 +842,9 @@ export async function retireStaleSourceSpans(
       WHERE organization_id = $1
         AND document_table = $2
         AND document_id = $3
-        AND provenance_kind = 'cre_evidence_source'
+        AND provenance_kind = $4
         AND deleted_at IS NULL`,
-    [orgId, ref.documentTable, ref.documentId],
+    [orgId, ref.documentTable, ref.documentId, kind],
   );
   const kept: Array<{ charStart: number; charEnd: number }> = [];
   const stale: string[] = [];
@@ -999,6 +1014,38 @@ function mapRow(r: any): SpanLineageRow {
   };
 }
 
+/** The cited Vault versions of a read's `vault_document` rows (S5c), looked up only when it holds one. */
+async function withVaultVersions(rows: any[], exec: Queryable, organizationId: number): Promise<any[]> {
+  const ids = [...new Set(rows.filter((r) => r.provenance_kind === 'vault_document').map((r) => String(r.reference_id)))];
+  if (ids.length === 0) return rows;
+  const { rows: found } = await exec.query(
+    `SELECT id::text AS id, content_hash, document_title FROM vault.documents
+      WHERE id::text = ANY($1::text[]) AND organization_id = $2 AND deleted_at IS NULL`,
+    [ids, organizationId],
+  );
+  const byId = new Map(found.map((v: any) => [String(v.id), v]));
+  return rows.map((r) => {
+    if (r.provenance_kind !== 'vault_document') return r;
+    const v = byId.get(String(r.reference_id));
+    return { ...r, vault_found: Boolean(v), vault_content_hash: v?.content_hash ?? null, vault_title: v?.document_title ?? null };
+  });
+}
+
+/** A read row with its state against its source (spine checksum, or Vault version hash); other kinds are current. */
+function withState(r: any): SpanLineageRow {
+  const row = mapRow(r);
+  if (row.provenanceKind === 'cre_evidence_source') {
+    row.state = spanState(r.payload_sha256 ?? null, r.current_checksum ?? null, r.current_checksum !== null);
+    row.sourceTitle = r.source_title ?? null;
+  } else if (row.provenanceKind === 'vault_document') {
+    row.state = spanState(r.payload_sha256 ?? null, r.vault_content_hash ?? null, r.vault_found === true);
+    row.sourceTitle = r.vault_title ?? null;
+  } else {
+    row.state = 'current';
+  }
+  return row;
+}
+
 /**
  * Forward read: everything backing this document, in document order.
  *
@@ -1015,7 +1062,7 @@ export async function listDocumentSpans(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             AND s.id = NULLIF(l.reference_id, '')::int
+             AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.document_table = $2
@@ -1025,18 +1072,7 @@ export async function listDocumentSpans(
     [orgId, ref.documentTable, ref.documentId],
   );
 
-  return rows.map((r: any) => {
-    const row = mapRow(r);
-    if (row.provenanceKind === 'cre_evidence_source') {
-      row.state = spanState(r.payload_sha256 ?? null, r.current_checksum ?? null, r.current_checksum !== null);
-      row.sourceTitle = r.source_title ?? null;
-    } else {
-      // An author assertion or an accepted machine draft is not against
-      // external content, so it cannot go stale the way a citation can.
-      row.state = 'current';
-    }
-    return row;
-  });
+  return (await withVaultVersions(rows, exec, orgId)).map(withState);
 }
 
 /**
@@ -1084,7 +1120,7 @@ export async function listStaleSpans(
     `SELECT l.*, s.checksum AS current_checksum, s.title AS source_title
        FROM document_span_lineage l
        JOIN cre_evidence_sources s
-              ON s.id = NULLIF(l.reference_id, '')::int
+              ON s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.provenance_kind = 'cre_evidence_source'
@@ -1151,7 +1187,7 @@ export async function getSelectionOrigins(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             AND s.id = NULLIF(l.reference_id, '')::int
+             AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.document_table = $2
@@ -1164,20 +1200,7 @@ export async function getSelectionOrigins(
     [orgId, ref.documentTable, ref.documentId, charStart, charEnd],
   );
 
-  const origins = rows.map((r: any) => {
-    const row = mapRow(r);
-    if (row.provenanceKind === 'cre_evidence_source') {
-      row.state = spanState(
-        r.payload_sha256 ?? null,
-        r.current_checksum ?? null,
-        r.current_checksum !== null,
-      );
-      row.sourceTitle = r.source_title ?? null;
-    } else {
-      row.state = 'current';
-    }
-    return row;
-  });
+  const origins = (await withVaultVersions(rows, pool as unknown as Queryable, orgId)).map(withState);
 
   // Gaps WITHIN the selection — clipped to it, so a reader is told about the
   // text they actually selected rather than the whole document.
@@ -1208,7 +1231,7 @@ export async function getSelectionOrigins(
         : Math.round(((selectedLength - uncoveredLength) / selectedLength) * 100),
     counts: {
       total: origins.length,
-      fromSources: origins.filter((o) => o.provenanceKind === 'cre_evidence_source').length,
+      fromSources: origins.filter((o) => SOURCE_KINDS.has(o.provenanceKind)).length,
       authorAsserted: origins.filter((o) => o.provenanceKind === 'author_assertion').length,
       machineDrafted: origins.filter((o) => o.provenanceKind === 'accepted_machine_draft').length,
       machineDraftedUnaccepted: origins.filter((o) => o.provenanceKind === 'machine_draft').length,
@@ -1329,6 +1352,8 @@ export interface DocumentAttributionSummary {
     provenanceKind: string;
     usage: string;
     sourceTitle: string | null;
+    /** Retained machine compositor identity, distinct from original authorship or qualification. */
+    machineAuthorId: string | null;
     /** 'changed' when the cited source moved after it was cited. */
     stale: boolean;
   }>;
@@ -1378,6 +1403,8 @@ const KIND_PRECEDENCE = [
   'machine_draft',
   'accepted_machine_draft',
   'author_assertion',
+  // Both cite external content; a character either credits is fromSources.
+  'vault_document',
   'cre_evidence_source',
 ] as const;
 
@@ -1417,7 +1444,7 @@ export async function summarizeDocumentAttribution(
     const mine = mergeRanges(spans.filter((s) => s.provenanceKind === kind).map(clip));
     const unclaimed = subtractRanges(mine, claimed);
     const chars = totalLength(unclaimed);
-    if (kind === 'cre_evidence_source') byKind.fromSources = chars;
+    if (SOURCE_KINDS.has(kind)) byKind.fromSources += chars;
     else if (kind === 'author_assertion') byKind.authorAsserted = chars;
     else if (kind === 'accepted_machine_draft') byKind.machineDrafted = chars;
     else byKind.machineDraftedUnaccepted = chars;
@@ -1430,15 +1457,15 @@ export async function summarizeDocumentAttribution(
   // are intersected with exactly that: the ranges this partition credited to
   // sources, not every stale span (one may sit under a weaker claim).
   const sourceRanges = subtractRanges(
-    mergeRanges(spans.filter((s) => s.provenanceKind === 'cre_evidence_source').map(clip)),
+    mergeRanges(spans.filter((s) => SOURCE_KINDS.has(s.provenanceKind)).map(clip)),
     mergeRanges(
       spans
-        .filter((s) => s.provenanceKind !== 'cre_evidence_source')
+        .filter((s) => !SOURCE_KINDS.has(s.provenanceKind))
         .map(clip),
     ),
   );
   const staleRanges = mergeRanges(
-    spans.filter((s) => s.provenanceKind === 'cre_evidence_source' && s.state === 'changed').map(clip),
+    spans.filter((s) => SOURCE_KINDS.has(s.provenanceKind) && s.state === 'changed').map(clip),
   );
   const staleChars = totalLength(
     subtractRanges(staleRanges, subtractRanges(staleRanges, sourceRanges)),
@@ -1459,6 +1486,7 @@ export async function summarizeDocumentAttribution(
           provenanceKind: String(sp.provenanceKind),
           usage: String(sp.usage),
           sourceTitle: sp.sourceTitle ?? null,
+          machineAuthorId: sp.machineAuthorId ?? null,
           stale: sp.state === 'changed',
         };
       })

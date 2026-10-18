@@ -1,0 +1,15 @@
+# 4 mutations, all red
+# driver: scratchpad/mutate23.py (apply, run the named test, restore)
+
+RED       the option check runs for select and radio only again
+          test: server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts > the agency question > refuses an agency it does not offer, rather than storing prose 14ms
+RED       a question that offers no positions takes any string as one
+          test: server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts > a question whose catalogue holds nothing for this programme > refuses a position, because it offered none 14ms
+RED       the question tells a person who named an agency that none was named
+          test: server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts > the agency question > does not then tell them no agency was named 7ms
+RED       an own-words agency is not noticed at all
+          test: server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/a-question-that-offers-positions-enforces-them.test.ts > the agency question > does not then tell them no agency was named 8ms

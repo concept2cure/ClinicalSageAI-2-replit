@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 1,
+  "phase": "protocol-signature-read-qualification",
+  "startingHead": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "branch": "concept2cure-v2",
+  "runtime": {
+    "node": "v22.22.0",
+    "vitest": "4.1.7",
+    "heapMiB": 4096
+  },
+  "draftRuntimeLabelCorrection": {
+    "description": "Initial undelivered draft typed Vitest 3.2.4; actual raw logs all report 4.1.7. Draft bytes preserved in /tmp; this filed phase corrects the label without rerunning or changing tests, production or raw logs.",
+    "preservedDraftRecords": [
+      {
+        "path": "/tmp/protocol-read-evidence-initial-runtime-label/manifest.json",
+        "kind": "preserved-undelivered-draft",
+        "bytes": 16168,
+        "digestAlgorithm": "sha256",
+        "digest": "a69afc12320334f292ad9ff8e87ef6f053a178bb74fb7972cf545b54f3ecfb51"
+      },
+      {
+        "path": "/tmp/protocol-read-evidence-initial-runtime-label/commands.txt",
+        "kind": "preserved-undelivered-draft",
+        "bytes": 3353,
+        "digestAlgorithm": "sha256",
+        "digest": "ba45ccaf916966836b14f81301dce0f7de602dc192e8507aa15554d0e8eff2f3"
+      }
+    ]
+  },
+  "sourceRecords": [
+    {
+      "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 13040,
+      "digestAlgorithm": "sha256",
+      "digest": "0a68f74980a3b9f2a999362488215ca99dc192d8e7d7bca3a5d5ca729dd46010"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 10847,
+      "digestAlgorithm": "sha256",
+      "digest": "ec422c3ca3303e4672a58e8f7f6b3193da9e7cbb0a217980964a8d2ff9e3766f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+      "kind": "owned-frozen-source",
+      "bytes": 12325,
+      "digestAlgorithm": "sha256",
+      "digest": "6c9fea52b94361673078bf9f077fd18688de069b8b007ae1040222492822a562"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-logic.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 14753,
+      "digestAlgorithm": "sha256",
+      "digest": "6c672b5f4752966dc7fa1bf22b1a5e6b1e9b70c80e9931c8df5704511361ac2a"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-service.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 7710,
+      "digestAlgorithm": "sha256",
+      "digest": "068cf902465a920f7fea14ac0fdea5a98b3ca2f3e49153d0f8470218ad716803"
+    },
+    {
+      "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 7990,
+      "digestAlgorithm": "sha256",
+      "digest": "c3443e9e333cb2e1b9580fe0d9964ca7a01a484060f961224c97afac3b2898be"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+      "kind": "owned-frozen-source",
+      "bytes": 7389,
+      "digestAlgorithm": "sha256",
+      "digest": "abc08907e75e4c95a6f2ecb2f7c4c2e111fb53823290fa8d110e3458c224d640"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+      "kind": "owned-frozen-source",
+      "bytes": 7518,
+      "digestAlgorithm": "sha256",
+      "digest": "e2928103ced54b42d1bf3f45f7239d47aa510bf88dab9ababcac419b6263158b"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 27025,
+      "digestAlgorithm": "sha256",
+      "digest": "637b6aff21ac8c8a2cd22df7d690b8abafe0698ae6cdba8a0521d8f8798b8b3f"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/_protocol-signature-schema-fixture.ts",
+      "kind": "owned-frozen-source",
+      "bytes": 1735,
+      "digestAlgorithm": "sha256",
+      "digest": "d46c07feb566d912d859dd462313e2348a0327c80077f8d3a7bd4c45e47a1618"
+    },
+    {
+      "path": "docs/design/PROTOCOL_SIGNATURE_READ_QUALIFICATION.md",
+      "kind": "design-contract",
+      "bytes": 4031,
+      "digestAlgorithm": "sha256",
+      "digest": "1683057a6fb7402e8c3b21f4234877f2503e9bf74dced9d9fe77c486f498fb8a"
+    }
+  ],
+  "validationInputRecords": [
+    {
+      "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+      "kind": "unchanged-regression-neighbour",
+      "bytes": 2996,
+      "digestAlgorithm": "sha256",
+      "digest": "6e623ce40489a051b46dd4c73a8607cf26bfca370a8e515f70c1c7eefa55fec3"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+      "kind": "unchanged-regression-neighbour",
+      "bytes": 1893,
+      "digestAlgorithm": "sha256",
+      "digest": "a63f1909d122314701736262f84a4712e2ed66f034e8c89ba153c14658373567"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+      "kind": "unchanged-regression-neighbour",
+      "bytes": 3505,
+      "digestAlgorithm": "sha256",
+      "digest": "3c3a3de340fbc59f13ae0307080f371c08e8cf45a144357fd4635037ea8d7186"
+    },
+    {
+      "path": "vitest.config.ts",
+      "kind": "canonical-validation-input",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    },
+    {
+      "path": "tests/setup.ts",
+      "kind": "canonical-validation-input",
+      "bytes": 17904,
+      "digestAlgorithm": "sha256",
+      "digest": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+    },
+    {
+      "path": "eslint.config.js",
+      "kind": "canonical-validation-input",
+      "bytes": 16479,
+      "digestAlgorithm": "sha256",
+      "digest": "8980ee711992c0d216296b9cfe4351531569582b130ccb3e3f856e62901f8804"
+    }
+  ],
+  "originalAndRefinedPreparationRecords": [
+    {
+      "path": "/tmp/protocol-signature-read-qualification/bounded.patch",
+      "kind": "preserved-preparation",
+      "bytes": 30484,
+      "digestAlgorithm": "sha256",
+      "digest": "a765a867bddc76d784c8be35bece87607f4db540ca1d1f01b6ca197d8e5a6d13"
+    },
+    {
+      "path": "/tmp/protocol-signature-read-qualification/sources.json",
+      "kind": "preserved-preparation",
+      "bytes": 2303,
+      "digestAlgorithm": "sha256",
+      "digest": "bb0dcea5b8f9d381437165689b25307bddb7b83bfe29c457ae48c55b8f79357b"
+    },
+    {
+      "path": "/tmp/protocol-signature-read-qualification/refined/bounded.patch",
+      "kind": "preserved-preparation",
+      "bytes": 38085,
+      "digestAlgorithm": "sha256",
+      "digest": "927676ee4895b17e1173f1fc5fe233301b77370b2748c3888aa99d7b03a6210a"
+    },
+    {
+      "path": "/tmp/protocol-signature-read-qualification/refined/source-records.json",
+      "kind": "preserved-preparation",
+      "bytes": 4359,
+      "digestAlgorithm": "sha256",
+      "digest": "b83f3bbe091535efa61b71a6932d5bab01b6bbb95578fa82a14d6e4e85428deb"
+    },
+    {
+      "path": "/tmp/protocol-signature-read-qualification/refined/sources.json",
+      "kind": "preserved-preparation",
+      "bytes": 2303,
+      "digestAlgorithm": "sha256",
+      "digest": "d7560c97f339906c682d15780881295b58c3e0cfeaa2f295cc1db6bcefd8b47c"
+    },
+    {
+      "path": "/tmp/protocol-signature-read-qualification/refined/vitest.external.config.mjs",
+      "kind": "preserved-preparation",
+      "bytes": 2116,
+      "digestAlgorithm": "sha256",
+      "digest": "7d1de5acebb3989ca8140ce5578a7f616b1175f49fbf106d46bc971e00d9f466"
+    }
+  ],
+  "verifiedBaseAndFirstAppliedRecords": [
+    {
+      "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+      "baseBytes": 9840,
+      "baseDigest": "1fbb5c5fc8f3ebc9cd3ec4c8884438222fe996f1ff88ac7860a59f3316c68b9b",
+      "originalProposedDigest": "5e45bdc2217881f0d0a9c3e83406fb403651484f8208f7305dff684a84856263",
+      "refinedBytes": 13040,
+      "refinedDigest": "0a68f74980a3b9f2a999362488215ca99dc192d8e7d7bca3a5d5ca729dd46010",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+      "baseBytes": 9761,
+      "baseDigest": "ce1c6528d45bf744a0d032535f11dd2ce7dcdd0e61b14822e933b702e6f05753",
+      "originalProposedDigest": "67dee94479c1d869893eec4959572413bba7a12b3e576f4335979a86475d8469",
+      "refinedBytes": 10847,
+      "refinedDigest": "ec422c3ca3303e4672a58e8f7f6b3193da9e7cbb0a217980964a8d2ff9e3766f",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+      "baseBytes": 11633,
+      "baseDigest": "14107c6c9921b50b4293c88af4e22a00e49aa14ba3ec9397877025795ea5c5bc",
+      "originalProposedDigest": "70d03c5129277a6f5d4c10b868328b111a9a382b631978ef15b4474a294bcc73",
+      "refinedBytes": 12325,
+      "refinedDigest": "6c9fea52b94361673078bf9f077fd18688de069b8b007ae1040222492822a562",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-logic.ts",
+      "baseBytes": 13070,
+      "baseDigest": "1f9b0859ea68453b3ace2c259077687e5072fb26798233dce18150a6488420b9",
+      "originalProposedDigest": "35ddd0af73eb91a83d986cf9e49050057740f005aebdfc5c162abdf80fff8a45",
+      "refinedBytes": 14380,
+      "refinedDigest": "90642afb75c6ff8f012d4defc663f1d201a5d4de22067321f928752557fe86f4",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-service.ts",
+      "baseBytes": 7575,
+      "baseDigest": "52c955bcd7bc0e5e6c842ea0ed6385edeb9b8ddc4fd0f33271a15527e7677e02",
+      "originalProposedDigest": "068cf902465a920f7fea14ac0fdea5a98b3ca2f3e49153d0f8470218ad716803",
+      "refinedBytes": 7710,
+      "refinedDigest": "068cf902465a920f7fea14ac0fdea5a98b3ca2f3e49153d0f8470218ad716803",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+      "baseBytes": 5456,
+      "baseDigest": "976dc78f83daa3930ed930251025fb3fa55d7fecf6f2234f2ac767396a0d9250",
+      "originalProposedDigest": "1570b17f5c87462969b55309e2a4c844908f152501af5eedb97bdd46d9294ebe",
+      "refinedBytes": 7990,
+      "refinedDigest": "c3443e9e333cb2e1b9580fe0d9964ca7a01a484060f961224c97afac3b2898be",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+      "baseBytes": 4768,
+      "baseDigest": "deac61129b51edbdde32406eb15970a3d5f9d4458b9500f7be2dfd9886c92139",
+      "originalProposedDigest": "67a1c214723d6cfabd1a6ac97c5d064b1126736a98e497feddc4456d360e51c2",
+      "refinedBytes": 7389,
+      "refinedDigest": "abc08907e75e4c95a6f2ecb2f7c4c2e111fb53823290fa8d110e3458c224d640",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+      "baseBytes": 4938,
+      "baseDigest": "7445b964272d5269786807681a93b344ceb77a462693fa4538a8822a8b7db063",
+      "originalProposedDigest": "e2928103ced54b42d1bf3f45f7239d47aa510bf88dab9ababcac419b6263158b",
+      "refinedBytes": 7518,
+      "refinedDigest": "e2928103ced54b42d1bf3f45f7239d47aa510bf88dab9ababcac419b6263158b",
+      "digestAlgorithm": "sha256"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+      "baseBytes": 18536,
+      "baseDigest": "ee9dc457c34990faadbcb5025e608cbede83450b21c4f0bb94997d33f9712df3",
+      "originalProposedDigest": "616b0d7730ca0ae1ee426cf1cfdf8b31f4c864cbdc590816443b649e912d5983",
+      "refinedBytes": 28625,
+      "refinedDigest": "15483d2e33f10dae16a1a5bec014966722abdfe555fb9e30c1cb9f8d13f85eb1",
+      "digestAlgorithm": "sha256"
+    }
+  ],
+  "unchangedExtractedFixtureSqlLiteral": {
+    "bytes": 1466,
+    "digestAlgorithm": "sha256",
+    "digest": "d065ce3c9e5c8093855d51c45583a51235b4dba6479d90921003c339f7662377",
+    "comparison": "exact original/refactored SQL literal byte equality"
+  },
+  "rawLogRecords": [
+    {
+      "path": "/tmp/protocol-read-refined-red.txt",
+      "kind": "raw-test-log",
+      "bytes": 102385,
+      "digestAlgorithm": "sha256",
+      "digest": "43033ca5f8396badb10d55cbafa26e3c68cd9ae6c779de9d8a1ad14a1a0b5888"
+    },
+    {
+      "path": "/tmp/protocol-read-actual-green-first.txt",
+      "kind": "raw-test-log",
+      "bytes": 19496,
+      "digestAlgorithm": "sha256",
+      "digest": "85deb000908487a3214683cd14bcf67c01566f50cc337e2465f4ca7318256412"
+    },
+    {
+      "path": "/tmp/protocol-read-actual-green-final.txt",
+      "kind": "raw-test-log",
+      "bytes": 19499,
+      "digestAlgorithm": "sha256",
+      "digest": "4172dabcb908385a31c8788239f8b1c8d85bc6e2897d8d056601bbf3f9cfda79"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-base.json",
+      "kind": "raw-eslint-json",
+      "bytes": 16049,
+      "digestAlgorithm": "sha256",
+      "digest": "699cd57a00e54a18fab9a215bfd4937644a0d8aa00409a63968cd9d5574a0d06"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-base-stderr.txt",
+      "kind": "raw-eslint-stderr",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-actual-first.json",
+      "kind": "raw-eslint-json",
+      "bytes": 46963,
+      "digestAlgorithm": "sha256",
+      "digest": "02db0e5a942f6f85145e53bcb98c0855bd3f4faf020b8302a53c4868db30bf4f"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-actual-first-stderr.txt",
+      "kind": "raw-eslint-stderr",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-actual-final.json",
+      "kind": "raw-eslint-json",
+      "bytes": 18058,
+      "digestAlgorithm": "sha256",
+      "digest": "1ad2c3c8cae7718507730059e67e3648e132d73293a6584ea2eff6c03ee9a00a"
+    },
+    {
+      "path": "/tmp/protocol-read-lint-actual-final-stderr.txt",
+      "kind": "raw-eslint-stderr",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/README.md",
+      "kind": "bounded-filed-artifact",
+      "bytes": 5670,
+      "digestAlgorithm": "sha256",
+      "digest": "0eb3883750ef1fa10472da45d9547fcea0040719833f859556f622511eff2a71"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/actual-final-green.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 19499,
+      "digestAlgorithm": "sha256",
+      "digest": "4172dabcb908385a31c8788239f8b1c8d85bc6e2897d8d056601bbf3f9cfda79"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/actual-first-green.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 19496,
+      "digestAlgorithm": "sha256",
+      "digest": "85deb000908487a3214683cd14bcf67c01566f50cc337e2465f4ca7318256412"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/actual-red-contract-projection.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 33667,
+      "digestAlgorithm": "sha256",
+      "digest": "43490420f06961cb734dbd1497f43e3f20194e6dccb3c8deb9a2e33f04372676"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/commands.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 3353,
+      "digestAlgorithm": "sha256",
+      "digest": "766b1087c35f22a955f8d6cd9886e759687681b747169989b3cf7efc98bc2f16"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/red-test-only-overlay.config.mjs",
+      "kind": "bounded-filed-artifact",
+      "bytes": 2116,
+      "digestAlgorithm": "sha256",
+      "digest": "7d1de5acebb3989ca8140ce5578a7f616b1175f49fbf106d46bc971e00d9f466"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/scoped-lint-results.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 7728,
+      "digestAlgorithm": "sha256",
+      "digest": "e65ce7cd029e50b0bb5287f193a1aa4966b7fa88db76c8c65c372aab9e71344c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-signature-read-qualification/test-case-results.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 75119,
+      "digestAlgorithm": "sha256",
+      "digest": "b477ea1862a55024a0d46356824ef46ab802705f0ca0a47d46ba44f9cb666d4d"
+    }
+  ],
+  "qualifications": [
+    "read-only increment; no schema/writer/repair",
+    "PGlite/isolated scratch fixtures and mocked dependencies",
+    "PDF/DOCX tests establish Markdown forwarding/download only",
+    "native historical preservation and compile/publication are separate"
+  ]
+}

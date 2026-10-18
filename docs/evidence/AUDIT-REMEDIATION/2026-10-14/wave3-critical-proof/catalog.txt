@@ -1,0 +1,37 @@
+ nspname |             relname             | relrowsecurity | relforcerowsecurity | app_select | app_insert 
+---------+---------------------------------+----------------+---------------------+------------+------------
+ public  | adverse_events                  | t              | t                   | t          | t
+ public  | audit_logs                      | t              | t                   | t          | t
+ public  | client_workspaces               | t              | t                   | t          | t
+ public  | concept2cure_artifacts          | t              | t                   | t          | t
+ public  | concept2cure_review_assignments | t              | t                   | t          | t
+ public  | literature_entries              | t              | t                   | t          | t
+ public  | literature_screening_decisions  | t              | t                   | t          | t
+ public  | organization_users              | t              | t                   | t          | t
+ public  | organizations                   | t              | t                   | t          | t
+ public  | project_members                 | t              | t                   | t          | t
+ public  | project_visibility_settings     | t              | t                   | t          | t
+ public  | projects                        | t              | t                   | t          | t
+ public  | regulatory_programs             | t              | t                   | t          | t
+ public  | users                           | t              | t                   | t          | t
+(14 rows)
+
+           table_name           |     column_name      | data_type 
+--------------------------------+----------------------+-----------
+ adverse_events                 | id                   | text
+ adverse_events                 | organization_id      | integer
+ adverse_events                 | project_id           | text
+ adverse_events                 | seriousness_criteria | text
+ adverse_events                 | narrative            | text
+ literature_screening_decisions | id                   | uuid
+ literature_screening_decisions | organization_id      | integer
+ literature_screening_decisions | literature_entry_id  | uuid
+ literature_screening_decisions | program_id           | uuid
+ literature_screening_decisions | decision             | text
+ literature_screening_decisions | decided_by           | integer
+ literature_entries             | id                   | uuid
+ literature_entries             | source_name          | text
+ literature_entries             | source_id            | text
+ literature_entries             | organization_id      | integer
+(15 rows)
+

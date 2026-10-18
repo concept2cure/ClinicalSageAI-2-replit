@@ -1,0 +1,30 @@
+# npx tsx scripts/ci/check-launch-scope-api.ts
+ci:launch-scope-api: 388 API paths named by launch and shell screens; none refused. {"launch":337,"infrastructure":2,"never-gated":49}
+exit=0
+
+# npx tsx scripts/ci/check-launch-scope-api.ts --list  (IND and HAQ rows only)
+launch       /api/ind-checklist  [ind-checklist]
+launch       /api/ind-forms  [ind-checklist]
+launch       /api/ind-forms/:p/artifact  [ind-checklist]
+launch       /api/ind-forms/:p/build  [ind-checklist]
+launch       /api/ind-forms/:p/official-upload  [ind-checklist]
+launch       /api/ind-forms/:p/pdf  [ind-checklist]
+launch       /api/ind-forms/program-facts  [ind-checklist]
+launch       /api/ind-lifecycle/amendment-plan  [ind-checklist]
+launch       /api/ind-lifecycle/amendment/file  [ind-checklist]
+launch       /api/ind-lifecycle/annual-report  [ind-checklist]
+launch       /api/ind-lifecycle/annual-report/file  [ind-checklist]
+launch       /api/ind-lifecycle/annual-report/pdf  [ind-checklist]
+launch       /api/ind-lifecycle/briefing-book  [ind-checklist]
+launch       /api/ind-lifecycle/briefing-book/pdf  [ind-checklist]
+launch       /api/ind-lifecycle/clock  [ind-checklist]
+launch       /api/ind-lifecycle/cover-letter  [ind-checklist]
+launch       /api/ind-lifecycle/cover-letter/pdf  [ind-checklist]
+launch       /api/ind-lifecycle/loa  [ind-checklist]
+launch       /api/ind-lifecycle/loa/pdf  [ind-checklist]
+launch       /api/ind-lifecycle/right-of-reference  [ind-checklist]
+launch       /api/ind-lifecycle/right-of-reference/pdf  [ind-checklist]
+
+# npx tsx scripts/ci/check-launch-scope-api.ts --selftest
+
+selftest PASSED — the gate flags a launch screen that production would refuse.

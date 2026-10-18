@@ -115,6 +115,9 @@ router.post('/compile/:projectId', async (req, res) => {
   try {
     const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
+    // 2026-10-15: with no user, each section's provenance event was written by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     await client.query('BEGIN');
 
     /* One composition for the project — core sections, emittable 3.2.A
@@ -138,7 +141,7 @@ router.post('/compile/:projectId', async (req, res) => {
       });
     }
 
-    const actorId = String((req as any).user?.id || 'system');
+    const actorId = String(userId);
     for (const section of compiled) {
       await persistComposedSection(client, orgId, projectId, section, { actorId, event: 'compiled' });
     }
@@ -159,7 +162,7 @@ router.post('/compile/:projectId', async (req, res) => {
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        }, { createdById: Number((req as any).user?.id) || null });
+        }, { createdById: userId });
         if (bridged.bridged) {
           bridgedArtifacts.push({
             sectionKey: section.sectionKey,
@@ -375,10 +378,14 @@ router.get('/readiness/:projectId', async (req, res) => {
        drift and table checks: the board offered placement for a project the
        gate then refused (discovery map 2026-10-04,
        readiness-ready-while-gate-refuses). */
+    // 2026-10-15: with no user the gate's governed evaluation was recorded as
+    // decided by 'system'; it is the user's, by id, or refused.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     const verdict = await evaluateFinalExportGate({
       orgId,
       projectId,
-      actorId: (req as any).user?.id || 'system',
+      actorId: String(userId),
     });
     const state = verdict.data;
     const exportReady = verdict.allowed;
@@ -885,6 +892,9 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
   try {
     const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
+    // 2026-10-15: with no user, the refresh's provenance event was written by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     await client.query('BEGIN');
     const sectionRes = await client.query(
       `SELECT id, deterministic_json, approval_state FROM cmc_module3_sections
@@ -915,7 +925,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     }
 
     const diffSummary = summarizeSectionDiff(section.deterministic_json, compiledRecordOf(composed));
-    const actorId = String((req as any).user?.id || 'system');
+    const actorId = String(userId);
     await persistComposedSection(client, orgId, projectId, composed, {
       actorId,
       event: 'refreshed',
@@ -932,7 +942,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
         completeness: composed.completeness,
         missingInputs: composed.missingInputs,
         lineage: composed.lineage,
-      }, { createdById: Number((req as any).user?.id) || null });
+      }, { createdById: userId });
     } catch (bridgeErr) {
       bridged = { bridged: false, reason: 'error', detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr) };
     }
@@ -969,10 +979,13 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     // The verdict lives in evaluateFinalExportGate so the placement path
     // (place-into-submission below) refuses on exactly the same answer.
+    // 2026-10-15: with no user its governed evaluation was decided by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     const verdict = await evaluateFinalExportGate({
       orgId,
       projectId,
-      actorId: (req as any).user?.id || 'system',
+      actorId: String(userId),
     });
     if (!verdict.allowed) {
       return res.status(409).json({ success: false, error: verdict.error, data: verdict.data });

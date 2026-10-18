@@ -1,0 +1,17 @@
+{
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/projects/schedule-of-events/__tests__",
+    "server/routes/__tests__/project-schedule-of-events.test.ts",
+    "server/services/ana/__tests__/tool-authorization.test.ts",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 27.38,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings.json"
+}

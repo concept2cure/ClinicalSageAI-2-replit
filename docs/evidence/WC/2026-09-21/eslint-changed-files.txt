@@ -13,4 +13,3 @@
   466:10  warning  Async function 'redisRateLimiterMiddleware' has a complexity of 17. Maximum allowed is 15  complexity
 
 ✖ 5 problems (0 errors, 5 warnings)
-

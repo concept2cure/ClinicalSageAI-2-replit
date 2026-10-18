@@ -147,21 +147,9 @@ const place = (sequenceId: number, documentId: number, sectionCode = '2.5') =>
 beforeAll(async () => {
   // The program spine: a transmit precheck reads what the package would name as
   // its applicant and application (package-identity.ts, QA 2026-10-08 j6).
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
-  await harness.pglite.exec(`
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-  `);
 }, 60_000);
 
 afterAll(async () => {

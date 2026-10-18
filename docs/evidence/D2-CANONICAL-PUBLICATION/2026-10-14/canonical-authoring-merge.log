@@ -1,0 +1,408 @@
+Merge made by the 'ort' strategy.
+ .devcontainer/AGENT_RULES.md                       |     8 +-
+ .../v2/__tests__/authoringCreateExport.test.tsx    |     8 +-
+ .../__tests__/authoringCreationRecovery.test.tsx   |   488 +
+ .../v2/__tests__/authoringRefreshAll.test.tsx      |    11 +-
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |    78 +-
+ .../__tests__/workbenchCreationContext.test.tsx    |   257 +
+ .../concept2cure/v2/editor/useAuthoringCreation.ts |   204 +
+ .../v2/surfaces/AuthoringCreateExport.tsx          |   207 +-
+ .../design/AUTHORING_CREATE_RECOVERY_2026-10-14.md |    73 +
+ .../2026-10-14/create-recovery/README.md           |    80 +
+ .../2026-10-14/create-recovery/browser/README.md   |   104 +
+ .../create-recovery/browser/browser-checks.mjs     |    90 +
+ .../browser/browser-fixture-import-proof.json      |   146 +
+ .../browser/browser-fixture-lint.json              |     1 +
+ .../create-recovery/browser/browser-summary.json   |   192 +
+ .../2026-10-14/create-recovery/browser/browser.mjs |    70 +
+ .../candidate-empty-assert/browser-summary.json    |   196 +
+ .../desktop-dark-results.json                      |   978 ++
+ .../desktop-light-results.json                     |   978 ++
+ .../candidate-empty-assert/touch-dark-results.json |  1069 ++
+ ...ch-light-native-section-created-leave-held.json |   141 +
+ ...uch-light-native-section-created-leave-held.png |   Bin 0 -> 92025 bytes
+ .../touch-light-results.json                       |  1069 ++
+ .../desktop-dark-held-document-held-project.json   |    26 +
+ .../desktop-dark-held-document-held-project.png    |   Bin 0 -> 14568 bytes
+ ...op-dark-native-document-created-leave-held.json |   111 +
+ ...top-dark-native-document-created-leave-held.png |   Bin 0 -> 192292 bytes
+ ...ark-native-document-exact-document-handoff.json |   111 +
+ ...dark-native-document-exact-document-handoff.png |   Bin 0 -> 123520 bytes
+ ...top-dark-native-section-created-leave-held.json |   111 +
+ ...ktop-dark-native-section-created-leave-held.png |   Bin 0 -> 190086 bytes
+ ...-dark-native-section-exact-created-section.json |   111 +
+ ...p-dark-native-section-exact-created-section.png |   Bin 0 -> 107858 bytes
+ ...p-dark-unknown-document-failed-scoped-read.json |    36 +
+ ...op-dark-unknown-document-failed-scoped-read.png |   Bin 0 -> 20624 bytes
+ .../desktop-dark-unknown-document-pending.json     |    26 +
+ .../desktop-dark-unknown-document-pending.png      |   Bin 0 -> 29012 bytes
+ ...rk-unknown-document-successful-scoped-read.json |    36 +
+ ...ark-unknown-document-successful-scoped-read.png |   Bin 0 -> 18620 bytes
+ .../desktop-dark-unknown-document-unconfirmed.json |    36 +
+ .../desktop-dark-unknown-document-unconfirmed.png  |   Bin 0 -> 20062 bytes
+ ...op-dark-unknown-section-failed-scoped-read.json |    36 +
+ ...top-dark-unknown-section-failed-scoped-read.png |   Bin 0 -> 19464 bytes
+ .../desktop-dark-unknown-section-pending.json      |    26 +
+ .../desktop-dark-unknown-section-pending.png       |   Bin 0 -> 29929 bytes
+ ...ark-unknown-section-successful-scoped-read.json |    36 +
+ ...dark-unknown-section-successful-scoped-read.png |   Bin 0 -> 18250 bytes
+ .../desktop-dark-unknown-section-unconfirmed.json  |    36 +
+ .../desktop-dark-unknown-section-unconfirmed.png   |   Bin 0 -> 19305 bytes
+ .../desktop-light-held-document-held-project.json  |    26 +
+ .../desktop-light-held-document-held-project.png   |   Bin 0 -> 14735 bytes
+ ...p-light-native-document-created-leave-held.json |   111 +
+ ...op-light-native-document-created-leave-held.png |   Bin 0 -> 201975 bytes
+ ...ght-native-document-exact-document-handoff.json |   111 +
+ ...ight-native-document-exact-document-handoff.png |   Bin 0 -> 123944 bytes
+ ...op-light-native-section-created-leave-held.json |   111 +
+ ...top-light-native-section-created-leave-held.png |   Bin 0 -> 199913 bytes
+ ...light-native-section-exact-created-section.json |   111 +
+ ...-light-native-section-exact-created-section.png |   Bin 0 -> 108839 bytes
+ ...-light-unknown-document-failed-scoped-read.json |    36 +
+ ...p-light-unknown-document-failed-scoped-read.png |   Bin 0 -> 20488 bytes
+ .../desktop-light-unknown-document-pending.json    |    26 +
+ .../desktop-light-unknown-document-pending.png     |   Bin 0 -> 29911 bytes
+ ...ht-unknown-document-successful-scoped-read.json |    36 +
+ ...ght-unknown-document-successful-scoped-read.png |   Bin 0 -> 18391 bytes
+ ...desktop-light-unknown-document-unconfirmed.json |    36 +
+ .../desktop-light-unknown-document-unconfirmed.png |   Bin 0 -> 19864 bytes
+ ...p-light-unknown-section-failed-scoped-read.json |    36 +
+ ...op-light-unknown-section-failed-scoped-read.png |   Bin 0 -> 19335 bytes
+ .../desktop-light-unknown-section-pending.json     |    26 +
+ .../desktop-light-unknown-section-pending.png      |   Bin 0 -> 30732 bytes
+ ...ght-unknown-section-successful-scoped-read.json |    36 +
+ ...ight-unknown-section-successful-scoped-read.png |   Bin 0 -> 17966 bytes
+ .../desktop-light-unknown-section-unconfirmed.json |    36 +
+ .../desktop-light-unknown-section-unconfirmed.png  |   Bin 0 -> 19069 bytes
+ ...tic-touch-light-held-document-held-project.json |    26 +
+ ...stic-touch-light-held-document-held-project.png |   Bin 0 -> 11283 bytes
+ ...h-light-native-document-created-leave-held.json |   132 +
+ ...ch-light-native-document-created-leave-held.png |   Bin 0 -> 94263 bytes
+ ...ch-light-native-section-created-leave-held.json |   138 +
+ ...uch-light-native-section-created-leave-held.png |   Bin 0 -> 91086 bytes
+ ...ostic-touch-light-unknown-document-pending.json |    26 +
+ ...nostic-touch-light-unknown-document-pending.png |   Bin 0 -> 18161 bytes
+ ...c-touch-light-unknown-document-unconfirmed.json |    36 +
+ ...ic-touch-light-unknown-document-unconfirmed.png |   Bin 0 -> 6572 bytes
+ ...nostic-touch-light-unknown-section-pending.json |    26 +
+ ...gnostic-touch-light-unknown-section-pending.png |   Bin 0 -> 19279 bytes
+ ...ic-touch-light-unknown-section-unconfirmed.json |    36 +
+ ...tic-touch-light-unknown-section-unconfirmed.png |   Bin 0 -> 6572 bytes
+ .../touch-dark-held-document-held-project.json     |    26 +
+ .../touch-dark-held-document-held-project.png      |   Bin 0 -> 11070 bytes
+ ...ch-dark-native-document-created-leave-held.json |   135 +
+ ...uch-dark-native-document-created-leave-held.png |   Bin 0 -> 90295 bytes
+ ...ark-native-document-exact-document-handoff.json |   138 +
+ ...dark-native-document-exact-document-handoff.png |   Bin 0 -> 52567 bytes
+ ...uch-dark-native-section-created-leave-held.json |   141 +
+ ...ouch-dark-native-section-created-leave-held.png |   Bin 0 -> 86913 bytes
+ ...-dark-native-section-exact-created-section.json |   147 +
+ ...h-dark-native-section-exact-created-section.png |   Bin 0 -> 43131 bytes
+ ...h-dark-unknown-document-failed-scoped-read.json |    36 +
+ ...ch-dark-unknown-document-failed-scoped-read.png |   Bin 0 -> 16521 bytes
+ .../touch-dark-unknown-document-pending.json       |    26 +
+ .../touch-dark-unknown-document-pending.png        |   Bin 0 -> 17872 bytes
+ ...rk-unknown-document-successful-scoped-read.json |    36 +
+ ...ark-unknown-document-successful-scoped-read.png |   Bin 0 -> 14822 bytes
+ .../touch-dark-unknown-document-unconfirmed.json   |    36 +
+ .../touch-dark-unknown-document-unconfirmed.png    |   Bin 0 -> 15650 bytes
+ ...ch-dark-unknown-section-failed-scoped-read.json |    36 +
+ ...uch-dark-unknown-section-failed-scoped-read.png |   Bin 0 -> 15119 bytes
+ .../touch-dark-unknown-section-pending.json        |    36 +
+ .../touch-dark-unknown-section-pending.png         |   Bin 0 -> 18596 bytes
+ ...ark-unknown-section-successful-scoped-read.json |    36 +
+ ...dark-unknown-section-successful-scoped-read.png |   Bin 0 -> 14441 bytes
+ .../touch-dark-unknown-section-unconfirmed.json    |    36 +
+ .../touch-dark-unknown-section-unconfirmed.png     |   Bin 0 -> 15035 bytes
+ .../touch-light-held-document-held-project.json    |    26 +
+ .../touch-light-held-document-held-project.png     |   Bin 0 -> 11124 bytes
+ ...h-light-native-document-created-leave-held.json |   135 +
+ ...ch-light-native-document-created-leave-held.png |   Bin 0 -> 94873 bytes
+ ...ght-native-document-exact-document-handoff.json |   138 +
+ ...ight-native-document-exact-document-handoff.png |   Bin 0 -> 52242 bytes
+ ...ch-light-native-section-created-leave-held.json |   141 +
+ ...uch-light-native-section-created-leave-held.png |   Bin 0 -> 92025 bytes
+ ...light-native-section-exact-created-section.json |   147 +
+ ...-light-native-section-exact-created-section.png |   Bin 0 -> 42991 bytes
+ ...-light-unknown-document-failed-scoped-read.json |    36 +
+ ...h-light-unknown-document-failed-scoped-read.png |   Bin 0 -> 16436 bytes
+ .../touch-light-unknown-document-pending.json      |    26 +
+ .../touch-light-unknown-document-pending.png       |   Bin 0 -> 17913 bytes
+ ...ht-unknown-document-successful-scoped-read.json |    36 +
+ ...ght-unknown-document-successful-scoped-read.png |   Bin 0 -> 14687 bytes
+ .../touch-light-unknown-document-unconfirmed.json  |    36 +
+ .../touch-light-unknown-document-unconfirmed.png   |   Bin 0 -> 15483 bytes
+ ...h-light-unknown-section-failed-scoped-read.json |    36 +
+ ...ch-light-unknown-section-failed-scoped-read.png |   Bin 0 -> 15011 bytes
+ .../touch-light-unknown-section-pending.json       |    36 +
+ .../touch-light-unknown-section-pending.png        |   Bin 0 -> 19051 bytes
+ ...ght-unknown-section-successful-scoped-read.json |    36 +
+ ...ight-unknown-section-successful-scoped-read.png |   Bin 0 -> 14338 bytes
+ .../touch-light-unknown-section-unconfirmed.json   |    36 +
+ .../touch-light-unknown-section-unconfirmed.png    |   Bin 0 -> 14857 bytes
+ .../browser/desktop-dark-results.json              |  1087 ++
+ .../browser/desktop-light-results.json             |  1087 ++
+ .../browser/diagnostic-summary.json                |    87 +
+ .../browser/diagnostic-touch-light-results.json    |   380 +
+ .../create-recovery/browser/import-proof.mjs       |    25 +
+ .../2026-10-14/create-recovery/browser/index.html  |     2 +
+ .../create-recovery/browser/mock-api.mjs           |   105 +
+ .../2026-10-14/create-recovery/browser/probe.tsx   |    66 +
+ .../create-recovery/browser/records.json           |    10 +
+ .../browser/reports/browser-rollup.json            |    36 +
+ .../2026-10-14/create-recovery/browser/server.mjs  |    12 +
+ .../browser/touch-dark-results.json                |  1214 ++
+ .../browser/touch-light-results.json               |  1214 ++
+ .../create-recovery/browser/unknown-cases.mjs      |    64 +
+ .../create-recovery/browser/visual-checks.mjs      |    14 +
+ .../create-recovery/browser/visual-review.md       |    45 +
+ .../create-recovery/browser/workbench-cases.mjs    |    53 +
+ .../2026-10-14/create-recovery/creation/README.md  |    84 +
+ .../creation/expanded-red-suite.tsx.txt            |   387 +
+ .../create-recovery/creation/expanded-red.txt      | 15780 +++++++++++++++++++
+ .../create-recovery/creation/final-green.txt       |   155 +
+ .../create-recovery/creation/first-integration.txt |  1555 ++
+ .../create-recovery/creation/initial-red.txt       |   175 +
+ .../creation/intermediate-green-101.txt            |   161 +
+ .../creation/intermediate-green-105.txt            |   165 +
+ .../creation/lint-legacy-baseline.json             |     1 +
+ .../create-recovery/creation/lint-legacy.json      |     1 +
+ .../creation/pre-notice-placement-green-107.txt    |   155 +
+ .../creation/stale-check-supplement.txt            |    87 +
+ .../creation/strict-combined-existing-warning.txt  |     7 +
+ .../create-recovery/creation/test-evaluation.json  |   188 +
+ .../creation/unsuccessful-receipt-red-hook.ts.txt  |   199 +
+ .../unsuccessful-receipt-red-suite.tsx.txt         |   488 +
+ .../creation/unsuccessful-receipt-red.txt          |  1228 ++
+ .../create-recovery/regression-test-files.json     |    80 +
+ .../create-recovery/release-broadRegression.txt    |   927 ++
+ .../create-recovery/release-buildFinal.txt         |    23 +
+ .../release-buildPostIntegration.txt               |    23 +
+ .../2026-10-14/create-recovery/release-checks.json |   253 +
+ .../create-recovery/release-compilerBefore.txt     |    19 +
+ .../release-compilerIntermediate.txt               |    11 +
+ .../release-compilerPostIntegration.txt            |     7 +
+ .../release-compilerPreIntegrationFinal.txt        |     6 +
+ .../create-recovery/release-uiPostIntegration.txt  |   138 +
+ .../create-recovery/release-warningRatchet.txt     |     9 +
+ .../release-warningRatchetPostIntegration.txt      |     5 +
+ .../2026-10-14/create-recovery/workbench/README.md |    71 +
+ .../workbench/after-notice-host.txt                |    27 +
+ .../2026-10-14/create-recovery/workbench/after.txt |    26 +
+ .../create-recovery/workbench/before.txt           |  1674 ++
+ .../create-recovery/workbench/compiler-before.txt  |    15 +
+ .../workbench/intermediate-edge-before.txt         |   376 +
+ .../workbench/legacy-refresh-all-after.txt         |    12 +
+ .../workbench/legacy-refresh-all-before.txt        |    26 +
+ .../workbench/legacy-refresh-all-lint-before.json  |     1 +
+ .../workbench/legacy-refresh-all-lint.json         |     1 +
+ .../create-recovery/workbench/lint-after.json      |     1 +
+ .../create-recovery/workbench/lint-before.json     |     1 +
+ .../workbench/notice-host-before.txt               |   409 +
+ .../workbench/related-regressions.txt              |  1349 ++
+ .../workbench/typed-fixture-after.txt              |    27 +
+ .../workbench/typed-fixture-lint.json              |     1 +
+ .../create-recovery/workbench/verification.json    |   179 +
+ docs/getting-started/CODESPACE_AGENT_PLAYBOOK.md   |    33 +-
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |   231 +
+ 206 files changed, 42193 insertions(+), 159 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/useAuthoringCreation.ts
+ create mode 100644 docs/design/AUTHORING_CREATE_RECOVERY_2026-10-14.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-fixture-import-proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-fixture-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/browser-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/desktop-dark-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/desktop-light-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/touch-dark-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/touch-light-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/touch-light-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/candidate-empty-assert/touch-light-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-held-document-held-project.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-held-document-held-project.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-document-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-document-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-document-exact-document-handoff.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-document-exact-document-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-section-exact-created-section.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-native-section-exact-created-section.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-document-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-dark-unknown-section-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-held-document-held-project.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-held-document-held-project.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-document-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-document-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-document-exact-document-handoff.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-document-exact-document-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-section-exact-created-section.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-native-section-exact-created-section.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-document-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/desktop-light-unknown-section-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-held-document-held-project.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-held-document-held-project.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-native-document-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-native-document-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-document-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-document-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-document-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-document-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-section-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-section-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-section-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/diagnostic-touch-light-unknown-section-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-held-document-held-project.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-held-document-held-project.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-document-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-document-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-document-exact-document-handoff.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-document-exact-document-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-section-exact-created-section.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-native-section-exact-created-section.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-document-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-dark-unknown-section-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-held-document-held-project.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-held-document-held-project.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-document-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-document-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-document-exact-document-handoff.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-document-exact-document-handoff.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-section-created-leave-held.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-section-created-leave-held.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-section-exact-created-section.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-native-section-exact-created-section.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-document-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-failed-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-failed-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-pending.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-pending.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-successful-scoped-read.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-successful-scoped-read.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-unconfirmed.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/captures/touch-light-unknown-section-unconfirmed.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/desktop-dark-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/desktop-light-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/diagnostic-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/diagnostic-touch-light-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/import-proof.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/index.html
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/mock-api.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/records.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/reports/browser-rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/server.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/touch-dark-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/touch-light-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/visual-checks.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/visual-review.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/expanded-red-suite.tsx.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/expanded-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/final-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/first-integration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/initial-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/intermediate-green-101.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/intermediate-green-105.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/lint-legacy-baseline.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/lint-legacy.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/pre-notice-placement-green-107.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/stale-check-supplement.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/strict-combined-existing-warning.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/test-evaluation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/unsuccessful-receipt-red-hook.ts.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/unsuccessful-receipt-red-suite.tsx.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/creation/unsuccessful-receipt-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/regression-test-files.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-broadRegression.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-buildFinal.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-buildPostIntegration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-checks.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-compilerBefore.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-compilerIntermediate.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-compilerPostIntegration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-compilerPreIntegrationFinal.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-uiPostIntegration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-warningRatchet.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/release-warningRatchetPostIntegration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/after-notice-host.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/after.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/before.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/compiler-before.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/intermediate-edge-before.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/legacy-refresh-all-after.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/legacy-refresh-all-before.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/legacy-refresh-all-lint-before.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/legacy-refresh-all-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/lint-after.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/lint-before.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/notice-host-before.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/related-regressions.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/typed-fixture-after.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/typed-fixture-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/workbench/verification.json
+ create mode 100644 docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md

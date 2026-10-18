@@ -1,0 +1,111 @@
+# GREEN at 68ae6060d (2026-10-15T06:51:39Z): every client suite importing the Vault panels, useChatUpload or the intake formats, plus the archive, hook, signature and allowlist tests
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history loads, it is held, then sent after loading
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history failed, it is held through the retry and sent after recovery
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > an executed action is shown as a record — not a button, not a sample
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a non-signature governed command shows the reason-for-change sign-off
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a navigation chip that cannot say where it goes is a record, not a control
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip that cannot name its script is never a button
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip is inert when the shell gives no demo starter
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > never rewrites what the person typed, with Live Drive on
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the person's turn stays the person's > a user turn is shown as typed and grows no work record
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn the round limit cut short says so under it, with the rounds it ran
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn she ended herself claims no stop
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.csv bytes, scoped to the open project
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.xlsx bytes, scoped to the open project
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual resource.json bytes, scoped to the open project
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual define.xml bytes, scoped to the open project
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > POSTs the real File to /api/chat/upload, not just its name
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > names the uploaded file in the turn once it is ready, and sends it by id
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does NOT claim an attachment when the upload failed
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > refuses to send at all when only a failed upload is present
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does not send while an upload is still in flight
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip says how the file was read once it was
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip gives the failure reason rather than a bare filename
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > rejects an unsupported type without a network call
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > shows the panel with the live turn by default
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > renders a turn as every host does: her work, then the answer
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > counts her declared plan on the chip, and only that
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > adds no steer furniture to a turn that was never steered
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > adds no pre-mortem furniture to a turn that produced none
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > returns each file by its own name, typed by its extension, and its path in the archive
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > refuses a path that climbs out, an absolute path and an archive inside the archive; skips clutter
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > refuses an entry compressed like a bomb, without inflating it
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > stops inflating at the cap when a header understates the size, and refuses a size that does not match
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > refuses the whole archive, before inflating anything, over the count, total or archive size
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > expandArchive > says when the bytes are not an archive
+ ✓ client/src/concept2cure/hooks/__tests__/archive-intake.test.ts > entry names > judges the path as written
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff)
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container)
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell)
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case)
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .json name carrying a different declared binary type
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .xml name carrying a different declared binary type
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .tsv name carrying a different declared binary type
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / application/json
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / application/xml
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / text/xml
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.tsv / text/tab-separated-values
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / text/plain
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist
+ ✓ server/utils/__tests__/fileSignature.test.ts > SAS transport and Dataset-JSON NDJSON (2026-10-15) > checks an .xpt against the transport header, declared as its own type or as a browser sends it
+ ✓ server/utils/__tests__/fileSignature.test.ts > SAS transport and Dataset-JSON NDJSON (2026-10-15) > refuses an .xpt whose bytes are not a transport file, however it is declared
+ ✓ server/utils/__tests__/fileSignature.test.ts > SAS transport and Dataset-JSON NDJSON (2026-10-15) > admits application/octet-stream for .xpt only: any other name keeps its own binding
+ ✓ server/utils/__tests__/fileSignature.test.ts > SAS transport and Dataset-JSON NDJSON (2026-10-15) > checks an .ndjson as text
+ ✓ server/utils/__tests__/fileSignature.test.ts > the name bindings the browser declares from (shared/constants/upload-name-bindings.ts) > declares, for every name, a type that name admits
+ ✓ server/utils/__tests__/fileSignature.test.ts > the name bindings the browser declares from (shared/constants/upload-name-bindings.ts) > binds every byte-checked format the Data Room picker offers
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a viewer reads the document and its filing, and is offered no write
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a member is offered each control, and no view-only note
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > the Vault offers its write controls to the writing roles only > a session that carries no permissions is offered the controls; the server decides
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a viewer selects nothing and files nothing, and is told why
+ ✓ client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx > Data Room filing > a member selects and files
+ ✓ client/src/concept2cure/hooks/__tests__/useChatUpload.archive.test.tsx > a .zip in the Data Room > sends each file inside as its own upload, and refuses the rest by name
+ ✓ client/src/concept2cure/hooks/__tests__/useChatUpload.archive.test.tsx > a .zip in the Data Room > an archive it cannot open is one chip that says so, and nothing is sent
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.csv through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.tsv through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.xlsx through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows resource.json through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows define.xml through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows notes.md through the picker and client validation
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > preserves empty, unsupported, and 50 MB refusal boundaries
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > shares Vault picker candidates with its receiver while keeping limits and legacy truth explicit
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a body over the limit is 413 FILE_TOO_LARGE, naming the limit
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a type the filter refuses is 415 UNSUPPORTED_FILE_TYPE
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a second file where one is allowed is 400 UPLOAD_INVALID
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > an admitted file reaches the handler
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > extensionOf > extracts a lowercase extension
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > allows regulatory document types
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects executables/scripts even if MIME is spoofed to a document type
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects unknown types and extensionless files
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > honours a custom allowlist
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > makeUploadFileFilter > accepts an allowed file and rejects a blocked one
+ Test Files  173 passed (173)
+      Tests  1794 passed (1794)

@@ -1,0 +1,268 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > denies an unassigned same-organization member and viewer while allowing owner and explicit use members 15ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > retains public-project and pending-review access without admitting another organization 6ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses a writing creator who has no actual access to the private project 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > permits scheduling by an explicit project member and delivery to an authorized viewer 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > honors project-membership revocation on the next delivery validation 7ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses an unauthorized same-organization recipient before computing or persisting any output 6ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > requires access to every private project referenced by a program-group schedule 5ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps genuine organization registers governed by their existing organization policy 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > resolves owned project, document, submission, group and account scopes 14ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > keeps organization mandatory when no workspace filter is selected 9ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > binds a supplied workspace separately from the current organization on every scope 7ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt project scope 21 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope foreign 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope foreign 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 2 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 999 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt document scope broken 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt submission scope broken 1ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt program scope 3 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses foreign, unknown or corrupt account scope 8 0ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses a same-organization document from another client and a foreign workspace 2ms
+ ✓ server/services/report-os/__tests__/scope-ownership.test.ts > canonical reporting scope ownership in PostgreSQL > refuses unverified study scope and mismatched internal project proof 0ms
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Database connection test failed { error: "Cannot read properties of undefined (reading 'on')" }
+
+stdout | server/services/report-os/__tests__/run-history.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/report-os/__tests__/run-history.test.ts
+[database] Initial connection test failed: Cannot read properties of undefined (reading 'on')
+
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > applies the canonical private-project policy before count and pagination 20ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > uses current sharing membership and pending review assignments with the existing manager policy 17ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history > keeps historical program access bound to recorded members when current membership changes 29ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > searches and exposes the regional engine market metadata 9ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > finds a canonical run ID only inside the authenticated organization 4ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > searches all tenant records before paging, including a match older than the latest 100 8ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > keeps search wildcards literal and searches joined catalog labels 22ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > filters scope/status/type/workspace before totals and preserves organization isolation 11ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > sorts the full set before paging with deterministic ties and nulls last 11ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > returns an accurate total even when the requested page is empty 4ms
+ ✓ server/services/report-os/__tests__/run-history.test.ts > saved report history query semantics > rejects invalid tenant and pagination without issuing a query 2ms
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T22:46:22.929Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T22:46:23.313Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:46:23.313Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T22:46:23.314Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/report-os/program-groups/1
+{
+  "timestamp": "2026-10-13T22:46:23.924Z",
+  "level": "error",
+  "message": "[report-os] updating program groups failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups/1/snapshots
+{
+  "timestamp": "2026-10-13T22:46:23.927Z",
+  "level": "error",
+  "message": "[report-os] saving snapshots failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.select is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/program-groups is refused by the write gate 34ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > patch /api/report-os/program-groups/1 is refused by the write gate 5ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/program-groups/1/snapshots is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/runs is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/runs/1/finalize is refused by the write gate 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/bundles is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/report-os/deliveries is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/predictions is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/predictions/run is refused by the write gate 5ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > post /api/insights/subscriptions is refused by the write gate 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > patch /api/insights/subscriptions/1 is refused by the write gate 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer cannot write to reporting > never reaches the subscription service 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups 4ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/report-os/program-groups/1 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups/1/snapshots 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/runs 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/bundles 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/deliveries 2ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/predictions 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/predictions/run 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/insights/subscriptions 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/insights/subscriptions/1 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer can still read reporting > GET /api/report-os/portfolio/org answers 3ms
+ ✓ server/routes/__tests__/report-os-viewer-writes.test.ts > a viewer can still read reporting > GET /api/insights/subscriptions answers 2ms
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T22:46:25.067Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T22:46:25.241Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:46:25.242Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-13T22:46:25.242Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > does not show a multi-project delivery after access to one carried project is lost 26ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > keeps a delivery visible only when all carried scopes still exist and are permitted 6ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > omits a delivery whose saved target run no longer exists 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":) 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":{"deliveryId":"22222222-2222-4222-8222-222222222222","organizationId":99,"projectId":11,"bundleId":"11111111-1111-4111-8111-111111111111","channel":"external_pdf_export","recipients":["partner"],"subject":"Restricted review pack","message":"Private project12 finding","status":"exported","createdAt":"2026-10-13T12:00:00Z"}}) 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > omits every group whose complete member set is inaccessible, while showing an authorized group 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses changing an inaccessible group before any membership can be replaced 10ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses adding an inaccessible project to a new or accessible existing group 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > checks historical snapshot project sets rather than changed live group membership 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses invalid saved snapshot membership instead of implying an empty register 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses taking a snapshot of an inaccessible live group 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > derives snapshot membership from the owned group despite a forged public-only binding in the request 4ms
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T22:46:26.518Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T22:46:26.687Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:46:26.688Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts
+{
+  "timestamp": "2026-10-13T22:46:26.688Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T22:46:26.830Z",
+  "level": "error",
+  "message": "[report-os] saving program groups failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T22:46:26.833Z",
+  "level": "error",
+  "message": "[report-os] saving program groups failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T22:46:26.838Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none
+{
+  "timestamp": "2026-10-13T22:46:26.841Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "read past the workspace check",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups refuses another organisation's workspace before reading or writing anything 26ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs refuses another organisation's workspace before reading or writing anything 5ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/program-groups goes on past the check with the organisation's own workspace, or none 8ms
+ ✓ server/routes/__tests__/report-os-workspace-claims.test.ts > report-os writes and the client workspace they name > POST /api/report-os/runs goes on past the check with the organisation's own workspace, or none 7ms
+
+ Test Files  6 passed (6)
+      Tests  73 passed (73)
+   Start at  22:46:09
+   Duration  17.28s (transform 2.43s, setup 153ms, import 6.72s, tests 9.40s, environment 1ms)

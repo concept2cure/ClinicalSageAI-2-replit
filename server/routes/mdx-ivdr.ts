@@ -39,6 +39,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { programInOrganization } from '../services/c2c/program-access';
+import { IVDR_CLASSES } from '../../shared/regulatory/device-class.js';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
@@ -51,7 +52,7 @@ function getOrgId(req: Request): number | null {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const IVDR_CLASS = ['A', 'B', 'C', 'D'] as const;
+const IVDR_CLASS = IVDR_CLASSES;
 const IVDR_RULE = ['1', '2', '3', '4', '5', '6', '7'] as const;
 
 async function ownsArtifact(artifactId: number | null | undefined, orgId: number): Promise<boolean> {

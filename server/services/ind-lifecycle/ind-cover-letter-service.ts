@@ -25,6 +25,9 @@ export type IndSubmissionType =
   | 'annual_report'
   | 'safety_report';
 
+/** The FDA center the IND is filed with: drugs (CDER) or biologics (CBER). */
+export type FdaCenter = 'CDER' | 'CBER';
+
 export interface CoverLetterInput {
   sponsorName: string;
   sponsorAddress?: string;
@@ -32,7 +35,14 @@ export interface CoverLetterInput {
   indication?: string;
   /** IND number if assigned; absent/null for an original IND. */
   indNumber?: string | null;
-  submissionType: IndSubmissionType;
+  /** Absent (or not an IndSubmissionType) → a gap and a placeholder, never a guess. */
+  submissionType?: IndSubmissionType | null;
+  /**
+   * The center the letter is addressed to. Required: absent → a gap and the
+   * "[FDA Center]" placeholder. (2026-10-15: every letter said CDER, so a
+   * CBER IND's letter went to the wrong center with no gap.)
+   */
+  fdaCenter?: FdaCenter;
   /**
    * For a protocol amendment: the 21 CFR 312.30(d) title(s) the submission
    * must be prominently identified with ("Protocol Amendment: New Protocol",
@@ -60,7 +70,8 @@ export interface CoverLetterInput {
 export interface CoverLetterModel {
   reportType: 'IND_COVER_LETTER';
   indNumber: string | null;
-  submissionType: IndSubmissionType;
+  /** Null when no valid submission type was stated (a gap). */
+  submissionType: IndSubmissionType | null;
   /** The fully formatted letter body (ready to render to PDF). */
   body: string;
   /** Required fields that were missing (the letter still renders with placeholders). */
@@ -76,6 +87,13 @@ const SUBMISSION_LABEL: Record<IndSubmissionType, string> = {
   annual_report: 'Annual Report',
   safety_report: 'IND Safety Report',
 };
+
+const FDA_CENTER_NAME: Record<FdaCenter, string> = {
+  CDER: 'Center for Drug Evaluation and Research',
+  CBER: 'Center for Biologics Evaluation and Research',
+};
+
+const hasOwn = (o: object, k: unknown): boolean => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
 
 const DEFAULT_PURPOSE: Record<IndSubmissionType, string> = {
   original:
@@ -125,8 +143,25 @@ const PROTOCOL_AMENDMENT_TITLES = new Set([
   'Protocol Amendment: New Investigator',
 ]);
 
-function submissionLabel(input: CoverLetterInput, gaps: string[]): string {
-  if (input.submissionType !== 'protocol_amendment') return SUBMISSION_LABEL[input.submissionType];
+/**
+ * The addressee center and the submission type, each as stated or a gap.
+ * 2026-10-15: the center was always CDER (a CBER IND's letter went to the
+ * wrong center, gap-free), and a missing type printed "undefined".
+ */
+function statedCenterAndType(
+  input: CoverLetterInput,
+  gaps: string[],
+): { centerName: string | null; type: IndSubmissionType | null } {
+  const center = typeof input.fdaCenter === 'string' ? input.fdaCenter.trim().toUpperCase() : '';
+  const centerName = hasOwn(FDA_CENTER_NAME, center) ? FDA_CENTER_NAME[center as FdaCenter] : null;
+  if (!centerName) gaps.push('fdaCenter');
+  const type = hasOwn(SUBMISSION_LABEL, input.submissionType) ? (input.submissionType as IndSubmissionType) : null;
+  if (!type) gaps.push('submissionType');
+  return { centerName, type };
+}
+
+function submissionLabel(input: CoverLetterInput, type: IndSubmissionType, gaps: string[]): string {
+  if (type !== 'protocol_amendment') return SUBMISSION_LABEL[type];
   const titles = (input.protocolAmendmentTitles ?? []).filter((t) => PROTOCOL_AMENDMENT_TITLES.has(t));
   if (titles.length === 0) {
     gaps.push(
@@ -149,14 +184,17 @@ export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
   const drugName = req(input.drugName, 'drugName', '[Drug Name]');
   const signatoryName = req(input.signatoryName, 'signatoryName', '[Authorized Representative]');
 
-  const label = submissionLabel(input, gaps);
+  const { centerName, type } = statedCenterAndType(input, gaps);
+
+  const label = type ? submissionLabel(input, type, gaps) : '[Submission Type]';
   const indLine = input.indNumber
     ? `IND ${input.indNumber} — ${drugName}`
     : `${label} — ${drugName}`;
   const indicationPart = input.indication ? ` for ${input.indication.trim()}` : '';
   const serialPart = input.serialNumber ? `, Serial Number ${input.serialNumber}` : '';
 
-  const purpose = (input.purpose && input.purpose.trim()) || DEFAULT_PURPOSE[input.submissionType];
+  const purpose =
+    (input.purpose && input.purpose.trim()) || (type ? DEFAULT_PURPOSE[type] : '[Purpose of the submission]');
 
   const contents =
     input.contents && input.contents.length > 0
@@ -174,7 +212,7 @@ export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
     fmtDate(input.date),
     '',
     'Food and Drug Administration',
-    'Center for Drug Evaluation and Research',
+    centerName ?? '[FDA Center]',
     input.fdaDivision?.trim() || '[Review Division]',
     '',
     `RE: ${indLine}${indicationPart}`,
@@ -200,7 +238,7 @@ export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
   return {
     reportType: 'IND_COVER_LETTER',
     indNumber: input.indNumber ?? null,
-    submissionType: input.submissionType,
+    submissionType: type,
     body,
     gaps,
   };

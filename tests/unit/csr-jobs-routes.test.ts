@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
+vi.mock('../../server/services/csr/project-scope', async importOriginal => ({ ...(await importOriginal<typeof import('../../server/services/csr/project-scope')>()), requireCsrJobAccess: async () => true }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOISTED MOCK STATE (shared by mocks + assertions)
@@ -186,6 +187,14 @@ beforeEach(() => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('POST /api/csr/jobs', () => {
+  it('refuses an explicitly malformed project instead of enqueueing an organization-wide build', async () => {
+    for (const projectId of [0, -1, 1.5, 'invalid', null]) {
+      const res = await request(makeApp({ organizationId: 100, userId: 7 })).post('/api/csr/jobs').send({ projectId, studyInfo: { protocolNumber: 'STUDY' } });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('CSR_SCOPE_INVALID');
+    }
+    expect(hoisted.launchCSRBuildAsync).not.toHaveBeenCalled();
+  });
   it('returns 202 with { jobId, status: "queued" } when authenticated', async () => {
     hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 42, status: 'queued' });
 

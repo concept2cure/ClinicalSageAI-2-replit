@@ -135,6 +135,8 @@ export interface ExportManifest {
    * on exports sealed before that change.
    */
   exportRecord?: { auditEventId: number };
+  /** A format conversion retains this verified source snapshot identity. */
+  sourceExport?: { exportId: string; dataHash: string; format: 'json'; exportedAt: string; exportRecord?: { auditEventId: number } };
   /**
    * How many rows each store contributed. The export used to read audit_events
    * only, so no event the launch apps write to audit_logs (Vault ingest, filing,
@@ -567,17 +569,21 @@ export function sanitizeCsvValue(val: unknown): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
-function formatCSV(rows: any[]): string {
+export function formatAuditExportCsv(rows: Record<string, unknown>[]): string {
   const headers = [
     'source', 'id', 'timestamp', 'organization_id', 'event_type', 'entity_type', 'entity_id',
     'user_id', 'user_name', 'user_role', 'ip_address', 'reason',
     'regulatory_significant', 'gxp_relevant',
     'record_hash', 'previous_hash', 'sequence_number',
-    'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target',
+    'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target', 'comments', 'created_at',
   ];
 
   const csvRows = rows.map(row =>
-    headers.map(h => sanitizeCsvValue(row[h])).join(',')
+    headers.map(h => {
+      const value = row[h];
+      const text = value instanceof Date ? value.toISOString() : value != null && typeof value === 'object' ? JSON.stringify(value) : value;
+      return sanitizeCsvValue(text);
+    }).join(',')
   );
 
   return [headers.join(','), ...csvRows].join('\n');
@@ -615,7 +621,7 @@ export async function generateSignedAuditExport(
   const { rows, truncated, sources } = await queryAuditData(pool, request);
 
   // 2. Format
-  const data = request.format === 'csv' ? formatCSV(rows) : formatJSON(rows);
+  const data = request.format === 'csv' ? formatAuditExportCsv(rows) : formatJSON(rows);
   const dataHash = sha256Hex(data);
 
   // 3. Snapshot chain integrity at time of export

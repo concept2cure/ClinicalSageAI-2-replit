@@ -1,0 +1,6 @@
+{
+  "format": "Raw UTF-8 tool log encoded as JSON; bytes retained through text plus SHA-256.",
+  "sha256": "b7be16c2bf4ebbd83f9283c50469cbceb324b19339738e8a2bf131e726b24896",
+  "bytes": 262,
+  "text": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n"
+}

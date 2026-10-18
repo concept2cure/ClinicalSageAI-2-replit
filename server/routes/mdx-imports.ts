@@ -20,7 +20,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { detectArchive } from '../services/legacy-importer/detector';
+import { detectArchive, type DetectedFile } from '../services/legacy-importer/detector';
 /* WO-16C #133. The two audit writes in this router — import approve and finding
    resolve — were `void auditService.logAction({…})`, which discards the
    `AuditWriteResult` that call resolves, so the response was byte-identical
@@ -73,6 +73,27 @@ const createBody = z.object({
   programId:        z.string().regex(UUID_RE).optional().nullable(),
 });
 
+/* One import_job_files row per detected file, stored with the status the
+   detector gives it. mapping_confidence is 1 only where the archive's backbone
+   declares the placement and NULL otherwise: a filename pattern is a suggestion
+   with no measured confidence, and its rule id goes in metadata.
+   The one row builder for both import paths. 2026-10-15: AnA's
+   start_legacy_import kept its own INSERT and status rule, and stored a
+   filename suggestion as 'pending' at mapping_confidence 0.00 with no rule id. */
+export const IMPORT_FILE_INSERT_SQL = `INSERT INTO import_job_files (
+           import_job_id, organization_id, relative_path, file_name, size_bytes,
+           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
+           mapped_artifact_kind, mapping_confidence, mapping_source, status, metadata
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb)`;
+export function importFileParams(jobId: number, orgId: number, f: DetectedFile): unknown[] {
+  return [
+    jobId, orgId, f.relativePath, f.fileName, f.sizeBytes, f.sha256,
+    f.detectedKind, f.mappedCtdSection, f.mappedSectionKey, f.mappedArtifactKind,
+    f.mappingSource === 'backbone_xml' ? 1 : null, f.mappingSource, f.reviewStatus,
+    JSON.stringify(f.mappingRuleId ? { mappingRuleId: f.mappingRuleId } : {}),
+  ];
+}
+
 router.post('/imports', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -116,25 +137,15 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
   /* Run detection. */
   try {
     const detected = await detectArchive(sourcePath);
-    const mapped = detected.files.filter((f) => f.mappingConfidence >= 0.5).length;
-    const skipped = detected.files.filter((f) => f.detectedKind !== 'leaf').length;
+    /* 2026-10-15: status was `CASE WHEN $7 = 'leaf' AND $11 >= 0.5 THEN 'mapped'`
+       over per-regex weights the detector called confidences, so a file named
+       protocol_deviation_log.xlsx was stored 'mapped' to 5.3.5.1 and approve
+       imported it; mapped_count also counted the backbone XML and stylesheets. */
+    const mapped = detected.files.filter((f) => f.reviewStatus === 'mapped').length;
+    const skipped = detected.files.filter((f) => f.reviewStatus === 'skipped').length;
     /* Persist files. */
     for (const f of detected.files) {
-      await pool.query(
-        `INSERT INTO import_job_files (
-           import_job_id, organization_id, relative_path, file_name, size_bytes,
-           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
-           mapped_artifact_kind, mapping_confidence, mapping_source, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-           CASE WHEN $7 = 'leaf' AND $11 >= 0.5 THEN 'mapped'
-                WHEN $7 = 'leaf'                THEN 'pending'
-                ELSE 'skipped' END)`,
-        [
-          jobId, orgId, f.relativePath, f.fileName, f.sizeBytes, f.sha256,
-          f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
-          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource,
-        ],
-      );
+      await pool.query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, orgId, f));
     }
     /* Persist findings. */
     for (const fnd of detected.findings) {
@@ -277,69 +288,131 @@ router.patch('/imports/:id/files/:fileId', requireEditorAccess, async (req: Requ
   } catch (err) { return serverError(res, log, 'patch-file', err); }
 });
 
-/* ─── POST /imports/:id/approve — materialize artifacts ───── */
+/* ─── Approving an import — the one implementation ───────────
+   POST /imports/:id/approve and AnA's approve_import both call this. Until
+   2026-10-17 (document store consolidation step 3) the AnA tool kept its own
+   copy of the loop: no transaction, no lock on the job, no check that the
+   project belongs to the job's organisation, and no audit row.
 
-router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  const userId = getUserId(req);
-  if (orgId === null) return orgRequired(res);
-  if (userId === null) return clientError(res, 401, 'User context required');
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+   Each file whose mapping a person confirmed ('mapped') becomes one
+   concept2cure_artifacts 'imported' row. That row is the import's placement
+   record, not a copy of an upload: its content is the empty string (the bytes
+   stay in the archive), it carries the file's sha256 and CTD section, and it is
+   read by import_job_files.artifact_id, the Module 3 build board (ctd_section)
+   and the project's artifact registry. No data-room source exists for an
+   archive file, so there is no second record of it.
 
-  const projectId = typeof req.body?.projectId === 'number' ? req.body.projectId : null;
-  if (projectId === null) {
-    return clientError(res, 422, 'projectId (number) is required so artifacts can be attached');
+   The metadata parameters are cast: jsonb_build_object takes "any", and an
+   untyped bind parameter there is refused ("could not determine data type of
+   parameter $8"), so every file failed and no approval ever materialized one.
+   Each file runs under a SAVEPOINT so one failure is recorded on that file
+   and does not abort the approval. */
+export type ApproveImportOutcome =
+  | { kind: 'job_not_found' }
+  | { kind: 'not_ready'; status: string }
+  | { kind: 'project_not_found' }
+  | { kind: 'approved'; created: number; auditTrail: Awaited<ReturnType<typeof recordAuditRow>> };
+
+interface ImportApproveClient { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }>; release: () => void }
+
+interface ImportFileRow {
+  id: number; relative_path: string; file_name: string;
+  mapped_ctd_section: string | null; mapped_artifact_kind: string | null; sha256: string | null;
+}
+
+/** One confirmed file → one 'imported' artifact, under its own SAVEPOINT. */
+async function materializeImportFile(
+  client: ImportApproveClient,
+  input: { orgId: number; userId: number; jobId: number; projectId: number; backendService: string; file: ImportFileRow },
+): Promise<boolean> {
+  const { orgId, userId, jobId: id, projectId, file: f } = input;
+  await client.query('SAVEPOINT import_file');
+  try {
+    const artifactRes = await client.query(
+      `INSERT INTO concept2cure_artifacts (
+         artifact_id, project_id, organization_id, type, category, title,
+         content, content_hash, ctd_section, status, created_by_id, metadata
+       ) VALUES (
+         $1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
+         jsonb_build_object('importJobId', $8::int, 'sourcePath', $9::text, 'artifactKind', $10::text)
+       )
+       RETURNING id`,
+      [
+        `import-${id}-${f.id}`, projectId, orgId,
+        f.mapped_artifact_kind ? f.mapped_artifact_kind.replace(/_/g, ' ') + ' — ' + f.file_name : f.file_name,
+        f.sha256, f.mapped_ctd_section, userId,
+        id, f.relative_path, f.mapped_artifact_kind,
+      ],
+    );
+    await client.query(
+      `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
+      [artifactRes.rows[0].id, f.id],
+    );
+    await client.query('RELEASE SAVEPOINT import_file');
+    // Uniform provenance: an imported file is a 'source_input' event, in the
+    // same transaction. Best-effort via its own SAVEPOINT.
+    await recordArtifactProvenanceBestEffort(client, {
+      artifactId: artifactRes.rows[0].id,
+      organizationId: orgId,
+      eventType: 'source_input',
+      eventAction: 'import',
+      actorId: userId,
+      details: { importJobId: id, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
+      backendService: input.backendService,
+    });
+    return true;
+  } catch (innerErr: unknown) {
+    await client.query('ROLLBACK TO SAVEPOINT import_file');
+    await client.query(
+      `UPDATE import_job_files SET status = 'error', error_message = $1 WHERE id = $2`,
+      [innerErr instanceof Error ? innerErr.message : String(innerErr), f.id],
+    );
+    return false;
   }
+}
 
-  const client = await pool.connect();
+export async function approveImportJob(
+  db: { connect: () => Promise<ImportApproveClient> },
+  input: { orgId: number; userId: number; jobId: number; projectId: number; backendService: string },
+): Promise<ApproveImportOutcome> {
+  const { orgId, userId, jobId: id, projectId } = input;
+  const client = await db.connect();
   try {
     await client.query('BEGIN');
-    const own = await client.query<{ status: string }>(
+    const own = await client.query(
       `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
       [id, orgId],
     );
     if (own.rows.length === 0) {
       await client.query('ROLLBACK');
-      return notFoundInTenant(res, 'Import job');
+      return { kind: 'job_not_found' };
     }
     if (own.rows[0].status !== 'ready_for_review') {
       await client.query('ROLLBACK');
-      return clientError(res, 409, `Import is not in ready_for_review state (current: ${own.rows[0].status})`);
+      return { kind: 'not_ready', status: String(own.rows[0].status) };
     }
 
     /* The IMPORT JOB was proved to be this tenant's above; `projectId` was not,
-       and it comes straight from the request body. A caller could approve their
-       own import into ANOTHER TENANT'S project lineage — the artifacts, and the
-       provenance and audit rows that follow them, land under a project the
-       caller does not own.
- 
-       `projects` is the right table: concept2cure_artifacts.project_id carries a
-       FOREIGN KEY to projects.id, so this is the tenant guard and the guarantee
-       that placement cannot fail at the constraint. Same check, same reasoning
-       and same 404 shape as cerv2-export-routes.ts, which closed this for
-       itself — "not yours" must not be distinguishable from "does not exist". */
+       and it comes from the caller. A caller could approve their own import
+       into ANOTHER TENANT'S project lineage — the artifacts, and the provenance
+       and audit rows that follow them, land under a project the caller does
+       not own. `projects` is the right table: concept2cure_artifacts.project_id
+       carries a FOREIGN KEY to projects.id. "Not yours" is indistinguishable
+       from "does not exist". */
     const ownedProject = await client.query(
       `SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
       [projectId, orgId],
     );
     if (ownedProject.rows.length === 0) {
       await client.query('ROLLBACK');
-      return notFoundInTenant(res, 'Project');
+      return { kind: 'project_not_found' };
     }
     await client.query(
       `UPDATE import_jobs SET status = 'approving', updated_at = NOW() WHERE id = $1`,
       [id],
     );
 
-    /* For every file with status='mapped', insert a concept2cure_artifact
-       row pointing at the imported leaf. Tenant + project on the new row.
-       Artifact title comes from the mapped artifact_kind or file name. */
-    const files = await client.query<{
-      id: number; relative_path: string; file_name: string;
-      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
-      sha256: string | null;
-    }>(
+    const files = await client.query(
       `SELECT id, relative_path, file_name, mapped_ctd_section,
               mapped_artifact_kind, sha256
          FROM import_job_files
@@ -347,47 +420,8 @@ router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, re
       [id],
     );
     let created = 0;
-    for (const f of files.rows) {
-      try {
-        const artifactRes = await client.query<{ id: number }>(
-          `INSERT INTO concept2cure_artifacts (
-             artifact_id, project_id, organization_id, type, category, title,
-             content, content_hash, ctd_section, status, created_by_id, metadata
-           ) VALUES (
-             $1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
-             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10)
-           )
-           RETURNING id`,
-          [
-            `import-${id}-${f.id}`, projectId, orgId,
-            f.mapped_artifact_kind ? f.mapped_artifact_kind.replace(/_/g, ' ') + ' — ' + f.file_name : f.file_name,
-            f.sha256, f.mapped_ctd_section, userId,
-            id, f.relative_path, f.mapped_artifact_kind,
-          ],
-        );
-        await client.query(
-          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
-          [artifactRes.rows[0].id, f.id],
-        );
-        created++;
-        // Uniform provenance: an imported file is a 'source_input' event, in the
-        // same transaction. Best-effort via SAVEPOINT so a provenance failure
-        // rolls back only itself and never poisons the import transaction.
-        await recordArtifactProvenanceBestEffort(client, {
-          artifactId: artifactRes.rows[0].id,
-          organizationId: orgId,
-          eventType: 'source_input',
-          eventAction: 'import',
-          actorId: userId,
-          details: { importJobId: id, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
-          backendService: 'routes/mdx-imports',
-        });
-      } catch (innerErr: unknown) {
-        await client.query(
-          `UPDATE import_job_files SET status = 'error', error_message = $1 WHERE id = $2`,
-          [innerErr instanceof Error ? innerErr.message : String(innerErr), f.id],
-        );
-      }
+    for (const f of files.rows as ImportFileRow[]) {
+      if (await materializeImportFile(client, { ...input, file: f })) created++;
     }
 
     await client.query(
@@ -401,27 +435,47 @@ router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, re
       [id, userId, created],
     );
     await client.query('COMMIT');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The COMMIT on the line
-       above has already landed the whole approval — the job at 'completed' with
-       its approver and `artifacts_created`, the `concept2cure_artifacts` rows and
-       the imported file statuses — so this is a log beside a completed action and
-       is never reverted here. What the caller can now read is `meta.auditTrail`:
-       whether the §11.10(e) record of who approved this import, and of how many
-       artifacts it materialized, was written. This handler writes one audit row,
-       so the unqualified key names it unambiguously. */
+    /* WO-16C #133. The COMMIT above has already landed the whole approval, so
+       this is a log beside a completed action and is never reverted here. The
+       caller can read whether the §11.10(e) record of who approved this import,
+       and how many artifacts it materialized, was written. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.onboarding.import.approve',
+      tenantId: orgId, userId, action: 'mdx.onboarding.import.approve',
       resourceType: 'import_job', resourceId: id, details: { artifactsCreated: created },
     });
-    const { rows } = await pool.query(
-      `SELECT * FROM import_jobs WHERE id = $1`, [id],
-    );
-    return ok(res, rows[0], { auditTrail });
+    return { kind: 'approved', created, auditTrail };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
-    return serverError(res, log, 'approve', err);
+    throw err;
   } finally {
     client.release();
+  }
+}
+
+/* ─── POST /imports/:id/approve — materialize artifacts ───── */
+
+router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const projectId = typeof req.body?.projectId === 'number' ? req.body.projectId : null;
+  if (projectId === null) {
+    return clientError(res, 422, 'projectId (number) is required so artifacts can be attached');
+  }
+  try {
+    const outcome = await approveImportJob(pool, { orgId, userId, jobId: id, projectId, backendService: 'routes/mdx-imports' });
+    if (outcome.kind === 'job_not_found') return notFoundInTenant(res, 'Import job');
+    if (outcome.kind === 'project_not_found') return notFoundInTenant(res, 'Project');
+    if (outcome.kind === 'not_ready') {
+      return clientError(res, 409, `Import is not in ready_for_review state (current: ${outcome.status})`);
+    }
+    const { rows } = await pool.query(`SELECT * FROM import_jobs WHERE id = $1`, [id]);
+    return ok(res, rows[0], { auditTrail: outcome.auditTrail });
+  } catch (err) {
+    return serverError(res, log, 'approve', err);
   }
 });
 
@@ -502,7 +556,9 @@ router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
       legacy: (r.file_name as string) ?? '',
       mapped: (r.mapped_artifact_kind as string) ?? (r.artifact_id != null ? String(r.artifact_id) : ''),
       section: (r.mapped_ctd_section as string) ?? '',
-      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : 0,
+      /* 2026-10-15: was `: 0`, which reported a placement nobody measured (a
+         filename suggestion or an unmatched file, stored NULL) at confidence 0. */
+      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : null,
       state: (r.status as string) ?? 'pending',
       issues: 0,
     }));
@@ -522,7 +578,10 @@ router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
       note: (r.message as string) ?? '',
     }));
 
-    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.mapped !== '').length;
+    /* 2026-10-15: was `a.state === 'mapped' || a.mapped !== ''`, which counted every
+       row with an artifact kind — unconfirmed suggestions, the attachment bucket,
+       the md5 index and stylesheets — as mapped. */
+    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.state === 'imported').length;
     const kpis = [
       { label: 'Artifacts imported', metric: String(artifacts.length), meta: `${mapped} mapped`, tone: 'ok' },
       { label: 'Open findings', metric: String(validations.filter((v) => v.severity !== 'ok').length), meta: '', tone: 'warn' },

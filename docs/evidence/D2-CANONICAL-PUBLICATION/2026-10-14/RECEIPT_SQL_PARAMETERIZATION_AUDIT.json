@@ -1,0 +1,176 @@
+{
+  "scope": "Read-only static SQL parameterization audit of two receipt modules; no app/baseline/gate edits and no database execution.",
+  "sourceSha256": {
+    "server/services/ana/source-admission-receipt-history.ts": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+    "server/services/ana/source-admission-receipt-store.ts": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+    "shared/ana/source-admission-receipts.ts": "62710ab0555de812b41c60f2ec31b705508f9358bbce75d6a7bfde3766de6391",
+    "shared/canonical-json.ts": "06ac6544f1422fead32f85b6ead22b3efe4571cf046d335006440dca7366a4c4",
+    "server/services/ana/source-read-scope.ts": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2",
+    "server/services/vault/document-catalog-actor-access.ts": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d",
+    "server/services/ana/source-read-receipt.ts": "60fbe6d691b9449242b0dffb9f3f907a74aed7c853247c1d0e6b75e888a3438d",
+    "scripts/ci/check-sql-interpolation.mjs": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85",
+    "scripts/ci/check-sql-interpolation.selftest.mjs": "8fa622174fa1c8ff110f086fe8b2a33ddb5119092fb15c980ad6a26027c7567b",
+    "scripts/ci/lib/strip-comments.mjs": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1"
+  },
+  "finding": "No external value or external identifier enters SQL text at reviewed query/construction sites; all runtime values use bind arrays.",
+  "gateCounts": {
+    "server/services/ana/source-admission-receipt-history.ts": 1,
+    "server/services/ana/source-admission-receipt-store.ts": 1
+  },
+  "gateKnownGapInspected": "Variable INSERT with two literal COLUMNS expressions passed to q.query(INSERT,values).",
+  "fixedColumnList": {
+    "path": "server/services/ana/source-admission-receipt-store.ts",
+    "declarationLine": 20,
+    "immutableBinding": "unexported module-local const initialized only from no-substitution template literal",
+    "identifiers": [
+      "id",
+      "organization_id",
+      "receipt_version",
+      "checkpoint",
+      "actor_user_id",
+      "admitted_role",
+      "program_id",
+      "document_id",
+      "original_sha256",
+      "extraction_sha256",
+      "total_chars",
+      "ranges",
+      "payload_sha256",
+      "tool_use_id",
+      "thread_id",
+      "receipt_sha256"
+    ],
+    "sourceOrConfigurationDependencies": []
+  },
+  "sites": [
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "line": 92,
+      "kind": "counted direct query template",
+      "expressions": [
+        "COLUMNS"
+      ],
+      "provenance": "Fixed module-local column identifiers; no caller/configuration/row component.",
+      "boundValues": {
+        "$1": "descriptor.receiptId",
+        "$2": "descriptor.organizationId",
+        "$3": "descriptor.actorId"
+      }
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "line": 23,
+      "callLine": 84,
+      "kind": "uncounted constant INSERT template passed by identifier",
+      "expressions": [
+        "COLUMNS",
+        "COLUMNS"
+      ],
+      "provenance": "Same fixed literal column list in INSERT columns and RETURNING; table/casts/conflict behavior/placeholder list are literal.",
+      "boundValues": {
+        "$1": "receiptId",
+        "$2": "organizationId",
+        "$3": "version",
+        "$4": "checkpoint",
+        "$5": "actorId",
+        "$6": "admittedRole",
+        "$7": "programId",
+        "$8": "documentId",
+        "$9": "originalSha256",
+        "$10": "extractionSha256",
+        "$11": "totalChars",
+        "$12": "JSON.stringify(ranges)",
+        "$13": "payloadSha256",
+        "$14": "toolUseId",
+        "$15": "threadId",
+        "$16": "fingerprint"
+      }
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-history.ts",
+      "line": 84,
+      "queryStartLine": 82,
+      "kind": "counted direct query template",
+      "expressions": [
+        "exact"
+      ],
+      "provenance": "Local fragment starts empty; only fixed predicates plus local parameter-array length are appended.",
+      "constructionSites": [
+        {
+          "line": 79,
+          "column": "r.document_id",
+          "expression": "params.length",
+          "valueAction": "params.push(selection.documentId)"
+        },
+        {
+          "line": 80,
+          "column": "r.id",
+          "expression": "params.length",
+          "valueAction": "params.push(selection.receiptId)"
+        }
+      ],
+      "boundBaseValues": {
+        "$1": "pinnedScope.organizationId",
+        "$2": "pinnedScope.userId",
+        "$3": "copy of pinnedScope.accessibleProgramIds",
+        "$4": "selection.limit"
+      }
+    }
+  ],
+  "optionalFilterCases": [
+    {
+      "providedIds": [],
+      "fragment": "",
+      "bindCount": 4
+    },
+    {
+      "providedIds": [
+        "documentId"
+      ],
+      "fragment": " AND r.document_id=$5::uuid",
+      "bindCount": 5
+    },
+    {
+      "providedIds": [
+        "receiptId"
+      ],
+      "fragment": " AND r.id=$5::uuid",
+      "bindCount": 5
+    },
+    {
+      "providedIds": [
+        "documentId",
+        "receiptId"
+      ],
+      "fragment": " AND r.document_id=$5::uuid AND r.id=$6::uuid",
+      "bindCount": 6
+    }
+  ],
+  "validationContracts": {
+    "optionalIds": "Only undefined omits. Null, blank/whitespace, booleans and non-UUID values refuse400; valid uppercase UUIDs lowercase then bind.",
+    "limit": "Default50; supplied safe integer1..200; always bound as$4.",
+    "emptyProgramSet": "ANY($3::uuid[]) retained; bound empty array cannot omit the program predicate.",
+    "descriptor": "Exact owned-data fields and ranges privately validated/copied; UUID/SHA canonicalized and text values remain bind parameters.",
+    "actor": "Public actor history wrapper canonically admits/stamps current role and revalidates before COMMIT. Internal same-q history and append primitives depend on canonical caller admission/transaction.",
+    "rows": "Actor/history/fingerprint projection validates rows but never supplies SQL identifiers."
+  },
+  "dependencyReasons": {
+    "shared/ana/source-admission-receipts.ts": "Pure descriptor validation/fingerprint dependency supplies only primitive/range values for bind parameters.",
+    "shared/canonical-json.ts": "Canonical serialization used for fingerprints; no SQL identifier source.",
+    "server/services/ana/source-read-scope.ts": "Canonical server-derived actor/program allowlist and fresh readmission; allowlist binds as a UUID array.",
+    "server/services/vault/document-catalog-actor-access.ts": "Actor-access transaction wrapper, tenant/role stamping, current access and post-read revalidation.",
+    "server/services/ana/source-read-receipt.ts": "Guarded writer builds actual descriptor, owns source reservations/transaction/COMMIT and invokes append.",
+    "scripts/ci/check-sql-interpolation.mjs": "Exact ratchet semantics: direct query templates and sql.raw counted; variable-built SQL known gap.",
+    "scripts/ci/check-sql-interpolation.selftest.mjs": "Documents/pins known variable-query and concatenation gaps; no blind path claimed as gate safety."
+  },
+  "exceptionReasonCandidates": {
+    "server/services/ana/source-admission-receipt-store.ts": "One counted interpolation is a fixed unexported literal16-column list, also separately inspected in the uncounted INSERT; all descriptor and lookup values bind.",
+    "server/services/ana/source-admission-receipt-history.ts": "One counted interpolation is only fixed document/receipt predicates with generated local$n placeholders; UUIDs and all actor/program/limit data bind."
+  },
+  "limits": [
+    "Static source inspection only; no application or database execution.",
+    "No baseline/gate modification by this owner.",
+    "No authorization/RLS/deployed-security or regulatory qualification.",
+    "Gate count alone cannot establish future semantics of variable-built SQL."
+  ]
+}

@@ -1,0 +1,3 @@
+ESLint: the 12 owned stream test files listed in source-manifest.json
+Exit code: 0
+No diagnostics.

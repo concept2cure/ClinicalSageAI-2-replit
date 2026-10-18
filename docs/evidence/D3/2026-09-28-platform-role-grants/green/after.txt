@@ -28,4 +28,3 @@ stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make an
       Tests  6 passed (6)
    Start at  17:16:27
    Duration  2.72s (transform 1.08s, setup 76ms, import 1.92s, tests 439ms, environment 0ms)
-

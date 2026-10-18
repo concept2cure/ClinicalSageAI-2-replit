@@ -80,6 +80,7 @@ async function sign() {
 afterEach(cleanup);
 beforeEach(() => {
   apiRequest.mockReset();
+  verifyPassword.mockClear();
   downloadBlob.mockClear();
   seqs = [seqRow()];
 });
@@ -123,11 +124,13 @@ describe('a governed step is asked before anyone signs (finding: signature befor
   });
 });
 
+const TRANSMIT = (configured: { staging: boolean | null; production: boolean | null }) => ({
+sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
+configured, recordedApplicationNumber: '000512', gate: CLEAR, refusal: configured.staging || configured.production ? null : 'This sequence\'s agency gateway has no staging or production credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.',
+});
+
 describe('the dispatched sequence has a package and a transmit (the blocker)', () => {
-  const TRANSMIT = (configured: { staging: boolean | null; production: boolean | null }) => ({
-    sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
-    configured, recordedApplicationNumber: '000512', gate: CLEAR, refusal: configured.staging || configured.production ? null : 'This sequence\'s agency gateway has no staging or production credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.',
-  });
+
 
   it('downloads the package through the canonical eCTD export for this sequence', async () => {
     seqs = [seqRow({ status: 'dispatched' })];
@@ -161,6 +164,19 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
     const transmit = screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement;
     expect(transmit.disabled).toBe(true);
     expect((screen.getByLabelText('Agency application number') as HTMLInputElement).value).toBe('000512');
+  });
+
+  it('a configured account with an unavailable transport never asks for a transmit signature', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    const unavailable = { transport: 'as2', implementation: 'unavailable', qualification: 'not_verified', qualified: false, reason: 'Agency transport prerequisites are unavailable.', missingDependencies: ['transport runtime'] };
+    mockApi((method, url) => method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+      ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: { ...TRANSMIT({ staging: true, production: true }), transportReadiness: { staging: unavailable, production: unavailable } } })
+      : undefined);
+    await ready(); openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain('Agency transport prerequisites are unavailable.'));
+    expect((screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(0);
+    expect(verifyPassword).not.toHaveBeenCalled();
   });
 
   /* QA 2026-10-08 (j6): the package named "UNASSIGNED (organization 1)" as the

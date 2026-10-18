@@ -574,7 +574,7 @@ AssertionError: expected [ { …(3) } ] to deeply equal []
 +       "Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/x-no-errors",
 +       "------=_Part_FDA_MDN
 + Content-Type: message/disposition-notification
-+ 
++
 + Reporting-UA: FDA-CESUB
 + Original-Message-ID: <2c257cbb-5bab-4a76-a6fc-7a14e390d3bd@SPONSOR-AS2>
 + Disposition: automatic-action/MDN-sent-automatically; processed/x-no-errors
@@ -614,7 +614,7 @@ AssertionError: expected [ { …(3) } ] to deeply equal []
 +       "Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed/x-failover-used",
 +       "------=_Part_FDA_MDN
 + Content-Type: message/disposition-notification
-+ 
++
 + Reporting-UA: FDA-CESUB
 + Original-Message-ID: <a3f63c8a-4bd5-4769-ac3e-c6439d40ad93@SPONSOR-AS2>
 + Disposition: automatic-action/MDN-sent-automatically; processed/x-failover-used
@@ -656,4 +656,3 @@ AssertionError: expected { transmittalId: 4242, …(6) } to be an instance of Er
       Tests  26 failed | 115 passed (141)
    Start at  07:50:27
    Duration  2.20s (transform 584ms, setup 174ms, import 677ms, tests 375ms, environment 0ms)
-

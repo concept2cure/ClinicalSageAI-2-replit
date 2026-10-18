@@ -1,0 +1,23 @@
+{
+  "scope": "Exact previously published checksum fingerprints; no broad path or rule suppression.",
+  "proofs": [
+    {
+      "fingerprint": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-summary.json:generic-api-key:11",
+      "field": "apiContractSha256",
+      "algorithm": "SHA-256",
+      "sourceCommit": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c",
+      "contractPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/api-contract.json",
+      "matchesOriginalCommittedBytes": true,
+      "credential": false
+    },
+    {
+      "fingerprint": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-initial-failure/browser-original-summary.json:generic-api-key:11",
+      "field": "apiContractSha256",
+      "algorithm": "SHA-256",
+      "sourceCommit": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c",
+      "contractPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/api-contract.json",
+      "matchesOriginalCommittedBytes": true,
+      "credential": false
+    }
+  ]
+}

@@ -1253,9 +1253,9 @@ stdout | server/services/ana/__tests__/gateway-region-enum-parity.test.ts
 
 
 === round-3 skeptic probes (verify-r3b/withdrawal) on the fixed tree ===
-[A] delete leaf: 
+[A] delete leaf:
 [A] skipped: [{"sectionCode":"m3.2.s.2","reason":"withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"}] | blockers: ["1 placed leaf/leaves could not be packaged (m3.2.s.2: withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place)"]
-[B] delete leaf: 
+[B] delete leaf:
 [B] skipped: [{"sectionCode":"m3.2.s.2","reason":"withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"}] | blockers: ["1 placed leaf/leaves could not be packaged (m3.2.s.2: withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place)"]
  ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > A: delete naming never-filed doc 107 must not withdraw doc 104 133ms
  ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > B: stale re-withdrawal of already-withdrawn doc 107 must not withdraw doc 104 61ms

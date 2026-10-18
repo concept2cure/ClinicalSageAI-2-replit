@@ -5,6 +5,20 @@
 --
 -- This migration implements causal AI: DAG representations, causal effect estimation,
 -- counterfactual analysis, and intervention planning.
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no fabricated output):
+-- cortex.estimate_causal_effect stored a fixed effect of 0.15 ± 1.96 × 0.05,
+-- jittered by random() when conditioned, labelled an 'aipw' estimate;
+-- cortex.generate_counterfactual stored a 0.5 base probability when none was
+-- given, 0.05 for every intervention with no estimated effect and a 0.6
+-- "confidence", as status 'analyzed'. Both were SECURITY DEFINER and nothing
+-- calls them. Both now raise feature_not_supported and run as their caller.
+-- Databases installed before this amendment get the same definitions from
+-- migrations/20261015i_cortex_engine_functions_refuse.sql (deploy set).
+-- Section 10 seeded ten causal mechanisms as 'established' / 'supported' by
+-- 'literature' / 'data_mining' / 'expert', with no citation or run recorded;
+-- removed, and the rows an earlier install wrote are withdrawn by
+-- migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql (deploy set).
 
 BEGIN;
 
@@ -530,60 +544,18 @@ CREATE OR REPLACE FUNCTION cortex.estimate_causal_effect(
 )
 RETURNS UUID
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_effect_id UUID;
-    v_graph RECORD;
-    v_effect_estimate NUMERIC;
-    v_se NUMERIC;
-    v_adjustment_set TEXT[];
 BEGIN
-    -- Get causal graph
-    SELECT * INTO v_graph FROM cortex.causal_graphs WHERE id = p_graph_id;
-    IF v_graph IS NULL THEN
-        RAISE EXCEPTION 'Causal graph not found: %', p_graph_id;
-    END IF;
-    
-    -- Get adjustment set from graph
-    SELECT ARRAY(
-        SELECT jsonb_array_elements_text(v_graph.backdoor_adjustment_sets->0)
-    ) INTO v_adjustment_set;
-    
-    -- Simplified effect estimation (real implementation would use actual data)
-    -- This is a placeholder that returns a reasonable estimate
-    v_effect_estimate := 0.15; -- Base effect
-    v_se := 0.05; -- Base standard error
-    
-    -- Adjust based on conditioning
-    IF p_conditioning != '{}' THEN
-        v_effect_estimate := v_effect_estimate * (1 + random() * 0.2 - 0.1);
-    END IF;
-    
-    INSERT INTO cortex.causal_effects (
-        org_id, graph_id, treatment_variable, outcome_variable,
-        effect_type, conditioning_variables,
-        effect_estimate, effect_units,
-        confidence_interval_lower, confidence_interval_upper,
-        standard_error, estimation_method, adjustment_set
-    ) VALUES (
-        p_org_id, p_graph_id, p_treatment, p_outcome,
-        CASE WHEN p_conditioning = '{}' THEN 'ate' ELSE 'cate' END,
-        NULLIF(p_conditioning, '{}'),
-        v_effect_estimate, 'probability',
-        v_effect_estimate - 1.96 * v_se, v_effect_estimate + 1.96 * v_se,
-        v_se, 'aipw', v_adjustment_set
-    )
-    RETURNING id INTO v_effect_id;
-    
-    RETURN v_effect_id;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.estimate_causal_effect computes no estimate: no estimator exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.estimate_causal_effect IS
-'Estimate the causal effect of a treatment on an outcome using the specified
-causal graph. Returns the ID of the created effect estimate.';
+'Refuses (feature_not_supported): no causal estimator exists. It used to store a fixed
+0.15 effect, jittered by random(), labelled an AIPW estimate.';
 
 -- Function: Generate counterfactual scenario
 CREATE OR REPLACE FUNCTION cortex.generate_counterfactual(
@@ -595,58 +567,18 @@ CREATE OR REPLACE FUNCTION cortex.generate_counterfactual(
 )
 RETURNS UUID
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_scenario_id UUID;
-    v_factual_prob NUMERIC;
-    v_counterfactual_prob NUMERIC;
-    v_intervention JSONB;
-    v_effect NUMERIC;
 BEGIN
-    -- Calculate factual outcome probability (simplified)
-    v_factual_prob := COALESCE((p_factual_state->>'base_probability')::NUMERIC, 0.5);
-    
-    -- Apply each intervention
-    v_counterfactual_prob := v_factual_prob;
-    FOR v_intervention IN SELECT * FROM jsonb_array_elements(p_interventions)
-    LOOP
-        -- Look up causal effect for this intervention
-        SELECT effect_estimate INTO v_effect
-        FROM cortex.causal_effects
-        WHERE treatment_variable = v_intervention->>'variable'
-          AND (graph_id = p_graph_id OR p_graph_id IS NULL)
-        LIMIT 1;
-        
-        v_counterfactual_prob := v_counterfactual_prob + COALESCE(v_effect, 0.05);
-    END LOOP;
-    
-    -- Bound probability
-    v_counterfactual_prob := GREATEST(0.01, LEAST(0.99, v_counterfactual_prob));
-    
-    INSERT INTO cortex.counterfactual_scenarios (
-        org_id, submission_id, graph_id,
-        scenario_name, factual_state, interventions,
-        factual_outcome_probability, counterfactual_outcome_probability,
-        probability_change, confidence_in_counterfactual, status
-    ) VALUES (
-        p_org_id, p_submission_id, p_graph_id,
-        'Generated Counterfactual', p_factual_state, p_interventions,
-        v_factual_prob, v_counterfactual_prob,
-        v_counterfactual_prob - v_factual_prob,
-        0.6, -- Base confidence
-        'analyzed'
-    )
-    RETURNING id INTO v_scenario_id;
-    
-    RETURN v_scenario_id;
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.generate_counterfactual computes no counterfactual: no causal model exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.generate_counterfactual IS
-'Generate a counterfactual scenario by applying interventions to a factual state.
-Returns the ID of the created scenario.';
+'Refuses (feature_not_supported): no causal model exists. It used to store a 0.5 base
+probability, 0.05 per intervention with no estimated effect and a 0.6 confidence.';
 
 -- Function: Recommend interventions
 CREATE OR REPLACE FUNCTION cortex.recommend_interventions(
@@ -706,54 +638,10 @@ COMMENT ON FUNCTION cortex.recommend_interventions IS
 Returns interventions with expected impact and effort estimates.';
 
 -- ============================================================================
--- SECTION 10: SEED MECHANISM LIBRARY
+-- SECTION 10: SEED MECHANISM LIBRARY — REMOVED 2026-10-15
 -- ============================================================================
-
-INSERT INTO cortex.mechanism_library (
-    mechanism_name, mechanism_description, mechanism_category,
-    cause_variable, effect_variable, effect_direction, effect_magnitude,
-    evidence_strength, discovered_by, is_active
-) VALUES
-    ('Trial Size Effect', 'Larger trials provide more statistical power and regulatory confidence', 
-     'efficacy_evidence', 'trial_size', 'approval_probability', 'positive', 'moderate',
-     'established', 'literature', TRUE),
-    
-    ('Endpoint Robustness', 'Well-validated clinical endpoints increase regulatory confidence',
-     'efficacy_evidence', 'endpoint_validation', 'approval_probability', 'positive', 'strong',
-     'established', 'literature', TRUE),
-    
-    ('Safety Signal Impact', 'Serious adverse events reduce approval probability',
-     'safety_evidence', 'serious_ae_rate', 'approval_probability', 'negative', 'strong',
-     'established', 'literature', TRUE),
-    
-    ('Active Comparator Advantage', 'Superiority vs active comparator strengthens evidence',
-     'study_design', 'active_comparator', 'evidence_strength', 'positive', 'moderate',
-     'established', 'literature', TRUE),
-    
-    ('Breakthrough Designation Effect', 'Breakthrough designation accelerates review and increases approval rate',
-     'regulatory_pathway', 'breakthrough_designation', 'approval_probability', 'positive', 'moderate',
-     'supported', 'data_mining', TRUE),
-    
-    ('Pre-Submission Meeting Impact', 'Productive pre-submission meetings align expectations',
-     'agency_dynamics', 'pre_sub_alignment', 'approval_probability', 'positive', 'moderate',
-     'supported', 'expert', TRUE),
-    
-    ('Historical Precedent Effect', 'Similar approved products create favorable precedent',
-     'precedent_effects', 'similar_approvals', 'approval_probability', 'positive', 'moderate',
-     'supported', 'data_mining', TRUE),
-    
-    ('Submission Timing Effect', 'End-of-year submissions may face resource constraints',
-     'timing_effects', 'q4_submission', 'review_delay_probability', 'positive', 'weak',
-     'hypothesized', 'data_mining', TRUE),
-    
-    ('Unmet Need Impact', 'High unmet need increases regulatory flexibility',
-     'external_factors', 'unmet_need_severity', 'approval_probability', 'positive', 'moderate',
-     'established', 'literature', TRUE),
-    
-    ('Complete Response Impact', 'Prior CRL reduces probability of subsequent approval',
-     'precedent_effects', 'prior_crl', 'approval_probability', 'negative', 'moderate',
-     'supported', 'data_mining', TRUE)
-ON CONFLICT DO NOTHING;
+-- Ten mechanisms with claimed evidence strength and no citation. See the note
+-- at the top of this file.
 
 -- ============================================================================
 -- SECTION 11: TRIGGERS
@@ -785,6 +673,5 @@ BEGIN
     RAISE NOTICE 'Migration 076: Causal Inference Engine complete';
     RAISE NOTICE 'Tables: causal_graphs, causal_effects, counterfactual_scenarios, interventions, causal_discovery_runs, mechanism_library';
     RAISE NOTICE 'Functions: estimate_causal_effect, generate_counterfactual, recommend_interventions';
-    RAISE NOTICE 'Seeded 10 core mechanisms';
     RAISE NOTICE 'RLS enabled on all tables';
 END $$;

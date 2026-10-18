@@ -7,8 +7,11 @@
  * EMA Scientific Advice. Read by GET /api/agency-meetings; the v2
  * AgencyMeetings surface renders the meeting list and, per meeting, its briefing
  * book (sections + questions) and minutes (agreements + commitments), held as
- * JSONB. Mirrors the surface fixture — no fabricated data. to_regclass guarded,
- * org-scoped, idempotent (ON CONFLICT DO NOTHING).
+ * JSONB. INVENTED demonstration data: no agency granted, held or minuted any
+ * of these meetings (this header said "no fabricated data" until 2026-10-15).
+ * The GA demo seed runs against a database on this machine only
+ * (scripts/seed/local-only.mjs). to_regclass guarded, org-scoped, idempotent
+ * (ON CONFLICT DO NOTHING).
  */
 const MEETINGS = [
   {

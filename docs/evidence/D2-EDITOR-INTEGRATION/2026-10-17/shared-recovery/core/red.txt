@@ -1,0 +1,133 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > blocks synchronous overlapping Open and Attach without sharing a success result 23ms
+   → expected { …(6) } to match object { ok: false, phase: 'blocked' }
+(4 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > retains unknown outcome and refuses another document POST 4ms
+   → expected "vi.fn()" to be called 1 times, but got 2 times
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > reuses a confirmed complete payload only for a later deliberate action 3ms
+   → expected "vi.fn()" to be called 2 times, but got 3 times
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > does not release uncertainty after a wrong-project inventory 3ms
+   → hook.current(...).check is not a function
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > a scoped no-ID check exposes inventory without attributing a document 3ms
+   → hook.current(...).check is not a function
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > continues only original text into a confirmed empty document after an explicit scoped check 3ms
+   → expected "vi.fn()" to be called 2 times, but got 3 times
+ × client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > an existing normalized section is inspection only and never overwritten 2ms
+   → hook.current(...).check is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > blocks synchronous overlapping Open and Attach without sharing a success result
+AssertionError: expected { …(6) } to match object { ok: false, phase: 'blocked' }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "phase": "blocked",
++   "phase": "unknown",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:39:129
+     37|     const pending = deferred<Response>(); apiRequest.mockReturnValueOn…
+     38|     const hook = setup(); let first!: ReturnType<ReturnType<typeof use…
+     39|     await act(async () => { first = hook.current().save(input); const …
+       |                                                                                                                                 ^
+     40|     expect(apiRequest).toHaveBeenCalledTimes(1);
+     41|     await act(async () => { pending.resolve(docReply()); await first; …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > retains unknown outcome and refuses another document POST
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:46:24
+     44|     apiRequest.mockRejectedValue(new Error('response lost')); const ho…
+     45|     await act(async () => { await hook.current().save(input); await ho…
+     46|     expect(apiRequest).toHaveBeenCalledTimes(1); expect(hook.current()…
+       |                        ^
+     47|   });
+     48|   it('reuses a confirmed complete payload only for a later deliberate …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > reuses a confirmed complete payload only for a later deliberate action
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:52:24
+     50|     await act(async () => { await hook.current().save(input); });
+     51|     let reused; await act(async () => { reused = await hook.current().…
+     52|     expect(apiRequest).toHaveBeenCalledTimes(2); expect(reused).toMatc…
+       |                        ^
+     53|   });
+     54|   it('does not release uncertainty after a wrong-project inventory', a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > does not release uncertainty after a wrong-project inventory
+TypeError: hook.current(...).check is not a function
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:57:50
+     55|     apiRequest.mockRejectedValueOnce(new Error('lost')); const hook = …
+     56|     apiRequest.mockResolvedValueOnce(reply({ success: true, documents:…
+     57|     await act(async () => { await hook.current().check(); await hook.c…
+       |                                                  ^
+     58|     expect(apiRequest).toHaveBeenCalledTimes(2); expect(hook.current()…
+     59|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:57:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > a scoped no-ID check exposes inventory without attributing a document
+TypeError: hook.current(...).check is not a function
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:63:50
+     61|     apiRequest.mockRejectedValueOnce(new Error('lost')); const hook = …
+     62|     apiRequest.mockResolvedValueOnce(reply({ success: true, documents:…
+     63|     await act(async () => { await hook.current().check(); });
+       |                                                  ^
+     64|     expect(hook.current().state).toMatchObject({ phase: 'checked', inv…
+     65|     expect(hook.current().state?.docId).toBeUndefined(); expect(hook.c…
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:63:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > continues only original text into a confirmed empty document after an explicit scoped check
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:70:24
+     68|     apiRequest.mockResolvedValueOnce(docReply()).mockResolvedValueOnce…
+     69|     const hook = setup(); await act(async () => { await hook.current()…
+     70|     expect(apiRequest).toHaveBeenCalledTimes(2); scopedRead();
+       |                        ^
+     71|     await act(async () => { await hook.current().check(); });
+     72|     expect(hook.current().state?.canContinue).toBe(true); expect(apiRe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx > one specialist creation lane and explicit recovery > an existing normalized section is inspection only and never overwritten
+TypeError: hook.current(...).check is not a function
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:80:50
+     78|     apiRequest.mockResolvedValueOnce(docReply()).mockRejectedValueOnce…
+     79|     await act(async () => { await hook.current().save(input); }); scop…
+     80|     await act(async () => { await hook.current().check(); await hook.c…
+       |                                                  ^
+     81|     expect(hook.current().state?.canContinue).toBe(false); expect(hook…
+     82|   });
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx:80:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  22:24:42
+   Duration  1.03s (transform 177ms, setup 147ms, import 175ms, tests 45ms, environment 481ms)

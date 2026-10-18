@@ -9,10 +9,18 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
+import {
+  ENDPOINT_CORPUS_UNAVAILABLE,
+  EndpointCorpusUnavailableError,
+  type EndpointRecommenderService,
+} from '../services/endpoint-recommender-service';
 
 interface AnaRiDeps {
   csrSearchService: any;
-  getEndpointRecommenderService: () => any;
+  getEndpointRecommenderService: () => Pick<
+    EndpointRecommenderService,
+    'getComprehensiveEndpointRecommendations'
+  >;
   /**
    * Retained only so the composition root's existing call site keeps
    * typechecking. Its sole consumer was the retired /ask-ana-ri handler, so it
@@ -63,34 +71,45 @@ router.post('/search/vector', async (req: Request, res: Response) => {
 // Endpoint recommendation compatibility facade (P0 route recovery)
 router.post('/endpoint/recommend', async (req: Request, res: Response) => {
   try {
-    const indication = String(req.body?.indication || 'General');
-    const phase = String(req.body?.phase || 'Phase 2');
-    const therapeuticArea = String(req.body?.therapeuticArea || '');
+    // 2026-10-15: indication and phase defaulted to 'General' and 'Phase 2', so an
+    // empty request was answered for a guessed indication, narrowed to Phase 2 trials.
+    const indication = String(req.body?.indication ?? '').trim();
+    if (!indication) {
+      return res.status(400).json({ error: 'indication is required' });
+    }
+    const phase = String(req.body?.phase ?? '').trim();
+    const therapeuticArea = String(req.body?.therapeuticArea ?? '').trim();
     const service = getEndpointRecommenderService();
-    const recommendations = await service.getComprehensiveEndpointRecommendations(
+    const { recommendations, sources } = await service.getComprehensiveEndpointRecommendations(
       indication,
       phase,
       10,
       therapeuticArea
     );
 
-    return res.json(
-      recommendations.map((rec: any) => ({
+    // 2026-10-15: a bare array, whose summary fell back to "<phase> <indication> endpoint
+    // recommendation based on available evidence." when no evidence was attached. The
+    // summary is now the evidence line or null, and `sources` says what was read.
+    return res.json({
+      recommendations: recommendations.map((rec) => ({
         endpoint: rec.endpoint,
-        summary:
-          rec.evidence?.[0]?.reference_text ||
-          `${phase} ${indication} endpoint recommendation based on available evidence.`,
-        matchCount: rec.occurrence_count ?? 0,
+        summary: rec.evidence[0]?.reference_text ?? null,
+        evidenceBasis: rec.evidence_basis ?? null,
+        matchCount: rec.occurrence_count,
         successRate:
           typeof rec.success_rate === 'number'
             ? rec.success_rate > 1
               ? rec.success_rate / 100
               : rec.success_rate
             : null,
-        reference: rec.evidence?.[0]?.title || null,
-      }))
-    );
+        reference: rec.evidence[0]?.title || null,
+      })),
+      sources,
+    });
   } catch (error) {
+    if (error instanceof EndpointCorpusUnavailableError) {
+      return res.status(503).json(ENDPOINT_CORPUS_UNAVAILABLE);
+    }
     console.error('Endpoint recommendation failed:', error);
     return res.status(500).json({ error: 'Endpoint recommendation failed' });
   }

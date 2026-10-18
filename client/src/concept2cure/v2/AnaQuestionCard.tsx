@@ -28,6 +28,7 @@
  */
 import React, { useMemo, useState } from 'react';
 
+import { evaluatePredicate } from '@shared/ana/question-predicate';
 import {
   OTHER_POSITION,
   OWN_POSITION_MAX_CHARS,
@@ -88,9 +89,20 @@ function tookOwnPosition(field: QuestionField, answers: Answers): boolean {
   return value === OTHER_POSITION || (Array.isArray(value) && value.includes(OTHER_POSITION));
 }
 
+/**
+ * The fields to draw. The server has already decided every field gated on an
+ * earlier question; what it cannot decide is a field gated on an answer in
+ * THIS question, so it sends those with their predicate and they are decided
+ * here, as the person answers (2026-10-12 review). The evaluator is the
+ * server's own, moved to shared so the two cannot drift.
+ */
+function shown(fields: readonly QuestionField[], answers: Answers): QuestionField[] {
+  return fields.filter(field => !field.visibleWhen || evaluatePredicate(field.visibleWhen, answers));
+}
+
 /** Nothing to send yet: a required answer is missing, or an own position has no words. */
 function notReady(fields: readonly QuestionField[], answers: Answers): boolean {
-  return fields.some(field => {
+  return shown(fields, answers).some(field => {
     if (tookOwnPosition(field, answers) && field.allowOther?.required !== false) {
       const words = answers[otherFieldId(field.id)];
       return typeof words !== 'string' || !words.trim();
@@ -354,7 +366,7 @@ export function AnaQuestionCard({ question, sessionId, flowState, onAnswer, busy
         </ul>
       ) : null}
 
-      {node.fields.map(field => (
+      {shown(node.fields, answers).map(field => (
         <QuestionFieldRow key={field.id} field={field} answers={answers} onPick={pick} onSet={set} />
       ))}
 

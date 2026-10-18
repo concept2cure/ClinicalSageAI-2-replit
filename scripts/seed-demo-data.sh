@@ -5,9 +5,25 @@
 # ============================================================================
 set -euo pipefail
 
+# 2026-10-15: no built-in credential (it signed in as the founder's address
+# with "demo123"), and a server on this machine unless SEED_ALLOW_REMOTE=1 —
+# these records are invented demonstration data.
 BASE_URL="${BASE_URL:-http://localhost:5000}"
-EMAIL="${DEMO_EMAIL:-jm.smith@concept2cure.pro}"
-PASSWORD="${DEMO_PASSWORD:-demo123}"
+if [ -z "${DEMO_EMAIL:-}" ] || [ -z "${DEMO_PASSWORD:-}" ]; then
+  echo "seed-demo-data: set DEMO_EMAIL and DEMO_PASSWORD, the account to sign in as. No credential is built in." >&2
+  exit 1
+fi
+SEED_HOST=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.urlsplit(sys.argv[1]).hostname or "")' "$BASE_URL" 2>/dev/null || true)
+case "$SEED_HOST" in
+  localhost|127.0.0.1|::1) ;;
+  *)
+    if [ "${SEED_ALLOW_REMOTE:-}" != "1" ]; then
+      echo "seed-demo-data: $BASE_URL is not a server on this machine. These records are invented demonstration data; set SEED_ALLOW_REMOTE=1 to send them there anyway." >&2
+      exit 1
+    fi
+    ;;
+esac
+EMAIL="$DEMO_EMAIL"
 
 echo "=========================================="
 echo "  Concept2Cure Demo Data Seeder"
@@ -17,9 +33,10 @@ echo ""
 
 # ── Authenticate ────────────────────────────────────────────────────────────
 echo "🔐 Authenticating as $EMAIL..."
+LOGIN_BODY=$(python3 -c 'import json, os; print(json.dumps({"email": os.environ["DEMO_EMAIL"], "password": os.environ["DEMO_PASSWORD"]}))')
 LOGIN_RESP=$(curl -sf "$BASE_URL/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
+  --data-binary @- <<<"$LOGIN_BODY")
 
 TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
 echo "   ✅ Token acquired"
@@ -360,4 +377,4 @@ echo "  • BLA workflow:    Show biosimilar analytical similarity"
 echo "  • MAA workflow:    Show EU-specific regulatory strategy"
 echo "  • De Novo:         Show novel device risk assessment"
 echo ""
-echo "Login: $EMAIL / $PASSWORD"
+echo "Login: $EMAIL (password: the DEMO_PASSWORD you set)"

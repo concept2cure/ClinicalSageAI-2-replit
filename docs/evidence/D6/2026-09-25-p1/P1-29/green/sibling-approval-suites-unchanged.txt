@@ -40,4 +40,3 @@ stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST 
       Tests  21 passed (21)
    Start at  12:59:00
    Duration  1.27s (transform 717ms, setup 195ms, import 1.45s, tests 153ms, environment 0ms)
-

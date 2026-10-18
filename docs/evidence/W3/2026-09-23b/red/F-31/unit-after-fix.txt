@@ -35,4 +35,3 @@ stderr | server/routes/__tests__/admin-security.test.ts > GET /api/admin/securit
       Tests  18 passed (18)
    Start at  15:41:13
    Duration  2.56s (transform 1.30s, setup 222ms, import 554ms, tests 2.04s, environment 0ms)
-

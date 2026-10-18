@@ -1,0 +1,476 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > refuses a signature consumed by verified receipt settlement before taking another claim 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > rechecks the canonical spent ledger after acquiring the sequence lock, before claiming or sending 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 461ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 33ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting 26ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5056ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting 5108ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 1ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+{
+  "timestamp": "2026-10-14T05:16:59.072Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "cdc0ee0d-58d7-4923-a2b8-750e2d88ecc1",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<e177e116-8a54-4a13-83e7-4ade7cbca809@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE 453ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+{
+  "timestamp": "2026-10-14T05:16:59.541Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "98e7bb6e-9c95-4de4-aa37-1ef810d6094b",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<e0badea5-67db-4f0c-9098-5bc07461a5f5@SPONSOR-AS2>",
+    "httpStatus": 504,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress 461ms
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+{
+  "timestamp": "2026-10-14T05:16:59.893Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "fb89d418-20b2-4130-b5d1-298d3685e292",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id 366ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-10-14T05:17:00.025Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "186ae37b-d6d6-43e0-a1e6-5989530e6053",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (transport): ICSR AS2 POST (FDA_FAERS) failed: socket hang up. Nothing reached the agency: the message was never released to an authenticated gateway, or its TLS layer refused it.",
+    "status": "prepared"
+  }
+}
+
+stdout | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+{
+  "timestamp": "2026-10-14T05:17:00.370Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "186ae37b-d6d6-43e0-a1e6-5989530e6053",
+    "gateway": "FDA_FAERS",
+    "receiptId": "<mdn-icsr@FDA>",
+    "organizationId": 7
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+{
+  "timestamp": "2026-10-14T05:17:00.439Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "b46ca8d5-19c8-49b1-a3df-123c1a8845a8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "reason": "ICSR was NOT transmitted to FDA_FAERS (gateway-rejected): The agency endpoint refused the message: HTTP 403: forbidden",
+    "status": "prepared"
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+{
+  "timestamp": "2026-10-14T05:17:00.504Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "a27179b3-8076-4c5a-98ee-5bef243fd4a2",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<78fe11fb-cecb-4f1c-bcb0-907d056ab824@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent 467ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared 65ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared 65ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:01.606Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "71b99180-a80e-4ef1-ba47-b81695527972",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<a62a1e93-f56d-4777-9590-25c98ee6b00d@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:02.659Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "71b99180-a80e-4ef1-ba47-b81695527972",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<d8a489f2-6769-4039-bc7d-317c75defaaf@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:03.708Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "71b99180-a80e-4ef1-ba47-b81695527972",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<6c8816f6-dc7e-4cbf-9e6d-8e924ff453c5@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": null
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 3236ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:04.793Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "41934bfd-7bb3-4946-8527-52c1aec85f85",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<05702610-6eda-45c4-b9ed-df47ee5e59d2@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:05.814Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "41934bfd-7bb3-4946-8527-52c1aec85f85",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<42716cdb-31b6-47c2-a5ce-1e4fe46bffc1@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+{
+  "timestamp": "2026-10-14T05:17:06.832Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "41934bfd-7bb3-4946-8527-52c1aec85f85",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<5b8598c0-2248-48c1-a75b-004b2af765d4@SPONSOR-AS2>",
+    "httpStatus": null,
+    "recordFailure": null
+  }
+}
+
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-10-14T05:17:06.947Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR receipt could not be recorded; row held transmitting",
+  "context": {
+    "id": "36462615-a6c5-4d4f-ae29-11105b8de461",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "receiptId": "<mdn-icsr@FDA>",
+    "simulated": false,
+    "reason": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transmitted_at\" = $2, \"transport_receipt_id\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmitted,2026-10-14T05:17:06.839Z,<mdn-icsr@FDA>,2026-10-14T05:17:06.945Z,36462615-a6c5-4d4f-ae29-11105b8de461,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared 3093ms
+stderr | server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+{
+  "timestamp": "2026-10-14T05:17:06.988Z",
+  "level": "warn",
+  "message": "[ind-icsr-transmission-persistence] ICSR delivery unconfirmed",
+  "context": {
+    "id": "16c19d64-ad9f-4f00-965e-3edb355445c0",
+    "gateway": "FDA_FAERS",
+    "organizationId": 7,
+    "transportMessageId": "<f51a8745-eca3-457c-bb81-cead5eedfc7d@SPONSOR-AS2>",
+    "httpStatus": 502,
+    "recordFailure": "Failed query: update \"ind_icsr_transmissions\" set \"status\" = $1, \"transport_receipt_id\" = $2, \"errors\" = $3, \"updated_at\" = $4 where (\"ind_icsr_transmissions\".\"id\" = $5 and \"ind_icsr_transmissions\".\"organization_id\" = $6) returning \"id\", \"organization_id\", \"submission_id\", \"adverse_event_id\", \"gateway\", \"message_number\", \"sender_id\", \"receiver_id\", \"status\", \"transmit_ready\", \"transmitted_at\", \"transport_receipt_id\", \"acknowledged_at\", \"ack_code\", \"acknowledged_message_number\", \"errors\", \"gaps\", \"message\", \"created_by\", \"created_at\", \"updated_at\"\nparams: transmission_unconfirmed,<f51a8745-eca3-457c-bb81-cead5eedfc7d@SPONSOR-AS2>,[{\"kind\":\"transmission_unconfirmed\",\"stage\":\"receipt-unproven\",\"reason\":\"ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): The agency endpoint answered HTTP 502, which neither accepts nor refuses the message (an intermediary or the agency's backend may hold it): Bad Gateway The gateway answered HTTP 502 to AS2 message <f51a8745-eca3-457c-bb81-cead5eedfc7d@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.\",\"httpStatus\":502,\"agencyResponseRaw\":\"Bad Gateway\",\"transportMessageId\":\"<f51a8745-eca3-457c-bb81-cead5eedfc7d@SPONSOR-AS2>\",\"recordedAt\":\"2026-10-14T05:17:06.986Z\"}],2026-10-14T05:17:06.986Z,16c19d64-ad9f-4f00-965e-3edb355445c0,7"
+  }
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing 118ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing 39ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts > actual CMS/mTLS send followed by receipt persistence failures > accepts the exact agency-signed MIC receipt after the peer decrypts and verifies the signed bundle 2105ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts > actual CMS/mTLS send followed by receipt persistence failures > retains the duplicate-send lock after verified remote receipt when persistence throw fails 2080ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts > actual CMS/mTLS send followed by receipt persistence failures > retains the duplicate-send lock after verified remote receipt when persistence missing-row fails 2063ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts > actual CMS/mTLS send followed by receipt persistence failures > proves no transmission when original binding persistence fails before the POST 16ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — control over a real mTLS connection > a trusted client certificate and an accepting MDN for our message is received 21ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.3: rejected (transport), nothing reached the application, never in transit 7ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — the agency refuses our client certificate at the TLS handshake: NOT_DELIVERED > TLSv1.2: rejected (transport), nothing reached the application, never in transit 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 500: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 502: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 503: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 5xx after the whole bundle: DELIVERED_UNCONFIRMED, held in the lock > HTTP 504: in transit with our AS2 Message-ID, http_status, the body kept, confirm before any resend 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 503 on the request head, body never read: in transit, never "Nothing reached FDA" 158ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > HTTP 302 on the request head, body never read: in transit, never "Nothing reached FDA" 160ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > httpsPost settles once on an early answer; the request error the stop raises is neither unhandled nor a second settlement 368ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > an early 503 from a server that keeps reading: the rest of the body is not sent; the attempt is still held 111ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > a 503 status sent early, but the answer ended only after the server read the whole body — in transit 213ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — a 5xx/3xx answered on the request head: held in transit (the client cannot prove the server lacks the body) > a 503 after the server read the whole 32 MiB body is in transit 132ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 400: rejected (gateway), never in transit 10ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 401: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 403: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 404: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 405: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 409: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 411: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 413: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 415: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — HTTP 4xx: the agency answered and refused, REFUSED_BY_AGENCY > HTTP 422: rejected (gateway), never in transit 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.3: the server resets after reading the whole body — in transit, never rejected 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > TLSv1.2: the server resets after reading the whole body — in transit, never rejected 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — an authenticated server that took the whole bundle and then failed: DELIVERED_UNCONFIRMED > 200 headers and part of the MDN, then a reset: settles promptly as in transit (no hang) 26ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 301 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 100 neither accepts nor refuses: DELIVERED_UNCONFIRMED with our id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 500 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 502 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 503 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 504 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 302 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > HTTP 307 is DELIVERED_UNCONFIRMED whatever a timing flag on the response says 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > a RequestSentTransportError is DELIVERED_UNCONFIRMED; any other thrown error is NOT_DELIVERED 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV13_ALERT_CERTIFICATE_REQUIRED / x is the peer refusal alert "certificate required" 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_SSLV3_ALERT_BAD_CERTIFICATE / x is the peer refusal alert "bad certificate" 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > EPROTO / write EPROTO C0:error:0A000418:SSL routines:ssl3_read_bytes:tlsv1 alert unknown ca:../ssl/record/rec_layer_s3.c:1605:SSL alert number 48 is the peer refusal alert "unknown ca" 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC (SSL routines:tls_get_more_records:decryption failed or bad record mac) is not a peer refusal alert 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR (tlsv1 alert internal error) is not a peer refusal alert 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ECONNRESET (socket hang up) is not a peer refusal alert 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > ETIMEDOUT (read ETIMEDOUT) is not a peer refusal alert 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > classifyAs2Delivery / peerRefusalAlert — the rule itself > CERT_HAS_EXPIRED (certificate has expired) is not a peer refusal alert 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 8ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: the agency read the whole bundle and answered; its answer fails decryption — in transit, never "Nothing reached FDA" 6ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.3: 200 headers arrive, then the MDN record fails decryption — in transit 157ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLSv1.2: 200 headers arrive, then the MDN record fails decryption — in transit 158ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > TLS 1.3: a client-certificate refusal 60 ms away (each way) — rejected, nothing written, never in transit 250ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > control: a trusted certificate 60 ms away (each way) is received — the session ticket, not the window, releases the request 373ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > FDA ESG — through a proxy: corrupted answers and WAN latency > the TLS 1.3 settle window is at least 1 s — longer than any realistic round trip to the agency 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > HTTP 502 right after the whole body: DELIVERED_UNCONFIRMED on every attempt 955ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > a reset right after the whole body: RequestSentTransportError (DELIVERED_UNCONFIRMED) on every attempt 778ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > a separate-process server that read the whole body, answered while this process is busy > through FdaEsgGateway: a 502 after the whole bundle is in transit, never rejected, never proof that nothing was sent 519ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > nothing before the server accepted this client (the request still corked, not a byte written) is held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write, a reset, a timeout or a local decryption failure (the server sent bytes) is held — whether or not Node had fired finish 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad certificate" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv13 alert certificate required" refused us or our bytes: not held 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert unknown ca" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "tlsv1 alert access denied" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "ssl/tls alert handshake failure" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > after an authenticated write with no answer, the peer alert "sslv3 alert bad record mac" refused us or our bytes: not held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > a peer alert that refuses nothing ("internal error") after an authenticated write is held 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts > requestReachedServer — when a failed attempt may be held by the recipient > once any response has been parsed, every failure is held — even a peer alert 1ms
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:17:19.980Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 121ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 56ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 53ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 61ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 82ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 62ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 87ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 52ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 48ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 23ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 45ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 52ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > encrypts for the agency and signs the exact binary MIME entity, verified by independent OpenSSL roundtrip 68ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > requests required signed synchronous receipts without an invalid async receipt URL 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > accepts only a pinned agency-signed receipt naming the original message and exact MIC 26ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for rogue signatures without freeing a resend 29ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for wrong-pin signatures without freeing a resend 33ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > rejects an altered signed MDN 31ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another message 47ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another MIC 52ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > keeps an unsigned success receipt unconfirmed 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > allows only the authenticated tied failure receipt to establish agency refusal 85ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > refuses mismatched signing key and MIME header injection before sending 2ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes exact bytes with authenticated actor/org, restores the original tenant scope after multipart, and returns verified proof 30ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains the real editor permission gate before accepting a receipt 5ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes a typed cryptographic or tenant refusal back without a success claim 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects an invalid transmittal identifier and a missing receipt before verification 5ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > enforces the eight-megabyte multipart bound before verification 18ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded onto a CRLF continuation line 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded with a bare LF and a tab 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads a Disposition folded after its action mode 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > a folded processed/error modifier is a rejection 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > does not join a following field that is not a continuation 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field whose value is only a trailing space names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field folded onto a whitespace-only continuation names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > an empty msg-id "<>" names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field absent altogether names no message 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a value carrying no angle-bracketed msg-id cannot be tied to the message sent 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a value carrying two msg-ids cannot be tied to the message sent, even when one of them is ours 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id followed by a comment folded onto a continuation line 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id followed by a comment on the same line 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id preceded by a comment that itself contains an angle-bracketed id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a folded "(no failure)" comment after processed is not a failure modifier 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a nested comment mentioning error after processed is not an error modifier 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a /error modifier folded onto a continuation line after processed is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a failed disposition naming our message is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/error is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/failure is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/warning is an acceptance even when its description text contains the word failure 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > an accepting MDN for a different message is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a 2xx body with no disposition is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a disposition type that is neither processed nor failed is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a notification carrying two conflicting Disposition fields is delivered-unconfirmed 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > case L: a folded Original-Message-ID in a text/plain part does not override the notification part naming another message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > case K: an accepting Disposition in a text/plain part does not override a failed notification part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > in a multipart/report, the text/plain part naming our message does not override a notification naming another 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > in a multipart/report, the notification part naming our message with processed is the receipt 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a multipart body with no notification part is never read from its text/plain part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a single-part text/plain body is not read as a notification 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a bare notification with no MIME structure is read as the notification fields 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a notification part nested inside a multipart/signed wrapper is found 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/failed: signature check failed names a failure and is a rejection, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/decryption-failed names a failure and is a rejection, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/x-error names a failure and is a rejection, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/Warning, error: mixed names a failure and is a rejection, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/superseded is an unknown modifier: delivered-unconfirmed, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/x-custom-modifier: something is an unknown modifier: delivered-unconfirmed, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/warning, expired is an unknown modifier: delivered-unconfirmed, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/warning is an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed/Warning: duplicate-document is an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > processed is an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > a Disposition with an unclosed comment is unreadable, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > a Disposition with an unterminated quoted string is unreadable, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers — only processed with no modifier, or with warning, is an acceptance > an Original-Message-ID with an unclosed comment is not a single msg-id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > failed, for a different message is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > processed/error, for a different message is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > failed, naming "<>" is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > failed, naming two msg-ids one of which is ours is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > failed, naming no message is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a refusal is evidence about our message only when it names our message > processed/error naming our message is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a multipart/alternative human part (P4), accepting our message, is the receipt — with and without the HTTP Content-Type 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/rfc822-headers third part echoing our multipart/signed headers (P5), accepting our message, is the receipt — with and without the HTTP Content-Type 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with a text/plain part quoting a boundary-bearing Content-Type (P13), accepting our message, is the receipt — with and without the HTTP Content-Type 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > an unsigned multipart/report whose outer boundary is in the HTTP Content-Type > with the boundary known from the HTTP Content-Type, a delimiter-like line inside a text part cannot name a second notification 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID echoed without angle brackets > a bare id naming our message is the receipt 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID echoed without angle brackets > a bare id naming another message is a different message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID echoed without angle brackets > two bare words are not a single msg-id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > a notification Content-Type line inside a text/plain part BODY does not name a part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > with a boundary declared in the body, a delimiter-like line inside a text part does not open a second part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > the part locator — a boundary declared in the body, and the end of the notification part > the notification part ends at the next delimiter: a later part naming another message does not make it ambiguous 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/x-no-errors is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/x-failover-used is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/x-not-failed is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/warning;error is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/ is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/warning, is not an explicit refusal: delivered-unconfirmed, never rejected or accepted 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed: error — a description with no modifier — is unreadable, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed: — a description with no modifier — is unreadable, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > a colon inside the action mode is unreadable, never an acceptance 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/error: authentication-failed naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/failure: sender-equals-receiver naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/decryption-failed naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/x-error naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/Integrity-Check-Failed naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > failed/failure: unsupported format naming our message is still a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/warning: see note (unbalanced — free text after the modifier cannot make the disposition unreadable 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/warning: a 3.5" disk — free text after the modifier cannot make the disposition unreadable 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed/warning: stray ) paren — free text after the modifier cannot make the disposition unreadable 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > processed (a comment: with a colon)/warning: text — free text after the modifier cannot make the disposition unreadable 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > disposition modifiers are whole tokens, and a description needs a modifier > an unclosed comment BEFORE the description still makes the disposition unreadable 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a bare notification with a footer line, and an id with more than one @ > a bare notification followed by a dashed footer line is read as the notification 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a bare notification with a footer line, and an id with more than one @ > with a multipart boundary in the HTTP Content-Type, a body of delimiter lines and no part headers is not read as bare 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a bare notification with a footer line, and an id with more than one @ > a body with a delimiter line and a declared boundary but no notification part is still not read as bare 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > a bare notification with a footer line, and an id with more than one @ > a bare echo of an id whose AS2 identity is e-mail shaped names our message 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > configured FDA credentials plus implemented offline transport never establish agency acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > regional generic protocol adapters remain unverified rather than becoming qualified by discovery 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > a missing runtime implementation is reported unavailable even if the same account has credentials 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"organizationId":8} 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"signatureActionId":"another-signature"} 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses a sequence binding that disagrees with verified request facts: {"bundleSha256":"another-bundle"} 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced uk adapter before package/database/wire work and makes the claim releasable 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced cn adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced au adapter before package/database/wire work and makes the claim releasable 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced ch adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced br adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced in adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced kr adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced sg adapter before package/database/wire work and makes the claim releasable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 2ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a number the identifier rule cannot carry, as the eCTD export does (P-23) 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+
+ Test Files  10 passed (10)
+      Tests  234 passed (234)
+   Start at  05:16:42
+   Duration  45.57s (transform 2.50s, setup 171ms, import 7.02s, tests 36.95s, environment 1ms)
+

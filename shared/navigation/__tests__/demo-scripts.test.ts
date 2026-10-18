@@ -199,7 +199,11 @@ describe('the Live Drive scripts stay inside the launch catalog', () => {
     expect(idx('vault')).toBeGreaterThanOrEqual(0);
     expect(idx('authoring')).toBeGreaterThan(idx('vault'));
     expect(idx('submission-center')).toBeGreaterThan(idx('authoring'));
-    expect(idx('submission-readiness')).toBeGreaterThan(idx('submission-center'));
-    expect(idx('part11')).toBeGreaterThan(idx('submission-readiness'));
+    expect(idx('part11')).toBeGreaterThan(idx('submission-center'));
+    /* Readiness is a Submission Center screen since 2026-10-17; the walk still
+       opens it after the sequence is built and before the Part 11 record. */
+    const at = (s: string) => surfaces.indexOf(s);
+    expect(at('dispatch-readiness')).toBeGreaterThan(at('submission-center'));
+    expect(at('part11-console') >= 0 ? at('part11-console') : at('audit-trail')).toBeGreaterThan(at('dispatch-readiness'));
   });
 });

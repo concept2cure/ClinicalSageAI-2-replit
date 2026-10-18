@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { I } from '../icons';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import type { ToastTone } from '../toast';
 import { ASSIGNABLE_ORG_ROLES } from '@shared/constants/org-roles';
+import { invitationOutcome, type InvitationOutcome } from '../onboarding/invitationOutcome';
+import { OnboardingInvitations } from './OnboardingInvitations';
 
 /**
  * Change a member's role, or remove them from the organization — the two
@@ -29,8 +31,8 @@ import { ASSIGNABLE_ORG_ROLES } from '@shared/constants/org-roles';
  * A member who has not set a password yet (state 'invited') can be sent a new
  * setup link (QA 2026-10-08, j9 finding 5): the drawer re-invites them through
  * the invitation route, POST /api/tenant-users, which replaces their setup
- * token — the previous link stops working — and hands the new one over the way
- * the first was (setupLinkHandover).
+ * token — the previous link stops working. The confirmed delivery result and
+ * any private link remain visible until dismissed, with an explicit copy action.
  */
 
 export interface MemberActionTarget {
@@ -44,42 +46,6 @@ export interface MemberActionTarget {
   self?: boolean;
   /** 'invited' until the setup link is redeemed (mdx-admin.ts memberStateOf). */
   state?: string;
-}
-
-/** The invitation part of a POST /api/tenant-users answer (invitation-delivery.ts). */
-export interface InvitationReply {
-  delivery?: string;
-  setupUrl?: string;
-  expiresAt?: string | null;
-}
-
-/**
- * How the invitee gets their setup link, as one sentence for the administrator.
- * When this server sends no email the link is copied to the clipboard — and the
- * clipboard is named only when the copy succeeded; otherwise the link is shown.
- * It used to say "on your clipboard" whenever the browser had no clipboard to
- * write to, so the one copy of the link was lost while the page said it was
- * kept.
- */
-export async function setupLinkHandover(inv: InvitationReply | undefined): Promise<string> {
-  if (inv?.delivery !== 'link' || !inv.setupUrl) {
-    return 'An invitation email with their password setup link was sent.';
-  }
-  const left = inv.expiresAt ? Date.parse(inv.expiresAt) - Date.now() : NaN;
-  const days = Number.isFinite(left) ? Math.max(1, Math.round(left / 86_400_000)) : 21;
-  let copied = false;
-  try {
-    if (typeof navigator !== 'undefined' && typeof navigator.clipboard?.writeText === 'function') {
-      await navigator.clipboard.writeText(inv.setupUrl);
-      copied = true;
-    }
-  } catch {
-    copied = false;
-  }
-  return (
-    `This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`}` +
-    ` — it expires in ${days} day${days === 1 ? '' : 's'}.`
-  );
 }
 
 /** The roles an administrator assigns (shared/constants/org-roles.ts), labelled as the page labels them. */
@@ -111,6 +77,20 @@ async function membershipRequest(
     return { ok: true, answer };
   } catch (e) {
     return { ok: false, why: sentence(e instanceof Error ? e.message : String(e)) };
+  }
+}
+
+/** A replacement request uses the same delivery contract as a first invitation. */
+async function reissueRequest(member: MemberActionTarget, email: string): Promise<InvitationOutcome> {
+  try {
+    const res = await apiRequest('POST', '/api/tenant-users', {
+      name: member.name, email, role: member.role.toLowerCase(),
+    });
+    return invitationOutcome(email, res.status, await res.json().catch(() => null));
+  } catch (error) {
+    return error instanceof ApiRequestError
+      ? invitationOutcome(email, error.status, error.payload)
+      : invitationOutcome(email, 0, null);
   }
 }
 
@@ -150,18 +130,63 @@ const removeForm = (member: MemberActionTarget): C2CFormConfig => ({
   fields: [{ key: 'reason', label: 'Reason for removal', type: 'textarea', required: true, rows: 3 }],
 });
 
+function MemberActionControls({ member, unavailable, onOpen }: {
+  member: MemberActionTarget;
+  unavailable: string | null;
+  onOpen: (act: Act) => void;
+}) {
+  const canReissue = member.state === 'invited' && !unavailable && Boolean(member.email);
+  return (
+    <>
+      <button
+        className="btn ghost small"
+        data-testid="member-change-role"
+        disabled={Boolean(unavailable)}
+        title={unavailable ?? `Change ${member.name}'s role`}
+        onClick={() => onOpen('role')}
+      >
+        {I.penLine} Change role
+      </button>
+      <button
+        className="btn ghost small"
+        data-testid="member-remove"
+        disabled={Boolean(unavailable)}
+        title={unavailable ?? `Remove ${member.name} from this organization`}
+        onClick={() => onOpen('remove')}
+      >
+        {I.close} Remove from organization
+      </button>
+      {canReissue && (
+        <button
+          className="btn ghost small"
+          data-testid="member-reissue"
+          title={`Issue ${member.name} a new password setup link`}
+          onClick={() => onOpen('reissue')}
+        >
+          {I.key} Issue a new setup link
+        </button>
+      )}
+      {unavailable && <div className="adm-muted adm-sub">{unavailable}</div>}
+    </>
+  );
+}
+
 export function AdminMemberActions({
   member,
   organizationId,
   onChanged,
+  onInvitationOutcome,
   toast,
 }: {
   member: MemberActionTarget;
   organizationId?: number;
   onChanged: () => void;
+  /** Keep the private handover outside a roster subtree that reload unmounts. */
+  onInvitationOutcome?: (result: InvitationOutcome) => void;
   toast: (m: string, tone?: ToastTone) => void;
 }) {
   const [open, setOpen] = useState<Act | null>(null);
+  const [localInvitation, setLocalInvitation] = useState<InvitationOutcome | null>(null);
   /* One request at a time: the form has no busy state, and a second click on
      "Remove member" must not send a second DELETE. */
   const sending = useRef(false);
@@ -209,47 +234,33 @@ export function AdminMemberActions({
       () => `${member.name} was removed from this organization. The removal and your reason are recorded in the audit trail.`,
     );
 
-  const reissue = () =>
-    void send(
-      ['POST', '/api/tenant-users', { name: member.name, email: member.email ?? '', role: member.role.toLowerCase() }],
-      'No new setup link',
-      async (answer) =>
-        `A new setup link for ${member.name} was issued; the previous one no longer works. ` +
-        (await setupLinkHandover((answer?.invitation ?? undefined) as InvitationReply | undefined)),
-    );
-  const canReissue = member.state === 'invited' && !unavailable && Boolean(member.email);
-
+  const reissue = async () => {
+    if (sending.current || unavailable || !member.email) return;
+    sending.current = true;
+    try {
+      const result = await reissueRequest(member, member.email);
+      // Publish before reload: the member drawer may immediately unmount.
+      if (onInvitationOutcome) onInvitationOutcome(result);
+      else setLocalInvitation(result);
+      const confirmedDelivery = result.state === 'email' || result.state === 'link';
+      toast(result.note, confirmedDelivery ? undefined : 'error');
+      if (result.recorded) {
+        setOpen(null);
+        onChanged();
+      }
+    } finally {
+      sending.current = false;
+    }
+  };
   return (
     <>
-      <button
-        className="btn ghost small"
-        data-testid="member-change-role"
-        disabled={Boolean(unavailable)}
-        title={unavailable ?? `Change ${member.name}'s role`}
-        onClick={() => setOpen('role')}
-      >
-        {I.penLine} Change role
-      </button>
-      <button
-        className="btn ghost small"
-        data-testid="member-remove"
-        disabled={Boolean(unavailable)}
-        title={unavailable ?? `Remove ${member.name} from this organization`}
-        onClick={() => setOpen('remove')}
-      >
-        {I.close} Remove from organization
-      </button>
-      {canReissue && (
-        <button
-          className="btn ghost small"
-          data-testid="member-reissue"
-          title={`Issue ${member.name} a new password setup link`}
-          onClick={() => setOpen('reissue')}
-        >
-          {I.key} Issue a new setup link
-        </button>
+      <MemberActionControls member={member} unavailable={unavailable} onOpen={setOpen} />
+      {!onInvitationOutcome && localInvitation && (
+        <section aria-label="Member invitation handover">
+          <OnboardingInvitations invitations={[localInvitation]} />
+          <button className="btn ghost small" onClick={() => setLocalInvitation(null)}>Dismiss invitation handover</button>
+        </section>
       )}
-      {unavailable && <div className="adm-muted adm-sub">{unavailable}</div>}
       {open === 'role' && <C2CForm config={roleForm(member)} onCancel={() => setOpen(null)} onSubmit={changeRole} />}
       {open === 'remove' && <C2CForm config={removeForm(member)} onCancel={() => setOpen(null)} onSubmit={remove} />}
       {open === 'reissue' && <C2CForm config={reissueForm(member)} onCancel={() => setOpen(null)} onSubmit={reissue} />}

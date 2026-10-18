@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > 2.5.8 created after a seeded 2.5 template assembles LAST, not first (the walk’s case) 22ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs in the middle lands in the middle, and nothing else changes order 10ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs first lands first 11ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > sections created into an empty document still converge on code order, at contiguous indexes 15ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > an explicit order_index is still honoured 6ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > answers 409 SECTION_CODE_EXISTS naming the code — not 500 lineage — and writes nothing 11ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > compares codes as the structure check does, so 3.2.s is the 3.2.S the document already has 6ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > recognises the unique-index violation a concurrent create loses with, so it too reads as a conflict 4ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  21:13:04
+   Duration  5.18s (transform 1.14s, setup 94ms, import 2.37s, tests 2.45s, environment 0ms)

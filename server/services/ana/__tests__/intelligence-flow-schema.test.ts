@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
+import { getToolHandler } from '../AnaToolExecutor.js';
 
 const tool = (name: string) => ALL_ANA_TOOLS.find((t) => t.name === name);
 const props = (name: string) =>
@@ -57,5 +58,25 @@ describe('the persisted-session tools match their handlers', () => {
     const p = props('commit_intelligence_flow');
     expect(p).toHaveProperty('project_id');
     expect(p).toHaveProperty('dry_run');
+  });
+});
+
+describe('intelligence flow client context', () => {
+  it('maps IVD and diagnostics tenants to the device flow family', async () => {
+    const handler = getToolHandler('list_intelligence_flows')!;
+    const result = JSON.parse(await handler({}, { clientType: 'ivd' }));
+    const categories = result.flows.map((flow: { category: string }) => flow.category);
+
+    expect(categories).toContain('device_510k');
+    expect(categories).not.toContain('ind_submission');
+  });
+
+  it('leaves CRO context cross-domain instead of falsely constraining it to pharma', async () => {
+    const handler = getToolHandler('list_intelligence_flows')!;
+    const result = JSON.parse(await handler({}, { clientType: 'cro' }));
+    const categories = result.flows.map((flow: { category: string }) => flow.category);
+
+    expect(categories).toContain('device_510k');
+    expect(categories).toContain('ind_submission');
   });
 });

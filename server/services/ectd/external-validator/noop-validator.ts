@@ -1,5 +1,5 @@
 /**
- * No-op external validator — the default when no licensed engine is configured.
+ * No-op validator — selected when neither an external path nor subset is configured.
  *
  * Honest by construction: `isConfigured()` is false and `validate()` returns a
  * report with `ran: false` and `passed: false` (an un-run external validation is
@@ -13,6 +13,7 @@ import type { ExternalValidator, ExternalValidationReport, ValidateArgs } from '
 
 export class NoopExternalValidator implements ExternalValidator {
   readonly name = 'noop';
+  readonly kind = 'unavailable' as const;
 
   async isConfigured(): Promise<boolean> {
     return false;

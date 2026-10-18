@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { AuditWriteResult } from '../../services/auditService';
 // Env before any module load (same reason as authSurfaceSecurity.test.ts).
 vi.hoisted(() => {
   process.env.NODE_ENV = 'development';
@@ -8,6 +9,7 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 const revokeToken = vi.hoisted(() => vi.fn(async (_token: string, _reason?: string) => undefined));
+const logAuditEvent = vi.hoisted(() => vi.fn<(...args: unknown[]) => Promise<AuditWriteResult>>());
 // The live-token check reads the revocation list and the account's standing
 // through the pool. `db` (drizzle) answers the membership and organisation
 // reads the switch makes, whatever the projection.
@@ -48,6 +50,7 @@ vi.mock('../../services/auth-security-service', () => ({
   checkPasswordHistory: vi.fn(), createElectronicSignature: vi.fn(), verifySignatureIntegrity: vi.fn(),
 }));
 vi.mock('../../services/auditService', () => ({ default: { log: vi.fn(), logAction: vi.fn() } }));
+vi.mock('../../services/audit/auditLogger', () => ({ logAuditEvent }));
 vi.mock('../../services/audit/auth-event-audit', () => ({ recordAuthEvent: vi.fn(async () => undefined) }));
 vi.mock('../../db/tenantAdmission', () => ({ assertCanAdmitNewTenant: vi.fn() }));
 vi.mock('../../services/token-revocation', async importOriginal => ({
@@ -60,6 +63,7 @@ import request from 'supertest';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import enterpriseRoutes from '../authEnterprise';
+import { getTenantScope } from '../../db/tenantStore';
 
 /**
  * POST /api/auth/enterprise/select-organization — rotation (the security-auditor
@@ -81,7 +85,10 @@ const SECRET = process.env.JWT_SECRET as string;
 const presentedToken = () =>
   jwt.sign({ userId: '1', email: 'u@example.com', organizationId: '3', role: 'user', type: 'access', sid: 'S1', sst: Math.floor(Date.now() / 1000), idl: 900 }, SECRET, { algorithm: 'HS256', expiresIn: '5m' });
 
-beforeEach(() => revokeToken.mockClear());
+beforeEach(() => {
+  revokeToken.mockClear();
+  logAuditEvent.mockReset().mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
+});
 
 describe('POST /select-organization rotates', () => {
   it('mints a token for the selected organisation, keeps the session, and revokes the presented token', async () => {
@@ -98,5 +105,39 @@ describe('POST /select-organization rotates', () => {
     expect(claims.sid).toBe('S1');
     expect(claims.idl, "the selected organisation's idle window").toBe(45 * 60);
     expect(revokeToken, 'the presented token stayed live beside its successor').toHaveBeenCalledWith(presented, 'rotated');
+    expect(res.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
+    expect(res.headers['x-audit-row-persisted']).toBe('true');
+  });
+
+  it.each(['lost', 'thrown', 'tamper-only'] as const)('keeps the rotated session usable with the actual %s audit outcome', async mode => {
+    let scope: ReturnType<typeof getTenantScope>;
+    logAuditEvent.mockImplementationOnce(async () => {
+      scope = getTenantScope();
+      if (mode === 'thrown') throw new Error('private audit connection detail');
+      return mode === 'lost'
+        ? { persisted: false, chained: false, tamperProof: false, error: 'private audit connection detail' }
+        : { persisted: true, chained: false, tamperProof: true };
+    });
+    const presented = presentedToken();
+    const res = await request(app()).post('/api/auth/enterprise/select-organization')
+      .set('Authorization', `Bearer ${presented}`).send({ organizationId: 7 });
+    expect(res.status).toBe(200);
+    expect(jwt.decode(res.body.token)).toMatchObject({ organizationId: '7', sid: 'S1' });
+    expect(revokeToken).toHaveBeenCalledWith(presented, 'rotated');
+    expect(scope!).toMatchObject({ tenantId: '7', role: null });
+    expect(logAuditEvent).toHaveBeenCalledOnce();
+    expect(logAuditEvent.mock.calls[0][0]).toMatchObject({ action: 'organization_switch', organizationId: '7', userId: '1' });
+    expect(JSON.stringify(res.body)).not.toContain('private audit connection detail');
+    if (mode === 'tamper-only') {
+      expect(res.body.meta.auditTrail).toEqual({ persisted: true, chained: false });
+      expect(res.headers['x-audit-row-chained']).toBe('false');
+    } else {
+      expect(res.body.meta.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+      expect(res.headers['x-audit-row-persisted']).toBe('false');
+    }
+    const recovery = await request(app()).post('/api/auth/enterprise/select-organization')
+      .set('Authorization', `Bearer ${presentedToken()}`).send({ organizationId: 7 });
+    expect(recovery.status).toBe(200);
+    expect(recovery.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
   });
 });

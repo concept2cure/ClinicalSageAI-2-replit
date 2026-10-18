@@ -37,12 +37,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { databaseUrl } from '../setup.db';
 
-/** Marks every row this suite creates, so cleanup never touches anything else. */
-const PROBE_PREFIX = 'dbtest-w06 ';
-const PROBE_CODE = 'DBTEST-W06-DOC';
+const RUN_ID = randomUUID();
+/** Fresh QA identities and stored records survive the check. */
+const PROBE_PREFIX = `dbtest-w06 ${RUN_ID} `;
+const PROBE_CODE = `DBTEST-W06-${RUN_ID.slice(0, 12)}`;
 
 let owner: Pool;
 let orgId: number;
@@ -50,6 +53,7 @@ let orgUuid: string;
 let otherOrgId: number;
 let otherOrgUuid: string;
 let userId: number;
+const roleActorIds = {} as Record<'viewer' | 'member' | 'missingMembership', number>;
 let programId: string;
 let otherProgramId: string;
 let app: express.Express;
@@ -62,84 +66,74 @@ const PDF_BYTES = Buffer.from(
 const PDF_SHA256 = createHash('sha256').update(PDF_BYTES).digest('hex');
 
 /**
- * The router under test behind a stub supplying exactly what the real
- * `authMiddleware` populates. Authentication is not what is being tested;
- * ingestion is. `req.user.organizationId` is what the route's ownership guard
+ * The router under test uses a signed token for the explicit seeded actor
+ * and canonical requireTenantContext. Actual OU role and request SQL scope
+ * are verified before ingestion. `req.user.organizationId` is what the route's ownership guard
  * reads, so switching it is how the cross-tenant case below is expressed.
  */
 let actingOrgId: () => number;
 
 async function buildApp(): Promise<express.Express> {
   const createVaultIngestRoutes = (await import('../../server/routes/vault-ingest')).default;
-  const { establishRequestTenantScope } = await import(
-    '../../server/middleware/establishRequestTenantScope'
-  );
+  const { requireTenantContext } = await import('../../server/middleware/tenantContext');
   const a = express();
-  a.use((req, _res, next) => {
-    const r = req as unknown as Record<string, unknown>;
-    r.userId = userId;
-    r.tenantId = actingOrgId();
-    r.userRole = 'admin';
-    // organizationUuid too, not just the integer id: the production chain
-    // (enforceOrgMembership) attaches it, establishRequestTenantScope publishes
-    // it as the app.current_org_id GUC, and identity.current_org_id() — which
-    // every core.can_write_program-backed vault policy resolves through — reads
-    // ONLY the uuid form. A stub without it sets the GUC to '' and every
-    // INSERT into vault.documents is RLS-denied regardless of ownership.
-    r.user = {
-      id: userId,
-      organizationId: actingOrgId(),
-      organizationUuid: actingOrgId() === orgId ? orgUuid : otherOrgUuid,
-      role: 'admin',
-    };
-    next();
-  });
-  /* The REAL middleware, not a stub. This project runs with RLS_ENFORCE=on
-     (tests/setup.db.ts), so a bare `pool.query` fails closed without an active
-     tenant scope — which is exactly what the route's ownership check does. In
-     production `authMiddleware` (server/auth.ts:113 → :215) establishes the
-     scope for every authenticated /api route before the handler runs, so
-     omitting it here would have tested the route against a permission model
-     production does not have. It cost six red tests to notice, and the red was
-     the harness, not the route. */
-  a.use(establishRequestTenantScope);
+  a.use(requireTenantContext);
   a.use('/api/vault/ingest', createVaultIngestRoutes());
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  /* audit_logs is append-only at the database level
-     (db/migrations/20260617_audit_logs_immutability.sql); the one DELETE door,
-     audit_logs_archive_delete(), refuses rows inside the 24-month hot window,
-     so a suite tearing down its own probe rows does so as the table owner with
-     the DELETE trigger disabled for this transaction only. */
+function actingRequest() {
+  const actingOrg = actingOrgId();
+  const token = jwt.sign({ type: 'access', userId: String(userId), organizationId: String(actingOrg),
+    organizationUuid: actingOrg === orgId ? orgUuid : otherOrgUuid }, activeJwtSecret(), { expiresIn: '15m' });
+  return { post: (url: string) => request(app).post(url).set('Authorization', `Bearer ${token}`) };
+}
+
+async function seedRoleActor(role: 'viewer' | 'member' | 'missingMembership'): Promise<number> {
+  const actor = Number((await owner.query("INSERT INTO users(email,name,password_hash,status) VALUES($1,$2,'not-a-real-hash','active') RETURNING id",
+    [`dbtest-w06-${RUN_ID}-${role}@example.invalid`, `${PROBE_PREFIX}${role}`])).rows[0].id);
+  if (role !== 'missingMembership') await owner.query('INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,$3)', [orgId, actor, role]);
+  return actor;
+}
+
+async function anchorProgram(organizationId: number, selectedProgramId: string, actorId: number): Promise<number> {
+  const { ensureOrganizationDefaultWorkspace, poolClientWorkspaceStore } = await import('../../server/services/c2c/organization-default-workspace');
+  const { requireProgramProjectAnchor } = await import('../../server/services/c2c/program-project-anchor');
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
+    await ensureOrganizationDefaultWorkspace(poolClientWorkspaceStore(client), { orgId: organizationId, orgName: `${PROBE_PREFIX}tenant`, orgSlug: `dbtest-w06-${RUN_ID}-${organizationId}` });
+    const anchor = await requireProgramProjectAnchor({ client, orgId: organizationId, userId: actorId, programId: selectedProgramId,
+      name: `${PROBE_PREFIX}device project`, code: PROBE_CODE, priority: 'normal', metadata: { registryId: 'US_510K', submissionType: 'US_510K' } });
     await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
+    return anchor.projectId;
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}
+
+/** Inspect only this invocation's exact tenant rows and actual provider scopes. */
+async function denialState(scopes: Array<{ organizationId: number; programId: string }>) {
+  const { getStorageProvider } = await import('../../server/services/storage/index');
+  const organizationIds = [...new Set(scopes.map((scope) => scope.organizationId))];
+  const { rows } = await owner.query(
+    `SELECT (SELECT count(*)::int FROM vault.documents WHERE organization_id = ANY($1::int[])) AS documents,
+            (SELECT count(*)::int FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND action = 'vault.document.ingest') AS ingest_audits`,
+    [organizationIds],
+  );
+  const storage = await Promise.all(scopes.map(async (scope) => ({
+    ...scope,
+    versionIds: (await getStorageProvider().list(scope.organizationId, scope.programId))
+      .map((entry) => entry.vaultVersionId).sort(),
+  })));
+  return { counts: rows[0], storage };
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
 
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-w06-tenant'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
+    [`${PROBE_PREFIX}tenant`, `dbtest-w06-${RUN_ID}-tenant`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(
@@ -147,9 +141,8 @@ beforeAll(async () => {
   );
 
   const other = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE_PREFIX}other tenant`, 'dbtest-w06-other'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
+    [`${PROBE_PREFIX}other tenant`, `dbtest-w06-${RUN_ID}-other`],
   );
   otherOrgId = Number(other.rows[0].id);
   otherOrgUuid = String(
@@ -157,13 +150,13 @@ beforeAll(async () => {
   );
 
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-w06@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+    [`dbtest-w06-${RUN_ID}@example.invalid`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
 
-  await cleanupProbeRows();
+  await owner.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$3,'admin'),($2,$3,'admin')", [orgId, otherOrgId, userId]);
+  for (const role of ['viewer', 'member', 'missingMembership'] as const) roleActorIds[role] = await seedRoleActor(role);
 
   const prog = await owner.query(
     /* Every NOT NULL column without a default. The suite provisions its own
@@ -183,18 +176,20 @@ beforeAll(async () => {
   );
   otherProgramId = String(otherProg.rows[0].id);
 
+  const projectId = await anchorProgram(orgId, programId, userId);
+  await anchorProgram(otherOrgId, otherProgramId, userId);
+  await owner.query("INSERT INTO project_members(organization_id,project_id,user_id,role,status) VALUES($1,$2,$3,'edit','active')", [orgId, projectId, roleActorIds.member]);
   actingOrgId = () => orgId;
   app = await buildApp();
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
   await owner.end().catch(() => {});
 });
 
 describe('POST /api/vault/ingest — the document actually lands', () => {
   it('accepts the upload and records the SHA-256 of the bytes that were sent', async () => {
-    const res = await request(app)
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', programId)
       .field('documentCode', PROBE_CODE)
@@ -305,16 +300,18 @@ describe('POST /api/vault/ingest — the Part 11 record of who put it there', ()
 
 describe('POST /api/vault/ingest — another tenant cannot write into your program', () => {
   it('refuses the upload and leaves nothing behind', async () => {
+    const scopes = [{ organizationId: orgId, programId: otherProgramId },
+      { organizationId: otherOrgId, programId: otherProgramId }];
+    const beforeState = await denialState(scopes);
     const before = await owner.query(
       `SELECT count(*)::int AS n FROM vault.documents WHERE program_id = $1`,
       [otherProgramId],
     );
 
-    /* The caller is authenticated as the FIRST org and targets the SECOND
-       org's program. `vault.documents` has no organization_id column, so the
-       route's guard against regulatory_programs is the only thing standing
-       between the two tenants. */
-    const res = await request(app)
+    /* The caller is authenticated in the first org and targets the second
+       org's real anchored program. Current parent admission refuses that
+       identity before document or storage writes. */
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', otherProgramId)
       .field('documentCode', `${PROBE_CODE}-CROSS`)
@@ -322,7 +319,8 @@ describe('POST /api/vault/ingest — another tenant cannot write into your progr
       .field('documentType', 'OTHER')
       .attach('file', PDF_BYTES, 'cross-tenant.pdf');
 
-    expect(res.status).toBe(403);
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(res.body.error.code).toBe('PROJECT_NOT_FOUND');
     /* The refusal names no table, no column and no query. */
     expect(JSON.stringify(res.body)).not.toMatch(/vault\.|regulatory_programs|SELECT|relation/i);
 
@@ -331,6 +329,7 @@ describe('POST /api/vault/ingest — another tenant cannot write into your progr
       [otherProgramId],
     );
     expect(after.rows[0].n).toBe(before.rows[0].n);
+    expect(await denialState(scopes)).toEqual(beforeState);
   });
 });
 
@@ -348,7 +347,7 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
 
   it('different bytes at an occupied code and version: 409, and no new object in storage', async () => {
     const before = await storedVersionIds();
-    const res = await request(app)
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', programId)
       .field('documentCode', PROBE_CODE)
@@ -363,7 +362,7 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
 
   it('the same bytes under a second code: 409, no new object, and the original still reads back', async () => {
     const before = await storedVersionIds();
-    const res = await request(app)
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', programId)
       .field('documentCode', `${PROBE_CODE}-DUP`)
@@ -390,7 +389,7 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
 
   it('a folder outside the program taxonomy: 400, and no new object in storage', async () => {
     const before = await storedVersionIds();
-    const res = await request(app)
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', programId)
       .field('documentCode', `${PROBE_CODE}-FOLDER`)
@@ -438,7 +437,7 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
 
   it('an admitted upload still stores exactly one object — the one its record names', async () => {
     const before = await storedVersionIds();
-    const res = await request(app)
+    const res = await actingRequest()
       .post('/api/vault/ingest')
       .field('programId', programId)
       .field('documentCode', `${PROBE_CODE}-NEW`)
@@ -469,7 +468,7 @@ describe('POST /api/vault/ingest — only a role that may write adds to the Vaul
       () =>
         ingestVaultDocument({
           organizationId: orgId,
-          userId,
+          userId: role === 'viewer' ? roleActorIds.viewer : role === 'member' ? roleActorIds.member : roleActorIds.missingMembership,
           programId,
           documentCode: code,
           documentTitle: `Uploaded as ${role ?? 'no role'}`,
@@ -497,9 +496,13 @@ describe('POST /api/vault/ingest — only a role that may write adds to the Vaul
     expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
   });
 
-  it('refuses a scope that carries no role at all', async () => {
+  it('refuses an actual actor without organization membership', async () => {
+    const scopes = [{ organizationId: orgId, programId }];
+    const beforeState = await denialState(scopes);
     const out = await ingestAs(null, `${PROBE_CODE}-NOROLE`, 'no-role');
-    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' });
+    expect(JSON.stringify(out)).not.toMatch(/vault\.|regulatory_programs|SELECT|relation/i);
+    expect(await denialState(scopes)).toEqual(beforeState);
   });
 
   it('admits a member — the role SSO provisioning assigns', async () => {
@@ -507,4 +510,3 @@ describe('POST /api/vault/ingest — only a role that may write adds to the Vaul
     expect(out.ok).toBe(true);
   });
 });
-

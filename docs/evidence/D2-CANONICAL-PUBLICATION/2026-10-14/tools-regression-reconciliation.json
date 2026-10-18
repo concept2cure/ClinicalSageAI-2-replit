@@ -1,0 +1,36 @@
+{
+  "status": "passed",
+  "testFiles": 4,
+  "tests": 33,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "productionChangesInThisFollowup": false,
+  "proofScope": "Registered source/draft/keyless handler and actual facade composition with explicit synthetic admission; no provider, deployment or PostgreSQL RLS qualification.",
+  "sourceBinding": "Current end-of-run snapshot; final lead regression binds the integrated tree.",
+  "sourceSha256": {
+    "server/services/ana/__tests__/document-source-access-tools.test.ts": "e544731a2c720d182992caa0cd1b171615bd2acd435dfeb0c332d6a93942cc01",
+    "server/services/ana/__tests__/document-source-facade-integration.test.ts": "25998887ecabba45265fdf163164975cb573353071bbd7ebf964fc2448fd50ee",
+    "server/services/ana/__tests__/vault-access-without-key.test.ts": "ffdaa94e054b3a71717336fe70be380ed6644fdbb16c0d79d3a1d7388d81db15",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "523d306edb9b9c567a2dc33d20785eaffbe43421934a5e02c967fc52b2fa4d57",
+    "server/services/ana/catalog-scope.ts": "93b8f5206b85e36138a569e5f96419ca0fdc99183453df1b530b77b6d0aa0976",
+    "server/services/ana/document-catalog-tools.ts": "0d0c37947e4a7aa971cd140f42930285bc37cfdb8666118c7a7e1d718b6c3716",
+    "server/services/ana/document-passage-tools.ts": "da079458b9d8de4b2dd5b16e4e9923c51cacb3bb127dc5ddab00a41b24032536",
+    "server/services/ana/document-tools-shared.ts": "7d0b0e6b8f8b5efc09aa05a2702f8e3b263d09a7c0e9681131a18109d2bf99ae",
+    "server/services/ana/draft-project-sources.ts": "e324efd958dd68111e4104517f9d7ed3737740517466bc1fe8d953c04f9c7ba1",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "3177b8b81d23612aa3814e8da98e146386020c569b874c5e335bd5eda8cfb282"
+  },
+  "logs": [
+    "tools-regression-reconciliation.log",
+    "tools-regression-reconciliation-lint.log"
+  ],
+  "preservedControls": [
+    "Serving actor identity rather than body actor or supplied allowlist",
+    "Private source refusal and readable viewer scope",
+    "Historical source text without new current-source receipt",
+    "Exact extraction envelope and same-length mutation refusal",
+    "Access revocation during coverage before source disclosure",
+    "Legacy reads without catalog backfill writes",
+    "Keyless lexical search and semantic-unavailable fallback",
+    "Version-bound server-loaded drafting sources without copying raw text into receipts"
+  ]
+}

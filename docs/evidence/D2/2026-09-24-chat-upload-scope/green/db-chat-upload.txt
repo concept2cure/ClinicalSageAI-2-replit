@@ -56,4 +56,3 @@ stdout | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client doc
       Tests  1 passed (1)
    Start at  18:32:28
    Duration  9.78s (transform 6.90s, setup 67ms, import 102ms, tests 9.36s, environment 0ms)
-

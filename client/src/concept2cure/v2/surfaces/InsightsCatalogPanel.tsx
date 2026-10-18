@@ -9,7 +9,7 @@
  * of what the platform computes had no affordance at all.
  *
  * ── THE RULE THIS PANEL EXISTS TO KEEP ──────────────────────────────────────
- * A type with no engine is NEVER a control. 39 of the 61 declared types have
+ * A type with no engine is NEVER a control. Some declared report types have
  * no provider (`server/services/report-os/report-engine.ts`), and running one
  * returned the readiness digest under the wrong title — the defect QA found on
  * 2026-10-08 (j8). They are listed by name, as not computed, and nothing in
@@ -19,9 +19,10 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import { EmptyState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
-import { PanelHead, type LibraryReportType } from './insightsLibraryShared';
+import { catalogCapabilityCounts, isRowList, PanelHead, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import { useCatalogReportingRole } from '../reportingPersona';
 
 /** Family ids to the words a client reads; anything unlisted shows its id. */
 const FAMILY_LABEL: Readonly<Record<string, string>> = {
@@ -52,14 +53,27 @@ export function familyLabel(id: string): string {
 }
 
 /** One runnable type: what it is, where it runs, and the one control. */
+function runControlTitle(canRun: boolean, unavailableReason?: string): string | undefined {
+  return unavailableReason || (canRun ? undefined : 'Running a governed report needs an editor role');
+}
+
+function RunUnavailableNote({ reason }: { reason?: string }) {
+  if (!reason) return null;
+  return <div className="rl-card-meta">{reason}</div>;
+}
+
 function TypeCard({
   type,
   canRun,
   onRun,
+  busy,
+  unavailableReason,
 }: {
   type: LibraryReportType;
   canRun: boolean;
   onRun: (t: LibraryReportType) => void;
+  busy: boolean;
+  unavailableReason?: string;
 }) {
   return (
     <div className="rl-card">
@@ -74,6 +88,11 @@ function TypeCard({
             ? `Declared for: ${type.scopes.join(', ')}`
             : 'Scope not declared'}
       </div>
+      {type.computedScope === 'organization' && <div className="rl-card-meta">Organization-wide records</div>}
+      {type.computedScope === 'organization' && <div className="rl-card-meta">Counts are not narrowed to the selected program.</div>}
+      {(type.region || type.allowedPersonas?.length) && <div className="rl-card-meta">{[type.region, type.allowedPersonas?.map(readable).join(', ')].filter(Boolean).join(' · ')}</div>}
+      {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
+      {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}
       {type.entitled === false ? (
         <div className="rl-card-lock">
           {I.lock} {type.requiredTier ? `${type.requiredTier} plan` : 'A higher plan'} unlocks this report.
@@ -82,9 +101,9 @@ function TypeCard({
         <button
           type="button"
           className="rl-card-run"
-          disabled={!canRun}
+          disabled={!canRun || busy || Boolean(unavailableReason)}
           onClick={() => onRun(type)}
-          title={canRun ? undefined : 'Running a governed report needs an editor role'}
+          title={runControlTitle(canRun, unavailableReason)}
         >
           {I.play} Run
         </button>
@@ -112,39 +131,61 @@ function NotComputed({ types }: { types: LibraryReportType[] }) {
       </p>
       <ul className="rl-nc-list">
         {types.map((t) => (
-          <li key={t.typeId} className="rl-nc-item">{t.label}</li>
+          <li key={t.typeId} className="rl-nc-item">{t.label}{t.availabilityReason ? <span className="rl-cell-sub">{t.availabilityReason}</span> : null}</li>
         ))}
       </ul>
     </section>
   );
 }
 
+function PredictionAvailability({ types }: { types: LibraryReportType[] }) {
+  if (!types.length) return null;
+  return <section className="rl-fam" aria-label="Prediction availability">
+    <div className="ro-rep-eyebrow">Prediction availability</div>
+    <p className="rl-sub">These definitions cannot run here: no validated prediction model is part of this release.
+      Separate advisory assemblers do not establish a validated forecast, and a plan does not make these definitions executable.</p>
+    <ul className="rl-nc-list">{types.map(type => <li className="rl-nc-item" key={type.typeId}>{type.label}
+      {type.availabilityReason && <span className="rl-cell-sub">{type.availabilityReason}</span>}</li>)}</ul>
+  </section>;
+}
+
 export function CatalogPanel({
   types,
   onRun,
   canRun,
+  runUnavailableReason,
   programLabel,
+  busy = false,
+  projectId,
 }: {
   types: LibraryReportType[];
   onRun: (t: LibraryReportType) => void;
   canRun: boolean;
-  programLabel: string;
+  runUnavailableReason?: (type: LibraryReportType) => string | undefined;
+  programLabel: string | null;
+  busy?: boolean;
+  projectId?: number;
 }) {
   const [q, setQ] = useState('');
+  const [region, setRegion] = useState('');
+  const [scope, setScope] = useState('');
+  const [state, setState] = useState('');
   const searchId = React.useId();
+  const regions = [...new Set(types.map(t => t.region).filter((v): v is string => Boolean(v)))].sort();
+  const personas = [...new Set(types.flatMap(t => t.allowedPersonas ?? []))].sort();
+  const { persona, choose: choosePersona, profile } = useCatalogReportingRole(personas);
+  const scopes = [...new Set(types.flatMap(t => t.computedScope === 'organization' ? ['organization'] : t.computedScopes))].sort();
 
-  const { runnable, notComputed } = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    const shown = needle
-      ? types.filter(
-          (t) => t.label.toLowerCase().includes(needle) || t.typeId.toLowerCase().includes(needle),
-        )
-      : types;
+  const counts = catalogCapabilityCounts(types);
+  const { runnable, notComputed, needsContext, predictions } = useMemo(() => {
+    const shown = types.filter(t => matchesCatalog(t, { q, region, persona, scope, state }));
     return {
       runnable: shown.filter((t) => t.runnable),
-      notComputed: shown.filter((t) => !t.runnable),
+      notComputed: shown.filter((t) => !t.runnable && catalogAvailability(t) === 'not-computed'),
+      predictions: shown.filter(t => !t.runnable && catalogAvailability(t) === 'prediction-unavailable'),
+      needsContext: shown.filter(t => !t.runnable && !['not-computed', 'prediction-unavailable'].includes(catalogAvailability(t))),
     };
-  }, [types, q]);
+  }, [types, q, region, persona, scope, state]);
 
   /* Grouped by family so a client scans by the kind of question they have,
      rather than down an alphabetical list of every title. */
@@ -156,17 +197,18 @@ export function CatalogPanel({
     return [...m.entries()].sort((a, b) => familyLabel(a[0]).localeCompare(familyLabel(b[0])));
   }, [runnable]);
 
-  const searching = q.trim().length > 0;
+  const searching = Boolean(q.trim() || region || persona || scope || state);
 
   return (
     <div className="rl">
       <PanelHead
         title="Report catalog"
         sub={
-          `Every governed report type your plan and ${programLabel}'s product type admit. ` +
-          `${runnable.length} ${runnable.length === 1 ? 'is' : 'are'} computed by an engine and can be run here.`
+          (programLabel ? `Applicable reports for ${programLabel}. ` : 'Organization reports can run before a product program exists. ') +
+          'Availability follows the supported computation, reporting scope and your organization’s plan.'
         }
       />
+      <CatalogCounts counts={counts} />
 
       <div className="rl-filters">
         <div className="rl-filter">
@@ -180,9 +222,16 @@ export function CatalogPanel({
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
+        <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} />
+        <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
+        <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
+        <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
       </div>
+      <ReportingPersonaError profile={profile} />
 
-      {byFamily.length === 0 && notComputed.length === 0 ? (
+      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
+
+      {byFamily.length === 0 && notComputed.length === 0 && needsContext.length === 0 && predictions.length === 0 ? (
         <EmptyState
           icon={I.grid}
           title={searching ? `No report type matches "${q.trim()}"` : 'No report types for this program'}
@@ -200,13 +249,67 @@ export function CatalogPanel({
           <div className="ro-rep-eyebrow">{familyLabel(family)}</div>
           <div className="rl-grid">
             {rows.map((t) => (
-              <TypeCard key={t.typeId} type={t} canRun={canRun} onRun={onRun} />
+              <TypeCard key={t.typeId} type={t} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(t)} />
             ))}
           </div>
         </section>
       ))}
 
       <NotComputed types={notComputed} />
+      <PredictionAvailability types={predictions} />
     </div>
   );
 }
+
+const readable = (value: string) => value.replace(/[._-]/g, ' ');
+function catalogAvailability(type: LibraryReportType): string {
+  if (type.family === 'prediction' && !type.runnable && (!type.availabilityState || type.availabilityState === 'not-computed')) return 'prediction-unavailable';
+  if (!type.runnable) return type.availabilityState || (type.computedScopes.length ? 'unavailable' : 'not-computed');
+  return type.entitled === false ? 'locked' : 'available';
+}
+function matchesCatalog(type: LibraryReportType, filter: { q: string; region: string; persona: string; scope: string; state: string }): boolean {
+  const text = `${type.label} ${type.typeId} ${type.family}`.toLowerCase();
+  const scopeMatches = filter.scope === 'organization' ? type.computedScope === filter.scope : type.computedScopes.includes(filter.scope);
+  return [text.includes(filter.q.trim().toLowerCase()), !filter.region || !type.region || type.region === filter.region,
+    !filter.persona || !type.allowedPersonas?.length || type.allowedPersonas.includes(filter.persona),
+    !filter.scope || scopeMatches, !filter.state || catalogAvailability(type) === filter.state].every(Boolean);
+}
+function ReportingPersonaError({ profile }: { profile: ReturnType<typeof useCatalogReportingRole>['profile'] }) {
+  if (!profile.enabled || !profile.isError) return null;
+  return <ErrorState variant="inline" title="Your saved reporting role could not be read." message={profile.error?.message} retry={() => void profile.refetch()} />;
+}
+
+function CatalogFilter({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+  const id = React.useId();
+  return <div className="rl-filter"><label className="gov-label" htmlFor={id}>{label}</label><select id={id} className="rl-input" value={value} onChange={e => onChange(e.target.value)}><option value="">All</option>{options.map(option => <option key={option} value={option}>{readable(option)}</option>)}</select></div>;
+}
+
+interface TraceArtifact { id: string; title: string; status?: string }
+function DocumentTracePicker({ type, projectId, canRun, busy, onRun, unavailableReason }: { type: LibraryReportType; projectId?: number; canRun: boolean; busy: boolean; onRun: (type: LibraryReportType) => void; unavailableReason?: string }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const id = React.useId();
+  const url = open && projectId ? `/api/concept2cure/projects/${projectId}/artifacts` : null;
+  const read = useLiveData<unknown>(url, [url, attempt], isRowList);
+  const artifacts = rowsOf<TraceArtifact>(read.data).filter(a => typeof a.id === 'string' && typeof a.title === 'string');
+  const picked = artifacts.find(a => a.id === selected);
+  if (!projectId) return <div className="ro-dash-note" role="note">{I.info} {type.label} requires a document. Open its program to choose the governed document.</div>;
+  const run = () => { if (picked) onRun({ ...type, runnable: true, runScopeType: 'document', runScopeId: picked.id, computedScope: 'document', availabilityReason: null }); };
+  const mayRun = Boolean(picked && canRun && !busy && type.entitled !== false && !unavailableReason);
+  let content: React.ReactNode = <button type="button" className="btn ghost" onClick={() => setOpen(true)}>Choose a document</button>;
+  if (open && read.loading) content = <EmptyState busy title="Loading governed documents…" />;
+  else if (open && read.error) content = <ErrorState title="Couldn’t read governed documents" message={read.error} retry={() => setAttempt(n => n + 1)} />;
+  else if (open && !artifacts.length) content = <EmptyState title="No governed documents in this program" hint="Create or retain a document in the program before running its evidence trace." />;
+  else if (open) content = <div className="rl-filters"><div className="rl-filter rl-filter-wide"><label className="gov-label" htmlFor={id}>Document</label><select id={id} className="rl-input" value={selected} onChange={e => setSelected(e.target.value)}><option value="">Choose a governed document</option>{artifacts.map(a => <option key={a.id} value={a.id}>{a.title}{a.status ? ` · ${a.status}` : ''}</option>)}</select></div><button type="button" className="btn primary" disabled={!mayRun} title={unavailableReason} onClick={run}>Run document trace</button></div>;
+  return <section className="rl-form" aria-label="Document evidence trace"><div className="rl-card-h">{type.label}</div><p className="rl-sub">Trace a retained document’s sources, versions and governed decisions. This reports its evidence record; it does not approve the document.</p>
+    {content}
+    <RunUnavailableNote reason={unavailableReason} />
+  </section>;
+}
+
+function CatalogCounts({ counts }: { counts: ReturnType<typeof catalogCapabilityCounts> }) { return <>
+      <p className="rl-sub" role="status">{counts.defined} applicable definitions · {counts.engineBacked} engine-backed · {counts.available} available to run</p>
+      <p className="rl-sub">{counts.locked} requires a plan · {counts.contextRequired} requires context · {counts.disabled} disabled · {counts.unregistered} unregistered</p>
+      <p className="rl-sub">{counts.uncomputed} uncomputed · {counts.predictionUnavailable} prediction unavailable. An engine-backed type still requires authorized recorded inputs and its output gates.</p>
+  </>; }

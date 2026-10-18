@@ -21,6 +21,7 @@ import { contextWordIn, isCommonPassword, type PasswordContext } from './passwor
    than reimplemented — see verifySignatureIntegrity. */
 import { evaluateBindingVerification } from './part11/version-binding';
 import part11ComplianceService from './part11ComplianceService';
+import type { RequestSqlClient } from '../db/requestDb';
 
 const logger = createScopedLogger('auth-security');
 
@@ -150,13 +151,17 @@ export async function checkPasswordHistory(
  * fails closed on the throw: sign-in answers 500, the signing dialog's check
  * answers not valid, and the ceremony refuses ACCOUNT_STATE_UNKNOWN.
  */
-export async function isAccountLocked(userId: number): Promise<{
+export async function isAccountLocked(userId: number, executor?: RequestSqlClient): Promise<{
   locked: boolean;
   lockedUntil?: Date;
   remainingAttempts?: number;
 }> {
   try {
-    const result = await db
+    // tenant-isolation-safe: users is shared identity; scoped re-verification passes the authenticated signer id, never a body id, on its verified request executor. FORCE RLS still limits membership/account visibility.
+    const result = executor ? (await executor.query('SELECT failed_login_attempts AS "failedLoginAttempts", locked_until AS "lockedUntil" FROM users WHERE id = $1 LIMIT 1', [userId])).rows.map(row => ({
+      failedLoginAttempts: Number(row.failedLoginAttempts ?? 0),
+      lockedUntil: row.lockedUntil == null ? null : new Date(String(row.lockedUntil)),
+    })) : await db
       .select({
         failedLoginAttempts: users.failedLoginAttempts,
         lockedUntil: users.lockedUntil,
@@ -179,7 +184,11 @@ export async function isAccountLocked(userId: number): Promise<{
 
     // If lockout expired, reset the counter
     if (user.lockedUntil && new Date(user.lockedUntil) <= new Date()) {
-      await db
+      if (executor) {
+        // tenant-isolation-safe: resets only the same authenticated signer's expired lock read above, on the same scoped executor; users membership/account FORCE RLS remains enforced.
+        const reset = await executor.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1 RETURNING id', [userId]);
+        if (reset.rows.length !== 1) throw new Error('Account lockout reset could not be recorded.');
+      } else await db
         .update(users)
         .set({ failedLoginAttempts: 0, lockedUntil: null })
         .where(eq(users.id, userId));
@@ -212,7 +221,7 @@ export async function isAccountLocked(userId: number): Promise<{
  * locked": sign-in answers 500 and the signing ceremony refuses, the same
  * posture as isAccountLocked above.
  */
-export async function recordFailedLogin(userId: number): Promise<{
+export async function recordFailedLogin(userId: number, executor?: RequestSqlClient): Promise<{
   locked: boolean;
   remainingAttempts: number;
 }> {
@@ -220,7 +229,11 @@ export async function recordFailedLogin(userId: number): Promise<{
   // stored value reads back the same way isAccountLocked expects.
   const lockUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000).toISOString();
   try {
-    const [updated] = await db
+    // tenant-isolation-safe: increments the authenticated signer's shared account counter from canonical re-verification, not a request-supplied target; the optional executor retains users membership/account FORCE RLS and zero returned rows refuse.
+    const [updated] = executor ? (await executor.query(`UPDATE users
+      SET failed_login_attempts = coalesce(failed_login_attempts, 0) + 1, last_failed_login = $2,
+        locked_until = CASE WHEN coalesce(failed_login_attempts, 0) + 1 >= $3::int THEN $4::timestamp ELSE locked_until END
+      WHERE id = $1 RETURNING failed_login_attempts AS "failedLoginAttempts"`, [userId, new Date(), LOCKOUT_THRESHOLD, lockUntil])).rows.map(row => ({ failedLoginAttempts: Number(row.failedLoginAttempts) })) : await db
       .update(users)
       .set({
         failedLoginAttempts: sql`coalesce(${users.failedLoginAttempts}, 0) + 1`,

@@ -152,13 +152,21 @@ export function evaluateBacktest(
  * Read landed predictions (observed_outcome IS NOT NULL) from
  * intelligence.risk_predictions and backtest the deployed model. Optionally scope to a
  * target and/or an organization. Uses `predicted_prob` (the model's probability, 0..1).
+ *
+ * Only rows a trained model or a network prior produced count. Until 2026-10-15 a cold
+ * start (neither) was persisted as predicted_prob 0.5 with no model_version_id and no
+ * network_prior_prob; databases that ran before then still hold those rows.
  */
 export async function backtestRiskModel(opts: {
   target?: RiskTarget;
   organizationId?: number;
   thresholds?: BacktestThresholds;
 } = {}): Promise<BacktestMetrics> {
-  const where: string[] = ['observed_outcome IS NOT NULL', 'predicted_prob IS NOT NULL'];
+  const where: string[] = [
+    'observed_outcome IS NOT NULL',
+    'predicted_prob IS NOT NULL',
+    '(model_version_id IS NOT NULL OR network_prior_prob IS NOT NULL)',
+  ];
   const params: unknown[] = [];
   if (opts.target) { params.push(opts.target); where.push(`target = $${params.length}`); }
   if (opts.organizationId != null) { params.push(opts.organizationId); where.push(`organization_id = $${params.length}`); }

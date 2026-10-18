@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH01: Repeated equal values still have different assays
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH02: Repeated equal values still have different configurations
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH03: Source software qualifier cannot be silently omitted
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH04: Restricted population cannot inherit its broader label
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH05: Duplicate assay labels remain ambiguous
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH06: Clipped value anchor cannot borrow remote context
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH07: An extra source qualifier cannot be discarded
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH08: A negative value cannot supply a positive scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH09: A scientific exponent cannot be clipped
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH10: Upper range endpoint cannot supply a scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH11: Decimal digits cannot bind an integer result
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH12: Clipping a bound marker cannot establish a scalar
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH13: Clipping a unit cannot establish unit binding
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH14: A witness with a different byte hash refuses
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH15: Server source object must bind its actual text hash
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH16: Unsupported semantic witness paths refuse
+ ↓ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH17: Earlier scalar occurrence cannot erase the named result bound
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH18: Source instrument cannot be omitted 8ms
+   → A recorded diagnostic instrument restricts the source result and cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH19: Source reagent version cannot be omitted 2ms
+   → A recorded diagnostic reagent version cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH20: Source analytical lot cannot be omitted 1ms
+   → A recorded analytical lot cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ × server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH21: Source device test condition cannot be omitted 3ms
+   → A recorded device test condition cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH18: Source instrument cannot be omitted
+AssertionError: A recorded diagnostic instrument restricts the source result and cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:27:58
+     25|         expect(result.ok, item.rationale).toBe(true);
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         expect(result.context.state, item.rationale).not.toBe('passed'…
+       |                                                          ^
+     28|         if (item.expected === 'not_established') expect(result.context…
+     29|         expect(result.context.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH19: Source reagent version cannot be omitted
+AssertionError: A recorded diagnostic reagent version cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:27:58
+     25|         expect(result.ok, item.rationale).toBe(true);
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         expect(result.context.state, item.rationale).not.toBe('passed'…
+       |                                                          ^
+     28|         if (item.expected === 'not_established') expect(result.context…
+     29|         expect(result.context.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH20: Source analytical lot cannot be omitted
+AssertionError: A recorded analytical lot cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:27:58
+     25|         expect(result.ok, item.rationale).toBe(true);
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         expect(result.context.state, item.rationale).not.toBe('passed'…
+       |                                                          ^
+     28|         if (item.expected === 'not_established') expect(result.context…
+     29|         expect(result.context.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts-heldout.test.ts > held-out scientific source/anchor adversaries > SFH21: Source device test condition cannot be omitted
+AssertionError: A recorded device test condition cannot disappear from its context.: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ server/services/vault/__tests__/scientific-source-facts-heldout.test.ts:27:58
+     25|         expect(result.ok, item.rationale).toBe(true);
+     26|         expect(result.transcription.state, item.rationale).toBe('passe…
+     27|         expect(result.context.state, item.rationale).not.toBe('passed'…
+       |                                                          ^
+     28|         if (item.expected === 'not_established') expect(result.context…
+     29|         expect(result.context.reasons.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 17 skipped (21)
+   Start at  06:30:14
+   Duration  750ms (transform 418ms, setup 67ms, import 440ms, tests 17ms, environment 0ms)
+

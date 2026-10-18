@@ -38,7 +38,11 @@
  */
 
 import { Node, mergeAttributes } from '@tiptap/core';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import type { NodeView } from '@tiptap/pm/view';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthToken } from '@/utils/authToken';
 import { CAPTION_ID_ATTR } from '@shared/authoring/captions';
 import {
   isFigureSrc,
@@ -46,10 +50,7 @@ import {
   isInlineFigureImage,
 } from '@shared/authoring/figure-refs';
 
-/* ── Authenticated display cache ──────────────────────────────── */
-
-/** One fetch per image per page lifetime; object URLs are tiny handles. */
-const objectUrlCache = new Map<string, Promise<string>>();
+/* ── Authenticated display ────────────────────────────────────── */
 
 /** Thrown for a src that is not a figure. */
 export const NOT_A_FIGURE_REF = 'NOT_A_FIGURE_REF';
@@ -65,22 +66,23 @@ export const FIGURE_NOT_UPLOADED_NOTE =
  *  request. Periodic review 2026-09-28, editor family, SEC-B-1 and SEC-B-2:
  *  the governed check was a prefix test that dot segments walked out of to any
  *  API route, and every other src was handed to the browser to fetch. */
-export function resolveImageSrc(src: string): Promise<string> {
-  if (isInlineFigureImage(src)) return Promise.resolve(src);
-  if (!isGovernedImageRef(src)) return Promise.reject(new Error(NOT_A_FIGURE_REF));
-  let hit = objectUrlCache.get(src);
-  if (!hit) {
-    hit = (async () => {
-      const res = await apiRequest('GET', src);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      return URL.createObjectURL(blob);
-    })();
-    // A failed fetch must not poison the cache — the next render retries.
-    hit.catch(() => objectUrlCache.delete(src));
-    objectUrlCache.set(src, hit);
-  }
-  return hit;
+export async function resolveImageSrc(src: string): Promise<string> {
+  if (isInlineFigureImage(src)) return src;
+  if (!isGovernedImageRef(src)) throw new Error(NOT_A_FIGURE_REF);
+  // A page-level cache bypasses the current viewer's project access check on
+  // remount, including after logout or a permission change. Each mounted view
+  // owns its bytes and asks the canonical route for current authorization.
+  const viewingSession = getAuthToken();
+  const res = await apiRequest('GET', src);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  if (getAuthToken() !== viewingSession) throw new Error('Image viewing session changed.');
+  return URL.createObjectURL(blob);
+}
+
+/** Release bytes owned by a view; an inline figure has no object URL. */
+export function releaseImageSrc(url: string): void {
+  if (url.startsWith('blob:') && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(url);
 }
 
 /* ── The node ─────────────────────────────────────────────────── */
@@ -104,6 +106,66 @@ declare module '@tiptap/core' {
       insertAuthoringImage: (attrs: AuthoringImageAttrs) => ReturnType;
     };
   }
+}
+
+const authenticatedImageViewKey = new PluginKey('authoringImageView');
+
+/** The one display implementation, including React's temporary view teardown. */
+function authenticatedImageNodeView(node: ProseMirrorNode): NodeView {
+  const dom = document.createElement('figure');
+  dom.className = 'rse-img';
+  const img = document.createElement('img');
+  img.alt = node.attrs.alt ?? '';
+  img.draggable = false;
+  const status = document.createElement('span');
+  status.className = 'rse-img-status';
+  status.textContent = 'Loading image…';
+  dom.append(img, status);
+
+  let alive = true;
+  let displayUrl: string | null = null;
+  const src = String(node.attrs.src ?? '');
+  if (!src) {
+    status.textContent = 'Image reference is empty.';
+    dom.dataset.error = '1';
+  } else {
+    resolveImageSrc(src)
+      .then((url) => {
+        if (!alive) { releaseImageSrc(url); return; }
+        displayUrl = url;
+        img.src = url;
+        img.onload = () => status.remove();
+        img.onerror = () => {
+          status.textContent =
+            'The image could not be displayed. Its reference is kept in the section.';
+          dom.dataset.error = '1';
+        };
+      })
+      .catch((e: unknown) => {
+        if (!alive) return;
+        // JSON or live sync can bypass the schema parser; the resolver still
+        // refuses non-figure references before any request is made.
+        status.textContent =
+          e instanceof Error && e.message === NOT_A_FIGURE_REF
+            ? FIGURE_NOT_UPLOADED_NOTE
+            : 'The image could not be loaded — you may not have access, or the store is unreachable. Its reference is kept in the section.';
+        dom.dataset.error = '1';
+      });
+  }
+
+  return {
+    dom,
+    // A different source or caption rebuilds the view rather than retaining
+    // another figure's bytes or screen-reader description.
+    update: (updated) =>
+      updated.type.name === 'image' &&
+      updated.attrs.src === src &&
+      (updated.attrs.alt ?? '') === (node.attrs.alt ?? ''),
+    destroy: () => {
+      alive = false;
+      if (displayUrl) releaseImageSrc(displayUrl);
+    },
+  };
 }
 
 export const AuthoringImage = Node.create({
@@ -166,59 +228,17 @@ export const AuthoringImage = Node.create({
   },
 
   addNodeView() {
-    return ({ node }) => {
-      const dom = document.createElement('figure');
-      dom.className = 'rse-img';
-      const img = document.createElement('img');
-      img.alt = node.attrs.alt ?? '';
-      img.draggable = false;
-      const status = document.createElement('span');
-      status.className = 'rse-img-status';
-      status.textContent = 'Loading image…';
-      dom.append(img, status);
+    return ({ node }) => authenticatedImageNodeView(node);
+  },
 
-      let alive = true;
-      const src = String(node.attrs.src ?? '');
-      if (!src) {
-        status.textContent = 'Image reference is empty.';
-        dom.dataset.error = '1';
-      } else {
-        resolveImageSrc(src)
-          .then((url) => {
-            if (!alive) return;
-            img.src = url;
-            img.onload = () => status.remove();
-            img.onerror = () => {
-              status.textContent =
-                'The image could not be displayed. Its reference is kept in the section.';
-              dom.dataset.error = '1';
-            };
-          })
-          .catch((e: unknown) => {
-            if (!alive) return;
-            // A node can still arrive without a parse (JSON, live sync). One
-            // that is not a figure was never requested; say what to do.
-            status.textContent =
-              e instanceof Error && e.message === NOT_A_FIGURE_REF
-                ? FIGURE_NOT_UPLOADED_NOTE
-                : 'The image could not be loaded — you may not have access, or the store is unreachable. Its reference is kept in the section.';
-            dom.dataset.error = '1';
-          });
-      }
-
-      return {
-        dom,
-        /* A src change is a different image — rebuild the view. So is an alt
-           change: alt is the figure's caption AND what a screen reader
-           announces, and a stale one would describe the previous words. */
-        update: (updated) =>
-          updated.type.name === 'image' &&
-          updated.attrs.src === src &&
-          (updated.attrs.alt ?? '') === (node.attrs.alt ?? ''),
-        destroy: () => {
-          alive = false;
-        },
-      };
-    };
+  addProseMirrorPlugins() {
+    // TipTap React clears the direct nodeViews prop while EditorContent
+    // unmounts, before moving the live DOM. The plugin fallback keeps the same
+    // authenticated renderer in place instead of briefly rendering schema
+    // HTML as a native API img. Stored renderHTML remains the plain reference.
+    return [new Plugin({
+      key: authenticatedImageViewKey,
+      props: { nodeViews: { [this.name]: authenticatedImageNodeView } },
+    })];
   },
 });

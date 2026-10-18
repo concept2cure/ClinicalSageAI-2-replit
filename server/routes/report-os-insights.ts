@@ -29,6 +29,7 @@ import {
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
 import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
+import { CompletenessNotAssessedError } from '../services/intelligence/regulatory-intelligence';
 import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import {
   scheduledReportsEntitled,
@@ -41,6 +42,9 @@ import {
   listSubscriptions,
   setEnabled,
 } from '../services/report-os/scheduling/subscription-service';
+import { ScheduleConfigurationError } from '../services/report-os/scheduling/configuration';
+import { isValidTimeZone } from '../services/report-os/scheduling/cadence';
+import { canAccessReportScope, type ReportProjectActor } from '../services/report-os/project-access';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -110,22 +114,28 @@ const predictionMetaSchema = z.object({
   generatedAt: z.string().optional(),
 });
 
+// A null probability is a target nothing estimated; it renders "not assessed".
+// No modelConfidence: none is computed for these probabilities (2026-10-15).
 const deficiencyRiskSchema = z.object({
   kind: z.literal('deficiency_risk'),
-  rtfProbability: z.number(),
-  crlProbability: z.number(),
-  firstCycleApprovalProbability: z.number(),
+  rtfProbability: z.number().nullable(),
+  crlProbability: z.number().nullable(),
+  firstCycleApprovalProbability: z.number().nullable(),
   sampleSize: z.number().int().nonnegative(),
   usingNetworkPrior: z.boolean(),
-  modelConfidence: z.number().optional(),
 });
 
+// ReadinessTrajectoryInput exactly. 2026-10-15: this still asked for the retired
+// predictedReviewTimeDays / predictedDeficiencyCount and a non-null approval
+// probability, so the engine's own input was refused and a retired one rendered
+// its review clock and unmet count as undefined.
 const readinessTrajectorySchema = z.object({
   kind: z.literal('readiness_trajectory'),
   overallScore: z.number(),
-  predictedApprovalProbability: z.number(),
-  predictedReviewTimeDays: z.number(),
-  predictedDeficiencyCount: z.number(),
+  predictedApprovalProbability: z.number().nullable(),
+  reviewClockDays: z.number().nullable(),
+  reviewClockBasis: z.string().nullable(),
+  unmetCriteriaCount: z.number().int().nonnegative(),
   trend: z.array(z.object({ asOf: z.string(), score: z.number() })).optional(),
 });
 
@@ -188,7 +198,8 @@ const reportScheduleSchema = z.object({
   minute: z.number().int().min(0).max(59).optional(),
   dayOfWeek: z.number().int().min(0).max(6).optional(),
   dayOfMonth: z.number().int().min(1).max(28).optional(),
-  timeZoneOffsetMinutes: z.number().int().optional(),
+  timeZone: z.string().max(100).refine(isValidTimeZone, 'Use a valid IANA timezone').optional(),
+  timeZoneOffsetMinutes: z.number().int().min(-840).max(840).optional(),
 });
 
 const createSubscriptionSchema = z.object({
@@ -197,7 +208,7 @@ const createSubscriptionSchema = z.object({
   scopeType: z.string().min(1),
   scopeId: z.string().min(1),
   schedule: reportScheduleSchema,
-  recipients: z.array(z.string().max(320)).optional(),
+  recipients: z.array(z.string().email().max(320)).max(100).optional(),
   format: z.enum(['pdf', 'in_app']).optional(),
   channel: z.enum(['platform', 'external']).optional(),
   persona: z.string().nullable().optional(),
@@ -263,7 +274,8 @@ router.post('/predictions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const input = parsed.data.input as PredictionInput;
+    // No cast: the compiler holds each schema to the engine's input type.
+    const input: PredictionInput = parsed.data.input;
     const meta: PredictionReportMeta = {
       reportTypeId: parsed.data.meta.reportTypeId,
       reportTypeLabel: parsed.data.meta.reportTypeLabel ?? parsed.data.meta.reportTypeId,
@@ -286,8 +298,18 @@ router.post('/predictions', async (req: Request, res: Response) => {
 // then assembles the advisory report. Entitlement-gated (professional); the
 // assembled report is ALWAYS status:'partial' with a mandatory disclosure block
 // (assertHasDisclosure). Never fabricates: a program with no readiness
-// assessment yields a 422, not a rendered 0%.
+// assessment yields a 422, not a rendered 0%, and a draft no trained model or
+// network prior can estimate yields a 422, not a rendered 50%.
 // ---------------------------------------------------------------------------
+
+/** A submission type with no required-section profile is refused by the model as
+ *  the caller's request (422); it reached serverError as a 500 (2026-10-15). */
+function answerPredictionRunFailure(res: Response, error: unknown): Response {
+  if (error instanceof CompletenessNotAssessedError) {
+    return res.status(422).json({ error: error.message, code: error.code });
+  }
+  return serverError(res, logger, 'running predictions', error);
+}
 
 router.post('/predictions/run', async (req: Request, res: Response) => {
   try {
@@ -334,14 +356,23 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
 
     // The pre-mortem stores its result against the project and submission it
     // names; an id from another tenant reads as not found, before any model runs.
-    if (body.projectId != null && !(await projectsInOrg(organizationId, [body.projectId])).has(body.projectId)) {
-      return res.status(404).json({ error: 'Project not found' });
+    if (body.projectId != null) {
+      if (!(await projectsInOrg(organizationId, [body.projectId])).has(body.projectId)) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      const actor = subscriptionActor(req);
+      if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
+      // The model records calibration against this project. Organization
+      // ownership alone cannot authorize IO for an explicitly private project.
+      if (!(await canAccessReportScope(organizationId, actor, { scopeType: 'project', scopeId: String(body.projectId) }))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
     }
     if (body.submissionId != null) {
       const owned = body.projectId != null && (await submissionInProject(organizationId, body.projectId, body.submissionId));
       if (!owned) return res.status(404).json({ error: 'Submission not found' });
     }
-    const input: PredictionInput = await runDeficiencyRiskForDraft({
+    const input: PredictionInput | null = await runDeficiencyRiskForDraft({
       organizationId,
       projectId: body.projectId,
       submissionId: body.submissionId,
@@ -353,6 +384,17 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       harmonizeIssueCount: body.harmonizeIssueCount,
       openEscalations: body.openEscalations,
     });
+    /* 2026-10-15: at cold start the model answered 0.5 for every target and
+       this report printed "Predicted first-cycle approval probability is
+       50%…". With nothing estimated, the pre-mortem refuses, as the forecast
+       does. */
+    if (input === null) {
+      return res.status(422).json({
+        error:
+          'No refuse-to-file, complete-response-letter or first-cycle approval probability could be estimated for this draft: no trained model and no network prior exist for it yet. Nothing was predicted.',
+        code: 'PREDICTION_NOT_ASSESSED',
+      });
+    }
 
     const meta: PredictionReportMeta = {
       reportTypeId: typeInfo.typeId,
@@ -374,7 +416,7 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return serverError(res, logger, 'running predictions', error);
+    return answerPredictionRunFailure(res, error);
   }
 });
 
@@ -382,14 +424,28 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
 // Subscriptions — org-scoped CRUD over the subscription service.
 // ---------------------------------------------------------------------------
 
+/** The authenticator's current membership role takes precedence over the token.
+ * The subscription creator is evaluated separately at enablement/fire time. */
+function subscriptionActor(req: Request): ReportProjectActor | null {
+  const userId = authedUserId(req);
+  if (!Number.isSafeInteger(userId) || userId == null || userId < 1) return null;
+  return { userId, role: req.userRole ?? req.user?.role };
+}
+
 router.get('/subscriptions', async (req: Request, res: Response) => {
   try {
     const organizationId = authedOrgId(req);
     if (organizationId == null) {
       return res.status(403).json({ error: 'Tenant context required' });
     }
+    const actor = subscriptionActor(req);
+    if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
     const rows = await listSubscriptions(organizationId);
-    return res.json({ data: rows });
+    const allowed = [];
+    for (const row of rows) {
+      if (await canAccessReportScope(organizationId, actor, row)) allowed.push(row);
+    }
+    return res.json({ data: allowed });
   } catch (error: any) {
     return serverError(res, logger, 'loading subscriptions', error);
   }
@@ -431,6 +487,7 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ data: row });
   } catch (error: any) {
+    if (error instanceof ScheduleConfigurationError) return res.status(error.status).json({ error: error.message, code: error.code, ...(error.requiredTier ? { requiredTier: error.requiredTier } : {}) });
     return serverError(res, logger, 'saving subscriptions', error);
   }
 });
@@ -442,7 +499,7 @@ router.patch('/subscriptions/:id', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Tenant context required' });
     }
     const id = Number(req.params.id);
-    if (!Number.isFinite(id) || id <= 0) {
+    if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid subscription id' });
     }
     const parsed = setEnabledSchema.safeParse(req.body);
@@ -450,12 +507,21 @@ router.patch('/subscriptions/:id', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const row = await setEnabled(id, organizationId, parsed.data.enabled);
+    const actor = subscriptionActor(req);
+    if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
+    const existing = (await listSubscriptions(organizationId)).find(row => row.id === id);
+    // Both disabling and enabling are management actions over this scope. A
+    // valid stored creator cannot grant the managing caller project access.
+    if (!existing || !(await canAccessReportScope(organizationId, actor, existing))) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    const row = await setEnabled(id, organizationId, parsed.data.enabled, actor.userId);
     if (!row) {
       return res.status(404).json({ error: 'Subscription not found' });
     }
     return res.json({ data: row });
   } catch (error: any) {
+    if (error instanceof ScheduleConfigurationError) return res.status(error.status).json({ error: error.message, code: error.code, ...(error.requiredTier ? { requiredTier: error.requiredTier } : {}) });
     return serverError(res, logger, 'updating subscriptions', error);
   }
 });

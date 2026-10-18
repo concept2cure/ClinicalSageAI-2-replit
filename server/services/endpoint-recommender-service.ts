@@ -1,8 +1,9 @@
-import { eq, and, sql, desc, like } from 'drizzle-orm';
+import { eq, and, inArray, like } from 'drizzle-orm';
 import { db } from '../db';
 import { csrReports, csrDetails } from '../../shared/schema';
 import { huggingFaceService } from '../huggingface-service';
 import { academicDocumentProcessor } from './academic-document-processor';
+import { endpointsFromDetail } from './corpus/precedent-benchmark-reader';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -20,6 +21,7 @@ export type EndpointEvidenceBasis =
 
 export interface EndpointRecommendation {
   endpoint: string;
+  /** CSR reports (for a literature-only endpoint: literature results) recording it; 0 if model-proposed. */
   occurrence_count: number;
   /**
    * Empirical trial-success rate (0–100) — set ONLY when derived from real recorded
@@ -44,13 +46,17 @@ export interface EndpointRecommendation {
 
 export interface EndpointEvidence {
   source_id: string;
-  source_type: 'csr' | 'academic' | 'regulatory';
+  /** Where the item came from; a model suggestion is 'language_model', not literature. */
+  source_type: 'csr' | 'academic' | 'regulatory' | 'language_model';
   title: string;
   reference_text: string;
   success_metric?: string;
   phase?: string;
   url?: string;
-  confidence: number;
+  /** Not assessed: no evidence item carries a calibrated confidence, so this is null. */
+  confidence: number | null;
+  /** The literature search's similarity score for this item, as the search returned it (literature only). */
+  retrieval_score?: number | null;
 }
 
 export interface RegulatoryGuidance {
@@ -87,9 +93,12 @@ export interface RawRegulatoryGuidanceItem {
 
 export interface AcademicReference {
   title: string;
-  authors: string[];
-  publication: string;
-  year: string;
+  /** null: the literature search records no authors (which is not "no authors"). */
+  authors: string[] | null;
+  /** null when the source records none. */
+  publication: string | null;
+  /** null: the literature search records no year. */
+  year: string | null;
   url?: string;
   excerpt: string;
 }
@@ -134,6 +143,249 @@ export function deriveEvidenceStrength(rec: EndpointRecommendation, basis: Endpo
 export function normalizeEndpointEvidence(rec: EndpointRecommendation): EndpointRecommendation {
   const evidence_basis = classifyEndpointBasis(rec);
   return { ...rec, evidence_basis, evidence_strength: deriveEvidenceStrength(rec, evidence_basis) };
+}
+
+// ─── What each source returned ────────────────────────────────────────────────────
+// 2026-10-15: every source caught its own failure and returned an empty answer, so a
+// source that could not be read looked the same as one that found nothing. Each answer
+// now says, per source, which of the two it was.
+
+/** The sources a recommendation consults. */
+export type EndpointSourceName =
+  | 'csr_corpus'
+  | 'academic_literature'
+  | 'regulatory_guidance'
+  | 'language_model';
+
+export interface EndpointSourceStatus {
+  /**
+   * read: consulted, and it returned candidates (for the model: it answered).
+   * no_matches: consulted, and nothing matched.
+   * unavailable: the read failed, or no such source is loaded.
+   * not_queried: not consulted.
+   */
+  status: 'read' | 'no_matches' | 'unavailable' | 'not_queried';
+  /** Why a source was unavailable or not queried, or what a read covered; null otherwise. */
+  detail: string | null;
+}
+
+export interface EndpointRecommendationResult {
+  recommendations: EndpointRecommendation[];
+  sources: Record<EndpointSourceName, EndpointSourceStatus>;
+}
+
+export interface EndpointEvaluation {
+  /** Always null: no deterministic endpoint-quality rubric exists, and a number a model types is not one. */
+  score: null;
+  /** The language model's commentary on the endpoint: narration, not a score or verdict. */
+  feedback: string;
+  /**
+   * Primary endpoints recorded in CSRs for the indication that share a word with this one;
+   * null when the endpoint has no word to match on, so nothing was compared.
+   */
+  similarEndpoints: string[] | null;
+}
+
+/** The answer to a recommendation refused because the CSR corpus could not be read. */
+export const ENDPOINT_CORPUS_UNAVAILABLE = {
+  error: 'ENDPOINT_CORPUS_UNAVAILABLE',
+  message: 'The CSR endpoint corpus could not be read; no endpoint recommendations were produced.',
+  unavailable: ['csr_corpus'],
+} as const;
+
+/**
+ * The CSR corpus is the recommender's primary evidence. When it cannot be read the
+ * recommendation is refused: an answer from the literature and the model alone would
+ * present a gap nobody measured as a lack of precedent.
+ */
+export class EndpointCorpusUnavailableError extends Error {
+  readonly unavailable: EndpointSourceName[] = ['csr_corpus'];
+
+  constructor(options?: { cause?: unknown }) {
+    super(ENDPOINT_CORPUS_UNAVAILABLE.message, options);
+    this.name = 'EndpointCorpusUnavailableError';
+  }
+}
+
+/** Reports read per request; the read says when more matched. */
+const CORPUS_REPORT_LIMIT = 100;
+
+/** What the CSR corpus read returned. */
+interface CorpusRead {
+  endpoints: EndpointRecommendation[];
+  status: EndpointSourceStatus;
+}
+
+type SourceRead<T> = { ok: true; value: T } | { ok: false };
+
+type AcademicSearchResult = Awaited<
+  ReturnType<typeof academicDocumentProcessor.searchAcademicKnowledge>
+>[number];
+
+/** Read one supplementary source. A failure is logged and reported, never returned as an empty answer. */
+async function readSource<T>(what: string, read: () => Promise<T>): Promise<SourceRead<T>> {
+  try {
+    return { ok: true, value: await read() };
+  } catch (error) {
+    logger.error(`Endpoint recommender: ${what} failed`, { error });
+    return { ok: false };
+  }
+}
+
+function foundStatus(found: number): EndpointSourceStatus {
+  return { status: found > 0 ? 'read' : 'no_matches', detail: null };
+}
+
+function literatureStatus(loaded: boolean, read: SourceRead<EndpointRecommendation[]>): EndpointSourceStatus {
+  if (!loaded) return { status: 'unavailable', detail: 'no literature is loaded' };
+  if (!read.ok) return { status: 'unavailable', detail: 'the literature search failed' };
+  return foundStatus(read.value.length);
+}
+
+/** One group of a csr_details.endpoints record, read by the corpus reader's own rule. */
+function endpointGroup(endpoints: unknown, group: 'primary' | 'secondary'): string[] {
+  if (!endpoints || typeof endpoints !== 'object') return [];
+  return endpointsFromDetail({ [group]: (endpoints as Record<string, unknown>)[group] });
+}
+
+/**
+ * One CSR report as evidence. 2026-10-15: the line read "<sponsor> trial (<phase>):
+ * Completed" and carried confidence 0.9. csr_reports has no outcome column, so
+ * "Completed" was a trial status nobody recorded; no computation produced the 0.9.
+ */
+function csrEvidence(report: {
+  id: number;
+  title: string | null;
+  sponsor: string | null;
+  phase: string | null;
+}): EndpointEvidence {
+  const sponsor = report.sponsor || 'Sponsor not recorded';
+  return {
+    source_id: report.id.toString(),
+    source_type: 'csr',
+    title: report.title || '',
+    reference_text: `${sponsor} trial (${report.phase || 'phase not recorded'}): outcome not recorded`,
+    phase: report.phase || undefined,
+    confidence: null,
+  };
+}
+
+/**
+ * A literature item as the search returned it. 2026-10-15: confidence was
+ * `relevance || 0.8`, so a real relevance of 0 became 0.8. The reference read year
+ * 'Recent', authors [] and publication 'Academic publication'. The search records
+ * no year and no authors, and the publication was a placeholder.
+ */
+function literatureEvidence(result: AcademicSearchResult): EndpointEvidence {
+  return {
+    source_id: result.id || 'academic-source',
+    source_type: 'academic',
+    title: result.title || 'Academic source',
+    reference_text: result.context || result.summary || 'Academic reference',
+    confidence: null,
+    retrieval_score: typeof result.relevance === 'number' ? result.relevance : null,
+  };
+}
+
+function literatureReference(result: AcademicSearchResult): AcademicReference {
+  return {
+    title: result.title || 'Unknown title',
+    authors: null,
+    publication: result.source || null,
+    year: null,
+    excerpt: result.context || result.summary || '',
+  };
+}
+
+/**
+ * A model-proposed endpoint, labelled as exactly that. 2026-10-15: it was filed as
+ * source_type 'academic', said "Based on analysis of similar trial endpoints for <X>",
+ * and carried confidence 0.7 and occurrence_count 1. No analysis happened, the source
+ * is not literature, no computation produced the 0.7, and no report recorded it.
+ */
+function modelSuggestion(endpoint: string): EndpointRecommendation {
+  return {
+    endpoint,
+    occurrence_count: 0,
+    success_rate: null, // No trial-outcome data for an AI-suggested endpoint — do not fabricate a rate
+    evidence: [
+      {
+        source_id: 'ai-generated',
+        source_type: 'language_model',
+        title: 'AI-based recommendation',
+        reference_text: 'Proposed by a language model; not matched to any CSR, literature or guidance evidence',
+        confidence: null,
+      },
+    ],
+    is_primary: true,
+    similar_endpoints: [],
+  };
+}
+
+const SOURCE_LABEL: Record<EndpointSourceName, string> = {
+  csr_corpus: 'CSR corpus',
+  academic_literature: 'literature search',
+  regulatory_guidance: 'regulatory guidance',
+  language_model: 'language model',
+};
+
+const STATUS_LABEL: Record<EndpointSourceStatus['status'], string> = {
+  read: 'read',
+  no_matches: 'no matches',
+  unavailable: 'unavailable',
+  not_queried: 'not queried',
+};
+
+const BASIS_LABEL: Record<EndpointEvidenceBasis, string> = {
+  regulatory_recommended: 'backed by regulatory guidance',
+  corpus_outcomes: 'backed by CSR outcome data',
+  corpus_frequency: 'seen in the CSR corpus',
+  academic_literature: 'drawn from the literature',
+  ai_suggested: 'proposed by a language model with no corpus evidence',
+};
+
+/** How many recommendations rest on which basis, and what each source returned. Deterministic. */
+export function summarizeEndpointRecommendations(
+  result: EndpointRecommendationResult,
+  subject: string
+): string {
+  const byBasis = new Map<EndpointEvidenceBasis, number>();
+  for (const rec of result.recommendations) {
+    const basis = rec.evidence_basis ?? classifyEndpointBasis(rec);
+    byBasis.set(basis, (byBasis.get(basis) ?? 0) + 1);
+  }
+  const breakdown = [...byBasis].map(([basis, n]) => `${n} ${BASIS_LABEL[basis]}`).join(', ');
+  const sources = (Object.keys(SOURCE_LABEL) as EndpointSourceName[])
+    .map((name) => {
+      const { status, detail } = result.sources[name];
+      return `${SOURCE_LABEL[name]} ${STATUS_LABEL[status]}${detail ? ` (${detail})` : ''}`;
+    })
+    .join('; ');
+  const count = result.recommendations.length;
+  const head =
+    count > 0
+      ? `${count} endpoint recommendation(s) for ${subject}: ${breakdown}`
+      : `No endpoint recommendations for ${subject}`;
+  return `${head}. Sources: ${sources}.`;
+}
+
+/** An evaluation in words: no score, the model's commentary marked as such, and the CSR precedent. */
+export function describeEndpointEvaluation(evaluation: EndpointEvaluation, indication: string): string {
+  let precedent: string;
+  if (evaluation.similarEndpoints === null) {
+    precedent =
+      'CSR precedent was not compared: the endpoint has no word longer than three letters to match on.';
+  } else if (evaluation.similarEndpoints.length === 0) {
+    precedent = `No primary endpoint recorded in CSRs for ${indication} shares a word with it.`;
+  } else {
+    const listed = evaluation.similarEndpoints.join('; ');
+    precedent = `Primary endpoints recorded in CSRs for ${indication} that share a word with it: ${listed}.`;
+  }
+  return (
+    'Not scored: no deterministic endpoint-quality rubric exists, ' +
+    'and a number from a language model would not be one. ' +
+    `Language-model commentary: ${evaluation.feedback} ${precedent}`
+  );
 }
 
 /**
@@ -231,79 +483,107 @@ export class EndpointRecommenderService {
   }
 
   /**
-   * Get comprehensive endpoint recommendations based on indication and phase
-   * Returns detailed recommendations with evidence and references
+   * Get comprehensive endpoint recommendations based on indication and phase:
+   * the recommendations with their evidence, and what each source returned.
+   * Throws EndpointCorpusUnavailableError when the CSR corpus cannot be read.
    */
   async getComprehensiveEndpointRecommendations(
     indication: string,
     phase: string = '',
     count: number = 5,
     therapeuticArea: string = ''
-  ): Promise<EndpointRecommendation[]> {
+  ): Promise<EndpointRecommendationResult> {
+    logger.info(`Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`);
+
+    // Step 1: the CSR corpus. 2026-10-15: this step and each one below caught its own
+    // failure and returned an empty list. An unreadable corpus read as "no CSR precedent",
+    // the model filled the gap, and the caller got HTTP 200 (an empty list if every step
+    // failed). A failed corpus read now refuses the answer; the other sources report
+    // their failures in `sources`.
+    let corpus: CorpusRead;
     try {
-      logger.info(`Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`);
-
-      // Step 1: Get CSR-based endpoints with statistics
-      const csrEndpoints = await this.getEndpointsWithEvidence(indication, phase);
-
-      // Step 2: Get academic knowledge references
-      const academicEndpoints = await this.getAcademicEndpointGuidance(
-        indication,
-        phase,
-        therapeuticArea
-      );
-
-      // Step 3: Get regulatory guidance
-      const regulatoryGuidance = await this.getRegulatoryGuidance(indication, phase);
-
-      // Step 4: Combine and rank all recommendations
-      const combinedEndpoints = this.combineEndpointSources(
-        csrEndpoints,
-        academicEndpoints,
-        regulatoryGuidance
-      );
-
-      // Step 5: If not enough recommendations, generate more with AI
-      if (combinedEndpoints.length < count) {
-        const aiRecommendations = await this.getAIGeneratedEndpoints(
-          indication,
-          phase,
-          count - combinedEndpoints.length
-        );
-
-        // Add AI recommendations with lower confidence
-        for (const endpoint of aiRecommendations) {
-          if (!combinedEndpoints.some(e => e.endpoint.toLowerCase() === endpoint.toLowerCase())) {
-            combinedEndpoints.push({
-              endpoint: endpoint,
-              occurrence_count: 1,
-              success_rate: null, // No trial-outcome data for an AI-suggested endpoint — do not fabricate a rate
-              evidence: [
-                {
-                  source_id: 'ai-generated',
-                  source_type: 'academic',
-                  title: 'AI-based recommendation',
-                  reference_text: `Based on analysis of similar trial endpoints for ${indication}`,
-                  confidence: 0.7,
-                },
-              ],
-              is_primary: true,
-              similar_endpoints: [],
-            });
-          }
-        }
-      }
-
-      // Attach an honest evidence_basis + evidence_strength to each recommendation and
-      // rank by that real signal (regulatory backing, corpus recurrence, corroboration)
-      // instead of a fabricated success rate.
-      const normalized = combinedEndpoints.map(normalizeEndpointEvidence);
-      normalized.sort((a, b) => (b.evidence_strength ?? 0) - (a.evidence_strength ?? 0));
-      return normalized.slice(0, count);
+      corpus = await this.getEndpointsWithEvidence(indication, phase);
     } catch (error) {
-      logger.error('Error generating comprehensive endpoint recommendations:', { error: error });
-      return [];
+      logger.error('CSR endpoint corpus read failed', { error });
+      throw new EndpointCorpusUnavailableError({ cause: error });
     }
+
+    // Step 2: academic literature (an empty store is no source, not "no literature").
+    // Step 3: regulatory guidance.
+    const literatureLoaded = this.academicProcessor.getRecentlyProcessedDocuments(1).length > 0;
+    const academic: SourceRead<EndpointRecommendation[]> = literatureLoaded
+      ? await readSource('literature search', () =>
+          this.getAcademicEndpointGuidance(indication, phase, therapeuticArea)
+        )
+      : { ok: false };
+    const regulatory = await readSource('regulatory guidance lookup', () =>
+      this.getRegulatoryGuidance(indication, phase)
+    );
+
+    // Step 4: Combine and rank all recommendations
+    const combinedEndpoints = this.combineEndpointSources(
+      corpus.endpoints,
+      academic.ok ? academic.value : [],
+      regulatory.ok ? regulatory.value : {}
+    );
+
+    // Step 5: If not enough recommendations, ask the model for more
+    const languageModel = await this.addModelSuggestions(combinedEndpoints, indication, phase, count);
+
+    // Attach an honest evidence_basis + evidence_strength to each recommendation and
+    // rank by that real signal (regulatory backing, corpus recurrence, corroboration)
+    // instead of a fabricated success rate.
+    const normalized = combinedEndpoints.map(normalizeEndpointEvidence);
+    normalized.sort((a, b) => (b.evidence_strength ?? 0) - (a.evidence_strength ?? 0));
+    return {
+      recommendations: normalized.slice(0, count),
+      sources: {
+        csr_corpus: corpus.status,
+        academic_literature: literatureStatus(literatureLoaded, academic),
+        regulatory_guidance: this.regulatoryGuidanceStatus(regulatory),
+        language_model: languageModel,
+      },
+    };
+  }
+
+  /** Fill up to `count` with endpoints a language model proposes; returns what the model source did. */
+  private async addModelSuggestions(
+    combined: EndpointRecommendation[],
+    indication: string,
+    phase: string,
+    count: number
+  ): Promise<EndpointSourceStatus> {
+    if (combined.length >= count) {
+      return { status: 'not_queried', detail: 'the other sources supplied the recommendations requested' };
+    }
+    const suggested = await readSource('language model request', () =>
+      this.getAIGeneratedEndpoints(indication, phase, count - combined.length)
+    );
+    if (!suggested.ok) {
+      return {
+        status: 'unavailable',
+        detail: 'the language model request failed, or its reply was not a list of endpoints',
+      };
+    }
+    for (const endpoint of suggested.value) {
+      if (!combined.some(e => e.endpoint.toLowerCase() === endpoint.toLowerCase())) {
+        combined.push(modelSuggestion(endpoint));
+      }
+    }
+    return { status: 'read', detail: null };
+  }
+
+  /** What the regulatory guidance source returned. An empty cache is no source, not "no guidance". */
+  private regulatoryGuidanceStatus(
+    read: SourceRead<Record<string, RegulatoryGuidance[]>>
+  ): EndpointSourceStatus {
+    if (!read.ok) {
+      return { status: 'unavailable', detail: 'the regulatory guidance lookup failed' };
+    }
+    if (this.regulatoryGuidanceCache.size === 0) {
+      return { status: 'unavailable', detail: 'no regulatory guidance source is loaded' };
+    }
+    return foundStatus(Object.keys(read.value).length);
   }
 
   /**
@@ -362,12 +642,10 @@ export class EndpointRecommenderService {
       if (aHasRegulatory && !bHasRegulatory) return -1;
       if (!aHasRegulatory && bHasRegulatory) return 1;
 
-      // Then prioritize evidence strength (combined CSR + academic)
-      const aEvidenceStrength = a.evidence.reduce((sum, e) => sum + e.confidence, 0);
-      const bEvidenceStrength = b.evidence.reduce((sum, e) => sum + e.confidence, 0);
-
-      if (aEvidenceStrength !== bEvidenceStrength) {
-        return bEvidenceStrength - aEvidenceStrength;
+      // Then prefer more evidence items (combined CSR + academic). 2026-10-15: this summed
+      // each item's `confidence`, a constant per source type that no computation produced.
+      if (a.evidence.length !== b.evidence.length) {
+        return b.evidence.length - a.evidence.length;
       }
 
       // Then prefer a higher EMPIRICAL success rate, only when one is known for both
@@ -389,113 +667,59 @@ export class EndpointRecommenderService {
     phase: string = '',
     therapeuticArea: string = ''
   ): Promise<EndpointRecommendation[]> {
-    try {
-      // Generate search terms based on indication and therapeutic area
-      const searchTerms = [
-        `${indication} clinical trial endpoints`,
-        `${indication} ${phase || ''} endpoints`,
-        `${indication} outcome measures`,
-      ];
+    // Generate search terms based on indication and therapeutic area
+    const searchTerms = [
+      `${indication} clinical trial endpoints`,
+      `${indication} ${phase || ''} endpoints`,
+      `${indication} outcome measures`,
+    ];
 
-      // Add therapeutic area specific terms if available
-      if (therapeuticArea && this.therapeuticAreaKeywords[therapeuticArea]) {
-        const keywords = this.therapeuticAreaKeywords[therapeuticArea];
-        searchTerms.push(...keywords.map(kw => `${kw} ${indication} endpoints`));
-      }
-
-      // Collect academic knowledge results for all search terms
-      const academicResults: any[] = [];
-
-      for (const searchTerm of searchTerms) {
-        try {
-          // Search academic knowledge using the document processor
-          const results = await this.academicProcessor.searchAcademicKnowledge(searchTerm, 5);
-
-          if (results && results.length > 0) {
-            academicResults.push(...results);
-          }
-        } catch (err) {
-          logger.error(`Error searching academic knowledge for "${searchTerm}":`, { error: err });
-          // If the standard search fails, try with local fallback
-          logger.info(`Generating local response from CSR data...`);
-        }
-      }
-
-      // Process and extract endpoints from academic results
-      const academicEndpoints = new Map<string, EndpointRecommendation>();
-
-      for (const result of academicResults) {
-        try {
-          // Extract potential endpoints from the context
-          const endpoints = this.extractEndpointsFromAcademicText(
-            result.context || result.summary || '',
-            indication
-          );
-
-          // Process each extracted endpoint
-          for (const endpoint of endpoints) {
-            if (!academicEndpoints.has(endpoint.toLowerCase())) {
-              academicEndpoints.set(endpoint.toLowerCase(), {
-                endpoint: endpoint,
-                occurrence_count: 1,
-                success_rate: null, // Literature mention is not a trial-outcome rate — do not fabricate
-                evidence: [
-                  {
-                    source_id: result.id || 'academic-source',
-                    source_type: 'academic',
-                    title: result.title || 'Academic source',
-                    reference_text: result.context || result.summary || 'Academic reference',
-                    confidence: result.relevance || 0.8,
-                  },
-                ],
-                academic_references: [
-                  {
-                    title: result.title || 'Unknown title',
-                    authors: result.authors || [],
-                    publication: result.source || 'Academic publication',
-                    year: result.year || 'Recent',
-                    excerpt: result.context || result.summary || '',
-                  },
-                ],
-                is_primary:
-                  endpoint.toLowerCase().includes('primary') ||
-                  !endpoint.toLowerCase().includes('secondary'),
-              });
-            } else {
-              // Update existing endpoint with additional evidence
-              const existing = academicEndpoints.get(endpoint.toLowerCase())!;
-              existing.occurrence_count += 1;
-              existing.evidence.push({
-                source_id: result.id || 'academic-source',
-                source_type: 'academic',
-                title: result.title || 'Academic source',
-                reference_text: result.context || result.summary || 'Academic reference',
-                confidence: result.relevance || 0.8,
-              });
-
-              if (!existing.academic_references) {
-                existing.academic_references = [];
-              }
-
-              existing.academic_references.push({
-                title: result.title || 'Unknown title',
-                authors: result.authors || [],
-                publication: result.source || 'Academic publication',
-                year: result.year || 'Recent',
-                excerpt: result.context || result.summary || '',
-              });
-            }
-          }
-        } catch (err) {
-          logger.error('Error processing academic result:', { error: err });
-        }
-      }
-
-      return Array.from(academicEndpoints.values());
-    } catch (error) {
-      logger.error('Error getting academic endpoint guidance:', { error: error });
-      return [];
+    // Add therapeutic area specific terms if available
+    if (therapeuticArea && this.therapeuticAreaKeywords[therapeuticArea]) {
+      const keywords = this.therapeuticAreaKeywords[therapeuticArea];
+      searchTerms.push(...keywords.map(kw => `${kw} ${indication} endpoints`));
     }
+
+    // Collect academic knowledge results for all search terms. 2026-10-15: a failed
+    // search was logged ("Generating local response from CSR data...", which generated
+    // nothing) and skipped, and any other error returned [], so a literature outage read
+    // as "no literature". A failure now throws; the caller reports the source unavailable.
+    const academicResults: AcademicSearchResult[] = [];
+    for (const searchTerm of searchTerms) {
+      academicResults.push(...(await this.academicProcessor.searchAcademicKnowledge(searchTerm, 5)));
+    }
+
+    // Process and extract endpoints from academic results
+    const academicEndpoints = new Map<string, EndpointRecommendation>();
+
+    for (const result of academicResults) {
+      const endpoints = this.extractEndpointsFromAcademicText(
+        result.context || result.summary || '',
+        indication
+      );
+
+      for (const endpoint of endpoints) {
+        const key = endpoint.toLowerCase();
+        const existing = academicEndpoints.get(key);
+        if (!existing) {
+          academicEndpoints.set(key, {
+            endpoint: endpoint,
+            occurrence_count: 1,
+            success_rate: null, // Literature mention is not a trial-outcome rate — do not fabricate
+            evidence: [literatureEvidence(result)],
+            academic_references: [literatureReference(result)],
+            is_primary: key.includes('primary') || !key.includes('secondary'),
+          });
+          continue;
+        }
+        // Update existing endpoint with additional evidence
+        existing.occurrence_count += 1;
+        existing.evidence.push(literatureEvidence(result));
+        existing.academic_references = [...(existing.academic_references ?? []), literatureReference(result)];
+      }
+    }
+
+    return Array.from(academicEndpoints.values());
   }
 
   /**
@@ -648,333 +872,103 @@ export class EndpointRecommenderService {
 
       return result;
     } catch (error) {
+      // 2026-10-15: returned {} here, so a failed lookup read as "no guidance issued".
       logger.error('Error getting regulatory guidance:', { error: error });
-      return {};
+      throw error;
     }
   }
 
   /**
-   * Get endpoints with evidence from CSR database
+   * Read the CSR corpus: the endpoints recorded for the reports that match the
+   * indication (and phase), with how many reports record each. Throws when the
+   * read fails; the caller refuses the recommendation rather than answer without it.
    */
-  private async getEndpointsWithEvidence(
-    indication: string,
-    phase: string = ''
-  ): Promise<EndpointRecommendation[]> {
-    try {
-      // Create query conditions
-      const conditions = [];
-
-      // Add indication filter (with fuzzy matching)
-      conditions.push(like(csrReports.indication, `%${indication}%`));
-
-      // Add phase filter if provided
-      if (phase && phase !== 'any') {
-        conditions.push(like(csrReports.phase, `%${phase}%`));
-      }
-
-      // Build full query condition
-      const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
-
-      // Query for reports matching criteria
-      const matchingReports = await db
-        .select({
-          id: csrReports.id,
-          title: csrReports.title,
-          sponsor: csrReports.sponsor,
-          phase: csrReports.phase,
-          date: csrReports.reportDate,
-        })
-        .from(csrReports)
-        .where(whereCondition)
-        .limit(100);
-
-      if (matchingReports.length === 0) {
-        return [];
-      }
-
-      // Get report IDs
-      const reportIds = matchingReports.map(report => report.id);
-
-      // Extract report details with endpoints
-      const reportsWithDetails = await db
-        .select({
-          reportId: csrDetails.reportId,
-          endpoints: csrDetails.endpoints,
-          results: csrDetails.results,
-        })
-        .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`);
-
-      // Process endpoints and calculate statistics
-      const endpointStats = new Map<
-        string,
-        {
-          endpoint: string;
-          occurrences: number;
-          successfulTrials: number;
-          totalTrials: number;
-          isPrimary: boolean;
-          reports: Array<{
-            id: number;
-            title: string;
-            sponsor: string;
-            phase: string;
-            date: string;
-            // The current csr_reports schema has no trial-outcome column, so
-            // this is left blank until an outcome source is wired in. Success
-            // classification below therefore counts no trials as successful.
-            outcome: string;
-          }>;
-        }
-      >();
-
-      // Process each report's endpoints
-      for (const detail of reportsWithDetails) {
-        try {
-          const report = matchingReports.find(r => r.id === detail.reportId);
-          if (!report) continue;
-
-          // No trial-outcome column exists on csr_reports in the current schema.
-          const reportDateStr = report.date ?? '';
-          const reportOutcome = '';
-
-          const endpoints = (detail.endpoints as any) || {};
-          const primaryEndpoints = endpoints.primary || [];
-          const secondaryEndpoints = endpoints.secondary || [];
-
-          // Process primary endpoints
-          for (const endpoint of primaryEndpoints) {
-            if (!endpoint) continue;
-
-            const key = endpoint.toString().trim();
-            if (!endpointStats.has(key)) {
-              endpointStats.set(key, {
-                endpoint: key,
-                occurrences: 0,
-                successfulTrials: 0,
-                totalTrials: 0,
-                isPrimary: true,
-                reports: [],
-              });
-            }
-
-            const stats = endpointStats.get(key)!;
-            stats.occurrences += 1;
-            stats.totalTrials += 1;
-
-            // Check if trial was successful
-            const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
-            const isSuccessful = successOutcomes.some(term =>
-              reportOutcome.toLowerCase().includes(term)
-            );
-
-            if (isSuccessful) {
-              stats.successfulTrials += 1;
-            }
-
-            // Add report reference
-            stats.reports.push({
-              id: report.id,
-              title: report.title || '',
-              sponsor: report.sponsor || '',
-              phase: report.phase || '',
-              date: reportDateStr,
-              outcome: reportOutcome,
-            });
-          }
-
-          // Process secondary endpoints
-          for (const endpoint of secondaryEndpoints) {
-            if (!endpoint) continue;
-
-            const key = endpoint.toString().trim();
-            if (!endpointStats.has(key)) {
-              endpointStats.set(key, {
-                endpoint: key,
-                occurrences: 0,
-                successfulTrials: 0,
-                totalTrials: 0,
-                isPrimary: false,
-                reports: [],
-              });
-            }
-
-            const stats = endpointStats.get(key)!;
-            stats.occurrences += 1;
-
-            // Only count as a trial if not already counted as primary
-            if (!primaryEndpoints.some((e: any) => e === key)) {
-              stats.totalTrials += 1;
-
-              // Check if trial was successful
-              const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
-              const isSuccessful = successOutcomes.some(term =>
-                reportOutcome.toLowerCase().includes(term)
-              );
-
-              if (isSuccessful) {
-                stats.successfulTrials += 1;
-              }
-
-              // Add report reference
-              stats.reports.push({
-                id: report.id,
-                title: report.title || '',
-                sponsor: report.sponsor || '',
-                phase: report.phase || '',
-                date: reportDateStr,
-                outcome: reportOutcome,
-              });
-            }
-          }
-        } catch (error) {
-          logger.error('Error processing CSR endpoints:', { error: error });
-        }
-      }
-
-      // Convert to EndpointRecommendation format
-      return (Array.from(endpointStats.values())
-        .filter(stat => stat.totalTrials > 0)
-        .map(stat => {
-          // Emit an empirical rate ONLY when successful trials were actually recorded;
-          // otherwise null (do not fabricate, and do not report a misleading 0 when
-          // outcome status simply was not captured). Rank uses evidence_strength.
-          const successRate =
-            stat.totalTrials > 0 && stat.successfulTrials > 0
-              ? Math.round((stat.successfulTrials / stat.totalTrials) * 100)
-              : null;
-
-          return {
-            endpoint: stat.endpoint,
-            occurrence_count: stat.occurrences,
-            success_rate: successRate,
-            evidence: stat.reports.slice(0, 3).map(
-              (report): EndpointEvidence => ({
-                source_id: report.id.toString(),
-                source_type: 'csr',
-                title: report.title,
-                reference_text: `${report.sponsor} trial (${report.phase}): ${report.outcome || 'Completed'}`,
-                success_metric: report.outcome || undefined,
-                phase: report.phase,
-                confidence: 0.9,
-              })
-            ),
-            is_primary: stat.isPrimary,
-            similar_endpoints: [] as string[],
-          };
-        })
-        .sort((a, b) => {
-          // Primary endpoints first
-          if (a.is_primary && !b.is_primary) return -1;
-          if (!a.is_primary && b.is_primary) return 1;
-
-          // Then by EMPIRICAL success rate, only when known for both (null = no data)
-          if (a.success_rate != null && b.success_rate != null && a.success_rate !== b.success_rate) {
-            return b.success_rate - a.success_rate;
-          }
-
-          // Then by occurrence count
-          return b.occurrence_count - a.occurrence_count;
-        })) as unknown as EndpointRecommendation[];
-    } catch (error) {
-      logger.error('Error getting endpoints with evidence:', { error: error });
-      return [];
+  private async getEndpointsWithEvidence(indication: string, phase: string = ''): Promise<CorpusRead> {
+    const conditions = [like(csrReports.indication, `%${indication}%`)];
+    if (phase && phase !== 'any') {
+      conditions.push(like(csrReports.phase, `%${phase}%`));
     }
+
+    // One row past the limit tells a bounded read from a complete one; ordered by id
+    // so the same request reads the same reports.
+    const matched = await db
+      .select({
+        id: csrReports.id,
+        title: csrReports.title,
+        sponsor: csrReports.sponsor,
+        phase: csrReports.phase,
+      })
+      .from(csrReports)
+      .where(and(...conditions))
+      .orderBy(csrReports.id)
+      .limit(CORPUS_REPORT_LIMIT + 1);
+
+    if (matched.length === 0) {
+      return { endpoints: [], status: { status: 'no_matches', detail: null } };
+    }
+    const reports = matched.slice(0, CORPUS_REPORT_LIMIT);
+    const reportById = new Map(reports.map(report => [report.id, report]));
+
+    // 2026-10-15: this was sql`report_id IN (${ids.join(',')})`, one bound text parameter
+    // ('1,2,3') against an integer column. Postgres refuses that ("invalid input syntax
+    // for type integer") whenever two or more reports match, and the catch returned [].
+    const details = await db
+      .select({ reportId: csrDetails.reportId, endpoints: csrDetails.endpoints })
+      .from(csrDetails)
+      .where(inArray(csrDetails.reportId, [...reportById.keys()]))
+      .orderBy(csrDetails.reportId, csrDetails.id);
+
+    // Each endpoint counted once per report that records it, primary if any report
+    // records it as primary. (csr_reports has no outcome column, so no success rate.)
+    const tallies = new Map<string, { isPrimary: boolean; reports: typeof reports }>();
+    const recording = new Set<number>();
+    for (const detail of details) {
+      const report = reportById.get(detail.reportId);
+      if (!report) continue;
+      const primary = endpointGroup(detail.endpoints, 'primary');
+      const secondary = endpointGroup(detail.endpoints, 'secondary').filter(e => !primary.includes(e));
+      for (const endpoint of [...primary, ...secondary]) {
+        const tally = tallies.get(endpoint) ?? { isPrimary: false, reports: [] };
+        tally.isPrimary = tally.isPrimary || primary.includes(endpoint);
+        if (!tally.reports.includes(report)) tally.reports.push(report);
+        tallies.set(endpoint, tally);
+        recording.add(report.id);
+      }
+    }
+
+    const endpoints = Array.from(tallies, ([endpoint, tally]): EndpointRecommendation => ({
+      endpoint,
+      occurrence_count: tally.reports.length,
+      success_rate: null,
+      evidence: tally.reports.slice(0, 3).map(csrEvidence),
+      is_primary: tally.isPrimary,
+      similar_endpoints: [],
+    })).sort(
+      (a, b) => Number(b.is_primary) - Number(a.is_primary) || b.occurrence_count - a.occurrence_count
+    );
+
+    const covered =
+      matched.length > CORPUS_REPORT_LIMIT
+        ? `the first ${CORPUS_REPORT_LIMIT} by id of more than ${CORPUS_REPORT_LIMIT} matching CSR reports`
+        : `${reports.length} matching CSR report(s)`;
+    return {
+      endpoints,
+      status: { status: 'read', detail: `${covered}, ${recording.size} with endpoints recorded` },
+    };
   }
 
   /**
-   * Get endpoint recommendations based on indication and phase
-   * This method is maintained for backwards compatibility.
-   */
-  async getEndpointRecommendations(
-    indication: string,
-    phase: string = '',
-    count: number = 5
-  ): Promise<string[]> {
-    try {
-      // Use the new comprehensive method but extract just the endpoint strings
-      const recommendations = await this.getComprehensiveEndpointRecommendations(
-        indication,
-        phase,
-        count
-      );
-
-      // Extract just the endpoint strings
-      return recommendations.map(rec => rec.endpoint);
-    } catch (error) {
-      logger.error('Error getting endpoint recommendations:', { error: error });
-      return [];
-    }
-  }
-
-  /**
-   * Get common endpoints directly from the database
-   */
-  private async getCommonEndpointsFromDatabase(
-    indication: string,
-    phase: string = ''
-  ): Promise<string[]> {
-    try {
-      // Create query conditions
-      const conditions = [];
-
-      // Add indication filter (with fuzzy matching)
-      conditions.push(like(csrReports.indication, `%${indication}%`));
-
-      // Add phase filter if provided
-      if (phase && phase !== 'any') {
-        conditions.push(like(csrReports.phase, `%${phase}%`));
-      }
-
-      // Build full query condition
-      const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
-
-      // Query for reports matching criteria
-      const matchingReports = await db
-        .select({
-          id: csrReports.id,
-        })
-        .from(csrReports)
-        .where(whereCondition)
-        .limit(100);
-
-      if (matchingReports.length === 0) {
-        return [];
-      }
-
-      // Get report IDs
-      const reportIds = matchingReports.map(report => report.id);
-
-      // Extract unique endpoints from matching reports
-      const detailsResults = await db
-        .select({
-          endpoint: sql<string>`jsonb_array_elements_text(${csrDetails.endpoints}->>'primary')`,
-        })
-        .from(csrDetails)
-        .where(sql`${csrDetails.reportId} IN (${reportIds.join(',')})`)
-        .groupBy(sql`jsonb_array_elements_text(${csrDetails.endpoints}->>'primary')`)
-        .orderBy(desc(sql`COUNT(*)`));
-
-      // Extract endpoints and filter out null/empty values
-      const endpoints = detailsResults.map(result => result.endpoint).filter(Boolean) as string[];
-
-      return endpoints;
-    } catch (error) {
-      logger.error('Error getting endpoints from database:', { error: error });
-      return [];
-    }
-  }
-
-  /**
-   * Generate endpoint recommendations using Hugging Face
+   * Endpoints a language model proposes. Throws when the request fails or the reply is
+   * not a JSON array of endpoint names. 2026-10-15: a failed request returned [], which
+   * read as "the model proposed nothing"; a reply that was not a JSON array was split
+   * into lines, then quotes, and each fragment came back as a suggested endpoint.
    */
   private async getAIGeneratedEndpoints(
     indication: string,
     phase: string = '',
     count: number = 5
   ): Promise<string[]> {
-    try {
-      const prompt = `
+    const prompt = `
 Generate ${count} evidence-based primary endpoints appropriate for a ${phase || 'clinical'} trial 
 targeting ${indication}. Format the response as a JSON array of strings containing only the endpoints.
 
@@ -989,171 +983,94 @@ Guidelines:
 - Provide clear metrics (e.g., percentage reduction, absolute change)
 `;
 
-      // Query Hugging Face API
-      const response = await this.hfService.queryHuggingFace(prompt);
-
-      // Parse response to extract JSON array
-      try {
-        // Find JSON array in the response
-        const jsonMatch = response.match(/\[.*\]/s);
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[0];
-          const endpoints = JSON.parse(jsonStr);
-
-          if (Array.isArray(endpoints)) {
-            return endpoints
-              .slice(0, count)
-              .map(endpoint => endpoint.trim())
-              .filter(Boolean);
-          }
-        }
-
-        // Fallback: Parse line by line if JSON parsing fails
-        return response
-          .split('\n')
-          .map(line => line.replace(/^["'\d\s-]+/, '').trim())
-          .filter(Boolean)
-          .slice(0, count);
-      } catch (parseError) {
-        logger.error('Error parsing AI response:', { error: parseError });
-
-        // Last resort fallback: Split by quotes or line breaks
-        return response
-          .split(/["'\n]/)
-          .map(line => line.trim())
-          .filter(line => line.length > 10 && !line.includes('{') && !line.includes('}'))
-          .slice(0, count);
-      }
-    } catch (error) {
-      logger.error('Error generating AI endpoints:', { error: error });
-      return [];
+    const response = await this.hfService.queryHuggingFace(prompt);
+    const jsonMatch = response.match(/\[.*\]/s);
+    const endpoints: unknown = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    if (!Array.isArray(endpoints)) {
+      throw new Error('The language model reply was not a JSON array of endpoint names');
     }
+    return endpoints
+      .filter((endpoint): endpoint is string => typeof endpoint === 'string')
+      .map(endpoint => endpoint.trim())
+      .filter(Boolean)
+      .slice(0, count);
   }
 
   /**
-   * Evaluate an endpoint's quality and applicability
+   * Comment on an endpoint: a language model narrates, and the CSR corpus supplies
+   * precedent. 2026-10-15: the model was asked for "score: A number from 0-100
+   * representing quality", with no rubric and no range check, and the AnA command
+   * reported it as "scored N/100" (CLAUDE.md Rule 2: a tool that asks a model for a
+   * figure is a defect). No deterministic endpoint-quality rubric exists, so `score` is
+   * null. A failed model request or corpus read now throws; before, each came back as
+   * a successful evaluation with error text as its feedback.
    */
   async evaluateEndpoint(
     endpoint: string,
     indication: string,
     phase: string = ''
-  ): Promise<{
-    score: number | null;   // null when the model returns no usable score — never fabricated
-    feedback: string;
-    similarEndpoints: string[];
-  }> {
-    try {
-      const prompt = `
-Evaluate this clinical trial endpoint for a ${phase || 'clinical'} trial in ${indication}:
+  ): Promise<EndpointEvaluation> {
+    const prompt = `
+Comment on this clinical trial endpoint for a ${phase || 'clinical'} trial in ${indication}:
 "${endpoint}"
 
-Consider:
+Address:
 1. Specificity and measurability
 2. Clinical relevance
 3. Appropriateness for ${phase || 'clinical'} trials
 4. Standard practices for ${indication}
 5. Statistical considerations
 
-Provide a JSON response with:
-- score: A number from 0-100 representing quality
-- feedback: Constructive feedback explaining the score
-- suggestedImprovement: How to improve this endpoint (if score < 90)
+Answer in plain prose. Do not give a score, rating, grade, probability or overall verdict.
 `;
 
-      // Query Hugging Face API
-      const response = await this.hfService.queryHuggingFace(prompt);
-
-      // Parse response
-      try {
-        // Try to extract JSON
-        const jsonMatch = response.match(/{.*}/s);
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[0];
-          const evaluation = JSON.parse(jsonStr);
-
-          // Get similar endpoints from the database
-          const similarEndpoints = await this.getSimilarEndpoints(endpoint, indication, 3);
-
-          return {
-            // Use the model's score only when it is a real number (0 is valid); never
-            // fabricate a fallback score when it is missing.
-            score: typeof evaluation.score === 'number' ? evaluation.score : null,
-            feedback: evaluation.feedback || 'No specific feedback available',
-            similarEndpoints,
-          };
-        }
-
-        // Fallback if JSON parsing fails — no score is honest, not a made-up 70.
-        return {
-          score: null,
-          feedback:
-            'Unable to parse structured feedback. Please review the endpoint for clarity and measurability.',
-          similarEndpoints: await this.getSimilarEndpoints(endpoint, indication, 3),
-        };
-      } catch (parseError) {
-        logger.error('Error parsing endpoint evaluation:', { error: parseError });
-        return {
-          score: null,
-          feedback:
-            'Endpoint evaluation failed. Please ensure the endpoint is clear, specific, and measurable.',
-          similarEndpoints: [],
-        };
-      }
-    } catch (error) {
-      logger.error('Error evaluating endpoint:', { error: error });
-      return {
-        score: null,
-        feedback: 'An error occurred during evaluation. Please try again.',
-        similarEndpoints: [],
-      };
-    }
+    const feedback = (await this.hfService.queryHuggingFace(prompt)).trim();
+    const similarEndpoints = await this.getSimilarEndpoints(endpoint, indication, 3);
+    return { score: null, feedback, similarEndpoints };
   }
 
   /**
-   * Find similar endpoints from the database
+   * Primary endpoints recorded in CSRs for the indication that share a word longer than
+   * three letters with this endpoint. null when it has no such word: nothing was compared.
+   * Throws when the corpus read fails.
    */
   private async getSimilarEndpoints(
     endpoint: string,
     indication: string,
     limit: number = 3
-  ): Promise<string[]> {
-    try {
-      // Get keywords from endpoint
-      const keywords = endpoint
-        .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 3);
+  ): Promise<string[] | null> {
+    const keywords = endpoint
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter(word => word.length > 3);
 
-      if (keywords.length === 0) {
-        return [];
-      }
-
-      // Query for similar endpoints using JSON search
-      const results = await db
-        .select({
-          endpoint: sql<string>`jsonb_array_elements_text(${csrDetails.endpoints}->>'primary')`,
-        })
-        .from(csrDetails)
-        .innerJoin(csrReports, eq(csrDetails.reportId, csrReports.id))
-        .where(like(csrReports.indication, `%${indication}%`))
-        .limit(limit * 3); // Get more, then filter for relevance
-
-      // Filter results for relevance (contains at least one keyword)
-      const filteredEndpoints = results
-        .map(result => result.endpoint)
-        .filter(Boolean)
-        .filter(endpointText => {
-          const endpointLower = endpointText.toLowerCase();
-          return keywords.some(keyword => endpointLower.includes(keyword));
-        })
-        .slice(0, limit);
-
-      return filteredEndpoints;
-    } catch (error) {
-      logger.error('Error finding similar endpoints:', { error: error });
-      return [];
+    if (keywords.length === 0) {
+      return null;
     }
+
+    // 2026-10-15: this selected jsonb_array_elements_text(endpoints->>'primary'), a jsonb
+    // function over the text that ->> reads from a json column. Postgres refuses it, and
+    // the catch returned [], so every evaluation reported no similar CSR endpoint without
+    // reading one. It also matched only the first limit*3 rows.
+    const rows = await db
+      .select({ endpoints: csrDetails.endpoints })
+      .from(csrDetails)
+      .innerJoin(csrReports, eq(csrDetails.reportId, csrReports.id))
+      .where(like(csrReports.indication, `%${indication}%`))
+      .orderBy(csrDetails.id);
+
+    const similar: string[] = [];
+    for (const row of rows) {
+      for (const text of endpointGroup(row.endpoints, 'primary')) {
+        const lower = text.toLowerCase();
+        const isNew = !similar.some(s => s.toLowerCase() === lower);
+        if (similar.length < limit && isNew && keywords.some(keyword => lower.includes(keyword))) {
+          similar.push(text);
+        }
+      }
+    }
+    return similar;
   }
 }
 

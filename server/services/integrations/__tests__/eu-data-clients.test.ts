@@ -143,11 +143,14 @@ describe('eu-data clients', () => {
       expect(r.message).toMatch(/HTTP 503/);
     });
 
-    it('treats a 404 (zero matches) as an empty OK result', async () => {
+    // 2026-10-15: this pinned 404 → `status: 'ok'`, zero devices. No documentation
+    // or live contract test says a 404 here means "no match", so it is a failed read
+    // (eu-clients-404-is-unavailable-not-zero-matches.test.ts).
+    it('treats a 404 as unavailable, not as zero matches', async () => {
       global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }) as any;
       const r = await searchEudamed({ query: 'nonesuch' });
-      expect(r.status).toBe('ok');
-      expect(r.devices).toEqual([]);
+      expect(r.status).toBe('unavailable');
+      expect(r.message).toMatch(/HTTP 404/);
     });
   });
 

@@ -1,0 +1,47 @@
+
+server/routes/ana-ri/stream.ts
+   241:7   warning  'dbPool' is assigned a value but never used                                    @typescript-eslint/no-unused-vars
+   544:8   warning  Function 'mountStreamRoute' has too many lines (2031). Maximum allowed is 100  max-lines-per-function
+   545:62  warning  Async arrow function has too many lines (1972). Maximum allowed is 100         max-lines-per-function
+   545:62  warning  Async arrow function has a complexity of 279. Maximum allowed is 15            complexity
+   740:1   warning  File has too many lines (2436). Maximum allowed is 500                         max-lines
+  1580:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1626:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1628:15  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  1636:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  1641:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  2462:39  warning  Async arrow function has too many lines (439). Maximum allowed is 100          max-lines-per-function
+  2462:39  warning  Async arrow function has a complexity of 86. Maximum allowed is 15             complexity
+  2554:27  warning  Async arrow function has a complexity of 19. Maximum allowed is 15             complexity
+  2822:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2823:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2824:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2835:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2850:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2855:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2877:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2888:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2893:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  3748:77  warning  Async arrow function has a complexity of 20. Maximum allowed is 15             complexity
+
+server/routes/chat/send-message.ts
+    98:71  warning  Async arrow function has too many lines (988). Maximum allowed is 100                    max-lines-per-function
+    98:71  warning  Async arrow function has a complexity of 212. Maximum allowed is 15                      complexity
+   165:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+   375:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+   379:13  warning  Blocks are nested too deeply (6). Maximum allowed is 4                                   max-depth
+   403:13  warning  Blocks are nested too deeply (6). Maximum allowed is 4                                   max-depth
+   414:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+   560:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   661:1   warning  File has too many lines (1061). Maximum allowed is 500                                   max-lines
+   675:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+   737:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   906:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1095:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  1097:13  warning  Blocks are nested too deeply (6). Maximum allowed is 4                                   max-depth
+  1117:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  1140:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  1143:13  warning  Blocks are nested too deeply (6). Maximum allowed is 4                                   max-depth
+  1165:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+
+✖ 41 problems (0 errors, 41 warnings)

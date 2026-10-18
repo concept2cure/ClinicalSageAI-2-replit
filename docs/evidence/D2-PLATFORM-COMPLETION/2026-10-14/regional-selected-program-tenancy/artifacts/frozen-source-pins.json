@@ -1,0 +1,32 @@
+[
+  {
+    "path": "server/routes/insights-canvas-routes.ts",
+    "sha256": "427eb63e2746d9580e9de61925006f39d8cd9f7cb650ee0a33f49e1c61ba021d",
+    "bytes": 33165
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-regional-filing.test.ts",
+    "sha256": "c8a6d4d6429a7178a6e33f243a76c1cca51317ed8213e34102c00f96380a242c",
+    "bytes": 16942
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-open-program.test.ts",
+    "sha256": "378fdcf412e60d7c81dc9187a9ca518f93d76bdcdf6f3f67dcb8a3850dc5a865",
+    "bytes": 8489
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-catalog.test.ts",
+    "sha256": "2717d15dfe0c062c4e2ff382564fe416a51365061f8acaee5da4340a6ff596f9",
+    "bytes": 14273
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts",
+    "sha256": "834170b38d49b9cb2a2491c986e677f6473a98b333de550450a2e77cb4dd9524",
+    "bytes": 6831
+  },
+  {
+    "path": "docs/design/REGIONAL_REPORT_APPLICABILITY_SELECTED_PROGRAM.md",
+    "sha256": "8adb7d6a57619b0e078fdc7e8640bc3bf2e420c6ada695a1d8da4e0918441da5",
+    "bytes": 1824
+  }
+]

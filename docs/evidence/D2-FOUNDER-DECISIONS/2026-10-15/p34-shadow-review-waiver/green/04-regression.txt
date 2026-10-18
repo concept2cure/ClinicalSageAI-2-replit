@@ -1,0 +1,16 @@
+# Regression: submission-service, shadow-review, ectd, submissions routes, AnA sign/submission tools, migration manifest — 2026-10-15
+# npx vitest run server/services/submission-service/__tests__/ server/services/shadow-review/__tests__/ server/services/ectd/__tests__/ server/routes/__tests__/submission server/routes/__tests__/shadow-review-read.test.ts server/services/ana/__tests__/{ana-cannot-sign,submission-center-tools,ana-cannot-waive-shadow-review}.test.ts tests/ops/apply-c2c-migrations-manifest.test.mjs
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > passes the trimmed reason to the service and answers 204 25ms
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates 9ms
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service 16ms
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers the projects of the submission’s filing type, from the service 5ms
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 161ms
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 131ms
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 118ms
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 110ms
+ Test Files  3 failed | 129 passed | 1 skipped (133)
+      Tests  8 failed | 1545 passed | 2 skipped (1555)
+
+# The 8 failures are not this change:
+#  - submissions-leaf-remove-and-precheck / submissions-program-anchor (4): exact-match ctx assertions that predate HEAD's ctxOf adding ipAddress (server/routes/submissions.ts:94 at HEAD, commit f2f656eed); this change does not touch ctxOf.
+#  - withdrawal-approval-binding (4): MISSING_REQUIRED_SECTION 1.2 for a continuing IND sequence, from the concurrent P-33 edit to assess-dispatch-readiness.ts (uncommitted, another session's file).

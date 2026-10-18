@@ -1,0 +1,110 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+    "sha256": "18a4a420f8e1c35271ed481a25431fa7fe1fe5a875bdd9db8807107da9282f30",
+    "afterSha256": "18a4a420f8e1c35271ed481a25431fa7fe1fe5a875bdd9db8807107da9282f30",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/authoringHandoffRecovery.ts",
+    "sha256": "a5c92b1708dd175fad925a80bb6cded2a21c71a5e33074788e2f5106046fde9c",
+    "afterSha256": "a5c92b1708dd175fad925a80bb6cded2a21c71a5e33074788e2f5106046fde9c",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+    "sha256": "cd67e34b07e39f69bece55dc2c6d508546072181aa5fa865e450c34f1967a83f",
+    "afterSha256": "cd67e34b07e39f69bece55dc2c6d508546072181aa5fa865e450c34f1967a83f",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx",
+    "sha256": "b24758ae02131cd2577a1f88952554d77e36ce90d03ea9f5703c29ab2e4879f4",
+    "afterSha256": "b24758ae02131cd2577a1f88952554d77e36ce90d03ea9f5703c29ab2e4879f4",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/AuthoringRecoveryNotice.tsx",
+    "sha256": "9408bfdf71910e94217ad47b7ecd1d9187db0c50306c721c2255911cae1f8697",
+    "afterSha256": "9408bfdf71910e94217ad47b7ecd1d9187db0c50306c721c2255911cae1f8697",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+    "sha256": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98",
+    "afterSha256": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+    "sha256": "8edbcbe7623e10e5748df62b9abf43a8b813c98499eaf28b52ce677e128fee2b",
+    "afterSha256": "8edbcbe7623e10e5748df62b9abf43a8b813c98499eaf28b52ce677e128fee2b",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+    "sha256": "c86c2a6a932413be12a325344e948d0c67985839c1d38ea4992225964cb3505a",
+    "afterSha256": "c86c2a6a932413be12a325344e948d0c67985839c1d38ea4992225964cb3505a",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+    "sha256": "40361dba9e66e24e40666112ee0d78c03f0d2f33129877ed623271af9d638c0f",
+    "afterSha256": "40361dba9e66e24e40666112ee0d78c03f0d2f33129877ed623271af9d638c0f",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+    "sha256": "93256627fc09105d2f8cb68a6537c106ba9f180ecde12b6fbe70101074686306",
+    "afterSha256": "93256627fc09105d2f8cb68a6537c106ba9f180ecde12b6fbe70101074686306",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+    "sha256": "c9870e12e96506453e9157691a8155f1091239aee3bd8da61170a3c6a7fb0ea0",
+    "afterSha256": "c9870e12e96506453e9157691a8155f1091239aee3bd8da61170a3c6a7fb0ea0",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/shellProject.ts",
+    "sha256": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "afterSha256": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/editorTarget.ts",
+    "sha256": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d",
+    "afterSha256": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d",
+    "match": true
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx",
+    "sha256": "d1156db8b3cc4a71614b1e08d522008da9814c1202a2d27ca8af4b890ef1eddb",
+    "afterSha256": "d1156db8b3cc4a71614b1e08d522008da9814c1202a2d27ca8af4b890ef1eddb",
+    "match": true
+  },
+  {
+    "path": "client/src/services/portal/authService.tsx",
+    "sha256": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "afterSha256": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "match": true
+  },
+  {
+    "path": "client/src/lib/queryClient.ts",
+    "sha256": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f",
+    "afterSha256": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f",
+    "match": true
+  },
+  {
+    "path": "vitest.config.ts",
+    "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "afterSha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "match": true
+  },
+  {
+    "path": "tests/setup.ts",
+    "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "afterSha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "match": true
+  }
+]

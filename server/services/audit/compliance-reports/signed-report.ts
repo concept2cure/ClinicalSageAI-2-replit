@@ -37,6 +37,8 @@ export interface ComplianceReportManifest {
   compliance: { standard: string; section: string; description: string };
   manifestVersion: 2;
   signingKeyId: string;
+  /** The verified JSON snapshot from which a different-format copy was derived. */
+  sourceExport?: { exportId: string; dataHash: string; format: 'json' };
 }
 
 export interface SignedReport {
@@ -56,6 +58,7 @@ export interface SignedReportOptions {
   chain: ChainSummary;
   /** The key resolved before the run; resolved here when omitted. */
   signingKey?: ResolvedExportSigningKey;
+  sourceExport?: ComplianceReportManifest['sourceExport'];
 }
 
 /*
@@ -88,6 +91,7 @@ export function buildSignedReport(data: ReportData, opts: SignedReportOptions): 
     hashAlgorithm: 'SHA-256' as const,
     chainAtGeneration: opts.chain,
     basis: [...opts.basis],
+    ...(opts.sourceExport ? { sourceExport: { ...opts.sourceExport } } : {}),
     compliance: {
       standard: '21 CFR Part 11',
       section: '§11.10(e)',

@@ -1,0 +1,23 @@
+{
+  "reviewDate": "2026-10-14",
+  "mode": "read-only application review; prospective acceptance cases, no independent D2 test execution",
+  "baselineHEAD": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "files": {
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "332b5afe00c71ce94baffcd531dbc51f68067ff5d8d45a6d3e6534cce943c0c9",
+    "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "529364683edd3fc4f573331d6b0fe652242631371098ce41830c6c4567f377b5",
+    "server/services/ana/uploaded-file-access.ts": "980cd348d5c5762b3f265ba75f9e238f22c363fca936bad20c12d6ab13b14bec",
+    "server/routes/c2c/projects.ts": "83375e9cd2187835010bae214579cef8dc08b7401798952c92bb6c8dc981b3a8",
+    "server/routes/chat/upload.ts": "f428c4f442f6b34df628a61d541a23f1d28512a47192de44196a00eb4d6630ab",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/document-data-disposition/service.ts": "bad02257299c83bd923adade7067ea50aa40c34729e9271f5c61a1d31d64388a",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/recorded-lineage.ts": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+    "migrations/20261001_cre_evidence_sources_capture_immutability.sql": "571a2831d8b79526662de877411f2cdeba05a1a0b79e6d1d50a08c2931f0766f",
+    "migrations/20261008c_data_room_source_text.sql": "c649a69cac300e9932b2ead12e7c53eab715bc18043f531afee4e5ef75afdb48",
+    "docs/evidence/D2-PROCESSING-RECOVERY-STUDY/2026-10-14/processing-recovery.probe.mts": "8503cb565d6831ce5f82033426effe7c5883e5e886e7b67c0128212ba8b6efb7",
+    "docs/evidence/D2-PROCESSING-RECOVERY-STUDY/2026-10-14/README.md": "b349e3e6838f7f138bdeeef81532455cd1ca24a196490fed13c12b7edec6f485",
+    "tests/db/data-room-processing.dbtest.ts": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71",
+    "tests/setup.db.ts": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3",
+    "server/services/vault/document-chunking-backfill.service.ts": "68182ce9238c665c78349406d4ad5cae74338612a71281629c8e2fc1836a6349"
+  }
+}

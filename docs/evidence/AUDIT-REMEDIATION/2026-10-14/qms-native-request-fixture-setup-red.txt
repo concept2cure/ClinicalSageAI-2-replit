@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads retained versions and counts actual current-version training
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > refuses exact foreign records, training acknowledgments and program claims without exposing prose
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > uses fresh membership to refuse an unshared member despite an admin token claim
+ ↓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/mdx-qms-request-rls.dbtest.ts [ tests/db/mdx-qms-request-rls.dbtest.ts ]
+error: inconsistent types deduced for parameter $3
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/mdx-qms-request-rls.dbtest.ts:74:5
+     72|   for (const [organizationId,programId,actor] of [[org,PROGRAM,author]…
+     73|     const workspace = await owner.query<{id:number}>('INSERT INTO clie…
+     74|     await owner.query(`INSERT INTO regulatory_programs (id,organizatio…
+       |     ^
+     75|       VALUES ($1,$2,$3,$3,'IND','small_molecule','FDA',$3,$4,'active')…
+     76|     const project=await owner.query<{id:number}>(`INSERT INTO projects…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 155, severity: 'ERROR', code: '42P08', detail: 'text versus character varying', hint: undefined, position: '161', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/mdx-qms-request-rls.dbtest.ts [ tests/db/mdx-qms-request-rls.dbtest.ts ]
+error: trigger "enforce_signature_immutability" for table "electronic_signatures" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/mdx-qms-request-rls.dbtest.ts:109:45
+    107|     try {
+    108|       await c.query('BEGIN');
+    109|       for(const [table,trigger] of triggers)await c.query(`ALTER TABLE…
+       |                                             ^
+    110|       const ids=[org,otherOrg];
+    111|       await c.query('DELETE FROM qms_training_records WHERE organizati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 160, severity: 'ERROR', code: '42704', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'trigger.c', routine: 'EnableDisableTriggerNew2' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 skipped (8)
+   Start at  06:42:35
+   Duration  596ms (transform 147ms, setup 54ms, import 238ms, tests 103ms, environment 0ms)
+

@@ -1,0 +1,15 @@
+{
+  "phase": "first coherent carry-forward diagnostic, not final release proof",
+  "tests": {
+    "passed": 11,
+    "failed": 3,
+    "total": 14,
+    "durationSeconds": 8.41
+  },
+  "testSha256": "30960087372dc8c435944aeb8e39d1603bf16fe59f64b7a2b7969dacbac4050d",
+  "remainingFailures": [
+    "Paragraph printing styles lose retained machine prose",
+    "Inline image splits unchanged paragraph into human authority",
+    "Equivalent scientific HTML entities lose retained machine prose"
+  ]
+}

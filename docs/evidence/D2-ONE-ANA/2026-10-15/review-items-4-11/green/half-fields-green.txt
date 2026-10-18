@@ -1,0 +1,2 @@
+[{"precedingDivs":0,"sameRow":true,"gap":12},{"precedingDivs":1,"sameRow":true,"gap":12},{"precedingDivs":2,"sameRow":true,"gap":12},{"precedingDivs":3,"sameRow":true,"gap":12}]
+PASS: all 4 layouts pair with a 12px gap

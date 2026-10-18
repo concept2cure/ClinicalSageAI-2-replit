@@ -7,7 +7,7 @@
  * @module server/routes/c2c/project-access
  */
 
-import type { Request } from 'express';
+import type { Request, RequestHandler } from 'express';
 import { and, eq } from 'drizzle-orm';
 import { db, pool } from '../../db';
 import { projects, projectMembers, projectVisibilitySettings } from '../../../shared/schema';
@@ -15,11 +15,14 @@ import { parseIntegerProjectId } from '../../lib/project-id.js';
 import {
   applyProjectSharingState,
   canUseProject,
+  canEditProject,
   getProjectSharingState,
   type ProjectActorRole,
 } from '../../services/project-sharing-access';
-import { getOrganizationId, getUserId } from './shared';
+import { getOrganizationId, getUserId, sendError } from './shared';
 import { createScopedLogger } from '../../utils/logger';
+import { readCsrProjectActor } from '../../services/csr/project-scope';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 
 export function normalizeProjectSettings(settings: unknown): Record<string, unknown> {
   return settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
@@ -325,4 +328,78 @@ export async function verifyProjectAccess(
     });
     throw error;
   }
+}
+
+export class ProjectAdmissionRefusal extends Error {
+  constructor(readonly status: 403 | 404 | 409 | 503, readonly code: string, message: string) {
+    super(message); this.name = 'ProjectAdmissionRefusal';
+  }
+}
+
+/** Resolve current persisted membership rather than reuse a token's old role. */
+export async function requireCurrentProjectActor(req: Request, forWrite = false) {
+  let organizationId: number;
+  try { organizationId = getOrganizationId(req); }
+  catch { throw new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.'); }
+  try {
+    // Read/export operations preserve the canonical offboarding data-return
+    // window. This mode comes from the registered operation, never a payload.
+    const actor = await readCsrProjectActor(pool, organizationId, getUserId(req), {allowReadOnlyTenant:!forWrite});
+    const role = String(actor.role).toLowerCase();
+    if (forWrite && !GOVERNED_WRITE_ROLES.has(role)) {
+      throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot change this project record.');
+    }
+    req.userRole = role;
+    return { userId: actor.userId, role };
+  } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) throw error;
+    if ((error as { status?: number }).status === 403) {
+      throw new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.');
+    }
+    throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
+  }
+}
+
+/** Add fresh write authority to the existing sharing/read-assignment policy. */
+export async function requireProjectAdmission(req: Request, projectId: string | string[] | undefined, forWrite = false) {
+  const actor = await requireCurrentProjectActor(req, forWrite);
+  const scope = getProjectScope(projectId);
+  if (!scope) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  try {
+    const organizationId = getOrganizationId(req);
+    const { project } = await loadProjectAccessRow({ organizationId, userId: actor.userId,
+      actorRole: actor.role as ProjectActorRole, projectId: scope.numericId, clientWorkspaceId: await resolveClientWorkspaceId(req) });
+    if (!project) throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    if (forWrite) {
+      const sharing = await loadProjectSharingState(project.id, organizationId, project);
+      if (!GOVERNED_WRITE_ROLES.has(actor.role) || !canEditProject({ actor: { userId: actor.userId, orgRole: actor.role },
+        project: { ownerId: project.ownerId, createdById: project.createdById,
+          settings: applyProjectSharingState(normalizeProjectSettings(project.settings), sharing) } })) {
+        throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current role and project permissions do not allow changes to this record.');
+      }
+      if (['archived', 'deleted'].includes(project.status)) {
+        throw new ProjectAdmissionRefusal(409, 'PROJECT_ARCHIVED', 'This project is archived. Retained records can still be read.');
+      }
+    }
+    return project;
+  } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) throw error;
+    if (error instanceof Error && /Client workspace (does not belong|context)/.test(error.message)) {
+      throw new ProjectAdmissionRefusal(403, 'PROJECT_WORKSPACE_PERMISSION_DENIED', 'A current workspace in this organization is required.');
+    }
+    throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
+  }
+}
+
+/** Run before route bodies, upload receivers or project-content reads. */
+export function projectAdmissionMiddleware(options: { forWrite?: boolean } = {}): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      await requireProjectAdmission(req, req.params.projectId, options.forWrite ?? !['GET', 'HEAD'].includes(req.method));
+      next();
+    } catch (error) {
+      const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
+      sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+    }
+  };
 }

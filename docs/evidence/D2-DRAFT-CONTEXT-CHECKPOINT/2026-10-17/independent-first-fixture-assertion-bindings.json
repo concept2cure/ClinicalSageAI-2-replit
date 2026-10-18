@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-17T22:39:52.834Z",
+  "finishedAt": "2026-10-17T22:39:58.571Z",
+  "node": "v22.23.3",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts"
+  ],
+  "exitCode": 1,
+  "before": {
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "76a29212b149ede3790e8f35bedf52146cc51cb4a4b7aec1a33545d4295a425a",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "20498973480815bb831e834fc2774abbf96689b528816a51f6aca661e882c456",
+    "server/services/ai-gateway/types.ts": "4dec62d230562fd0ac66566779d0e55d2c768d0dcbe71aa7c8a559b57ca69b0c",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "40866eddd80390b8d8d3947735383fc30ab276423ddc385aaa1d1e5a92dfa248",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "3268cb8b91749000fe8783c16a28c792f5a73d17ee200ddaae9f1ad55720517f",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "0d67d4796b622548a8051413b7e14897b1509b151a0d63b3bbf4aadd978097c7"
+  },
+  "after": {
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "76a29212b149ede3790e8f35bedf52146cc51cb4a4b7aec1a33545d4295a425a",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "20498973480815bb831e834fc2774abbf96689b528816a51f6aca661e882c456",
+    "server/services/ai-gateway/types.ts": "4dec62d230562fd0ac66566779d0e55d2c768d0dcbe71aa7c8a559b57ca69b0c",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "40866eddd80390b8d8d3947735383fc30ab276423ddc385aaa1d1e5a92dfa248",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "3268cb8b91749000fe8783c16a28c792f5a73d17ee200ddaae9f1ad55720517f",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "0d67d4796b622548a8051413b7e14897b1509b151a0d63b3bbf4aadd978097c7"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "scope": "Actual producer and drafting service; synthetic catalog/actor/program and gateway/provider boundary. gateway.ts is bound for integration tracking but mocked, not executed. No DB, provider or network."
+}

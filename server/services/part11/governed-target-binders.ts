@@ -113,6 +113,49 @@ const reportRunSealBinding: ContentBinder = async (client, rest, orgId, ledgerFa
   };
 };
 
+/**
+ * interim-snapshot:<id>: the interim data an adaptive decision is taken on.
+ *
+ * An IDMC does not approve "a decision" in the abstract — it approves a
+ * decision ABOUT a specific look at the data, so that look is what the
+ * signature binds. CONTENT ONLY, as the protocol binder is: the look number,
+ * the information fraction, the enrolment, the summary statistics, the test
+ * statistic, the conditional and predictive power and the boundary. No
+ * snapshot_date, no created_at, no blinding flag — a signature taken on this
+ * look must re-derive later when none of the DATA changed.
+ */
+const interimSnapshotBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed interim snapshot pointer');
+  const snap = await client.query(
+    `SELECT plan_id, look_number, information_fraction, enrolled_count,
+            summary_statistics, test_statistic, conditional_power,
+            predictive_power, boundary
+       FROM interim_data_snapshots
+      WHERE id = $1::int AND organization_id = $2
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const row = snap.rows[0];
+  if (!row) return ledgerFallback('interim snapshot not readable at signing time');
+
+  const content = {
+    planId: Number(row.plan_id),
+    lookNumber: Number(row.look_number),
+    informationFraction: row.information_fraction === null ? null : Number(row.information_fraction),
+    enrolledCount: row.enrolled_count === null ? null : Number(row.enrolled_count),
+    summaryStatistics: row.summary_statistics ?? null,
+    testStatistic: row.test_statistic === null ? null : Number(row.test_statistic),
+    conditionalPower: row.conditional_power === null ? null : Number(row.conditional_power),
+    predictivePower: row.predictive_power === null ? null : Number(row.predictive_power),
+    boundary: row.boundary ?? null,
+  };
+  return {
+    digest: sha256CanonicalJson(content),
+    basis: BINDING_BASIS.INTERIM_SNAPSHOT_CONTENT,
+    note: `sha256 over the interim data at look ${content.lookNumber} (information fraction ${content.informationFraction}) of plan ${content.planId}: enrolment, summary statistics, test statistic, conditional and predictive power, and the boundary. No snapshot date, blinding flag or row timestamp is bound.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -120,4 +163,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-review-assignment': (client, rest, orgId, fallback) =>
     protocolContentBinding(client, 'protocol-review-assignment', rest, orgId, fallback),
   'report-run': reportRunSealBinding,
+  'interim-snapshot': interimSnapshotBinding,
 };

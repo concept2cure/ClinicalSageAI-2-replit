@@ -233,9 +233,11 @@ export function analyzeConsistency(sections: DocumentSection[]): ConsistencyRepo
   // Step 2: Cross-compare all assertion pairs
   const inconsistencies: InconsistencyFlag[] = [];
   const seen = new Set<string>();
+  let comparisons = 0;
 
   for (let i = 0; i < allAssertions.length; i++) {
     for (let j = i + 1; j < allAssertions.length; j++) {
+      if (allAssertions[i].sectionId !== allAssertions[j].sectionId) comparisons++;
       const flag = compareAssertions(allAssertions[i], allAssertions[j]);
       if (flag) {
         // Deduplicate by section pair + type
@@ -248,21 +250,21 @@ export function analyzeConsistency(sections: DocumentSection[]): ConsistencyRepo
     }
   }
 
-  // Step 3: Calculate consistency score
-  const totalComparisons = Math.max(
-    (allAssertions.length * (allAssertions.length - 1)) / 2,
-    1
-  );
+  // Step 3: Calculate consistency score — only over what was compared.
+  // 2026-10-15: with no cross-section comparison (one section, or no
+  // statements from two sections) this was 100 − 0 = 100/100.
   const highSeverityCount = inconsistencies.filter(i => i.severity === 'high').length;
   const mediumSeverityCount = inconsistencies.filter(i => i.severity === 'medium').length;
 
   // Weighted penalty: high = 10 points, medium = 5 points, low = 2 points
   const penalty = highSeverityCount * 10 + mediumSeverityCount * 5;
-  const consistencyScore = Math.max(0, Math.min(100, 100 - penalty));
+  const consistencyScore =
+    comparisons === 0 ? null : Math.max(0, Math.min(100, 100 - penalty));
 
   return {
     assertions: allAssertions,
     inconsistencies,
+    comparisons,
     consistencyScore,
   };
 }

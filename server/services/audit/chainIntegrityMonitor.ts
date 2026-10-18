@@ -85,6 +85,11 @@ export interface ChainMonitorStatus {
   intervalMs: number;
   /** Why the status is not a verdict, when it is not one. */
   reason?: string;
+  /**
+   * Organisations whose broken chain this scan could not record in their own
+   * audit trail. Absent when every failure event was recorded.
+   */
+  failureEventsNotRecorded?: number[];
 }
 
 /**
@@ -237,14 +242,23 @@ let _status: ChainMonitorStatus = {
  * naming only that organisation's links. Until 2026-10-01 one event went to
  * organisation 1 (hard-coded) with every tenant's link details, and never to
  * the organisation whose records were affected.
+ *
+ * Until 2026-10-15 the event's actor was user_id 0 — which
+ * audit_events_user_id_users_id_fk refuses, so on a migrated database no
+ * event was ever recorded, and the refusal was only logged — named 'system'
+ * from 127.0.0.1. The actor is this monitor: no user id and no client
+ * address, so both are NULL (as SCIM provisioning records itself).
+ *
+ * Returns the organisations whose event could not be recorded.
  */
-async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLink[]): Promise<void> {
+async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLink[]): Promise<number[]> {
   const byOrg = new Map<number, BrokenChainLink[]>();
   for (const link of brokenDetails) {
     const list = byOrg.get(link.orgId) ?? [];
     list.push(link);
     byOrg.set(link.orgId, list);
   }
+  const notRecorded: number[] = [];
   for (const [orgId, links] of byOrg) {
     try {
       // entity_id is INTEGER per the schema. Use 0 as a sentinel for
@@ -254,8 +268,8 @@ async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLi
         `INSERT INTO audit_events
           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
            user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-         VALUES ($1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
-                 'system', '127.0.0.1', NOW(), $2, $3, true, true)`,
+         VALUES ($1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, NULL,
+                 'audit chain integrity monitor', 'system', NULL, NOW(), $2, $3, true, true)`,
         [
           orgId,
           `Chain integrity check failed: ${links.length} broken link(s) in this organisation's audit trail`,
@@ -263,9 +277,11 @@ async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLi
         ]
       );
     } catch (logErr: any) {
+      notRecorded.push(orgId);
       logger.error('failed to log integrity failure event', { orgId, err: logErr?.message });
     }
   }
+  return notRecorded;
 }
 
 /**
@@ -358,7 +374,8 @@ async function runCheck(): Promise<ChainMonitorStatus> {
           sample: brokenDetails.slice(0, 5),
         });
 
-        await recordChainFailureEvents(_pool!, brokenDetails);
+        const notRecorded = await recordChainFailureEvents(_pool!, brokenDetails);
+        if (notRecorded.length > 0) _status = { ..._status, failureEventsNotRecorded: notRecorded };
       } else if (isHealthy) {
         // The §11.10(e) continuous-monitoring evidence line. It may only be
         // written when every one of `entries` rows actually carried a hash and

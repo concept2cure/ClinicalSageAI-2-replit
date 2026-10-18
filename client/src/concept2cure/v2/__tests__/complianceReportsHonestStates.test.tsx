@@ -45,7 +45,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-10-01T12:00:00Z'));
   route = (url) => (url === '/api/audit/reports' ? ok(CATALOG) : ok(exportBody(SECTIONED)));
   apiCall.mockReset();
-  apiCall.mockImplementation(async (_method: string, url: string) => route(url));
+  apiCall.mockImplementation(async (_method: string, url: string) => url === '/api/audit/reviews' ? ok({ canSign: false, status: { access: { state: 'none', latest: null }, audit_trail: { state: 'none', latest: null } } }) : route(url));
   apiRequest.mockReset();
 });
 afterEach(() => {

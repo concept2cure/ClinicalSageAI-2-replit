@@ -821,4 +821,3 @@ AssertionError: expected 'Draft a protocol synopsis for C2C-101…' to match /pr
       Tests  7 failed | 2 passed | 31 skipped (40)
    Start at  04:39:25
    Duration  22.33s (transform 8.59s, setup 1.26s, import 13.11s, tests 19.34s, environment 5.53s)
-

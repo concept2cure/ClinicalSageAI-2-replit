@@ -96,24 +96,41 @@ interface Placement {
    * checked, not complete (QA 2026-10-08, second walk, j7).
    */
   requiredFieldsMissing?: string[] | null;
+  /**
+   * When the uploader attested the file is the completed, signed form; null =
+   * nobody did; absent = the listing does not say (never read as either).
+   */
+  attestedAt?: string | null;
 }
 
-/** What an attachment's recorded check says, in the panel's words. */
+/* What an attachment's recorded check and attestation say, in the panel's
+   words. 2026-10-15 (report_ind_ivd_irb #15): a clean check alone read
+   "completed form filed", but the check reads the program record, not the
+   file — an edited, unsigned PDF passed it. It is the completed form only once
+   the uploader has attested it. */
 function placementVerdict(p: Placement): { chip: string; tone: string; detail: string | null } {
   const missing = p.requiredFieldsMissing;
-  if (Array.isArray(missing) && missing.length === 0) return { chip: 'completed form filed', tone: 'tone-ok', detail: null };
-  if (Array.isArray(missing)) return { chip: 'attached · not complete', tone: 'tone-warn', detail: `missing: ${missing.join(', ')}` };
-  return { chip: 'attached · not checked', tone: 'tone-warn', detail: 'Attach it again to have it checked.' };
+  if (Array.isArray(missing) && missing.length > 0) return { chip: 'attached · not complete', tone: 'tone-warn', detail: `missing: ${missing.join(', ')}` };
+  if (!Array.isArray(missing)) return { chip: 'attached · not checked', tone: 'tone-warn', detail: 'Attach it again to have it checked.' };
+  if (p.attestedAt === undefined) return { chip: 'checked · attestation not reported', tone: 'tone-warn', detail: 'This listing does not say whether the file was attested; the checklist above says whether the form counts.' };
+  if (p.attestedAt === null) return { chip: 'attached · not attested', tone: 'tone-warn', detail: 'Nobody has attested it is the completed, signed form. Attach it again with the attestation ticked.' };
+  return { chip: 'completed form filed', tone: 'tone-ok', detail: null };
 }
 
-/** The sentence after a filing: filed, and whether the forms engine counts it as complete. */
+/** The sentence after a filing: filed, and whether it counts as the completed form. */
 function filedSentence(formId: string, json: Record<string, unknown>): string {
   const where = `filed at ${String(json.sectionCode)} in sequence ${String(json.sequenceNumber)}${json.replaced ? ', replacing the form previously attached' : ''}`;
   const missing = json.requiredFieldsMissing;
-  if (json.complete === true && Array.isArray(missing) && missing.length === 0) return `Completed FDA ${shortFormId(formId)} ${where}.`;
+  if (json.complete === true && Array.isArray(missing) && missing.length === 0) {
+    return `Completed FDA ${shortFormId(formId)} ${where}, with your attestation that it is the completed, signed form.`;
+  }
   if (Array.isArray(missing) && missing.length > 0) {
     return `FDA ${shortFormId(formId)} ${where}, and not counted as complete: ${missing.length} required field(s) missing — `
       + `${missing.join(', ')}. Record or state them, then attach the completed form again.`;
+  }
+  if (Array.isArray(missing)) {
+    return `FDA ${shortFormId(formId)} ${where}, and not counted as complete: not attested as the completed, signed form. `
+      + 'If it is, tick the attestation and attach it again.';
   }
   return `FDA ${shortFormId(formId)} ${where}, and not counted as complete: the forms engine could not check it.`;
 }
@@ -243,6 +260,9 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
      edit of them not yet saved. The forms read the recorded pair. */
   const [recordedFacts, setRecordedFacts] = useState({ sponsorAddress: '', indType: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
+  /* Per form: the person ticked that the file they attach next IS the
+     completed, signed form. Sent only when ticked, cleared after each filing. */
+  const [attest, setAttest] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<string | null>(null);
   // One hidden file picker per form, opened by that row's button. The picker
   // cannot be the visible control: a display:none input is outside the tab
@@ -503,6 +523,8 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       for (const [key, value] of Object.entries(metadataBody())) {
         if (key !== 'projectIdent' && typeof value === 'string') form.append(key, value);
       }
+      // The person's own statement; the server records who made it and when.
+      if (attest[formId] === true) form.append('attestCompletedSigned', 'true');
       const res = await apiUpload('POST', `/api/ind-forms/${formId}/official-upload`, form);
       const json = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) { note('Filing a completed form requires the regulatory-author role.', 'error'); return; }
@@ -516,11 +538,12 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         [formId]: [json as Placement, ...(p[formId] ?? []).filter((x) => x.sequenceId !== (json as Placement).sequenceId)],
       }));
       note(filedSentence(formId, json as Record<string, unknown>));
+      setAttest((a) => ({ ...a, [formId]: false }));
       // Re-read rather than trusting the local merge: the listing is what the
       // next visitor sees, and it is the server's record of the placement.
       void load();
     } finally { setBusy(null); }
-  }, [programIdent, target.seqId, note, load, metadataBody]);
+  }, [programIdent, target.seqId, note, load, metadataBody, attest]);
 
   const recordFacts = useMemo(() => {
     if (!program) return null;
@@ -671,6 +694,15 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                         : `File the completed, signed form into sequence ${target.seq?.sequenceNumber ?? ''}`}>
                       {I.paperclip} {attachText}
                     </button>
+                    {/* Unticked, the file is filed and does not count as the
+                        completed form: the platform cannot see a signature. */}
+                    <label style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, fontSize: 12, marginTop: 6, whiteSpace: 'normal' }}
+                      title="Recorded with the file, under your name and the time. Without it the form is filed but not counted as complete.">
+                      <input type="checkbox" checked={attest[f] === true} disabled={busy != null}
+                        aria-label={`I attest the file I attach is the completed, signed form: ${FORM_LABELS[f] ?? shortFormId(f)}`}
+                        onChange={(e) => { const on = e.target.checked; setAttest((a) => ({ ...a, [f]: on })); }} />
+                      I attest the file I attach is the completed, signed form
+                    </label>
                   </>
                 )}
               </td>

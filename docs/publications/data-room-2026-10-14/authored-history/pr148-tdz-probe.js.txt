@@ -1,0 +1,12 @@
+const artifacts = [];
+const useCallback = (fn, deps) => fn;
+  const openVerification = useCallback(
+    (artifactId) => {
+      const art = artifactId ? artifacts.find(a => a.id === artifactId) : activeArtifact;
+      setPhase4Ctx({ artifactId: art?.id, artifactTitle: art?.title });
+      setPhase4Panel('verification');
+    },
+    [artifacts, activeArtifact]
+  );
+
+const activeArtifact = null;

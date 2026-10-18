@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+········x···
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout
+AssertionError: expected 'Executive Readiness Digest Run #41 (r…' to contain '(2026)'
+
+Expected: "(2026)"
+Received: "Executive Readiness Digest Run #41 (run-uuid-41) Report type: readiness.executive_digest Scope: project 12 Status: partial Confidence: 64 Computed: 2026-10-01T08:00:00.000Z (UTC) Run by: Sam Lee Multilingual evidence تقرير الامتثال للبرنامج דוח תאימות לתוכנית Phase 3: דוח תאימות — )2026( تقرير الامتثال Run #41 · Export exp-123 · Exported 2026-10-01T10:00:00.000Z (UTC) · Page 1 of 1 NOT FINAL (PARTIAL) -- 1 of 1 -- "
+
+ ❯ server/services/report-os/pdf/__tests__/run-pdf.test.ts:141:15
+    139|     expect(t).toContain('דוח תאימות לתוכנית');
+    140|     expect(t).toContain('Phase 3:');
+    141|     expect(t).toContain('(2026)');
+       |               ^
+    142|     expect(t).toContain('תאימות');
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  18:48:06
+   Duration  6.50s (transform 251ms, setup 189ms, import 233ms, tests 5.72s, environment 0ms)

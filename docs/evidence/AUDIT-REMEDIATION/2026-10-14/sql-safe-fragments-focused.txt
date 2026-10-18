@@ -1,0 +1,152 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized unified_task with its record-owned UUID program 45ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized submission with its record-owned UUID program 21ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized ectd_sequence with its record-owned UUID program 21ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized gateway_transmittal with its record-owned UUID program 20ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized protocol_document with its record-owned UUID program 19ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact authorized qms_document with its record-owned UUID program 23ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens an authored section only through its canonical document, section permission and exact section code 22ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > opens the exact saved report through existing report scope authorization without borrowing metadata program 15ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 actual recipient-to-record resolver > unfiled protocol and unbound QMS targets remain explicitly unfiled instead of adopting the open program 19ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > archived, expired, preference-disabled and inactive membership notices cannot resolve destinations 25ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a same-tenant nonrecipient, role audience mismatch and stale privileged claim grant no target access 20ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > notification receipt is no access grant to a foreign/deleted record or a private program 25ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > safe legacy action URL IDs are reread, and a mismatched sequence parent cannot redirect into another submission 23ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 13ms
+stderr | server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a failed ownership read is retryable and never becomes missing/clean/authorized
+{
+  "timestamp": "2026-10-14T05:23:30.788Z",
+  "level": "error",
+  "message": "[mdx-notifications] notification target lookup unavailable",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 13ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 13ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 15ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > an unmappable or contradictory legacy reference is explicit without a fallback record 15ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a failed ownership read is retryable and never becomes missing/clean/authorized 19ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 saved report owning context > a saved document report preserves the canonical parent program without converting its source to an authoring document 19ms
+ ✓ server/routes/__tests__/notification-record-target.pglite.test.ts > F19 saved report owning context > a saved submission report preserves the canonical parent program without converting its source to an authoring document 20ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > reproduces the unscoped zero and proves the actual test role cannot bypass RLS 5ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > returns positive graph rows for the owning tenant 20ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > returns the other tenant only on that tenant connection 5ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > does not traverse a guessed foreign node or cite a guessed foreign document 9ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > reads a real positive citation and counts only the owning tenant graph 9ms
+ ✓ server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts > retained deferred reads under tenant RLS > returns real tenant analytics counts, not shared-pool zeros or another tenant totals 5ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > does not disclose role notifications to another organization role 14ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > requires a live membership, not just an organization number 6ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > binds category and severity filters as data while preserving audience and limit 8ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > a role notification cannot be marked read by a nonrecipient 5ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > one person reading a team notice does not clear another recipient tray 8ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > mark all read changes only the current recipient receipts 7ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > archiving an org notice is private to the archiving recipient 6ms
+ ✓ server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts > notification audience and recipient-specific receipts > honors the actual recipient in-app category preference 6ms
+stdout | server/services/cmc/__tests__/register-link-recovery.test.ts
+{
+  "timestamp": "2026-10-14T05:23:35.738Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:23:35.739Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/cmc/__tests__/register-link-recovery.test.ts
+{
+  "timestamp": "2026-10-14T05:23:35.739Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/cmc/__tests__/register-link-recovery.test.ts
+[database] Database connection successful
+
+stderr | server/services/cmc/__tests__/register-link-recovery.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/register-link-recovery.test.ts
+{
+  "timestamp": "2026-10-14T05:23:36.123Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > a canonical failure stays unlinked and is metered; no success is inferred from saving the register
+{
+  "timestamp": "2026-10-14T05:23:36.173Z",
+  "level": "error",
+  "message": "[cmc-module3-link] Module 3 canonical write-through failed",
+  "context": {
+    "recordId": "31",
+    "propagation": "retry_register_link",
+    "error": "unavailable"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > distinguishes missing, older, current and unfiled rows from saved records, not request receipts 3ms
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > retries the stored owned record through the existing writer with its actual actor and changes no signature 2ms
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > a canonical failure stays unlinked and is metered; no success is inferred from saving the register 1ms
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > refuses foreign-record without invoking any canonical writer 1ms
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > refuses unfiled-record without invoking any canonical writer 1ms
+ ✓ server/services/cmc/__tests__/register-link-recovery.test.ts > durable CMC register linkage recovery > refuses request-controlled SQL identifiers and reports a failed schema read as an error 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts > Vault source identity to canonical CRE link > links only the same tenant, program and byte checksum; direct uploads stay unlinked 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts > Vault source identity to canonical CRE link > does not cite a retired capture or superseded Vault version 14ms
+stdout | server/api/cmc/__tests__/register-link-recovery.routes.test.ts
+{
+  "timestamp": "2026-10-14T05:23:38.663Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:23:38.664Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/register-link-recovery.routes.test.ts
+{
+  "timestamp": "2026-10-14T05:23:38.664Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/register-link-recovery.routes.test.ts
+[database] Database connection successful
+
+stderr | server/api/cmc/__tests__/register-link-recovery.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/register-link-recovery.routes.test.ts
+{
+  "timestamp": "2026-10-14T05:23:38.708Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/api/cmc/__tests__/register-link-recovery.routes.test.ts > register link recovery route boundaries > a viewer reads status but cannot invoke a retry 24ms
+ ✓ server/api/cmc/__tests__/register-link-recovery.routes.test.ts > register link recovery route boundaries > a foreign program is refused before reading or retrying its records 5ms
+ ✓ server/api/cmc/__tests__/register-link-recovery.routes.test.ts > register link recovery route boundaries > accepts no fabricated source payload and uses the session actor 7ms
+ ✓ server/api/cmc/__tests__/register-link-recovery.routes.test.ts > register link recovery route boundaries > refuses the canonical postapproval classifier under launch enforcement before it runs 4ms
+
+ Test Files  6 passed (6)
+      Tests  47 passed (47)
+   Start at  05:23:27
+   Duration  12.12s (transform 1.49s, setup 113ms, import 4.13s, tests 7.20s, environment 0ms)
+

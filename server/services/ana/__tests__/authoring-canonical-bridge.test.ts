@@ -24,7 +24,7 @@ function deps(overrides: Partial<AuthoringBridgeDeps> = {}): AuthoringBridgeDeps
         actionId: 'act',
         auditId: 'aud',
         provenanceLinks: 0,
-        readiness: 60,
+        readiness: { score: 60, notAssessed: [] },
         steps: ['version', 'ai_action', 'audit', 'review', 'placement', 'readiness', 'ui_refresh'],
       };
     },

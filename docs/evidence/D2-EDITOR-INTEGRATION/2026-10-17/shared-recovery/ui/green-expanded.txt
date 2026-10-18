@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > retains an actionable unknown-outcome notice and blocks repeat creation 388ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > does not create a second document after its confirmed first document has no saved text 128ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > shows the checked inventory with uncertainty and only opens the list after another explicit action 227ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > keeps the check control and creation guard after a failed inventory read 238ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > checks without writing, continues only the text, then offers a separate exact document open 235ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  22:28:25
+   Duration  2.66s (transform 485ms, setup 155ms, import 602ms, tests 1.22s, environment 510ms)

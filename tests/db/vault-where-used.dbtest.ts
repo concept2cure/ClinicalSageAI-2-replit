@@ -26,12 +26,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vwhere ';
-const CODE = 'DBTEST-VWHERE';
+const RUN = randomUUID().slice(0, 12);
+const PROBE = `dbtest-vwhere-${RUN} `;
+const CODE = `DBTEST-VWHERE-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
@@ -88,16 +89,17 @@ const versions = async (t: Tenant, doc: string, as: Tenant = t) =>
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active')
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'active' RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vwhere-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vwhere-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Placea 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  const current = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-parent` });
+  return current;
 }
 
 async function sequence(t: Tenant, subId: number, number: string): Promise<number> {
@@ -118,44 +120,18 @@ async function submission(t: Tenant, title: string): Promise<number> {
   return Number(rows[0].id);
 }
 
-async function cleanup(): Promise<void> {
-  const orgs = `(SELECT id FROM organizations WHERE slug LIKE 'dbtest-vwhere-%')`;
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN ${orgs}`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query(`DELETE FROM concept2cure_provenance_events WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM concept2cure_artifact_versions WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM concept2cure_artifacts WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM regulatory_audit_logs WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM projects WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM client_workspaces WHERE organization_id IN ${orgs}`).catch(() => {});
-  await owner.query(`DELETE FROM submission_leaves WHERE organization_id IN ${orgs}`);
-  await owner.query(`DELETE FROM ectd_sequences WHERE organization_id IN ${orgs}`);
-  await owner.query(`DELETE FROM submissions WHERE organization_id IN ${orgs}`);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vwhere@example.test', 'Wren Where', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'Wren Where', 'not-a-real-hash') RETURNING id`,
+    [`dbtest-vwhere-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  await assertVaultFixtureRuntime(mine);
   ids.v1 = await ingest(mine, 'Stability summary, version 1.', { documentCode: `${CODE}-STAB`, documentTitle: 'Stability summary' });
   ids.v2 = await ingest(mine, 'Stability summary, version 2.', { supersedesDocumentId: ids.v1, documentTitle: 'Stability summary' });
   ids.other = await ingest(mine, 'Clinical overview.', { documentCode: `${CODE}-CO`, documentTitle: 'Clinical overview' });
@@ -183,11 +159,9 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
-  for (const t of [mine, theirs]) {
-    if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
-  }
+  // Retain new namespaces, source bytes and append-only history, including failures.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe("the server's transmit verdict and the dispatch status (VR-14)", () => {
@@ -247,7 +221,7 @@ describe('where a Vault version is placed (VR-14a)', () => {
     // As the table owner, whom row security does not bind: only the SQL's own
     // organisation filter keeps the other organisation's leaf out.
     const { readVaultPlacements } = await import('../../server/services/vault/vault-where-used');
-    const found = await readVaultPlacements(owner, mine.orgId, [ids.v1]);
+    const found = await readVaultPlacements(owner, mine.orgId, [ids.v1], { userId });
     expect(found.get(ids.v1)?.map((p) => p.sequenceId)).toEqual([seq.first]);
   });
 });
@@ -265,7 +239,7 @@ const retention = { retained: true, documentId: '', documentCode: 'eSTAR-510k-de
 async function exportEstar(t: Tenant, how: 'unplaced' | 'placed', attachments: unknown[], projectId?: number): Promise<void> {
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const writers = await import('../../server/services/export/governedExportConsequence');
-  const metadata = { attachments, retention: { ...retention, documentId: ids.other } };
+  const metadata = { programId: t.programId, attachments, retention: { ...retention, documentId: ids.other } };
   const common = { organizationId: t.orgId, userId, backendRoute: 'POST /api/510k/estar/official', filename: 'k123_eSTAR.pdf', mimeType: 'application/pdf' };
   await runWithTenantScope(
     { tenantId: String(t.orgId), orgUuid: t.orgUuid, role: 'admin', source: 'request', caller: 'tests/db/vault-where-used.dbtest.ts' },
@@ -286,14 +260,12 @@ async function exportEstar(t: Tenant, how: 'unplaced' | 'placed', attachments: u
 }
 
 async function pmProject(t: Tenant): Promise<number> {
-  const ws = await owner.query(
-    `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, 'where-used', $2) RETURNING id`,
-    [t.orgId, `dbtest-vwhere-ws-${t.orgId}`],
-  );
   const p = await owner.query(
-    `INSERT INTO projects (organization_id, client_workspace_id, name, type) VALUES ($1, $2, $3, 'ind') RETURNING id`,
-    [t.orgId, ws.rows[0].id, `${PROBE}pm project`],
+    `SELECT id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2
+       AND created_by_id=$3 AND owner_id=$3 AND status<>'deleted'`,
+    [t.orgId, t.programId, userId],
   );
+  expect(p.rows).toHaveLength(1);
   return Number(p.rows[0].id);
 }
 
@@ -321,7 +293,7 @@ describe('official eSTAR exports that attached a version (VR-14c)', () => {
   it("a record that names no source is not inferred, and another organisation's is not listed", async () => {
     const { readVaultEstarUses } = await import('../../server/services/vault/vault-where-used');
     // As the owner, so only the read's own organisation filter applies.
-    const found = await readVaultEstarUses(owner, mine.orgId, [ids.v1, ids.v2, ids.other]);
+    const found = await readVaultEstarUses(owner, mine.orgId, [ids.v1, ids.v2, ids.other], { userId });
     expect(found.get(ids.v1)).toHaveLength(1);
     expect(found.get(ids.v2)).toHaveLength(1);
     expect(found.has(ids.other)).toBe(false);

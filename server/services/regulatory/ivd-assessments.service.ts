@@ -9,6 +9,12 @@
 
 import { pool } from '../../db';
 
+interface AssessmentSqlClient { query(sql: string, params?: unknown[]): Promise<{ rows: any[] }> }
+export class IvdDraftStateRefusal extends Error {
+  readonly status = 400; readonly code = 'DRAFT_ONLY';
+  constructor() { super('Save a draft, then review and sign its working copy through the governed document lifecycle.'); }
+}
+
 /** Recognized assessment types (the calculator families that can be saved). */
 export const IVD_ASSESSMENT_TYPES = [
   'ivdr_classification',
@@ -59,6 +65,7 @@ export function isDocumentType(v: unknown): v is IvdDocumentType {
 
 export async function saveAssessment(orgId: number, p: {
   assessmentType: IvdAssessmentType;
+  programId?: string | null;
   title?: string | null;
   inputs: unknown;
   result: unknown;
@@ -66,14 +73,14 @@ export async function saveAssessment(orgId: number, p: {
   corpusVersion?: string | null;
   engineVersion?: string | null;
   createdBy?: string | null;
-}) {
-  const { rows } = await pool.query(
+}, q: AssessmentSqlClient = pool) {
+  const { rows } = await q.query(
     `INSERT INTO ivd_assessments
        (organization_id, program_id, assessment_type, title, inputs, result, verdict, corpus_version, engine_version, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
     [
       orgId,
-      (p as any).programId ?? null,
+      p.programId ?? null,
       p.assessmentType,
       p.title ?? null,
       JSON.stringify(p.inputs ?? {}),
@@ -87,29 +94,29 @@ export async function saveAssessment(orgId: number, p: {
   return rows[0];
 }
 
-export async function listAssessments(orgId: number, opts: { assessmentType?: string; programId?: string; limit?: number } = {}) {
+export async function listAssessments(orgId: number, opts: { assessmentType?: string; programId?: string; limit?: number } = {}, q: AssessmentSqlClient = pool) {
   const args: unknown[] = [orgId];
   let where = 'organization_id = $1 AND deleted_at IS NULL';
   if (opts.assessmentType) { args.push(opts.assessmentType); where += ` AND assessment_type = $${args.length}`; }
   if (opts.programId) { args.push(opts.programId); where += ` AND program_id = $${args.length}`; }
   const limit = Math.min(500, Math.max(1, opts.limit ?? 100));
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT * FROM ivd_assessments WHERE ${where} ORDER BY created_at DESC LIMIT ${limit}`,
     args
   );
   return rows;
 }
 
-export async function getAssessment(orgId: number, id: string) {
-  const { rows } = await pool.query(
+export async function getAssessment(orgId: number, id: string, q: AssessmentSqlClient = pool) {
+  const { rows } = await q.query(
     `SELECT * FROM ivd_assessments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId]
   );
   return rows[0] ?? null;
 }
 
-export async function deleteAssessment(orgId: number, id: string) {
-  const { rows } = await pool.query(
+export async function deleteAssessment(orgId: number, id: string, q: AssessmentSqlClient = pool) {
+  const { rows } = await q.query(
     `UPDATE ivd_assessments SET deleted_at = now(), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL RETURNING id`,
     [id, orgId]
@@ -127,8 +134,9 @@ export async function saveGeneratedDocument(orgId: number, p: {
   corpusVersion?: string | null;
   createdBy?: string | null;
   programId?: string | null;
-}) {
-  const { rows } = await pool.query(
+}, q: AssessmentSqlClient = pool) {
+  if (p.status && p.status !== 'draft') throw new IvdDraftStateRefusal();
+  const { rows } = await q.query(
     `INSERT INTO ivd_generated_documents
        (organization_id, program_id, doc_type, title, payload, status, corpus_version, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
@@ -140,12 +148,12 @@ export async function saveGeneratedDocument(orgId: number, p: {
   return rows[0];
 }
 
-export async function listGeneratedDocuments(orgId: number, opts: { docType?: string; programId?: string } = {}) {
+export async function listGeneratedDocuments(orgId: number, opts: { docType?: string; programId?: string } = {}, q: AssessmentSqlClient = pool) {
   const args: unknown[] = [orgId];
   let where = 'organization_id = $1 AND deleted_at IS NULL';
   if (opts.docType) { args.push(opts.docType); where += ` AND doc_type = $${args.length}`; }
   if (opts.programId) { args.push(opts.programId); where += ` AND program_id = $${args.length}`; }
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT * FROM ivd_generated_documents WHERE ${where} ORDER BY created_at DESC LIMIT 200`,
     args
   );

@@ -1,0 +1,76 @@
+{
+  "startedAt": "2026-10-17T23:01:43.750950+00:00",
+  "finishedAt": "2026-10-17T23:02:06.214196+00:00",
+  "branch": "concept2cure-v2",
+  "sourceHead": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "node": "v22.23.3",
+  "sourceStableDuringChecks": true,
+  "sourceBefore": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "93fa54467345ba22b7b7326813c8b066144dbf4c95910aa7f9e117450a5cc3a3",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "8d525eac7069e1b9cb6a8260f050a79c142663c05cb04c891600714d24700d53",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "efa1ae075c94b90448d916caf9860d37c42f14df963b337a18fcde92959d00e5",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "073aab2362b7ce738083c8dfe6f77d9554b99d679113bb1eeba04bc37f14a442",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "c3c811770792008ee764daf27c4a8b77f714c0b23c270cdca4aa593f26588897",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/shellProject.ts": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "client/src/services/portal/authService.tsx": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "03f8d7fc1988f14acf08cd7a27288a3e2a8d3e96c374494d75c54ed3f01b4e5c"
+  },
+  "sourceAfter": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "93fa54467345ba22b7b7326813c8b066144dbf4c95910aa7f9e117450a5cc3a3",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "8d525eac7069e1b9cb6a8260f050a79c142663c05cb04c891600714d24700d53",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "efa1ae075c94b90448d916caf9860d37c42f14df963b337a18fcde92959d00e5",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "073aab2362b7ce738083c8dfe6f77d9554b99d679113bb1eeba04bc37f14a442",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "c3c811770792008ee764daf27c4a8b77f714c0b23c270cdca4aa593f26588897",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/shellProject.ts": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7",
+    "client/src/services/portal/authService.tsx": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "03f8d7fc1988f14acf08cd7a27288a3e2a8d3e96c374494d75c54ed3f01b4e5c"
+  },
+  "checks": [
+    {
+      "receipt": "workbench-final.json",
+      "exitCode": 0
+    },
+    {
+      "receipt": "eslint-final.json",
+      "exitCode": 0
+    }
+  ],
+  "qualification": "16/16 and strict lint passed on stable post-layout source. Official compiler later found a test teardown typing error: publishShellProject(null) was accepted at runtime but not by its ShellProject parameter type. Replaced with the canonical publisher using an empty ID; readShellProject and shellProgramId both treat it as no project. Production bytes unchanged; superseded by the typed-test replay.",
+  "receipts": {
+    "workbench-final.json": {
+      "command": [
+        "./node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+      ],
+      "exitCode": 0,
+      "rawSha256": "121873fe84c7b8cc7c347289c650065a7c8eac406c521b0de03e6ecd67a75d34",
+      "output": "\n RUN  v4.1.7 /workspace/ClinicalSageAI\n\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > offers a build disclosure for the exact open saved document 613ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > previews and builds without AnA in the exact document while preserving the selected editor and saved text 3098ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > assembles only the explicitly selected template section and keeps the current saved editor selected 2576ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a lost response commit and requires an explicit saved-record check before a deliberate new preview 1161ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a wrong document commit and requires an explicit saved-record check before a deliberate new preview 858ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a malformed rows commit and requires an explicit saved-record check before a deliberate new preview 594ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > retains text typed while a structural commit is pending and does not start AnA afterwards 831ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > retains edits typed during the confirmed build refresh and does not begin later generation 872ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after project round trip 470ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after account change 490ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after organization change 479ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after unmount 444ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > starts exact empty sections sequentially and never accepts generated candidates automatically 675ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > keeps candidate edits and stated reasons across review switches and asks before leaving dirty editor work 1299ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > retains an already reviewed candidate when the next queued section completes 1282ms\n \u2713 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > reports a provider refusal truthfully and retains the completed candidate without an automatic retry 798ms\n\n Test Files  1 passed (1)\n      Tests  16 passed (16)\n   Start at  23:01:44\n   Duration  20.43s (transform 1.96s, setup 202ms, import 2.65s, tests 16.55s, environment 824ms)\n\n"
+    },
+    "eslint-final.json": {
+      "command": [
+        "./node_modules/.bin/eslint",
+        "--max-warnings",
+        "0",
+        "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+      ],
+      "exitCode": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output": ""
+    }
+  }
+}

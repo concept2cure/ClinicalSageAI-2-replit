@@ -16,7 +16,7 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { regulatoryAssessments, type RegulatoryAssessment } from '../../../shared/schema/regulatory-assessments';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('regulatory-assessment-persistence');
@@ -41,8 +41,10 @@ export interface CreateAssessmentInput {
   result: Record<string, unknown>;
 }
 
+export type RecordedAssessment = RegulatoryAssessment & { auditTrail: AuditRowOutcome };
+
 /** Persist an assessment result as an audited, point-in-time snapshot. */
-export async function createAssessment(input: CreateAssessmentInput, ctx: AssessmentCtx): Promise<RegulatoryAssessment> {
+export async function createAssessment(input: CreateAssessmentInput, ctx: AssessmentCtx): Promise<RecordedAssessment> {
   const [row] = await db
     .insert(regulatoryAssessments)
     .values({
@@ -56,7 +58,9 @@ export async function createAssessment(input: CreateAssessmentInput, ctx: Assess
     })
     .returning();
 
-  await auditService.logAction({
+  // The snapshot is already durable; carry what happened to its ancillary
+  // audit write instead of answering a lost audit as a failed creation.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'REGULATORY_ASSESSMENT_RECORDED',
@@ -65,7 +69,7 @@ export async function createAssessment(input: CreateAssessmentInput, ctx: Assess
     details: { submissionId: input.submissionId, assessmentType: input.assessmentType, ready: input.ready ?? null },
   });
   logger.info('Recorded regulatory assessment', { submissionId: input.submissionId, assessmentType: input.assessmentType, organizationId: ctx.organizationId });
-  return row as RegulatoryAssessment;
+  return { ...row, auditTrail };
 }
 
 /** List a submission's assessments, newest first; optionally filtered by type. */

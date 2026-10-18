@@ -1,0 +1,43 @@
+{
+  "publishedHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "executionUtc": {
+    "start": "2026-10-14T20:01:27.468000+00:00",
+    "end": "2026-10-14T20:08:22.859549+00:00"
+  },
+  "previousBaff": {
+    "runId": 38535578465,
+    "artifactId": 11881124538,
+    "counts": {
+      "numFailedTests": 112,
+      "numPassedTests": 1567,
+      "numPendingTests": 128,
+      "numTotalTests": 1807
+    },
+    "distinctFailedFiles": 35
+  },
+  "removedFromFailedFiles": [
+    "tests/db/platform-role-grant-record.dbtest.ts",
+    "tests/db/platform-role-grants.dbtest.ts",
+    "tests/db/project-vault-secondary-access.dbtest.ts",
+    "tests/db/report-pack-export.dbtest.ts"
+  ],
+  "newFailedFiles": [],
+  "currentPendingCatalogueReconciliation": {
+    "files": [
+      "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "tests/db/document-catalog-governed.dbtest.ts",
+      "tests/db/document-catalog-recall.dbtest.ts",
+      "tests/db/document-catalog-role.dbtest.ts",
+      "tests/db/document-catalog.dbtest.ts"
+    ],
+    "hostedFailedAssertions": 24,
+    "qualification": "The current separate catalogue/MCP phase has55 local native cases passed; that unpublished fixture increment is absent from this fa39 artifact. Do not report it as hosted green."
+  },
+  "genuineProductionDefects": "No new production defect is isolated by this artifact alone. Current-admission fixture prerequisites and intentional fault controls must be repaired/reached before downstream failures can be classified.",
+  "indexFailureQualification": "Platform role-grant files now hosted6+4passed, so old missing-upsert-arbiter failures are closed for this phase. Do not reopen those from the earlier census.",
+  "triageGroups": {
+    "canonical-anchor-or-parent": 4,
+    "current-actor-admission-and-dependent-cascades": 22,
+    "catalogue-current-q-api-and-anchor": 5
+  }
+}

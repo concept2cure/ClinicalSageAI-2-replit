@@ -16,7 +16,10 @@ bash db_migrate.sh                        # manifest-ordered db/migrations/*
 
 # 2. Demo data — org, users, projects, and every Wave-0 domain store
 npm run db:seed                           # scripts/seed-ga-demo.mjs
-#   → refuses to run when NODE_ENV=production
+#   → invented demonstration data: runs against a database on this machine
+#     only, never with NODE_ENV=production (scripts/seed/local-only.mjs,
+#     2026-10-15). For a hosted UAT environment use `npm run demo:seed`,
+#     which creates labelled, purgeable records through the API.
 #   → idempotent: re-running never duplicates rows
 
 # 3. Boot

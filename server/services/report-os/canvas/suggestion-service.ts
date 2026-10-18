@@ -23,10 +23,12 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../../db';
 import { reportRuns, reportSubscriptions, reportTypeRegistry } from '@shared/schema/report-os';
 import type { ReportDefinitionSpec, ReportScope } from '@shared/schema/report-os';
+import { reportScopeEnum } from '@shared/schema/report-os';
 import { regulatoryPrograms } from '@shared/schema/programs';
 import { deriveOrgSegments, filterTypesForSegment } from '../segment';
 import { decideReportEntitlement } from '../entitlement-map';
 import { resolveCapabilities } from '../../entitlements/resolver';
+import { reportAvailability } from '../report-engine';
 
 export interface CandidateType {
   typeId: string;
@@ -52,6 +54,14 @@ export interface ReportSuggestion {
   alreadyUsed: boolean;
   score: number;
   reasons: string[];
+}
+
+const SCOPES = new Set<string>(reportScopeEnum);
+
+/** A preset may use only a registry scope the actual engine computes. */
+function firstRunnableScope(candidate: CandidateType): ReportScope | null {
+  const scope = candidate.allowedScopes.find((s) => SCOPES.has(s) && reportAvailability(candidate.typeId, s, candidate.allowedScopes).runnable);
+  return (scope as ReportScope | undefined) ?? null;
 }
 
 // Program statuses/phases that indicate an active push toward submission.
@@ -88,7 +98,7 @@ export function rankReportSuggestions(input: {
   const latePhaseCount = programs.filter((p) => p.phase && LATE_PHASE.has(p.phase)).length;
   const programTypes = new Set(programs.map((p) => p.programType).filter(Boolean) as string[]);
 
-  const suggestions = types.map((t): ReportSuggestion => {
+  const suggestions = types.filter((t) => firstRunnableScope(t) !== null).map((t): ReportSuggestion => {
     const reasons: string[] = [];
     let score = 1;
 
@@ -146,25 +156,26 @@ export function rankReportSuggestions(input: {
 /**
  * PURE: build a preset dashboard spec from ranked suggestions — the top N
  * entitled, not-yet-used ("missing best-practice") panels, each pinned to the
- * report type's first allowed scope. Falls back to top entitled panels if
- * everything is already used. Returns null when there is nothing entitled.
+ * report type's first computable allowed scope. Falls back to top entitled
+ * panels if everything is already used. Returns null when no panel can run.
  */
 export function buildPresetSpec(
   suggestions: ReportSuggestion[],
   candidatesByType: Map<string, CandidateType>,
   limit = 4,
 ): ReportDefinitionSpec | null {
-  const entitled = suggestions.filter((s) => s.entitled);
-  const preferred = entitled.filter((s) => !s.alreadyUsed);
-  const pool = (preferred.length > 0 ? preferred : entitled).slice(0, limit);
+  const eligible = suggestions.flatMap((suggestion) => {
+    const candidate = candidatesByType.get(suggestion.typeId);
+    if (!suggestion.entitled || !candidate?.entitled) return [];
+    const scopeType = firstRunnableScope(candidate);
+    return scopeType ? [{ suggestion, scopeType }] : [];
+  });
+  const preferred = eligible.filter(({ suggestion }) => !suggestion.alreadyUsed);
+  const pool = (preferred.length > 0 ? preferred : eligible).slice(0, limit);
   if (pool.length === 0) return null;
 
-  const panels = pool.map((s) => {
-    const cand = candidatesByType.get(s.typeId);
-    const scope = (cand?.allowedScopes?.[0] as ReportScope) ?? 'program';
-    return { reportTypeId: s.typeId, scopeType: scope, label: s.label };
-  });
-  return { scopeType: (panels[0]?.scopeType ?? 'program') as ReportScope, panels };
+  const panels = pool.map(({ suggestion, scopeType }) => ({ reportTypeId: suggestion.typeId, scopeType, label: suggestion.label }));
+  return { scopeType: panels[0].scopeType, panels };
 }
 
 export interface SuggestReportsResult {
@@ -183,7 +194,12 @@ export async function suggestReportsForOrg(
   persona?: string | null,
 ): Promise<SuggestReportsResult> {
   const segments = await deriveOrgSegments(organizationId);
-  const caps = await resolveCapabilities(organizationId).catch(() => ({ tier: 'standard' as const }));
+  const caps = await resolveCapabilities(organizationId);
+  // 2026-10-15: `tierResolved` was dropped here, so suggestions were ranked and
+  // a preset built on an unread plan reported as 'standard'.
+  if (caps.tier === null || caps.tierResolved === false) {
+    throw new Error('Your plan could not be read, so no reports were suggested.');
+  }
   const tier = caps.tier;
 
   const registryRows = await db
@@ -240,7 +256,7 @@ export async function suggestReportsForOrg(
       })
       .from(regulatoryPrograms)
       .where(eq(regulatoryPrograms.organizationId, organizationId)),
-  ]).catch(() => [[], [], []] as [Array<{ typeId: string }>, Array<{ typeId: string }>, ProgramFact[]]);
+  ]);
 
   const usedTypeIds = new Set(runRows.map((r) => r.typeId));
   const subscribedTypeIds = new Set(subRows.map((r) => r.typeId));

@@ -1,0 +1,35 @@
+{
+  "phase": "actual regional first-run red",
+  "results": {
+    "passed": 9,
+    "failed": 1,
+    "skipped": 0,
+    "durationSeconds": 11.24,
+    "exit": 1
+  },
+  "nativeSource": {
+    "path": "tests/db/insights-regional-filing.dbtest.ts",
+    "sha256": "1b1cc614d46d92887a25bf14a9b4f2680355fb43d590f78fa8e3ac560180481c"
+  },
+  "backendRouteAtRun": {
+    "path": "server/routes/insights-canvas-routes.ts",
+    "sha256": "8ff460812a12fe664751c54a6df07ba1ca42e9e7b9c76245a270d1561b358c24",
+    "provenance": "backend frozen-green handoff plus exact hash verified before native placement; production was frozen through first run"
+  },
+  "failure": "foreign selected-program request returns requester own-org200 unanchored rather than404; no foreign metadata read/private filing exposure observed",
+  "mutationQualification": "fresh invented QA rows retained; withdrawal and market change used actual app_service/RLS scoped runtime; no grants/history deletion/provider calls",
+  "raw": [
+    {
+      "original": "/tmp/regional-filing-native-contract.txt",
+      "preservedRed": "/tmp/regional-filing-native-contract.first-red.txt",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-first-run/native-nine-pass-one-refusal-failure.log",
+      "sha256": "ff945a26a2756604139aa2b0eca966ad0b1a4023d009b21a2c0b7414ec631368"
+    },
+    {
+      "original": "/tmp/regional-filing-native-observations.json",
+      "preservedRed": "/tmp/regional-filing-native-observations.first-red.json",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-first-run/native-first-run-observations.json",
+      "sha256": "741109d67c497ecdcddd7075f9e77a9dd7ffec911310577b7ee3d8d9586342ce"
+    }
+  ]
+}

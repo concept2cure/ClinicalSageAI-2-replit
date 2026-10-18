@@ -61,7 +61,9 @@ describe('describeToolPlan', () => {
       // Not "the vault document": this tool reads the Artifacts Center, and the
       // Vault is a different store (vault-named-tools-honesty.test.ts).
       'Reading an Artifacts Center document',
-      'Saving a document to the Vault',
+      // Not "to the Vault": it creates an authoring draft and files nothing
+      // (document store consolidation step 2, 2026-10-17).
+      'Saving an AnA draft in the editor',
       'Opening the Trial Master File',
       'Looking up reports that fit your programs',
       'Drafting the Module 2.5 Clinical Overview',

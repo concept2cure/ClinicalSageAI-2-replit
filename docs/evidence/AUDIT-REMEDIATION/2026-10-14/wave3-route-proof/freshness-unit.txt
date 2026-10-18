@@ -1,0 +1,10 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts (12 tests) 14ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  21:06:51
+   Duration  1.59s (transform 725ms, setup 79ms, import 1.26s, tests 14ms, environment 0ms)
+

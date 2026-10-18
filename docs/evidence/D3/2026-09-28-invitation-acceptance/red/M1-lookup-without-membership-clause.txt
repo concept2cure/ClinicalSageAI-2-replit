@@ -54,4 +54,3 @@ AssertionError: the lookup answered about a non-member: expected [ { id: 32 } ] 
       Tests  1 failed | 5 passed (6)
    Start at  18:16:55
    Duration  2.65s (transform 1.01s, setup 71ms, import 1.78s, tests 534ms, environment 0ms)
-

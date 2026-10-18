@@ -1,0 +1,36 @@
+{
+  "metrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": null,
+    "editor": null,
+    "documentScroll": null,
+    "editorScroll": null,
+    "sectionHeading": null,
+    "editorCount": 0
+  },
+  "passage": null,
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            "#_r_0_-template"
+          ]
+        ]
+      }
+    ],
+    "passes": 18
+  },
+  "qualification": "Pre-lint-helper diagnostic metadata on 9ba70078 plus the concise-picker feature. Behavior-preserving helper extraction changes production source hashes; final-path PNGs are replaced by the subsequent lint-clean final replay and must not be paired with these earlier metrics."
+}

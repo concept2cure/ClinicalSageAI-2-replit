@@ -43,6 +43,11 @@ const SCAN_DIRS = ['server', 'scripts'];
 const EXT = /\.(ts|tsx|js|mjs|cjs)$/;
 const EXCLUDED = /(__tests__|\.test\.|\.spec\.|\.dbtest\.|node_modules|\/dist\/)/;
 const WRITE = /\bUPDATE\s+vault\.documents\b/i;
+// An ingestion retry mutates the existing version through ON CONFLICT. Keep
+// that writer reviewed even when its comments no longer spell out UPDATE.
+// Stop at SQL/JS statement or template boundaries, so an unrelated later
+// query's conflict clause cannot turn an insert into an update writer.
+const UPSERT = /\bINSERT\s+INTO\s+vault\.documents\b[^;`]*\bON\s+CONFLICT\b[^;`]*\bDO\s+UPDATE\b/i;
 
 function walk(dir, out) {
   if (!fs.existsSync(dir)) return out;
@@ -66,7 +71,10 @@ export function findWriters(root) {
     .map((f) => path.relative(root, f).split(path.sep).join('/'))
     // The gate and its selftest name the statement they look for; they write nothing.
     .filter((rel) => !EXCLUDED.test(rel) && !rel.startsWith('scripts/ci/check-vault-document-writers'))
-    .filter((rel) => WRITE.test(fs.readFileSync(path.join(root, rel), 'utf8')))
+    .filter((rel) => {
+      const source = fs.readFileSync(path.join(root, rel), 'utf8');
+      return WRITE.test(source) || UPSERT.test(source);
+    })
     .sort();
 }
 

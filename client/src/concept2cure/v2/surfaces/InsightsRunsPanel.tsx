@@ -14,15 +14,13 @@
  *
  * @module client/src/concept2cure/v2/surfaces/InsightsRunsPanel
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
 import {
-  RUNS_WINDOW,
   RUN_STATUS_LABEL,
   confidenceText,
-  runsSearchCaveat,
   runsUrl,
   whenText,
   type ReportRunRow,
@@ -31,7 +29,6 @@ import {
   PanelHead,
   StatusTag,
   isRowList,
-  pageMetaOf,
   readFailureOf,
   rowsOf,
   type LibraryReportType,
@@ -124,7 +121,7 @@ function RunRow({
         {run.reportTypeLabel}
         {market ? <div className="rl-cell-sub">{market}</div> : null}
       </td>
-      <td>{run.scopeType} — {run.scopeId}</td>
+      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}{run.computedScope === 'organization' && <div className="rl-cell-sub">Organization-wide records</div>}</td>
       <td><StatusTag status={run.status} /></td>
       <td>{confidenceText(run.confidence)}</td>
       <td>{whenText(run.completedAt ?? run.createdAt)}</td>
@@ -140,38 +137,38 @@ export function RunsPanel({
   onOpen,
   onBundle,
   canBundle,
+  scope,
 }: {
   types: LibraryReportType[];
   onOpen: (run: ReportRunRow) => void;
   onBundle: (runIds: number[]) => void;
   canBundle: boolean;
+  scope?: { scopeType: string; scopeId: string; label?: string } | null;
 }) {
   const [status, setStatus] = useState('');
   const [typeId, setTypeId] = useState('');
   const [search, setSearch] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [picked, setPicked] = useState<number[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [currentScope, setCurrentScope] = useState(false);
+  const [sortBy, setSortBy] = useState<'createdAt' | 'completedAt' | 'confidence' | 'status' | 'reportType' | 'scopeType'>('createdAt');
+  const pageSize = 50;
+  useEffect(() => { setOffset(0); setPicked([]); }, [status, typeId, search, currentScope, scope?.scopeType, scope?.scopeId, sortBy]);
 
   const url = runsUrl({
     ...(status ? { status } : {}),
     ...(typeId ? { reportTypeId: typeId } : {}),
     ...(search.trim() ? { search } : {}),
-    sortBy: 'createdAt',
+    ...(currentScope && scope ? { scopeType: scope.scopeType, scopeId: scope.scopeId } : {}),
+    sortBy,
     sortOrder: 'desc',
-    /* The largest page the route serves. Since review C-1 the route searches
-       and sorts in SQL before this limit and returns `meta.matched`, so this
-       is a page size and no longer the search's reach — asking for the maximum
-       now just means the fewest pages, not the widest search. */
-    limit: RUNS_WINDOW,
+    limit: pageSize,
+    offset,
   });
   const runs = useLiveData<unknown>(url, [url, attempt], isRowList);
   const rows = useMemo(() => rowsOf<ReportRunRow>(runs.data), [runs.data]);
-  const meta = useMemo(() => pageMetaOf(runs.meta), [runs.meta]);
   const filtered = Boolean(status || typeId || search.trim());
-  /* A page presented as the whole answer is a silent cap, so the panel states
-     the total whenever more matched than this page holds — and says nothing
-     when the page IS the whole answer, which is the common case now. */
-  const caveat = runsSearchCaveat(meta, { searching: Boolean(search.trim()) });
 
   const toggle = (id: number) =>
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
@@ -180,7 +177,7 @@ export function RunsPanel({
     <div className="rl">
       <PanelHead
         title="Run history"
-        sub="Every governed report run this organization has made, newest first. A run is an immutable record; opening one shows the document it produced."
+        sub="The governed reports you can access, newest first. A run retains the document it produced; opening one shows that saved record."
         actions={
           picked.length > 0 && canBundle ? (
             <button type="button" className="btn primary" onClick={() => onBundle(picked)}>
@@ -199,12 +196,8 @@ export function RunsPanel({
         search={search}
         setSearch={setSearch}
       />
-
-      {caveat && (
-        <div className="ro-dash-note" role="status" data-testid="rl-runs-caveat">
-          {I.info} {caveat}
-        </div>
-      )}
+      <HistoryControls scopeLabel={scope?.label} scopeAvailable={Boolean(scope)} currentScope={currentScope} onScope={setCurrentScope} sortBy={sortBy} onSort={setSortBy} onRefresh={() => setAttempt(n => n + 1)} />
+      <HistoryPageInfo read={runs} offset={offset} count={rows.length} />
 
       <RunsBody
         loading={runs.loading}
@@ -217,8 +210,31 @@ export function RunsPanel({
         onOpen={onOpen}
         onRetry={() => setAttempt((n) => n + 1)}
       />
+      <HistoryPagination read={runs} offset={offset} pageSize={pageSize} onOffset={setOffset} />
     </div>
   );
+}
+
+type HistorySort = 'createdAt' | 'completedAt' | 'confidence' | 'status' | 'reportType' | 'scopeType';
+type HistoryRead = { loading: boolean; error?: string; meta?: Record<string, unknown> };
+function HistoryControls({ scopeLabel, scopeAvailable, currentScope, onScope, sortBy, onSort, onRefresh }: { scopeLabel?: string; scopeAvailable: boolean; currentScope: boolean; onScope: (v: boolean) => void; sortBy: HistorySort; onSort: (v: HistorySort) => void; onRefresh: () => void }) {
+  const scopeId = React.useId();
+  const sortId = React.useId();
+  return <div className="rl-filters">
+    {scopeAvailable && <div className="rl-filter"><label className="gov-label" htmlFor={scopeId}>Reporting scope</label><select id={scopeId} className="rl-input" value={currentScope ? 'current' : 'all'} onChange={e => onScope(e.target.value === 'current')}><option value="all">All accessible reports</option><option value="current">{scopeLabel || 'Selected program'}</option></select></div>}
+    <div className="rl-filter"><label className="gov-label" htmlFor={sortId}>Order by</label><select id={sortId} className="rl-input" value={sortBy} onChange={e => onSort(e.target.value as HistorySort)}><option value="createdAt">Newest first</option><option value="completedAt">Most recently computed</option><option value="confidence">Highest measured confidence</option><option value="reportType">Report type</option><option value="status">Status</option></select></div>
+    <button type="button" className="btn ghost" onClick={onRefresh}>Refresh</button>
+  </div>;
+}
+function HistoryPageInfo({ read, offset, count }: { read: HistoryRead; offset: number; count: number }) {
+  if (read.loading || read.error) return null;
+  if (typeof read.meta?.total === 'number') return <div className="rl-sub" role="status">{read.meta.total} matching reports · {count ? `${offset + 1}–${offset + count}` : '0'} shown</div>;
+  return <div className="ro-dash-note" role="status">{I.info} The report register did not state whether more matching records exist. This list may be incomplete; refresh to check again.</div>;
+}
+function HistoryPagination({ read, offset, pageSize, onOffset }: { read: HistoryRead; offset: number; pageSize: number; onOffset: (offset: number) => void }) {
+  const hasMore = read.meta?.hasMore === true;
+  if (read.loading || read.error || (!offset && !hasMore)) return null;
+  return <div className="rl-pagination" role="group" aria-label="Report history pages"><button type="button" className="btn ghost" disabled={offset === 0} onClick={() => onOffset(Math.max(0, offset - pageSize))}>Previous</button><span>Page {Math.floor(offset / pageSize) + 1}</span><button type="button" className="btn ghost" disabled={!hasMore} onClick={() => onOffset(offset + pageSize)}>Next</button></div>;
 }
 
 /** The three honest outcomes of the read, and the table when there is one. */

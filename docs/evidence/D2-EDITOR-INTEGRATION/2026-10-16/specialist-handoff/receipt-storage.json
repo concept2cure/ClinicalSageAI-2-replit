@@ -1,0 +1,41 @@
+{
+  "qualification": "Command receipts preserve all output except trailing line ending normalization recorded per file; raw hashes identify the original command capture, stored hashes identify repository copies.",
+  "receipts": [
+    {
+      "path": "green-helper-first.txt",
+      "rawSha256": "443d163e0c1c2f788ffa984198be7f0aba6b143f37d40f6b8a3322d68dfaaec2",
+      "storedSha256": "a567da367fd8b6e12f086dff482a6f7cc08b709970f64b045e36d6007429ddfa",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    },
+    {
+      "path": "green-helper.txt",
+      "rawSha256": "1d0b24a079324806fff6c4ef119bbdc3207fdfcc817e46c45e790ee565dbb29d",
+      "storedSha256": "df7ecb40c5dd09d3a49588f2face831e4c2a89fe962a1700d416f02e8fd8f4df",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    },
+    {
+      "path": "red-helper.txt",
+      "rawSha256": "91ea6243fab8d839f26e79ce9a6093878caad2548aafca8e8e3a701a82cab78a",
+      "storedSha256": "a038e28251678d17cb67cd90d46dd27310ceb5eda88b502c2eee9312209830cd",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    },
+    {
+      "path": "red-project-guard.txt",
+      "rawSha256": "80181db8c5a24ec83603706389bb427b2db696835c49484132181f08a4b9e97b",
+      "storedSha256": "abc199433514f9ab3ded5a9818634bc166519a8d168507593287716707f7501c",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    },
+    {
+      "path": "regression-candidate.txt",
+      "rawSha256": "af97af4438892d9f5589f9bd26537c3bc1282fcfa6aa1a51290aaf387114e10f",
+      "storedSha256": "38ff245ae642eadd23509118004202198d56421923bdbd8cfd112546f4dff054",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    },
+    {
+      "path": "regression-final.txt",
+      "rawSha256": "fdc566a065efe253c4cdd477e6b1f37bb57c233c40bb93a40a2a0e957219137a",
+      "storedSha256": "f3f5711136a11ff09c3da18079e806fa980b9581be36a4cfba585d7372bb24d0",
+      "onlyChange": "Trailing CR/LF bytes normalized to exactly one LF"
+    }
+  ]
+}

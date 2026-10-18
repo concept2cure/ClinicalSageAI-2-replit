@@ -28,9 +28,11 @@
  *     section approval).
  *   - `persistGovernedSignatureRevocation(client, params)` closes the §11.70
  *     supersession chain for the governed `revoke-signature` action: it resolves
- *     the live signature on that target (org-scoped), records the revocation as
- *     its own attributable row, and points the revoked row's `superseded_by` at
- *     it. A revocation that cannot resolve what it revokes REFUSES.
+ *     the ONE live signature on that target (org-scoped) that the payload names
+ *     — by `signatureId`, `signatureActionId` or `intent` — records the
+ *     revocation as its own attributable row, and points the revoked row's
+ *     `superseded_by` at it. A revocation that resolves nothing, or more than
+ *     one signature, REFUSES.
  *
  * Ledger L37 folded the LAST remaining second INSERT in.
  * `part11ComplianceService.createElectronicSignature` — the writer behind
@@ -62,6 +64,12 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
 import { CONTENT_BINDERS } from './governed-target-binders.js';
+import {
+  chooseSignatureToRevoke,
+  revocationCandidateOf,
+  revocationSelectorOf,
+  SignatureRevocationUnresolvedError,
+} from './revocation-selection.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -114,6 +122,18 @@ export const BINDING_BASIS = {
   TRANSMITTED_BUNDLE_SHA256: 'transmitted-bundle-sha256',
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
+  /**
+   * sha256 over the interim data snapshot an adaptive decision is taken on:
+   * the look number, information fraction, enrolment, summary statistics, test
+   * statistic, conditional and predictive power, and the boundary at that look.
+   *
+   * An IDMC does not approve "a decision"; it approves a decision ABOUT a
+   * specific interim look, so that look's data is what the signature binds
+   * (§11.70). Added 2026-10-13, when the adaptive decision stopped being a
+   * Drizzle insert that stamped `approved_by` from the session user with no
+   * ceremony at all.
+   */
+  INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
   /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
@@ -248,7 +268,10 @@ export function isSignatureWithdrawn(row: {
  * written: nobody signed the void. Its cause, the refusal, is recorded on the
  * audit row the caller writes. One statement, so it needs no transaction; the
  * predicate makes it a compare-and-set, and a second void of the same row
- * matches nothing.
+ * matches nothing. The immutability trigger permits exactly this transition and
+ * freezes the row after it (db/migrations/20260730_esign_audit_db_level_immutability.sql,
+ * amended 2026-10-15: until then it refused the statement, so the void reached
+ * the audit chain only and the row kept reading is_valid = true).
  */
 export async function voidSignatureForRefusedAct(
   client: SignatureDbClient,
@@ -849,20 +872,6 @@ export async function persistGovernedSignSignature(
 // ── §11.70 supersession (governed revoke-signature) ──────────────────────────
 
 /**
- * A governed revocation could not identify the signature it revokes. Fail
- * closed: a revocation that cannot name what it revokes revokes nothing, and
- * recording it would leave the supersession chain claiming an act that never
- * landed.
- */
-export class SignatureRevocationUnresolvedError extends Error {
-  readonly code = 'REVOCATION_TARGET_UNRESOLVED';
-  constructor(message: string) {
-    super(message);
-    this.name = 'SignatureRevocationUnresolvedError';
-  }
-}
-
-/**
  * Persist the §11.70 supersession for a governed `revoke-signature` action, on
  * the SAME client/transaction as the revocation's ledger write.
  *
@@ -899,32 +908,53 @@ export class SignatureRevocationUnresolvedError extends Error {
  * revoked target's content digest — otherwise it would collide with the
  * (organization_id, bound_payload_digest, superseded_by IS NULL) lookup and a
  * revoked release would read as freshly signed.
+ *
+ * WHICH SIGNATURE (amended 2026-10-15, row D5). This resolved "the newest live
+ * row on the target", whatever it was given for. Since P-34 a sequence carries
+ * live signatures for several acts at once — freeze, dispatch, transmit, a
+ * Shadow Review waiver and, per P-35, one disposition per critical finding — so
+ * a revocation meant for the release could withdraw the waiver, or the
+ * reverse, and this row would then name the wrong signature as revoked
+ * (§11.10(e), §11.70). The payload now names the signature: `signatureId`,
+ * `signatureActionId` or `intent` (RevocationSelector), and exactly one live
+ * signature must answer, or nothing is written (chooseSignatureToRevoke) —
+ * on every target, whether or not its signatures declare an intent.
  */
 export async function persistGovernedSignatureRevocation(
   client: SignatureDbClient,
   params: GovernedSignParams,
 ): Promise<{ revocationId: number; revokedSignatureId: number }> {
-  // Resolve the signature under revocation: org-scoped, anchored on the same
-  // governed target the ledger records, still live. Revocation rows themselves
-  // are excluded — a revocation is not a signature that can be revoked.
+  // A malformed name refuses before any query (SignatureRevocationSelectorError).
+  const selector = revocationSelectorOf(params.payload);
+
+  // The signatures on the target — org-scoped, anchored on the same governed
+  // target the ledger records, not superseded, newest first — each with the
+  // intent its sign action declared. Revocation rows themselves are excluded:
+  // a revocation is not a signature that can be revoked. One voided for a
+  // refused act (P-23) is out of force too, by the canonical predicate.
   const found = await client.query(
-    `SELECT id, signature_hash, signature_type, signed_at, signer_id
-       FROM electronic_signatures
-      WHERE organization_id = $1
-        AND signed_target = $2
-        AND signature_type <> $3
-        AND superseded_by IS NULL
-      ORDER BY signed_at DESC, id DESC
-      LIMIT 1`,
+    `SELECT es.id, es.signature_hash, es.signature_type, es.signed_at, es.signer_id,
+            es.superseded_by, es.is_valid, es.verification_status,
+            (es.signature_manifest::jsonb ->> 'actionId') AS action_id,
+            (a.payload ->> 'intent') AS intent
+       FROM electronic_signatures es
+       LEFT JOIN c2c_ana_actions a
+         ON a.id = (es.signature_manifest::jsonb ->> 'actionId')
+        AND a.org_id = es.organization_id
+      WHERE es.organization_id = $1
+        AND es.signed_target = $2
+        AND es.signature_type <> $3
+        AND es.superseded_by IS NULL
+      ORDER BY es.signed_at DESC, es.id DESC`,
     [params.orgId, params.target, GOVERNED_REVOCATION_SIGNATURE_TYPE],
   );
-  if (found.rows.length === 0) {
-    throw new SignatureRevocationUnresolvedError(
-      `revoke-signature: no active electronic signature is anchored to target '${params.target}' in organization ${params.orgId} — refusing to record a revocation of nothing (§11.70).`,
-    );
-  }
-  const revoked = found.rows[0];
-  const revokedId = Number(revoked.id);
+  const liveRows = found.rows.filter((r) => !isSignatureWithdrawn(r));
+  const chosen = chooseSignatureToRevoke(liveRows.map(revocationCandidateOf), selector, {
+    target: params.target,
+    orgId: params.orgId,
+  });
+  const revoked = liveRows.find((r) => Number(r.id) === chosen.signatureId);
+  const revokedId = chosen.signatureId;
 
   const revocation = await persistGovernedActionSignature(client, {
     ...params,
@@ -944,9 +974,13 @@ export async function persistGovernedSignatureRevocation(
       '(21 CFR Part 11 §11.50/§11.70/§11.200); the superseded signature is retained unaltered and linked via superseded_by.',
     extraManifest: {
       revokedSignatureId: revokedId,
-      revokedSignatureHash: revoked.signature_hash ?? null,
-      revokedSignatureType: revoked.signature_type ?? null,
-      revokedSignatureSignerId: revoked.signer_id == null ? null : Number(revoked.signer_id),
+      revokedSignatureHash: revoked?.signature_hash ?? null,
+      revokedSignatureType: revoked?.signature_type ?? null,
+      revokedSignatureSignerId: revoked?.signer_id == null ? null : Number(revoked.signer_id),
+      // What the signature was given for, so the record states which act's
+      // authorization was withdrawn (§11.10(e)).
+      revokedSignatureActionId: chosen.signatureActionId,
+      revokedSignatureIntent: chosen.intent,
     },
   });
 

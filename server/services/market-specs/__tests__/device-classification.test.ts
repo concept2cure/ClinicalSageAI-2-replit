@@ -518,8 +518,10 @@ describe('FDA pathway recommendation (heuristic)', () => {
   it('novel low-to-moderate risk, no predicate → De Novo', () => {
     expect(recommendFdaPathway({ novelLowModerateRisk: true }).pathway).toBe('de_novo');
   });
-  it('no predicate and risk unestablished → PMA (conservative default)', () => {
-    expect(recommendFdaPathway({}).pathway).toBe('pma');
+  // This asserted PMA as a "conservative default" for no facts, with "No predicate
+  // available" nobody had said (2026-10-15). See fda-pathway-undetermined-without-deciding-facts.test.ts.
+  it('no facts → undetermined, not PMA', () => {
+    expect(recommendFdaPathway({}).pathway).toBe('undetermined');
   });
   it('every recommendation carries a confirm caveat', () => {
     expect(recommendFdaPathway({ exempt: true }).caveat).toMatch(/classification/i);

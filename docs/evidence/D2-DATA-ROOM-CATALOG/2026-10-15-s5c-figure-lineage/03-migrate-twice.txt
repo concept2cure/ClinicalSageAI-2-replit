@@ -1,0 +1,8 @@
+# run 1
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.
+# run 2 (replay)
+  governed-content tree: 3/3 sentinel(s) present
+
+✅ Schema migration complete — safe to roll services.

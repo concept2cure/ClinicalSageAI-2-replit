@@ -1,0 +1,348 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+{
+  "timestamp": "2026-10-14T20:01:56.552Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:01:56.554Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+{
+  "timestamp": "2026-10-14T20:01:56.554Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+[database] Database connection successful
+
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > models the target and deduplicates creator plus the complete historical ledger
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > refuses the original creator reviewing their document
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > refuses an earlier content contributor after a different person saved the latest revision
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > admits an independent reviewer only after authorship has been resolved
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > retains a historical contributor who has left the organization and has no current grant
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > granting another OWNER/AUTHOR and revoking creator grants cannot replace recorded authorship
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > machine contributor metadata cannot invent a human author or erase the actual saver
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > does not disclose foreign document authors or admit a missing local record
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > ignores another same-tenant document and all foreign-tenant history
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > canonical composite foreign keys refuse cross-tenant section and revision parentage
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > also ignores a legacy section whose tenant disagrees with its document parent
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > ignores a legacy revision whose tenant disagrees with its section parent
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "7x" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "author@example.test" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "10000000-0000-4000-8000-000000000001" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "0" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "-7" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "7.5" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "2147483648" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "07" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity " 7 " even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "" even when one historical author is known
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver null even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "7x" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "writer@example.test" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "20000000-0000-4000-8000-000000000001" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "0" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "-7" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "7.5" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "2147483648" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "07" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver " 7 " even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "" even with a known original creator
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document: returns unresolved rather than a cast failure or admission
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document:not-a-uuid returns unresolved rather than a cast failure or admission
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document:42 returns unresolved rather than a cast failure or admission
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document returns unresolved rather than a cast failure or admission
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a syntactically valid missing document stays unresolved
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > an actual database query failure is unverified, never an independence result
+ ↓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > The actual historical authorship rows are immutable > engine UPDATE, DELETE and TRUNCATE guards retain contributor identity
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > an empty section creator is an author even when no prose revision was written 26ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a title-only contributor from the native from/to metadata shape 9ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a code-only contributor from the native from/to metadata shape 6ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a recorded null-to-heading change is distinct and contributes authorship 5ms
+   → expected [ 11 ] to deeply equal [ 11, 19 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a saved section-order contributor is an author without a section-scoped audit row 6ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained CREATE actor survives removal of the source section 12ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained RENAME actor survives removal of the source section 10ms
+   → expected [ 11 ] to deeply equal [ 11, 17 ]
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > deduplicates original, prose, heading and order authors across the protected sources 17ms
+   → expected [ 11, 17 ] to deeply equal [ 11, 17, 19, 29 ]
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > document creation with no section cannot fabricate a second author 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > GRANT_PERMISSION activity does not make its actor a controlled-content author 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > COMMENT activity does not make its actor a controlled-content author 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > document_reviewed activity does not make its actor a controlled-content author 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > review_requested activity does not make its actor a controlled-content author 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > E_SIGN activity does not make its actor a controlled-content author 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > SIGN activity does not make its actor a controlled-content author 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > TRACK_CHANGES activity does not make its actor a controlled-content author 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a RENAME with wrong source does not fabricate a heading contributor 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a RENAME with missing source does not fabricate a heading contributor 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a RENAME with unchanged heading does not fabricate a heading contributor 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a RENAME with unchanged null code does not fabricate a heading contributor 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a RENAME with track-only changes does not fabricate a heading contributor 4ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > ignores other-document and other-tenant audit identities before resolving actors 6ms
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor null leaves independence unresolved 6ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "7x" leaves independence unresolved 8ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "writer@example.test" leaves independence unresolved 5ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "20000000-0000-4000-8000-000000000001" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "0" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "-7" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "7.5" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "2147483648" leaves independence unresolved 5ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "07" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor " 7 " leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "" leaves independence unresolved 4ms
+   → promise resolved "{ modelled: true, …(2) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > an actual failed audit query remains unverified even when creator and prose facts are known 7ms
+   → promise resolved "{ checked: true, …(1) }" instead of rejecting
+ × server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > actual audit UPDATE, DELETE and TRUNCATE guards preserve heading-author evidence 11ms
+   → promise resolved "{ checked: true, …(1) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > an empty section creator is an author even when no prose revision was written
+AssertionError: expected [ 11 ] to deeply equal [ 11, 17 ]
+
+- Expected
++ Received
+
+  [
+    11,
+-   17,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:293:29
+    291|     expect((await sql.query('SELECT id FROM doc_revisions WHERE sectio…
+    292|     const authors = await resolveTargetAuthors(doc.target,ORG,sql);
+    293|     expect(authors.authors).toEqual([CREATOR,HISTORICAL_WRITER]);
+       |                             ^
+    294|     expect(authors.sources.some(source => /audit|heading|structure/i.t…
+    295|     await expect(assertIndependent(doc,HISTORICAL_WRITER)).rejects.toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a title-only contributor from the native from/to metadata shape
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a code-only contributor from the native from/to metadata shape
+AssertionError: expected [ 11 ] to deeply equal [ 11, 17 ]
+
+- Expected
++ Received
+
+  [
+    11,
+-   17,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:305:70
+    303|     await sql.query(`UPDATE authoring_sections SET ${field}=$1 WHERE i…
+    304|     await audit(doc,'RENAME',String(HISTORICAL_WRITER),{ source:'secti…
+    305|     expect((await resolveTargetAuthors(doc.target,ORG,sql)).authors).t…
+       |                                                                      ^
+    306|     await expect(assertIndependent(doc,HISTORICAL_WRITER)).rejects.toB…
+    307|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a recorded null-to-heading change is distinct and contributes authorship
+AssertionError: expected [ 11 ] to deeply equal [ 11, 19 ]
+
+- Expected
++ Received
+
+  [
+    11,
+-   19,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:314:70
+    312|       source:'section-metadata',changes:[{ field:'title',from:null,to:…
+    313|     });
+    314|     expect((await resolveTargetAuthors(doc.target,ORG,sql)).authors).t…
+       |                                                                      ^
+    315|     await expect(assertIndependent(doc,SECOND_WRITER)).rejects.toBeIns…
+    316|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a saved section-order contributor is an author without a section-scoped audit row
+AssertionError: expected [ 11 ] to deeply equal [ 11, 17 ]
+
+- Expected
++ Received
+
+  [
+    11,
+-   17,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:325:70
+    323|     await sql.query('UPDATE authoring_sections SET order_index=1 WHERE…
+    324|     await audit(doc,'REORDER_SECTIONS',String(HISTORICAL_WRITER),{ ord…
+    325|     expect((await resolveTargetAuthors(doc.target,ORG,sql)).authors).t…
+       |                                                                      ^
+    326|     await expect(assertIndependent(doc,HISTORICAL_WRITER)).rejects.toB…
+    327|     await expect(assertIndependent(doc)).resolves.toMatchObject({ chec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained CREATE actor survives removal of the source section
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained RENAME actor survives removal of the source section
+AssertionError: expected [ 11 ] to deeply equal [ 11, 17 ]
+
+- Expected
++ Received
+
+  [
+    11,
+-   17,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:338:70
+    336|     await sql.query('DELETE FROM authoring_sections WHERE id=$1 AND te…
+    337|     expect((await sql.query('SELECT id FROM authoring_sections WHERE d…
+    338|     expect((await resolveTargetAuthors(doc.target,ORG,sql)).authors).t…
+       |                                                                      ^
+    339|     await expect(assertIndependent(doc,HISTORICAL_WRITER)).rejects.toB…
+    340|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > deduplicates original, prose, heading and order authors across the protected sources
+AssertionError: expected [ 11, 17 ] to deeply equal [ 11, 17, 19, 29 ]
+
+- Expected
++ Received
+
+  [
+    11,
+    17,
+-   19,
+-   29,
+  ]
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:350:70
+    348|     });
+    349|     await audit(doc,'REORDER_SECTIONS',String(FOREIGN_WRITER),{ order:…
+    350|     expect((await resolveTargetAuthors(doc.target,ORG,sql)).authors).t…
+       |                                                                      ^
+    351|     await expect(assertIndependent(doc,FOREIGN_WRITER)).rejects.toBeIn…
+    352|     await expect(assertIndependent(doc)).resolves.toMatchObject({ chec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor null leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "7x" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "writer@example.test" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "20000000-0000-4000-8000-000000000001" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "0" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "-7" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "7.5" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "2147483648" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "07" leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor " 7 " leaves independence unresolved
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a countable audit act with malformed actor "" leaves independence unresolved
+AssertionError: promise resolved "{ modelled: true, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "authors": [
++     11,
++   ],
++   "modelled": true,
++   "sources": [
++     "Authoring document creator",
++   ],
+  }
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:399:58
+    397|     const doc = await document();
+    398|     await audit(doc,'RENAME',actor,{ source:'section-metadata',changes…
+    399|     await expect(resolveTargetAuthors(doc.target,ORG,sql)).rejects.toB…
+       |                                                          ^
+    400|     await expect(assertIndependent(doc)).rejects.toBeInstanceOf(Separa…
+    401|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > an actual failed audit query remains unverified even when creator and prose facts are known
+AssertionError: promise resolved "{ checked: true, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "checked": true,
++   "reason": "Signer is not among the record's authors (Authoring document creator, Authoring revision ledger).",
+  }
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:410:59
+    408|     const quiet = vi.spyOn(console,'error').mockImplementation(() => u…
+    409|     try {
+    410|       await expect(assertIndependent(doc,REVIEWER,failing)).rejects.to…
+       |                                                           ^
+    411|     } finally { quiet.mockRestore(); }
+    412|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > actual audit UPDATE, DELETE and TRUNCATE guards preserve heading-author evidence
+AssertionError: promise resolved "{ checked: true, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "checked": true,
++   "reason": "Signer is not among the record's authors (Authoring document creator).",
+  }
+
+ ❯ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts:425:58
+    423|     expect((await sql.query('SELECT actor_id FROM authoring_audit_trai…
+    424|       .toEqual([{ actor_id:String(HISTORICAL_WRITER) }]);
+    425|     await expect(assertIndependent(doc,HISTORICAL_WRITER)).rejects.toB…
+       |                                                          ^
+    426|   });
+    427| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  21 failed | 14 passed | 40 skipped (75)
+   Start at  20:01:54
+   Duration  4.48s (transform 777ms, setup 97ms, import 1.50s, tests 2.61s, environment 0ms)

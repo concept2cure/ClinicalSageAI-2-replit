@@ -25,7 +25,7 @@
  */
 
 import type { PoolClient } from 'pg';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
 import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
@@ -292,6 +292,42 @@ export interface ProgramAnchorRow {
   clientWorkspaceId: number | null;
 }
 
+export interface ProgramAnchorReadExecutor {
+  query(text: string, params?: unknown[]): Promise<{ rows: unknown[] }>;
+}
+export type ProgramAnchorEligibility = 'all' | 'non-deleted';
+export interface ProgramAnchorCandidate { programId: string; anchor: ProgramAnchorRow | null }
+
+function parsedAnchor(row: unknown): ProgramAnchorRow | null {
+  if (!row || typeof row !== 'object' || !('id' in row)) return null;
+  const id = Number(row.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  const workspace = 'clientWorkspaceId' in row ? row.clientWorkspaceId : null;
+  if (workspace == null) return { id, clientWorkspaceId: null };
+  const clientWorkspaceId = Number(workspace);
+  return Number.isSafeInteger(clientWorkspaceId) && clientWorkspaceId > 0 ? { id, clientWorkspaceId } : null;
+}
+
+/** All recorded eligible anchors, before sharing is evaluated. A malformed or
+ * duplicate relationship never becomes unique by hiding its private row. */
+export async function listProgramAnchorCandidates(db: ProgramAnchorReadExecutor, params: {
+  orgId: number; eligibility?: ProgramAnchorEligibility;
+}): Promise<ProgramAnchorCandidate[]> {
+  const statement = params.eligibility === 'non-deleted'
+    ? `SELECT regulatory_program_id::text AS program_id,id,client_workspace_id AS "clientWorkspaceId"
+       FROM projects WHERE organization_id=$1 AND regulatory_program_id IS NOT NULL
+         AND status IS DISTINCT FROM 'deleted' ORDER BY regulatory_program_id,id`
+    : `SELECT regulatory_program_id::text AS program_id,id,client_workspace_id AS "clientWorkspaceId"
+       FROM projects WHERE organization_id=$1 AND regulatory_program_id IS NOT NULL ORDER BY regulatory_program_id,id`;
+  const { rows } = await db.query(statement,[params.orgId]);
+  return rows.map(row => {
+    if (!row || typeof row !== 'object' || !('program_id' in row) || typeof row.program_id !== 'string') {
+      throw new Error('Program anchor identity could not be read');
+    }
+    return { programId: row.program_id, anchor: parsedAnchor(row) };
+  });
+}
+
 /**
  * The program's anchor row, org-scoped: the lowest-id projects row naming it,
  * which is the row intake links (ensureProgramProjectAnchor, ORDER BY id). The
@@ -310,24 +346,28 @@ export interface ProgramAnchorRow {
  * caller's to judge (isMissingAnchorColumn).
  */
 export async function readProgramAnchorRow(
-  db: RequestDb | { query(text: string, params?: unknown[]): Promise<{ rows: ProgramAnchorRow[] }> },
-  params: { programId: string; orgId: number; context: string; requireUnique?: boolean },
+  db: RequestDb | ProgramAnchorReadExecutor,
+  params: { programId: string; orgId: number; context: string; requireUnique?: boolean; eligibility?: ProgramAnchorEligibility },
 ): Promise<ProgramAnchorRow | null> {
   const rows = 'select' in db ? await db
     .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
     .from(projects)
-    .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId)))
+    .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId),
+      params.eligibility === 'non-deleted' ? sql`${projects.status} IS DISTINCT FROM 'deleted'` : undefined))
     .orderBy(asc(projects.id))
     .limit(2) : (await db.query(
-      `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
-       WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2`,
+      params.eligibility === 'non-deleted'
+        ? `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+           WHERE regulatory_program_id=$1 AND organization_id=$2 AND status IS DISTINCT FROM 'deleted' ORDER BY id LIMIT 2`
+        : `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+           WHERE regulatory_program_id=$1 AND organization_id=$2 ORDER BY id LIMIT 2`,
       [params.programId, params.orgId],
     )).rows;
   if ((rows?.length ?? 0) > 1) {
     logger.warn(params.requireUnique ? 'Program has more than one anchor row; unique anchor required' : 'Program has more than one anchor row; reading the lowest id, the row intake links', {
       context: params.context,
       programId: params.programId,
-      projectIds: rows.map((r) => r.id),
+      projectIds: rows.map((r) => parsedAnchor(r)?.id ?? null),
     });
     if (params.requireUnique) return null;
   }
@@ -336,8 +376,7 @@ export async function readProgramAnchorRow(
   // A non-integer id is not an anchor. `concept2cure_artifacts.project_id` is
   // an integer FK, so placing against anything else would fail at the
   // registry — better to take the honest unanchored path than to try.
-  const id = Number(row.id);
-  return Number.isInteger(id) && id > 0 ? { id, clientWorkspaceId: row.clientWorkspaceId ?? null } : null;
+  return parsedAnchor(row);
 }
 
 /**

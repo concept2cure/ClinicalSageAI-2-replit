@@ -45,4 +45,3 @@ TypeError: Cannot read properties of undefined (reading 'storage_version_id')
       Tests  1 failed | 10 skipped (11)
    Start at  16:52:43
    Duration  1.97s (transform 835ms, setup 64ms, import 153ms, tests 1.50s, environment 0ms)
-

@@ -32,9 +32,9 @@
 
 import type { PositionCaution } from '../types/intelligence-questions.js';
 import { agencyFor } from './agency-positions.js';
-import type { IvdrClass } from './device-class.js';
+import type { DeviceClass, IvdrClass, MdrRuleClass } from './device-class.js';
 import { getApplicationType } from './global-document-registry.js';
-import { MODALITY_LABEL, type Modality } from './modality.js';
+import { MODALITY_FRAME, MODALITY_LABEL, type Modality } from './modality.js';
 import { annotatedPositionIds, positionFor } from './pathway-positions.js';
 import { canonicalRegionOf, type CanonicalRegion } from './region-identity.js';
 
@@ -71,9 +71,14 @@ export interface ProgrammeFacts {
    */
   predicate?: 'named' | 'none' | 'nse';
   /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */
-  deviceClass?: 'I' | 'II' | 'III';
-  /** The MDR class the sponsor states for the EU. */
-  euMdrClass?: 'I' | 'IIa' | 'IIb' | 'III';
+  deviceClass?: DeviceClass;
+  /**
+   * The MDR class the sponsor states for the EU, read onto the four the Annex
+   * VIII rules YIELD — these rules reason about routes, and Is, Im and Ir take
+   * the Class I route with the notified body involved for that aspect alone.
+   * The RECORD keeps the seven a sponsor declares.
+   */
+  euMdrClass?: MdrRuleClass;
   /**
    * The IVDR class the sponsor states for the EU. Until the classification
    * question landed no interview could state it at all, so the IVDR routes
@@ -136,7 +141,7 @@ const IVDR_POSITION_CLASSES: Readonly<Record<string, readonly IvdrClass[]>> = {
 };
 
 /** The MDR class each class route is the route FOR. */
-const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
+const MDR_POSITION_CLASS: Readonly<Record<string, MdrRuleClass>> = {
   EU_MDR_CLASS_I: 'I',
   EU_MDR_CLASS_IIA: 'IIa',
   EU_MDR_CLASS_IIB: 'IIb',
@@ -159,6 +164,21 @@ interface CautionRule {
 function regionOfPosition(positionId: string): CanonicalRegion | null {
   const entry = getApplicationType(positionId);
   return (entry && canonicalRegionOf(String(entry.region))) || null;
+}
+
+/**
+ * What the filing IS, in words true of it. For a medicine the regulator is the
+ * agency: EMA grants a marketing authorisation. For a device or a diagnostic
+ * in the EU it is not — the MDR and IVDR routes are a notified body's
+ * assessment — so naming EMA over an MDR class route is a sentence that is
+ * simply false (a review caught it, 2026-10-12).
+ */
+function filingIs(positionId: string, region: CanonicalRegion): string {
+  const segment = String(getApplicationType(positionId)?.segment ?? '');
+  if (region === 'EU' && (segment === 'medical_devices' || segment === 'diagnostics_ivd')) {
+    return `an EU conformity assessment under the ${segment === 'diagnostics_ivd' ? 'IVDR' : 'MDR'}`;
+  }
+  return `a filing to ${agencyFor(region)}`;
 }
 
 /** 'FDA', 'FDA and EMA', 'FDA, EMA and PMDA' — the agencies as a person wrote them. */
@@ -191,7 +211,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
       const region = regionOfPosition(id)!;
       const them = listed(f.regions ?? []);
       return (
-        `You have named ${them} for this project, and this is a filing to ${agencyFor(region)}. ` +
+        `You have named ${them} for this project, and this is ${filingIs(id, region)}. ` +
         `If you are filing there as well, name ${agencyFor(region)} among the agencies and this route is open.`
       );
     },
@@ -238,6 +258,36 @@ const CAUTION_RULES: readonly CautionRule[] = [
       `You have said this is ${productWords(f)} — approved under section 505 of the FD&C Act rather than licensed ` +
       'as a biological product — so a biologics licence is not the route for it.',
     authority: 'FD&C Act 505; PHS Act 351(i) definition of a biological product',
+  },
+
+  /* -- A combination product: the lead centre decides, not the product type
+        The US side offers nothing for one and says why in the frame's own
+        words (governed-options.ts). The EU side offers all four medicines
+        routes, because the frame holds no European equivalent to narrow them
+        — so a combination product was offered an Article 8(3) MAA, a
+        conditional MA, a biosimilar application and a generic DCP with
+        nothing said (2026-10-12 review).
+
+        The CTA is here for the same reason, and it was missed when the
+        investigational filings were added to the catalogue a day later: a
+        device-led combination runs an MDR clinical investigation under Article
+        62, not a CTR trial through CTIS, so which application permits the
+        study follows from the same determination as which one permits the
+        sale. --------------------------------------------------------- */
+  {
+    id: 'combination_product_route_undecided',
+    positions: ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP', 'EU_CTA'],
+    availability: 'needs_basis',
+    when: f => f.modality === 'combination',
+    reason: () =>
+      'You have said this is a drug-device combination. ' +
+      `${MODALITY_FRAME.combination.centerBasis} Which route applies follows from that determination rather than ` +
+      'from the product type, so the application has to say what the primary mode of action is and which ' +
+      'regulation governs it — the trial application included, since a device-led combination runs an MDR ' +
+      'clinical investigation rather than a CTR trial.',
+    authority:
+      '21 CFR Part 3 (US); MDR (EU) 2017/745 Art 1(8)-(9) and Directive 2001/83/EC Art 1(2) for the EU division; ' +
+      'MDR Art 62 against Regulation (EU) 536/2014 for the trial application',
   },
 
   /* -- A biosimilar claim, or the absence of one -------------------------- */
@@ -330,7 +380,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
           'determination is one of the two conditions for a De Novo request rather than a basis for filing again.'
         : 'You have said there is no legally marketed device to compare to. Substantial equivalence is a comparison, so ' +
           'there is no 510(k) to make — which is the first condition for a De Novo request.',
-    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860.220(a)',
+    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860 Subpart D',
   },
 
   /* -- US: a Class III device is a PMA unless it is preamendments --------- */
@@ -353,7 +403,10 @@ const CAUTION_RULES: readonly CautionRule[] = [
     reason: () =>
       'You have said Class I. Most Class I devices are exempt from premarket notification by their own ' +
       'classification regulation, so check the exemption and the limitations on it before filing one.',
-    authority: '21 CFR 807.85; the classification part’s own § .9 limitations of exemption',
+    /* The exemption is granted by the device's own classification regulation
+       and limited by that part's § .9; 21 CFR 807.85 is a different exemption
+       (custom devices and relabellers) and was the wrong citation. */
+    authority: '21 CFR 862–892 — the classification regulation and its own § .9 limitations of exemption',
   },
 
   /* -- US: a PMA is the Class III route ----------------------------------- */

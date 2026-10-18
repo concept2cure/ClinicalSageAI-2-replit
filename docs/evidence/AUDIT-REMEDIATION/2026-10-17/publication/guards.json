@@ -1,0 +1,421 @@
+{
+  "rawArtifact": {
+    "artifact": "results.json",
+    "sha256": "8440d3880c589c49740aa5c5c7856ff3f279172d412ddafa1997cfb85f249c59",
+    "bytes": 49001
+  },
+  "passes": 82,
+  "failures": 0,
+  "results": [
+    {
+      "command": "npm run --silent ci:node-runtime",
+      "exitCode": 0,
+      "seconds": 0.16
+    },
+    {
+      "command": "npm run --silent ci:migration-set-order",
+      "exitCode": 0,
+      "seconds": 0.16
+    },
+    {
+      "command": "npm run --silent ci:migration-guard-order",
+      "exitCode": 0,
+      "seconds": 0.22
+    },
+    {
+      "command": "npm run --silent ci:migration-drop-safety",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "command": "npm run --silent ci:migration-deploy-path",
+      "exitCode": 0,
+      "seconds": 0.18
+    },
+    {
+      "command": "npm run --silent ci:migration-prefix-collisions",
+      "exitCode": 0,
+      "seconds": 0.23
+    },
+    {
+      "command": "npm run --silent ci:rls-allowlist-sync",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "command": "npm run --silent ci:duplicate-table-ddl",
+      "exitCode": 0,
+      "seconds": 0.22
+    },
+    {
+      "command": "npm run --silent ci:journey-migration-reachability",
+      "exitCode": 0,
+      "seconds": 0.18
+    },
+    {
+      "command": "npm run --silent ci:migration-reachability",
+      "exitCode": 0,
+      "seconds": 0.86
+    },
+    {
+      "command": "npm run --silent ci:column-reachability",
+      "exitCode": 0,
+      "seconds": 1.59
+    },
+    {
+      "command": "npm run --silent ci:launch-scope",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api",
+      "exitCode": 0,
+      "seconds": 0.77
+    },
+    {
+      "command": "npm run --silent ci:workflow-targets",
+      "exitCode": 0,
+      "seconds": 0.28
+    },
+    {
+      "command": "npm run --silent ci:surface-discoverability",
+      "exitCode": 0,
+      "seconds": 0.28
+    },
+    {
+      "command": "npm run --silent ci:ana-surface-context",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "command": "npm run --silent ci:discarded-audit-write",
+      "exitCode": 0,
+      "seconds": 2.97
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony",
+      "exitCode": 0,
+      "seconds": 0.91
+    },
+    {
+      "command": "npm run --silent ci:action-overclaim",
+      "exitCode": 0,
+      "seconds": 0.51
+    },
+    {
+      "command": "npm run --silent ci:success-before-ok",
+      "exitCode": 0,
+      "seconds": 0.51
+    },
+    {
+      "command": "npm run --silent ci:lineage-save-gate",
+      "exitCode": 0,
+      "seconds": 2.03
+    },
+    {
+      "command": "npm run --silent ci:artifact-provenance",
+      "exitCode": 0,
+      "seconds": 1.2
+    },
+    {
+      "command": "npm run --silent ci:vault-document-writers",
+      "exitCode": 0,
+      "seconds": 0.35
+    },
+    {
+      "command": "npm run --silent ci:program-ownership-single-source",
+      "exitCode": 0,
+      "seconds": 0.44
+    },
+    {
+      "command": "npm run --silent ci:gateway-bypass",
+      "exitCode": 0,
+      "seconds": 9.23
+    },
+    {
+      "command": "npm run --silent ci:no-dev-auth-in-prod",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "command": "npm run --silent ci:org-path-param-guards",
+      "exitCode": 0,
+      "seconds": 0.34
+    },
+    {
+      "command": "npm run --silent ci:regulated-delete-audit",
+      "exitCode": 0,
+      "seconds": 0.23
+    },
+    {
+      "command": "npm run --silent ci:jwt-verify-pinned",
+      "exitCode": 0,
+      "seconds": 0.33
+    },
+    {
+      "command": "npm run --silent ci:saml-fail-closed",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "command": "npm run --silent ci:session-scoped-rls-bypass",
+      "exitCode": 0,
+      "seconds": 3.89
+    },
+    {
+      "command": "npm run --silent ci:sql-interpolation",
+      "exitCode": 0,
+      "seconds": 3.34
+    },
+    {
+      "command": "npm run --silent ci:tenant-blind-models",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "npm run --silent ci:tenant-column-types",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "command": "npm run --silent ci:tenant-entry-points",
+      "exitCode": 0,
+      "seconds": 0.42
+    },
+    {
+      "command": "npm run --silent ci:tenant-isolation:no-regression",
+      "exitCode": 0,
+      "seconds": 1.4
+    },
+    {
+      "command": "npm run --silent ci:tenant-resolvers",
+      "exitCode": 0,
+      "seconds": 0.46
+    },
+    {
+      "command": "npm run --silent ci:drizzle-tenant-scope",
+      "exitCode": 0,
+      "seconds": 0.36
+    },
+    {
+      "command": "npm run --silent ci:upload-guards",
+      "exitCode": 0,
+      "seconds": 0.27
+    },
+    {
+      "command": "npm run --silent ci:unauthenticated-fetch",
+      "exitCode": 0,
+      "seconds": 0.48
+    },
+    {
+      "command": "npm run --silent ci:unbacked-tables",
+      "exitCode": 0,
+      "seconds": 3.07
+    },
+    {
+      "command": "npm run --silent ci:writerless-stores",
+      "exitCode": 0,
+      "seconds": 0.65
+    },
+    {
+      "command": "npm run --silent check:security-patterns",
+      "exitCode": 0,
+      "seconds": 1.46
+    },
+    {
+      "command": "npm run --silent check:compliance-claims",
+      "exitCode": 0,
+      "seconds": 0.43
+    },
+    {
+      "command": "npm run --silent ci:server-error-leaks",
+      "exitCode": 0,
+      "seconds": 1.63
+    },
+    {
+      "command": "npm run --silent ci:error-envelope",
+      "exitCode": 0,
+      "seconds": 0.46
+    },
+    {
+      "command": "npm run --silent ci:insert-columns-declared",
+      "exitCode": 0,
+      "seconds": 0.66
+    },
+    {
+      "command": "npm run --silent ci:migration-guard-order:selftest",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "npm run --silent ci:migration-drop-safety:selftest",
+      "exitCode": 0,
+      "seconds": 0.54
+    },
+    {
+      "command": "npm run --silent ci:migration-deploy-path:selftest",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "command": "npm run --silent ci:launch-scope:selftest",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "command": "npm run --silent ci:launch-scope-api:selftest",
+      "exitCode": 0,
+      "seconds": 0.56
+    },
+    {
+      "command": "npm run --silent ci:discarded-audit-write:self-test",
+      "exitCode": 0,
+      "seconds": 0.41
+    },
+    {
+      "command": "npm run --silent ci:sign-ceremony:selftest",
+      "exitCode": 0,
+      "seconds": 0.13
+    },
+    {
+      "command": "npm run --silent ci:action-overclaim:self-test",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "command": "npm run --silent ci:success-before-ok:self-test",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "command": "npm run --silent ci:gateway-bypass:selftest",
+      "exitCode": 0,
+      "seconds": 4.2
+    },
+    {
+      "command": "npm run --silent ci:no-dev-auth-in-prod:selftest",
+      "exitCode": 0,
+      "seconds": 0.82
+    },
+    {
+      "command": "npm run --silent ci:org-path-param-guards:selftest",
+      "exitCode": 0,
+      "seconds": 1.16
+    },
+    {
+      "command": "npm run --silent ci:regulated-delete-audit:selftest",
+      "exitCode": 0,
+      "seconds": 1.17
+    },
+    {
+      "command": "npm run --silent ci:program-ownership-single-source:selftest",
+      "exitCode": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": "npm run --silent ci:drizzle-tenant-scope:selftest",
+      "exitCode": 0,
+      "seconds": 0.29
+    },
+    {
+      "command": "npm run --silent ci:upload-guards:selftest",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "npm run --silent ci:unauthenticated-fetch:selftest",
+      "exitCode": 0,
+      "seconds": 4.17
+    },
+    {
+      "command": "npm run --silent ci:step-presentation",
+      "exitCode": 0,
+      "seconds": 1.12
+    },
+    {
+      "command": "npm run --silent ci:ai-tenant-binding",
+      "exitCode": 0,
+      "seconds": 1.83
+    },
+    {
+      "command": "npm run --silent ci:client-ip-single-source",
+      "exitCode": 0,
+      "seconds": 2.12
+    },
+    {
+      "command": "npm run --silent ci:validation-traceability",
+      "exitCode": 0,
+      "seconds": 0.43
+    },
+    {
+      "command": "npm run --silent ci:internals-in-copy",
+      "exitCode": 0,
+      "seconds": 0.74
+    },
+    {
+      "command": "npm run --silent ci:empty-state-honesty",
+      "exitCode": 0,
+      "seconds": 0.89
+    },
+    {
+      "command": "npm run --silent ci:fixture-fallback",
+      "exitCode": 0,
+      "seconds": 0.69
+    },
+    {
+      "command": "npm run --silent ci:document-alias-attribute-free",
+      "exitCode": 0,
+      "seconds": 0.13
+    },
+    {
+      "command": "npm run --silent ci:canvas-path",
+      "exitCode": 0,
+      "seconds": 0.23
+    },
+    {
+      "command": "npm run --silent ci:no-mock-in-prod-routes",
+      "exitCode": 0,
+      "seconds": 1.71
+    },
+    {
+      "command": "npm run --silent check:catalog-copy",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "command": "npm run --silent check:ledger",
+      "exitCode": 0,
+      "seconds": 0.21
+    },
+    {
+      "command": "npm run --silent ci:dead-audit-tables",
+      "exitCode": 0,
+      "seconds": 2.88
+    },
+    {
+      "command": "node scripts/ci/check-node-runtime.mjs --self-test",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "command": "npm run --silent ci:tenant-isolation:selftest",
+      "exitCode": 0,
+      "seconds": 2.87
+    },
+    {
+      "command": "npm run --silent ci:dead-audit-tables:selftest",
+      "exitCode": 0,
+      "seconds": 12.77
+    },
+    {
+      "command": "npm run --silent ci:purge-coverage:selftest",
+      "exitCode": 0,
+      "seconds": 5.38
+    },
+    {
+      "command": "node scripts/ci/check-purge-coverage.mjs",
+      "exitCode": 0,
+      "seconds": 0.14
+    }
+  ]
+}

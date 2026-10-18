@@ -1,0 +1,11 @@
+{
+  "upstreamCommit": "87824205c33c4bc3e586060f61eab62ffb26a852",
+  "integratedCommit": "64832d9c5b481d6d02695a1334e8aa7745eaa2a0",
+  "upstreamDeltaPaths": 246,
+  "byteIdenticalUpstreamPaths": 245,
+  "onlyIntendedDifference": {
+    "path": "server/services/ana/AnaToolExecutor.ts",
+    "change": "Optional caller reason forwarding; removing this single line reproduces upstream bytes."
+  },
+  "conflictsRemaining": false
+}

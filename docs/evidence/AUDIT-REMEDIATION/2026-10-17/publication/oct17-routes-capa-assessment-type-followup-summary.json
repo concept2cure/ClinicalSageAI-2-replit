@@ -1,0 +1,50 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-routes-capa-assessment-type-followup.json",
+    "sha256": "59b809fe537f829c801fd62ad8062e759e98f0bd40d10ee64e8abd8ae8d141c1",
+    "bytes": 10918
+  },
+  "success": true,
+  "passedCases": 26,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 3,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/capa-mdr-complaint-intake.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/capa-mdr/__tests__/governed-context.test.ts",
+      "status": "passed",
+      "cases": 15,
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

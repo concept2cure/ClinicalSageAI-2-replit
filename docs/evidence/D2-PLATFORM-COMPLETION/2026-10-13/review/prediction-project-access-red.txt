@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-predictions-scoped.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-predictions-scoped.test.ts
+{
+  "timestamp": "2026-10-13T19:43:13.403Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+········xxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > refuses a same-organization private project before any model or calibration IO
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/report-os-predictions-scoped.test.ts:129:24
+    127|     h.scopeAccess.mockResolvedValue(false);
+    128|     const res = await request(app).post('/api/insights/predictions/run…
+    129|     expect(res.status).toBe(404);
+       |                        ^
+    130|     expect(h.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: '…
+    131|     expect(h.submission).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > uses the current membership role for an authorized prediction instead of a stale token admin role
+AssertionError: expected "vi.fn()" to be called with arguments: [ 7, …(2) ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/report-os-predictions-scoped.test.ts:138:27
+    136|     const res = await request(app).post('/api/insights/predictions/run…
+    137|     expect(res.status).toBe(200);
+    138|     expect(h.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: '…
+       |                           ^
+    139|     expect(h.risk).toHaveBeenCalledOnce();
+    140|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/report-os-predictions-scoped.test.ts > POST /api/insights/predictions/run (DP-64) > fails closed when project-sharing access cannot be read
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/report-os-predictions-scoped.test.ts:145:24
+    143|     h.scopeAccess.mockRejectedValue(new Error('sharing unavailable'));
+    144|     const res = await request(app).post('/api/insights/predictions/run…
+    145|     expect(res.status).toBe(500);
+       |                        ^
+    146|     expect(h.risk).not.toHaveBeenCalled();
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  19:43:11
+   Duration  1.98s (transform 869ms, setup 84ms, import 1.57s, tests 77ms, environment 0ms)

@@ -44,6 +44,7 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -62,11 +63,12 @@ import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { redactInternals } from '@/lib/queryClient';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { isSessionChangeHeld, registerSessionChangeGuard } from '@/lib/sessionChangeGuard';
 import { authService } from '@/services/portal/authService';
 import { Mapping } from '@tiptap/pm/transform';
 import type { Transaction } from '@tiptap/pm/state';
 import * as Y from 'yjs';
-import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
+import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText, serializeHtmlDocument, serializeHeldHtml } from './roundTrip';
 
 import {
   DataOriginsMenu,
@@ -77,6 +79,7 @@ import {
 import {
   TrackChanges,
   collectSuggestions,
+  acceptedProposalApplications,
   settleAcceptedContributions,
   proposeReplacement,
   type SuggestionAuthor,
@@ -86,6 +89,8 @@ import {
   type ReplacementProposal,
   type ProposeResult,
 } from './suggestions';
+import { ProposalLifecycle, type ProposalReceipt, type ProposalState } from './proposalLifecycle';
+export type { ProposalReceipt, ProposalState } from './proposalLifecycle';
 import {
   CommentAnchor,
   collectCommentAnchors,
@@ -144,7 +149,12 @@ export interface RichSectionEditorHandle {
    * insertSuggestion returns false — source mode, a frozen or read-only
    * section — and otherwise says why it could not place the proposal.
    */
-  proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor) => ProposeResult;
+  proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor) => ProposeResult & { editorInstanceId?: string };
+  /** True only after hydration and resolution of any local device-draft choice. */
+  canProposeReplacement: () => boolean;
+  /** Observe this application in the live canonical editor, never a remembered UI flag. */
+  getProposalState: (receipt: ProposalReceipt) => ProposalState;
+  subscribeProposalChanges: (listener: () => void) => () => void;
   /** Current serialized content (unsaved included). */
   getContent: () => string;
   /**
@@ -203,7 +213,7 @@ export interface RichSectionEditorHandle {
    * in source mode, on a read-only section, or when the source is not in the
    * live library; nothing is inserted in any of those cases.
    */
-  insertCitation: (sourceId: string, locator?: string | null) => boolean;
+  insertCitation: (sourceId: string, locator?: string | null) => boolean | Promise<boolean>;
   /**
    * Insert plain reference text at the caret (a vault document's title and
    * content hash, for a document that is NOT a citable data-room source).
@@ -345,8 +355,14 @@ export interface RichSectionEditorProps {
    */
   citationsApi?: {
     sources: CitationSource[];
+    choices?: CitationSource[];
+    precedingSources?: CitationSource[];
     precedingSourceIds: readonly string[];
-    onCite?: (sourceId: string) => void | Promise<void>;
+    resolutionState?: 'idle' | 'loading' | 'ready' | 'error';
+    resolutionError?: string | null;
+    onRetry?: () => void;
+    scopeKey?: string;
+    onCite?: (sourceId: string) => boolean | void | Promise<boolean | void>;
   } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
@@ -391,7 +407,7 @@ function wordsOf(text: string): number {
  *  `onCreate` (which fires during editor construction) can use it without
  *  touching component bindings that are not initialized yet. */
 function serializeEditor(
-  ed: { getHTML: () => string; getText: (o?: any) => string },
+  ed: { state: { doc: PMNode }; getText: (o?: any) => string },
   format: 'html' | 'text',
 ): string {
   return format === 'text'
@@ -401,7 +417,7 @@ function serializeEditor(
         // plain text silently loses its single newlines.
         textSerializers: { hardBreak: () => '\n' },
       })
-    : ed.getHTML();
+    : serializeHtmlDocument(ed.state.doc);
 }
 
 /**
@@ -500,6 +516,7 @@ const RB = React.memo(function RB({
   shortcut,
   children,
   disabled,
+  visibleLabel,
 }: {
   onClick: () => void;
   active?: boolean;
@@ -508,13 +525,20 @@ const RB = React.memo(function RB({
   shortcut?: string;
   children: React.ReactNode;
   disabled?: boolean;
+  /** Text drawn by a formula/sample glyph, for voice-control label matching. */
+  visibleLabel?: string;
 }) {
   const label = shortcut ? `${title} (${shortcut})` : title;
+  // Visible word labels remain in the accessible name for voice control.
+  // Formula glyphs below are decorative and use the explicit command name.
+  const wordLabel = visibleLabel ?? (typeof children === 'string' ? children.trim() : '');
+  const accessibleLabel = wordLabel && !label.toLowerCase().includes(wordLabel.toLowerCase())
+    ? `${label} — ${wordLabel}` : label;
   return (
     <button
       type="button"
       title={label}
-      aria-label={label}
+      aria-label={accessibleLabel}
       aria-pressed={active === undefined ? undefined : active}
       disabled={disabled}
       /* Keeps the editor selection alive when focus moves to the button; the
@@ -538,7 +562,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       onSave,
       autosaveMs = null,
       onDirtyChange,
-      readOnly = false,
+      readOnly: suppliedReadOnly = false,
       placeholder,
       storageKey = null,
       ariaLabel,
@@ -562,7 +586,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        current buffer — a number wrong in a way the author cannot see. */
     const [savedRevision, setSavedRevision] = useState(0);
 
-    const [dirty, setDirty] = useState(false);
+    const [dirty, setDirtyState] = useState(false);
+    const dirtyRef = useRef(false);
+    const pendingSaveCount = useRef(0);
+    const setDirty = useCallback((value: boolean) => {
+      dirtyRef.current = value;
+      setDirtyState(value);
+    }, []);
+    const [sessionChangeHeld, setSessionChangeHeld] = useState(isSessionChangeHeld);
+    const readOnly = suppliedReadOnly || sessionChangeHeld;
     /* Inline attribution painting (ledger L179, Phase 6a). The spans come from
        the bar's read rather than a second fetch of the same thing: two reads
        can disagree, and the one painted over the words would not be the one the
@@ -604,6 +636,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [collabSynced, setCollabSynced] = useState(false);
     const syncedOnceRef = useRef(false);
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
+    const [proposalLifecycle] = useState(() => new ProposalLifecycle());
+    const proposalCacheCheckedRef = useRef(!storageKey);
     /* ── Find & replace bar state ──
        The query text lives here; the matches and the focused index live in
        the editor's plugin state (the one source of truth for what is
@@ -615,7 +649,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [findInfo, setFindInfo] = useState({ count: 0, active: -1 });
     const findInputRef = useRef<HTMLInputElement>(null);
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
     /** Content a debounced autosave has been armed for but not yet written.
      *  Held so an unmount inside the debounce window flushes it instead of
@@ -751,6 +784,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        changes — and not on every keystroke, which is what the order key is
        for. */
     const citationSources = citationsApi?.sources ?? null;
+    const citationChoices = citationsApi?.choices ?? citationSources;
+    const citationApiRef = useRef(citationsApi);
+    citationApiRef.current = citationsApi;
     const citationKeyOfSources = citationSources
       ? citationSources
           .map((src) => `${src.id}\u0000${citationSourceName(src)}`)
@@ -763,6 +799,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     );
     const citationLookupRef = useRef<CitationLookup | null>(citationLookup);
     citationLookupRef.current = citationLookup;
+    const insertionLookupRef = useRef<CitationLookup | null>(null);
+    insertionLookupRef.current = citationChoices ? citationLookupFor(citationChoices) : null;
+    const precedingLookupRef = useRef<CitationLookup | null>(null);
+    precedingLookupRef.current = citationsApi?.precedingSources ? citationLookupFor(citationsApi.precedingSources) : citationLookup;
+    const precedingSourcesKey = (citationsApi?.precedingSources ?? []).map(source => `${source.id}:${citationSourceName(source)}`).join('\u0001');
 
     /** The sources cited above this section — where this section's numbering
      *  continues from. Read through a ref for the same reason the lookup is. */
@@ -775,7 +816,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [citationOrder, setCitationOrder] = useState('');
     useEffect(() => {
       for (const paint of citationRepaint.current) paint();
-    }, [citationKeyOfSources, precedingKey, citationOrder]);
+    }, [citationKeyOfSources, precedingSourcesKey, precedingKey, citationOrder, citationsApi?.resolutionState]);
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -851,6 +892,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         }),
         Citation.configure({
           lookup: () => citationLookupRef.current,
+          insertionLookup: () => insertionLookupRef.current,
+          precedingLookup: () => precedingLookupRef.current,
+          resolutionState: () => citationApiRef.current?.resolutionState ?? 'ready',
           preceding: () => precedingRef.current,
           repaint: citationRepaint.current,
         }),
@@ -887,10 +931,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (back !== stored.replace(/\r\n/g, '\n')) {
             return { mode: 'source' as const, html: null, verdict: null };
           }
+          return { mode: 'rich' as const, html, verdict: null, baseline: back };
         } catch {
           return { mode: 'source' as const, html: null, verdict: null };
         }
-        return { mode: 'rich' as const, html, verdict: null };
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
@@ -920,13 +964,19 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             ? { ...base, lossy: true, structuralDrift: ['tables' as const] }
             : base;
         if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
-        return { mode: 'rich' as const, html, verdict };
+        return { mode: 'rich' as const, html, verdict, baseline: serializeHeldHtml(held.doc, extensions) };
       } catch {
         // A parse that throws proves the content is not representable.
         return { mode: 'source' as const, html: null, verdict: null };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // The editor can emit a plugin update while mounting, before its delayed
+    // onCreate callback. Establish its parsed serialization before construction
+    // so hydration cannot be cached or reported as the author's unsaved edit.
+    // This baseline comes from the stored content and never from a live buffer.
+    const lastSavedRef = useRef<string>(boot.mode === 'rich' && !collabRuntime ? boot.baseline : value ?? '');
 
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
@@ -1046,8 +1096,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // With Yjs, content comes from the synced doc (seeded below), never
         // from props — passing it here would duplicate on every join.
         ...(collabRuntime ? {} : { content: boot.html ?? '' }),
-        onUpdate: ({ editor: ed }) => {
+        onUpdate: ({ editor: ed, transaction }) => {
+          proposalLifecycle.recordAccepted(acceptedProposalApplications(transaction));
           const serialized = serialize(ed);
+          // StarterKit's trailing-node plugin can append the empty cursor
+          // paragraph to a table on a metadata-only mount transaction. That
+          // is hydration, not writing. A real content transaction never takes
+          // this branch, even if it occurs before the delayed create event.
+          const hydrationOnly = !ed.isInitialized && !transaction.docChanged && boot.mode === 'rich' && !collabRuntime;
+          if (hydrationOnly) lastSavedRef.current = serialized;
           const isDirty = serialized !== lastSavedRef.current;
           setDirty(isDirty);
           /* Never leave 'saving' from a keystroke: editing back to the baseline
@@ -1067,22 +1124,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
              must not repaint the section. */
           liveDocRef.current = ed.state.doc;
           setCaptionOrder(captionOrderKey(ed.state.doc));
-          cacheDraft(serialized);
+          // Do not delete an earlier genuine crash draft during hydration.
+          if (!hydrationOnly) cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
             pendingAutosaveRef.current = serialized;
             autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
           }
+          proposalLifecycle.notify();
         },
         onCreate: ({ editor: ed }) => {
-          // The clean baseline is this editor's OWN serialization of the
-          // parsed content, not the stored string: legacy plain text parses
-          // to equivalent HTML that would otherwise read as "unsaved changes"
-          // on a canvas nobody has touched. The record itself is only ever
-          // rewritten by a real edit followed by a real save.
-          if (boot.mode === 'rich' && !collabRuntime) {
-            lastSavedRef.current = serializeEditor(ed, format);
-          }
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
@@ -1090,6 +1141,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           liveDocRef.current = ed.state.doc;
           setCaptionOrder(captionOrderKey(ed.state.doc));
           setEditorReady(true);
+          proposalLifecycle.notify();
         },
       },
       [],
@@ -1121,6 +1173,20 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const shouldEdit = !readOnly && boot.mode === 'rich' && (!collabRuntime || collabSynced);
       if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
     }, [editor, readOnly, boot.mode, collabRuntime, collabSynced]);
+
+    useLayoutEffect(() => registerSessionChangeGuard({
+      hasUnsavedWork: () => (!suppliedReadOnly && dirtyRef.current) || pendingSaveCount.current > 0 || pendingAutosaveRef.current !== null,
+      hold: held => {
+        // Hold synchronously before SELECT; React then hides the existing editing controls.
+        if (editor && !editor.isDestroyed) {
+          const editable = !held && !suppliedReadOnly && boot.mode === 'rich' && (!collabRuntime || collabSynced);
+          if (editor.isEditable !== editable) editor.setEditable(editable, false);
+        }
+        const source = editorHostRef.current?.querySelector('textarea');
+        if (source) source.readOnly = held || suppliedReadOnly;
+        setSessionChangeHeld(held);
+      },
+    }), [editor, suppliedReadOnly, boot.mode, collabRuntime, collabSynced]);
 
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
@@ -1193,12 +1259,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (!storageKey) return;
       try {
         const cached = localStorage.getItem(cacheKeyFor(storageKey));
-        if (cached != null && cached !== (value ?? '')) setRestoreOffer(cached);
+        setRestoreOffer(cached != null && cached !== (value ?? '') && cached !== lastSavedRef.current ? cached : null);
       } catch {
         /* unreadable storage — nothing to offer */
       }
+      // The crash cache is best effort. An unreadable cache offers no draft
+      // choice and must not permanently hide a known live application's state.
+      proposalCacheCheckedRef.current = true;
+      proposalLifecycle.notify();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey]);
+    }, [storageKey, editorReady]);
 
     const restoreCached = useCallback(() => {
       if (restoreOffer == null) return;
@@ -1215,7 +1285,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         editor.commands.setContentUntracked(html);
       }
       setRestoreOffer(null);
-    }, [restoreOffer, editor, boot.mode, format]);
+    }, [restoreOffer, editor, boot.mode, format, setDirty]);
 
     const discardCached = useCallback(() => {
       if (storageKey) {
@@ -1230,6 +1300,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /* ── The one save path ── */
     const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
+      if (isSessionChangeHeld()) return false;
       const serialized =
         boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : null;
       if (serialized == null) return false;
@@ -1247,6 +1318,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         return true;
       }
       setSaveState('saving');
+      ++pendingSaveCount.current;
       try {
         await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
@@ -1268,8 +1340,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // the state truthfully: not persisted, still cached on this device.
         setSaveState('error');
         return false;
+      } finally {
+        --pendingSaveCount.current;
       }
-    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft]);
+    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft, setDirty]);
 
     useEffect(() => {
       onDirtyChange?.(dirty);
@@ -1286,7 +1360,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        host surface. Armed only while genuinely dirty: a page that always
        refuses to close teaches people to click through the dialog. */
     useEffect(() => {
-      if (!dirty || readOnly) return;
+      if (!dirty || suppliedReadOnly) return;
       const onBeforeUnload = (e: BeforeUnloadEvent) => {
         e.preventDefault();
         // Older engines show the prompt only when returnValue is set; the
@@ -1296,7 +1370,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       };
       window.addEventListener('beforeunload', onBeforeUnload);
       return () => window.removeEventListener('beforeunload', onBeforeUnload);
-    }, [dirty, readOnly]);
+    }, [dirty, suppliedReadOnly]);
 
     /* ── A pending autosave must not die with the mount ──
        Hosts that pass `autosaveMs` (the MDX dossier drawer) debounce their
@@ -1317,7 +1391,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         }
         const pending = pendingAutosaveRef.current;
         pendingAutosaveRef.current = null;
-        if (pending != null && pending !== lastSavedRef.current) {
+        if (pending != null && pending !== lastSavedRef.current && !isSessionChangeHeld()) {
           void (async () => {
             try {
               await onSaveRef.current(pending);
@@ -1510,7 +1584,61 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       return store;
     }, [editor]);
 
+    const canProposeReplacement = useCallback(() => proposalLifecycle.isActive() && !!editor && !editor.isDestroyed && editor.isEditable && boot.mode === 'rich'
+      && editorReady && canvasSettled && proposalCacheCheckedRef.current && saveState !== 'saving' && restoreOffer === null,
+    [editor, boot.mode, editorReady, canvasSettled, saveState, restoreOffer, proposalLifecycle]);
+
+    const getProposalState = useCallback((receipt: ProposalReceipt): ProposalState => {
+      const pending = new Set(editor && !editor.isDestroyed
+        ? collectSuggestions(editor.state.doc).flatMap(range => range.applicationId ? [range.applicationId] : []) : []);
+      return proposalLifecycle.state(receipt, {
+        ready: canProposeReplacement(),
+        restorePending: restoreOffer !== null,
+        clean: !!editor && !editor.isDestroyed && serialize(editor) === lastSavedRef.current,
+        pending,
+      });
+    }, [editor, restoreOffer, serialize, proposalLifecycle, canProposeReplacement]);
+
+    useEffect(() => {
+      proposalLifecycle.notify();
+    }, [proposalLifecycle, editorReady, canvasSettled, restoreOffer, saveState, readOnly]);
+    useEffect(() => {
+      proposalLifecycle.activate();
+      return () => { proposalLifecycle.close(); };
+    }, [proposalLifecycle]);
+
     /* ── Imperative handle ── */
+    const citationPending = useRef(false);
+    const citationAlive = useRef(true);
+    const [citePending, setCitePending] = useState(false);
+    useEffect(() => { citationAlive.current = true; return () => { citationAlive.current = false; }; }, []);
+    const citationInsertionAvailable = useCallback((id: string) => Boolean(editor && !editor.isDestroyed && editor.isEditable && boot.mode === 'rich'
+      && !citationPending.current && id && insertionLookupRef.current?.(id)
+      && (!citationApiRef.current?.resolutionState || citationApiRef.current.resolutionState === 'ready')), [editor, boot.mode]);
+    const registerCitation = useCallback((sourceId: string, locator?: string | null, stillOpen: () => boolean = () => true): boolean | Promise<boolean> => {
+      const api = citationApiRef.current;
+      const id = sourceId.trim();
+      if (!editor || !citationInsertionAvailable(id)) return false;
+      const doc = editor.state.doc;
+      const selection = editor.state.selection;
+      const scope = api?.scopeKey;
+      const insert = (confirmed: boolean | void) => {
+        if (confirmed === false || !citationAlive.current || editor.isDestroyed || !editor.isEditable || !stillOpen()) return false;
+        if (citationApiRef.current?.scopeKey !== scope || editor.state.doc !== doc || !editor.state.selection.eq(selection)) return false;
+        return editor.chain().focus().insertCitation({ source: id, locator: locator ?? null }).run();
+      };
+      try {
+        const confirmation = api?.onCite?.(id);
+        if (!confirmation || typeof confirmation !== 'object' || !('then' in confirmation)) return insert(confirmation);
+        citationPending.current = true;
+        setCitePending(true);
+        return Promise.resolve(confirmation).then(insert, () => false).finally(() => {
+          citationPending.current = false;
+          if (citationAlive.current) setCitePending(false);
+        });
+      } catch { return false; }
+    }, [editor, citationInsertionAvailable]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -1547,15 +1675,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (!editor.isEditable) return false;
           return editor.chain().focus().insertSuggestedContent(text, author).run();
         },
-        /* The same three refusals as insertSuggestion, for the same reasons:
-           in source mode the textarea is the document and the editor a shell
-           that is never saved, and a frozen section would be refused at save. */
-        proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor): ProposeResult => {
-          if (!editor || editor.isDestroyed) return { ok: false, reason: 'not-editable' };
-          if (boot.mode !== 'rich') return { ok: false, reason: 'not-editable' };
-          if (!editor.isEditable) return { ok: false, reason: 'not-editable' };
-          return proposeReplacement(editor, { ...proposal, author });
+        /* A proposal needs the actual hydrated editable body and a resolved
+           device-draft choice, including its first application. */
+        proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor): ProposeResult & { editorInstanceId?: string } => {
+          if (!editor || !canProposeReplacement()) return { ok: false, reason: 'not-editable' };
+          const result = proposeReplacement(editor, { ...proposal, author });
+          return result.ok ? { ...result, editorInstanceId: proposalLifecycle.editorInstanceId } : result;
         },
+        canProposeReplacement,
+        getProposalState,
+        subscribeProposalChanges: listener => proposalLifecycle.subscribe(listener),
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         peekAcceptedAuthors: () => acceptedStore()?.acceptedAuthors ?? [],
@@ -1574,21 +1703,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         },
         openFind,
         focus: () => editor?.commands.focus(),
-        insertCitation: (sourceId: string, locator?: string | null) => {
-          if (!editor || editor.isDestroyed) return false;
-          if (boot.mode !== 'rich' || !editor.isEditable) return false;
-          const id = String(sourceId ?? '').trim();
-          if (!id) return false;
-          const inserted = editor
-            .chain()
-            .focus()
-            .insertCitation({ source: id, locator: locator ?? null })
-            .run();
-          if (!inserted) return false;
-          /* The same section→source record the picker keeps — see applyCite. */
-          void citationsApi?.onCite?.(id);
-          return true;
-        },
+        insertCitation: registerCitation,
         insertReference: (text: string) => {
           if (!editor || editor.isDestroyed) return false;
           if (boot.mode !== 'rich' || !editor.isEditable) return false;
@@ -1602,7 +1717,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           return editor.chain().focus().insertContent({ type: 'text', text: clean }).run();
         },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi, acceptedStore],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, registerCitation, acceptedStore, getProposalState, proposalLifecycle, canProposeReplacement],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction
@@ -1759,19 +1874,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [citeSource, setCiteSource] = useState('');
     const [citeLocator, setCiteLocator] = useState('');
     const [citeError, setCiteError] = useState<string | null>(null);
+    const citeSession = useRef(0);
     const citeSelectRef = useRef<HTMLSelectElement>(null);
 
     const openCite = useCallback(() => {
       setCiteError(null);
-      setCiteSource((cur) => cur || citationSources?.[0]?.id || '');
+      citeSession.current += 1;
+      setCiteSource((cur) => citationChoices?.some(source => source.id === cur) ? cur : citationChoices?.[0]?.id || '');
       setCiteOpen(true);
-    }, [citationSources]);
+    }, [citationChoices]);
 
     useEffect(() => {
       if (citeOpen) citeSelectRef.current?.focus();
     }, [citeOpen]);
 
     const closeCite = useCallback(() => {
+      citeSession.current += 1;
       setCiteOpen(false);
       setCiteError(null);
     }, []);
@@ -1782,30 +1900,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setCiteError('Choose the source to cite.');
         return;
       }
-      const inserted = editor
-        .chain()
-        .focus()
-        .insertCitation({ source: citeSource, locator: citeLocator })
-        .run();
-      if (!inserted) {
-        /* The picker offers the live library, so a refusal means it moved under
-           the writer. Inserting a citation that is already broken is not
-           something to do quietly. */
-        setCiteError(
-          'That source is no longer available to this document. Nothing was inserted.',
-        );
-        return;
-      }
-      /* Record the section→source link the platform already keeps, so the
-         Sources rail and the prose cannot drift apart — and so this citation
-         participates in the change report when the source's content moves.
-         Fire-and-forget: the citation is in the canvas either way, and the host
-         reports its own failure. */
-      void citationsApi?.onCite?.(citeSource);
-      setCiteLocator('');
-      setCiteOpen(false);
-      setCiteError(null);
-    }, [editor, citeSource, citeLocator, citationsApi]);
+      const session = citeSession.current;
+      const finish = (inserted: boolean) => {
+        if (!citationAlive.current || citeSession.current !== session) return;
+        if (!inserted) { setCiteError('The source or current selection could not be confirmed. Nothing was inserted.'); return; }
+        setCiteLocator(''); setCiteOpen(false); setCiteError(null);
+      };
+      const result = registerCitation(citeSource, citeLocator, () => citeSession.current === session);
+      if (typeof result === 'boolean') finish(result);
+      else void result.then(finish);
+    }, [editor, citeSource, citeLocator, registerCitation]);
 
     /* ── Caption bar ──
        The one place a table's or a figure's caption can be written. It is
@@ -1934,7 +2038,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           return true;
         } catch (e) {
           setImgNotice(
-            'The image was not uploaded — ' +
+            'The image was not inserted — ' +
               redactInternals(e instanceof Error ? e.message : '', 'the image store refused it') +
               '. Nothing was inserted.',
           );
@@ -2081,18 +2185,18 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             <RB title="Underline" shortcut="⌘U" active={!!editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
-              <span>
+            <RB title="Superscript" visibleLabel="x2" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+              <span aria-hidden="true">
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
-              <span>
+            <RB title="Subscript" visibleLabel="x2" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+              <span aria-hidden="true">
                 x<sub>2</sub>
               </span>
             </RB>
-            <RB title="Highlight" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
-              <span className="rse-hl-glyph">ab</span>
+            <RB title="Highlight" visibleLabel="ab" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+              <span className="rse-hl-glyph" aria-hidden="true">ab</span>
             </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" shortcut="⌘⇧8" active={!!editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
@@ -2651,7 +2755,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             }}
           >
             <span className="rse-find-label">Cite</span>
-            {citationSources && citationSources.length > 0 ? (
+            {citationsApi.resolutionState === 'loading' ? <span className="rse-find-note" role="status">Reading the complete source catalogue…</span>
+              : citationsApi.resolutionState === 'error' ? <span className="rse-find-err" role="alert">{citationsApi.resolutionError || 'Source references could not be checked.'}
+                {citationsApi.onRetry && <button type="button" className="rse-link" onClick={citationsApi.onRetry}>Try again</button>}</span>
+              : citationChoices && citationChoices.length > 0 ? (
               <>
                 <select
                   ref={citeSelectRef}
@@ -2659,6 +2766,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   style={{ flex: '0 1 320px', height: 24 }}
                   aria-label="Source to cite"
                   value={citeSource}
+                  disabled={citePending}
                   onChange={(e) => {
                     setCiteSource(e.target.value);
                     setCiteError(null);
@@ -2670,7 +2778,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                     }
                   }}
                 >
-                  {citationSources.map((src) => (
+                  {citationChoices.map((src) => (
                     <option key={src.id} value={src.id}>
                       {citationSourceName(src) || 'Untitled source'}
                     </option>
@@ -2691,8 +2799,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                     }
                   }}
                 />
-                <button type="button" className="rse-link" onClick={applyCite}>
-                  Insert
+                <button type="button" className="rse-link" disabled={citePending} onClick={applyCite}>
+                  {citePending ? 'Recording…' : 'Insert'}
                 </button>
               </>
             ) : (

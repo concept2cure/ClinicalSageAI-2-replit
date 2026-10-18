@@ -1325,4 +1325,3 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       Tests  18 failed | 19 passed (37)
    Start at  04:29:02
    Duration  1.13s (transform 263ms, setup 79ms, import 353ms, tests 400ms, environment 0ms)
-

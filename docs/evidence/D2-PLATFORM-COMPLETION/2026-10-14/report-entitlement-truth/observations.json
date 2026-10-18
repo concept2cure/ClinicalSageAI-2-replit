@@ -1,0 +1,51 @@
+{
+  "workstream": "W1",
+  "launch_row": "D2",
+  "branch": "concept2cure-v2",
+  "base_head": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "red": {
+    "exit_code": 1,
+    "selected_failed": 1,
+    "unselected_skipped": 40,
+    "failure": "actual resolver catches tier SQL fault; base reporting gate incorrectly returns entitled:true"
+  },
+  "green": {
+    "exit_code": 0,
+    "suites": 5,
+    "passed": 95,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 3.89
+  },
+  "lint": {
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 0,
+    "owned_files": 4
+  },
+  "test_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/services/__tests__/usage-alignment.test.ts server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts server/services/report-os/__tests__/entitlement-map.test.ts server/services/entitlements/__tests__/require-entitlement.test.ts server/services/entitlements/__tests__/mdx-entitlements.test.ts",
+  "lint_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH ./node_modules/.bin/eslint --no-ignore server/services/entitlements/resolver.ts server/services/report-os/entitlement-map.ts server/services/__tests__/usage-alignment.test.ts server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+  "logs": {
+    "real-resolver-red.txt": {
+      "raw_path": "/tmp/report-entitlement-real-resolver-red.txt",
+      "raw_sha256": "282c36cd7ce49d086d20e13de2201f21463fd66b285c62faab9a4f541e6c82fe",
+      "published_sha256": "282c36cd7ce49d086d20e13de2201f21463fd66b285c62faab9a4f541e6c82fe"
+    },
+    "fixture-spy-failed.txt": {
+      "raw_path": "/tmp/report-entitlement-resolver-fixture-spy-failed.txt",
+      "raw_sha256": "9032405242816bb69e56dcc65b0ecfc92ce65cab589c7dc1f1f2bb64d285d4ba",
+      "published_sha256": "9032405242816bb69e56dcc65b0ecfc92ce65cab589c7dc1f1f2bb64d285d4ba"
+    },
+    "focused-green.txt": {
+      "raw_path": "/tmp/report-entitlement-resolver-focused-green.txt",
+      "raw_sha256": "acd057487e3a3c40e61e449a187d0828bc96679c827612089dab7aeaea9eb80a",
+      "published_sha256": "acd057487e3a3c40e61e449a187d0828bc96679c827612089dab7aeaea9eb80a"
+    },
+    "focused-lint.txt": {
+      "raw_path": "/tmp/report-entitlement-resolver-focused-lint.txt",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "qualification": "Controlled query responses against actual resolver and report gate; regular Vitest setup mocks pg. Not native PostgreSQL/RLS, browser, deployed or regulatory qualification. No compiler/build/index/commit/push by this workstream."
+}

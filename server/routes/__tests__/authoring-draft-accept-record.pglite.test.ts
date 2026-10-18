@@ -41,7 +41,7 @@ import {
   since as sinceIn, writesSince as writesSinceIn, type Pkg,
 } from './_authoring-record-fixture';
 import { stableStringify } from '../../../shared/canonical-json';
-import { createDraftCandidate } from '../../services/clinical-regulatory-evidence/draft-candidate-store';
+import { createDraftCandidate, savedSectionDraftBase } from '../../services/clinical-regulatory-evidence/draft-candidate-store';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -176,6 +176,10 @@ async function seedSection(): Promise<string> {
 
 /** Park a candidate the way POST …/ai/draft does: the real store, its real table. */
 async function parkCandidate(sectionId: string, content = GENERATED): Promise<string> {
+  const saved = (await jdb.pglite.query<Record<string, unknown>>(
+    'SELECT id,doc_id,code,title,content,updated_at::text AS base_updated_at FROM authoring_sections WHERE id=$1 AND tenant_id=$2',
+    [sectionId, ORG],
+  )).rows[0];
   const { id } = await createDraftCandidate(
     ORG,
     sectionId,
@@ -183,7 +187,7 @@ async function parkCandidate(sectionId: string, content = GENERATED): Promise<st
     [],
     AUTHOR.id,
     jdb.pool as unknown as Parameters<typeof createDraftCandidate>[5],
-    GENERATOR,
+    { ...GENERATOR, savedSectionBase: savedSectionDraftBase(saved) },
     [],
   );
   return id;

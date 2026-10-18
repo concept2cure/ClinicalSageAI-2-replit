@@ -1,0 +1,185 @@
+
+ RUN  v4.1.7 /tmp/c2c-source-access-baseline
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 60ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-13T20:44:00.140Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "94af2050-afd3-49c3-92a0-7bf983208480",
+    "projectIds": [
+      6,
+      7
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 57ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 40ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 96ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 81ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 51ms
+ × server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 30ms
+   → promise resolved "[ { …(5) } ]" instead of rejecting
+ × server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 23ms
+   → promise resolved "{ …(7) }" instead of rejecting
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 21ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 19ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 18ms
+ × server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 18ms
+   → promise resolved "{ …(7) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost
+AssertionError: promise resolved "[ { …(5) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "checksumSha256": "6486c12dcd054d4a718d7863227af67dae8e1818c2bb3a0d468012a4579cea38",
+    "fileId": "996fb9a4-908b-4cea-9a6f-82d52e7a0695",
+    "fileName": "private-study.txt",
+    "mimeType": "text/plain",
+    "storagePath": "uploads/org-1008/996fb9a4-908b-4cea-9a6f-82d52e7a0695.pdf",
+  },
+]
+
+ ❯ server/services/ana/__tests__/source-context-admission.pglite.test.ts:92:77
+     90| describe('direct upload IDs cannot bypass private-source admission', (…
+     91|   it('refuses private upload metadata even to its uploader after proje…
+     92|     await expect(loadUploadedFileMetadata([f.upload], f.org, { userId:…
+       |                                                                             ^
+     93|     expect(h.readFile).not.toHaveBeenCalled();
+     94|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read
+AssertionError: promise resolved "{ …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "buffer": {
++     "data": [
++       112,
++       114,
++       105,
++       118,
++       97,
++       116,
++       101,
++       32,
++       115,
++       97,
++       118,
++       101,
++       100,
++       32,
++       115,
++       116,
++       117,
++       100,
++       121,
++       32,
++       101,
++       118,
++       105,
++       100,
++       101,
++       110,
++       99,
++       101,
++     ],
++     "type": "Buffer",
++   },
++   "fileId": "9eefab66-915c-40d6-a267-a3341555d2bf",
++   "fileName": "private-study.txt",
++   "fileSize": 28,
++   "integrity": "verified",
++   "mimeType": "text/plain",
++   "storagePath": "uploads/org-1009/9eefab66-915c-40d6-a267-a3341555d2bf.pdf",
+  }
+
+ ❯ server/services/ana/__tests__/source-context-admission.pglite.test.ts:96:67
+     94|   });
+     95|   it('refuses private upload bytes before the filesystem is read', asy…
+     96|     await expect(loadUploadedFile(f.upload, f.org, { userId: 43 })).re…
+       |                                                                   ^
+     97|     expect(h.readFile).not.toHaveBeenCalled();
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes
+AssertionError: promise resolved "{ …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "buffer": {
++     "data": [
++       112,
++       114,
++       105,
++       118,
++       97,
++       116,
++       101,
++       32,
++       115,
++       97,
++       118,
++       101,
++       100,
++       32,
++       115,
++       116,
++       117,
++       100,
++       121,
++       32,
++       101,
++       118,
++       105,
++       100,
++       101,
++       110,
++       99,
++       101,
++     ],
++     "type": "Buffer",
++   },
++   "fileId": "eec85f11-0455-4c8d-9649-159176dd127c",
++   "fileName": "private-study.txt",
++   "fileSize": 28,
++   "integrity": "verified",
++   "mimeType": "text/plain",
++   "storagePath": "uploads/org-1013/eec85f11-0455-4c8d-9649-159176dd127c.pdf",
+  }
+
+ ❯ server/services/ana/__tests__/source-context-admission.pglite.test.ts:116:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  20:43:52
+   Duration  8.31s (transform 1.93s, setup 298ms, import 2.46s, tests 5.24s, environment 0ms)

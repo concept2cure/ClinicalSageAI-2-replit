@@ -32,10 +32,13 @@ import { z } from 'zod';
 
 import { regulatoryPrograms } from './programs';
 
+// 'incomplete' (2026-10-15): an input the verdict needs was not assessed, so it
+// can be neither sufficient nor borderline. It used to read as sufficient.
 export type EvidenceSufficiencyVerdict =
   | 'sufficient'
   | 'borderline'
-  | 'insufficient';
+  | 'insufficient'
+  | 'incomplete';
 
 export type SubmissionPathway = 'PMA' | 'DE_NOVO' | '510K';
 

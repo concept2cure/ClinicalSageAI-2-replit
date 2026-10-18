@@ -1,0 +1,476 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:15:19.868Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:15:21.120Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:15:21.121Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T04:15:21.121Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:15:23.136Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323131_f4af83c6fa7803c3,9,conversation,conv_1791951323126_679f3b82104e,CREATE,data-change,,{\"projectId\":\"3\",\"title\":\"Saved conversation\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"4637e8326ccf8cc86b6ae1a2060542a9940c0fd1cd6656fc1a9e2248cec67876\"}",
+    "action": "CREATE",
+    "entityType": "conversation",
+    "entityId": "conv_1791951323126_679f3b82104e"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:15:23.137Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791951323126_679f3b82104e"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result
+{
+  "timestamp": "2026-10-14T04:15:23.155Z",
+  "level": "info",
+  "message": "[concept2cure-conversations] Created conversation",
+  "context": {
+    "projectId": "3",
+    "conversationId": "conv_1791951323152_a9ae78c21b30"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge
+{
+  "timestamp": "2026-10-14T04:15:23.167Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323165_de65f386ea5aa890,9,project,3,UPDATE,data-change,{\"id\":3,\"organization_id\":9,\"client_workspace_id\":1,\"parent_project_id\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"start_date\":null,\"target_end_date\":null,\"actual_end_date\":null,\"progress\":0,\"budget\":null,\"budget_currency\":\"USD\",\"budget_status\":\"within-budget\",\"created_by_id\":null,\"owner_id\":null,\"sponsors\":null,\"tags\":null,\"critical_to_quality_factors\":null,\"risk_level\":\"medium\",\"risk_assessment\":null,\"quality_targets\":null,\"module_references\":null,\"settings\":{},\"metadata\":null,\"created_at\":\"2026-10-14T04:15:23.103Z\",\"updated_at\":\"2026-10-14T04:15:23.103Z\",\"therapeutic_area\":null,\"retrieval_mode\":null,\"knowledge_token_estimate\":null,\"regulatory_program_id\":null},{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{\"customInstructions\":\"\",\"knowledge\":{\"documents\":[],\"customInstructions\":\"\",\"context\":\"Verified program context.\",\"memoryEnabled\":false}},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:15:23.103Z\",\"updatedAt\":\"2026-10-14T04:15:23.163Z\"},7,author@example.test,admin,::ffff:127.0.0.1,,,true,{\"integrityHash\":\"a794f240ba79764739648a46ec7aa06fe9b3e649fb917b8f6a7c961319f13e6d\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "3"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:15:23.187Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323186_2910be16622dbb20,9,project,3,UPDATE,data-change,{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:15:23.103Z\",\"updatedAt\":\"2026-10-14T04:15:23.173Z\"},{\"id\":3,\"organizationId\":9,\"clientWorkspaceId\":1,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Actual workspace\",\"code\":null,\"description\":null,\"status\":\"planning\",\"priority\":\"medium\",\"type\":\"IND\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":null,\"ownerId\":null,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":\"medium\",\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{\"connectedApps\":[{\"appId\":\"deep-research\",\"connectedAt\":\"2026-10-14T04:15:23.184Z\",\"status\":\"active\"}],\"knowledge\":{\"appContext\":\"\"}},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":null,\"regulatoryProgramId\":null,\"createdAt\":\"2026-10-14T04:15:23.103Z\",\"updatedAt\":\"2026-10-14T04:15:23.184Z\"},7,author@example.test,admin,::ffff:127.0.0.1,,,true,{\"integrityHash\":\"bd56f7d55693a01e882773d03abd8271d5214091c1bde71a7a5f64120830975c\"}",
+    "action": "UPDATE",
+    "entityType": "project",
+    "entityId": "3"
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:15:23.187Z",
+  "level": "info",
+  "message": "[concept2cure-knowledge-sources] App connected to project",
+  "context": {
+    "projectId": 3,
+    "appId": "deep-research",
+    "totalConnected": 1
+  }
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it
+{
+  "timestamp": "2026-10-14T04:15:23.196Z",
+  "level": "info",
+  "message": "[concept2cure-knowledge-sources] App connected to project",
+  "context": {
+    "projectId": 3,
+    "appId": "deep-research",
+    "totalConnected": 1
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history
+{
+  "timestamp": "2026-10-14T04:15:23.208Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323207_2cc197e5e26b42a3,9,project,proj_3,CREATE,data-change,,{\"authorityProfileId\":\"auth_1791951323204_1de9fd14\",\"authority\":\"FDA\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"0b0a42c383b16b429eb8ab889b3b0e87100a4821f7c692ff5198944eda82e8b1\"}",
+    "action": "CREATE",
+    "entityType": "project",
+    "entityId": "proj_3"
+  }
+}
+
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result 41ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result 10ms
+   → expected undefined to match object { persisted: true, chained: false }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge 12ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=false persists the exact requested knowledge 9ms
+   → expected undefined to match object { persisted: true, chained: false }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it 11ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it 8ms
+   → expected undefined to match object { persisted: true, chained: false }
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers
+{
+  "timestamp": "2026-10-14T04:15:23.221Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323220_a65a5bc9bde96d13,9,artifact,o01-audit-7e2695f2-7f71-4f85-9310-e53e2eab322b.docx,EXPORT,access,,{\"filename\":\"o01-audit-7e2695f2-7f71-4f85-9310-e53e2eab322b.docx\",\"fileSize\":34,\"exportHash\":\"610068f32d4375ac61b9fa43dca650c934f87c45788b08217b4923f3fb667441\",\"exportedAt\":\"2026-10-14T04:15:23.220Z\",\"exportedBy\":\"a***@example.test\",\"exportedByRole\":\"admin\"},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"caaff0f3bad1d54996bcb92f89af522663ebb753ff10a3ac1a4b96d8cf32982b\"}",
+    "action": "EXPORT",
+    "entityType": "artifact",
+    "entityId": "o01-audit-7e2695f2-7f71-4f85-9310-e53e2eab322b.docx"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome
+{
+  "timestamp": "2026-10-14T04:15:23.243Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "Failed query: insert into \"regulatory_audit_logs\" (\"id\", \"audit_id\", \"organization_id\", \"entity_type\", \"entity_id\", \"submission_id\", \"action\", \"action_category\", \"previous_value\", \"new_value\", \"change_reason\", \"user_id\", \"user_name\", \"user_role\", \"ip_address\", \"user_agent\", \"session_id\", \"is_gxp_relevant\", \"requires_justification\", \"justification\", \"timestamp\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, $6, $7, $8, default, $9, $10, $11, $12, $13, $14, $15, default, default, default, $16, default, default)\nparams: audit_1791951323242_8a58eac78fdc2eed,9,submission_package,3,EXPORT,access,,{\"readinessPercent\":0,\"eligibleCount\":0,\"totalArtifacts\":0},7,a***@example.test,admin,::ffff:127.0.0.xxx,,,true,{\"integrityHash\":\"f503e75750ad18b9c5e7d9a016d2aae755bb77a41bd5f78cf00cae8c5f40b130\"}",
+    "action": "EXPORT",
+    "entityType": "submission_package",
+    "entityId": "3"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > a failed business save creates no row and no successful audit receipt
+{
+  "timestamp": "2026-10-14T04:15:23.254Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure create conversation failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_conversations\" (\"id\", \"conversation_id\", \"project_id\", \"organization_id\", \"title\", \"summary\", \"parent_conversation_id\", \"fork_message_index\", \"thread_id\", \"message_count\", \"status\", \"created_by_id\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, default, default, default, $6, $7, default, default, default) returning \"id\", \"conversation_id\", \"project_id\", \"organization_id\", \"title\", \"summary\", \"parent_conversation_id\", \"fork_message_index\", \"thread_id\", \"message_count\", \"status\", \"created_by_id\", \"metadata\", \"created_at\", \"updated_at\"\nparams: conv_1791951323253_4f409163917a,3,9,Refused conversation,,active,7",
+    "operation": "create conversation",
+    "projectId": "3"
+  }
+}
+
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history 12ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=false remains a real saved profile and reports lost history 6ms
+   → expected undefined to match object { persisted: true, chained: false }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers 12ms
+   → expected {} to deeply equal Buffer[ 69, 120, 105, 115, 116, …(-70) ]
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=false retains the file bytes and exposes the canonical warning headers 8ms
+   → expected {} to deeply equal Buffer[ 69, 120, 105, 115, 116, …(-70) ]
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome 9ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=false preserves the actual manifest outcome 6ms
+   → expected undefined to match object { persisted: true, chained: false }
+ ✓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > a failed business save creates no row and no successful audit receipt 6ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:63:93
+     61|   it.each([true,false])('conversation creation audit unavailable=%s ke…
+     62|     if(failed)await missingAudit();const res=await request(app()).post…
+     63|     expect(res.status,JSON.stringify(res.body)).toBe(201);expect(res.b…
+       |                                                                                             ^
+     64|     expect((await pg.query('SELECT title FROM concept2cure_conversatio…
+     65|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:63:93
+     61|   it.each([true,false])('conversation creation audit unavailable=%s ke…
+     62|     if(failed)await missingAudit();const res=await request(app()).post…
+     63|     expect(res.status,JSON.stringify(res.body)).toBe(201);expect(res.b…
+       |                                                                                             ^
+     64|     expect((await pg.query('SELECT title FROM concept2cure_conversatio…
+     65|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:69:93
+     67|   it.each([true,false])('project knowledge save audit unavailable=%s p…
+     68|     if(failed)await missingAudit();const res=await request(app()).patc…
+     69|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                             ^
+     70|     expect((await pg.query<{settings:any}>('SELECT settings FROM proje…
+     71|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=false persists the exact requested knowledge
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:69:93
+     67|   it.each([true,false])('project knowledge save audit unavailable=%s p…
+     68|     if(failed)await missingAudit();const res=await request(app()).patc…
+     69|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                             ^
+     70|     expect((await pg.query<{settings:any}>('SELECT settings FROM proje…
+     71|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:75:93
+     73|   it.each([true,false])('knowledge-source selection audit unavailable=…
+     74|     if(failed)await missingAudit();const res=await request(app()).post…
+     75|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                             ^
+     76|     expect((await pg.query<{settings:any}>('SELECT settings FROM proje…
+     77|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:75:93
+     73|   it.each([true,false])('knowledge-source selection audit unavailable=…
+     74|     if(failed)await missingAudit();const res=await request(app()).post…
+     75|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                             ^
+     76|     expect((await pg.query<{settings:any}>('SELECT settings FROM proje…
+     77|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:81:93
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=false remains a real saved profile and reports lost history
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:81:93
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=false retains the file bytes and exposes the canonical warning headers
+AssertionError: expected {} to deeply equal Buffer[ 69, 120, 105, 115, 116, …(-70) ]
+
+- Expected
++ Received
+
+- {
+-   "data": [
+-     69,
+-     120,
+-     105,
+-     115,
+-     116,
+-     105,
+-     110,
+-     103,
+-     32,
+-     103,
+-     101,
+-     110,
+-     101,
+-     114,
+-     97,
+-     116,
+-     101,
+-     100,
+-     32,
+-     100,
+-     111,
+-     99,
+-     117,
+-     109,
+-     101,
+-     110,
+-     116,
+-     32,
+-     98,
+-     121,
+-     116,
+-     101,
+-     115,
+-     46,
+-   ],
+-   "type": "Buffer",
+- }
++ {}
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:87:51
+     85|   it.each([true,false])('binary download audit unavailable=%s retains …
+     86|     if(failed)await missingAudit();const res=await request(app()).get(…
+     87|     expect(res.status).toBe(200);expect(res.body).toEqual(bytes);expec…
+       |                                                   ^
+     88|     if(failed)expect(res.headers['x-audit-row-code']).toBe('AUDIT_ROW_…
+     89|     expect(await auditRows()).toHaveLength(failed?0:1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:93:133
+     91|   it.each([true,false])('manifest read audit unavailable=%s preserves …
+     92|     if(failed)await missingAudit();const res=await request(app()).post…
+     93|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                                                                     ^
+     94|     expect(await auditRows()).toHaveLength(failed?0:1);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=false preserves the actual manifest outcome
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:93:133
+     91|   it.each([true,false])('manifest read audit unavailable=%s preserves …
+     92|     if(failed)await missingAudit();const res=await request(app()).post…
+     93|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                                                                     ^
+     94|     expect(await auditRows()).toHaveLength(failed?0:1);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+   Start at  04:15:18
+   Duration  4.80s (transform 1.35s, setup 61ms, import 2.69s, tests 1.86s, environment 0ms)
+

@@ -160,4 +160,3 @@ AssertionError: the organisation switch was refused by the audit_logs policy: ex
       Tests  5 failed | 1 passed | 14 skipped (20)
    Start at  04:11:30
    Duration  6.05s (transform 1.52s, setup 80ms, import 242ms, tests 5.40s, environment 0ms)
-

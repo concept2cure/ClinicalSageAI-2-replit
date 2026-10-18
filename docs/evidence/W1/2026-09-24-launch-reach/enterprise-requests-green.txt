@@ -43,4 +43,3 @@ stdout | tests/db/master-enterprise-requests.dbtest.ts
       Tests  6 passed (6)
    Start at  21:27:40
    Duration  1.40s (transform 247ms, setup 166ms, import 376ms, tests 150ms, environment 532ms)
-

@@ -1,0 +1,127 @@
+{
+  "environment": "Local fresh canonical PostgreSQL database, development-only seeded organization; no production client data or AI provider",
+  "views": [
+    {
+      "view": "desktop-light-catalog",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-light-history",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-light-schedules",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-light-bundles",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-dark-catalog",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-dark-history",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-dark-schedules",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "desktop-dark-bundles",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "view": "mobile-light-catalog",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 390,
+      "viewport": 390
+    },
+    {
+      "view": "mobile-light-history",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 390,
+      "viewport": 390
+    },
+    {
+      "view": "mobile-light-schedules",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 390,
+      "viewport": 390
+    },
+    {
+      "view": "mobile-light-bundles",
+      "pageErrors": [],
+      "apiFailures": [],
+      "bodyWidth": 390,
+      "viewport": 390
+    }
+  ],
+  "accountRun": {
+    "createStatus": 201,
+    "requests": [
+      {
+        "path": "/api/report-os/runs",
+        "status": 201
+      },
+      {
+        "path": "/api/report-os/runs/11/rendered",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  "historyAndExport": {
+    "requests": [
+      {
+        "path": "/api/report-os/runs?sortBy=createdAt&sortOrder=desc&limit=50&offset=0",
+        "status": 200
+      },
+      {
+        "path": "/api/report-os/runs?sortBy=createdAt&sortOrder=desc&limit=50&offset=0",
+        "status": 200
+      },
+      {
+        "path": "/api/report-os/runs/11/rendered",
+        "status": 200
+      },
+      {
+        "path": "/api/report-os/runs/11/export.pdf",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "downloadFailure": null,
+    "pdfSize": 24015
+  },
+  "restartValidation": "Authenticated session renewed and library rechecked after restarting the final application source"
+}

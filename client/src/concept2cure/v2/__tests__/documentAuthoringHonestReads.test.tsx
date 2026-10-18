@@ -131,7 +131,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     expect(text()).not.toMatch(/3\.2\.S\.9/);
   });
   it('the filing outline does not call every part "not started" while the sections read has failed', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
@@ -165,7 +165,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
      open nothing is being read; the node and the click say what is true and
      where to go. (Starting the section from the outline is FILING_SPINE F4.) */
   it('with no document open, the outline says so — never that sections are being read', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [] });
@@ -193,7 +193,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('while the project’s documents are still being read, the outline says that — not that a document’s sections are', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return never();
@@ -244,7 +244,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('a citation removal the server refuses is reported with the server’s reason, not silently dropped', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       const citation = {
         citationId: 'cite-1', citedAt: '2026-07-01T00:00:00Z', citationText: null, citedChecksum: 'sha-1', state: 'current',
@@ -269,7 +269,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
     }
   });
   it('a failed filing-outline read is said in the tree header, not degraded silently to the document list', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       wire((m, u) => (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=') ? fail(500) : undefined));
       render(<DocumentAuthoring {...props()} />);
@@ -280,7 +280,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   });
 
   it('switching sections never shows the previous section’s sources under the next section’s header', async () => {
-    (window as any).C2C_PROJECT = { id: 'P-1' };
+    (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
       const TWO = { success: true, sections: [
         { ...SECTIONS.sections[0], citation_count: 1 },

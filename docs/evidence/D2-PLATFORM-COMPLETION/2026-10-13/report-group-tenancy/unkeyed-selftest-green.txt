@@ -1,0 +1,6 @@
+  ✓ new unkeyed table read by a route — expected FAIL, got FAIL
+  ✓ same table WITH organization_id — expected PASS, got PASS
+  ✓ keyed by a later ALTER, second of several ADD COLUMNs — expected PASS, got PASS
+  ✓ unkeyed table that no per-request path reads — expected PASS, got PASS
+
+[selftest] ✅ the gate fails on the case it exists to catch, and only on that case.

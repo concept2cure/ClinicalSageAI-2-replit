@@ -1,0 +1,285 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:14:49.611Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:14:49.725Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:14:49.725Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-14T04:14:49.725Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details
+{
+  "timestamp": "2026-10-14T04:14:51.525Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details
+{
+  "timestamp": "2026-10-14T04:14:51.531Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails
+{
+  "timestamp": "2026-10-14T04:14:51.554Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "source insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails
+{
+  "timestamp": "2026-10-14T04:14:51.557Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails
+{
+  "timestamp": "2026-10-14T04:14:51.561Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available
+{
+  "timestamp": "2026-10-14T04:14:51.566Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > does not process when COMMIT acknowledgement is lost and releases exactly once
+{
+  "timestamp": "2026-10-14T04:14:51.587Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "connection lost while acknowledging COMMIT",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > loads bytes through the canonical reader, retains the original and captures pending extraction with paired audits 25ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details 5ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses missing bytes without capture or unsafe storage details 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign organization without capture or unsafe storage details 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses withdrawn upload without capture or unsafe storage details 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > keeps checksum-less identity unknown instead of trusting recomputed bytes 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > locks the canonical program before row/write locks and reserves impact tables before identity reads 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects path changed at the final locked recheck 4ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum changed at the final locked recheck 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum lost at the final locked recheck 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects eligibility withdrawn at the final locked recheck 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails 5ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > duplicate adoption still verifies bytes and writes no source or audit, including a historical source 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > denies a non-lead member before bytes and refuses foreign program identity 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rechecks authorization after the advisory lock and refuses a disappeared project 3ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > allows an organization manager under the existing mutation policy 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rejects missing auth, malformed project and missing file identity before a transaction 4ms
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=false) 5ms
+   → expected 301 to be less than 300
+ × server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=true) 2ms
+   → expected 317 to be less than 316
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > does not process when COMMIT acknowledgement is lost and releases exactly once 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns extraction_failed 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retryable_failure 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns blocked 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns stale_source 2ms
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:14:51.603Z",
+  "level": "warn",
+  "message": "[c2c-projects] Adopted capture processing unavailable",
+  "context": {
+    "sourceId": 41,
+    "err": "private provider path /private/file"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns busy 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_not_due 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_exhausted 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through completed without another capture or audit 2ms
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through already_complete without another capture or audit 2ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:14:51.762Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] Captured spreadsheet processing unavailable",
+  "context": {
+    "sourceId": 77,
+    "err": "private extractor storage /private/workbook"
+  }
+}
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-14T04:14:51.773Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-14T04:14:51.774Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791951291774_8awgp4",
+    "bytes": 5
+  }
+}
+
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > releases the capture connection after acknowledged COMMIT and before processing 6ms
+   → expected 18 to be less than 17
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable completed separately from the edit receipt 4ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable already_complete separately from the edit receipt 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for extraction_failed 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retryable_failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for blocked 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for stale_source 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for busy 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_not_due 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_exhausted 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > does not process a conversation-only derivation 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > persists lineage but explicitly does not capture a conversation-only edit 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses a requested foreign/missing project before storing bytes or rows 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses if the source bytes no longer match the bytes that were edited 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rechecks source eligibility on the transaction before an edited copy is written 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111) 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits () 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if capture fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if audit fails and removes only the newly written bytes 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > requires an identified tenant and actor for a derivation receipt 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > never removes source or derived bytes after an ambiguous COMMIT failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=false)
+AssertionError: expected 301 to be less than 300
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:301:55
+    299|     expect(mocks.release).toHaveBeenCalledOnce();
+    300|     expect(mocks.release.mock.invocationCallOrder[0]).toBeGreaterThan(…
+    301|     expect(mocks.release.mock.invocationCallOrder[0]).toBeLessThan(moc…
+       |                                                       ^
+    302|   });
+    303|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=true)
+AssertionError: expected 317 to be less than 316
+ ❯ server/routes/c2c/__tests__/projects-adoption.test.ts:301:55
+    299|     expect(mocks.release).toHaveBeenCalledOnce();
+    300|     expect(mocks.release.mock.invocationCallOrder[0]).toBeGreaterThan(…
+    301|     expect(mocks.release.mock.invocationCallOrder[0]).toBeLessThan(moc…
+       |                                                       ^
+    302|   });
+    303|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > releases the capture connection after acknowledged COMMIT and before processing
+AssertionError: expected 18 to be less than 17
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:67:51
+     65|     expect(h.release).toHaveBeenCalledOnce();
+     66|     expect(h.release.mock.invocationCallOrder[0]).toBeGreaterThan(h.qu…
+     67|     expect(h.release.mock.invocationCallOrder[0]).toBeLessThan(h.proce…
+       |                                                   ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 57 passed (60)
+   Start at  04:14:48
+   Duration  3.58s (transform 1.68s, setup 75ms, import 3.07s, tests 145ms, environment 0ms)
+

@@ -1,0 +1,17 @@
+# npx vitest run <waiver integration> <waive route> <AnA guard>  — against HEAD (no waiver module, no route), 2026-10-15
+ × server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > refuses a body without the signature or the failed run, and waives nothing 35ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > hands the signature and the failed run to the service, with the session context, and answers the record 6ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a missing or wrong-intent signature is 403 GOVERNED_REQUIRED 4ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a sequence with no waiver on offer is 409 SHADOW_WAIVER_NOT_ELIGIBLE, with the reason 6ms
+   → expected 404 to be 409 // Object.is equality
+ × server/routes/__tests__/submissions-shadow-review-waive.test.ts > the precheck asks the waiver rule before anyone signs > accepts the 'shadow-waiver' step and answers 200 either way 23ms
+   → expected 400 to be 200 // Object.is equality
+ ✓ server/services/ana/__tests__/ana-cannot-waive-shadow-review.test.ts > no AnA tool can waive Shadow Review > no tool is declared for a waiver 4ms
+ ✓ server/services/ana/__tests__/ana-cannot-waive-shadow-review.test.ts > no AnA tool can waive Shadow Review > no AnA or MCP source reaches the waiver act 88ms
+ FAIL  server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts [ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts ]
+Error: Cannot find module '/server/services/ectd/shadow-review-waiver' imported from /home/user/ClinicalSageAI-2-replit/server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts
+ Test Files  2 failed | 1 passed (3)
+      Tests  5 failed | 2 passed (7)

@@ -58,7 +58,6 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
   getRun,
-  computeBoundPayloadDigest,
   findActiveReleaseSignature,
   PACKAGE_SIGN_SIGNATURE_MEANING,
   loadSubmissionFkBySubmissionIdText,
@@ -68,7 +67,6 @@ import { reverifySigner } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
-import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { composeFullModule3 } from '../services/module3-extensions.js';
 import {
@@ -78,8 +76,23 @@ import {
 import crypto from 'crypto';
 import type { ECTDLeaf } from '../services/ectd/ectd4-validator.js';
 import type { ComposedSection } from '../services/module3Composer.js';
+import { continueOrchestratorRun, prepareOrchestratorRelease, OrchestratorContinuationRefusal } from '../services/submission-orchestrator-continuation.js';
+import { CsrScopeError } from '../services/csr/project-scope.js';
+import { guardRunCsrSourcesTx } from '../services/csr/run-source-guard.js';
+import { CsrSourceInputError } from '../services/csr/vault-source-input.js';
 
 const log = createScopedLogger('submission-sign-release');
+
+/** Signature success is durable even if continuation needs a separate retry. */
+async function continueAfterSignature(runId: string, organizationId: number, signerId: number) {
+  try {
+    const result = await continueOrchestratorRun(runId, organizationId, signerId);
+    return { runStatus: result.run.status, continuation: result.continuation };
+  } catch (err) {
+    log.warn('Release signature recorded; continuation refused or unavailable', { runId, organizationId, code: err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError ? err.code : 'CONTINUATION_UNAVAILABLE' });
+    return { runStatus: 'awaiting-signature', continuation: 'retry-required', continuationError: err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError ? err.code : 'CONTINUATION_UNAVAILABLE' };
+  }
+}
 
 /**
  * Resolve the tenant org id from the JWT-bound request. Mirrors the helper
@@ -120,36 +133,6 @@ const SignReleaseBodySchema = z.object({
 });
 
 const router = Router();
-
-/**
- * Read back the bound payload digest the orchestrator persisted on the
- * package.sign step.
- *
- * The orchestrator now DOES persist the signed package (leaf manifest +
- * validator outcome + backbone) in the sign step's outputRef and, on resume,
- * HYDRATES that frozen snapshot and recomputes the digest from it as an
- * integrity guard (it no longer re-derives from source — that was the useAI
- * drift bug). This route therefore just returns the persisted digest; binding
- * the signature to it is the route's job, and the resume path enforces that the
- * frozen snapshot still hashes to it.
- *
- * Returns null if the sign step has no parseable payload digest.
- */
-async function recomputeBoundDigestFromRun(
-  run: Awaited<ReturnType<typeof getRun>>
-): Promise<string | null> {
-  if (!run) return null;
-  const signStep = run.steps.find(s => s.key === 'package.sign');
-  if (!signStep || !signStep.outputRef) return null;
-  let parsed: { payloadDigest?: string };
-  try {
-    parsed = JSON.parse(signStep.outputRef);
-  } catch {
-    return null;
-  }
-  if (typeof parsed.payloadDigest !== 'string') return null;
-  return parsed.payloadDigest;
-}
 
 /**
  * POST /api/submissions/:submissionId/sign-release
@@ -231,7 +214,12 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   }
 
   // ── Recompute the bound digest from the persisted run ───────────────────
-  const boundPayloadDigest = await recomputeBoundDigestFromRun(run);
+  let boundPayloadDigest: string;
+  try { boundPayloadDigest = await prepareOrchestratorRelease(run, signerId); }
+  catch (err) {
+    if (err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError) return res.status(err.status).json({ error: err.code, message: err.message });
+    return res.status(503).json({ error: 'release_record_verification_unavailable' });
+  }
   if (!boundPayloadDigest) {
     // The sign step lacks a persisted digest — unexpected if run.status
     // is awaiting-signature, but defensive.
@@ -249,7 +237,9 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   if (existing) {
     return res.json({
       signatureId: existing.id,
+      signedAt: existing.signedAt ?? null,
       already_signed: true,
+      ...await continueAfterSignature(runId, organizationId, signerId),
     });
   }
 
@@ -293,6 +283,7 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   // UPDATEd after insertion (§11.70 append-only invariant) — the previous
   // insert-then-tighten UPDATE was itself a violation of that invariant.
   let signatureId: number;
+  let signedAt: string | null;
   try {
     const result = await part11ComplianceService.createElectronicSignature({
       userId: signerId,
@@ -306,6 +297,7 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       reverified,
       boundPayloadDigest,
       signerRole: signerRole ?? undefined,
+      transactionalGuard: q => guardRunCsrSourcesTx(q, run, signerId),
       // Committed WITH the signature, not after it (ledger L138). This used to
       // be an auditService.logAction call further down, on its own connection,
       // after the signature had already committed.
@@ -328,7 +320,11 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       },
     });
     signatureId = result.signatureId;
+    // The signature service returns the exact timestamp written on its row.
+    const recordedAt = result.signedAt instanceof Date ? result.signedAt : result.signedAt ? new Date(result.signedAt) : null;
+    signedAt = recordedAt && Number.isFinite(recordedAt.getTime()) ? recordedAt.toISOString() : null;
   } catch (err) {
+    if (err instanceof CsrSourceInputError) return res.status(err.status).json({ error: err.code, message: err.message });
     // Concurrent-signing race: the pre-check (findActiveReleaseSignature)
     // and this INSERT are not atomic, so two signers can both pass the check
     // and race to insert. The database backstop
@@ -340,7 +336,7 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     if ((err as { code?: string } | null)?.code === '23505') {
       const winner = await findActiveReleaseSignature({ organizationId, boundPayloadDigest });
       if (winner) {
-        return res.json({ signatureId: winner.id, already_signed: true });
+        return res.json({ signatureId: winner.id, signedAt: winner.signedAt ?? null, already_signed: true, ...await continueAfterSignature(runId, organizationId, signerId) });
       }
       // Unique violation but no active row found — a superseded-chain edge
       // case. Surface honestly rather than papering over it.
@@ -376,7 +372,8 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
 
   return res.json({
     signatureId,
-    signedAt: new Date().toISOString(),
+    signedAt,
+    ...await continueAfterSignature(runId, organizationId, signerId),
   });
 });
 

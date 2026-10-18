@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "phase": "fa39-hosted-native-census",
+  "branch": "concept2cure-v2",
+  "publishedHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "runId": 38625681016,
+  "jobId": 116073085566,
+  "artifactId": 11924713848,
+  "originalArtifactAndPrivateCensusRecords": [
+    {
+      "path": "/tmp/fa39-real-database-results.zip",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 99436,
+      "digestAlgorithm": "sha256",
+      "digest": "0b343b94e2150de5eb0be8f2a124db0c8d16db58b1219f407dc8d30adf7c301e"
+    },
+    {
+      "path": "/tmp/fa39-real-database-results.raw.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 797688,
+      "digestAlgorithm": "sha256",
+      "digest": "5438770e603b036d81034680245bf3412bc973bf45eb186dd201a132e2cb674a"
+    },
+    {
+      "path": "/tmp/fa39-hosted-native-failure-census.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 222961,
+      "digestAlgorithm": "sha256",
+      "digest": "6b1c6f0198233fb39a1e9ef7f2564e69b7815fd7b9f15ae28f2b526f7405f3f3"
+    },
+    {
+      "path": "/tmp/fa39-stream-vault-family-cases.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 22576,
+      "digestAlgorithm": "sha256",
+      "digest": "70e7c8f31b5176574f52ee74d38273dbad42d97e42a207dd5ce96af156445afb"
+    },
+    {
+      "path": "/tmp/fa39-native-artifact-metadata.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 573,
+      "digestAlgorithm": "sha256",
+      "digest": "298cb8ff0b8c7ebf01d83db4f756de2a4d87a542acdb42b4b691813671920761"
+    },
+    {
+      "path": "/tmp/fa39-native-job-step-metadata.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 2262,
+      "digestAlgorithm": "sha256",
+      "digest": "482f28ce6bb1284e6e2b9129986555fbf0ea8b1d71afebeb0c20272f7b88d75a"
+    },
+    {
+      "path": "/tmp/baff-hosted-native-census.json",
+      "kind": "private-preserved-original-or-complete-census",
+      "bytes": 18766,
+      "digestAlgorithm": "sha256",
+      "digest": "a59c375423188f007948e38194816768c52a85e462dad11e19d736795e3735ea"
+    }
+  ],
+  "exactPublishedFailedFixtureRecords": [
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/actor-displays.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 16389,
+      "digestAlgorithm": "sha256",
+      "digest": "01a2085ccb4dba4520d05dff7be94ee969665bd21fc0744434ffd8aaf01cf38f"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/ana-vault-search-no-key.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 8562,
+      "digestAlgorithm": "sha256",
+      "digest": "878cbda45fe33f7748e55855a2d56b0bbed9416f20d8ceb1d772f55e7d6f2e72"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/c2c-project-persistence.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 20012,
+      "digestAlgorithm": "sha256",
+      "digest": "62542e39ba72f0bca36c71da527bac24bb892a0c19445f6e4bae7c964398ec65"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/cmc-source-evidence.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 20560,
+      "digestAlgorithm": "sha256",
+      "digest": "529adf9c4ddca00135cda1aeff726f576cc33e5516805c0a13f82c5d16093a79"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/data-room-catalog-facts.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 10638,
+      "digestAlgorithm": "sha256",
+      "digest": "bf8a11d57b39cb11cf695c433864e2a76495c693c98b8274bfd3b9b612581c6a"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/data-room-processing.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 14172,
+      "digestAlgorithm": "sha256",
+      "digest": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/document-catalog-governed.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 16174,
+      "digestAlgorithm": "sha256",
+      "digest": "9e96f13bd15c6e88b64a7e1b2f21374aafdbd3957e254ae2beccdc7f884962e2"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/document-catalog-recall.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 28879,
+      "digestAlgorithm": "sha256",
+      "digest": "9a26e45e008427c7735d7e85e2719eca5bd1596e45f0af3b922681d74033a9fd"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/document-catalog-role.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 6354,
+      "digestAlgorithm": "sha256",
+      "digest": "0e579032e2a508716709a3e70257302b6f266b3ca8b8facce7be9c1eedbbf00e"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/document-catalog.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 28705,
+      "digestAlgorithm": "sha256",
+      "digest": "ee517798491db424a22a1d7e51adc2bbc4229337d7626cc69eaaaaf4a927e5ce"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/org-retention-period.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 17568,
+      "digestAlgorithm": "sha256",
+      "digest": "7e9b5f19e84ec6b08a687aeb8a16e316efc7213998008340117a73b447df81e1"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-chunking-off.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 9989,
+      "digestAlgorithm": "sha256",
+      "digest": "038542d40ae0f6f170f485b57296da4791b1cf742d2bb70047c9db320afbf393"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-data-room-file.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 14474,
+      "digestAlgorithm": "sha256",
+      "digest": "6da4bcb6856c221f8848d131f3e62deb0d59bf160ac7a44ca71d2266e0cd3e96"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-document-relationships.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 17919,
+      "digestAlgorithm": "sha256",
+      "digest": "e12245cc819fc01b2f8407451c022230b2ebca9422584b5debd824091abd76fb"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-filing-vocabulary.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 7289,
+      "digestAlgorithm": "sha256",
+      "digest": "3e397eee6955373b45e1a0eb7c62ab24f0ff0b6836eacd679863548042e5a04f"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-fixity.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 8935,
+      "digestAlgorithm": "sha256",
+      "digest": "fbfd802f3ffeddf1b8a3b5653976cc0fc6cd419e34997f7394220c0b3d67baf0"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-ingest.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 23650,
+      "digestAlgorithm": "sha256",
+      "digest": "5242a2458f82da13c7c9e29d64937767b4f1fac2bec8e08faa2e3fca480622a0"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-library-search.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 7662,
+      "digestAlgorithm": "sha256",
+      "digest": "ea9d057c1285bd1d8a063011db394fe2d23d52ca0f9a2ff1a04bcd1ff1d84fce"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-lifecycle.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 16662,
+      "digestAlgorithm": "sha256",
+      "digest": "6187d57c426a891abc5b07ad95a30eab85f5c87e06d16da8414e44afde870952"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-passage-search-keyless.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 12937,
+      "digestAlgorithm": "sha256",
+      "digest": "6999bfc170f56352b1ea02f7f1649ef0b7375fff8defbe768a367cd56d43914b"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-passage-search.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 23673,
+      "digestAlgorithm": "sha256",
+      "digest": "74c5817e6a73bbab596408d13b6d8de5d8a06f7393895192a098bef6f4f41fbc"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-placement-batch.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 9503,
+      "digestAlgorithm": "sha256",
+      "digest": "d30a9f425db1a634dd0dc4390b961a71eaa62921f599960c38f41bf6840c8c43"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-placement.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 23622,
+      "digestAlgorithm": "sha256",
+      "digest": "01ee99c31bd4dc1d083aa96e161240381e1e0dc253b8b83255b1be0ae1e9cf51"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-reupload.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 8863,
+      "digestAlgorithm": "sha256",
+      "digest": "f3711f4bb381a429ff08ac5459cad91cdcc81db21c9ab399b0b8570c86705c6c"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-version-annotations-record.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 14717,
+      "digestAlgorithm": "sha256",
+      "digest": "ebb17947f40eb919afc63da01cb27877d9a8750f694d640161a3b08f6c7d94d1"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-version-annotations.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 17960,
+      "digestAlgorithm": "sha256",
+      "digest": "884effb4773cdd2143510b0b87b5951d0b967439d84291b1474d2ee9f5b7bb29"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-version-checkin.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 15269,
+      "digestAlgorithm": "sha256",
+      "digest": "66a3f93e83ef47fef65a73ba3213d0f63f186326a810d1babec307ca552be1ff"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-version-compare.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 8305,
+      "digestAlgorithm": "sha256",
+      "digest": "fcca545a63e6a598aeeb87d83b43299c55f1a2062ab7f399e3fa91381185f0f4"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-versions.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 13746,
+      "digestAlgorithm": "sha256",
+      "digest": "fa9c4cd96217be575339d858d8e710e838fa77c7e628e64ee15da5d753e20810"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/tests/db/vault-where-used.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 18060,
+      "digestAlgorithm": "sha256",
+      "digest": "f46c9bc91136a1074c26d210ff4a717f60c72157b09d4ada07129365f7f5d496"
+    },
+    {
+      "path": "/tmp/fa39-native-published-source/server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "kind": "exact-fa39-published-source-snapshot",
+      "bytes": 19625,
+      "digestAlgorithm": "sha256",
+      "digest": "a8c525e07d3036683a22b7fa348fa9ce721d16c39f511ea70584e1b59047edb5"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/README.md",
+      "kind": "bounded-filed-artifact",
+      "bytes": 10028,
+      "digestAlgorithm": "sha256",
+      "digest": "0ec8e018cf125ebbd7e7e9aaa011cf9593112246c73b6e6fe31408be2d0d4009"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/actual-hosted-passed-controls.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 1717,
+      "digestAlgorithm": "sha256",
+      "digest": "e39f5cef0214682387e024351e089e348a0648c5482fae4539ee7db1ed3779ae"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/baseline-comparison-and-source-guard.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 1851,
+      "digestAlgorithm": "sha256",
+      "digest": "9c4f3b2dc35dc669628dd236742c3d995663253e267aef29e5f12ca9f16754fe"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/bounded-failed-case-census.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 132792,
+      "digestAlgorithm": "sha256",
+      "digest": "c83d5613311ee55310c2cf00b5a3d52e89cda8e63f6a6fb5a3edd1b9a065d139"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/native-artifact-metadata.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 573,
+      "digestAlgorithm": "sha256",
+      "digest": "298cb8ff0b8c7ebf01d83db4f756de2a4d87a542acdb42b4b691813671920761"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/fa39-hosted-native-census/native-job-step-metadata.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 2262,
+      "digestAlgorithm": "sha256",
+      "digest": "482f28ce6bb1284e6e2b9129986555fbf0ea8b1d71afebeb0c20272f7b88d75a"
+    }
+  ],
+  "counterQualification": {
+    "independentAssertionStatusCounts": {
+      "passed": 1609,
+      "failed": 107,
+      "skipped": 110
+    },
+    "fileEntries": 171,
+    "distinctFailedFiles": 31,
+    "failedNestedSuites": 70,
+    "hookFailureFilesWithoutAssertion": 13
+  },
+  "currentSourceObservationQualification": {
+    "head": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+    "matchesPublishedBytes": 22,
+    "changedFixturePaths": [
+      "tests/db/c2c-project-persistence.dbtest.ts",
+      "tests/db/document-catalog-governed.dbtest.ts",
+      "tests/db/document-catalog-recall.dbtest.ts",
+      "tests/db/document-catalog-role.dbtest.ts",
+      "tests/db/document-catalog.dbtest.ts",
+      "tests/db/vault-ingest.dbtest.ts",
+      "tests/db/vault-version-annotations-record.dbtest.ts",
+      "tests/db/vault-version-annotations.dbtest.ts",
+      "server/mcp/__tests__/mcp-connector.dbtest.ts"
+    ],
+    "note": "Working-tree observations/candidates only; no execution claim or current-source pin rewrite."
+  }
+}

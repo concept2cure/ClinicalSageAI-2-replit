@@ -99,12 +99,13 @@ describe('(a) every eSTAR version row carries its provenance', () => {
     }
   });
 
-  it('names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, labelled recall until a verbatim read is filed', () => {
+  it('names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, verified against the verbatim official page', () => {
     expect(currentVersionFor('nivd')?.version).toBe('7.1');
     expect(currentVersionFor('ivd')?.version).toBe('7.1');
     expect(currentVersionFor('prestar')?.version).toBe('3.1');
     for (const f of ['nivd', 'ivd', 'prestar'] as const) {
-      expect(currentVersionFor(f)?.confidence).toBe('recall');
+      expect(currentVersionFor(f)?.confidence).toBe('regulator-text');
+      expect(currentVersionFor(f)?.lastVerified).toBe('2026-10-14');
     }
   });
 
@@ -148,7 +149,7 @@ describe('(b)-(d) filing readiness compares the template on file with FDA\'s cur
 
   it('the shared comparison is the one the template registry reports, from the manifest version', () => {
     const d = descriptorFor('510k', 'device')!;
-    expect(d.version).toBe('7.0'); // what is vendored today
+    expect(d.version).toBe('7.1'); // actual official bytes acquired on 2026-10-14
     const t = assessEstarTemplateReadiness({
       type: '510k',
       variant: 'device',
@@ -157,11 +158,9 @@ describe('(b)-(d) filing readiness compares the template on file with FDA\'s cur
       requireTemplate: false,
     });
     expect(t.programVersion).toBe('7.1');
-    expect(t.vendoredVersion).toBe('7.0');
-    expect(t.versionCurrent).toBe(false);
-    expect(templateVersionCurrency('nivd', d.version).blocker).toBe(
-      "Official template on file is eSTAR v7.0; FDA's current version is v7.1.",
-    );
+    expect(t.vendoredVersion).toBe('7.1');
+    expect(t.versionCurrent).toBe(true);
+    expect(templateVersionCurrency('nivd', d.version).blocker).toBeNull();
   });
 });
 

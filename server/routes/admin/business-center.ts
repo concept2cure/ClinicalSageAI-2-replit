@@ -30,7 +30,7 @@ import {
 } from '../../middleware/requireBusinessAdmin';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../../services/auditService';
+import { recordAuditRow, setAuditRowHeaders } from '../../services/audit/audit-write-outcome';
 import { buildCostAccounting, DEFAULT_COST_RATES } from './business/cost-model';
 import rateCardsRouter from './business/rate-cards';
 
@@ -109,7 +109,7 @@ router.get('/cost-accounting.csv', async (req: Request, res: Response) => {
     );
     const csv = [header, ...lines].join('\n') + '\n';
 
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: 0,
       userId: req.userId,
       action: 'data_access',
@@ -119,6 +119,7 @@ router.get('/cost-accounting.csv', async (req: Request, res: Response) => {
       details: { businessCenterAction: 'cost_accounting.csv_export', rows: rows.length },
     });
 
+    setAuditRowHeaders(res, auditTrail);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="cost-accounting.csv"');
     return res.send(csv);

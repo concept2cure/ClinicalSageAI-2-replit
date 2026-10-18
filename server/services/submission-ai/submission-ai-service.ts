@@ -370,6 +370,14 @@ function hasFinding(a: DispatchReadinessAssessment, ...codes: string[]): boolean
   return a.readiness.findings.some((f) => codes.includes(f.code));
 }
 
+/** Policy clearance and an external validation pass are separate facts. */
+function externalValidationCaveat(assessment: DispatchReadinessAssessment): string[] {
+  const view = assessment.gates?.find((gate) => gate.key === 'external');
+  if (!view || view.assessmentStatus === 'passed') return [];
+  const note = view.assessmentNote ?? view.notAssessed;
+  return note ? [note] : [];
+}
+
 /**
  * The deterministic dispatch-QC verdict. PURE: no DB, no network, no model.
  *
@@ -396,7 +404,10 @@ export function computeDispatchQcVerdict(
     return {
       clearedToDispatch: assessment.gate.cleared,
       blockers: [...assessment.gate.blockers],
-      warnings: assessment.readiness.findings.filter((f) => f.severity === 'warning').map((f) => f.message),
+      warnings: [
+        ...assessment.readiness.findings.filter((f) => f.severity === 'warning').map((f) => f.message),
+        ...externalValidationCaveat(assessment),
+      ],
       checklist,
       verdictSource: 'assess-dispatch-readiness',
     };

@@ -23,6 +23,7 @@ import {
   recordPattern,
   type RimSignalType,
 } from './rim-pattern-store.js';
+import { severityScore } from './signal-capture.js';
 
 /**
  * Memoized dynamic import (dynamic to keep the drizzle graph out of this
@@ -130,9 +131,10 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
       });
       return;
     }
-    const safeRate = Number.isFinite(supportedClaimRate)
-      ? Math.max(0, Math.min(1, supportedClaimRate))
-      : 0.5;
+    // 2026-10-15: a non-finite rate used to become 0.5 and was filed as a
+    // measured claim-support score of 50. No rate, no claim-quality signal.
+    const rateMeasured = Number.isFinite(supportedClaimRate);
+    const safeRate = Math.max(0, Math.min(1, supportedClaimRate));
     const safeClaimCount = Number.isFinite(claimCount) && claimCount >= 0 ? claimCount : 0;
 
     const ctx: RIMIntegrationContext = {
@@ -143,16 +145,17 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
     // Pattern scan on the generated text
     integratePatternScan(ctx, assistantMessage, sectionCode ?? 'chat_response');
 
-    // Capture claim quality as a signal
-    if (safeClaimCount > 0) {
+    // Capture claim quality as a signal: a check result, not a judgment
+    // (2026-10-15: typed 'judgment', it was averaged into judgment trends).
+    if (safeClaimCount > 0 && rateMeasured) {
       const qualityScore = Math.round(safeRate * 100);
       integrateSignal(ctx, {
-        type: 'judgment',
+        type: 'claim_check',
         riskLevel: qualityScore >= 70 ? 'none' : qualityScore >= 40 ? 'medium' : 'high',
         reviewerSensitivity: qualityScore >= 70 ? 'unlikely_question' : 'possible_question',
         defensibilityVerdict: qualityScore >= 70 ? 'pass' : qualityScore >= 40 ? 'needs_attention' : 'at_risk',
         score: qualityScore,
-        confidence: 60,
+        confidence: null, // was 60, a constant
         action: qualityScore < 50
           ? 'Strengthen evidence grounding — many claims lack citations'
           : 'Evidence grounding adequate',
@@ -219,7 +222,7 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
       reviewerSensitivity: errorCount > 0 ? 'likely_question' : 'possible_question',
       defensibilityVerdict: score >= 70 ? 'acceptable' : score >= 40 ? 'needs_attention' : 'at_risk',
       score,
-      confidence: 70,
+      confidence: null, // was 70, a constant
       action: errorCount > 0
         ? `Address ${errorCount} compliance error(s): ${issues.filter(i => i.type === 'error').map(i => i.rule).join(', ')}`
         : `Review ${warningCount} compliance warning(s)`,
@@ -243,8 +246,9 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
         riskLevel: 'critical',
         reviewerSensitivity: 'likely_question',
         defensibilityVerdict: 'at_risk',
-        score: 20,
-        confidence: 80,
+        // Severity convention, not a score of this issue; confidence was a constant 80.
+        score: severityScore('critical'),
+        confidence: null,
         action: issue.suggestion ?? `Fix compliance violation: ${issue.message}`,
         patternIds: [],
         metadata: {
@@ -292,15 +296,20 @@ export interface ArtifactChangeInterceptInput {
 }
 
 /**
- * Intercept artifact creation/updates to capture change signals
- * and scan new content for regulatory patterns.
+ * Intercept artifact creation/updates and scan new content for regulatory
+ * patterns.
+ *
+ * 2026-10-15: every create/update/delete used to be filed as a signal with
+ * verdict 'pass', score 80 and confidence 95. An edit is an event; nothing
+ * assessed it, and those figures fed the signal averages AnA was told to cite.
+ * Only the pattern scan of the new content produces signals now.
  */
 export function interceptArtifactChange(input: ArtifactChangeInterceptInput): void {
   try {
     const {
       organizationId, projectId, userId,
       artifactId, artifactVersionId, sectionCode,
-      changeType, title, contentLength, source, content,
+      changeType, content,
     } = input;
 
     const ctx: RIMIntegrationContext = {
@@ -308,23 +317,6 @@ export function interceptArtifactChange(input: ArtifactChangeInterceptInput): vo
       artifactId, artifactVersionId, sectionCode,
       runType: 'artifact_intercept',
     };
-
-    // Capture the artifact change
-    integrateSignal(ctx, {
-      type: 'artifact_change',
-      riskLevel: changeType === 'delete' ? 'medium' : 'none',
-      reviewerSensitivity: 'unlikely_question',
-      defensibilityVerdict: 'pass',
-      score: 80,
-      confidence: 95,
-      action: `Artifact ${changeType}: ${title}`,
-      patternIds: [],
-      metadata: {
-        source: 'artifact_change_interceptor',
-        changeType, title, contentLength,
-        artifactSource: source,
-      },
-    });
 
     // Pattern scan on new content
     if (content && content.length > 50 && (changeType === 'create' || changeType === 'update')) {
@@ -352,50 +344,19 @@ export interface FeedbackInterceptInput {
 
 /**
  * Capture user feedback on AnA output (accept/reject/edit/regenerate).
+ *
+ * 2026-10-15: the action used to be filed as a scored signal too — accept 90,
+ * edit 60, reject 20, regenerate 10, confidence 90, "Output accepted —
+ * intelligence validated". A user's action is not a score of anything; it is
+ * recorded as the action, in the outcome log and (rejections) the pattern store.
  */
 export function interceptFeedback(input: FeedbackInterceptInput): void {
   try {
     const {
       organizationId, projectId, userId,
-      artifactId, artifactVersionId, sectionCode,
+      artifactId, sectionCode,
       feedbackType, editDelta,
     } = input;
-
-    const ctx: RIMIntegrationContext = {
-      organizationId, projectId, userId,
-      artifactId, artifactVersionId, sectionCode,
-      runType: 'feedback_intercept',
-    };
-
-    const scoreMap = { accepted: 90, edited: 60, rejected: 20, regenerated: 10 };
-    const riskMap = {
-      accepted: 'none' as const,
-      edited: 'low' as const,
-      rejected: 'medium' as const,
-      regenerated: 'high' as const,
-    };
-
-    integrateSignal(ctx, {
-      type: 'feedback',
-      riskLevel: riskMap[feedbackType],
-      reviewerSensitivity: 'unlikely_question',
-      defensibilityVerdict: feedbackType === 'accepted' ? 'pass'
-        : feedbackType === 'edited' ? 'acceptable'
-        : 'needs_attention',
-      score: scoreMap[feedbackType],
-      confidence: 90,
-      action: feedbackType === 'accepted'
-        ? 'Output accepted — intelligence validated'
-        : feedbackType === 'edited'
-        ? `Output edited (${editDelta ?? 'unknown'} chars changed) — partial alignment`
-        : `Output ${feedbackType} — intelligence gap detected`,
-      patternIds: [],
-      metadata: {
-        source: 'feedback_interceptor',
-        feedbackType,
-        editDelta,
-      },
-    });
 
     // Durable learning: a rejection or regeneration is the user telling AnA
     // her output missed — the strongest ground-truth signal this layer gets.

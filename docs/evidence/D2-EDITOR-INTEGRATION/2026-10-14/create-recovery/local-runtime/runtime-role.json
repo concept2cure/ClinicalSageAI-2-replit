@@ -1,0 +1,19 @@
+{
+  "automated": true,
+  "method": "brief owner transaction locks only the newly provisioned test database authoring_sections table; observe real HTTP read blocked on app_service, then rollback and require HTTP200",
+  "runtimeRole": {
+    "rolname": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "observedRequestConnections": [
+    {
+      "usename": "app_service",
+      "state": "active",
+      "wait_event_type": "Lock",
+      "application_name": ""
+    }
+  ],
+  "httpStatus": 200,
+  "lockReleased": true
+}

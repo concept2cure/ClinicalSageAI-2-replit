@@ -1,0 +1,40 @@
+{
+  "testedHead": "11fb58f19e769f901566d1be5aec452d75164891",
+  "sourceSha256": {
+    "DocumentWorkbench.tsx": "1a63108864e65d4c1109e9d7dff714854ca095b8a04529f1116551a3a1084116",
+    "AuthoringRemedies.tsx": "804aaa444437aabfc882cf6eb11933830af8910019eadbb7dd551bfbd1e4f322",
+    "RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "suggestions.ts": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d",
+    "proposalLifecycle.ts": "d804f5aaffe7a11e894d2cf0174f9a32a35734a0d566023402020691eeb9633a",
+    "editorProposalReceipt.ts": "55d0cbdb87618c4d57169f183538f9c1b6992e40f2600be132092d2570290a35"
+  },
+  "apiContractSha256": "3b78ffb48cbaadd0977fea1f22a0342e8421c95342a129a4fcbffa45e5b68f63",
+  "completedAt": "2026-10-14T07:17:27.512Z",
+  "syntheticApisOnly": true,
+  "contexts": [
+    {
+      "label": "desktop-light",
+      "status": "pass",
+      "violations": 0
+    },
+    {
+      "label": "desktop-dark",
+      "status": "pass",
+      "violations": 0
+    },
+    {
+      "label": "touch-light",
+      "status": "pass",
+      "violations": 0
+    },
+    {
+      "label": "touch-dark",
+      "status": "pass",
+      "violations": 0
+    }
+  ],
+  "limitations": [
+    "Synthetic browser fixtures do not qualify live model approval, backend authorization, database audit persistence, RLS or deployment.",
+    "The browser uses a two-part replacement and exact saved source/version; broader low-level proposal cases are covered by separate tests."
+  ]
+}

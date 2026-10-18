@@ -1,0 +1,10 @@
+{
+  "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "9478ece8b084a93164a1ff587d169ad924f2ae1fff6f3bd78740c970320633e7",
+  "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "d541aefc793dce19af5caa3068da6ccb0097a29570dd4e1c9bc1eda790a37bad",
+  "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "bb0a839ee8581b7ddb991d7b9171462d168c0b9ddce2b2fd4cfcf2d8c5d5b4be",
+  "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "3d58ab5c75e7dd110d8db0b7f8ea7cac9c8c2a8dbc198e55b56a3db4058e6bd0",
+  "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "d741cc1fc8360b5ed92ad274521bbc95eca231f561bcb1247e184b42b8df32c3",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx": "02efda4c8f41893133f12e78e598668b7dce21ff0666d2b7dc2745fd1256aa95",
+  "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+  "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8"
+}

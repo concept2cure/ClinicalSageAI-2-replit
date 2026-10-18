@@ -1,0 +1,158 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-source-identity-sync-tests.json",
+    "sha256": "f3c7a42459a00133afa082dfd635d72c1f038ebf6f8b6985924e5f3410f9ab43",
+    "bytes": 127394
+  },
+  "success": true,
+  "passedCases": 232,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 12,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 19,
+      "counts": {
+        "passed": 19,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 31,
+      "counts": {
+        "passed": 31,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+      "status": "passed",
+      "cases": 15,
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "status": "passed",
+      "cases": 42,
+      "counts": {
+        "passed": 42,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-identity.test.ts",
+      "status": "passed",
+      "cases": 28,
+      "counts": {
+        "passed": 28,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/draft-source-identity.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "status": "passed",
+      "cases": 31,
+      "counts": {
+        "passed": 31,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/saved-draft-source-export.test.ts",
+      "status": "passed",
+      "cases": 21,
+      "counts": {
+        "passed": 21,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-document-access.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

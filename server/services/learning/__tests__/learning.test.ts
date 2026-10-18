@@ -86,8 +86,12 @@ describe('knowledge card identity + hashing', () => {
 });
 
 describe('promotion policy', () => {
-  it('auto-promotes high-confidence grounded revisions', () => {
-    const out = decidePromotion(makeCard(draft({ changeKind: 'revision', confidence: 0.95 })));
+  // 2026-10-15: this pinned "auto-promotes high-confidence grounded revisions" —
+  // a rule change promoted on the model's own confidence. A revision now goes to
+  // review (rule-bearing-revision-is-not-auto-promoted.test.ts); the auto path is
+  // shown on a non-rule-bearing kind.
+  it('auto-promotes high-confidence grounded effective-date announcements', () => {
+    const out = decidePromotion(makeCard(draft({ changeKind: 'effective_date', confidence: 0.95 })));
     expect(out.decision).toBe('auto_promote');
   });
 
@@ -139,13 +143,16 @@ describe('ICH currency check (feeds the existing corpus)', () => {
 });
 
 describe('weekly digest', () => {
+  /** Every due source read and every item distilled: the digest requires the scan's coverage. */
+  const readAll = (n: number) => ({ sourcesDue: n, unreadSources: [], itemsHarvested: n, undistilledItems: [] });
+
   it('summarises decisions and surfaces only the review queue', () => {
     const records: ScanRecord[] = [
       { card: makeCard(draft({ confidence: 0.95 })), decision: 'auto_promote', reason: 'ok' },
       { card: makeCard(draft({ standardCode: 'E20', title: 'Adaptive trials', changeKind: 'new_guideline' })), decision: 'review', reason: 'rule-bearing' },
       { card: makeCard(draft({ standardCode: 'X1', confidence: 0.1, grounded: false })), decision: 'quarantine', reason: 'low' },
     ];
-    const d = buildHorizonDigest(records, 3);
+    const d = buildHorizonDigest(records, readAll(3));
     expect(d.totals.ingested).toBe(3);
     expect(d.totals.autoPromoted).toBe(1);
     expect(d.totals.review).toBe(1);
@@ -155,7 +162,10 @@ describe('weekly digest', () => {
   });
 
   it('says nothing needs attention when the review queue is empty', () => {
-    const d = buildHorizonDigest([{ card: makeCard(draft({ confidence: 0.95 })), decision: 'auto_promote', reason: 'ok' }], 1);
+    const d = buildHorizonDigest(
+      [{ card: makeCard(draft({ confidence: 0.95 })), decision: 'auto_promote', reason: 'ok' }],
+      readAll(1),
+    );
     expect(d.markdown).toContain('Nothing needs your attention');
   });
 });

@@ -1,0 +1,26 @@
+Independent review on concept2cure-v2, 2026-10-13, baseline cd0140cbd.
+
+Focused verified results:
+- Existing governed audit recording, delivery recording, finalize signature and viewer write suites: 94/94 passed in four files. See audit-delivery-finalize-viewer-green.txt.
+- Delivery-only rerun after deterministic memory confidence was changed to null: 27/27 passed. These cases overlap the four-suite run; do not sum the counts. See delivery-confidence-green.txt.
+- Scheduling creator/recipient project-sharing proof: 21/21 passed, including eight real PGlite SQL cases. Three new configuration cases failed before the narrow production fix. See schedule-project-access*.txt.
+- Schedule register/current managing actor route proof: ten new cases and the existing viewer/contract suites pass, 39/39 total. Before the route guards eight cases failed and two authorized toggles passed. Focused lint is clean. See subscription-actor-access*.txt.
+
+Reviewed owner fixes now visible in source:
+- Owned project, program-group, document and submission scope resolution; unsupported unowned study scopes refuse before computation.
+- Effective deployed registry availability rather than static-seed runnable claims.
+- Canonical project-sharing rules for manual computation and saved run reads/exports; run history SQL applies access before total, sorting and pagination.
+- One exhaustive shared engine dispatch preserves the four regional Module 1 bindings, lineage's document computation, unsupported scope refusals and unknown dependency disclosures.
+- Run/snapshot/dependencies/audit, scheduled notification and cursor effects share a tenant transaction. Cursor compares legacy timestamp milliseconds plus stored configuration. Leadership uses PostgreSQL, destroys an uncertain locked connection and records healthy idle follower sweeps.
+- UI report output, metadata links and signature completions are bound to current context and request generation. Query-only saved-run navigation is reactive.
+- Saved report pack manifests remain complete above 20,000 characters, all project copies and chained audit commit together, over-limit packs refuse before writing, and corrupt records refuse read. Deterministic pack/delivery memory confidence remains unknown.
+- Retained snapshot CSV verification/audited release, canonical signatures, multilingual font assets and explicit unsupported chart layout disclosures remain in the existing export implementation.
+
+Remaining review findings sent to control tower and backend owner at 19:35-19:40 UTC; owner resolution and regression evidence are required before release:
+- Delivery register checks only its primary project, although carried bundles may include another private project.
+- Program-group register exposes private member project metadata; group mutation/snapshot routes lack the same project access guard.
+- Historical program output must authorize its recorded project set rather than only a group's mutable current membership.
+- Schedule register/enablement now authorizes the current managing actor's scope access, in addition to validating the stored creator and recipients at fire time. This finding is resolved with focused red/green proof.
+- Remaining legacy inventory sent to backend: health business counts require explicit organization predicates, and live prediction project input requires canonical sharing policy before model/calibration IO.
+
+This is fixture-based integration and source review evidence. PGlite exercises PostgreSQL SQL semantics but does not demonstrate the deployed application's native RLS, configured transports, production availability, agency acceptance or clinical validation. Native PostgreSQL and whole-platform checks are separately owned by control tower.

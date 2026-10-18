@@ -63,11 +63,12 @@ export interface FabricDecisionInterceptInput {
  * Compact RIM context for fabric evaluation enrichment.
  */
 export interface RIMFabricContext {
+  readonly available: true;
   readonly signalSummary: {
     readonly totalSignals: number;
     readonly byRiskLevel: Record<string, number>;
-    readonly averageScore: number;
-    readonly overallTrend: 'improving' | 'stable' | 'declining';
+    readonly averageScore: number | null;
+    readonly overallTrend: 'improving' | 'stable' | 'declining' | null;
     readonly trendConfidence: TrendConfidence;
   };
   readonly topPatternIds: string[];
@@ -76,6 +77,16 @@ export interface RIMFabricContext {
   readonly hasHighRiskSignals: boolean;
   readonly hasCriticalPatterns: boolean;
   readonly compactSummary: string;
+}
+
+/**
+ * The RIM context could not be read: nothing is known about the signals,
+ * including whether any are high-risk. 2026-10-15: a failure returned an
+ * empty context with hasHighRiskSignals false, the answer for a healthy, empty store.
+ */
+export interface RIMFabricContextUnavailable {
+  readonly available: false;
+  readonly reason: string;
 }
 
 /**
@@ -176,20 +187,6 @@ function buildActionFromDecision(input: FabricDecisionInterceptInput): string {
 }
 
 /**
- * Compute a signal confidence based on the fabric evaluation quality.
- * Higher confidence when the evaluation is clean (not degraded) with
- * clear outcomes.
- */
-function computeFabricConfidence(input: FabricDecisionInterceptInput): number {
-  if (input.outcome === 'degraded') return 40;
-  // Block/review decisions are high confidence — the fabric is certain
-  if (input.outcome === 'block') return 90;
-  if (input.outcome === 'review') return 80;
-  // Allow decisions — confidence scales with readiness
-  return Math.min(95, 60 + Math.round(input.readinessScore * 0.3));
-}
-
-/**
  * Self-register the RIM learning emitter with the fabric evaluator.
  * Called at module load time — no circular imports because this module
  * only imports from the evaluator's registration function.
@@ -225,7 +222,6 @@ export function interceptFabricDecision(input: FabricDecisionInterceptInput): vo
     const verdict = outcomeToVerdict(input.outcome, input.readinessScore);
     const sensitivity = outcomeToSensitivity(input.outcome, input.blockerCount);
     const action = buildActionFromDecision(input);
-    const confidence = computeFabricConfidence(input);
 
     // Normalize score: fabric readinessScore is 0-100 already
     const score = input.readinessScore;
@@ -236,7 +232,9 @@ export function interceptFabricDecision(input: FabricDecisionInterceptInput): vo
       reviewerSensitivity: sensitivity,
       defensibilityVerdict: verdict,
       score,
-      confidence,
+      // 2026-10-15: was a constant by outcome (block 90, review 80, degraded
+      // 40, allow 60 + 0.3 × readiness). The fabric computes no confidence.
+      confidence: null,
       action,
       patternIds: [],
       metadata: {
@@ -278,7 +276,7 @@ export function buildRIMContextForFabric(
   projectId: number,
   artifactId?: string,
   sectionCode?: string,
-): RIMFabricContext {
+): RIMFabricContext | RIMFabricContextUnavailable {
   try {
     // Get the overall project signal summary
     const summary: SignalSummary = getSignalSummary(organizationId, projectId);
@@ -336,6 +334,7 @@ export function buildRIMContextForFabric(
     );
 
     return {
+      available: true,
       signalSummary: {
         totalSignals: summary.totalSignals,
         byRiskLevel: summary.byRiskLevel,
@@ -354,28 +353,11 @@ export function buildRIMContextForFabric(
       compactSummary,
     };
   } catch (err) {
-    console.warn(
-      '[RIM] Failed to build fabric context (returning empty):',
-      err instanceof Error ? err.message : err,
-    );
-
-    // Return safe empty context — fabric evaluation should not fail
-    // because RIM context was unavailable
-    return {
-      signalSummary: {
-        totalSignals: 0,
-        byRiskLevel: {},
-        averageScore: 0,
-        overallTrend: 'stable',
-        trendConfidence: 'insufficient',
-      },
-      topPatternIds: [],
-      recentBlockerHistory: 0,
-      recurringPatterns: [],
-      hasHighRiskSignals: false,
-      hasCriticalPatterns: false,
-      compactSummary: 'No RIM intelligence available',
-    };
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn('[RIM] Failed to build fabric context:', reason);
+    // Fabric evaluation must not fail on this, but it must not read the
+    // failure as an empty, low-risk store either.
+    return { available: false, reason: `RIM context could not be read: ${reason}` };
   }
 }
 
@@ -389,14 +371,14 @@ function buildCompactSummary(
   hasHighRisk: boolean,
 ): string {
   if (summary.totalSignals === 0) {
-    return 'No RIM intelligence available';
+    return 'No RIM signals captured for this project';
   }
 
   const parts: string[] = [];
 
   parts.push(`${summary.totalSignals} signals`);
-  parts.push(`avg score ${summary.averageScore}`);
-  parts.push(`trend ${summary.overallTrend}`);
+  if (summary.averageScore !== null) parts.push(`avg score ${summary.averageScore}`);
+  parts.push(`trend ${summary.overallTrend ?? `not determined (${summary.trendConfidence} data)`}`);
 
   if (hasHighRisk) {
     const critCount = summary.byRiskLevel['critical'] ?? 0;

@@ -3,7 +3,7 @@ tests/boot_contract.tftest.hcl... in progress
   run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 321, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
 │  321:     condition = alltrue([
 │  322:       for st in jsondecode(aws_kms_key.vault.policy).Statement :
@@ -12,7 +12,7 @@ tests/boot_contract.tftest.hcl... in progress
 │     ├────────────────
 │     │ aws_kms_key.vault.policy is "{\"Statement\":[{\"Action\":[\"kms:Create*\",\"kms:Describe*\",\"kms:Enable*\",\"kms:List*\",\"kms:Put*\",\"kms:Update*\",\"kms:Revoke*\",\"kms:Disable*\",\"kms:Get*\",\"kms:Delete*\",\"kms:TagResource\",\"kms:UntagResource\",\"kms:ScheduleKeyDeletion\",\"kms:CancelKeyDeletion\",\"kms:Decrypt\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"},\"Resource\":\"*\",\"Sid\":\"KeyAdministrationWithoutUse\"},{\"Action\":[\"kms:Decrypt\",\"kms:GenerateDataKey\",\"kms:DescribeKey\"],\"Condition\":{\"StringEquals\":{\"kms:ViaService\":\"s3.us-east-1.amazonaws.com\"}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"*\",\"Sid\":\"ApplicationUsesTheKeyThroughS3\"}],\"Version\":\"2012-10-17\"}"
 │     │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
-│ 
+│
 │ No principal but the task role may decrypt with the vault key.
 ╵
   run "production_names_are_the_ones_the_deploy_workflow_targets"... pass

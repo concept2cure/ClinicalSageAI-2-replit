@@ -1,0 +1,41 @@
+{
+  "exports": [
+    {
+      "stem": "Concept2Cure-data-room-study-2026-10-14",
+      "pages": 11,
+      "markdownMatchesRepository": true,
+      "finalCountPresentInPdfAndDocx": true,
+      "docxIntegrity": "passed",
+      "visuallyExaminedPages": [
+        4,
+        5
+      ],
+      "visualFinding": "Readably wrapped paragraphs and tables, no observed clipping on examined pages.",
+      "sha256": {
+        ".md": "36e14f5a3d5d6c56cac370607284b5bb52fc2087ba15a9422ef1607e33701400",
+        ".pdf": "dbcf7bef1bd9fa9521984272be514a00281b64e32150a66c0d3085b50af4b0d5",
+        ".docx": "6ab01cc60e30802c4f9965c4c8d34fd4a095b80f012846342939a9a815614249"
+      }
+    },
+    {
+      "stem": "Concept2Cure-enhancement-delivery-plan-2026-10-14",
+      "pages": 7,
+      "markdownMatchesRepository": true,
+      "finalCountPresentInPdfAndDocx": true,
+      "docxIntegrity": "passed",
+      "visuallyExaminedPages": [
+        3,
+        4
+      ],
+      "visualFinding": "Readably wrapped paragraphs and tables, no observed clipping on examined pages.",
+      "sha256": {
+        ".md": "6ddb2ba7e875dcbf431eea3e936ca0dfb5dc40daae10b873561032a48190590f",
+        ".pdf": "f7df9d8e58e35791f37ce893fdaa6b2ff319d4e50360d2b81335c96f143ecc12",
+        ".docx": "07ea3424f43c1b1f8ceed9bce16fa4b279254728e03165b8cea77c28662ee738"
+      }
+    }
+  ],
+  "relativeReferencesChecked": 29,
+  "missingReferences": [],
+  "scope": "Export source parity, DOCX structure, final count visibility and selected-page visual review; not proof that every rendered page was visually reviewed."
+}

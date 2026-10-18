@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > requires a company goal and a use before advancing 173ms
+   → expected false to be true // Object.is equality
+ ↓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > saves discovery first, writes markets/pathways to the existing industry profile and preserves the setup link
+ ↓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > keeps answers and does not invite or bill when saving discovery is refused
+ ↓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > loads previously recorded answers and never renders a failed read as an empty profile
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery onboarding persists through governed setup and keeps outcomes reviewable > requires a company goal and a use before advancing
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx:60:94
+     58|   it('requires a company goal and a use before advancing', () => {
+     59|     render(<Onboarding {...props} />); next();
+     60|     expect((screen.getByRole('button', { name: /Continue/ }) as HTMLBu…
+       |                                                                                              ^
+     61|     fireEvent.change(screen.getByLabelText('Company goals *'), { targe…
+     62|     expect((screen.getByRole('button', { name: /Continue/ }) as HTMLBu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  03:01:18
+   Duration  909ms (transform 192ms, setup 105ms, import 213ms, tests 175ms, environment 234ms)

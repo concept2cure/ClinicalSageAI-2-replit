@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 /**
- * Library search: every project's Vault at once (plan critique 15, row D2).
+ * Library search: projects the viewer can access (plan critique 15, row D2).
  *
- * With "All projects" on, the Vault's search reads the library, not the
+ * With "Accessible projects" on, the Vault's search reads the library, not the
  * project. Each hit is named with the project that holds it, and downloads
- * through that project. A library search that failed says nothing was
- * searched, never "no matches". Server half: tests/db/vault-library-search.dbtest.ts.
+ * through that project. A library search that failed says its result could not
+ * be verified, never "no matches". Server half: tests/db/vault-library-search.dbtest.ts.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -47,20 +47,20 @@ afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 
 async function searchLibrary() {
   render(<Vault {...props()} />);
-  fireEvent.click(await screen.findByLabelText('All projects'));
+  fireEvent.click(await screen.findByLabelText('Accessible projects'));
   fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: 'stability' } });
 }
 
 describe('library search (critique 15)', () => {
-  it('lists hits from every project, each with its project, and downloads through that project', async () => {
+  it('limits the headline to accessible projects, names each hit’s project, and downloads through that project', async () => {
     onLibrary = () => ok({
       success: true,
-      data: { query: 'stability', total: 2, limit: 50, offset: 0, results: [hit(), hit({ id: 'd-2', title: 'Stability summary', program: { id: PID, name: 'BX-301' }, snippet: null })] },
+      data: { scope: 'verified-accessible-programs', query: 'stability', total: 2, limit: 50, offset: 0, results: [hit(), hit({ id: 'd-2', title: 'Stability summary', program: { id: PID, name: 'BX-301' }, snippet: null })] },
     });
     await searchLibrary();
     const list = await screen.findByTestId('vault-library-results');
     expect(apiRequest).toHaveBeenCalledWith('GET', LIB);
-    expect(within(list).getByRole('status').textContent).toBe('2 documents across all projects match “stability”.');
+    expect(within(list).getByRole('status').textContent).toBe('2 documents in projects you can access match “stability”.');
     expect(list.textContent).toContain('BX-302');
     expect(list.textContent).toContain('BX-301 (this project)');
     expect(list.textContent).toContain('the stability data at T12');
@@ -71,15 +71,40 @@ describe('library search (critique 15)', () => {
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${OTHER}/documents/${DOC}/download`));
   });
 
-  it('a failed library search says nothing was searched', async () => {
+  it('a failed library search leaves its result unverified', async () => {
     onLibrary = () => { throw new ApiRequestError('Failed', 500, { error: 'SEARCH_FAILED' }, 'SEARCH_FAILED'); };
     await searchLibrary();
     const list = await screen.findByTestId('vault-library-results');
-    expect((await within(list).findByRole('alert')).textContent).toContain('The library could not be searched, so nothing was searched');
+    expect((await within(list).findByRole('alert')).textContent).toContain('The library search could not be verified. This is not a result of zero matches.');
   });
 
   it('a page short of the total says how many are shown', () => {
-    expect(libraryHeadline({ query: 'q', total: 120, limit: 50, results: new Array(50).fill(hit()) }))
-      .toBe('120 documents across all projects match “q”. Showing the 50 best matches.');
+    expect(libraryHeadline({ scope: 'verified-accessible-programs', query: 'q', total: 120, limit: 50, results: new Array(50).fill(hit()) }))
+      .toBe('120 documents in projects you can access match “q”. Showing the 50 best matches.');
+  });
+
+  it('an accessible empty search makes no claim about every project', async () => {
+    onLibrary = () => ok({ success: true, data: { scope: 'verified-accessible-programs', query: 'stability', total: 0, limit: 50, results: [] } });
+    await searchLibrary();
+    const list = await screen.findByTestId('vault-library-results');
+    expect((await within(list).findByRole('status')).textContent).toBe('0 documents in projects you can access match “stability”.');
+    expect(list.textContent).not.toMatch(/all projects|every project|hidden|private/i);
+  });
+
+  it('a contradictory successful response is a failed read, never a zero-match claim', async () => {
+    onLibrary = () => ok({ success: true, data: { scope: 'verified-accessible-programs', query: 'stability', total: 0, limit: 50, results: [hit()] } });
+    await searchLibrary();
+    const list = await screen.findByTestId('vault-library-results');
+    expect((await within(list).findByRole('alert')).textContent).toContain('not a result of zero matches');
+    expect(within(list).queryByRole('status')).toBeNull();
+    expect(within(list).queryByRole('button', { name: /Download/ })).toBeNull();
+  });
+
+  it.each([undefined, 'organization-wide'])('an unverified search scope %s cannot establish zero matches', async scope => {
+    onLibrary = () => ok({ success: true, data: { scope, query: 'stability', total: 0, limit: 50, results: [] } });
+    await searchLibrary();
+    const list = await screen.findByTestId('vault-library-results');
+    expect((await within(list).findByRole('alert')).textContent).toContain('not a result of zero matches');
+    expect(within(list).queryByRole('status')).toBeNull();
   });
 });

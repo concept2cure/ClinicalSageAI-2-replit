@@ -1,0 +1,38 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T09:06:45.934Z","pid":171457,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T09:06:45.935Z","pid":171457,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T09:06:45.935Z","pid":171457,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-vault-secondary-access.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-vault-secondary-access.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/project-vault-secondary-access.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > uses a real non-owner runtime with tenant RLS 49ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves actual NULL-org global_public and withholds NULL-org private sources 261ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > enumerates genuinely unbound chat captures only for the original uploader 279ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not authorize an unknown workspace by a matching accessible numeric project 12ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves legacy numeric chat access only through its exact artifact/file parent 26ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not make a captured artifact appear to be an unbound conversation upload 116ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts only currently permitted citing documents even inside one accessible program 355ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts an explicit section grant without promoting it to whole-document authority 47ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > rechecks a revoked current section grant 102ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > refuses an explicitly selected private source before returning change metadata 39ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > preserves an unresolved recorded citation without enriching private source facts 131ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > returns unavailable verification rather than fabricated usage zeros 7ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > resolves a recorded unbound source citation for its original uploader 118ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > withholds that source metadata from a different permitted document reader without changing the citation or hash 40ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > runs bibliography and Sources HTTP reads through actual JWT, object ACL and instrumented app_service tenant transactions 396ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds private and unparented submissions while keeping readable placements 39ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds a private eSTAR export or a private retained counterpart 29ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > keeps permitted CMC evidence without leaking a private compiled section key 36ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  09:06:43
+   Duration  12.53s (transform 6.94s, setup 76ms, import 2.53s, tests 9.29s, environment 0ms)

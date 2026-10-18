@@ -12,8 +12,7 @@
  * unit-testable with a fake clock and fake generators — no Redis, no DB. The
  * `sweepDueSubscriptions` orchestrator wires the real subscription service +
  * an injected `generateAndDeliver`, and `registerSubscriptionSweep` mounts it
- * on the existing Bull scheduler (graceful Redis-absent no-op, exactly like
- * automation/scheduled-jobs.ts).
+ * on a PostgreSQL-coordinated timer, including Redis-free deployments.
  */
 
 import { createScopedLogger } from '../../../utils/logger';
@@ -72,11 +71,6 @@ export async function planSweep(deps: SweepDeps): Promise<SweepSummary> {
       reportTypeId: sub.reportTypeId,
     };
     try {
-      /* The SAME predicate POST /subscriptions gates on
-         (scheduling/entitlement.ts), so the create-time and fire-time verdicts
-         cannot drift. Before 2026-10-12 only this side checked, so a
-         standard-plan org could create an "Active" schedule that was skipped
-         here on every tick, for ever (coverage review C-26a). */
       const tier = await deps.resolveTier(sub.organizationId);
       if (!scheduledReportsVerdict(tier).entitled) {
         const reason = `Org tier '${tier}' is not entitled to scheduled reports.`;
@@ -120,6 +114,7 @@ export async function sweepDueSubscriptions(
   now: Date,
   generateAndDeliver: (sub: ReportSubscriptionRow) => Promise<void>,
   resolveTier: (organizationId: number) => Promise<Tier>,
+  options: { cursorCommittedByGenerator?: boolean } = {},
 ): Promise<SweepSummary> {
   const due = await runWithSystemTenantScope('report-sweep:scan', () =>
     listDueSubscriptions(now),
@@ -142,6 +137,7 @@ export async function sweepDueSubscriptions(
     generateAndDeliver: (sub) =>
       inOrgScope(sub.organizationId, 'report-sweep:generate-deliver', () => generateAndDeliver(sub)),
     onRan: async (sub) => {
+      if (options.cursorCommittedByGenerator) return;
       await inOrgScope(sub.organizationId, 'report-sweep:mark-run', () =>
         markRun(sub.id, sub.organizationId, now),
       );

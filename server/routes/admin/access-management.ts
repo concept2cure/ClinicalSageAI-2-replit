@@ -37,6 +37,7 @@ import { query, transaction } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { writeChainedAuditRow } from '../../services/auditService';
 import { recordAuditRow } from '../../services/audit/audit-write-outcome';
+import { PLATFORM_GRANT_ROLES, FINANCE_GRANT_ROLES } from '../../../shared/constants/platform-grant-roles';
 
 const logger = createScopedLogger('admin-access-management');
 const router = Router();
@@ -45,20 +46,14 @@ router.use(authMiddleware);
 router.use(requirePlatformAdmin);
 
 /** Platform roles that may be granted. NOT org-scoped roles. */
-const GRANTABLE_ROLES = new Set([
-  'super_admin',
-  'platform_admin',
-  'support',
-  'business_admin',
-  'owner',
-]);
+const GRANTABLE_ROLES = new Set<string>(PLATFORM_GRANT_ROLES);
 
 /** Roles whose grant confers finance access — only a business admin may grant. */
-const BUSINESS_TIER_ROLES = new Set(['owner', 'business_admin', 'super_admin']);
+const BUSINESS_TIER_ROLES = new Set<string>(FINANCE_GRANT_ROLES);
 
 // ─── List active grants ──────────────────────────────────────────────────────
 
-router.get('/grants', async (_req: Request, res: Response) => {
+router.get('/grants', async (req: Request, res: Response) => {
   try {
     const result = await query(
       `SELECT g.id, g.user_id, u.email, u.name, g.role, g.granted_by, g.granted_at
@@ -67,7 +62,10 @@ router.get('/grants', async (_req: Request, res: Response) => {
         WHERE g.revoked_at IS NULL
         ORDER BY g.role, u.email`
     );
-    return res.json({ grants: result.rows, generatedAt: new Date().toISOString() });
+    const financeStanding = await hasBusinessStanding(req);
+    return res.json({ grants: result.rows, generatedAt: new Date().toISOString(),
+      grantableRoles: PLATFORM_GRANT_ROLES.filter(role => financeStanding || !BUSINESS_TIER_ROLES.has(role)),
+    });
   } catch (err) {
     logger.error('Grant list query failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to load access grants.' });

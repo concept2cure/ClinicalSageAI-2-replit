@@ -72,10 +72,15 @@ const STATUSES = ['planned', 'in_life', 'in_reporting', 'finalized', 'cancelled'
 
 export async function setStudyStatusTx(client: Queryable, orgId: number, id: number, status: string, reportFinalizedDate?: string | null): Promise<void> {
   if (!STATUSES.includes(status)) throw new NonclinicalError('BAD_INPUT', `Invalid status "${status}".`);
+  // 2026-10-15: finalizing without a date bound today's date as report_finalized_date,
+  // a regulatory date nobody stated. The caller now states it, or nothing is written.
+  if (status === 'finalized' && !reportFinalizedDate) {
+    throw new NonclinicalError('BAD_INPUT', 'reportFinalizedDate (YYYY-MM-DD) is required to finalize a study: the date its final study report was signed.');
+  }
   const r = await client.query(
     `UPDATE nonclinical_studies SET status = $3, report_finalized_date = COALESCE($4, report_finalized_date), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [id, orgId, status, status === 'finalized' ? (reportFinalizedDate ?? new Date().toISOString().slice(0, 10)) : reportFinalizedDate ?? null],
+    [id, orgId, status, reportFinalizedDate || null],
   );
   if ((r as any).rowCount === 0) throw new NonclinicalError('NOT_FOUND', 'Study not found for this organization.');
 }
@@ -123,6 +128,8 @@ export async function listStudies(orgId: number, submissionId?: number): Promise
   // ({ id, type, species, dur, finding, cls, send }). `id` is the human study
   // number; `send` (CDISC SEND conformance) is derived from the study's latest
   // send_datasets row so no column duplicates that state.
+  // 2026-10-15: 'passed' read 'conforms'. It is the status the user declared via
+  // PUT /studies/:id/send — no validator runs on the platform — so it says so.
   const params: unknown[] = [orgId];
   let sql = `
     SELECT s.study_number                         AS id,
@@ -144,7 +151,7 @@ export async function listStudies(orgId: number, submissionId?: number): Promise
            s.finding_class                        AS cls,
            CASE
              WHEN sd.validation_status IS NULL     THEN 'n/a'
-             WHEN sd.validation_status = 'passed'  THEN 'conforms'
+             WHEN sd.validation_status = 'passed'  THEN 'declared passed (not validated by the platform)'
              ELSE 'in progress'
            END                                    AS send
       FROM nonclinical_studies s

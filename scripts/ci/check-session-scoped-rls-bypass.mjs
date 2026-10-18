@@ -55,13 +55,7 @@ const TAG = '[ci:session-scoped-rls-bypass]';
 
 /** Files permitted to still contain the session-scoped form, with a count. */
 const BASELINE = new Map([
-  ['server/services/innovation/regulatory-delta-radar-service.ts', 6],
-  ['server/services/innovation/adaptive-reviewer-workspace-service.ts', 8],
-  ['server/services/innovation/outcome-based-template-learning-service.ts', 6],
-  ['server/services/innovation/auto-traceability-service.ts', 4],
   ['server/services/innovation/submission-readiness-twin-service.ts', 4],
-  ['server/services/innovation/evidence-confidence-heatmap-service.ts', 4],
-  ['server/services/innovation/regulatory-negotiation-logbook-service.ts', 2],
 ]);
 
 // `SET app.bypass_rls`, but not `SET LOCAL app.bypass_rls`.

@@ -12,8 +12,11 @@
  * Markets: FDA (US), EMA (EU centralised), PMDA (JP). The criteria capture the
  * core statutory thresholds; sponsor regulatory affairs and the agency remain
  * the authority for edge cases (this is a readiness aid, honest-by-construction).
- * Where the inputs needed to judge a market's orphan threshold are not supplied,
- * the assessor declines to guess and reports "prevalence not supplied".
+ * Where a fact a market's orphan screen needs is not supplied, the assessor
+ * declines to guess: the screen is 'not_assessed' and names the missing facts.
+ * A criterion no input carries (the FDA cost-recovery prong, the EU
+ * insufficient-return limb, the PMDA criteria besides prevalence) is named in
+ * `notAssessedCriteria`, and a screen that waits on it is 'not_assessed' too.
  *
  * Pure / deterministic — no DB, no IO.
  *
@@ -73,7 +76,7 @@ export const DESIGNATION_REFERENCE: Record<Market, DesignationCriteria> = {
   EMA: {
     orphanProgram: 'EMA Orphan Medicinal Product Designation',
     orphanCriteria:
-      'Prevalence not more than 5 in 10,000 in the EU, the condition is life-threatening or chronically debilitating, and either no satisfactory authorised method exists or the product offers significant benefit over existing methods.',
+      'Prevalence not more than 5 in 10,000 in the EU and the condition is life-threatening or chronically debilitating (or, alternatively, insufficient return on investment under Art 3(1)(a)), and either no satisfactory authorised method exists or the product offers significant benefit over existing methods.',
     pediatricProgram: 'Paediatric Investigation Plan (PIP)',
     pediatricCriteria:
       'A Paediatric Investigation Plan (PIP) is required for a marketing-authorisation application unless a waiver or deferral applies.',
@@ -107,10 +110,29 @@ export interface DesignationInput {
 }
 
 export interface OrphanAssessment {
-  eligible: boolean;
+  /**
+   * The orphan screen on the stated facts (not a designation, which only the
+   * agency grants): true when met, false when a stated fact fails it,
+   * 'not_assessed' when it waits on a fact not stated (see `missing`) or on a
+   * criterion it does not assess (see `notAssessedCriteria`).
+   */
+  eligible: boolean | 'not_assessed';
   program: string;
   rationale: string;
+  /** The inputs the screen needed that were not stated. Empty when none. */
+  missing: (keyof DesignationInput)[];
+  /** Criteria the verdict waits on that no input carries, so they were not assessed. Empty when none. */
+  notAssessedCriteria: string[];
 }
+
+/** FDA's alternative to the prevalence prong (the reference's own wording); no input carries it. */
+const FDA_COST_RECOVERY_PRONG =
+  'No reasonable expectation of recovering development and marketing costs from US sales (the alternative to the prevalence threshold)';
+/** Regulation (EC) No 141/2000's alternative to the prevalence limb; no input carries it and its text is not held here. */
+const EMA_INSUFFICIENT_RETURN_LIMB =
+  'Insufficient return on investment (Regulation (EC) No 141/2000 Art 3(1)(a), the alternative to the prevalence limb)';
+/** The record's first PMDA orphan criterion is the prevalence threshold; the others have no input. */
+const [JP_ORPHAN_PREVALENCE_CRITERION, ...JP_ORPHAN_UNASSESSED_CRITERIA] = JP_ORPHAN.criteria;
 
 export interface PediatricAssessment {
   applicable: boolean;
@@ -131,10 +153,11 @@ export interface DesignationResult {
 /**
  * Assess orphan + pediatric designation eligibility for a market.
  *
- * Orphan eligibility applies the market's statutory threshold. When the
- * prevalence input required to judge that market is not supplied, orphan is
- * reported as not eligible with rationale "prevalence not supplied" rather than
- * guessing. Pediatric assessment is produced when pediatricDevelopment is true.
+ * Orphan eligibility applies the market's statutory threshold. A criterion fails
+ * only when a stated fact fails it; when a fact the screen needs is not supplied
+ * (and none fails), orphan is 'not_assessed' with the missing inputs named,
+ * rather than guessed. Pediatric assessment is produced when pediatricDevelopment
+ * is true.
  *
  * Pure / deterministic. Designations and notes are sorted for stable output.
  */
@@ -144,7 +167,7 @@ export function assessDesignationEligibility(input: DesignationInput): Designati
   const designations: string[] = [];
 
   const orphan = assessOrphan(input, ref, notes);
-  if (orphan.eligible) {
+  if (orphan.eligible === true) {
     designations.push(orphan.program);
   }
 
@@ -176,66 +199,120 @@ function assessOrphan(
 ): OrphanAssessment {
   const program = ref.orphanProgram;
 
+  // 2026-10-15: a missing prevalence returned eligible:false (a "no" for a screen
+  // that was never run), and the EMA criteria were read with `=== true`, so an
+  // unstated fact was reported as unmet ("not life-threatening/seriously
+  // debilitating"). A criterion is now unmet only when a stated fact fails it.
   if (input.market === 'FDA') {
-    if (input.usPrevalence == null) {
-      return { eligible: false, program, rationale: 'US prevalence not supplied; orphan eligibility cannot be assessed.' };
-    }
-    if (input.usPrevalence < 200000) {
+    if (input.usPrevalence != null && input.usPrevalence < 200000) {
       return {
         eligible: true,
         program,
         rationale: `US prevalence ${input.usPrevalence} is fewer than 200,000 — meets the FDA Orphan Drug Designation threshold.`,
+        missing: [],
+        notAssessedCriteria: [],
       };
     }
-    notes.push('FDA orphan status may still be possible via the cost-recovery prong if US sales cannot recover development/marketing costs.');
+    // 2026-10-15: 200,000 or more returned eligible:false while the note below said
+    // the cost-recovery prong may still qualify; that prong is not assessed here.
+    if (input.usPrevalence != null) {
+      notes.push('FDA orphan status may still be possible via the cost-recovery prong if US sales cannot recover development/marketing costs.');
+    }
+    const prevalence = input.usPrevalence == null
+      ? 'US prevalence not supplied'
+      : `US prevalence ${input.usPrevalence} is not fewer than 200,000`;
     return {
-      eligible: false,
+      eligible: 'not_assessed',
       program,
-      rationale: `US prevalence ${input.usPrevalence} is not fewer than 200,000 — does not meet the FDA Orphan Drug Designation prevalence threshold.`,
+      rationale: `${prevalence}, and the cost-recovery prong is not assessed; orphan eligibility cannot be assessed.`,
+      missing: input.usPrevalence == null ? ['usPrevalence'] : [],
+      notAssessedCriteria: [FDA_COST_RECOVERY_PRONG],
     };
   }
 
-  if (input.market === 'EMA') {
-    if (input.euPrevalencePer10k == null) {
-      return { eligible: false, program, rationale: 'EU prevalence (per 10,000) not supplied; orphan eligibility cannot be assessed.' };
-    }
-    const meetsPrevalence = input.euPrevalencePer10k <= 5;
-    const serious = input.seriousOrLifeThreatening === true;
-    const benefitOrNeed = input.noSatisfactoryTreatment === true || input.significantBenefit === true;
-    if (meetsPrevalence && serious && benefitOrNeed) {
-      return {
-        eligible: true,
-        program,
-        rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/seriously debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
-      };
-    }
-    const unmet: string[] = [];
-    if (!meetsPrevalence) unmet.push(`prevalence ${input.euPrevalencePer10k} per 10,000 exceeds 5`);
-    if (!serious) unmet.push('not life-threatening/seriously debilitating');
-    if (!benefitOrNeed) unmet.push('neither "no satisfactory method" nor "significant benefit" is established');
+  if (input.market === 'EMA') return assessEmaOrphan(input, program);
+
+  // PMDA: the record's criteria all apply; only the first (prevalence) has an input.
+  if (input.jpPrevalence != null && input.jpPrevalence >= 50000) {
     return {
       eligible: false,
       program,
-      rationale: `Does not meet EMA orphan criteria: ${unmet.join('; ')}.`,
+      rationale: `Japan prevalence ${input.jpPrevalence} is not fewer than 50,000 — does not meet the PMDA orphan criterion "${JP_ORPHAN_PREVALENCE_CRITERION}".`,
+      missing: [],
+      notAssessedCriteria: [],
     };
   }
+  // 2026-10-15: under 50,000 returned eligible:true and listed the designation,
+  // with a note to "confirm qualitatively" the criteria nothing assessed.
+  const prevalence = input.jpPrevalence == null
+    ? 'Japan prevalence not supplied'
+    : `Japan prevalence ${input.jpPrevalence} is fewer than 50,000`;
+  return {
+    eligible: 'not_assessed',
+    program,
+    rationale: `${prevalence}; not assessed: ${JP_ORPHAN_UNASSESSED_CRITERIA.join('; ')}.`,
+    missing: input.jpPrevalence == null ? ['jpPrevalence'] : [],
+    notAssessedCriteria: [...JP_ORPHAN_UNASSESSED_CRITERIA],
+  };
+}
 
-  // PMDA
-  if (input.jpPrevalence == null) {
-    return { eligible: false, program, rationale: 'Japan prevalence not supplied; orphan eligibility cannot be assessed.' };
+/** The EMA prevalence limb (≤ 5 in 10,000 AND serious): the stated facts that fail it, and those not stated. */
+function emaPrevalenceLimb(input: DesignationInput): { unmet: string[]; missing: (keyof DesignationInput)[] } {
+  const unmet: string[] = [];
+  const missing: (keyof DesignationInput)[] = [];
+  if (input.euPrevalencePer10k == null) missing.push('euPrevalencePer10k');
+  else if (input.euPrevalencePer10k > 5) unmet.push(`prevalence ${input.euPrevalencePer10k} per 10,000 exceeds 5`);
+  if (input.seriousOrLifeThreatening === false) unmet.push('not life-threatening/seriously debilitating');
+  else if (input.seriousOrLifeThreatening !== true) missing.push('seriousOrLifeThreatening');
+  return { unmet, missing };
+}
+
+/**
+ * EMA orphan screen, Regulation (EC) No 141/2000 Art 3(1): (a) the prevalence limb
+ * or the insufficient-return limb, which is not assessed, AND (b) no satisfactory
+ * method OR significant benefit.
+ */
+function assessEmaOrphan(input: DesignationInput, program: string): OrphanAssessment {
+  const { unmet: limbUnmet, missing: limbMissing } = emaPrevalenceLimb(input);
+  // (b): either prong satisfies it; it fails only when both are stated false.
+  const needMet = input.noSatisfactoryTreatment === true || input.significantBenefit === true;
+  if (input.noSatisfactoryTreatment === false && input.significantBenefit === false) {
+    return {
+      eligible: false,
+      program,
+      rationale: 'Does not meet EMA orphan criteria: neither "no satisfactory method" nor "significant benefit" is established.',
+      missing: [],
+      notAssessedCriteria: [],
+    };
   }
-  if (input.jpPrevalence < 50000) {
-    notes.push('PMDA orphan designation also requires high medical need (severe disease, no satisfactory alternative) — confirm qualitatively.');
+  const limbMet = limbUnmet.length === 0 && limbMissing.length === 0;
+  if (limbMet && needMet) {
     return {
       eligible: true,
       program,
-      rationale: `Japan prevalence ${input.jpPrevalence} is fewer than 50,000 — meets the PMDA orphan prevalence threshold (high medical need also required).`,
+      rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/seriously debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
+      missing: [],
+      notAssessedCriteria: [],
     };
   }
+  // 2026-10-15: a failed prevalence limb (over 5 in 10,000, or stated not serious)
+  // returned eligible:false, though the alternative insufficient-return limb of
+  // Art 3(1)(a) was never assessed. The screen now waits on it.
+  const needMissing = needMet
+    ? []
+    : (['noSatisfactoryTreatment', 'significantBenefit'] as const).filter((k) => typeof input[k] !== 'boolean');
+  const missing = [...(limbUnmet.length > 0 ? [] : limbMissing), ...needMissing];
+  const reasons = [
+    ...(limbUnmet.length > 0 ? [`prevalence limb not met (${limbUnmet.join('; ')})`] : []),
+    ...(missing.length > 0 ? [`not supplied: ${missing.join(', ')}`] : []),
+    ...(limbMet ? [] : ['the insufficient-return limb of Art 3(1)(a) is not assessed']),
+  ];
   return {
-    eligible: false,
+    eligible: 'not_assessed',
     program,
-    rationale: `Japan prevalence ${input.jpPrevalence} is not fewer than 50,000 — does not meet the PMDA orphan prevalence threshold.`,
+    rationale: `EMA orphan criteria cannot be assessed: ${reasons.join('; ')}.`,
+    missing,
+    notAssessedCriteria: limbMet ? [] : [EMA_INSUFFICIENT_RETURN_LIMB],
   };
 }
 

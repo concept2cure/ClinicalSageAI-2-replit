@@ -1,0 +1,166 @@
+TAP version 13
+# Subtest: recognizes the actual request-pinned transaction and both awaited prose callbacks
+ok 1 - recognizes the actual request-pinned transaction and both awaited prose callbacks
+  ---
+  duration_ms: 42.63898
+  type: 'test'
+  ...
+# Subtest: refuses missing wrapper
+ok 2 - refuses missing wrapper
+  ---
+  duration_ms: 34.411962
+  type: 'test'
+  ...
+# Subtest: refuses missing BEGIN
+ok 3 - refuses missing BEGIN
+  ---
+  duration_ms: 14.197196
+  type: 'test'
+  ...
+# Subtest: refuses missing COMMIT
+ok 4 - refuses missing COMMIT
+  ---
+  duration_ms: 46.581149
+  type: 'test'
+  ...
+# Subtest: refuses missing ROLLBACK
+ok 5 - refuses missing ROLLBACK
+  ---
+  duration_ms: 26.547312
+  type: 'test'
+  ...
+# Subtest: refuses different callback client
+ok 6 - refuses different callback client
+  ---
+  duration_ms: 9.640726
+  type: 'test'
+  ...
+# Subtest: refuses different governance client
+ok 7 - refuses different governance client
+  ---
+  duration_ms: 10.441443
+  type: 'test'
+  ...
+# Subtest: refuses different section writer client
+ok 8 - refuses different section writer client
+  ---
+  duration_ms: 15.827185
+  type: 'test'
+  ...
+# Subtest: refuses different synopsis writer client
+ok 9 - refuses different synopsis writer client
+  ---
+  duration_ms: 10.559568
+  type: 'test'
+  ...
+# Subtest: refuses unawaited callback
+ok 10 - refuses unawaited callback
+  ---
+  duration_ms: 8.457089
+  type: 'test'
+  ...
+# Subtest: refuses unawaited writer
+ok 11 - refuses unawaited writer
+  ---
+  duration_ms: 13.286115
+  type: 'test'
+  ...
+# Subtest: refuses rebound writer client
+ok 12 - refuses rebound writer client
+  ---
+  duration_ms: 6.460537
+  type: 'test'
+  ...
+# Subtest: refuses different request
+ok 13 - refuses different request
+  ---
+  duration_ms: 36.111734
+  type: 'test'
+  ...
+# Subtest: refuses noncanonical request helper
+ok 14 - refuses noncanonical request helper
+  ---
+  duration_ms: 9.077079
+  type: 'test'
+  ...
+# Subtest: refuses missing forwarding function
+ok 15 - refuses missing forwarding function
+  ---
+  duration_ms: 11.597188
+  type: 'test'
+  ...
+# Subtest: refuses substituted forwarded callback
+ok 16 - refuses substituted forwarded callback
+  ---
+  duration_ms: 11.576167
+  type: 'test'
+  ...
+# Subtest: a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+ok 17 - a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+  ---
+  duration_ms: 14.365427
+  type: 'test'
+  ...
+# Subtest: request binding failure must return before transaction entry
+ok 18 - request binding failure must return before transaction entry
+  ---
+  duration_ms: 9.866781
+  type: 'test'
+  ...
+# Subtest: the actual service callback itself must await the governed transaction
+ok 19 - the actual service callback itself must await the governed transaction
+  ---
+  duration_ms: 7.555862
+  type: 'test'
+  ...
+# Subtest: the real guard accepts actual Protocol ownership without removing its guarded service
+ok 20 - the real guard accepts actual Protocol ownership without removing its guarded service
+  ---
+  duration_ms: 671.237594
+  type: 'test'
+  ...
+# Subtest: the real guard rejects a different writer client even if an unrelated pooled transaction exists
+ok 21 - the real guard rejects a different writer client even if an unrelated pooled transaction exists
+  ---
+  duration_ms: 647.310723
+  type: 'test'
+  ...
+# Subtest: the gate ran against the fixture tree, not the repository
+ok 22 - the gate ran against the fixture tree, not the repository
+  ---
+  duration_ms: 609.420527
+  type: 'test'
+  ...
+# Subtest: a content write after a string holding /* is discovered
+ok 23 - a content write after a string holding /* is discovered
+  ---
+  duration_ms: 0.298092
+  type: 'test'
+  ...
+# Subtest: a content write after an https:// string on the same line is discovered
+ok 24 - a content write after an https:// string on the same line is discovered
+  ---
+  duration_ms: 0.160618
+  type: 'test'
+  ...
+# Subtest: a content write only inside real comments is not a writer
+ok 25 - a content write only inside real comments is not a writer
+  ---
+  duration_ms: 0.543116
+  type: 'test'
+  ...
+# Subtest: a content write named only in a trailing line comment is not a writer
+ok 26 - a content write named only in a trailing line comment is not a writer
+  ---
+  duration_ms: 0.12143
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2077.412044

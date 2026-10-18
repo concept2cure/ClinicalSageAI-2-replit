@@ -190,15 +190,27 @@ export function createCortexManagementRoutes(pool: Pool): Router {
           error: 'sourceAtomId, targetAtomId, and relationshipType required',
         });
       }
+      const strengthStated = relationshipStrength !== undefined && relationshipStrength !== null;
+      if (
+        strengthStated &&
+        (typeof relationshipStrength !== 'number' || relationshipStrength < 0 || relationshipStrength > 1)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'relationshipStrength, when given, must be a number from 0 to 1',
+        });
+      }
 
+      // 2026-10-15: an unstated strength was recorded as 0.8 (and a stated 0
+      // became 0.8 too), and every manual edge as confidence 0.9.
       const edgeId = await graphService.createEdge({
         sourceAtomId,
         targetAtomId,
         relationshipType,
-        relationshipStrength: relationshipStrength || 0.8,
+        relationshipStrength: strengthStated ? relationshipStrength : null,
         bidirectional: bidirectional !== false,
         extractedFrom: 'manual',
-        confidence: 0.9,
+        confidence: null,
       });
 
       res.json({

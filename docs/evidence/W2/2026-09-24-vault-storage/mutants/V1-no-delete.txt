@@ -3,7 +3,7 @@ tests/boot_contract.tftest.hcl... in progress
   run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 308, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
 │  308:     condition = anytrue([
 │  309:       for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Allow"] :
@@ -14,7 +14,7 @@ tests/boot_contract.tftest.hcl... in progress
 │     │ aws_s3_bucket.vault.arn is "lhesbd7i"
 │     │ aws_s3_bucket_policy.vault.policy is "{\"Statement\":[{\"Action\":[\"s3:ListBucket\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"lhesbd7i\",\"Sid\":\"TaskRoleListsTheVault\"},{\"Action\":[\"s3:GetObject\",\"s3:PutObject\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"lhesbd7i/*\",\"Sid\":\"TaskRoleReadsAndWritesVaultObjects\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"lhesbd7i\",\"lhesbd7i/*\"],\"Sid\":\"DenyInsecureTransport\"}],\"Version\":\"2012-10-17\"}"
 │     │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
-│ 
+│
 │ The task role must get, put and delete vault objects (s3-provider.ts
 │ deletes on discard).
 ╵

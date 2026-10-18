@@ -23,7 +23,47 @@
 --
 -- Idempotent: DROP CONSTRAINT IF EXISTS + ADD inside a to_regclass guard —
 -- re-running re-asserts the same policy.
+--
+-- AMENDED IN PLACE 2026-10-05: connector_credentials was referenced by this
+-- registered migration, but its only CREATE TABLE lived outside every deploy
+-- path. Add the canonical per-organization credential store here, before the
+-- FK convergence below. Credentials are application-encrypted ciphertext; the
+-- table has tenant RLS now and is also reached by the final migration-set
+-- tenant sweep because organization_id is a required public integer key.
 -- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.connector_credentials (
+  id                SERIAL PRIMARY KEY,
+  organization_id   INTEGER NOT NULL,
+  connector_id      TEXT NOT NULL,
+  credentials       TEXT NOT NULL,
+  is_valid          BOOLEAN DEFAULT TRUE,
+  last_validated_at TIMESTAMP,
+  created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT connector_credentials_organization_id_organizations_id_fk
+    FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
+  CONSTRAINT connector_credentials_org_connector_unique
+    UNIQUE (organization_id, connector_id)
+);
+
+ALTER TABLE public.connector_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.connector_credentials FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation_policy ON public.connector_credentials;
+CREATE POLICY tenant_isolation_policy ON public.connector_credentials
+  FOR ALL
+  USING (
+    NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+    OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
+    OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INTEGER
+    OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+  )
+  WITH CHECK (
+    NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+    OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
+    OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INTEGER
+    OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+  );
 
 DO $$
 BEGIN

@@ -19,6 +19,9 @@ function input(over: Partial<LetterOfAuthorizationInput> = {}): LetterOfAuthoriz
     holderAddress: '1 Industry Way, NJ',
     authorizedPartyName: 'Acme Therapeutics',
     subjectName: 'C2C-001 drug substance',
+    // 2026-10-15: the scope is a required particular; it used to default to
+    // "the file in its entirety" when unstated.
+    authorizedSections: ['3.2.S Drug Substance'],
     signatoryName: 'Dana Holder',
     signatoryTitle: 'VP Regulatory',
     signatureDate: '2026-06-14',
@@ -37,8 +40,10 @@ describe('assembleLetterOfAuthorization', () => {
     expect(byKey.authorization).toContain('Excipient Co.');
   });
 
-  it('defaults the scope to "in its entirety" and honors explicit sections', () => {
-    expect(assembleLetterOfAuthorization(input()).sections.find((s) => s.key === 'scope')?.body).toContain('in its entirety');
+  it('an unstated scope is a gap with a placeholder, never "in its entirety"; explicit sections are honored', () => {
+    const unstated = assembleLetterOfAuthorization(input({ authorizedSections: undefined }));
+    expect(unstated.sections.find((s) => s.key === 'scope')?.body).toBe('Authorized for reference: [scope to be specified].');
+    expect(unstated.gaps).toContain('authorized scope (sections authorized for reference)');
     const scoped = assembleLetterOfAuthorization(input({ authorizedSections: ['3.2.S Drug Substance'] }));
     expect(scoped.sections.find((s) => s.key === 'scope')?.body).toContain('3.2.S Drug Substance');
   });

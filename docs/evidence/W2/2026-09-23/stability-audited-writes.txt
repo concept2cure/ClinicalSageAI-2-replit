@@ -75,4 +75,3 @@ delete result                      -> 200 audit+1 data="0"
 delete timepoint                   -> 200 audit+1
 delete condition                   -> 200 audit+1
 audit actions: CREATE_STUDY:1 assign_add:1 bulk_assign:2 capa_create:1 coc_add:1 condition_add:1 condition_delete:1 condition_update:1 excursions_import:1 inuse_update:2 oot_rules_update:2 p8_export:1 p8_push_authoring:1 result_add:1 result_delete:1 result_update:1 results_import:1 sample_collect:1 sample_create:1 test_update:2 tp_actual_date:1 tp_add:1 tp_delete:1 tp_update:1
-

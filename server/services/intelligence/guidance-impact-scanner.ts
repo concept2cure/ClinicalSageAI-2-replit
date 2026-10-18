@@ -333,13 +333,9 @@ export async function scanArtifactsForGuidanceChange(
     typeof input.organizationId === 'number'
       ? [sectionList, input.organizationId]
       : [sectionList];
-  let rows: any[] = [];
-  try {
-    const queryResult = await getPool().query(sql, params);
-    rows = queryResult.rows;
-  } catch (err: any) {
-    if (err?.code !== '42P01') throw err;
-  }
+  // 2026-10-15: a missing artifacts table (42P01) was read as no rows, so the
+  // scan reported 0 artifacts affected without reading any. It now throws.
+  const { rows } = await getPool().query(sql, params);
 
   for (const row of rows) {
     const sectionMatches = matchesBySection.get(row.ctd_section) ?? [];
@@ -352,52 +348,44 @@ export async function scanArtifactsForGuidanceChange(
       required: m.required,
     }));
 
-    try {
-      const insertResult = await getPool().query(
-        `INSERT INTO guidance_alerts (
-           organization_id, project_id, artifact_id, artifact_pk,
-           guidance_code, guidance_authority,
-           prev_version, new_version,
-           severity, affected_sections, metadata
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-         ON CONFLICT (organization_id, artifact_id, guidance_code, new_version)
-           WHERE status IN ('open', 'acknowledged')
-         DO NOTHING
-         RETURNING id`,
-        [
-          row.organization_id,
-          row.project_id,
-          row.artifact_id,
-          row.artifact_pk,
-          input.guidanceCode,
-          input.authority,
-          input.prevVersion,
-          input.newVersion,
-          severity,
-          JSON.stringify(affectedSections),
-          JSON.stringify({
-            scannedAt: new Date().toISOString(),
-            sectionMatchSources: Array.from(
-              new Set(sectionMatches.map(m => m.source))
-            ),
-          }),
-        ]
-      );
-      if (insertResult.rows.length > 0) {
-        result.alertsCreated += 1;
-      } else {
-        result.alertsSkippedDuplicate += 1;
-      }
-      result.artifactsAffected += 1;
-    } catch (err: any) {
-      // Tolerant of missing tables in dev / test envs.
-      if (err?.code !== '42P01') {
-        console.warn(
-          '[guidance-impact-scanner] alert insert failed:',
-          err?.message || err
-        );
-      }
+    // 2026-10-15: a failed insert was logged (or, for 42P01, ignored) and the
+    // scan returned counts that left it out. A failed write now throws.
+    const insertResult = await getPool().query(
+      `INSERT INTO guidance_alerts (
+         organization_id, project_id, artifact_id, artifact_pk,
+         guidance_code, guidance_authority,
+         prev_version, new_version,
+         severity, affected_sections, metadata
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       ON CONFLICT (organization_id, artifact_id, guidance_code, new_version)
+         WHERE status IN ('open', 'acknowledged')
+       DO NOTHING
+       RETURNING id`,
+      [
+        row.organization_id,
+        row.project_id,
+        row.artifact_id,
+        row.artifact_pk,
+        input.guidanceCode,
+        input.authority,
+        input.prevVersion,
+        input.newVersion,
+        severity,
+        JSON.stringify(affectedSections),
+        JSON.stringify({
+          scannedAt: new Date().toISOString(),
+          sectionMatchSources: Array.from(
+            new Set(sectionMatches.map(m => m.source))
+          ),
+        }),
+      ]
+    );
+    if (insertResult.rows.length > 0) {
+      result.alertsCreated += 1;
+    } else {
+      result.alertsSkippedDuplicate += 1;
     }
+    result.artifactsAffected += 1;
   }
   return result;
 }
@@ -473,34 +461,31 @@ export async function listGuidanceAlerts(
   const limit = Math.max(1, Math.min(options.limit ?? 50, 200));
   const offset = Math.max(0, options.offset ?? 0);
 
-  try {
-    const [rowsResult, countResult] = await Promise.all([
-      getPool().query(
-        `SELECT * FROM guidance_alerts ${where}
-          ORDER BY
-            CASE severity
-              WHEN 'critical' THEN 0
-              WHEN 'major' THEN 1
-              WHEN 'minor' THEN 2
-              WHEN 'info' THEN 3
-            END,
-            created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
-        params
-      ),
-      getPool().query(
-        `SELECT COUNT(*)::int AS c FROM guidance_alerts ${where}`,
-        params
-      ),
-    ]);
-    return {
-      rows: rowsResult.rows,
-      total: countResult.rows[0]?.c ?? 0,
-    };
-  } catch (err: any) {
-    if (err?.code === '42P01') return { rows: [], total: 0 };
-    throw err;
-  }
+  // 2026-10-15: a missing table (42P01) returned { rows: [], total: 0 } —
+  // "no alerts" from a store that was never read. It now throws.
+  const [rowsResult, countResult] = await Promise.all([
+    getPool().query(
+      `SELECT * FROM guidance_alerts ${where}
+        ORDER BY
+          CASE severity
+            WHEN 'critical' THEN 0
+            WHEN 'major' THEN 1
+            WHEN 'minor' THEN 2
+            WHEN 'info' THEN 3
+          END,
+          created_at DESC
+        LIMIT ${limit} OFFSET ${offset}`,
+      params
+    ),
+    getPool().query(
+      `SELECT COUNT(*)::int AS c FROM guidance_alerts ${where}`,
+      params
+    ),
+  ]);
+  return {
+    rows: rowsResult.rows,
+    total: countResult.rows[0]?.c ?? 0,
+  };
 }
 
 async function transitionAlert(
@@ -517,21 +502,18 @@ async function transitionAlert(
     setClauses.push('resolved_at = NOW()');
     setClauses.push(`resolved_by = $4`);
   }
-  try {
-    const result = await getPool().query(
-      `UPDATE guidance_alerts
-          SET ${setClauses.join(', ')}
-        WHERE id = $1
-          AND organization_id = $2
-        RETURNING *`,
-      [alertId, organizationId, toStatus, userId]
-    );
-    if (result.rows.length === 0) return { ok: false, row: null };
-    return { ok: true, row: result.rows[0] };
-  } catch (err: any) {
-    if (err?.code === '42P01') return { ok: false, row: null };
-    throw err;
-  }
+  // 2026-10-15: a missing table (42P01) answered { ok: false } — "no such
+  // alert" — for a store that was never read. It now throws.
+  const result = await getPool().query(
+    `UPDATE guidance_alerts
+        SET ${setClauses.join(', ')}
+      WHERE id = $1
+        AND organization_id = $2
+      RETURNING *`,
+    [alertId, organizationId, toStatus, userId]
+  );
+  if (result.rows.length === 0) return { ok: false, row: null };
+  return { ok: true, row: result.rows[0] };
 }
 
 export async function acknowledgeGuidanceAlert(
@@ -581,25 +563,22 @@ async function bulkTransition(
   // earlier acknowledger when re-acknowledging).
   const fromStatuses =
     toStatus === 'acknowledged' ? ['open'] : ['open', 'acknowledged'];
-  try {
-    const result = await getPool().query(
-      `UPDATE guidance_alerts
-          SET ${setClauses.join(', ')}
-        WHERE id = ANY($1::uuid[])
-          AND organization_id = $2
-          AND status = ANY($5::text[])
-        RETURNING id`,
-      [alertIds, organizationId, toStatus, userId, fromStatuses]
-    );
-    return {
-      requested: alertIds.length,
-      matched: result.rows.length,
-      updated: result.rows.map((r: any) => String(r.id)),
-    };
-  } catch (err: any) {
-    if (err?.code === '42P01') return { requested: alertIds.length, matched: 0, updated: [] };
-    throw err;
-  }
+  // 2026-10-15: a missing table (42P01) answered "0 matched" for a store that
+  // was never read. It now throws.
+  const result = await getPool().query(
+    `UPDATE guidance_alerts
+        SET ${setClauses.join(', ')}
+      WHERE id = ANY($1::uuid[])
+        AND organization_id = $2
+        AND status = ANY($5::text[])
+      RETURNING id`,
+    [alertIds, organizationId, toStatus, userId, fromStatuses]
+  );
+  return {
+    requested: alertIds.length,
+    matched: result.rows.length,
+    updated: result.rows.map((r: any) => String(r.id)),
+  };
 }
 
 export async function bulkAcknowledgeGuidanceAlerts(
@@ -618,12 +597,29 @@ export async function bulkResolveGuidanceAlerts(
   return bulkTransition(alertIds, organizationId, 'resolved', userId);
 }
 
-// ─── Org-scoped alert summary ────────────────────────────────────────
+// ─── Alert summary (organisation, or one project) ────────────────────
 
 export interface GuidanceAlertsSummary {
   organizationId: number;
+  /** The project these counts cover; null when they cover the organisation. */
+  projectId: number | null;
   asOf: string;
+  /**
+   * Whether a scan result is on record for this scope. A guidance scan writes
+   * a row only for an artifact it finds affected, so false means no scan
+   * result is on record — never "scanned, nothing affected".
+   */
+  assessed: boolean;
+  /**
+   * The newest alert row's creation time: the latest scan on record. A scan
+   * that raises no new alert writes nothing, so a later scan may exist.
+   * Null when no scan result is on record.
+   */
+  lastScanAt: string | null;
+  /** Every alert raised, by severity, in any status (resolved included). */
   bySeverity: Record<GapSeverity, number>;
+  /** Open and acknowledged alerts by severity: what is still unresolved. */
+  openBySeverity: Record<GapSeverity, number>;
   byStatus: Record<AlertStatus, number>;
   /** open + acknowledged with severity=critical. The ops-critical number. */
   openCritical: number;
@@ -658,143 +654,144 @@ function highestSeverity(values: Array<GapSeverity | null | undefined>): GapSeve
   return null;
 }
 
+const SEVERITY_VALUES: readonly string[] = SEVERITY_RANK_LIST;
+
+/**
+ * 2026-10-15: this returned a zeroed summary for an organisation nothing had
+ * scanned and, on 42P01, for one whose alert table did not exist; both read as
+ * "0 open guidance alerts" and scored as clean. It was organisation-wide only.
+ * It now says whether a scan result is on record, can be scoped to one
+ * project, and a failed read throws.
+ */
 export async function getGuidanceAlertsSummary(
-  organizationId: number
+  organizationId: number,
+  options: { projectId?: number } = {}
 ): Promise<GuidanceAlertsSummary> {
-  const empty: GuidanceAlertsSummary = {
-    organizationId,
-    asOf: new Date().toISOString(),
-    bySeverity: { critical: 0, major: 0, minor: 0, info: 0 },
-    byStatus: { open: 0, acknowledged: 0, resolved: 0 },
-    openCritical: 0,
-    totalOpen: 0,
-    topGuidanceCodes: [],
-    topAffectedArtifacts: [],
-    recent: { lastAlertAt: null, lastResolvedAt: null },
-  };
+  const projectId = typeof options.projectId === 'number' ? options.projectId : null;
+  // $2 is the project, or null for the whole organisation.
+  const params: unknown[] = [organizationId, projectId];
+  const limited = [organizationId, projectId, MAX_TOP_LIST];
 
-  // 1. Per-severity counts (across all statuses).
-  // 2. Per-status counts.
-  // 3. Critical open count.
-  // 4. Top guidance codes with at least one open alert.
-  // 5. Top affected artifacts with at least one open alert.
-  // 6. Recency timestamps.
-  try {
-    const [sevRes, statRes, critRes, topCodesRes, topArtifactsRes, recencyRes] =
-      await Promise.all([
-        getPool().query(
-          `SELECT severity, COUNT(*)::int AS c
-             FROM guidance_alerts
-            WHERE organization_id = $1
-            GROUP BY severity`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT status, COUNT(*)::int AS c
-             FROM guidance_alerts
-            WHERE organization_id = $1
-            GROUP BY status`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT COUNT(*)::int AS c
-             FROM guidance_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-              AND severity = 'critical'`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT guidance_code, guidance_authority,
-                  COUNT(*)::int                  AS open_count,
-                  MIN(
-                    CASE severity
-                      WHEN 'critical' THEN 0
-                      WHEN 'major' THEN 1
-                      WHEN 'minor' THEN 2
-                      WHEN 'info' THEN 3
-                      ELSE 4
-                    END
-                  )                                AS severity_rank
-             FROM guidance_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-            GROUP BY guidance_code, guidance_authority
-            ORDER BY open_count DESC, severity_rank ASC
-            LIMIT $2`,
-          [organizationId, MAX_TOP_LIST]
-        ),
-        getPool().query(
-          `SELECT artifact_id, project_id,
-                  COUNT(*)::int                  AS open_count,
-                  MIN(
-                    CASE severity
-                      WHEN 'critical' THEN 0
-                      WHEN 'major' THEN 1
-                      WHEN 'minor' THEN 2
-                      WHEN 'info' THEN 3
-                      ELSE 4
-                    END
-                  )                                AS severity_rank
-             FROM guidance_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-            GROUP BY artifact_id, project_id
-            ORDER BY open_count DESC, severity_rank ASC
-            LIMIT $2`,
-          [organizationId, MAX_TOP_LIST]
-        ),
-        getPool().query(
-          `SELECT
-             MAX(created_at)            AS last_alert_at,
-             MAX(resolved_at)           AS last_resolved_at
+  const [sevRes, openSevRes, statRes, topCodesRes, topArtifactsRes, recencyRes] =
+    await Promise.all([
+      getPool().query(
+        `SELECT severity, COUNT(*)::int AS c
            FROM guidance_alerts
-          WHERE organization_id = $1`,
-          [organizationId]
-        ),
-      ]);
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+          GROUP BY severity`,
+        params
+      ),
+      getPool().query(
+        `SELECT severity, COUNT(*)::int AS c
+           FROM guidance_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY severity`,
+        params
+      ),
+      getPool().query(
+        `SELECT status, COUNT(*)::int AS c
+           FROM guidance_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+          GROUP BY status`,
+        params
+      ),
+      getPool().query(
+        `SELECT guidance_code, guidance_authority,
+                COUNT(*)::int                  AS open_count,
+                MIN(
+                  CASE severity
+                    WHEN 'critical' THEN 0
+                    WHEN 'major' THEN 1
+                    WHEN 'minor' THEN 2
+                    WHEN 'info' THEN 3
+                    ELSE 4
+                  END
+                )                                AS severity_rank
+           FROM guidance_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY guidance_code, guidance_authority
+          ORDER BY open_count DESC, severity_rank ASC
+          LIMIT $3`,
+        limited
+      ),
+      getPool().query(
+        `SELECT artifact_id, project_id,
+                COUNT(*)::int                  AS open_count,
+                MIN(
+                  CASE severity
+                    WHEN 'critical' THEN 0
+                    WHEN 'major' THEN 1
+                    WHEN 'minor' THEN 2
+                    WHEN 'info' THEN 3
+                    ELSE 4
+                  END
+                )                                AS severity_rank
+           FROM guidance_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY artifact_id, project_id
+          ORDER BY open_count DESC, severity_rank ASC
+          LIMIT $3`,
+        limited
+      ),
+      getPool().query(
+        `SELECT
+           MAX(created_at)            AS last_alert_at,
+           MAX(resolved_at)           AS last_resolved_at
+         FROM guidance_alerts
+        WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)`,
+        params
+      ),
+    ]);
 
-    const out = { ...empty };
-
-    for (const r of sevRes.rows as Array<{ severity: string; c: number }>) {
-      if ((['critical', 'major', 'minor', 'info'] as const).includes(r.severity as any)) {
-        out.bySeverity[r.severity as GapSeverity] = Number(r.c) || 0;
-      }
+  const bySeverity: Record<GapSeverity, number> = { critical: 0, major: 0, minor: 0, info: 0 };
+  for (const r of sevRes.rows as Array<{ severity: string; c: number }>) {
+    if (SEVERITY_VALUES.includes(r.severity)) bySeverity[r.severity as GapSeverity] = Number(r.c) || 0;
+  }
+  const openBySeverity: Record<GapSeverity, number> = { critical: 0, major: 0, minor: 0, info: 0 };
+  for (const r of openSevRes.rows as Array<{ severity: string; c: number }>) {
+    if (SEVERITY_VALUES.includes(r.severity)) openBySeverity[r.severity as GapSeverity] = Number(r.c) || 0;
+  }
+  const byStatus: Record<AlertStatus, number> = { open: 0, acknowledged: 0, resolved: 0 };
+  for (const r of statRes.rows as Array<{ status: string; c: number }>) {
+    if ((['open', 'acknowledged', 'resolved'] as readonly string[]).includes(r.status)) {
+      byStatus[r.status as AlertStatus] = Number(r.c) || 0;
     }
-    for (const r of statRes.rows as Array<{ status: string; c: number }>) {
-      if ((['open', 'acknowledged', 'resolved'] as const).includes(r.status as any)) {
-        out.byStatus[r.status as AlertStatus] = Number(r.c) || 0;
-      }
-    }
-    out.openCritical = Number(critRes.rows[0]?.c) || 0;
-    out.totalOpen = out.byStatus.open + out.byStatus.acknowledged;
+  }
+  const lastAlertRaw = recencyRes.rows[0]?.last_alert_at;
+  const lastResolvedRaw = recencyRes.rows[0]?.last_resolved_at;
+  const lastAlertAt = lastAlertRaw ? new Date(lastAlertRaw).toISOString() : null;
 
-    out.topGuidanceCodes = topCodesRes.rows.map((r: any) => ({
+  return {
+    organizationId,
+    projectId,
+    asOf: new Date().toISOString(),
+    assessed: lastAlertAt !== null,
+    lastScanAt: lastAlertAt,
+    bySeverity,
+    openBySeverity,
+    byStatus,
+    openCritical: openBySeverity.critical,
+    totalOpen: byStatus.open + byStatus.acknowledged,
+    topGuidanceCodes: topCodesRes.rows.map((r: any) => ({
       guidanceCode: r.guidance_code,
       authority: r.guidance_authority,
       openCount: Number(r.open_count) || 0,
-      severityHighest:
-        (SEVERITY_RANK_LIST[Number(r.severity_rank)] as GapSeverity) ?? null,
-    }));
-    out.topAffectedArtifacts = topArtifactsRes.rows.map((r: any) => ({
+      severityHighest: SEVERITY_RANK_LIST[Number(r.severity_rank)] ?? null,
+    })),
+    topAffectedArtifacts: topArtifactsRes.rows.map((r: any) => ({
       artifactId: r.artifact_id,
       projectId: r.project_id,
       openCount: Number(r.open_count) || 0,
-      severityHighest:
-        (SEVERITY_RANK_LIST[Number(r.severity_rank)] as GapSeverity) ?? null,
-    }));
-    out.recent.lastAlertAt = recencyRes.rows[0]?.last_alert_at
-      ? new Date(recencyRes.rows[0].last_alert_at).toISOString()
-      : null;
-    out.recent.lastResolvedAt = recencyRes.rows[0]?.last_resolved_at
-      ? new Date(recencyRes.rows[0].last_resolved_at).toISOString()
-      : null;
-
-    return out;
-  } catch (err: any) {
-    if (err?.code === '42P01') return empty;
-    throw err;
-  }
+      severityHighest: SEVERITY_RANK_LIST[Number(r.severity_rank)] ?? null,
+    })),
+    recent: {
+      lastAlertAt,
+      lastResolvedAt: lastResolvedRaw ? new Date(lastResolvedRaw).toISOString() : null,
+    },
+  };
 }
 
 // ─── Monitored-guidance catalog ──────────────────────────────────────
@@ -874,30 +871,29 @@ export async function getMonitoredGuidanceCatalog(): Promise<{
     { authority: string; currentVersion: string; currentVersionAt: Date }
   >();
   if (codes.length > 0) {
-    try {
-      const { rows } = await getPool().query(
-        `SELECT guidance_code, authority, current_version, current_version_at
-           FROM guidance_reference_index
-          WHERE guidance_code = ANY($1::text[])`,
-        [codes]
-      );
-      for (const r of rows as Array<{
-        guidance_code: string;
-        authority: string;
-        current_version: string;
-        current_version_at: Date | string;
-      }>) {
-        indexByCode.set(r.guidance_code, {
-          authority: r.authority,
-          currentVersion: r.current_version,
-          currentVersionAt:
-            r.current_version_at instanceof Date
-              ? r.current_version_at
-              : new Date(r.current_version_at),
-        });
-      }
-    } catch (err: any) {
-      if (err?.code !== '42P01') throw err;
+    // 2026-10-15: a missing registry table (42P01) was read as no rows, so
+    // every code was listed registered: false without the registry being
+    // read. It now throws.
+    const { rows } = await getPool().query(
+      `SELECT guidance_code, authority, current_version, current_version_at
+         FROM guidance_reference_index
+        WHERE guidance_code = ANY($1::text[])`,
+      [codes]
+    );
+    for (const r of rows as Array<{
+      guidance_code: string;
+      authority: string;
+      current_version: string;
+      current_version_at: Date | string;
+    }>) {
+      indexByCode.set(r.guidance_code, {
+        authority: r.authority,
+        currentVersion: r.current_version,
+        currentVersionAt:
+          r.current_version_at instanceof Date
+            ? r.current_version_at
+            : new Date(r.current_version_at),
+      });
     }
   }
 

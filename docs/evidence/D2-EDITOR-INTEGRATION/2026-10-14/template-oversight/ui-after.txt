@@ -1,0 +1,19 @@
+Selected behavioral results from /workspace/scratch/template-oversight-ui-final.log; routine request/component logs omitted.
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask 557ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask 242ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document 218ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes 206ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet 111ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits 197ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits 210ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > bounds long handoff limits explicitly and points to complete saved-review pages 251ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > does not carry late prior-document metadata into another document ask 578ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes 0ms
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  19:42:04
+   Duration  6.66s (transform 1.98s, setup 207ms, import 2.48s, tests 2.58s, environment 995ms)

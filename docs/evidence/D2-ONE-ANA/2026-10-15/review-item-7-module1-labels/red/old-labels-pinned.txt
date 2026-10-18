@@ -1,0 +1,10 @@
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 46ms
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 14ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no transmit channel 10ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 2ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 4 passed (6)
+      Tests  7 failed | 61 passed (68)

@@ -1,0 +1,24 @@
+# red: server-clock client tests before IndLifecycle.tsx calls POST /api/ind-lifecycle/clock (the screen still uses the client indlClock)
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/indLifecycleTargetDate.test.tsx
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — 30-day clock from the RECORDED target date only > renders "No target date set" (reason + next action) when no target is recorded 166ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — 30-day clock from the RECORDED target date only > renders the org's RECORDED target date when one exists 83ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — a projected 30-day clock never speaks as the regulatory one > does not show a cleared-to-proceed chip or the may-proceed sentence over a target date 97ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — a projected 30-day clock never speaks as the regulatory one > publishes the clock to AnA as a projection with safeToProceed unknown 121ms
+ × indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > shows the clock the server computed from the recorded target date 5036ms
+   → Unable to find an element with the text: 4321. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > while the server computes, says so — no number, no date 5013ms
+   → Unable to find an element with the text: /Computing the 30-day clock/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > a failed computation reads as a failure with a retry — never as a clock, never as "no target date" 5014ms
+   → Unable to find an element with the text: /The 30-day clock could not be computed — The clock engine is unavailable\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > a 200 that is not a clock is a failure, not a clock at zero 5023ms
+   → Unable to find an element with the text: /The 30-day clock could not be computed — unexpected response/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > with no recorded target date, nothing is asked of the server and nothing is projected 72ms
+ × indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > the screen carries no client copy of the readiness or clock engine 4ms
+   → expected 'import React, { useState, useMemo, us…' not to match /\bindlReadiness\b|\bindlClock\b/
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — deliverable cards carry no false affordance > prints no server route as decorative text 68ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — deliverable cards carry no false affordance > every card keeps an honest "Ask AnA" button that does exactly that 54ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — deliverable cards carry no false affordance > the cover-letter exemplar POSTs the real route and renders the SERVER model + gaps 108ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — deliverable cards carry no false affordance > a failed cover-letter assemble reports honestly — never success 94ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)

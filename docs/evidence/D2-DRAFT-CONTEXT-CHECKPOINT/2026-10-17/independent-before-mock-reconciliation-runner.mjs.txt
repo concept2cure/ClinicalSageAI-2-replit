@@ -1,0 +1,36 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const folder = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(folder, '../../../..');
+const label = process.argv[2];
+if (!label || !/^[a-z][a-z0-9-]*$/.test(label) || process.argv.length !== 3) throw new Error('Use one evidence label');
+if (Number(process.versions.node.split('.')[0]) !== 22) throw new Error('Use repository Node 22');
+const files = [
+  'server/services/ana/draft-project-sources.ts', 'server/services/ana/draft-source-identity.ts',
+  'server/services/ana/draft-source-window.ts', 'shared/authoring/draft-source-reference.ts',
+  'server/services/ana/AnaDocumentDraftingService.ts', 'server/services/ana/batch-draft-result.ts',
+  'server/services/ai-gateway/gateway.ts', 'server/services/ai-gateway/types.ts',
+  'server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts',
+  ...['CONTRACT.md', 'independent-checkpoint.config.mts', 'independent-run-checkpoint.mjs'].map(name => path.relative(root, path.join(folder, name))),
+];
+const counterfactual = label === 'counterfactual';
+if (counterfactual) files.push(...['independent-counterfactual.config.mts', 'independent-baseline-bindings.json',
+  'independent-baseline-draft-project-sources.ts.txt', 'independent-baseline-AnaDocumentDraftingService.ts.txt']
+  .map(name => path.relative(root, path.join(folder, name))));
+const hashes = () => Object.fromEntries(files.map(file => [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
+const before = hashes(); const startedAt = new Date().toISOString();
+const config = counterfactual ? 'independent-counterfactual.config.mts' : 'independent-checkpoint.config.mts';
+const command = ['node_modules/vitest/vitest.mjs', 'run', '--config', path.relative(root, path.join(folder, config))];
+const run = spawnSync(process.execPath, command, { cwd: root, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+  env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=4096' } });
+const after = hashes(); const sourcesUnchangedDuringRun = JSON.stringify(before) === JSON.stringify(after);
+writeFileSync(path.join(folder, `independent-${label}.txt`), run.stdout + run.stderr);
+writeFileSync(path.join(folder, `independent-${label}-bindings.json`), JSON.stringify({ startedAt, finishedAt: new Date().toISOString(),
+  node: process.version, command, exitCode: run.status, before, after, sourcesUnchangedDuringRun,
+  counterfactual: counterfactual ? 'Exact original producer and drafting-service snapshots substituted; unchanged case bodies after reversible describe-only grouping; all other modules current. Not the full historical application.' : null,
+  scope: 'Actual producer and drafting service; synthetic catalog/actor/program and gateway/provider boundary. gateway.ts is bound for integration tracking but mocked, not executed. No DB, provider or network.' }, null, 2) + '\n');
+process.stdout.write(run.stdout + run.stderr + `\nSources unchanged during run: ${sourcesUnchangedDuringRun}\n`);
+process.exit(run.status === 0 && sourcesUnchangedDuringRun ? 0 : 1);

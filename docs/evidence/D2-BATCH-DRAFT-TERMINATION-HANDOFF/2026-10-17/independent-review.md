@@ -1,0 +1,29 @@
+# Independent reported-termination boundary review
+
+## Existing server boundary
+
+The actual Express-registered `/api/batch-draft/documents/:id/accept` route passed **18/18 baseline controls**, with all 14 tracked inputs unchanged. These are positive compatibility controls for an existing policy; the meaningful fail-first evidence for the UI defect belongs to the component test owner. See `independent-baseline.txt` and `independent-baseline-bindings.json`.
+
+All three canonical snake_case cutoff reasons refuse with HTTP 422 `DRAFT_TRUNCATED` even when `truncated` is false or absent. Explicit true refuses with complete, unknown or missing reasons. Whitespace trimming preserves the canonical classifier behavior. Every refusal occurs before the mocked `requestDb` lookup.
+
+Complete, unknown, unrecognized, null and absent finish reports pass this cutoff check. The fixture stops them at a request-db sentinel and emits a distinct HTTP **418**, `accepted: false`; this is not a successful acceptance or completeness verdict. No database object, query, transaction, content/version/lineage/audit write or provider is exercised. Existing PGlite acceptance suites qualify actual SQL/transaction behavior separately. Canonical Vitest's PostgreSQL mock can log a successful connection; that log does not establish a real database connection or deployed role.
+
+The frozen fixture SHA-256 is `911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437`. Exact baseline test and finish-helper bytes are preserved in `independent-baseline.fixture.ts.txt` and `independent-baseline-finish-reason.ts.txt`. The runner captures the future shared helper as explicitly absent at baseline. Owned `.ts` test and `.mjs` runner lint records zero errors/warnings; the `.mts` evidence config has no lint-pass claim.
+
+## Wire and trust limits
+
+The service returns camelCase `finishReason`; the existing accept wire deliberately takes snake_case `finish_reason`. The UI must retain the service value and send that existing wire field with `truncated`. This increment adds no camelCase request alias. An unsupported camelCase-only reason is not checked as a snake_case report, and caller omission/forgery is not prevented by this client-reported metadata mechanism.
+
+The accept path separately verifies claimed machine text against tenant-scoped turn records and derives its model from verified records. Its lineage/version/content/audit transaction and lifecycle/figure checks are unchanged by this contract. Turn records do not attest per-section termination, and unknown/absent reports remain permitted for legacy/manual compatibility. The correction must therefore claim preserved and checked **reported termination**, not trusted generation attestation, guaranteed complete prose, scientific correctness, approval or filing acceptance.
+
+## Final status
+
+The identical frozen actual-Express fixture passed **18/18 final controls**, with all 14 before/after bindings unchanged. Fixture and runner bytes match the baseline exactly; only the UI, server compatibility module and previously absent shared helper changed among the bound paths. The actual accept route and its bound authoring/provenance dependencies remain unchanged. See `independent-final.txt`, `independent-final-bindings.json` and `independent-qualified-manifest.json`.
+
+Read-only review of the final three-file production change found no blocking issue within this contract. The component explicitly defaults card termination to null/false, retains exact string reports, and treats literal true or the shared canonical cutoff predicate as cutoff. Mapping makes cutoff an error before the content branch, clears both displayed and original machine prose, and supplies fixed shorten/split/redraft guidance. Existing counts select only `state: done`, and the error rendering supplies neither Edit nor Accept. Original selected-section ordering and document keys are unchanged.
+
+The acceptance handler independently refuses known cutoff before any POST. A usable card sends its retained reason as `finish_reason` and its normalized flag as `truncated`, together with the existing framework, edited prose, original machine prose and turn record to its own document ID. Editing spreads the prior card and changes only `html`, preserving those other fields. The saved-state transition still requires the existing successful acceptance response. Unknown/absent reports remain explicitly unconfirmed.
+
+The new shared helper is byte-identical to the preserved baseline server helper (`572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c`). It has no runtime imports or browser-incompatible dependencies. The old server path directly re-exports all three existing public symbols without wrappers or vocabulary changes; the component imports only the shared module. Final reviewed UI hash: `d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691`; server re-export hash: `fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7`.
+
+The separate component owner's retained evidence records **12 intended behavioral failures and four passing controls at baseline, then 16/16 final passes** with the same test bytes. That suite renders the actual React component and its query/data/auth/API helpers, replacing fetch responses; its successful responses are fixture premises. This review's 18 controls exercise actual Express HTTP registration and the existing refusal boundary, stopping allowed cases at a pre-database sentinel. Neither suite proves a real end-to-end acceptance transaction. The lead's cohort separately includes real PGlite SQL acceptance fixtures, and these focused counts overlap that cohort rather than adding to it. Whole-repository checks, browser qualification, normal hooks and canonical publication remain the lead's evidence. No production or Git changes were made by this reviewer.

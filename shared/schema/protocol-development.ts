@@ -15,7 +15,7 @@
  * @module shared/schema/protocol-development
  */
 
-import { boolean, index, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { organizations, users } from '../schema';
 import { researchPersonnel } from './research-compliance';
 
@@ -37,6 +37,8 @@ export const protocolDocuments = pgTable(
   {
     id: serial('id').primaryKey(),
     organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    /** Owned regulatory program; legacy records stay explicitly unfiled. */
+    programId: uuid('program_id'),
     protocolKind: text('protocol_kind').$type<ProtocolKind>().notNull(),
     /** Soft reference to iacuc_protocols / irb_submissions / clinical_studies by kind. */
     linkedProtocolId: integer('linked_protocol_id'),

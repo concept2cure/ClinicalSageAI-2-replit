@@ -1,0 +1,43 @@
+Live mutation — three production rows reverted to the literals they carried before this step,
+on the green tree, 2026-10-12. Restored immediately after. This is the reproducible red for the
+committed state: edit the three lines below and the nine tests come back.
+
+  services/regulatory/pyramids/ind-pyramid.ts   documentBindings: IB_BINDINGS  ->  [{ ctdSection: '5.3.5.4', ... }]
+  server/services/vault/vault-filing.service.ts  folder: 'module-1', ctdSection: <record>  ->  folder: 'module-5', ctdSection: '5.3'
+  server/routes/mission-control.ts               module: `module-${p.code.split('.')[0]}`, section: p.code  ->  module: 'module-5', section: '1.3.3'
+
+ × tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the rows that are wrong in a way the contract alone cannot see > an uploaded investigator's brochure is not filed where the clinical study reports live 87ms
+   → expected 'module-5' not to be 'module-5' // Object.is equality
+ × tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the two copies that state a module rather than a Module 1 heading > the Mission Control IND scaffold does not create the IB as a Module 5 artifact 186ms
+   → expected 'module-5' not to be 'module-5' // Object.is equality
+ × tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the two copies that state a module rather than a Module 1 heading > the IND pyramid binds the IB task to the IB's own heading, not to the study reports 42ms
+   → expected '5.3.5.4' not to be '5.3.5.4' // Object.is equality
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > Vault body-text filing rules 9ms
+   → server/services/vault/vault-filing.service.ts: expected [ Array(1) ] to deeply equal []
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > Mission Control IND scaffold 1ms
+   → server/routes/mission-control.ts: expected [ Array(1) ] to deeply equal []
+ × tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > IND pyramid document bindings 4ms
+   → services/regulatory/pyramids/ind-pyramid.ts: expected [ Array(1) ] to deeply equal []
+ × tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > Vault body-text filing rules — the IB back at 5.3 (where the clinical study reports live) 2ms
+   → Vault body-text filing rules: expected [ Array(1) ] to deeply equal []
+ × tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > Mission Control IND scaffold — the IB scaffold row back at 1.3.3 1ms
+   → Mission Control IND scaffold: expected [ Array(1) ] to deeply equal []
+ × tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > IND pyramid document bindings — the IB task binding back at 1.3.3 6ms
+   → IND pyramid document bindings: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > Vault body-text filing rules
++   "5.3 \"investigator's brochure\" — investigator's brochure is a Module 1 document; it files under 1.14.4.1, not in Module 5",
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > Mission Control IND scaffold
++   "1.3.3 \"Investigator's Brochure\" — investigator's brochure files under 1.14.4.1",
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > registered copies agree with the record > IND pyramid document bindings
++   "5.3.5.4 \"Investigator's Brochure\" — investigator's brochure is a Module 1 document; it files under 1.14.4.1, not in Module 5",
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > Vault body-text filing rules — the IB back at 5.3 (where the clinical study reports live)
++   "5.3 \"investigator's brochure\" — investigator's brochure is a Module 1 document; it files under 1.14.4.1, not in Module 5",
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > Mission Control IND scaffold — the IB scaffold row back at 1.3.3
++   "1.3.3 \"Investigator's Brochure\" — investigator's brochure files under 1.14.4.1",
+ FAIL  tests/regulatory/ctd-registry-consistency.test.ts > the check is live — each Module 1 placement this step fixed fails if it comes back > IND pyramid document bindings — the IB task binding back at 1.3.3
++   "5.3.5.4 \"Investigator's Brochure\" — investigator's brochure is a Module 1 document; it files under 1.14.4.1, not in Module 5",
+ FAIL  tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the rows that are wrong in a way the contract alone cannot see > an uploaded investigator's brochure is not filed where the clinical study reports live
+ FAIL  tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the two copies that state a module rather than a Module 1 heading > the Mission Control IND scaffold does not create the IB as a Module 5 artifact
+ FAIL  tests/regulatory/ctd-registry/m1-placement.consistency.test.ts > the two copies that state a module rather than a Module 1 heading > the IND pyramid binds the IB task to the IB's own heading, not to the study reports
+      Tests  9 failed | 58 passed (67)

@@ -82,14 +82,14 @@ describe('related documents (critique 15)', () => {
   it('finds a document in the library, relates it, and claims it only once the server recorded it', async () => {
     let listed: unknown[] = [];
     onList = () => ok({ success: true, data: { relationships: listed } });
-    onSearch = () => ok({ success: true, data: { results: [
+    onSearch = () => ok({ success: true, data: { scope: 'verified-accessible-programs', results: [
       { id: DOC_ID, title: 'This document', version: '1.0', program: { id: PID, name: 'BX-301' } },
       { id: IB, title: 'Investigator brochure', version: '2.0', program: { id: OTHER_PROJECT, name: 'BX-302' } },
     ] } });
     onRelate = () => { listed = [rel({ id: 'r-9', type: 'based_on', label: 'Based on' })]; return { ok: true, status: 201, json: async () => ({ success: true, data: { id: 'r-9' } }) } as Response; };
     render(<Vault {...props()} />);
     const p = await pane();
-    await within(p).findByText(/No related documents are recorded/);
+    await within(p).findByText('No related documents are available to you for this version.');
     fireEvent.click(within(p).getByTestId('vault-relationships-open'));
     fireEvent.change(within(p).getByTestId('vault-relationships-query'), { target: { value: 'brochure' } });
     fireEvent.click(within(p).getByRole('button', { name: 'Find' }));
@@ -109,7 +109,7 @@ describe('related documents (critique 15)', () => {
 
   it('a refused relate says so and claims nothing', async () => {
     onList = () => ok({ success: true, data: { relationships: [] } });
-    onSearch = () => ok({ success: true, data: { results: [{ id: IB, title: 'Investigator brochure', version: '2.0', program: { id: PID, name: 'BX-301' } }] } });
+    onSearch = () => ok({ success: true, data: { scope: 'verified-accessible-programs', results: [{ id: IB, title: 'Investigator brochure', version: '2.0', program: { id: PID, name: 'BX-301' } }] } });
     onRelate = () => { throw new ApiRequestError('conflict', 409, { success: false, error: 'ALREADY_RELATED', message: 'It is already based on that version.' }, 'ALREADY_RELATED'); };
     render(<Vault {...props()} />);
     const p = await pane();
@@ -122,6 +122,61 @@ describe('related documents (critique 15)', () => {
     expect(within(p).queryByRole('status')).toBeNull();
   });
 
+});
+
+describe('accessible related documents and library read contracts', () => {
+  it('an empty related list makes no claim about inaccessible documents', async () => {
+    onList = () => ok({ success: true, data: { relationships: [], scope: 'verified-accessible-related-programs' } });
+    render(<Vault {...props()} />);
+    const p = await pane();
+    expect(await within(p).findByText('No related documents are available to you for this version.')).toBeTruthy();
+    expect(p.textContent).not.toMatch(/No related documents are recorded|hidden|private/i);
+    fireEvent.click(within(p).getByTestId('vault-relationships-open'));
+    expect(within(p).getByTestId('vault-relationships-query').getAttribute('placeholder')).toBe('Title or text, in projects you can access');
+  });
+
+  it('an empty search is limited to other accessible documents', async () => {
+    onList = () => ok({ success: true, data: { relationships: [] } });
+    // The selected document is excluded from candidates, so this search is not a global zero.
+    onSearch = () => ok({ success: true, data: { scope: 'verified-accessible-programs', results: [
+      { id: DOC_ID, title: 'This document', version: '1.0', program: { id: PID, name: 'BX-301' } },
+    ] } });
+    render(<Vault {...props()} />);
+    const p = await pane();
+    fireEvent.click(await within(p).findByTestId('vault-relationships-open'));
+    fireEvent.change(within(p).getByTestId('vault-relationships-query'), { target: { value: 'document' } });
+    fireEvent.click(within(p).getByRole('button', { name: 'Find' }));
+    expect((await within(p).findByRole('status')).textContent).toBe('No other accessible document matches this search.');
+  });
+
+  it('a successful search with no results field reports failure instead of no matches', async () => {
+    onList = () => ok({ success: true, data: { relationships: [] } });
+    onSearch = () => ok({ success: true, data: { scope: 'verified-accessible-programs', total: 0 } });
+    render(<Vault {...props()} />);
+    const p = await pane();
+    fireEvent.click(await within(p).findByTestId('vault-relationships-open'));
+    fireEvent.change(within(p).getByTestId('vault-relationships-query'), { target: { value: 'brochure' } });
+    fireEvent.click(within(p).getByRole('button', { name: 'Find' }));
+    expect((await within(p).findByRole('alert')).textContent).toContain('The library could not be searched.');
+    expect(within(p).queryByRole('status')).toBeNull();
+    expect(within(p).queryByTestId('vault-relationships-relate')).toBeNull();
+  });
+
+  it.each([undefined, 'organization-wide'])('an unverified search scope %s offers no empty finding or candidate', async scope => {
+    onList = () => ok({ success: true, data: { relationships: [] } });
+    onSearch = () => ok({ success: true, data: { scope, results: [] } });
+    render(<Vault {...props()} />);
+    const p = await pane();
+    fireEvent.click(await within(p).findByTestId('vault-relationships-open'));
+    fireEvent.change(within(p).getByTestId('vault-relationships-query'), { target: { value: 'brochure' } });
+    fireEvent.click(within(p).getByRole('button', { name: 'Find' }));
+    expect((await within(p).findByRole('alert')).textContent).toContain('The library could not be searched.');
+    expect(within(p).queryByRole('status')).toBeNull();
+    expect(within(p).queryByTestId('vault-relationships-relate')).toBeNull();
+  });
+});
+
+describe('governed relationship removal', () => {
   it('removing one needs a reason of the required length, sends it, and then re-reads the list', async () => {
     let listed: unknown[] = [rel()];
     onList = () => ok({ success: true, data: { relationships: listed } });

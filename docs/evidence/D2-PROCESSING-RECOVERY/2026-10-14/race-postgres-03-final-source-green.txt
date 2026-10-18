@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 01: two claimants wait on one real advisory barrier; one claim/extraction and one busy result 101ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-success 98ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-extraction-failure 96ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-profile-catch 77ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 03: lease acceptance uses actual time after a real lock wait 626ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 04: supersession commits on an independent source lock before stale completion reads 81ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 05: project deletion commits on an independent project lock before stale completion 57ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: same-program 118ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: cross-program 123ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: null-program 88ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 07: recovery-first order has a fresh impact or named stale preview, without deadlock: same-program 169ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 07: recovery-first order has a fresh impact or named stale preview, without deadlock: cross-program 147ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 08: local NOSUPERUSER/NOBYPASSRLS role under canonical policy can process own source and cannot read another tenant 58ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  04:55:04
+   Duration  2.55s (transform 344ms, setup 0ms, import 420ms, tests 1.89s, environment 0ms)
+

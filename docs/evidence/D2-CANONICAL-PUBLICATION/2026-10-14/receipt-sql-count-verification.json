@@ -1,0 +1,22 @@
+{
+  "method": "Read-only reproduction of gate count algorithm using its unchanged stripComments dependency; no gate/baseline edit or query execution.",
+  "files": [
+    {
+      "path": "server/services/ana/source-admission-receipt-history.ts",
+      "sha256": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+      "count": 1,
+      "expressions": [
+        "exact"
+      ]
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "sha256": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+      "count": 1,
+      "expressions": [
+        "COLUMNS"
+      ]
+    }
+  ],
+  "primarySourceHashesUnchanged": true
+}

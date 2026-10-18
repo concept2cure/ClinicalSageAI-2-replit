@@ -1,0 +1,45 @@
+
+> concept2cure-riai@1.0.0 ci:token-cascade
+> node scripts/ci/check-token-cascade.mjs
+
+  ok   client/src/concept2cure/_shared/components/EsignModal.css                        26/26
+  ok   client/src/concept2cure/_shared/components/governed-confirm-dialog.css           24/24
+  ok   client/src/concept2cure/components/ana/styles.module.css                         50/50
+  ok   client/src/concept2cure/components/concept2cure-auth/styles.module.css           33/33
+  ok   client/src/concept2cure/components/session/IdleSessionGuard.module.css           6/6
+  ok   client/src/concept2cure/mdx/app.css                                              73/73
+  ok   client/src/concept2cure/mdx/drafter.css                                          31/31
+  ok   client/src/concept2cure/mdx/files-tree.css                                       24/24
+  ok   client/src/concept2cure/mdx/pathway-tabs.css                                     35/35
+  ok   client/src/concept2cure/pdev/app.css                                             51/51
+  ok   client/src/concept2cure/quality/app.css                                          26/26
+  ok   client/src/concept2cure/v2/styles/admin-access.css                               28/28
+  ok   client/src/concept2cure/v2/styles/ana-v2.css                                     26/26
+  ok   client/src/concept2cure/v2/styles/app-v2.css                                     57/57
+  ok   client/src/concept2cure/v2/styles/auth-entry.css                                 32/32
+  ok   client/src/concept2cure/v2/styles/authoring-v2.css                               52/52
+  ok   client/src/concept2cure/v2/styles/commcenter-v2.css                              27/27
+  ok   client/src/concept2cure/v2/styles/coverage-v2.css                                42/42
+  ok   client/src/concept2cure/v2/styles/device-v2.css                                  36/36
+  ok   client/src/concept2cure/v2/styles/ectd-v2.css                                    34/34
+  ok   client/src/concept2cure/v2/styles/insights-v2.css                                29/29
+  ok   client/src/concept2cure/v2/styles/intelligence-v2.css                            29/29
+  ok   client/src/concept2cure/v2/styles/journey-v2.css                                 39/39
+  ok   client/src/concept2cure/v2/styles/licensing-access-requests.css                  7/7
+  ok   client/src/concept2cure/v2/styles/licensing-enforcement.css                      7/7
+  ok   client/src/concept2cure/v2/styles/licensing-history.css                          5/5
+  ok   client/src/concept2cure/v2/styles/misc-surfaces-v2.css                           38/38
+  ok   client/src/concept2cure/v2/styles/onboarding-review.css                          22/22
+  ok   client/src/concept2cure/v2/styles/project-home-v2.css                            34/34
+  ok   client/src/concept2cure/v2/styles/protocol-dev-editing.css                       14/14
+  ok   client/src/concept2cure/v2/styles/pyramid-v2.css                                 33/33
+  ok   client/src/concept2cure/v2/styles/rbm-v2.css                                     36/36
+  ok   client/src/concept2cure/v2/styles/redline.css                                    3/3
+  ok   client/src/concept2cure/v2/styles/research-v2.css                                44/44
+  ok   client/src/concept2cure/v2/styles/rich-section-editor.css                        18/18
+  ok   client/src/concept2cure/v2/styles/submission-v2.css                              13/13
+  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                41/41
+  ok   client/src/concept2cure/v2/styles/translation-v2.css                             39/39
+  ok   client/src/styles/projects-prototype.css                                         24/24
+
+[token-cascade] PASS — all 39 stylesheets resolve cleanly.

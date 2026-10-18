@@ -1,0 +1,41 @@
+{
+  "runtime": "v22.23.3",
+  "baselineHEAD": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/final-review-sweep-coherence.config.mts"
+  ],
+  "startedAt": "2026-10-14T04:54:29.198168+00:00",
+  "finishedAt": "2026-10-14T04:54:33.955864+00:00",
+  "exitCode": 0,
+  "testCount": "5 passed, 16 skipped intentionally (21)",
+  "proofScope": "Actual core SQL and canonical migrations in PGlite with controlled loader/extractor/profile/classifier seams; sequential state/interleaving behavior; no independent PostgreSQL/RLS/OCR/deployment claim",
+  "sourcesUnchangedDuringRun": true,
+  "changedSources": [],
+  "before": {
+    "server/services/clinical-regulatory-evidence/data-room-processing-read.ts": "e2a6ae260981399ca3eeb121be8431a265fbf769dc61921862b68dd44c7fd2b9",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+    "shared/data-room-processing-status.ts": "7f4788b2527bbd67bd32a41cd2d9da9a5d5b8ebe1b9b5368b2c50c83baa16ebe",
+    "server/services/document-data-disposition/service.ts": "b114ce3511d6e3b9e1e80628cc9a2a34838fb6aebf9807b6fc319895cbdca5a8",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/final-review-sweep-coherence.test.mts": "5e7e34a30c81a13fb1fb060b1c82fd4c8bfabca6432e138c192513b88588d43f",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/final-review-sweep-coherence.config.mts": "46dd8b2c9cffceafbe7b1118f0fdd1757ae1f20fc12ae3c34287104c98f6e8b5"
+  },
+  "after": {
+    "server/services/clinical-regulatory-evidence/data-room-processing-read.ts": "e2a6ae260981399ca3eeb121be8431a265fbf769dc61921862b68dd44c7fd2b9",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+    "shared/data-room-processing-status.ts": "7f4788b2527bbd67bd32a41cd2d9da9a5d5b8ebe1b9b5368b2c50c83baa16ebe",
+    "server/services/document-data-disposition/service.ts": "b114ce3511d6e3b9e1e80628cc9a2a34838fb6aebf9807b6fc319895cbdca5a8",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/final-review-sweep-coherence.test.mts": "5e7e34a30c81a13fb1fb060b1c82fd4c8bfabca6432e138c192513b88588d43f",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/final-review-sweep-coherence.config.mts": "46dd8b2c9cffceafbe7b1118f0fdd1757ae1f20fc12ae3c34287104c98f6e8b5"
+  },
+  "logSha256": "cf7e86d7dde401cabad6d560790f2738ed676ab33db3861da6bd8c53b7322df2"
+}

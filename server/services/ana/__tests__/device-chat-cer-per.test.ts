@@ -222,7 +222,8 @@ describe('GET /device-status answers CER and IVDR from the canonical outlines', 
     const r = await request(app()).get('/api/ind-generation/device-status/CER/3').set('Authorization', TOKEN);
     expect(r.status).toBe(200);
     expect(r.body.data.totalSections).toBe(12);
-    expect(r.body.data.completedSections).toBe(1);
+    // A draft is drafted, not completed (2026-10-15: this was `completedSections`).
+    expect(r.body.data.draftedSections).toBe(1);
     const appraisal = r.body.data.sections.find((s: { code: string }) => s.code === 'CER.appraisal');
     expect(appraisal).toMatchObject({ status: 'draft', artifactId: 'a7' });
   });

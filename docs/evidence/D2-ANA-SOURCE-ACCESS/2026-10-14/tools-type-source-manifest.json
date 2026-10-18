@@ -1,0 +1,28 @@
+{
+  "sourceHashes": {
+    "server/services/ana/document-catalog-tool-defs.ts": "a4c1337e4d2f56e40720a4b39a3dbcce35c688e8fb7e947612de76e33f0ff820",
+    "server/services/ana/step-presentation.ts": "46500dd5eee9612231e6568e11203ca6061debae0bbb63eb891d54bbb6a3e30a",
+    "server/services/ana/__tests__/document-source-facade-integration.test.ts": "5d9b9a415bc4af351890e41d9fc2a276bd1ab24f68d79c5e778ceb1811999e34",
+    "server/services/ana/__tests__/step-document-titles.pglite.test.ts": "09152d33ff7c9d9f8f87e259809d1652ec7ccbb75c0b3c911990a8fda5d15e80",
+    "server/services/ana/__tests__/document-placement-tools.test.ts": "a1e0bb193525d1995ae5b21c80197f22fd18c1e96d1cdb99ffc98cfccc426140",
+    "server/services/ana/catalog-scope.ts": "b3a136200955c7a2f4063cae4530ff4843238aedba8c1faa20171e64cdc29449",
+    "server/services/ana/document-tools-shared.ts": "34d360454673fe8e5211aa43b6fb0f37210a468f214f5b3534717b9f9e1eeb81",
+    "server/services/ana/document-catalog-tools.ts": "58e543add469a0e510f86cd2e9817ee195a2890ef16831f6d660ed80a0f1c895",
+    "server/services/ana/document-catalog-input.ts": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c",
+    "server/services/ana/document-passage-tools.ts": "8b31f7b6320bfb97beb1fb71dfdc66670c6271e2d2da8fe147e59296dbafcdae",
+    "server/services/ana/draft-project-sources.ts": "09db691aef1e2442ccbe4fb8f54419098e4676da41fab72c48e4a1d4e4673c70",
+    "server/services/ana/__tests__/document-source-access-tools.test.ts": "cb175ac88670c93ff741d49b52c3c6f4a33716f0550683584eba4f498541d962",
+    "server/services/ana/__tests__/document-catalog-preview-tools.test.ts": "3f6ad0477d90e26df0b64483951a0f57b39bfbe3d6204002062d726ee2b9ff14",
+    "server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts": "8d9d20539d8843e97e1ffedc5d229926e607448a0648df62a7b190a9af969fd8",
+    "server/services/ana/__tests__/document-catalog-tools-id-space.test.ts": "ae4f6a4f800148493e67d875b42f5d91b3883a703ecda05a2e0c19655a3a2c66",
+    "server/services/ana/__tests__/document-catalog-program-binding.test.ts": "e0e59c08cc461c3e43290985df1e037580164d7a762caa2d26e40cde125247cf",
+    "server/services/ana/__tests__/document-passage-tools.test.ts": "0c65147ab02a5bc6e7818f5ec9fcfbd8163754d05b71c6060fa28552c34daef6",
+    "server/services/ana/__tests__/draft-project-sources.test.ts": "d6ba7e888644a78bd318116e7333f67c936f7fe8341f8b5b4ad053a28c7ef14b",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "db85f4bbc1691e55a6bc69d4790e0dfae31f9446e4474d09823a04351dec24ba",
+    "server/services/ana/__tests__/vault-access-without-key.test.ts": "00832528751461f44fe077b42a532c1366f51ed823327237093a0743c426fcb1",
+    "server/services/ana/__tests__/read-delivery-executor.test.ts": "8c8a378c55cb431a7399eb0d735d11198f70a261156aaf6d266f07060b131991",
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": "ff50aa0e008c61b5aa11bfb7b819d0f1545e6216e64caf0d406c6c8b6004775f",
+    "server/services/ana/__tests__/support/source-read-tool-fixture.ts": "c2a4d3a9ad7c9f04c3e3571cba74827b161fe7e3e05ef53055feae716e5ad537"
+  },
+  "unchanged": true
+}

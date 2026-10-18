@@ -56,12 +56,19 @@ function scopeRow(status = 'draft') {
   };
 }
 
+function permissionRows(options?: { throwOnPermission?: boolean; roles?: string[] }) {
+  if (options?.throwOnPermission) throw new Error('permission store unavailable');
+  return { rows: (options?.roles ?? []).map(role => ({ role })) };
+}
+
 function installQueryBehavior(options?: {
   status?: string;
   roles?: string[];
   throwOnPermission?: boolean;
+  qmsStatus?: string;
 }) {
   h.query.mockImplementation(async (sql: string) => {
+    if (/FROM qms_documents/i.test(sql)) return { rows: options?.qmsStatus ? [{ status: options.qmsStatus }] : [] };
     if (/FROM authoring_sections s/i.test(sql) && /JOIN authoring_documents d/i.test(sql)) {
       return { rows: [scopeRow(options?.status)] };
     }
@@ -77,10 +84,7 @@ function installQueryBehavior(options?: {
         ],
       };
     }
-    if (/FROM doc_permissions p/i.test(sql)) {
-      if (options?.throwOnPermission) throw new Error('permission store unavailable');
-      return { rows: (options?.roles ?? []).map(role => ({ role })) };
-    }
+    if (/FROM doc_permissions p/i.test(sql)) return permissionRows(options);
     return { rows: [] };
   });
 }
@@ -88,6 +92,28 @@ function installQueryBehavior(options?: {
 describe('mandatory authoring object authorization middleware', () => {
   beforeEach(() => {
     h.query.mockReset();
+  });
+
+  it.each(['in_review', 'effective', 'signed-version', 'retained-version'])('refuses edits of a linked controlled QMS record: %s', async qmsStatus => {
+    installQueryBehavior({ roles: ['OWNER'], qmsStatus });
+    const req = request({ method: 'PATCH', path: `/authoring/sections/${SECTION_ID}`, user: author, body: { content: 'Replacement' } });
+    const res = response(); const next = vi.fn();
+    await authoringObjectAuthorization(req, res, next);
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toMatchObject({ error: { code: 'QMS_DOCUMENT_CONTROLLED' } });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('allows editing a linked QMS draft, but directs its signing to Quality', async () => {
+    installQueryBehavior({ roles: ['OWNER'], qmsStatus: 'draft' });
+    const edited = response(); const next = vi.fn();
+    await authoringObjectAuthorization(request({ method: 'PATCH', path: `/authoring/sections/${SECTION_ID}`, user: author }), edited, next);
+    expect(next).toHaveBeenCalledOnce();
+    const signed = response(); const signedNext = vi.fn();
+    await authoringObjectAuthorization(request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/freeze`, user: author }), signed, signedNext);
+    expect(signed.statusCode).toBe(409);
+    expect(signed.body).toMatchObject({ error: { code: 'QMS_SIGN_IN_QUALITY' } });
+    expect(signedNext).not.toHaveBeenCalled();
   });
 
   it('ignores non-authoring API mutations at the shared /api mount', async () => {
@@ -467,15 +493,13 @@ describe('the tracked-change-decision routes — the regex miss that let them ru
     expect((res.body as any).error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
   });
 
-  it('does not match a document id that merely starts with "docs" or an unrelated /documents/ route', async () => {
-    // Sanity check on the regex's boundaries: it must not swallow neighbouring
-    // routes this fix deliberately leaves alone (see the production comment —
-    // /documents/:id/review and /request-review have different, incompatible
-    // role requirements and must keep going through their own route RBAC).
+  it('does not impose review policy on an unrelated /documents/ route', async () => {
+    // Review, requests and saved review reads now have explicit classifications.
+    // The narrow patterns still leave unrelated documents routes to their policy.
     installQueryBehavior({ roles: [] });
     const req = request({
       method: 'POST',
-      path: `/authoring/documents/${DOC_ID}/review`,
+      path: `/authoring/documents/${DOC_ID}/unrelated-operation`,
       user: { ...author, id: 'user-outsider', userId: 'user-outsider' },
     });
     const res = response();
@@ -487,4 +511,42 @@ describe('the tracked-change-decision routes — the regex miss that let them ru
     expect(next).toHaveBeenCalledOnce();
     expect(h.query).not.toHaveBeenCalled();
   });
+});
+
+describe('native bound human review object authorization', () => {
+  beforeEach(() => h.query.mockReset());
+  it.each(['/authoring/documents/', '/Authoring/Documents/'])(
+    'requires full-document view for native saved review reads (%s)', async prefix => {
+      const path = `${prefix}${DOC_ID}/Reviews/`;
+      const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user' };
+      installQueryBehavior({ roles: [] });
+      const denied = response();
+      const next = vi.fn();
+      await authoringObjectAuthorization(request({ method: 'GET', path, user: reviewer }), denied, next);
+      expect(denied.statusCode).toBe(403);
+      expect(next).not.toHaveBeenCalled();
+      installQueryBehavior({ roles: ['VIEWER'] });
+      const allowed = response();
+      await authoringObjectAuthorization(request({ method: 'GET', path, user: reviewer }), allowed, next);
+      expect(next).toHaveBeenCalledOnce();
+      expect(allowed.locals.authoringAuthorization.action).toBe('view');
+    },
+  );
+
+  it('classifies native verdicts as review and refuses a viewer', async () => {
+    const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user' };
+    const req = request({ method: 'POST', path: `/Authoring/Documents/${DOC_ID}/Review/`, user: reviewer });
+    installQueryBehavior({ roles: ['VIEWER'] });
+    const denied = response();
+    const next = vi.fn();
+    await authoringObjectAuthorization(req, denied, next);
+    expect(denied.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+    installQueryBehavior({ roles: ['REVIEWER'] });
+    const allowed = response();
+    await authoringObjectAuthorization(req, allowed, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(allowed.locals.authoringAuthorization.action).toBe('review');
+  });
+
 });

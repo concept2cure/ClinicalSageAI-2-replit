@@ -11,6 +11,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MDX mutation tools — let AnA take action against the kit's data domain.
@@ -336,7 +337,7 @@ export const CLASSIFY_IVD_DEVICE: AnaTool = {
     properties: {
       program_id:           { type: 'string' },
       device_name:          { type: 'string' },
-      ivdr_class:           { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      ivdr_class:           { type: 'string', enum: [...IVDR_CLASSES] },
       classification_rule:  { type: 'string', enum: ['1', '2', '3', '4', '5', '6', '7'] },
       rationale:            { type: 'string' },
       companion_diagnostic: { type: 'boolean' },

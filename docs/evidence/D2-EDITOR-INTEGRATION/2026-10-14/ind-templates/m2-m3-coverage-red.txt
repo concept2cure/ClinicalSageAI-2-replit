@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M2 section 13ms
+   → expected { id: 'section:m2.2', …(11) } to have property "template.id" with value StringMatching{…}
+ × server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M3 section 6ms
+   → expected { id: 'section:m3.2.S', …(11) } to have property "template.id" with value StringMatching{…}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M2 section
+AssertionError: expected { id: 'section:m2.2', …(11) } to have property "template.id" with value StringMatching{…}
+
+- Expected:
+StringMatching /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
++ Received:
+undefined
+
+ ❯ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts:9:23
+      7|     expect(sections.length).toBeGreaterThan(0);
+      8|     for (const section of sections) {
+      9|       expect(section).toHaveProperty('template.id', expect.stringMatch…
+       |                       ^
+     10|     }
+     11|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M3 section
+AssertionError: expected { id: 'section:m3.2.S', …(11) } to have property "template.id" with value StringMatching{…}
+
+- Expected:
+StringMatching /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
++ Received:
+undefined
+
+ ❯ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts:9:23
+      7|     expect(sections.length).toBeGreaterThan(0);
+      8|     for (const section of sections) {
+      9|       expect(section).toHaveProperty('template.id', expect.stringMatch…
+       |                       ^
+     10|     }
+     11|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  03:33:08
+   Duration  501ms (transform 197ms, setup 84ms, import 150ms, tests 22ms, environment 0ms)

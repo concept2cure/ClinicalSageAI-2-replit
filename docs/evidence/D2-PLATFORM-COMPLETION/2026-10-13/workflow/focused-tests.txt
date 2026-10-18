@@ -1,0 +1,411 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 555ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 111ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 65ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 354ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 96ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 88ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 273ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 69ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 36ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 59ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 30ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 37ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 51ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > reads the selected program, even when a sibling and foreign tenant have newer builds 88ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > refuses a foreign/unanchored program and conflicting or malformed scope instead of falling back to a sibling 36ms
+ ✓ server/routes/__tests__/csr-workflow-program-scope.pglite.test.ts > CSR board follows its actual program in PostgreSQL > returns honest empty retained history for an archived project and preserves explicitly unscoped organization boards 66ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 22ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 30ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 5ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 10ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > keeps genuine organization-wide builds when no target was supplied 5ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > resolves a real program through its own unique anchor and rejects a foreign program or conflicting project 13ms
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > checks actual workspace membership and keeps archived history readable 22ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties 24ms
+ ✓ server/services/csr/__tests__/csr-latest-completed-generation.pglite.test.ts > CSR sources supplied to CTD summaries > retains all historical generations and their section records 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 40ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 675ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 478ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 83ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 5548ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 47ms
+stderr | tests/routes/ectd-compile-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+{
+  "timestamp": "2026-10-13T19:23:47.714Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 5274ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 2ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 6ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 1ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-10-13T19:24:02.023Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 2105ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 30ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 15ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 14ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 12ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 19ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 40ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 10ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 3ms
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-10-13T19:24:08.467Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 2317ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 8ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 3ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-10-13T19:24:12.977Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 2137ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 16ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 25ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 7ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 8ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 28ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 4ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 8ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > CsrWorkflow — real board renders (no fixture) > renders the REAL program header and its real sections 428ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > CsrWorkflow — honest no-active-job state > shows the honest "no active build job" header + note, still real sections 64ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > CsrWorkflow — honest error state > shows an error EmptyState — never a fixture — when the read fails 34ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > RegulatoryWorkspace — real tree + intel render (no fixture) > renders the REAL section tree and the REAL intelligence rows 220ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > RegulatoryWorkspace — honest empty state > shows an EmptyState — never a fixture tree — when the org has no tracked sections 110ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaProjectNoFixtures.test.tsx > RegulatoryWorkspace — honest error state > shows an error EmptyState — never a fixture — when the read fails 48ms
+ ✓ server/routes/__tests__/csr-build-scope-refusal.test.ts > synchronous CSR build scope refusal > returns scoped not-found for a foreign project and never bills or requests AI 37ms
+ ✓ server/routes/__tests__/csr-build-scope-refusal.test.ts > synchronous CSR build scope refusal > returns conflict for an archived project and validation error for a malformed target 12ms
+ ✓ client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx > CSR board program changes > reads the actual shell program and clears the previous study while the next program loads 138ms
+ ✓ client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx > CSR board program changes > discards a delayed old-program response after navigation 22ms
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written
+{
+  "timestamp": "2026-10-13T19:24:25.283Z",
+  "level": "warn",
+  "message": "[submission-orchestrator] Inline cmcSources refused outside development",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down
+{
+  "timestamp": "2026-10-13T19:24:25.291Z",
+  "level": "warn",
+  "message": "[submission-orchestrator] Inline cmcSources refused outside development",
+  "context": {
+    "organizationId": 42
+  }
+}
+
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses an inaccessible project before loading any private input arrays or starting a run 38ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written 7ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > does not refuse an EMPTY array — it carries no Module 3 either way 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > keeps the fixture door open in development 4ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > asks the gate for THIS program, under THIS organization, and carries the sources when it opens 7ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 when the gate refuses, and never reads the sources 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > says WHY it carried none, in the gate’s own words 3ms
+stderr | server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program
+{
+  "timestamp": "2026-10-13T19:24:25.348Z",
+  "level": "warn",
+  "message": "[load-approved-cmc-sources] export gate could not be evaluated; the package carries no Module 3",
+  "context": {
+    "orgId": 42,
+    "projectId": "11111111-2222-3333-4444-555555555555",
+    "err": "connection terminated"
+  }
+}
+
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands the refusal to the run, so m3.compose records WHY it skipped 27ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands no refusal when the gate opened — the step has nothing to explain 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > does not ask the gate at all when no CMC program is named 4ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > the standalone QOS route is gone > POST /m2/qos is not routed — the QOS is composed from records, not from a request body 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > m3.refine’s model path is unreachable from a request > useAI cannot be set through the run route 2ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > refuses an explicitly malformed project instead of enqueueing an organization-wide build 50ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 202 with { jobId, status: "queued" } when authenticated 5ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs > returns 401 when organizationId is missing from req 12ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns the status object when found in the same org 9ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 404 when getCSRBuildJobStatus returns null 6ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId > returns 400 when :jobId is non-numeric 7ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > GET /api/csr/jobs/:jobId/sections > returns the section array 9ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > transitions status to "cancelled" via the org-scoped Drizzle update 44ms
+ ✓ tests/unit/csr-jobs-routes.test.ts > POST /api/csr/jobs/:jobId/cancel > returns 409 when status is already "complete" 8ms
+stderr | tests/routes/ectd-compile-ident.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-ident.test.ts
+{
+  "timestamp": "2026-10-13T19:24:30.114Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it
+[eCTD Compile] Project 7: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > keeps the numeric legacy path: sections load by project id, org-scoped 10ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program UUID org-scoped and reports the unlinked section store honestly 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program CODE ident (non-UUID, non-numeric) 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 404s an ident outside the caller org without leaking data 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 401s without an org context before any resolution 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/validate — program idents get the unlinked-store finding > prepends SECTION_STORE_UNLINKED as a blocking error 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/history — program idents filter by the program label > reads history org-scoped with the resolved label 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it 1ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 12ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > enqueueCSRBuildJob > inserts a row with status="queued" and returns jobId 13ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success 7ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > writes status="failed" with error JSON on a thrown section error 6ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — content_hash > produces a 64-char lowercase hex SHA-256 of the content 6ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > reaches 100 on successful completion 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > is 100 (no divide-by-zero) when the filtered work list is empty 5ms
+ ✓ tests/unit/csr-job-runner.test.ts > getCSRBuildJobStatus — cross-tenant isolation > returns null when organizationId does not match 1ms
+ ✓ tests/unit/csr-job-runner.test.ts > getCSRSectionOutputs — cross-tenant isolation > returns only sections for the requested org 4ms
+ ✓ tests/unit/csr-job-runner.test.ts > runCSRBuildJob — regeneration upsert > produces ONE row per (jobId, sectionNumber) on re-draft, never duplicates 6ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 6ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied 4ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 2ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 7ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 1ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+stderr | tests/routes/ectd-readiness-boundaries.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-readiness-boundaries.test.ts
+{
+  "timestamp": "2026-10-13T19:24:39.215Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns a contained error when the section store is unreadable instead of zero-percent readiness
+{
+  "timestamp": "2026-10-13T19:24:40.119Z",
+  "level": "error",
+  "message": "[ectd-compile] reading the compilation status failed",
+  "context": {
+    "projectIdent": "42",
+    "err": "SENTINEL private database failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns the same contained failure for an unavailable pre-compile validation read
+{
+  "timestamp": "2026-10-13T19:24:40.122Z",
+  "level": "error",
+  "message": "[ectd-compile] validating the submission failed",
+  "context": {
+    "projectIdent": "42",
+    "err": "SENTINEL private database failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > does not count adjacent numeric section codes as the required node in readiness or validation 5ms
+ ✓ tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > counts a true child using the same normalized CTD boundary rule as placed leaves 1ms
+ ✓ tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns a contained error when the section store is unreadable instead of zero-percent readiness 3ms
+ ✓ tests/routes/ectd-readiness-boundaries.test.ts > eCTD section boundaries and unavailable reads > returns the same contained failure for an unavailable pre-compile validation read 1ms
+stderr | server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 13; marking failed instead of complete
+
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job FAILED (not complete) when a section still has an unresolved placeholder 11ms
+ ✓ server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts > runCSRBuildJob — placeholder gate > marks the job COMPLETE when the section is placeholder-free 1ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > does not reserve or consume quota for a foreign project in either launch path 6ms
+ ✓ server/services/csr/__tests__/csr-builder-scope-quota.test.ts > CSR refusal before quota and AI work > refuses conflicting tenant, actor or malformed target before billing 2ms
+
+ Test Files  22 passed (22)
+      Tests  156 passed (156)
+   Start at  19:22:22
+   Duration  142.72s (transform 25.25s, setup 2.49s, import 64.66s, tests 64.67s, environment 2.91s)

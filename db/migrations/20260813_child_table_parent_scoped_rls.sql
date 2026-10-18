@@ -125,38 +125,56 @@
 -- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
 --
 -- ── AMENDED IN PLACE 2026-10-13 (D3) ────────────────────────────────────────
--- Five children join the CHAINED list, and the three deny-all chains recorded
--- above gain the FORCE they never had. Found by running
--- scripts/db/install-fresh.mjs against a blank PostgreSQL 16: its final step
--- runs this repo's own coverage gate (scripts/db/rls-coverage-check.sql) and
--- REFUSED the install —
+-- capa_actions, q_sub_meetings, q_sub_questions and q_sub_timeline_entries
+-- join the CHAINED list — and they are here because yesterday's amendment put
+-- them there. Adding capa_records and q_submissions to `specs` above made
+-- those two tenant-keyed PARENTS, which is what the change was for; it also
+-- gave each of them children that are now "tenant-keyed table(s) [carrying] no
+-- RLS policy". install-fresh's own verifier caught it and failed the whole
+-- provision:
 --
 --   ❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
---      readable across tenants once anything reads them: public.capa_actions
---      (child of public.capa_records, row security off), public.q_sub_meetings,
---      public.q_sub_questions, public.q_sub_timeline_entries
+--      readable across tenants once anything reads them:
+--      public.capa_actions (child of public.capa_records, row security off),
+--      public.q_sub_meetings, public.q_sub_questions,
+--      public.q_sub_timeline_entries (children of public.q_submissions)
 --
--- so no database could be provisioned from blank at all until this is fixed.
+-- That is the check doing its job, and the lesson is that policying a table
+-- MOVES the frontier rather than closing it. Fixing only those four proved it
+-- twice over: the next provision failed again, on
 --
--- Those four are the layer the 2026-10-12 amendment newly exposed, and the
--- cause is worth stating because it will recur: policying capa_records and
--- q_submissions turned their children into children OF a row-secured parent,
--- which is exactly what the gate's child rule looks for. Adding a parent to
--- one of this file's lists therefore makes its children the gate's business on
--- the next install, and they must be added in the same change. q_sub_commitments
--- is added here for that reason rather than because the gate named it: it hangs
--- off q_sub_questions, so it becomes newly flagged the moment q_sub_questions
--- gains row security two lines above. Parent lines come first, as the chained
--- block's note requires; a policy created earlier in the same loop is visible
--- to the later iteration's pg_policies guard because both run inside this
--- file's single transaction.
+--   public.q_sub_commitments (child of public.q_sub_questions, row security off)
 --
--- ── The FORCE the deny-all chains never had ────────────────────────────────
--- Checking the "they remain deny-all, which is safe" exemption instead of
--- trusting it turned up a narrower defect in it. The exemption rests on
--- migrations/0005_csr_knowledge_database.sql's ENABLE ROW LEVEL SECURITY loop,
--- which does name all three — and that loop runs ENABLE and never FORCE, so
--- on a database provisioned from blank they measure
+-- a table that was not a child of a tenant-keyed parent until the line above
+-- made q_sub_questions one. So the whole descendant tree was then walked at
+-- once, transitively through pg_constraint rather than one failure at a time:
+--
+--   depth 1  capa_actions            → capa_records     (capa_id)
+--   depth 1  q_sub_meetings          → q_submissions    (q_submission_id)
+--   depth 1  q_sub_questions         → q_submissions    (q_submission_id)
+--   depth 1  q_sub_timeline_entries  → q_submissions    (q_submission_id)
+--   depth 2  q_sub_commitments       → q_sub_questions  (q_sub_question_id)
+--
+-- and nothing lies below depth 2. All five are grandchildren or deeper: their
+-- parents carry no organization_id of their own and are themselves scoped
+-- through regulatory_programs, so they go in `chained`, which delegates to the
+-- parent's own policy instead of naming a tenant column. Keys are uuid → uuid
+-- throughout, so no text comparison is involved. Order is load-bearing within
+-- the list as well as between the two loops: `specs` runs before `chained`, and
+-- q_sub_commitments follows q_sub_questions. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/.
+
+-- ── AMENDED IN PLACE 2026-10-13, again (D3): the FORCE the deny-all chains
+-- never had ──────────────────────────────────────────────────────────────────
+-- A separate session reached the five above independently and landed them
+-- first; this half is what checking the file's OTHER 2026-10-13 claim turned
+-- up, and it stands on its own.
+--
+-- The header exempts three chains it cannot express — csr_endpoint_results,
+-- ctd_module_sections, ctd_documents — as "deny-all, which is safe". That
+-- rests on migrations/0005_csr_knowledge_database.sql's ENABLE ROW LEVEL
+-- SECURITY loop, which does name all three. The loop runs ENABLE and never
+-- FORCE, so on a database provisioned from blank they measure
 --
 --   relrowsecurity = t, relforcerowsecurity = f, 0 policies
 --
@@ -164,27 +182,29 @@
 -- the exemption holds where production reads. For the table OWNER it is not:
 -- PostgreSQL exempts an owner from its own policies unless FORCE is set, and
 -- with no policy and no FORCE the owner read every tenant's rows. That is the
--- same owner-exemption install-fresh's step 7/8 warns about in general terms,
+-- same owner exemption install-fresh's step 7/8 warns about in general terms,
 -- and the reason every other table in this file gets ENABLE **and** FORCE and
--- the test asserts both. The last block below applies the same pair to these
--- three, so the deny-all is true under every role rather than all but one.
+-- the test asserts both. The last block in this file applies the same pair to
+-- these three, so the deny-all is true under every role rather than all but
+-- one.
 --
--- It also applies the ENABLE, not only the FORCE, for a reason about appliers:
+-- It applies the ENABLE too, not only the FORCE, for a reason about appliers:
 -- 0005 is on install-fresh's own RLS_MIGRATIONS list but is NOT in
 -- C2C_MIGRATION_FILES. So the ENABLE reaches a database provisioned from blank
 -- and nothing replays it for one that only ever runs deploy-migrate. Putting
--- both in THIS file — which is in the deploy set — makes the state the header
--- claims true on either path, from one place.
+-- both in THIS file — which the deploy set carries — makes the state the
+-- header claims true on either path, from one place.
 --
 -- tests/db/child-table-parent-scoped-rls asserted the exemption as
--- `policied === false`, which is equally true of deny-all, of deny-all the
--- owner walks through, and of a table with row security off altogether. It now
--- asserts row security ON and FORCEd and unpolicied — the only combination
--- that denies to everyone. Run against a database provisioned before this
--- amendment it fails, naming the table.
+-- `policied === false`, which is equally true of real deny-all, of deny-all the
+-- owner walks through, and of a table with row security off altogether — so it
+-- passed in the state it existed to prevent. It now asserts row security ON
+-- and FORCEd and unpolicied, the only combination that denies to everyone. Run
+-- against a database provisioned before this amendment it fails, naming the
+-- table.
 --
--- Nothing is removed from this file, and the three chains stay deny-all: that
--- choice is the repo's and is not a session's to reverse. Evidence
+-- The three chains stay deny-all; reversing that is the repo's call, not a
+-- session's. Nothing is removed from this file. Evidence
 -- docs/evidence/D3/2026-10-13-child-rls-force-and-q-sub-children/.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
@@ -548,18 +568,24 @@ DECLARE
   -- child, fk column, parent, parent key column. Key types agree for every
   -- pair (checked against the catalog), so no cast is needed.
   chained TEXT[][] := ARRAY[
+    -- 2026-10-14 audit remediation: the canonical Shadow packet/export/job
+    -- store lives in predicate, not public. Both packet and export carry the
+    -- actual programme UUID; render jobs inherit the export's tenant. Keep
+    -- the complete descendant chain here so a missing route predicate cannot
+    -- expose another tenant's packet, export or rendering job.
+    ['predicate.defense_packets',                    'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.proof_pack_exports',                 'program_id',   'public.regulatory_programs',             'id'],
+    ['predicate.render_jobs',                        'proof_pack_id','predicate.proof_pack_exports',           'id'],
     ['ai_claims',                     'generation_run_id',  'ai_generation_runs',     'id'],
     ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
     ['section_propagations',          'patch_id',           'section_patches',        'id'],
 
-    -- ── 2026-10-13 (D3): the four the installer refused, plus the one that
-    -- fixing them would otherwise expose one generation down. See the header.
-    --
-    -- Every owner key here is NOT NULL and matches its parent's key type
-    -- (uuid↔uuid throughout), checked against the catalog — so no row is
-    -- orphaned into invisibility and this block's no-cast assumption holds.
+    -- 2026-10-13 (D3): the generation below capa_records and q_submissions,
+    -- which `specs` made tenant-keyed parents the day before. Their own
+    -- parents carry no organization_id, so these delegate to the parent's
+    -- policy rather than naming a tenant column.
     --
     -- Readers were surveyed rather than assumed. capa_actions is read and
     -- written only by services/capa-mdr/capaMdr.service.ts, which imports the
@@ -584,8 +610,8 @@ DECLARE
     ['q_sub_meetings',                'q_submission_id',    'q_submissions',          'id'],
     ['q_sub_questions',               'q_submission_id',    'q_submissions',          'id'],
     ['q_sub_timeline_entries',        'q_submission_id',    'q_submissions',          'id'],
-    -- Follows q_sub_questions: its parent's policy is created above, in this
-    -- same loop and transaction.
+    -- Depth 2: a commitment hangs off a question, not off the submission. It
+    -- follows q_sub_questions so that policy exists when this one is reached.
     ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
 
     -- 2026-09-24 (ledger L203): children outside public.

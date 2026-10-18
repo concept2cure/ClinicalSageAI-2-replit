@@ -76,7 +76,7 @@ export const GLOBAL_REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     family: 'usa_fda_de_novo',
     allowedScopes: ['project', 'submission', 'document'],
     allowedPersonas: ['ra_lead', 'qa', 'medical_writer'],
-    allowedClientSegments: ['device'],
+    allowedClientSegments: ['device', 'ivd'],
     dataDependencies: ['submission_readiness', 'clinical_evidence', 'device_safety_summary', 'predicate_mapping'],
     artifactDependencies: ['concept2cure_artifacts', 'immutable_report_records'],
     workflowDependencies: ['submission_ops', 'project_sections', 'governance_boundary'],

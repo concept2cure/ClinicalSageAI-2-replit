@@ -84,46 +84,46 @@ describe('computeDecisionDue (review clock)', () => {
  * These pin the governed filing on a fake client, so the SQL and the two Part 11
  * writes are observable without a database.
  */
-describe('applySignedFiling', () => {
-  const ID = '0f0d5a9e-0000-4000-8000-000000000001';
-  const DOC = 'a2b4c6d8-0000-4000-8000-000000000002';
-  const HASH = 'a'.repeat(64);
-  const NOW = new Date('2026-09-07T12:00:00.000Z');
+const ID = '0f0d5a9e-0000-4000-8000-000000000001';
+const DOC = 'a2b4c6d8-0000-4000-8000-000000000002';
+const HASH = 'a'.repeat(64);
+const NOW = new Date('2026-09-07T12:00:00.000Z');
 
-  /** A pg-shaped fake that answers the artifact SELECT and the UPDATE. */
-  function makeClient(opts: { artifact?: unknown[]; updated?: unknown[] } = {}) {
-    const calls: Array<{ sql: string; params: unknown[] }> = [];
-    const client = {
-      query: vi.fn(async (sql: string, params: unknown[] = []) => {
-        calls.push({ sql, params });
-        if (/FROM vault\.documents/i.test(sql)) {
-          return { rows: opts.artifact ?? [{ content_hash: HASH }] };
-        }
-        if (/UPDATE estar_submissions/i.test(sql)) {
-          return { rows: opts.updated ?? [{ id: ID }] };
-        }
-        return { rows: [] };
-      }),
-    };
-    return { client, calls };
-  }
-
-  const params = {
-    id: ID,
-    organizationId: 2,
-    userId: 7,
-    fromStatus: 'draft' as const,
-    reviewGoalDays: 90,
-    artifactDocumentId: DOC,
-    reason: 'Filed the cleared 510(k) package with CDRH.',
-    meaning: 'approval',
-    authenticationMethod: 'password',
-    secondFactorVerified: false,
-    ipAddress: '10.0.0.1',
-    fdaTrackingNumber: 'K260001',
-    now: NOW,
+/** A pg-shaped fake that answers the artifact SELECT and the UPDATE. */
+function makeClient(opts: { artifact?: unknown[]; updated?: unknown[] } = {}) {
+  const calls: Array<{ sql: string; params: unknown[] }> = [];
+  const client = {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
+      calls.push({ sql, params });
+      if (/FROM vault\.documents/i.test(sql)) {
+        return { rows: opts.artifact ?? [{ content_hash: HASH }] };
+      }
+      if (/UPDATE estar_submissions/i.test(sql)) {
+        return { rows: opts.updated ?? [{ id: ID }] };
+      }
+      return { rows: [] };
+    }),
   };
+  return { client, calls };
+}
 
+const params = {
+  id: ID,
+  organizationId: 2,
+  userId: 7,
+  fromStatus: 'draft' as const,
+  reviewGoalDays: 90,
+  artifactDocumentId: DOC,
+  reason: 'Filed the cleared 510(k) package with CDRH.',
+  meaning: 'approval',
+  authenticationMethod: 'password',
+  secondFactorVerified: false,
+  ipAddress: '10.0.0.1',
+  fdaTrackingNumber: 'K260001',
+  now: NOW,
+};
+
+describe('applySignedFiling', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('binds the filing to the vault row, and to the hash the VAULT holds', async () => {
@@ -148,6 +148,14 @@ describe('applySignedFiling', () => {
   it('refuses an artifact that is not in this organization vault', async () => {
     const { client } = makeClient({ artifact: [] });
     await expect(applySignedFiling(client, params)).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect(mockRecordGovernedAction).not.toHaveBeenCalled();
+    expect(mockPersistSignature).not.toHaveBeenCalled();
+  });
+
+  it('refuses a retained administrative PreSTAR prefill before any filing, audit or signature write', async () => {
+    const { client, calls } = makeClient({ artifact: [{ content_hash: HASH, document_code: 'PreSTAR-prefill-q_sub-prestar' }] });
+    await expect(applySignedFiling(client, params)).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringContaining('administrative prefill') });
+    expect(calls.some(call => /UPDATE estar_submissions/.test(call.sql))).toBe(false);
     expect(mockRecordGovernedAction).not.toHaveBeenCalled();
     expect(mockPersistSignature).not.toHaveBeenCalled();
   });

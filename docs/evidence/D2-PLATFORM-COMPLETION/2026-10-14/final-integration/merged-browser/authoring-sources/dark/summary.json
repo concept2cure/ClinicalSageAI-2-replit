@@ -1,0 +1,149 @@
+{
+  "variant": "dark",
+  "fixture": {
+    "programId": "3a27db9b-c7de-4e93-8b34-ac4438fec36d",
+    "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+    "title": "Synthetic QA Source Access 20261014-014535"
+  },
+  "scope": "Actual authoring Sources read; automatic collaboration requests blocked and separately recorded; synthetic QA only",
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED"
+  ],
+  "apiFailures": [],
+  "blockedWrites": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f1d75fc2-ae4f-4ef1-9381-20135e0d2a2c/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f1d75fc2-ae4f-4ef1-9381-20135e0d2a2c/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f31f99f4-35ce-4109-a965-8eecc66b3ac3/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    }
+  ],
+  "providerTurns": [],
+  "surfaces": {
+    "authoring-current-source-rail": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "url": "/concept2cure/document-authoring",
+      "sourceRail": "Drafted from\nRe-read all\nRecord a source\nSynthetic QA accessible source alpha.txt\n\u00b7 cited 1 h ago\nMatches the source record as stored\nSynthetic test citation, not scientific support.\nRe-read source\nRemove",
+      "docId": "f31f99f4-35ce-4109-a965-8eecc66b3ac3",
+      "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10"
+    }
+  },
+  "apiReadFacts": {
+    "projectSources": {
+      "usageScope": "accessible-citations",
+      "total": 2,
+      "sources": [
+        {
+          "id": 12,
+          "title": "Synthetic QA accessible source beta.txt",
+          "usage": {
+            "sourceId": 12,
+            "sections": 0,
+            "documents": 0,
+            "changedSections": 0
+          },
+          "ingestionStatus": "ingested",
+          "extractionStatus": "pending"
+        },
+        {
+          "id": 11,
+          "title": "Synthetic QA accessible source alpha.txt",
+          "usage": {
+            "sourceId": 11,
+            "sections": 1,
+            "documents": 1,
+            "changedSections": 0
+          },
+          "ingestionStatus": "ingested",
+          "extractionStatus": "pending"
+        }
+      ]
+    },
+    "sectionSources": {
+      "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+      "success": true,
+      "sources": [
+        {
+          "citationId": "6d773ceb-ed89-4577-b8cb-e46e4e3768b4",
+          "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+          "state": "current",
+          "sourceId": 11,
+          "sourceTitle": "Synthetic QA accessible source alpha.txt",
+          "citedChecksum": "c5c495f9c5c8b1a76c73ed2e72f7b1f052da8fd072d252ee9a1aeafd07c33662",
+          "currentChecksum": "c5c495f9c5c8b1a76c73ed2e72f7b1f052da8fd072d252ee9a1aeafd07c33662"
+        }
+      ]
+    }
+  },
+  "requestFailures": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f1d75fc2-ae4f-4ef1-9381-20135e0d2a2c/users/me",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f1d75fc2-ae4f-4ef1-9381-20135e0d2a2c/users/me",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/f31f99f4-35ce-4109-a965-8eecc66b3ac3/users/me",
+      "failure": "net::ERR_FAILED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "failure": "net::ERR_FAILED"
+    }
+  ],
+  "programDocumentRow": "Synthetic QA accessible citation document\nDraft\nnull\nUpdated 01:45 AM\nOpen",
+  "completedApiMutations": 0,
+  "automaticCollaborationAttemptsBlocked": 7,
+  "passed": true
+}

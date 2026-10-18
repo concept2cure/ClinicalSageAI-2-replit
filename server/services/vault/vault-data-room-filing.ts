@@ -22,7 +22,8 @@
  */
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { programInOrganization } from '../c2c/program-access';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { vaultWriteRefusal } from './vault-write-authority';
 import { readSourceUploads, sourceIdList, type SourceUpload } from '../clinical-regulatory-evidence/evidence-spine.service.js';
 import { currentVersionLateral, supersededSql } from './vault-version-family.js';
 import { capturedBinaryAvailableSql, capturedDataEligibleSql } from '../document-data-disposition/eligibility.js';
@@ -300,8 +301,13 @@ export async function fileDataRoomSources(input: DataRoomFileInput): Promise<Dat
       message: 'A file can only be added as a new version of a document named by its id. Nothing was filed.',
     };
   }
-  if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
-    return { ok: false, status: 404, code: 'NOT_FOUND', message: 'Project not found.' };
+  try {
+    const access = await requireCurrentProgramAccess(pool, { organizationId: input.organizationId, userId: input.userId ?? undefined, programId: input.programId });
+    const roleRefusal = vaultWriteRefusal(access.actor.role);
+    if (roleRefusal) return roleRefusal;
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) return { ok: false, status: error.status, code: error.code, message: error.message };
+    return { ok: false, status: 503, code: 'PROJECT_ACCESS_UNAVAILABLE', message: 'Current project access could not be verified. Nothing was filed.' };
   }
 
   const sources = new Map((await readSourceUploads(input.organizationId, ids)).map((s) => [s.id, s]));

@@ -1,0 +1,184 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:06:16.318Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:06:16.408Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:06:16.408Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts
+{
+  "timestamp": "2026-10-14T03:06:16.409Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:06:16.671Z",
+  "level": "error",
+  "message": "[concept2cure-api] Failed to persist audit entry",
+  "context": {
+    "error": "audit internal storage unavailable",
+    "action": "UPDATE",
+    "entityType": "artifact",
+    "entityId": "artifact_abc"
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:06:16.673Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=false preserves the committed edit and reports the actual audit outcome
+{
+  "timestamp": "2026-10-14T03:06:16.687Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT artifact: reached with the NUMERIC row id, after the tx commits, and reported in the response
+{
+  "timestamp": "2026-10-14T03:06:16.692Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Updated artifact",
+  "context": {
+    "artifactId": "artifact_abc",
+    "version": 3
+  }
+}
+
+stdout | tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT placement: reached with the numeric id, and the outcome reaches the RESPONSE (the audit log is best-effort and swallows its own failures)
+{
+  "timestamp": "2026-10-14T03:06:16.697Z",
+  "level": "info",
+  "message": "[concept2cure-artifacts] Artifact placement updated",
+  "context": {
+    "artifactId": "artifact_abc",
+    "operation": "relocate",
+    "from": "3.2.S.1",
+    "to": "3.2.P.1"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > PUT artifact: enforceAuthorLineage throws inside the tx -> rollback, and the invalidation must NOT run
+{
+  "timestamp": "2026-10-14T03:06:16.707Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact failed",
+  "context": {
+    "error": "LINEAGE_GAP: unattributed clause",
+    "operation": "update artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > POST rollback: lineage throws -> rollback, no invalidation
+{
+  "timestamp": "2026-10-14T03:06:16.710Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure rollback artifact failed",
+  "context": {
+    "error": "LINEAGE_GAP: unattributed clause",
+    "operation": "rollback artifact",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ × tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome 33ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=false preserves the committed edit and reports the actual audit outcome 6ms
+   → expected undefined to match object { persisted: true, chained: false }
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT artifact: reached with the NUMERIC row id, after the tx commits, and reported in the response 5ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT placement: reached with the numeric id, and the outcome reaches the RESPONSE (the audit log is best-effort and swallows its own failures) 4ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > PUT ctd-section: reached with the numeric id and reported 4ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > the four mutating artifact routes reach the invalidation with the right arguments > POST rollback: reached with the numeric id, after the tx, and reported 3ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > PUT artifact: enforceAuthorLineage throws inside the tx -> rollback, and the invalidation must NOT run 3ms
+ ✓ tests/artifact-routes-invalidate-bundles.test.ts > an edit that never committed must not invalidate > POST rollback: lineage throws -> rollback, no invalidation 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=true preserves the committed edit and reports the actual audit outcome
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ tests/artifact-routes-invalidate-bundles.test.ts:227:39
+    225|     expect(st.trace).toContain('tx:commit');expect(st.trace).not.toCon…
+    226|     expect(st.trace.indexOf(failed?'audit:failed':'audit:written')).to…
+    227|     expect(res.body.meta?.auditTrail).toMatchObject(failed?{persisted:…
+       |                                       ^
+    228|     expect(JSON.stringify(res.body)).not.toContain('internal storage');
+    229|     expect(st.inval).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/artifact-routes-invalidate-bundles.test.ts > durable artifact edits expose the real regulatory audit writer outcome > audit storage failure=false preserves the committed edit and reports the actual audit outcome
+AssertionError: expected undefined to match object { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ tests/artifact-routes-invalidate-bundles.test.ts:227:39
+    225|     expect(st.trace).toContain('tx:commit');expect(st.trace).not.toCon…
+    226|     expect(st.trace.indexOf(failed?'audit:failed':'audit:written')).to…
+    227|     expect(res.body.meta?.auditTrail).toMatchObject(failed?{persisted:…
+       |                                       ^
+    228|     expect(JSON.stringify(res.body)).not.toContain('internal storage');
+    229|     expect(st.inval).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  03:06:13
+   Duration  2.84s (transform 1.11s, setup 57ms, import 2.52s, tests 62ms, environment 0ms)
+

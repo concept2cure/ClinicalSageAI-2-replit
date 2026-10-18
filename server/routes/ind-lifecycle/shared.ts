@@ -95,6 +95,17 @@ export function readinessFrom(input: any, overdueSafetyReports?: number) {
   });
 }
 
+/**
+ * Parse an optional overdue-safety-report count from a body value: undefined
+ * when absent (the engines then say it was not assessed — never zero), the
+ * count when a non-negative integer, null when present but not one (the caller
+ * answers 400 rather than reading "2" or -1 as something else).
+ */
+export function overdueCountParam(raw: unknown): number | null | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  return typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 ? raw : null;
+}
+
 /** The accepted sequence-validation filingType values, for 400 messages. */
 export const FILING_TYPE_VALUES = SEQUENCE_FILING_TYPES.map((t) => `'${t}'`).join('|');
 

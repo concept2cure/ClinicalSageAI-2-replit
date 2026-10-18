@@ -1,0 +1,9 @@
+
+<repo>/server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+  101:74  warning  Arrow function has too many lines (154). Maximum allowed is 100  max-lines-per-function
+
+<repo>/server/services/authoring/__tests__/authoring-source-import.test.ts
+  31:67  warning  Async arrow function has a complexity of 19. Maximum allowed is 15  complexity
+  70:52  warning  Arrow function has too many lines (119). Maximum allowed is 100     max-lines-per-function
+
+✖ 3 problems (0 errors, 3 warnings)

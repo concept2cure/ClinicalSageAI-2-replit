@@ -46,7 +46,9 @@ const CONCEPT_TO_ENTRIES: Record<LifecycleConcept, string[]> = {
   'scientific-validity': ['sci.ivd.scientific-validity', 'eu.ivdr.performance-evaluation', 'mdcg.2022-2-performance-evaluation'],
   'software.safety-class': ['std.iec-62304', 'mdcg.2019-11-software'],
   'software.sdlc': ['std.iec-62304'],
-  'software.cybersecurity': ['fda.ivd.expedited-programs', 'std.iec-62304'],
+  // 2026-10-15: also cited fda.ivd.expedited-programs (Breakthrough/STeP/PCCP), which
+  // says nothing on cybersecurity. The corpus has no §524B entry to cite instead.
+  'software.cybersecurity': ['std.iec-62304'],
   'change.fda-510k': ['legal.ivd.change-significant', 'fda.ivd.510k-pathway'],
   'change.eu-significant': ['legal.ivd.change-significant', 'mdcg.2020-3-significant-change', 'eu.ivdr.transition-timeline'],
   'process-validation': ['std.iso-13485'],

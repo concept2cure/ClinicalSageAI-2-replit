@@ -13,6 +13,10 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { getDocumentTemplate } from '../../../market-specs/document-template-library.js';
+
+/** The IB body headings, from the platform's one IB outline ('investigators_brochure'). */
+const IB_BODY = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => `${sec.number}. ${sec.heading}`).join('; ');
 
 export function createIndSubmissionFlow(): FlowDefinition {
   return {
@@ -877,7 +881,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Does the IB contain all required sections per ICH E6(R3) Appendix A?',
             type: 'yes_no',
             required: true,
-            helpText: 'Required sections: Title Page, Confidentiality Statement, Summary, Introduction, Physical/Chemical/Pharmaceutical Properties, Nonclinical Studies, Effects in Humans (if any), Summary of Data and Guidance for the Investigator.',
+            helpText: `Front matter: title page, confidentiality statement, table of contents. Then: ${IB_BODY}.`,
           },
           {
             id: 'ib_prior_human_experience',
@@ -1231,12 +1235,13 @@ export function createIndSubmissionFlow(): FlowDefinition {
               'Any additional information, concerns, or known regulatory risks for this IND submission...',
           },
         ],
-        branches: [
-          {
-            when: { field: 'ind_type_selection', operator: 'eq', value: 'emergency' },
-            goto: 'ind_review',
-          },
-        ],
+        /* An emergency-IND branch onto this node itself, which can only ask
+           this question again: it was inert while branches read one node's
+           answers, and reading every answer made it a loop. Removed rather
+           than left to loop; the engine now refuses the shape as well. What
+           an emergency shortcut would need is a branch on the node BEFORE
+           review, naming the node an emergency IND should jump TO — which is
+           a flow decision, not a repair (founder's directive, 2026-10-12). */
         defaultNext: 'drug_substance_characterization',
         issueChecks: [
           {

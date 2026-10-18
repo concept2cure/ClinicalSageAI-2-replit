@@ -1,0 +1,13 @@
+× client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses before hydration without creating pending marks or saving 254ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > waits for the cache choice, then becomes available after Discard it 157ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > waits for the cache choice, then becomes available after Restore the device draft 126ms
+ × client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses on a read-only editor and after its rich editor is destroyed 5106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses source mode without changing the authored source or saving 23ms
+AssertionError: expected { ok: true, …(2) } to deeply equal { ok: false, reason: 'not-editable' }
+AssertionError: expected { ok: true, …(2) } to deeply equal { ok: false, reason: 'not-editable' }
+AssertionError: expected { ok: true, …(2) } to deeply equal { ok: false, reason: 'not-editable' }
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed | 15 skipped (20)
+   Start at  06:47:06
+   Duration  8.51s (transform 1.27s, setup 184ms, import 1.61s, tests 5.67s, environment 627ms)

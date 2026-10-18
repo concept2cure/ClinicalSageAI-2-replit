@@ -1,0 +1,3913 @@
+{
+  "qualification": "Actual Workbench in canonical dcv-workbench wrapper, synthetic API. Manual-wheel diagnostic only; no full shell/conversation mounted.",
+  "layoutSourceSha256": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "0f74f256e689c2852d3289a0ee8bfbf741877a768a689ce40dff97019e96da3e",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "afb63c9217e2837885c7da620385fb341b5f5dd16c21c3b074451a689b5bacba",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3"
+  },
+  "sourceFrozenDuringCapture": true,
+  "userReachable": true,
+  "before": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 2089,
+        "clientHeight": 2089,
+        "rect": {
+          "x": 44,
+          "y": -991,
+          "width": 302,
+          "height": 2089.046875,
+          "top": -991,
+          "right": 346,
+          "bottom": 1098.046875,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 3158,
+        "clientHeight": 3158,
+        "rect": {
+          "x": 0,
+          "y": -1027,
+          "width": 390,
+          "height": 3158.34375,
+          "top": -1027,
+          "right": 390,
+          "bottom": 2131.34375,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 1516,
+        "scrollHeight": 3158,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": 237.125,
+          "width": 278,
+          "height": 44,
+          "top": 237.125,
+          "right": 334,
+          "bottom": 281.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 645.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 645.125,
+          "right": 164.28125,
+          "bottom": 689.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 645.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 645.125,
+          "right": 293.484375,
+          "bottom": 689.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 967.046875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 967.046875,
+          "right": 316.90625,
+          "bottom": 1011.046875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 1029.046875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 1029.046875,
+          "right": 217.984375,
+          "bottom": 1073.046875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": null,
+    "nativeEditor": {
+      "x": 45,
+      "y": 1538.84375,
+      "width": 300,
+      "height": 320,
+      "top": 1538.84375,
+      "right": 345,
+      "bottom": 1858.84375,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "after": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 2089,
+        "clientHeight": 2089,
+        "rect": {
+          "x": 44,
+          "y": -1391,
+          "width": 302,
+          "height": 2089.046875,
+          "top": -1391,
+          "right": 346,
+          "bottom": 698.046875,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 3158,
+        "clientHeight": 3158,
+        "rect": {
+          "x": 0,
+          "y": -1427,
+          "width": 390,
+          "height": 3158.34375,
+          "top": -1427,
+          "right": 390,
+          "bottom": 1731.34375,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 1916,
+        "scrollHeight": 3158,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": -162.875,
+          "width": 278,
+          "height": 44,
+          "top": -162.875,
+          "right": 334,
+          "bottom": -118.875,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 245.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 245.125,
+          "right": 164.28125,
+          "bottom": 289.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 245.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 245.125,
+          "right": 293.484375,
+          "bottom": 289.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 567.046875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 567.046875,
+          "right": 316.90625,
+          "bottom": 611.046875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 629.046875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 629.046875,
+          "right": 217.984375,
+          "bottom": 673.046875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": null,
+    "nativeEditor": {
+      "x": 45,
+      "y": 1138.84375,
+      "width": 300,
+      "height": 320,
+      "top": 1138.84375,
+      "right": 345,
+      "bottom": 1458.84375,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "wheels": [
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 2089,
+          "clientHeight": 2089,
+          "rect": {
+            "x": 44,
+            "y": -1191,
+            "width": 302,
+            "height": 2089.046875,
+            "top": -1191,
+            "right": 346,
+            "bottom": 898.046875,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 3158,
+          "clientHeight": 3158,
+          "rect": {
+            "x": 0,
+            "y": -1227,
+            "width": 390,
+            "height": 3158.34375,
+            "top": -1227,
+            "right": 390,
+            "bottom": 1931.34375,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 1716,
+          "scrollHeight": 3158,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 37.125,
+            "width": 278,
+            "height": 44,
+            "top": 37.125,
+            "right": 334,
+            "bottom": 81.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 445.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 445.125,
+            "right": 164.28125,
+            "bottom": 489.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 445.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 445.125,
+            "right": 293.484375,
+            "bottom": 489.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 767.046875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 767.046875,
+            "right": 316.90625,
+            "bottom": 811.046875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 829.046875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 829.046875,
+            "right": 217.984375,
+            "bottom": 873.046875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": null,
+      "nativeEditor": {
+        "x": 45,
+        "y": 1338.84375,
+        "width": 300,
+        "height": 320,
+        "top": 1338.84375,
+        "right": 345,
+        "bottom": 1658.84375,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 2089,
+          "clientHeight": 2089,
+          "rect": {
+            "x": 44,
+            "y": -1391,
+            "width": 302,
+            "height": 2089.046875,
+            "top": -1391,
+            "right": 346,
+            "bottom": 698.046875,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 3158,
+          "clientHeight": 3158,
+          "rect": {
+            "x": 0,
+            "y": -1427,
+            "width": 390,
+            "height": 3158.34375,
+            "top": -1427,
+            "right": 390,
+            "bottom": 1731.34375,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 1916,
+          "scrollHeight": 3158,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": -162.875,
+            "width": 278,
+            "height": 44,
+            "top": -162.875,
+            "right": 334,
+            "bottom": -118.875,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 245.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 245.125,
+            "right": 164.28125,
+            "bottom": 289.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 245.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 245.125,
+            "right": 293.484375,
+            "bottom": 289.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 567.046875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 567.046875,
+            "right": 316.90625,
+            "bottom": 611.046875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 629.046875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 629.046875,
+            "right": 217.984375,
+            "bottom": 673.046875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": null,
+      "nativeEditor": {
+        "x": 45,
+        "y": 1138.84375,
+        "width": 300,
+        "height": 320,
+        "top": 1138.84375,
+        "right": 345,
+        "bottom": 1458.84375,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    }
+  ],
+  "reviewOpened": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 2109,
+        "clientHeight": 2109,
+        "rect": {
+          "x": 44,
+          "y": 525,
+          "width": 302,
+          "height": 2109.1875,
+          "top": 525,
+          "right": 346,
+          "bottom": 2634.1875,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 4008,
+        "clientHeight": 4008,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 4008.234375,
+          "top": 489,
+          "right": 390,
+          "bottom": 4497.234375,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 0,
+        "scrollHeight": 4008,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": 1753.125,
+          "width": 278,
+          "height": 44,
+          "top": 1753.125,
+          "right": 334,
+          "bottom": 1797.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 2161.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 2161.125,
+          "right": 164.28125,
+          "bottom": 2205.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 2161.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 2161.125,
+          "right": 293.484375,
+          "bottom": 2205.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 2503.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2503.1875,
+          "right": 316.90625,
+          "bottom": 2547.1875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 2565.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2565.1875,
+          "right": 217.984375,
+          "bottom": 2609.1875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": {
+      "x": 63,
+      "y": 2836.1875,
+      "width": 206,
+      "height": 49.375,
+      "top": 2836.1875,
+      "right": 269,
+      "bottom": 2885.5625,
+      "left": 63
+    },
+    "nativeEditor": {
+      "x": 45,
+      "y": 4010.234375,
+      "width": 300,
+      "height": 320,
+      "top": 4010.234375,
+      "right": 345,
+      "bottom": 4330.234375,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "reviewAfterCollapse": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 68,
+        "clientHeight": 68,
+        "rect": {
+          "x": 44,
+          "y": 525,
+          "width": 302,
+          "height": 68,
+          "top": 525,
+          "right": 346,
+          "bottom": 593,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 1967,
+        "clientHeight": 1967,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 1967.046875,
+          "top": 489,
+          "right": 390,
+          "bottom": 2456.046875,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 0,
+        "scrollHeight": 1967,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": 1753.125,
+          "width": 278,
+          "height": 44,
+          "top": 1753.125,
+          "right": 334,
+          "bottom": 1797.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 2161.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 2161.125,
+          "right": 164.28125,
+          "bottom": 2205.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 2161.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 2161.125,
+          "right": 293.484375,
+          "bottom": 2205.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 2503.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2503.1875,
+          "right": 316.90625,
+          "bottom": 2547.1875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 2565.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2565.1875,
+          "right": 217.984375,
+          "bottom": 2609.1875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": {
+      "x": 63,
+      "y": 795,
+      "width": 206,
+      "height": 49.375,
+      "top": 795,
+      "right": 269,
+      "bottom": 844.375,
+      "left": 63
+    },
+    "nativeEditor": {
+      "x": 45,
+      "y": 1969.046875,
+      "width": 300,
+      "height": 320,
+      "top": 1969.046875,
+      "right": 345,
+      "bottom": 2289.046875,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "disclosureCollapsedForReview": true,
+  "reviewHeadingReached": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 68,
+        "clientHeight": 68,
+        "rect": {
+          "x": 44,
+          "y": 325,
+          "width": 302,
+          "height": 68,
+          "top": 325,
+          "right": 346,
+          "bottom": 393,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 1967,
+        "clientHeight": 1967,
+        "rect": {
+          "x": 0,
+          "y": 289,
+          "width": 390,
+          "height": 1967.046875,
+          "top": 289,
+          "right": 390,
+          "bottom": 2256.046875,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 200,
+        "scrollHeight": 1967,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": 1553.125,
+          "width": 278,
+          "height": 44,
+          "top": 1553.125,
+          "right": 334,
+          "bottom": 1597.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 1961.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 1961.125,
+          "right": 164.28125,
+          "bottom": 2005.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 1961.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 1961.125,
+          "right": 293.484375,
+          "bottom": 2005.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 2303.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2303.1875,
+          "right": 316.90625,
+          "bottom": 2347.1875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 2365.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 2365.1875,
+          "right": 217.984375,
+          "bottom": 2409.1875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": {
+      "x": 63,
+      "y": 595,
+      "width": 206,
+      "height": 49.375,
+      "top": 595,
+      "right": 269,
+      "bottom": 644.375,
+      "left": 63
+    },
+    "nativeEditor": {
+      "x": 45,
+      "y": 1769.046875,
+      "width": 300,
+      "height": 320,
+      "top": 1769.046875,
+      "right": 345,
+      "bottom": 2089.046875,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "editorReached": {
+    "ancestors": [
+      {
+        "tag": "SECTION",
+        "cls": "authoring-oversight",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 68,
+        "clientHeight": 68,
+        "rect": {
+          "x": 44,
+          "y": -675,
+          "width": 302,
+          "height": 68,
+          "top": -675,
+          "right": 346,
+          "bottom": -607,
+          "left": 44
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-inner",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 1967,
+        "clientHeight": 1967,
+        "rect": {
+          "x": 0,
+          "y": -711,
+          "width": 390,
+          "height": 1967.046875,
+          "top": -711,
+          "right": 390,
+          "bottom": 1256.046875,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed-doc-scroll",
+        "overflowY": "auto",
+        "scrollTop": 1200,
+        "scrollHeight": 1967,
+        "clientHeight": 355,
+        "rect": {
+          "x": 0,
+          "y": 489,
+          "width": 390,
+          "height": 355,
+          "top": 489,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "SECTION",
+        "cls": "ed-doc",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 664,
+        "clientHeight": 664,
+        "rect": {
+          "x": 0,
+          "y": 180,
+          "width": 390,
+          "height": 664,
+          "top": 180,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "ed",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "MAIN",
+        "cls": "dcv-workbench",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "c2c-v2 ",
+        "overflowY": "hidden",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "DIV",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "BODY",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      },
+      {
+        "tag": "HTML",
+        "cls": "",
+        "overflowY": "visible",
+        "scrollTop": 0,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    ],
+    "controls": [
+      {
+        "text": "Clear selected sources",
+        "rect": {
+          "x": 56,
+          "y": 553.125,
+          "width": 278,
+          "height": 44,
+          "top": 553.125,
+          "right": 334,
+          "bottom": 597.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Preview build",
+        "rect": {
+          "x": 56,
+          "y": 961.125,
+          "width": 108.28125,
+          "height": 44,
+          "top": 961.125,
+          "right": 164.28125,
+          "bottom": 1005.125,
+          "left": 56
+        }
+      },
+      {
+        "text": "Build document",
+        "rect": {
+          "x": 172.28125,
+          "y": 961.125,
+          "width": 121.203125,
+          "height": 44,
+          "top": 961.125,
+          "right": 293.484375,
+          "bottom": 1005.125,
+          "left": 172.28125
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.2",
+        "rect": {
+          "x": 194.921875,
+          "y": 1303.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 1303.1875,
+          "right": 316.90625,
+          "bottom": 1347.1875,
+          "left": 194.921875
+        }
+      },
+      {
+        "text": "Review 3.2.P.8.3",
+        "rect": {
+          "x": 96,
+          "y": 1365.1875,
+          "width": 121.984375,
+          "height": 44,
+          "top": 1365.1875,
+          "right": 217.984375,
+          "bottom": 1409.1875,
+          "left": 96
+        }
+      }
+    ],
+    "reviewHeading": {
+      "x": 63,
+      "y": -405,
+      "width": 206,
+      "height": 49.375,
+      "top": -405,
+      "right": 269,
+      "bottom": -355.625,
+      "left": 63
+    },
+    "nativeEditor": {
+      "x": 45,
+      "y": 769.046875,
+      "width": 300,
+      "height": 320,
+      "top": 769.046875,
+      "right": 345,
+      "bottom": 1089.046875,
+      "left": 45
+    },
+    "scrollArea": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355,
+      "top": 489,
+      "right": 390,
+      "bottom": 844,
+      "left": 0
+    }
+  },
+  "editorWheels": [
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": 325,
+            "width": 302,
+            "height": 68,
+            "top": 325,
+            "right": 346,
+            "bottom": 393,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": 289,
+            "width": 390,
+            "height": 1967.046875,
+            "top": 289,
+            "right": 390,
+            "bottom": 2256.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 200,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 1553.125,
+            "width": 278,
+            "height": 44,
+            "top": 1553.125,
+            "right": 334,
+            "bottom": 1597.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1961.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 1961.125,
+            "right": 164.28125,
+            "bottom": 2005.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1961.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 1961.125,
+            "right": 293.484375,
+            "bottom": 2005.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 2303.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 2303.1875,
+            "right": 316.90625,
+            "bottom": 2347.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 2365.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 2365.1875,
+            "right": 217.984375,
+            "bottom": 2409.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": 595,
+        "width": 206,
+        "height": 49.375,
+        "top": 595,
+        "right": 269,
+        "bottom": 644.375,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 1769.046875,
+        "width": 300,
+        "height": 320,
+        "top": 1769.046875,
+        "right": 345,
+        "bottom": 2089.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": 125,
+            "width": 302,
+            "height": 68,
+            "top": 125,
+            "right": 346,
+            "bottom": 193,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": 89,
+            "width": 390,
+            "height": 1967.046875,
+            "top": 89,
+            "right": 390,
+            "bottom": 2056.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 400,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 1353.125,
+            "width": 278,
+            "height": 44,
+            "top": 1353.125,
+            "right": 334,
+            "bottom": 1397.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1761.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 1761.125,
+            "right": 164.28125,
+            "bottom": 1805.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1761.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 1761.125,
+            "right": 293.484375,
+            "bottom": 1805.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 2103.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 2103.1875,
+            "right": 316.90625,
+            "bottom": 2147.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 2165.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 2165.1875,
+            "right": 217.984375,
+            "bottom": 2209.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": 395,
+        "width": 206,
+        "height": 49.375,
+        "top": 395,
+        "right": 269,
+        "bottom": 444.375,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 1569.046875,
+        "width": 300,
+        "height": 320,
+        "top": 1569.046875,
+        "right": 345,
+        "bottom": 1889.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": -75,
+            "width": 302,
+            "height": 68,
+            "top": -75,
+            "right": 346,
+            "bottom": -7,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": -111,
+            "width": 390,
+            "height": 1967.046875,
+            "top": -111,
+            "right": 390,
+            "bottom": 1856.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 600,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 1153.125,
+            "width": 278,
+            "height": 44,
+            "top": 1153.125,
+            "right": 334,
+            "bottom": 1197.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1561.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 1561.125,
+            "right": 164.28125,
+            "bottom": 1605.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1561.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 1561.125,
+            "right": 293.484375,
+            "bottom": 1605.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 1903.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1903.1875,
+            "right": 316.90625,
+            "bottom": 1947.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 1965.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1965.1875,
+            "right": 217.984375,
+            "bottom": 2009.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": 195,
+        "width": 206,
+        "height": 49.375,
+        "top": 195,
+        "right": 269,
+        "bottom": 244.375,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 1369.046875,
+        "width": 300,
+        "height": 320,
+        "top": 1369.046875,
+        "right": 345,
+        "bottom": 1689.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": -275,
+            "width": 302,
+            "height": 68,
+            "top": -275,
+            "right": 346,
+            "bottom": -207,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": -311,
+            "width": 390,
+            "height": 1967.046875,
+            "top": -311,
+            "right": 390,
+            "bottom": 1656.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 800,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 953.125,
+            "width": 278,
+            "height": 44,
+            "top": 953.125,
+            "right": 334,
+            "bottom": 997.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1361.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 1361.125,
+            "right": 164.28125,
+            "bottom": 1405.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1361.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 1361.125,
+            "right": 293.484375,
+            "bottom": 1405.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 1703.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1703.1875,
+            "right": 316.90625,
+            "bottom": 1747.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 1765.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1765.1875,
+            "right": 217.984375,
+            "bottom": 1809.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": -5,
+        "width": 206,
+        "height": 49.375,
+        "top": -5,
+        "right": 269,
+        "bottom": 44.375,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 1169.046875,
+        "width": 300,
+        "height": 320,
+        "top": 1169.046875,
+        "right": 345,
+        "bottom": 1489.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": -475,
+            "width": 302,
+            "height": 68,
+            "top": -475,
+            "right": 346,
+            "bottom": -407,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": -511,
+            "width": 390,
+            "height": 1967.046875,
+            "top": -511,
+            "right": 390,
+            "bottom": 1456.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 1000,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 753.125,
+            "width": 278,
+            "height": 44,
+            "top": 753.125,
+            "right": 334,
+            "bottom": 797.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1161.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 1161.125,
+            "right": 164.28125,
+            "bottom": 1205.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1161.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 1161.125,
+            "right": 293.484375,
+            "bottom": 1205.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 1503.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1503.1875,
+            "right": 316.90625,
+            "bottom": 1547.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 1565.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1565.1875,
+            "right": 217.984375,
+            "bottom": 1609.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": -205,
+        "width": 206,
+        "height": 49.375,
+        "top": -205,
+        "right": 269,
+        "bottom": -155.625,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 969.046875,
+        "width": 300,
+        "height": 320,
+        "top": 969.046875,
+        "right": 345,
+        "bottom": 1289.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    },
+    {
+      "ancestors": [
+        {
+          "tag": "SECTION",
+          "cls": "authoring-oversight",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 68,
+          "clientHeight": 68,
+          "rect": {
+            "x": 44,
+            "y": -675,
+            "width": 302,
+            "height": 68,
+            "top": -675,
+            "right": 346,
+            "bottom": -607,
+            "left": 44
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-inner",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 1967,
+          "clientHeight": 1967,
+          "rect": {
+            "x": 0,
+            "y": -711,
+            "width": 390,
+            "height": 1967.046875,
+            "top": -711,
+            "right": 390,
+            "bottom": 1256.046875,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed-doc-scroll",
+          "overflowY": "auto",
+          "scrollTop": 1200,
+          "scrollHeight": 1967,
+          "clientHeight": 355,
+          "rect": {
+            "x": 0,
+            "y": 489,
+            "width": 390,
+            "height": 355,
+            "top": 489,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "SECTION",
+          "cls": "ed-doc",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 664,
+          "clientHeight": 664,
+          "rect": {
+            "x": 0,
+            "y": 180,
+            "width": 390,
+            "height": 664,
+            "top": 180,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "ed",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "MAIN",
+          "cls": "dcv-workbench",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "c2c-v2 ",
+          "overflowY": "hidden",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        },
+        {
+          "tag": "HTML",
+          "cls": "",
+          "overflowY": "visible",
+          "scrollTop": 0,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          }
+        }
+      ],
+      "controls": [
+        {
+          "text": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 553.125,
+            "width": 278,
+            "height": 44,
+            "top": 553.125,
+            "right": 334,
+            "bottom": 597.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 961.125,
+            "width": 108.28125,
+            "height": 44,
+            "top": 961.125,
+            "right": 164.28125,
+            "bottom": 1005.125,
+            "left": 56
+          }
+        },
+        {
+          "text": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 961.125,
+            "width": 121.203125,
+            "height": 44,
+            "top": 961.125,
+            "right": 293.484375,
+            "bottom": 1005.125,
+            "left": 172.28125
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.2",
+          "rect": {
+            "x": 194.921875,
+            "y": 1303.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1303.1875,
+            "right": 316.90625,
+            "bottom": 1347.1875,
+            "left": 194.921875
+          }
+        },
+        {
+          "text": "Review 3.2.P.8.3",
+          "rect": {
+            "x": 96,
+            "y": 1365.1875,
+            "width": 121.984375,
+            "height": 44,
+            "top": 1365.1875,
+            "right": 217.984375,
+            "bottom": 1409.1875,
+            "left": 96
+          }
+        }
+      ],
+      "reviewHeading": {
+        "x": 63,
+        "y": -405,
+        "width": 206,
+        "height": 49.375,
+        "top": -405,
+        "right": 269,
+        "bottom": -355.625,
+        "left": 63
+      },
+      "nativeEditor": {
+        "x": 45,
+        "y": 769.046875,
+        "width": 300,
+        "height": 320,
+        "top": 769.046875,
+        "right": 345,
+        "bottom": 1089.046875,
+        "left": 45
+      },
+      "scrollArea": {
+        "x": 0,
+        "y": 489,
+        "width": 390,
+        "height": 355,
+        "top": 489,
+        "right": 390,
+        "bottom": 844,
+        "left": 0
+      }
+    }
+  ]
+}

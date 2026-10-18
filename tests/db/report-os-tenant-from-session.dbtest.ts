@@ -117,8 +117,8 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     );
     groupA = group.rows[0].id;
     await owner.query(
-      `INSERT INTO report_program_group_projects (program_group_id,project_id) VALUES ($1,$2)`,
-      [groupA, ids.A.projects]
+      `INSERT INTO report_program_group_projects (program_group_id,project_id,organization_id) VALUES ($1,$2,$3)`,
+      [groupA, ids.A.projects, ORG_A]
     );
   });
 
@@ -205,8 +205,8 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
 
   it("a program group over another tenant's project is refused", async () => {
     // Naming its OWN org: the request is legitimate in every respect but the
-    // member. report_program_group_projects has no RLS, so this is the one
-    // check here the database cannot make.
+    // member. The route refuses before writing; canonical row security and
+    // validated same-organization membership keys also enforce the boundary.
     const groupsInB = await count('report_program_groups', ORG_B);
     const overForeign = await request(ro)
       .post('/api/report-os/program-groups')

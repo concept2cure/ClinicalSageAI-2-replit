@@ -33,7 +33,11 @@ export interface LetterOfAuthorizationInput {
   authorizedPartyName: string;
   /** Subject of the reference (drug substance / product / intermediate). */
   subjectName: string;
-  /** The specific sections / information authorized for reference (defaults to "in its entirety"). */
+  /**
+   * The specific sections / information authorized for reference. Required:
+   * absent or blank → a gap and "[scope to be specified]". An entire-file
+   * grant is stated as such ("the file in its entirety"), never defaulted.
+   */
   authorizedSections?: string[];
   /** The IND the reference supports (the receiving application), if known. */
   supportingIndNumber?: string;
@@ -80,16 +84,25 @@ function present(v: unknown): boolean {
   return typeof v === 'string' ? v.trim().length > 0 : v !== undefined && v !== null;
 }
 
+/** The placeholder printed where no authorized scope was recorded. */
+export const SCOPE_PLACEHOLDER = '[scope to be specified]';
+
+/** The stated authorized sections, trimmed; blank entries are not a scope. */
+export function statedSections(sections: unknown): string[] {
+  return Array.isArray(sections) ? sections.map((s) => String(s ?? '').trim()).filter(Boolean) : [];
+}
+
 /**
  * Assemble the Letter of Authorization document model + gap list. Pure.
  */
 export function assembleLetterOfAuthorization(input: LetterOfAuthorizationInput): LetterOfAuthorizationModel {
   const gaps = REQUIRED_FIELDS.filter((f) => !present(input[f.key])).map((f) => f.label);
 
-  const scope =
-    input.authorizedSections && input.authorizedSections.length > 0
-      ? input.authorizedSections.join('; ')
-      : 'the file in its entirety';
+  // 2026-10-15: no sections used to read "the file in its entirety" — a grant
+  // by the holder that nobody recorded. It is a gap and a placeholder now.
+  const authorized = statedSections(input.authorizedSections);
+  if (authorized.length === 0) gaps.push('authorized scope (sections authorized for reference)');
+  const scope = authorized.length > 0 ? authorized.join('; ') : SCOPE_PLACEHOLDER;
 
   const fileLabel = `${input.referencedFileType} ${input.referencedFileNumber}`.trim();
 

@@ -1,0 +1,118 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:14:03.842Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:14:03.841Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:14:03.842Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > intersects narrowing IDs with canonical access before count/rank/LIMIT 28ms
+ × server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > places actual private sharing ahead of tied counts and pages for a viewer 20ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > cannot launder a foreign source organization through an owned program 30ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > returns every current match exactly once across a heap reorder between pages 54ms
+ ✓ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > keeps project, tenant, deletion and current-version rules in counts and pages 51ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > preserves an admitted viewer and keyless positive read 6ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not return old text/counts after access is revoked during meaning embedding 24ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rechecks old lexical identities when the optional provider becomes unavailable 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > withholds stale totals even when the changed source was outside the selected page 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > does not swallow changed actor authority as optional meaning unavailability 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rejects contradictory actor/source organisation before a source read 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > pins scope arrays before an asynchronous callback can mutate them 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42703') and preserves the authorised lexical result 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped assistant retrieval > rolls back unsupported meaning SQL ('42704') and preserves the authorised lexical result 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > uses actor-filtered outside-index captures and current permitted programmes 3ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses UUID/integer tenant mismatch before retrieval 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > withholds passage content and coverage when actor scope changes during retrieval 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts > actor-scoped passage adapter > refuses a returned passage whose recorded programme is outside the allowed set 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot replace current actor admission with a supplied allowlist 3ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > cannot widen canonical scope by adding a private allowed program 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > recognises the missing optional vector type, while preserving other undefined objects as unavailable 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds the allowed set before the lexical count and page limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not promote an empty allowed set into all programmes 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > bounds meaning counts and candidates before rank and limit 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > uses the caller executor for meaning SQL rather than a different pool 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds passage ledger to the current byte version, live parent and allowed programmes 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > propagates allowed programmes to the existing passage router 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > retains SQL failures as unknown coverage rather than zero 1ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > does not fabricate zero coverage from an absent ledger aggregate row 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > preserves allowed set through the router filter merge 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > binds array filters in the canonical SQL helper 0ms
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts > server-generated allowed programme filters > refuses an actor programme constraint on a corpus without programme identity 0ms
+stdout | server/services/vault/__tests__/vault-search.test.ts
+{
+  "timestamp": "2026-10-14T21:14:08.740Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:14:08.741Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-search.test.ts
+{
+  "timestamp": "2026-10-14T21:14:08.742Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-search.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > the library search names the organisation in the count and in the page 3ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > a project search adds the project, and keeps the organisation 1ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > turns a question into an OR of its words, without operators from punctuation 1ms
+ ✓ server/services/vault/__tests__/vault-search.test.ts > any-term matching (AnA asks in sentences) > 'any' sends the OR query; the default keeps the search box's every-term meaning 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts > canonical Vault full-text paging with tied matches > places actual private sharing ahead of tied counts and pages for a viewer
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts:64:27
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 35 passed (36)
+   Start at  21:14:01
+   Duration  6.98s (transform 1.18s, setup 111ms, import 3.67s, tests 2.63s, environment 0ms)
+
+

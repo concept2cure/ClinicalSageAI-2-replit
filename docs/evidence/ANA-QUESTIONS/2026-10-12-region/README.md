@@ -89,10 +89,18 @@ that are one test, and the mutation that drops the asymmetry is red.
 Every project is asked its regulator. `submission_type` is now hidden for a
 device or diagnostics product, because `device_submission_pathway` is that
 programme's route question and asking both asked the same thing twice in two
-vocabularies. A multi-country device project now reaches the timeline question
-it used to skip. `createProjectSetupFlow` takes no context any more: both
-things it used context for are resolved from the answers, which is the only
-place that knows them.
+vocabularies. `createProjectSetupFlow` takes no context any more: both things
+it used context for are resolved from the answers, which is the only place
+that knows them.
+
+> **Correction (2026-10-12, from the review in `../2026-10-12-review/`).**
+> This section claimed "a multi-country device project now reaches the timeline
+> question it used to skip". **It did not.** The only branch to
+> `multi_country_setup` was declared on `submission_route`, which a device
+> project skips — so a device programme that had just said its filing was
+> multi-country was still never asked about it. The branch the claim described
+> is now on `medtech_regulatory`, with a test and a mutation for each path.
+> The claim was false when it was written.
 
 ### On the client
 

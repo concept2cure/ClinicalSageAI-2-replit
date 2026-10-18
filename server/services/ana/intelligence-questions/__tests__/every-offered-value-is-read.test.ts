@@ -25,29 +25,51 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FlowEngineContext, QuestionField } from '../types.js';
-import {
-  DECLARED_NON_FACTS,
-  factFields,
-  programmeFactsFrom,
-} from '../programme-facts.js';
+import { mdrFactsFrom } from '../annex-viii-classification.js';
+import { DECLARED_NON_FACTS, factFields, programmeFactsFrom } from '../programme-facts.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
 
 /** Every field of every registered flow, with the flow it came from. */
 const everyField = async (): Promise<Array<{ flow: string; node: string; field: QuestionField }>> => {
   const { getAvailableFlows, getFlowDefinition } = await import('../flows/index.js');
+  const { withGovernedOptions } = await import('../governed-options.js');
   const out: Array<{ flow: string; node: string; field: QuestionField }> = [];
   for (const listed of getAvailableFlows(CTX)) {
     for (const node of getFlowDefinition(listed.category, CTX)?.nodes ?? []) {
-      for (const field of node.fields) out.push({ flow: listed.category, node: node.id, field });
+      for (const field of node.fields) {
+        /* A field whose positions come from a catalogue carries no static
+           options, so scanning the flow definition alone skipped every one of
+           them — including `ivdr_class`, which this gate was extended to cover
+           in the same batch that made it unscannable (2026-10-12 review). The
+           catalogue is resolved here, for each region it holds, so the values
+           a person is actually offered are the values scanned. */
+        if (!field.optionsFrom) {
+          out.push({ flow: listed.category, node: node.id, field });
+          continue;
+        }
+        for (const region of ['US', 'EU'] as const) {
+          const [resolved] = withGovernedOptions([field], {
+            facts: { primaryRegion: region },
+            answers: { product_type: 'medical_device' },
+            ctx: CTX,
+          });
+          out.push({ flow: listed.category, node: `${node.id}(${region})`, field: resolved });
+        }
+      }
     }
   }
   return out;
 };
 
-/** Whether this value changes what the reader holds, for this field. */
-const statesAFact = (fieldId: string, value: string): boolean =>
-  Object.keys(programmeFactsFrom({ [fieldId]: value })).length > 0;
+/**
+ * Whether SOME reader takes this value. Two do: the fact reader, and the
+ * Annex VIII fact bridge — whose values reach the rule engine rather than a
+ * fact of their own, so a classification fact can be read without deciding a
+ * class on its own.
+ */
+const isRead = (fieldId: string, value: string): boolean =>
+  Object.keys(programmeFactsFrom({ [fieldId]: value })).length > 0 || mdrFactsFrom({ [fieldId]: value }) !== null;
 
 describe('every value a fact field offers', () => {
   it('is either read as a fact or declared a non-fact, with a reason', async () => {
@@ -58,7 +80,7 @@ describe('every value a fact field offers', () => {
       if (!fact.has(field.id) || !field.options?.length) continue;
       for (const option of field.options) {
         checked += 1;
-        if (statesAFact(field.id, option.value)) continue;
+        if (isRead(field.id, option.value)) continue;
         const reason = DECLARED_NON_FACTS[field.id]?.[option.value];
         if (reason && reason.trim().length > 20) continue;
         unread.push(`${flow}.${node}.${field.id} offers "${option.value}" (${option.label}) — read as nothing`);
@@ -86,6 +108,23 @@ describe('every value a fact field offers', () => {
       }
     }
     expect(stale, 'a declared non-fact for a value no question offers').toEqual([]);
+  });
+});
+
+describe('a question whose positions come from a catalogue', () => {
+  it('is scanned, with the values a person is actually offered', async () => {
+    /* The IVDR classes are a catalogue's values, not a flow's. Before the
+       review this gate skipped every such field, so the one fact field the
+       same batch added was the one it could not see. */
+    const fields = await everyField();
+    const ivdr = fields.filter(f => f.field.id === 'ivdr_class');
+    expect(ivdr.length, 'resolved once per region the catalogue holds').toBeGreaterThan(0);
+    const values = new Set(ivdr.flatMap(f => (f.field.options ?? []).map(o => o.value)));
+    expect([...values].sort(), 'the four IVDR classes').toEqual(['A', 'B', 'C', 'D']);
+    const routes = fields.filter(f => f.field.id === 'device_submission_pathway');
+    const routeValues = new Set(routes.flatMap(f => (f.field.options ?? []).map(o => o.value)));
+    expect(routeValues.has('US_510K'), 'and the device routes, per region').toBe(true);
+    expect(routeValues.has('EU_MDR_CLASS_III')).toBe(true);
   });
 });
 

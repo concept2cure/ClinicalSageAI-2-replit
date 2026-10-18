@@ -47,7 +47,15 @@ vi.mock('../../../background-jobs-metrics', () => ({
   registerBackgroundJob: vi.fn(),
   BACKGROUND_JOB: { REPORT_SUBSCRIPTION_SWEEP: 'report-subscription-sweep' },
 }));
-vi.mock('bull', () => ({ default: class { } }));
+vi.mock('../configuration', () => ({
+  validateSubscriptionConfiguration: async (sub: { reportTypeId: string; scopeType: string }) => {
+    const { reportAvailability, reportTypeNotComputedMessage } = await import('../../report-engine');
+    const availability = reportAvailability(sub.reportTypeId, sub.scopeType);
+    if (!availability.runnable) throw new Error(reportTypeNotComputedMessage(sub.reportTypeId));
+    return { availability, reportType: { label: sub.reportTypeId }, recipientUserIds: [1] };
+  },
+}));
+vi.mock('../../persistence', () => ({ persistReportRun: vi.fn() }));
 
 import { generateAndDeliver } from '../worker-register';
 
@@ -56,10 +64,10 @@ const sub = (reportTypeId: string, scopeType = 'project') =>
     id: 7, organizationId: 3, reportTypeId, scopeType, scopeId: '11',
     channel: 'platform', clientWorkspaceId: null, schedule: { cadence: 'weekly', hour: 8 },
     recipients: [], format: 'pdf', persona: null, enabled: true,
-    lastRunAt: null, nextRunAt: null, createdBy: 1, createdAt: new Date(), updatedAt: new Date(),
+    lastRunAt: null, nextRunAt: new Date('2026-10-09T08:00:00Z'), createdBy: 1, createdAt: new Date('2026-10-08'), updatedAt: new Date('2026-10-08'),
   }) as never;
 
-const noBlockers = { criticalBlockers: [], summary: {} };
+const noBlockers = { providers: [], blockers: [], criticalBlockers: [], confidence: null, summary: {} };
 
 beforeEach(() => {
   computeInitialRun.mockReset();
@@ -103,6 +111,7 @@ describe('a scheduled report runs its own engine', () => {
   });
 
   it.each([
+    'usa_fda.ind_safety_readiness',
     'usa_fda.nda_bla_filing_readiness',
     'ema.maa_readiness_assessment',
     'japan_pmda.jnda_shonin_readiness',

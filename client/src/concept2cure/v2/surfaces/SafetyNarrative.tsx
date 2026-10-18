@@ -4,7 +4,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -46,6 +46,8 @@ type LiveSaeCase = SaeCase & {
   reportingDetermined?: boolean;
   /** False = no seriousness assessment is recorded. Absent on an older server. */
   seriousnessAssessed?: boolean;
+  /** The exact stored narrative, distinct from a newly computed draft. */
+  narrative?: string | null;
 };
 
 /**
@@ -94,8 +96,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Local editable copy. Field edits (setField / toggleCrit) are in-memory
      drafting that re-runs the deterministic ICH E3 §16 composer over the selected
-     case; there is no case-write endpoint, so edits are not persisted (and the
-     surface never claims they are). Re-seed when the live rows resolve — their
+     case; Save version persists the selected draft with its history. Re-seed when the live rows resolve — their
      identity changes once the fetch settles. */
   const [cases, setCases] = useState<LiveSaeCase[]>(seed);
   const [selId, setSelId] = useState<string>(seed[0]?.id ?? '');
@@ -276,6 +277,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         const nc = { ...c, event: { ...c.event } };
         if (path.startsWith('event.')) (nc.event as Record<string, unknown>)[path.slice(6)] = val;
         else (nc as Record<string, unknown>)[path] = val;
+        if (path === 'event.seriousnessCriteria') nc.seriousnessAssessed = true;
         return nc;
       }),
     );
@@ -305,8 +307,31 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
      than the one they started with. */
   const [saveReason, setSaveReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const [readbackBusy, setReadbackBusy] = useState(false);
+  const [saveReadbacks, setSaveReadbacks] = useState<Record<string, { kind: 'saved' | 'unconfirmed'; loaded: boolean }>>({});
+  const pendingReadback = sel ? saveReadbacks[sel.id] : undefined;
+  const clearReadback = (caseId: string) => setSaveReadbacks((current) => {
+    const next = { ...current }; delete next[caseId]; return next;
+  });
+  const readStoredCase = async () => {
+    if (!sel || !pendingReadback || readbackBusy) return;
+    const caseId = sel.id;
+    setReadbackBusy(true);
+    try {
+      const response = await apiRequest('GET', `/api/safety-narratives/cases/${encodeURIComponent(caseId)}`);
+      const body = await response.json() as { data?: LiveSaeCase };
+      if (!body.data || body.data.id !== caseId) throw new Error('Invalid case readback');
+      const saved = body.data;
+      setCases((current) => current.map((item) => item.id === caseId ? saved : item));
+      if (pendingReadback.kind === 'saved') clearReadback(caseId);
+      else setSaveReadbacks((current) => ({ ...current, [caseId]: { kind: 'unconfirmed', loaded: true } }));
+      fire('The stored case was refreshed. Review its facts and stored narrative before making another version.');
+    } catch {
+      fire('The stored case could not be read. The save remains blocked until its current record can be reviewed.', 'error');
+    } finally { setReadbackBusy(false); }
+  };
   const saveVersion = async () => {
-    if (!sel || !result || saving) return;
+    if (!sel || !result || saving || pendingReadback || readbackBusy) return;
     if (saveReason.trim().length < 8) {
       fire('Enter a reason for change (at least 8 characters) before saving this version.', 'error');
       return;
@@ -321,18 +346,23 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           expectedness: sel.expectedness ?? null,
           reactionPt: sel.event?.term ?? null,
           onsetDate: sel.event?.onsetDate ?? null,
-          seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+          ...(sel.seriousnessAssessed === false ? {} : { seriousnessCriteria: sel.event?.seriousnessCriteria ?? [] }),
           narrative: result.narrative,
         },
       });
-      const json = (await res.json().catch(() => null)) as { data?: LiveSaeCase } | null;
+      const json = (await res.json().catch(() => null)) as { saved?: boolean | null; data?: LiveSaeCase; meta?: { readback?: { available?: boolean } } } | null;
+      if (json?.saved === true && json.meta?.readback?.available === false) {
+        setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'saved', loaded: false } }));
+        setSaveReason('');
+        fire('The case and its audit history were saved. Refresh its stored record before making another change.', 'error');
+        return;
+      }
       if (!res.ok || !json?.data) {
-        fire(
-          'The version was not saved — ' +
-            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
-            '. The case is unchanged.',
-          'error',
-        );
+        if (res.status >= 400 && res.status < 500) fire(serverMessage(json) ?? 'The server refused this version.', 'error');
+        else {
+          setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'unconfirmed', loaded: false } }));
+          fire('The save result could not be confirmed. Read the stored case before retrying this change.', 'error');
+        }
         return;
       }
       const saved = json.data;
@@ -342,10 +372,14 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         `Saved — ${sel.id} and its narrative are in the safety store. Reporting clock: ${saved.clock}, due ${saved.due}.`,
       );
     } catch (e) {
-      fire(
-        'The version was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The case is unchanged.',
-        'error',
-      );
+      const known = e instanceof ApiRequestError;
+      const payload = known && e.payload && typeof e.payload === 'object' ? e.payload as { saved?: unknown } : null;
+      if (known && (payload?.saved === false || (e.status >= 400 && e.status < 500))) {
+        fire(e.message, 'error');
+      } else {
+        setSaveReadbacks((current) => ({ ...current, [sel.id]: { kind: 'unconfirmed', loaded: false } }));
+        fire('The save result could not be confirmed. Read the stored case and its history before retrying this change.', 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -489,6 +523,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <input
                   className="sn-fi sn-save-reason"
                   value={saveReason}
+                  disabled={saving || readbackBusy || !!pendingReadback}
                   onChange={(e) => setSaveReason(e.target.value)}
                   placeholder="Reason for change (audited)"
                   aria-label="Reason for change, required to save this narrative version"
@@ -496,13 +531,23 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <button
                   className="bs-da alt"
                   onClick={() => void saveVersion()}
-                  disabled={saving || saveReason.trim().length < 8}
+                  disabled={saving || readbackBusy || !!pendingReadback || saveReason.trim().length < 8}
                   title={saveReason.trim().length < 8 ? 'Enter a reason for change to save' : 'Save the case and its narrative to the safety store'}
                 >
                   {I.check} {saving ? 'Saving…' : 'Save version'}
                 </button>
               </div>
             </div>
+            {pendingReadback && <div role="alert" className="scaf-note">
+              {pendingReadback.kind === 'saved'
+                ? 'The version and its audit history were saved; the current case display needs to be refreshed.'
+                : 'The previous save is unconfirmed. Read the current record and review its stored narrative before allowing another version.'}
+              <button className="bs-da" disabled={readbackBusy || saving} onClick={() => void readStoredCase()}>
+                {readbackBusy ? 'Reading…' : 'Read stored case'}
+              </button>
+              {pendingReadback.kind === 'unconfirmed' && pendingReadback.loaded && <button className="bs-da"
+                onClick={() => clearReadback(sel.id)}>I reviewed the stored case; allow a new version</button>}
+            </div>}
             <div className="cm-doc-page">
               <div className="cm-doc-render">
                 <h1>Serious adverse event case narrative</h1>
@@ -568,6 +613,10 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
                 <p>{result.narrative}</p>
+                {typeof sel.narrative === 'string' && <details>
+                  <summary>Stored narrative</summary>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{sel.narrative}</p>
+                </details>}
                 <hr />
                 <p>Drafted deterministically from the structured case per ICH E3 section 16 convention. No clinical detail is inferred beyond the supplied facts.</p>
               </div>

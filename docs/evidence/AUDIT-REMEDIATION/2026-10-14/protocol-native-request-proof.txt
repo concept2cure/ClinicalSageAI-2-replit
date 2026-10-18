@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T07:07:08.686Z","pid":105474,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T07:07:08.687Z","pid":105474,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T07:07:08.687Z","pid":105474,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T07:07:09.105Z', poolSize: 1 }
+
+stdout | tests/db/protocol-request-connection.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/protocol-request-connection.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+(node:105474) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > uses a genuine non-superuser without BYPASSRLS and deployed FORCE RLS policies 8ms
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > creates through the actual governed HTTP route and reads list/detail/index/full projection under FORCE RLS 187ms
+stdout | tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > computes completeness and records structured edits/version on the pinned request transaction
+[database] Database connection successful { timestamp: '2026-10-14T07:07:10.759Z', poolSize: 2 }
+
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > retains foreign tenant/record refusal and cannot create under a foreign program 32ms
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > computes completeness and records structured edits/version on the pinned request transaction 113ms
+{"level":50,"time":"2026-10-14T07:07:10.884Z","pid":105474,"hostname":"851fa3de1b8e","context":{"error":"Failed login could not be recorded: no account row for user 55","stack":"Error: Failed login could not be recorded: no account row for user 55\n    at recordFailedLogin (/workspace/ClinicalSageAI-2-replit/server/services/auth-security-service.ts:251:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Object.recordFailedAttempt (/workspace/ClinicalSageAI-2-replit/server/services/part11/reverify-signer-deps.ts:57:44)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:167:7\n    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:45:93)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/protocol-request-connection.dbtest.ts:160:5\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[auth-security] Failed to record failed login"}
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > reads current signer authority, verifies real bcrypt and durably records wrong-password lockout 21ms
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > uses the actual encrypted MFA enrolment and consumes its TOTP step only once on the pinned client 20ms
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > refuses a solely foreign account and cannot expose its factors or change its lockout/TOTP state 12ms
+ ✓ tests/db/protocol-request-connection.dbtest.ts > native protocol consumers on the request connection > finalizes using current transactional completeness, real password and atomic signature/ledger/content binding 85ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  07:07:06
+   Duration  4.24s (transform 2.25s, setup 71ms, import 247ms, tests 3.68s, environment 0ms)
+

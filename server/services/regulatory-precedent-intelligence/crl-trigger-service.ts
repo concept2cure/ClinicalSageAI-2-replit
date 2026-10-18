@@ -76,19 +76,28 @@ export interface DeficiencyDetail {
 }
 
 export interface CRLRiskAssessment {
-  overallRisk: 'low' | 'medium' | 'high' | 'critical';
-  riskScore: number;
+  /** 'not_assessed' when the organisation's library holds no pattern for
+   *  this submission: an empty library is not low risk (ADR 0013, why 3). */
+  overallRisk: 'low' | 'medium' | 'high' | 'critical' | 'not_assessed';
+  riskScore: number | null;
+  reason?: string;
   matchedPatterns: CRLTriggerPattern[];
   trajectoryPrediction: TrajectoryPrediction;
   mitigationStrategies: MitigationStrategy[];
 }
 
+/**
+ * From the organisation's own records only. A field nothing recorded supports
+ * is null: this returned a 10% CRL probability, 1 cycle, 180 days and 0.2
+ * confidence with nothing to go on, a probability of 1.5 x the mean pattern
+ * frequency, 300 days per cycle, and a confidence formula (2026-10-15).
+ */
 export interface TrajectoryPrediction {
-  likelyCrlProbability: number;
-  expectedCycles: number;
-  expectedResolutionDays: number;
+  likelyCrlProbability: number | null;
+  expectedCycles: number | null;
+  expectedResolutionDays: number | null;
   mostLikelyDeficiencies: string[];
-  confidenceScore: number;
+  confidenceScore: number | null;
 }
 
 export interface MitigationStrategy {
@@ -285,6 +294,18 @@ class CRLTriggerService {
       limit: 50,
     });
 
+    if (patterns.length === 0) {
+      return {
+        overallRisk: 'not_assessed',
+        riskScore: null,
+        reason: 'No CRL trigger pattern is recorded in this organisation\'s library for this submission, so CRL risk was not assessed.',
+        matchedPatterns: [],
+        trajectoryPrediction: { likelyCrlProbability: null, expectedCycles: null, expectedResolutionDays: null,
+          mostLikelyDeficiencies: [], confidenceScore: null },
+        mitigationStrategies: [],
+      };
+    }
+
     // Calculate aggregate risk score
     let riskScore = 0;
     const matchedPatterns: CRLTriggerPattern[] = [];
@@ -389,25 +410,14 @@ class CRLTriggerService {
     trajectories: CRLTrajectoryRecord[],
     matchedPatterns: CRLTriggerPattern[]
   ): TrajectoryPrediction {
-    if (trajectories.length === 0 && matchedPatterns.length === 0) {
-      return {
-        likelyCrlProbability: 0.1,
-        expectedCycles: 1,
-        expectedResolutionDays: 180,
-        mostLikelyDeficiencies: [],
-        confidenceScore: 0.2,
-      };
-    }
-
-    // Calculate from historical trajectories
+    const mean = (xs: number[]) => (xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+    // Resolved trajectories the organisation recorded; else the cycle counts
+    // its matched patterns state. Days only where a duration was recorded.
     const resolvedTrajectories = trajectories.filter(t => t.finalOutcome === 'approved');
     const avgCycles = resolvedTrajectories.length > 0
-      ? resolvedTrajectories.reduce((sum, t) => sum + (t.totalCycles ?? 1), 0) / resolvedTrajectories.length
-      : matchedPatterns.reduce((sum, p) => sum + p.avgCyclesToResolve, 0) / Math.max(matchedPatterns.length, 1);
-
-    const avgDays = resolvedTrajectories.length > 0
-      ? resolvedTrajectories.reduce((sum, t) => sum + (t.totalDurationDays ?? 365), 0) / resolvedTrajectories.length
-      : avgCycles * 300;
+      ? mean(resolvedTrajectories.flatMap(t => (t.totalCycles != null ? [t.totalCycles] : [])))
+      : mean(matchedPatterns.map(p => p.avgCyclesToResolve));
+    const avgDays = mean(resolvedTrajectories.flatMap(t => (t.totalDurationDays != null ? [t.totalDurationDays] : [])));
 
     // Aggregate deficiency categories
     const deficiencyCounts: Record<string, number> = {};
@@ -421,18 +431,13 @@ class CRLTriggerService {
       .slice(0, 5)
       .map(([cat]) => cat);
 
-    const crlProbability = matchedPatterns.length > 0
-      ? Math.min(0.95, matchedPatterns.reduce((sum, p) => sum + p.frequencyRate, 0) / matchedPatterns.length * 1.5)
-      : 0.15;
-
-    const confidenceScore = Math.min(0.95, 0.3 + trajectories.length * 0.02 + matchedPatterns.length * 0.05);
-
     return {
-      likelyCrlProbability: crlProbability,
-      expectedCycles: Math.round(avgCycles * 10) / 10,
-      expectedResolutionDays: Math.round(avgDays),
+      // No model computes a CRL probability or a confidence: none is given.
+      likelyCrlProbability: null,
+      expectedCycles: avgCycles === null ? null : Math.round(avgCycles * 10) / 10,
+      expectedResolutionDays: avgDays === null ? null : Math.round(avgDays),
       mostLikelyDeficiencies: sortedDeficiencies,
-      confidenceScore,
+      confidenceScore: null,
     };
   }
 

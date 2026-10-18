@@ -1,0 +1,107 @@
+{
+  "assertionResults": [
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets sends both retained bodies with exact-byte chained audit, saved order and real page ranges",
+      "status": "passed",
+      "title": "sends both retained bodies with exact-byte chained audit, saved order and real page ranges",
+      "duration": 3730.202427,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets refuses the entire historical packet for a private constituent without identifying it",
+      "status": "passed",
+      "title": "refuses the entire historical packet for a private constituent without identifying it",
+      "duration": 17.97498600000017,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets refuses the entire historical packet for a foreign constituent without identifying it",
+      "status": "passed",
+      "title": "refuses the entire historical packet for a foreign constituent without identifying it",
+      "duration": 24.634180000000015,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets refuses the entire historical packet for a missing constituent without identifying it",
+      "status": "passed",
+      "title": "refuses the entire historical packet for a missing constituent without identifying it",
+      "duration": 13.201414000000113,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets holds the real report reservation through rendering before the canonical finalizer can change its status",
+      "status": "failed",
+      "title": "holds the real report reservation through rendering before the canonical finalizer can change its status",
+      "duration": 3192.5139340000005,
+      "failureMessages": [
+        "AssertionError: expected { runId: 10, \u2026(11) } to match object { statusAtRead: 'final', \u2026(2) }\n(9 matching properties omitted from actual)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1283:10)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/report-pack-export.dbtest.ts:266:71\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      ],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets refuses an observed scope withdrawal during actual PDF work before any bytes leave",
+      "status": "passed",
+      "title": "refuses an observed scope withdrawal during actual PDF work before any bytes leave",
+      "duration": 2037.3127509999995,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets refuses an observed role withdrawal during actual PDF work before any bytes leave",
+      "status": "passed",
+      "title": "refuses an observed role withdrawal during actual PDF work before any bytes leave",
+      "duration": 1914.8803869999992,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    {
+      "ancestorTitles": [
+        "native retained complete report packets"
+      ],
+      "fullName": "native retained complete report packets fails closed on a real executor fault rather than assuming a verified standard plan",
+      "status": "passed",
+      "title": "fails closed on a real executor fault rather than assuming a verified standard plan",
+      "duration": 4.468514000000141,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    }
+  ],
+  "startTime": 1791968365420,
+  "endTime": 1791968376356.4685,
+  "status": "failed",
+  "message": "",
+  "name": "/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/report-pack-export.dbtest.ts"
+}

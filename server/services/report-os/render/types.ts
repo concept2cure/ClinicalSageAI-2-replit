@@ -81,6 +81,10 @@ export interface RenderedReport {
   /** The scope by name (a project's name or code), stored at run creation.
    *  Absent on runs created before it was stored. */
   scopeLabel?: string;
+  /** Actual data boundary, separate from the context used to open the report. */
+  computedScope?: string;
+  /** Stored calculation inputs/results, kept with the sealed document. */
+  provenance?: Record<string, unknown>;
   generatedAt: string;
   status: ReportRunStatus;
   sections: ReportSection[];

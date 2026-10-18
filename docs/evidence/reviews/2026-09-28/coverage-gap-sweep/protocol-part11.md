@@ -295,4 +295,3 @@ It is already recorded as open:
 It is also not reachable from a launch surface today. A grep of client/src finds calls to POST /api/protocol-deviations/deviations (ProtocolRegisterForms.tsx:187) and /deviations/:id/assessment (ProtocolDevWrites.ts:262), but nothing that calls /deviations/:id/close. So no user or auditor currently sees a "deviation closed" row in the esign bucket from a launch-catalog action.
 
 What I covered: the route and governed() helper, recordGovernedAction, the Command type and high-risk set, the ledger's deriveKind and audit_logs mapper and header, the AdminSurfaces kind counts and colours, the file's git history (the `sign` has been there since the file was added in 4876e2829), the sign-ceremony baseline, the 2026-09-24 review, and client/src callers. What I did not do: run the route against Postgres, check whether rows are already in the esign bucket in any deployed database, or read the 2026-09-26 and 2026-09-28 reports beyond a grep.
-

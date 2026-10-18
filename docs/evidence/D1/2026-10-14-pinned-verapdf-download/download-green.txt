@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: verified canonical Central download installs readable bytes without using the fallback
+ok 1 - verified canonical Central download installs readable bytes without using the fallback
+  ---
+  duration_ms: 48.440709
+  type: 'test'
+  ...
+# Subtest: canonical Central HTTP refusal falls back to the same pinned artifact at official repo1
+ok 2 - canonical Central HTTP refusal falls back to the same pinned artifact at official repo1
+  ---
+  duration_ms: 90.098677
+  type: 'test'
+  ...
+# Subtest: an interrupted partial download is removed before a verified fallback is installed
+ok 3 - an interrupted partial download is removed before a verified fallback is installed
+  ---
+  duration_ms: 99.223472
+  type: 'test'
+  ...
+# Subtest: both official endpoints being unavailable fails closed
+ok 4 - both official endpoints being unavailable fails closed
+  ---
+  duration_ms: 82.89658
+  type: 'test'
+  ...
+# Subtest: a successful corrupt canonical response fails integrity immediately without falling back
+ok 5 - a successful corrupt canonical response fails integrity immediately without falling back
+  ---
+  duration_ms: 58.104301
+  type: 'test'
+  ...
+# Subtest: a successful corrupt fallback response is never installed
+ok 6 - a successful corrupt fallback response is never installed
+  ---
+  duration_ms: 97.570031
+  type: 'test'
+  ...
+# Subtest: transport failure preserves an existing retained destination
+ok 7 - transport failure preserves an existing retained destination
+  ---
+  duration_ms: 216.630479
+  type: 'test'
+  ...
+# Subtest: integrity failure preserves an existing retained destination
+ok 8 - integrity failure preserves an existing retained destination
+  ---
+  duration_ms: 55.247381
+  type: 'test'
+  ...
+# Subtest: malformed release and checksum pins are refused before any network or file write
+ok 9 - malformed release and checksum pins are refused before any network or file write
+  ---
+  duration_ms: 100.696738
+  type: 'test'
+  ...
+# Subtest: both endpoint attempts retain HTTPS restrictions and finite retry and request budgets
+ok 10 - both endpoint attempts retain HTTPS restrictions and finite retry and request budgets
+  ---
+  duration_ms: 273.999803
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1240.934511

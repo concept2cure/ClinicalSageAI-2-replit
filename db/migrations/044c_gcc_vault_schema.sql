@@ -3,6 +3,9 @@
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
 -- Purpose: Bootstrap vault schema with documents table and program_id RLS stub
+-- AMENDED IN PLACE 2026-10-14: FORCE the existing program policies for table
+-- owners too. The canonical resolver and durable tenant reconciliation run on
+-- the deployment path; no policy, grant, owner or quarantined row is replaced.
 --
 -- eCTD/CTD Context:
 --   - Module(s): Module 1 (Administrative), Module 5 (Clinical Study Reports)
@@ -110,6 +113,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_vault_documents_program_hash_unique
 -- ROW LEVEL SECURITY
 -- ============================================================================
 ALTER TABLE vault.documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vault.documents FORCE ROW LEVEL SECURITY;
 
 -- Drop existing policies if any (idempotent)
 DROP POLICY IF EXISTS vault_documents_select_policy ON vault.documents;

@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > renders recorded citations with their server-computed standing 118ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > reports a changed source with both checksums, and asks — never redrafts 44ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > keeps a citation visible when its source no longer resolves 25ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > makes no claim for a citation that was never checked 23ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > renders no confidence percentage anywhere — recorded facts are not guesses 51ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > states the contract honestly when nothing is recorded yet 7ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > distinguishes a failed read from an empty library 11ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: null 9ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0} 12ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":[],"total":0,"scope":"organization-wide"} 10ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: {"sections":{},"total":0,"scope":"verified-accessible-authoring-sections"} 6ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > publishes the verified accessible scope without claiming the organization has no citations 6ms
+ ✓ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > hands unrecorded-claim analysis to AnA without inventing citations 57ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > lists what the section is drafted from 1210ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > reports a changed source without rewriting anything 500ms
+stderr | client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed in the canonical conversation without redrafting on the spot
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed in the canonical conversation without redrafting on the spot 1100ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > makes no claim about a citation with no recorded checksum 410ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > says a source is gone instead of dropping the citation 449ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > distinguishes a failed read from a section that cites nothing 375ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > renders an honest empty state for a section with no recorded sources 309ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > offers the project data room, and refuses an unreadable document 296ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > posts the chosen source id and reloads the rail 290ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says so when there is no project data room to pick from 274ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says the data room could not be read, rather than that it is empty (GE-H-1, 2026-09-28) 435ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > surfaces the server’s refusal instead of reporting success 327ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > asks the server to re-resolve, and reports what it says 347ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > reports a refusal from the server verbatim 339ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 212ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 372ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 440ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 113ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 94ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 85ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 121ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 121ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 133ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > offers the exact receiver candidate formats, including raw structured text and signature-supported images 130ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 46ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 50ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 173ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 36ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 350ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a failed search publishes failure without an empty finding or an unrelated selection 274ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a pending search does not publish a zero or stale selection 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[],"total":null} 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":{},"total":0} 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a malformed search reply is unavailable, not zero matches: {"results":[{"id":"one","title":"One"}],"total":0} 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > an accessible-project library panel does not reuse the disabled project reader as a zero finding 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — only a completed search can establish matches > a verified empty project search can publish its returned zero 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > clicking the second hit shows the second hit, not the first 312ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > a hit for a filed document keeps its filing actions 133ms
+
+ Test Files  6 passed (6)
+      Tests  91 passed (91)
+   Start at  01:07:16
+   Duration  28.36s (transform 6.12s, setup 868ms, import 9.20s, tests 13.30s, environment 3.79s)

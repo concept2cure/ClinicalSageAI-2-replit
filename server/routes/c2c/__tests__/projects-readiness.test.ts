@@ -28,17 +28,25 @@ const queryMock = vi.fn();
 vi.mock('../../../db', () => ({
   pool: { query: (...args: unknown[]) => queryMock(...args) },
 }));
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import router from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const P1 = '11111111-1111-1111-1111-111111111111';
 const P2 = '22222222-2222-2222-2222-222222222222';
+const USER = 41;
 
 function app(orgId: number | null) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     if (orgId != null) req.organizationId = orgId;
+    req.userId = USER;
+    req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
   });
   a.use('/api/c2c/projects', router);
@@ -59,7 +67,13 @@ const listRows = () => ({
   ],
 });
 
-beforeEach(() => queryMock.mockReset());
+beforeEach(() => {
+  queryMock.mockReset();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, P1);
+  seatProgram(7, P2);
+});
 
 describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
   it('reports the governed section completion, not the frozen progress_percent', async () => {

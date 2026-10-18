@@ -80,7 +80,10 @@ describe('POST /execute', () => {
       .send({ templateId: 'submission_readiness_review', projectId: 7 });
 
     expect(r.status).toBe(200);
-    expect(h.executeWorkflow).toHaveBeenCalledWith(expect.objectContaining({ projectId: 7, organizationId: 1 }));
+    expect(h.executeWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: 7, organizationId: 1 }),
+      { ipAddress: expect.any(String) },
+    );
   });
 });
 

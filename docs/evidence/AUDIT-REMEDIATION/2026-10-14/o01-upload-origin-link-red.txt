@@ -1,0 +1,170 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:23:04.272Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:23:05.638Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:23:05.638Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:23:05.639Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=true
+{
+  "timestamp": "2026-10-14T05:23:07.787Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "source.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=false
+{
+  "timestamp": "2026-10-14T05:23:07.801Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "source.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=true keeps actual saved state and discloses the audit result
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > conversation creation audit unavailable=false keeps actual saved state and discloses the audit result
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=true persists the exact requested knowledge
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > project knowledge save audit unavailable=false persists the exact requested knowledge
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=true persists the app selection rather than falsely refusing it
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > knowledge-source selection audit unavailable=false persists the app selection rather than falsely refusing it
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=true remains a real saved profile and reports lost history
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > authority-profile save audit unavailable=false remains a real saved profile and reports lost history
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=true retains the file bytes and exposes the canonical warning headers
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > binary download audit unavailable=false retains the file bytes and exposes the canonical warning headers
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=true preserves the actual manifest outcome
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > manifest read audit unavailable=false preserves the actual manifest outcome
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > workspace saves and post-commit audit outcomes > a failed business save creates no row and no successful audit receipt
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot append to a conversation from another project through an authorized project URL
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot fork private conversation content into an authorized project
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > cannot fork an archived parent even in the authorized project
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=true
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > conversation content stays inside the authorized URL project > authorized fork, append, rename and archive retain actual results when audit unavailable=false
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private apps through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private authority-profiles through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private agency-communications through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private publishops/services through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private submission-center/items through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not disclose private knowledge through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private apps through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private authority-profiles through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > does not write private conversations through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a private project use grant permits reads but does not permit metadata writes
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a viewer with project edit sharing cannot write governed records
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > revoked membership refuses reads despite retained project grants and a stale token
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a valid member in another organization cannot read the same integer project
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an actual editor of a private project can read and save with a stale viewer claim
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a retained link does not disclose another private project after its access has been revoked 42ms
+   → expected [ { id: 1, kind: 'cross_ref', …(5) } ] to deeply equal []
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a link remains visible to an actual member who can read both projects
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > download permissions use the current canonical organization role
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a private-project upload refuses actor 11 before producing knowledge or an artifact
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a private-project upload refuses actor 10 before producing knowledge or an artifact
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a private-project upload refuses actor 12 before producing knowledge or an artifact
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=true 22ms
+   → {"success":false,"error":{"message":"Governed document contract validation failed","code":"GOVERNED_CONTRACT_INVALID","details":{"errors":["originSurface import_pipeline is not allowed for documentClass evidence_memo"],"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"resolved":{"originSurface":"import_pipeline","workspaceTarget":"project","placementContainerId":"3","rulePack":{"trackPack":{"requiredFields":["projectId","documentType","clientTrack","submissionProgram","persona","regulatorScope","documentClass","readinessGate","approvalPathType","workspaceTarget","regulatorIntent","editorPayload.title","editorPayload.content"],"requiredPlacementConstraints":["containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"exportGateList":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":[]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"requiredFields":[{"field":"projectId","required":true,"reason":"artifact ownership"},{"field":"documentType","required":true,"reason":"artifact classification"},{"field":"documentClass","required":true,"reason":"semantics and gate evaluation"},{"field":"clientTrack","required":true,"reason":"rule-pack routing"},{"field":"submissionProgram","required":true,"reason":"program-specific rules"},{"field":"persona","required":true,"reason":"overlay behavior"},{"field":"regulatorScope","required":true,"reason":"regulatory expectations"},{"field":"readinessGate","required":true,"reason":"stage-aware constraints"}],"requiredPlacementConstraints":["containerId","containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate","evidence_mode:csr","evidence_mode:literature","evidence_mode:test_data","evidence_mode:mixed","evidence_mode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs","generatedAt","generatedBy","sourceRefs"],"exportGates":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":["originSurface import_pipeline is not allowed for documentClass evidence_memo"]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"exportGateChecks":[{"name":"placement_present","passed":true,"detail":"workspace=project"},{"name":"ctd_section_present","passed":false},{"name":"evidence_present","passed":true,"detail":"content_length=75"},{"name":"evidence_classification_present","passed":false,"detail":"evidenceMode=mixed"},{"name":"provenance_complete","passed":true},{"name":"source_refs_present","passed":true},{"name":"regulator_scope_declared","passed":true},{"name":"approval_path_satisfied","passed":true},{"name":"readiness_gate_satisfied","passed":true},{"name":"document_class_rules_satisfied","passed":false,"detail":"originSurface import_pipeline is not allowed for documentClass evidence_memo"},{"name":"dossier_placement_satisfied","passed":true},{"name":"module_mapping_present","passed":true},{"name":"predicate_context_present","passed":true},{"name":"review_status_sufficient","passed":true}]}}}}: expected 400 to be 201 // Object.is equality
+ × server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=false 12ms
+   → {"success":false,"error":{"message":"Governed document contract validation failed","code":"GOVERNED_CONTRACT_INVALID","details":{"errors":["originSurface import_pipeline is not allowed for documentClass evidence_memo"],"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"resolved":{"originSurface":"import_pipeline","workspaceTarget":"project","placementContainerId":"3","rulePack":{"trackPack":{"requiredFields":["projectId","documentType","clientTrack","submissionProgram","persona","regulatorScope","documentClass","readinessGate","approvalPathType","workspaceTarget","regulatorIntent","editorPayload.title","editorPayload.content"],"requiredPlacementConstraints":["containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"exportGateList":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":[]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"requiredFields":[{"field":"projectId","required":true,"reason":"artifact ownership"},{"field":"documentType","required":true,"reason":"artifact classification"},{"field":"documentClass","required":true,"reason":"semantics and gate evaluation"},{"field":"clientTrack","required":true,"reason":"rule-pack routing"},{"field":"submissionProgram","required":true,"reason":"program-specific rules"},{"field":"persona","required":true,"reason":"overlay behavior"},{"field":"regulatorScope","required":true,"reason":"regulatory expectations"},{"field":"readinessGate","required":true,"reason":"stage-aware constraints"}],"requiredPlacementConstraints":["containerId","containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate","evidence_mode:csr","evidence_mode:literature","evidence_mode:test_data","evidence_mode:mixed","evidence_mode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs","generatedAt","generatedBy","sourceRefs"],"exportGates":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":["originSurface import_pipeline is not allowed for documentClass evidence_memo"]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"exportGateChecks":[{"name":"placement_present","passed":true,"detail":"workspace=project"},{"name":"ctd_section_present","passed":false},{"name":"evidence_present","passed":true,"detail":"content_length=75"},{"name":"evidence_classification_present","passed":false,"detail":"evidenceMode=mixed"},{"name":"provenance_complete","passed":true},{"name":"source_refs_present","passed":true},{"name":"regulator_scope_declared","passed":true},{"name":"approval_path_satisfied","passed":true},{"name":"readiness_gate_satisfied","passed":true},{"name":"document_class_rules_satisfied","passed":false,"detail":"originSurface import_pipeline is not allowed for documentClass evidence_memo"},{"name":"dossier_placement_satisfied","passed":true},{"name":"module_mapping_present","passed":true},{"name":"predicate_context_present","passed":true},{"name":"review_status_sufficient","passed":true}]}}}}: expected 400 to be 201 // Object.is equality
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > archived projects retain readable knowledge but refuse new writes
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > membership store failures are unavailable checks rather than false denials
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > unbound activation cannot bypass a private project relationship
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > ambiguous activation refuses to guess a project even for its administrator
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a uniquely scoped activation saves for an actual editor with audit unavailable=true
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a uniquely scoped activation saves for an actual editor with audit unavailable=false
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an editor cannot advance a communication they cannot view through a stale administrator claim
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a permitted communication transition remains saved with audit unavailable=true
+ ↓ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a permitted communication transition remains saved with audit unavailable=false
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > a retained link does not disclose another private project after its access has been revoked
+AssertionError: expected [ { id: 1, kind: 'cross_ref', …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "dir": "out",
++     "id": 1,
++     "kind": "cross_ref",
++     "name": "Other private workspace",
++     "status": "active",
++     "type": "",
++     "via": "Cross-reference",
++   },
++ ]
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:190:81
+    188|     await pg.exec("INSERT INTO concept2cure_project_links(org_id,sourc…
+    189|     const res=await request(app(9,9,'admin')).get('/api/c2c/projects/3…
+    190|     expect(res.status,JSON.stringify(res.body)).toBe(200);expect(res.b…
+       |                                                                                 ^
+    191|     expect(JSON.stringify(res.body)).not.toContain('Other private work…
+    192|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=true
+ FAIL  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts > current project read access and edit authority > an authorized private-project upload saves actual imported content with audit unavailable=false
+AssertionError: {"success":false,"error":{"message":"Governed document contract validation failed","code":"GOVERNED_CONTRACT_INVALID","details":{"errors":["originSurface import_pipeline is not allowed for documentClass evidence_memo"],"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"resolved":{"originSurface":"import_pipeline","workspaceTarget":"project","placementContainerId":"3","rulePack":{"trackPack":{"requiredFields":["projectId","documentType","clientTrack","submissionProgram","persona","regulatorScope","documentClass","readinessGate","approvalPathType","workspaceTarget","regulatorIntent","editorPayload.title","editorPayload.content"],"requiredPlacementConstraints":["containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"exportGateList":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":[]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"requiredFields":[{"field":"projectId","required":true,"reason":"artifact ownership"},{"field":"documentType","required":true,"reason":"artifact classification"},{"field":"documentClass","required":true,"reason":"semantics and gate evaluation"},{"field":"clientTrack","required":true,"reason":"rule-pack routing"},{"field":"submissionProgram","required":true,"reason":"program-specific rules"},{"field":"persona","required":true,"reason":"overlay behavior"},{"field":"regulatorScope","required":true,"reason":"regulatory expectations"},{"field":"readinessGate","required":true,"reason":"stage-aware constraints"}],"requiredPlacementConstraints":["containerId","containerId"],"requiredEvidenceConstraints":["evidenceMode:csr","evidenceMode:literature","evidenceMode:test_data","evidenceMode:mixed","evidenceMode:predicate","evidence_mode:csr","evidence_mode:literature","evidence_mode:test_data","evidence_mode:mixed","evidence_mode:predicate"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs","generatedAt","generatedBy","sourceRefs"],"exportGates":["evidence_present","evidence_classification_present","source_refs_present"],"approvalDefault":"single_reviewer","warnings":[],"disallowedCombinations":["originSurface import_pipeline is not allowed for documentClass evidence_memo"]},"personaOverlay":{"warnings":["Regulatory persona enforces explicit regulator scope and defensibility framing."],"additionalRequiredFields":["regulatorScope","readinessGate","approvalPathType"],"stricterInspectionReady":false},"documentSemantics":{"key":"evidence_memo","label":"Evidence Memo","allowedClientTracks":["biotech","device","diagnostics"],"allowedSubmissionPrograms":["ind","ectd","510k","pma","cer","ivdr","general_ri"],"requiredEvidenceModes":["csr","literature","test_data","mixed","predicate"],"suggestedPlacement":"project","suggestedReadinessGate":"internal_review","defaultApprovalPath":"single_reviewer","requiredStructureSections":["evidence_basis","known","inferred","missing"],"requiredProvenanceMinima":["generatedAt","generatedBy","sourceRefs"],"requiredPlacementMinima":["containerId"],"exportGateExpectations":["evidence_present","evidence_classification_present","source_refs_present"],"allowedOriginSurfaces":["ri_copilot","editor_panel","project_workspace_shell","api_route","ai_orchestrator","system"],"recommendedTitlePattern":"Evidence Memo - {topic} - {date}","recommendedMetadataTags":["evidence","known-inferred-missing"]},"exportGateChecks":[{"name":"placement_present","passed":true,"detail":"workspace=project"},{"name":"ctd_section_present","passed":false},{"name":"evidence_present","passed":true,"detail":"content_length=75"},{"name":"evidence_classification_present","passed":false,"detail":"evidenceMode=mixed"},{"name":"provenance_complete","passed":true},{"name":"source_refs_present","passed":true},{"name":"regulator_scope_declared","passed":true},{"name":"approval_path_satisfied","passed":true},{"name":"readiness_gate_satisfied","passed":true},{"name":"document_class_rules_satisfied","passed":false,"detail":"originSurface import_pipeline is not allowed for documentClass evidence_memo"},{"name":"dossier_placement_satisfied","passed":true},{"name":"module_mapping_present","passed":true},{"name":"predicate_context_present","passed":true},{"name":"review_status_sufficient","passed":true}]}}}}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts:215:49
+    213|     const res=await request(app(9,9,'viewer')).post('/api/c2c/document…
+    214|       .field('projectId','3').attach('file',Buffer.from(content),{file…
+    215|     expect(res.status,JSON.stringify(res.body)).toBe(201);expect(res.b…
+       |                                                 ^
+    216|     expect((await pg.query<{settings:any}>('SELECT settings FROM proje…
+    217|     const artifacts=(await pg.query<{content:string;metadata:any}>('SE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 46 skipped (49)
+   Start at  05:23:02
+   Duration  4.90s (transform 1.39s, setup 63ms, import 2.71s, tests 1.92s, environment 0ms)
+

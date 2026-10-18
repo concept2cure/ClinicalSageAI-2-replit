@@ -1,0 +1,185 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 70ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 11ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 7ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 3ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:05:56.692Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ × server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 9ms
+   → expected [ '1', '7', '9' ] to deeply equal [ '1' ]
+ × server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 3ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 1ms
+ × server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+   → expected [ '1', '7', '9' ] to deeply equal [ '1' ]
+ × server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 1ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 66ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 2ms
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 7ms
+   → expected 'old-organization-access' to be null
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 3ms
+   → expected { id: '7', …(3) } to be null
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 4ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher
+ FAIL  server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher
+AssertionError: expected [ '1', '7', '9' ] to deeply equal [ '1' ]
+
+- Expected
++ Received
+
+  [
+    "1",
++   "7",
++   "9",
+  ]
+
+ ❯ server/routes/__tests__/organizations-profile-settings.test.ts:580:71
+    578|       const res = await request(makeApp()).get('/api/organizations?mem…
+    579|       expect(res.status).toBe(200);
+    580|       expect(res.body.organizations.map((o: { id: string }) => o.id)).…
+       |                                                                       ^
+    581|       expect(grantLookupsFor(22)).toBe(0);
+    582|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory
+ FAIL  server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/organizations-profile-settings.test.ts:587:26
+    585|       directory();
+    586|       const res = await request(makeApp()).get('/api/organizations?mem…
+    587|       expect(res.status).toBe(400);
+       |                          ^
+    588|       expect(res.body.organizations).toBeUndefined();
+    589|       expect(grantLookupsFor(22)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption
+AssertionError: expected 'old-organization-access' to be null
+
+- Expected:
+null
+
++ Received:
+"old-organization-access"
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:85:60
+     83|     expect(sessionStorage.getItem('trialsage_access_token')).toBe('sso…
+     84|     expect(sessionStorage.getItem('trialsage_refresh_token')).toBe('');
+     85|     expect(localStorage.getItem('trialsage_access_token')).toBeNull();
+       |                                                            ^
+     86|     expect(localStorage.getItem('trialsage_refresh_token')).toBeNull();
+     87|     for (const storage of [sessionStorage, localStorage]) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account
+AssertionError: expected { id: '7', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "email": "alice@acme.test",
+  "id": "7",
+  "organizationId": "42",
+  "roles": [
+    "manager",
+  ],
+}
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:98:99
+     96|     const authService = await load();
+     97|     authService.setToken('old-organization-access', { id: '7', organiz…
+     98|     expect(await authService.adoptSession('sso-1', false, { userId: '7…
+       |                                                                                                   ^
+     99|     expect(await authService.adoptSession('sso-1', false, { userId: '8…
+    100|     expect(authService.getUser()).toMatchObject({ id: '7', organizatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:115:30
+    113|     expect(await authService.adoptSession('sso-1', false, { userId: '7…
+    114|     finish(jsonResponse(200, { accessToken: 'late-old-access', refresh…
+    115|     expect(await refreshing).toBe(false);
+       |                              ^
+    116|     expect(await authService.getValidAccessToken()).toBe('sso-1');
+    117|     expect(sessionStorage.getItem('trialsage_access_token')).toBe('sso…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 36 passed (43)
+   Start at  03:05:55
+   Duration  2.20s (transform 346ms, setup 232ms, import 191ms, tests 788ms, environment 522ms)
+

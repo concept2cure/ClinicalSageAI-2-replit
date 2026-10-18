@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-14T02:12:10.805Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:12:10.806Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-14T02:12:10.806Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/document-approval-signature.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-14T02:12:11.015Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > is a sha256 hex over the version content and is stable 2ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > changes when the controlled content changes 1ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > ignores the approval stamps the signature applies, and metadata.approval itself 0ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > treats a Date and its YYYY-MM-DD string as the same review date 0ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > is the version-content digest with the retirement stamp excluded, so it recomputes from the stored retired row 0ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > still changes when the controlled content changes, and still ignores metadata.approval 0ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > APPROVED is taken from the platform signature-meaning enum, not minted here 1ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > states what the bound digest is a digest of 0ms
+ ✓ server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a registry-only record before any approval or signature write 3ms
+ ✓ server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a bound document whose sections contain only empty editor markup 1ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  02:12:09
+   Duration  2.02s (transform 843ms, setup 77ms, import 1.64s, tests 13ms, environment 0ms)
+

@@ -14,14 +14,21 @@ import { recordUsage, checkQuota } from './usage-metering.js';
 import { e3ParentNumber } from './ind/ctd/csr-e3-guidance.js';
 import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
 import { acceptModelDraft } from './csr/unsupplied-statistics.js';
+import { resolveCsrBuildContext } from './csr/project-scope';
 
-// AI-powered drafting via the unified AI client (Claude primary)
-let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
-try {
-  const mod = await import('../lib/unified-ai-client.js');
-  ai = mod.ai;
-} catch {
-  console.warn('[CSR Builder] Unified AI client not available, using template drafting');
+// Load the canonical gateway client only when an async drafting operation
+// needs it. A top-level await propagates into the Authoring source/export
+// graph and makes its mutually importing release modules deadlock in esbuild's
+// cached async initializers, before the production server can listen.
+type CSRClient = { complete: (messages: any, options?: any) => Promise<string> };
+let aiClientPromise: Promise<CSRClient | null> | null = null;
+function loadCSRClient(): Promise<CSRClient | null> {
+  return aiClientPromise ??= import('../lib/unified-ai-client.js')
+    .then(mod => mod.ai)
+    .catch(() => {
+      console.warn('[CSR Builder] Unified AI client not available, using template drafting');
+      return null;
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -297,6 +304,7 @@ async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
  * Launch a CSR build job.
  */
 export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
+  await resolveCsrBuildContext(db, request, { organizationId: request.organizationId, projectId: request.projectId, requestedBy: request.userId });
   await reserveCSRBuilderQuota(request);
 
   // Initialize section structure
@@ -337,8 +345,9 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
  */
 export async function launchCSRBuildAsync(
   request: CSRBuildRequest,
-  ctx: { organizationId: number; projectId?: number; requestedBy?: number }
+  ctx: { organizationId: number; projectId?: number; programId?: string; clientWorkspaceId?: number; requestedBy?: number }
 ): Promise<{ jobId: number; status: 'queued' }> {
+  const scope = await resolveCsrBuildContext(db, request, ctx);
   // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
   // billing. Throws the same upgrade-required error as launchCSRBuild on
   // quota failure — the HTTP response shape is identical at the route layer.
@@ -348,7 +357,7 @@ export async function launchCSRBuildAsync(
     './csr/csr-job-runner.js'
   );
 
-  const enqueued = await enqueueCSRBuildJob(request, ctx);
+  const enqueued = await enqueueCSRBuildJob({ ...request, projectId: scope.projectId }, scope);
 
   // Fire-and-forget worker. Errors are persisted on the job row by
   // runCSRBuildJob's own catch block; we still attach a .catch handler
@@ -396,7 +405,7 @@ export async function generateCSRSections(
   aiContext?: CSRAIContext
 ): Promise<CSRSection[]> {
   const info = request.studyInfo;
-  const useAI = !!ai;
+  const useAI = !!(await loadCSRClient());
   const ctx: CSRAIContext = {
     organizationId: aiContext?.organizationId ?? request.organizationId,
     projectId: aiContext?.projectId ?? request.projectId,
@@ -409,7 +418,7 @@ export async function generateCSRSections(
     }
 
     if (useAI) {
-      section.content = await generateSectionWithAI(section, info, ctx);
+      section.content = (await generateSectionWithAI(section, info, ctx)).content;
     } else {
       section.content = generateSectionTemplate(section, info);
     }
@@ -421,7 +430,7 @@ export async function generateCSRSections(
           continue;
         }
         if (useAI) {
-          child.content = await generateSectionWithAI(child, info, ctx);
+          child.content = (await generateSectionWithAI(child, info, ctx)).content;
         } else {
           child.content = generateSectionTemplate(child, info);
         }
@@ -463,6 +472,7 @@ export async function draftCSRSectionWithProvenance(
   request: CSRBuildRequest,
   aiContext?: CSRAIContext
 ): Promise<DraftedCSRSection> {
+  const ai = await loadCSRClient();
   const info = request.studyInfo;
   const ctx: CSRAIContext = {
     organizationId: aiContext?.organizationId ?? request.organizationId,
@@ -636,8 +646,10 @@ async function generateSectionWithAI(
   section: CSRSection,
   info: CSRBuildRequest['studyInfo'],
   aiContext?: CSRAIContext
-): Promise<string> {
-  if (!ai) return generateSectionTemplate(section, info);
+): Promise<{ content: string; isAI: boolean }> {
+  const ai = await loadCSRClient();
+  const template = () => ({ content: generateSectionTemplate(section, info), isAI: false });
+  if (!ai) return template();
 
   const systemPrompt = buildSectionSystemPrompt(info);
 
@@ -660,12 +672,12 @@ async function generateSectionWithAI(
     // Same guard as the provenance path: a statistical section that states a
     // figure the study information does not contain is not used.
     if (content && !acceptModelDraft(section.number, content, info)) {
-      return generateSectionTemplate(section, info);
+      return template();
     }
-    return content;
+    return { content, isAI: Boolean(content?.trim()) };
   } catch (err) {
     console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
-    return generateSectionTemplate(section, info);
+    return template();
   }
 }
 
@@ -674,7 +686,8 @@ async function generateSectionWithAI(
  */
 export async function draftCSRSection(
   sectionNumber: string,
-  studyInfo: CSRBuildRequest['studyInfo']
+  studyInfo: CSRBuildRequest['studyInfo'],
+  aiContext?: CSRAIContext
 ): Promise<{ content: string; isAI: boolean }> {
   const allSections = [...ICH_E3_STRUCTURE];
   let targetSection: CSRSection | undefined;
@@ -691,12 +704,10 @@ export async function draftCSRSection(
     return { content: '', isAI: false };
   }
 
-  if (ai) {
-    const content = await generateSectionWithAI(targetSection, studyInfo);
-    return { content, isAI: true };
-  }
-
-  return { content: generateSectionTemplate(targetSection, studyInfo), isAI: false };
+  const drafted = await generateSectionWithAI(targetSection, studyInfo, aiContext);
+  // The full builder retains an empty section as incomplete. This on-demand
+  // endpoint instead offers the same explicit template as the provenance path.
+  return drafted.content?.trim() ? drafted : { content: generateSectionTemplate(targetSection, studyInfo), isAI: false };
 }
 
 /**
@@ -782,6 +793,7 @@ export async function analyzeCSRSafetySignals(
   }>;
   summary: string;
 }> {
+  const ai = await loadCSRClient();
   if (!ai) {
     return {
       signals: [],

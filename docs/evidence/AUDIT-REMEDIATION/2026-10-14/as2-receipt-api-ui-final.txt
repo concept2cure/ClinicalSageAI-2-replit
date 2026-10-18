@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > does not claim verification from a successful response that omitted the verified recording result 177ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > uploads the original file and exact response header to the named transmittal, then refreshes it 45ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > preserves the server refusal and makes no claim of verified receipt 28ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > keeps an unknown request outcome honest and tells the user to check status before retrying 24ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > refuses an oversized receipt before opening a request 24ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes exact bytes with authenticated actor/org, restores the original tenant scope after multipart, and returns verified proof 23ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > retains the real editor permission gate before accepting a receipt 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > passes a typed cryptographic or tenant refusal back without a success claim 4ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > rejects an invalid transmittal identifier and a missing receipt before verification 14ms
+ ✓ server/routes/__tests__/mdx-as2-receipt.test.ts > reachable verified FDA AS2 receipt endpoint > enforces the eight-megabyte multipart bound before verification 64ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  03:42:38
+   Duration  4.37s (transform 1.66s, setup 150ms, import 3.18s, tests 414ms, environment 420ms)
+

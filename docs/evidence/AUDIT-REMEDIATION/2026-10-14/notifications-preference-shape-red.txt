@@ -1,0 +1,855 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 202ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 64ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 15ms
+ × client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 5006ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-scrim"[39m
+    [36m/>[39m
+    [36m<aside[39m
+      [33maria-label[39m=[32m"Notification preferences"[39m
+      [33maria-modal[39m=[32m"true"[39m
+      [33mclass[39m=[32m"tt-panel"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-head"[39m
+      [36m>[39m
+        [36m<b>[39m
+          [0mNotification preferences[0m
+        [36m</b>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close notification preferences"[39m
+          [33mclass[39m=[32m"tt-close"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-scroll"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mChoose which in-app alerts appear in your inbox for this organization. Email and push alerts are not available.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSubmission status[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mValidation findings[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mPre-submission responses[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCompanion diagnostics[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mLDT milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mGateway credentials[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mDrafts awaiting action[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mResidual risks[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCAPA due dates[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mStudy deviations[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mEnrollment milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mAdministration[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSystem notices[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+    [36m</aside>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-scrim"[39m
+    [36m/>[39m
+    [36m<aside[39m
+      [33maria-label[39m=[32m"Notification preferences"[39m
+      [33maria-modal[39m=[32m"true"[39m
+      [33mclass[39m=[32m"tt-panel"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-head"[39m
+      [36m>[39m
+        [36m<b>[39m
+          [0mNotification preferences[0m
+        [36m</b>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close notification preferences"[39m
+          [33mclass[39m=[32m"tt-close"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-scroll"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mChoose which in-app alerts appear in your inbox for this organization. Email and push alerts are not available.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSubmission status[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mValidation findings[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mPre-submission responses[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCompanion diagnostics[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mLDT milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mGateway credentials[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mDrafts awaiting action[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mResidual risks[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCAPA due dates[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mStudy deviations[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mEnrollment milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mAdministration[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSystem notices[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+    [36m</aside>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-scrim"[39m
+    [36m/>[39m
+    [36m<aside[39m
+      [33maria-label[39m=[32m"Notification preferences"[39m
+      [33maria-modal[39m=[32m"true"[39m
+      [33mclass[39m=[32m"tt-panel"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-head"[39m
+      [36m>[39m
+        [36m<b>[39m
+          [0mNotification preferences[0m
+        [36m</b>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close notification preferences"[39m
+          [33mclass[39m=[32m"tt-close"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-scroll"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mChoose which in-app alerts appear in your inbox for this organization. Email and push alerts are not available.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSubmission status[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mValidation findings[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mPre-submission responses[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCompanion diagnostics[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mLDT milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mGateway credentials[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mDrafts awaiting action[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mResidual risks[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCAPA due dates[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mStudy deviations[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mEnrollment milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mAdministration[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSystem notices[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+    [36m</aside>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-scrim"[39m
+    [36m/>[39m
+    [36m<aside[39m
+      [33maria-label[39m=[32m"Notification preferences"[39m
+      [33maria-modal[39m=[32m"true"[39m
+      [33mclass[39m=[32m"tt-panel"[39m
+      [33mrole[39m=[32m"dialog"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-head"[39m
+      [36m>[39m
+        [36m<b>[39m
+          [0mNotification preferences[0m
+        [36m</b>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Close notification preferences"[39m
+          [33mclass[39m=[32m"tt-close"[39m
+        [36m>[39m
+          [0mClose[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-scroll"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mChoose which in-app alerts appear in your inbox for this organization. Email and push alerts are not available.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSubmission status[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mValidation findings[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mPre-submission responses[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCompanion diagnostics[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mLDT milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mGateway credentials[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mDrafts awaiting action[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mResidual risks[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mCAPA due dates[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mStudy deviations[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mEnrollment milestones[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mAdministration[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [0mSystem notices[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+    [36m</aside>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx:47:16
+     45|   apiRequest.mockResolvedValue(ok({ unexpected: true }));
+     46|   render(<NotificationPreferences onClose={vi.fn()} onSaved={vi.fn()} …
+     47|   await screen.findByRole('alert');
+       |                ^
+     48|   expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+     49| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:06:58
+   Duration  6.16s (transform 162ms, setup 111ms, import 224ms, tests 5.29s, environment 417ms)
+

@@ -8,8 +8,10 @@
  * failed-load state, never a fixture:
  *  - GET /catalog + /license adopted (live module names, category groups, tier
  *    chips, quota numbers); renewsAt is never invented (backend holds none)
- *  - toggle PUTs to /:moduleId/toggle; server rejection reverts the switch and
- *    surfaces the reason (no silent fake success)
+ *  - toggle is a governed change: it opens the reason-for-change dialog, and
+ *    only a confirmed reason PUTs to /:moduleId/toggle with { enabled, reason };
+ *    server rejection keeps the switch where it was and surfaces the reason
+ *    (no silent fake success)
  *  - offline → honest error states; NO fixture content, NO sample pill
  */
 import React from 'react';
@@ -71,6 +73,15 @@ function mockLive(onPut?: (url: string, body: unknown) => Promise<Response>) {
 }
 
 const noop = () => {};
+const REASON = 'Not used by this team this quarter';
+
+/** Fill and confirm the governed reason-for-change dialog the switch opens. */
+function confirmReason(reason = REASON) {
+  const dialog = screen.getByRole('dialog');
+  fireEvent.change(dialog.querySelector('textarea')!, { target: { value: reason } });
+  fireEvent.change(dialog.querySelector('input')!, { target: { value: 'yes' } });
+  fireEvent.click(screen.getByText('Confirm and log'));
+}
 const mount = () => render(<Apps surface={SURFACE} onAsk={noop} onNav={noop} segment="biotech" />);
 
 afterEach(() => {
@@ -124,8 +135,9 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     await screen.findByText('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module')); // the enabled within-plan module
+    confirmReason();
     await waitFor(() =>
-      expect(put).toHaveBeenCalledWith('/api/module-subscriptions/cmc-wizard/toggle', { enabled: false }),
+      expect(put).toHaveBeenCalledWith('/api/module-subscriptions/cmc-wizard/toggle', { enabled: false, reason: REASON }),
     );
     expect(await screen.findByText(/Disabled CMC Wizard/)).toBeTruthy();
   });
@@ -143,9 +155,43 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     await screen.findByText('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module'));
+    confirmReason();
     expect(await screen.findByText(/Could not disable CMC Wizard — Admin access required/)).toBeTruthy();
-    // reverted — still on, still offering "Disable"
+    // not applied — still on, still offering "Disable"
     await waitFor(() => expect(screen.getByTitle('Disable module')).toBeTruthy());
+  });
+
+  /* Settings/integrity audit 2026-10-17, finding 2: the switch wrote at once,
+     with no reason and no audit row. It is a governed change now. */
+  it('the switch asks for a reason first and sends nothing until one is confirmed', async () => {
+    const put = vi.fn(async () => ok({ moduleId: 'cmc-wizard', enabled: false, auditTrail: { persisted: true, chained: true } }));
+    mockLive(put);
+    mount();
+    await screen.findByText('CMC Wizard');
+    fireEvent.click(screen.getByTitle('Toggle admin controls'));
+    fireEvent.click(screen.getByTitle('Disable module'));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog.textContent).toMatch(/Disable CMC Wizard/);
+    // A reason under the shared 8-character floor cannot be confirmed.
+    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'short' } });
+    fireEvent.change(dialog.querySelector('input')!, { target: { value: 'yes' } });
+    expect((screen.getByText('Confirm and log').closest('button') as HTMLButtonElement).disabled).toBe(true);
+    expect(put).not.toHaveBeenCalled();
+    // Cancel leaves the module as it was and writes nothing.
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByTitle('Disable module')).toBeTruthy();
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('says so when the server reports the audit row was not written', async () => {
+    mockLive(async () => ok({ moduleId: 'cmc-wizard', enabled: false, auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'x' } }));
+    mount();
+    await screen.findByText('CMC Wizard');
+    fireEvent.click(screen.getByTitle('Toggle admin controls'));
+    fireEvent.click(screen.getByTitle('Disable module'));
+    confirmReason();
+    expect(await screen.findByText(/Disabled CMC Wizard.*audit entry .*not written/i)).toBeTruthy();
   });
 
   it('offline → honest failed-load states, never a fixture or sample pill', async () => {

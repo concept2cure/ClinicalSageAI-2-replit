@@ -1,0 +1,15 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 8 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 8 exceeds baseline 0 (+8).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(72,50): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(98,46): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(98,51): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(124,70): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(124,75): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(139,14): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(139,19): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count
+    client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx(205,50): error TS2739: Type '{ id: string; title: string; module: string; status: string; updated_at: string; }' is missing the following properties from type 'AuthDoc': product_code, section_count

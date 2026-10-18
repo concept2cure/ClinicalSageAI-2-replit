@@ -117,8 +117,9 @@ router.get('/discover', async (req, res) => {
   const limit = req.query.limit ? Number(req.query.limit) : undefined;
   try {
     const result = await discoverOpportunities(orgId, { query, limit: Number.isFinite(limit) ? limit : undefined });
-    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
-    recordOpportunityDiscovery(result.scored, strong);
+    // 2026-10-15: recounted here as fitScore >= 70, so a match whose eligibility
+    // was never checked (or not met) still counted as strong. The service's count requires it confirmed.
+    recordOpportunityDiscovery(result.scored, result.strongMatches);
     res.json(result);
   } catch (err) { fail(res, err); }
 });

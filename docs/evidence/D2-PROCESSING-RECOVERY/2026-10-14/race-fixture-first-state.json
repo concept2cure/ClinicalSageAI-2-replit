@@ -1,0 +1,31 @@
+{
+  "name": "c2c-d2-race-87e4e894-cba",
+  "database": "d2_processing_fixture",
+  "ownerRole": "d2_fixture_owner",
+  "host": "127.0.0.1",
+  "phase": "cleaned",
+  "startedAt": "2026-10-14T04:14:03.553Z",
+  "limitations": "Synthetic local owner fixture; no deployment, workload, OCR/provider, or deployed-role qualification.",
+  "dockerServerVersion": "28.4.0",
+  "image": [
+    "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+  ],
+  "containerId": "d8d4d0d23bdcf895edaeb18a71cf22c3c2d57c48ebd40fb6eb53f80d258f94fd",
+  "port": 32768,
+  "server": {
+    "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "database": "d2_processing_fixture",
+    "role": "d2_fixture_owner",
+    "pid": 70,
+    "rolsuper": true,
+    "rolbypassrls": true
+  },
+  "independentBackendPids": [
+    70,
+    71
+  ],
+  "cleanup": "Root removed exact verified owned container after resumed environment; fixture launcher had not completed its deadline cleanup.",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-14T04:48:50.465210+00:00",
+  "stopReason": "final authorized local-fixture cleanup after environment resume"
+}

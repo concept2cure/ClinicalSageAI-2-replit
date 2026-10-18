@@ -1,0 +1,43 @@
+# D2 scientific catalog preview and source-write integrity
+
+14 October 2026. Local uncommitted work on canonical `concept2cure-v2`, baseline `87b27c897c5d1be20b0527009bcaf425ebbf3af6`. This extends the existing Vault catalog and AnA tool, preserving the earlier storage, recovery and D7 work. It moves a bounded part of D2; it does not close the launch row or qualify global filings.
+
+## Delivered behavior
+
+The existing `catalog_project_document` tool accepts an explicit `record_type:verification_preview` with source-fact candidates. The server checks exact document/original-byte identity, stored-text SHA-256, offsets/quote, written value kind and supported context. Clinical checks reuse the existing clinical engine; CMC, device and diagnostic/analytical IVD checks currently support one explicit labelled semicolon-separated source row. Missing, ambiguous, inherited, OCR or unsupported language/layout context remains unresolved. Source binding, context and scientific qualification are separate outcomes.
+
+The prototype requires `ANA_CATALOG_SOURCE_FACT_PREVIEW=1` plus the existing catalog gate and current actor/project/Vault authority. It is **off by default**. Every preview remains `persisted:false`, `reviewState:not_recorded`, `scientificQualification:unassessed`. It creates no description, fact, review event, embedding, audit or receipt. Oversized output refuses rather than clipping checks. Computations, source-page/table attestation and fact acceptance are unsupported.
+
+Existing description/review writes snapshot input before asynchronous work, pin the admitted programme and exact extraction, freshly re-admit current persisted membership/private-project rights and source eligibility inside a short transaction, and require one conditional persistence receipt before chained audit/success. Withdrawal, supersession, source move, re-extraction, revoked access, zero-row/RLS refusal and audit failure cannot produce a successful write receipt. Only specifically unsupported vector SQL can fall back. Source reservations use the existing disposition advisory lock, then catalog ROW EXCLUSIVE and document SHARE; the global SHARE reservation is a contention tradeoff, not a scalability qualification.
+
+The existing panel and AnA recall preserve genuine historical confirmation/correction and attribution while disclosing legacy value-only checks and unrecorded context verification. Current source-use caveats are separate from that history. New reviews carry the extraction digest returned with the shown record; legacy callers retain whole-header semantics. Read windows and coverage use actual stored text length. Exact recorded document organization and live parent scope constrain source/description discovery; a malformed returned scope remains a visible error.
+
+## Evidence and reproduction
+
+- [Published interface and ownership contract](CONTRACT.md).
+- [Core implementation and supported forms](CORE_IMPLEMENTATION.md), [tool/service implementation](TOOLS_IMPLEMENTATION.md), [governance implementation](GOVERNANCE_IMPLEMENTATION.md), and [HTTP/panel boundary review](UI_FINAL_REVIEW.md).
+- [Independent primary source expectations](SCIENTIFIC_FIXTURE_EXPECTATIONS.md), [held-out expectations](HELD_OUT_SCIENTIFIC_EXPECTATIONS.md), and [70-request results](SCIENTIFIC_FIXTURE_RESULTS.md). These are synthetic engineering fixtures, not expert-approved clinical datasets.
+- [Independent review](INDEPENDENT_REVIEW.md), its source/adversary expectations, exact-hash manifests and historical failing logs. The late programme handoff finding is included and has a separate held-out runner.
+- `run-final-regression.mjs` runs the exact scientific/clinical/legacy scope plus the earlier recovery, storage and D7 suites. `final-regression-manifest.json` records paths, runtime, branch, source hashes, counts and log digest; `FINAL_REGRESSION.txt` is the final combined log.
+- `run-independent-core.mjs --label final`, `run-independent-tools.mjs`, and `run-independent-program-snapshot.mjs` reproduce independently authored negative/control cases. Their final manifests bind exact sources and disclose controlled seams.
+- `run-owned-postgres-fixture.mjs` creates a synthetic PostgreSQL 16 database on loopback, runs the actual canonical admission/source/catalog/audit SQL, then removes exactly its owned container in `finally`. It accepts no external database endpoint. `catalog-postgres-observations.json` records real independent-session wait barriers, replayed migration hashes, role posture and source stability. The test role is a database/table owner with neither SUPERUSER nor BYPASSRLS; the forced policy case is explicitly synthetic, not deployed RLS qualification.
+
+Use supported Node 22 from the repository root. The recorded executable is `/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node`. Dependencies are the existing locked repository dependencies. No production dependency or migration was added. Historical `REGRESSION_01`, `INTEGRATION_01`, red logs and the first failed launcher setup remain labelled intermediate evidence. The lead's final disposition below supersedes them for final-source verification.
+
+## Boundaries and next increment
+
+Read coverage remains aggregate original-byte-bound delivery evidence; it is not extraction-specific or current-actor/current-turn proof. Exact text hashes and honest disclosures do not upgrade those receipts. Source identity here names the recorded original; the preview does not re-download/inspect original pages. Local table-owner/forced-policy tests do not qualify deployed roles, all source-linked writers, production throughput or cold audit history.
+
+The broader org-wide bootstrap's actor-aware private-project qualification and precise multi-range retrieval remain a separate AnA increment. This patch freshly enforces canonical private-project access on the new preview and catalog writers; it does not claim all existing recall/read paths have been qualified. No live model/validator, client backlog repair, scheduler, deployment, commit, push or agency operation ran.
+
+Persisted typed facts, immutable per-fact accept/reject decisions, scientific/expert qualification, lifecycle/export/purge integration and regulatory applicability remain the next D5/scientific-catalog increment. The earlier [five-family specification](../../../reports/data-room-research-2026-10-14/scientific-catalog-spec.md) and [delivery plan](../../../plans/DATA_ROOM_ENHANCEMENT_DELIVERY_PLAN_2026-10-14.md) retain those distinct milestones. Competitive advantage remains a testable client-workflow hypothesis.
+
+## Final lead disposition
+
+Final combined Node **22.23.3** verification passes **1,752/1,752 tests across 87 files**, including the existing clinical engine and prior storage, recovery and D7 lanes. All 143 recorded source/test hashes remained stable during that run and match the final tree. The 70 independently specified five-family requests are included in this total, not additional tests.
+
+Separate independently authored held-out checks pass **52/52**: 37 pure source/semantic cases, 12 actual registered-handler/schema cases and 3 actual registered-handler/completion programme-handoff cases. Their final before/after hashes are stable and match current sources. The original reviewer authored/reproduced these adversaries; lead/cross-owner execution completed the late programme/transport disposition, as labelled in the review.
+
+The final owned PostgreSQL **16.15** run passes **15/15**, with ten observed independent-session blocking barriers, 34 unchanged exact source/migration/policy hashes and a verified ordinary owner role (`NOSUPERUSER`, `NOBYPASSRLS`). The real zero-row trigger, forced synthetic policy error and audit-insert failure all refuse/roll back without successful receipt. See [final PostgreSQL log](POSTGRES_FINAL.txt), [observations](catalog-postgres-observations.json) and [independent cleanup verification](FINAL_FIXTURE_CLEANUP.json). All three exact owned containers, including the first setup failure, are confirmed absent; other containers were untouched.
+
+Every owner's selected-source TypeScript check and the lead's six-target check pass with zero selected diagnostics. This is not whole-repository semantic/build qualification. Scoped lint has zero errors and no new warning instances; the six existing Vault-route size/complexity warnings and one existing bootstrap-format complexity warning remain. `git diff --check` passes. The final source/reproduction manifests identify this local, uncommitted review result; no production flag was enabled and no push/deployment ran.

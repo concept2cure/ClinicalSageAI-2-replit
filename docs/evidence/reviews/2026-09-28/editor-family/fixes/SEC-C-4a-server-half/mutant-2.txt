@@ -6,7 +6,7 @@
    if (surface) lines.push(`Surface: ${surface}`);
    if (summary) lines.push(`Showing: ${summary}`);
 -  if (selection) lines.push(selection);
- 
+
    if (ctx.facts && typeof ctx.facts === 'object' && !Array.isArray(ctx.facts)) {
      const entries = Object.entries(ctx.facts as Record<string, unknown>)
 @@ -210,5 +209,6 @@
@@ -103,4 +103,3 @@ AssertionError: expected 13 to be less than 12
       Tests  3 failed | 22 passed (25)
    Start at  17:58:03
    Duration  350ms (transform 107ms, setup 96ms, import 36ms, tests 48ms, environment 0ms)
-

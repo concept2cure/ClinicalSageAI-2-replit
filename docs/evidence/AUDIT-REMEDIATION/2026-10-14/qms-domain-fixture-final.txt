@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+{
+  "timestamp": "2026-10-14T07:10:23.999Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200
+{
+  "timestamp": "2026-10-14T07:10:25.573Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "mdx.qms.nonconforming.disposition",
+    "resourceType": "qms_nonconforming_product",
+    "resourceId": 1,
+    "code": null
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity
+{
+  "timestamp": "2026-10-14T07:10:25.596Z",
+  "level": "error",
+  "message": "[mdx-analytics] Analytics data could not be run",
+  "context": {
+    "reason": "Analytics data could not be run: 42P01",
+    "correlationId": null
+  }
+}
+
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/documents returns 403 without org context 15ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/qms/documents returns 403 without org context 8ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/suppliers returns 403 without org context 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/labeling returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/labeling returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/search?q=foo returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/analytics/portfolio returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document rejects unknown doc_type 10ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 201 on valid 8ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 409 on duplicate docNumber 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve 409 when not in_review 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > supplier criticality required 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST rejects unknown doc_kind 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST 201 with default language en 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 404 when document not in tenant 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 409 on duplicate language 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > coverage returns counts 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > add symbol requires symbol_code 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > rejects q shorter than 2 chars 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > returns grouped envelope 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > survives missing optional tables (42P01) 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > portfolio returns programs + byPathway + submissions 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > submissions cycle-times converts seconds to hours 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > blockers returns 3 sub-aggregates 3ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  07:10:22
+   Duration  3.04s (transform 1.38s, setup 61ms, import 2.69s, tests 99ms, environment 0ms)
+

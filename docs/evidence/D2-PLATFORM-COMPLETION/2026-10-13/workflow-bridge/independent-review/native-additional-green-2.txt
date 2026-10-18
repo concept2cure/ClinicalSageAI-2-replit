@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T21:11:48.942Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T21:11:48.944Z","pid":43315,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T21:11:48.944Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/workflow-import-governance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-governance.dbtest.ts
+✅ Template tables initialized
+
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > opens a real non-owner NOSUPERUSER NOBYPASSRLS connection
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses an active unassigned organization member before private target/source import
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > rechecks an explicit project grant after preview rather than trusting the stale member JWT
+(node:43315) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > hides an existing foreign-organization source under actual forced RLS and the import route 143ms
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > retains a coherent source snapshot across a committed concurrent child insertion
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses a preview made stale by a new child row before any authoring evidence
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > converges concurrent identical imports on one actual draft and preserves later edits
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not let a full-hash adoption cover content added after that human signature
+{"level":30,"time":"2026-10-13T21:11:54.569Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.586Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.593Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.600Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.606Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.620Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.632Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.680Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.779Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > requires new full-document adoption after an actual section-title edit even when its prose hash stays the same
+[database] Database connection successful { timestamp: '2026-10-13T21:11:54.847Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-13T21:11:54.866Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:11:54.893Z","pid":43315,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: RENAME on doc aad00f04-4517-42f3-83dd-bfa1a076bce4 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > requires new full-document adoption after an actual section-title edit even when its prose hash stays the same 596ms
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > retains an accepted protocol machine span as machine origin without transferring its prior acceptance or inventing qualification
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not lift a known-machine hold when displayed workflow provenance is removed
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > permits an actual human replacement after current review without erasing original machine origin or fabricating PQ
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > refuses re-signing and new controlled output when a source child changes after reviewed freeze
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 15 skipped (17)
+   Start at  21:11:46
+   Duration  8.74s (transform 4.88s, setup 85ms, import 288ms, tests 7.96s, environment 0ms)

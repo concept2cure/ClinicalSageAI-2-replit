@@ -19,10 +19,14 @@
  * which no production code called) — and eleven retrieval call sites used none
  * of them. docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
  */
-import type pg from 'pg';
+import type { QueryResultRow } from 'pg';
 import { getTenantScope, type TenantScope } from './tenantStore';
 
-export type TenantKeyQueryable = Pick<pg.Pool, 'query'> | Pick<pg.PoolClient, 'query'>;
+/** Shared promise/query shape of pg and the request executor; no Pool methods
+ * or incompatible overload union is required for a tenant-key lookup. */
+export interface TenantKeyQueryable {
+  query(text: string, params?: unknown[]): Promise<{ rows: QueryResultRow[] }>;
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -50,11 +54,12 @@ export async function currentTenantOrgUuid(db: TenantKeyQueryable): Promise<stri
   if (isTenantUuid(scope.orgUuid)) return scope.orgUuid;
   const orgId = Number(scope.tenantId);
   if (!Number.isSafeInteger(orgId) || orgId <= 0) return null;
-  const { rows } = await db.query<{ uuid: string }>(
+  const { rows } = await db.query(
     'SELECT uuid::text AS uuid FROM organizations WHERE id = $1',
     [orgId]
   );
-  return rows[0]?.uuid ?? null;
+  const uuid = rows[0]?.uuid;
+  return isTenantUuid(uuid) ? uuid : null;
 }
 
 /**

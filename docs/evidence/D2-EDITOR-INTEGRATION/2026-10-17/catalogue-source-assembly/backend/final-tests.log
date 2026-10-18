@@ -1,0 +1,626 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:49:46.159Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:49:52.457Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:49:52.458Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:49:52.458Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows 415ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis
+{
+  "timestamp": "2026-10-17T23:49:53.847Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 6f916e7c-2902-43c5-a62b-d7dda6e3ecd4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis 275ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-10-17T23:49:54.208Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f62b13d5-b041-4307-bb24-5f4310682c71 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-10-17T23:49:54.224Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f62b13d5-b041-4307-bb24-5f4310682c71 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-10-17T23:49:54.228Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc f62b13d5-b041-4307-bb24-5f4310682c71 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event 378ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length data-room extraction correction and rolls back the entire source-bound build 237ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length vault extraction correction and rolls back the entire source-bound build 204ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt 237ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body 61ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > fails the selected set when one source becomes unreadable instead of silently dropping it 76ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-10-17T23:49:55.293Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7db5f420-7e29-427a-ac45-e105f531acf1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-10-17T23:49:55.314Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7db5f420-7e29-427a-ac45-e105f531acf1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-10-17T23:49:55.321Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 7db5f420-7e29-427a-ac45-e105f531acf1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original 271ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a withdrawn selected Data Room record without appending anything 202ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a superseded selected Data Room record without appending anything 186ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a checksum selected Data Room record without appending anything 198ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+{
+  "timestamp": "2026-10-17T23:49:56.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 54f971a7-74a0-4c4e-9d81-c5b19fcead9f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+{
+  "timestamp": "2026-10-17T23:49:56.187Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 54f971a7-74a0-4c4e-9d81-c5b19fcead9f by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+CRITICAL: Failed to create audit trail: Error: Injected assembly manifest evidence failure
+    at query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:69:29)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:83:28)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at commitOnClient (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:142:35)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:162:18)
+    at /workspace/ClinicalSageAI/server/routes/authoring-assembly.ts:20:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails 281ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rechecks current source-parent access after reading and withholds an asynchronously revoked source 49ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources 8ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order 42ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+{
+  "timestamp": "2026-10-17T23:49:56.422Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97c86c0d-6b20-4967-8f46-030bb9616df5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+{
+  "timestamp": "2026-10-17T23:49:56.434Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97c86c0d-6b20-4967-8f46-030bb9616df5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing
+{
+  "timestamp": "2026-10-17T23:49:56.559Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3603270c-8e4c-40be-b943-2275412a4fee by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata 148ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+{
+  "timestamp": "2026-10-17T23:49:56.775Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c73b78b1-d16b-4800-b9b6-cb95cd401982 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+{
+  "timestamp": "2026-10-17T23:49:56.797Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c73b78b1-d16b-4800-b9b6-cb95cd401982 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing 209ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-10-17T23:49:56.973Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 71be7bc6-68be-4ad4-ab72-57167db296e3 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+Error creating revision: Error: injected second-section revision failure
+    at query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:71:112)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:83:28)
+    at createRevision (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:403:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at insertSectionSeedTx (/workspace/ClinicalSageAI/server/services/authoring/authoring-section-seed.ts:30:3)
+    at appendRows (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:122:19)
+    at commitOnClient (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:141:20)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:162:18)
+    at /workspace/ClinicalSageAI/server/routes/authoring-assembly.ts:20:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows 203ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-10-17T23:49:57.064Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 71be7bc6-68be-4ad4-ab72-57167db296e3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-10-17T23:49:57.077Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 71be7bc6-68be-4ad4-ab72-57167db296e3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-10-17T23:49:57.243Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0bf037a1-ea1c-4dfa-b1db-a0e557d30bac by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+CRITICAL: Failed to create audit trail: Error: injected second-section audit failure
+    at query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:71:112)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts:83:28)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at insertSectionSeedTx (/workspace/ClinicalSageAI/server/services/authoring/authoring-section-seed.ts:32:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at appendRows (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:122:19)
+    at commitOnClient (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:141:20)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts:162:18)
+    at /workspace/ClinicalSageAI/server/routes/authoring-assembly.ts:20:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails 256ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-10-17T23:49:57.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0bf037a1-ea1c-4dfa-b1db-a0e557d30bac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-10-17T23:49:57.352Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0bf037a1-ea1c-4dfa-b1db-a0e557d30bac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails 246ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-10-17T23:49:57.518Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6678180a-b761-4f2d-a0a5-cc313ce5c04f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-10-17T23:49:57.634Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6678180a-b761-4f2d-a0a5-cc313ce5c04f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-10-17T23:49:57.645Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6678180a-b761-4f2d-a0a5-cc313ce5c04f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails 325ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row 145ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row 105ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row 104ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row 134ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row 142ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview 71ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview 79ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview 96ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview 88ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses frozen changes after preview 75ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target 91ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering 110ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering 111ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code 144ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity
+{
+  "timestamp": "2026-10-17T23:49:59.350Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a5b73347-73f8-4961-9c99-559da8deefe0 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity 207ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA 172ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict 186ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule 85ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+{
+  "timestamp": "2026-10-17T23:50:00.149Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 757f6224-756d-4b84-97d9-2b8e34aa911d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+{
+  "timestamp": "2026-10-17T23:50:00.171Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 757f6224-756d-4b84-97d9-2b8e34aa911d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails 504ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+{
+  "timestamp": "2026-10-17T23:50:00.573Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e07d0003-9eeb-4e9f-9da1-07dd3f448914 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+{
+  "timestamp": "2026-10-17T23:50:00.596Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e07d0003-9eeb-4e9f-9da1-07dd3f448914 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+{
+  "timestamp": "2026-10-17T23:50:00.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3277a501-f8de-4834-8713-73914cd588ea by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+{
+  "timestamp": "2026-10-17T23:50:00.939Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3277a501-f8de-4834-8713-73914cd588ea by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails 398ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit 238ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA 111ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada 161ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA 106ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA 69ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+{
+  "timestamp": "2026-10-17T23:50:01.538Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 02a12ac8-c3e4-4296-8d47-235dcd5c8a76 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+{
+  "timestamp": "2026-10-17T23:50:01.547Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 02a12ac8-c3e4-4296-8d47-235dcd5c8a76 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure 148ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:50:02.867Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > creates a client_document source carrying its upload provenance 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records ingestion and extraction status instead of leaving them pending 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records a failed extraction honestly rather than as extracted 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > still defaults to pending when a caller says nothing 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves a re-upload of the same bytes to the existing identity 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > returns the earliest identity when duplicates already exist 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not resolve one tenant's file to another tenant's identity 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves identity within one project: the same bytes in two projects are two sources (PF-07 / VR-10) 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > finds nothing for an unknown or empty checksum 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not match a different source type when one is requested 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > scopes a source to a UUID-keyed program 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > rejects an invalid status rather than writing it 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns only the requested program's documents 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > never returns another tenant's documents for the same program id 59ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > does not widen to the whole tenant when a scope matches nothing 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns ownerless documents only when asked, and never mixes them in 110ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > refuses a numeric workspace without an authoritative programme 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > lists only client documents, not CSRs or letters 62ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > resolves a selected source back to the upload its bytes live in 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > preserves the requested order and de-duplicates 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > does not resolve another tenant's source 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > skips a source that has no readable upload 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > returns the readable subset of a mixed selection 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > ignores malformed ids without querying 0ms
+stdout | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:07.412Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:50:07.413Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:07.413Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:07.491Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > 2.5.8 created after a seeded 2.5 template assembles LAST, not first (the walk’s case) 29ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs in the middle lands in the middle, and nothing else changes order 12ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs first lands first 13ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > sections created into an empty document still converge on code order, at contiguous indexes 18ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > an explicit order_index is still honoured 9ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > answers 409 SECTION_CODE_EXISTS naming the code — not 500 lineage — and writes nothing 12ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > compares codes as the structure check does, so 3.2.s is the 3.2.S the document already has 7ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > recognises the unique-index violation a concurrent create loses with, so it too reads as a conflict 5ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:50:11.702Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > schema + CRUD (real Postgres) > applies the migration and creates a source → finding → outcome chain 30ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > schema + CRUD (real Postgres) > upserts a canonical study idempotently on its key 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > §13 tenant isolation > a tenant sees GLOBAL_PUBLIC + its own rows, never another tenant’s private rows 71ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > governance invariants > forces potentially_related edges to be inferred + carry confidence 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > governance invariants > refuses to generalize a design lesson from a single source 8ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > reserves the existing source stores and verifies the same program, bytes and version 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: null 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","version":"1.0","catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"2.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","disposition":"remove_data","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"22222222-2222-4222-8222-222222222222","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > preserves legacy candidates but refuses a malformed recorded receipt 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > uses one scoped executor and records the actual retrieval actor without creating source identities 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > keeps an unregistered actual Vault source uncited rather than inventing a registry entry 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal 0 before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal NaN before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal -5 before source retrieval 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > rechecks with the current accepting principal rather than the receipt retrieval actor 1ms
+stdout | server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:15.211Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:50:15.212Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:15.212Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts > saved template guidance binds actor identity to the captured tenant > returns the exact saved reference for an active current member without writing 23ms
+ ✓ server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts > saved template guidance binds actor identity to the captured tenant > does not read another organization’s actor email before refusing guidance 7ms
+ ✓ server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts > saved template guidance binds actor identity to the captured tenant > refuses an inactive member before returning saved guidance 5ms
+stdout | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:18.878Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:50:18.879Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:18.879Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:50:18.970Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts > canonical section creation enlists its evidence in the same transaction > rolls back the new section and existing order shift on revision failure
+{
+  "timestamp": "2026-10-17T23:50:22.599Z",
+  "level": "error",
+  "message": "[authoring-documents] Section create refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "5a2df83d-a540-43ac-a561-bb067ab5c179",
+    "tenantId": 7,
+    "err": "injected genesis failure"
+  }
+}
+
+stderr | server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts > canonical section creation enlists its evidence in the same transaction > rolls back the new section and existing order shift on audit failure
+{
+  "timestamp": "2026-10-17T23:50:22.610Z",
+  "level": "error",
+  "message": "[authoring-documents] Section create refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "beef81f0-3c7a-4597-a4a7-aa20d819bf5b",
+    "tenantId": 7,
+    "err": "injected audit failure"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts > canonical section creation enlists its evidence in the same transaction > rolls back the new section and existing order shift on revision failure 26ms
+ ✓ server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts > canonical section creation enlists its evidence in the same transaction > rolls back the new section and existing order shift on audit failure 9ms
+ ✓ server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts > canonical section creation enlists its evidence in the same transaction > retains ordinary single-create placement and exact existing content 10ms
+stdout | server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > can plan every existing universal builtin outline without writing rows or claiming generated content
+Pure universal assembly plan coverage { templates: 305, sections: 4308, maximumOutline: 295 }
+
+ ✓ server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > plans the full existing Module 5 outline instead of imposing the unrelated from-draft 200-section cap 67ms
+ ✓ server/services/authoring/__tests__/assembly-plan.test.ts > complete existing IND template assembly > can plan every existing universal builtin outline without writing rows or claiming generated content 158ms
+stdout | server/services/authoring/__tests__/assembly-template-guidance.test.ts
+{
+  "timestamp": "2026-10-17T23:50:24.086Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:50:24.087Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/assembly-template-guidance.test.ts
+{
+  "timestamp": "2026-10-17T23:50:24.088Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/assembly-template-guidance.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > returns selected-section guidance while preserving the absent/different parent template 3ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses an invalid recorded docId instead of falling back to another template 1ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses an invalid recorded programId instead of falling back to another template 0ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses an invalid recorded templateId instead of falling back to another template 0ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses an invalid recorded templateSnapshot instead of falling back to another template 0ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses an invalid recorded fingerprint instead of falling back to another template 0ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses a different otherwise valid document identity 0ms
+ ✓ server/services/authoring/__tests__/assembly-template-guidance.test.ts > exact assembly template guidance receipts > refuses a different otherwise valid snapshot 0ms
+
+ Test Files  9 passed (9)
+      Tests  114 passed (114)
+   Start at  23:49:40
+   Duration  43.70s (transform 6.97s, setup 259ms, import 14.66s, tests 27.26s, environment 1ms)

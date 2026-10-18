@@ -1,0 +1,29 @@
+{
+  "backend/source-pins.json#after": {
+    "count": 56,
+    "drift": []
+  },
+  "orchestration/source-pins.json#files": {
+    "count": 13,
+    "drift": []
+  },
+  "independent/summary.json#files": {
+    "count": 24,
+    "drift": []
+  },
+  "browser/final/summary.json#productionSourceSha256": {
+    "count": 40,
+    "drift": []
+  },
+  "browser/final/summary.json#fixtureSourceSha256": {
+    "count": 6,
+    "drift": [
+      "probe.tsx",
+      "server.mjs",
+      "browser.mjs",
+      "mock-api.mjs",
+      "baseline-entry.mjs",
+      "index.html"
+    ]
+  }
+}

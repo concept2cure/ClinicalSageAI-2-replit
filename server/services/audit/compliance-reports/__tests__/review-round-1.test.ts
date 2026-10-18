@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { findReport } from '../catalog';
 import { summarizeIntegrityChecks } from '../queries/audit-trail-integrity';
@@ -173,6 +173,44 @@ describe('item 5 — administrative changes: which settings changes are recorded
     for (const action of ['member_role_changed', 'member_removed', 'tenant_settings_changed', 'tenant_settings_reset']) {
       expect(ADMINISTRATIVE_ACTIONS).toContain(action);
     }
+  });
+});
+
+describe('workspace setup consent and provisioning access changes reach the report', () => {
+  it('queries invitation consent and SCIM IP-rule events within the selected tenant and period', async () => {
+    const actions = [
+      'organization_invitation_accepted', 'organization_invitation_declined',
+      'scim_ip_rule_created', 'scim_ip_rule_updated', 'scim_ip_rule_deleted',
+    ];
+    const recorded = actions.map((action) => ({ action, target_type: action.startsWith('scim_') ? 'scim_ip_allowlist' : 'organization_invitations' }));
+    // Model the action filter the real query sends: an omitted writer action
+    // makes its stored event disappear from this user-facing report.
+    const query = vi.fn(async (_sql: string, params: unknown[] = []) => ({
+      rows: params[0] === 7 ? recorded.filter((row) => (params[1] as string[]).includes(row.action)) : [],
+    }));
+    const report = findReport('administrative-changes');
+    expect(report?.run).toBeTypeOf('function');
+    if (!report?.run) throw new Error('The administrative changes report must have a query runner');
+    const result = await report.run({
+      client: { query }, orgId: 7,
+      period: { from: '2026-10-01', to: '2026-10-14', kind: 'range' },
+      bounds: { start: '2026-10-01T00:00:00Z', end: '2026-10-15T00:00:00Z' },
+      checks: {
+        auditEventsLinkage: async () => { throw new Error('Not an integrity report'); },
+        auditLogsSeals: async () => { throw new Error('Not an integrity report'); },
+      },
+    });
+    expect(result.changes.rows.map((row) => row.action)).toEqual(actions);
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(query.mock.calls[0][0]).toContain('a.tenant_id = $1');
+    expect(query.mock.calls[0][1]?.slice(2)).toEqual(['2026-10-01T00:00:00Z', '2026-10-15T00:00:00Z']);
+  });
+
+  it('keeps the historical IP-rule audit gap and SCIM-token limitation distinct from current recorded rules', () => {
+    const disclosure = findReport('administrative-changes')!.notRecorded.join(' ');
+    expect(disclosure).toContain('Administration of SCIM tokens is not recorded.');
+    expect(disclosure).toMatch(/IP allow-list changes made before the product began recording them were not recorded/);
+    expect(disclosure).not.toContain('Administration of SCIM tokens and of the IP allow-list is not recorded.');
   });
 });
 

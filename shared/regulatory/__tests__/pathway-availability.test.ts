@@ -36,6 +36,7 @@ const FACT_SETS: ProgrammeFacts[] = [
   { modality: 'biosimilar' },
   { modality: 'small_molecule' },
   { modality: 'mab' },
+  { modality: 'combination' },
   { predicateNamed: 'K123456 — Acme Stent', predicate: 'named' },
   { predicate: 'none' },
   { predicate: 'nse' },
@@ -70,7 +71,14 @@ describe('the agency the sponsor named', () => {
     const caution = cautionFor('EU_MDR_CLASS_III', { regions: ['US'] })!;
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/You have named FDA/);
+    /* And it names the filing in words true of it: an MDR class route is a
+       notified body's conformity assessment, not a filing to EMA. */
+    expect(caution.reason).toMatch(/an EU conformity assessment under the MDR/);
     expect(caution.reason, 'the way out must be actionable').toMatch(/name EMA among the agencies/);
+    expect(cautionFor('EU_IVDR_CLASS_B', { regions: ['US'] })!.reason).toMatch(/under the IVDR/);
+    expect(cautionFor('EU_MAA', { regions: ['US'] })!.reason, 'a medicine IS filed to EMA').toMatch(
+      /a filing to EMA/,
+    );
     /* The authority is the statute behind the position itself: what makes an
        MDR route the EU's is the MDR, and that is the position's own citation. */
     expect(caution.authority).toBe(positionFor('EU_MDR_CLASS_III')!.authority);
@@ -111,7 +119,10 @@ describe('a programme with nothing to compare to', () => {
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/no legally marketed device to compare to/);
     expect(caution.reason).toMatch(/first condition for a De Novo/);
-    expect(caution.authority).toMatch(/860\.220\(a\)/);
+    /* The regulation is cited at subpart level: 860.220 is the De Novo
+       request's content and format, not who may make one, and this module
+       does not state a section it has not verified. */
+    expect(caution.authority).toMatch(/860 Subpart D/);
     expect(cautionFor('US_510K_IVD', { predicate: 'none' })!.availability).toBe('inapplicable');
   });
 
@@ -206,6 +217,27 @@ describe('which statute governs the product', () => {
     expect(bla.reason).toMatch(/NOT claiming biosimilarity/);
     expect(cautionFor('EU_MAA', { modality: 'biosimilar' })!.reason).toMatch(/Article 8\(3\)/);
     expect(cautionFor('EU_GENERIC_DCP', { modality: 'mab' })!.availability).toBe('inapplicable');
+  });
+});
+
+describe('a drug-device combination product', () => {
+  it('is told the lead centre decides, in the frame\u2019s own words', () => {
+    /* The US side offers it no route at all and says why; the EU side offers
+       all four medicines routes, because the frame holds no European
+       equivalent to narrow them — so each is marked instead. */
+    const caution = cautionFor('EU_MAA', { modality: 'combination' })!;
+    expect(caution.availability).toBe('needs_basis');
+    expect(caution.reason).toMatch(/drug-device combination/);
+    expect(caution.reason, 'the frame says why in its own words').toMatch(/primary mode of action under 21 CFR Part 3/);
+    expect(caution.authority).toMatch(/21 CFR Part 3/);
+    for (const id of ['EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']) {
+      expect(cautionFor(id, { modality: 'combination' })!.availability, id).toBe('needs_basis');
+    }
+  });
+
+  it('leaves a device or an IVD route alone, which is the other half of the question', () => {
+    expect(cautionFor('US_510K', { modality: 'combination' })).toBeNull();
+    expect(cautionFor('EU_MDR_CLASS_IIB', { modality: 'combination' })).toBeNull();
   });
 });
 

@@ -1,15 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { 
-  fda510kProjects,
-  fda510kStageProgress,
-  fda510kDocuments,
-  projects,
-  organizations
-} from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { fda510kDocuments } from '@shared/schema';
+import { eq, and } from 'drizzle-orm';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
-import FDAFormGenerator from '../services/FDAFormGenerator';
+import FDAFormGenerator, {
+  loadFormProjectData,
+  FORM_NOT_DRAFTED,
+  FORM_NOT_SAVED,
+  formRunMessage,
+} from '../services/FDAFormGenerator';
 import {
   FDAFormsRegistryClass,
   FDA_FORMS_RELEASE_READINESS,
@@ -43,6 +42,22 @@ function requireActorId(req: Request, res: Response): number | null {
   }
   return numericId;
 }
+
+/**
+ * A run over several forms answers as the audit-trail batch does
+ * (audit-trail-routes.ts): 200 only when every form was produced, otherwise 207
+ * with success: false and each form not produced named with a fixed reason. The
+ * caught error goes to the log, never into the body.
+ */
+function formRunStatus(notProduced: number): { status: 200 | 207; success: boolean } {
+  return notProduced === 0 ? { status: 200, success: true } : { status: 207, success: false };
+}
+
+/** One form of an auto-generate run: drafted and saved, or not, with a fixed reason. */
+type FormRunResult =
+  | { formType: string; success: true; completeness: number }
+  | { formType: string; success: false; reason: string };
+
 const formsRegistry = new FDAFormsRegistryClass();
 
 // Get forms registry
@@ -135,9 +150,11 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
         status: existingForms.find(f => f.documentType === 'FDA_3881') ? 'generated' : 'pending'
       },
       {
+        // 2026-10-15: listed as "FDA Form 3654"; Form FDA 3654 is the Standards
+        // Data Report for 510(k)s (config/FDAFormsRegistry.ts). Key kept: rows are stored under it.
         id: 'FDA_3654',
-        name: 'FDA Form 3654 - Certification/Disclosure Statement',
-        description: 'Certification of compliance and disclosures',
+        name: 'Certification/Disclosure Statement (510(k))',
+        description: 'Truthful-and-accurate certification and clinical-investigation disclosures. Not Form FDA 3654, which is the Standards Data Report for 510(k)s.',
         required: true,
         status: existingForms.find(f => f.documentType === 'FDA_3654') ? 'generated' : 'pending'
       }
@@ -176,28 +193,15 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
+    const projectData = await loadFormProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
 
     // Generate the specific form
-    let generatedForm;
-    switch (formType) {
-      case 'FDA_3514':
-        generatedForm = await formGenerator.generateForm3514(projectData);
-        break;
-      case 'FDA_3601':
-        generatedForm = await formGenerator.generateForm3601(projectData);
-        break;
-      case 'FDA_3881':
-        generatedForm = await formGenerator.generateForm3881(projectData);
-        break;
-      case 'FDA_3654':
-        generatedForm = await formGenerator.generateForm3654(projectData);
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid form type' });
+    const generatedForm = await formGenerator.generate510kForm(formType, projectData);
+    if (!generatedForm) {
+      return res.status(400).json({ error: 'Invalid form type' });
     }
 
     // Save to database
@@ -277,7 +281,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
     });
 
   } catch (error: any) {
-    console.error(`Error generating ${formType}:`, error);
+    console.error('Error generating FDA form:', { formType }, error);
     res.status(500).json({ error: `Failed to generate ${formType}` });
   }
 });
@@ -293,6 +297,8 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
     return res.status(401).json({ error: 'Authentication required' });
   }
   const userId = String(actorIdRaw);
+  // 2026-10-15: ran without an organization, passing "NaN" or "0" through.
+  if (requireOrgId(req, res) === null) return;
 
   try {
     const orchestrationService = new DocumentOrchestrationService();
@@ -304,10 +310,14 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
       organizationId.toString()
     );
 
-    res.json({
-      success: true,
-      message: 'All FDA forms generated successfully',
-      forms: result.forms
+    // 2026-10-15: answered "All FDA forms generated successfully" whatever the
+    // run produced; it now says which forms were not produced, and why.
+    const run = formRunStatus(result.failed.length);
+    res.status(run.status).json({
+      success: run.success,
+      message: result.message,
+      forms: result.forms,
+      failed: result.failed,
     });
 
   } catch (error: any) {
@@ -331,7 +341,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
     }
 
     // Fetch project and workflow data — scoped to the caller's org
-    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
+    const projectData = await loadFormProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -409,7 +419,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
     }
 
   } catch (error: any) {
-    console.error(`Error generating smart form ${formId}:`, error);
+    console.error('Error generating smart form:', { formId }, error);
     res.status(500).json({ error: 'Failed to generate smart form' });
   }
 });
@@ -429,7 +439,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
     }
 
     // Fetch project and workflow data — scoped to the caller's org
-    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
+    const projectData = await loadFormProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -448,14 +458,18 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
     
     // Get all required forms for this submission type
     const formsToGenerate = getRequiredForms(submissionType as '510k' | 'PMA' | 'DeNovo');
-    const results: any[] = [];
+    const results: FormRunResult[] = [];
 
+    // 2026-10-15: a failed form's error.message (the database's own text) went
+    // into a 200 body headed success: true, "Forms auto-generated successfully".
     for (const formId of formsToGenerate) {
+      let step: 'draft' | 'save' = 'draft';
       try {
         // Use the new smart form generator for all forms
         const generatedForm = await formGenerator.generateSmartForm(formId, projectData);
 
         if (generatedForm) {
+          step = 'save';
           // Save to database
           const documentRecord = {
             documentId: `${formId}_${projectId}_${Date.now()}`,
@@ -476,7 +490,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
 
           // Check if form already exists and update or insert.
           // SECURITY: scope by organizationId on both the read and the write,
-          // matching the /generate and /generate-smart siblings. fetchProjectData
+          // matching the /generate and /generate-smart siblings. loadFormProjectData
           // already org-gates the project, but the doc-level org predicate is the
           // required backstop against check-then-act cross-tenant overwrite.
           const existingForm = await db
@@ -522,19 +536,17 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             completeness: generatedForm.completeness
           });
         }
-      } catch (error: any) {
-        console.error(`Error auto-generating ${formId}:`, error);
-        results.push({
-          formType: formId,
-          success: false,
-          error: error.message
-        });
+      } catch (error: unknown) {
+        console.error('Error auto-generating FDA form:', { formId }, error);
+        results.push({ formType: formId, success: false, reason: step === 'draft' ? FORM_NOT_DRAFTED : FORM_NOT_SAVED });
       }
     }
 
-    res.json({
-      success: true,
-      message: 'Forms auto-generated successfully',
+    const notProduced = results.filter((r) => !r.success).map((r) => r.formType);
+    const run = formRunStatus(notProduced.length);
+    res.status(run.status).json({
+      success: run.success,
+      message: formRunMessage(results.length - notProduced.length, notProduced),
       results
     });
 
@@ -601,12 +613,13 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
     const results = [];
     
     // Fetch project data once — scoped to the caller's org
-    const projectData = await fetchProjectData(parseInt(projectId), organizationId);
+    const projectData = await loadFormProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Generate each stage form
+    // Generate each stage form. 2026-10-15: as auto-generate — the caught
+    // error's text in a 200 body headed success: true.
     for (const formId of formsToGenerate) {
       try {
         const generatedForm = await formGenerator.generateSmartForm(formId, projectData);
@@ -615,22 +628,25 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
           status: 'success',
           form: generatedForm
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        console.error('[FDA Forms] Error drafting stage form:', { formId }, error);
         results.push({
           formId,
           status: 'error',
-          error: error.message
+          reason: FORM_NOT_DRAFTED
         });
       }
     }
-    
-    res.json({
-      success: true,
+
+    const totalFailed = results.filter(r => r.status === 'error').length;
+    const run = formRunStatus(totalFailed);
+    res.status(run.status).json({
+      success: run.success,
       projectId,
       stage,
       results,
       totalGenerated: results.filter(r => r.status === 'success').length,
-      totalFailed: results.filter(r => r.status === 'error').length,
+      totalFailed,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
@@ -639,89 +655,8 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
   }
 });
 
-// Helper function to fetch all project data
-async function fetchProjectData(projectId: number, organizationId: number) {
-  try {
-    // Fetch FDA 510k project — scoped to the caller's org to prevent
-    // cross-tenant IDOR. A project in another org returns null (-> 404).
-    const [fda510kProject] = await db
-      .select()
-      .from(fda510kProjects)
-      .where(
-        and(
-          eq(fda510kProjects.projectId, projectId),
-          eq(fda510kProjects.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!fda510kProject) {
-      return null;
-    }
-
-    // Fetch base project info
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
-
-    // Fetch organization info
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, fda510kProject.organizationId))
-      .limit(1);
-
-    // Fetch all workflow stage data
-    const stageProgress = await db
-      .select()
-      .from(fda510kStageProgress)
-      .where(eq(fda510kStageProgress.projectId, projectId));
-
-    // Fetch initial data forms using SQL
-    const initialForms = await db.execute(sql`
-      SELECT id, project_id, form_type, form_data
-      FROM fda_510k_initial_data_forms
-      WHERE project_id = ${projectId}
-    `);
-
-    // Aggregate workflow data
-    const workflowData: any = {};
-    stageProgress.forEach(stage => {
-      if (stage.collectedData) {
-        const data = typeof stage.collectedData === 'string' 
-          ? JSON.parse(stage.collectedData) 
-          : stage.collectedData;
-        workflowData[stage.stageName] = data;
-      }
-    });
-
-    // Aggregate initial form data
-    const formData: any = {};
-    if (initialForms.rows) {
-      initialForms.rows.forEach((form: any) => {
-        if (form.form_data) {
-          const data = typeof form.form_data === 'string'
-            ? JSON.parse(form.form_data)
-            : form.form_data;
-          formData[form.form_type] = data;
-        }
-      });
-    }
-
-    return {
-      project: project,
-      fda510kProject: fda510kProject,
-      organization: organization,
-      workflowData: workflowData,
-      formData: formData,
-      metadata: fda510kProject.metadata || {}
-    };
-  } catch (error: any) {
-    console.error('Error fetching project data:', error);
-    return null;
-  }
-}
+// The project record the form builders read is loadFormProjectData in
+// services/FDAFormGenerator.ts (moved there 2026-10-15 so the 510(k)
+// orchestration drafts from the same record with the same builders).
 
 export default router;

@@ -12,6 +12,7 @@
  *   3. the Module 2 loader never quotes §11.4 text as the primary result.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('../project-scope', () => ({ resolveCsrScope: async () => ({ projectId: 2 }) }));
 
 const { completeMock } = vi.hoisted(() => ({
   completeMock: vi.fn(async (_messages: unknown, _options?: unknown) => ''),
@@ -31,6 +32,7 @@ const dbRows = vi.hoisted(() => ({
 }));
 vi.mock('../../../db', () => ({
   db: {
+    selectDistinctOn: () => ({ from: () => ({ where: () => ({ orderBy: async () => dbRows.jobs }) }) }),
     select: () => ({
       from: () => ({
         where: () => {

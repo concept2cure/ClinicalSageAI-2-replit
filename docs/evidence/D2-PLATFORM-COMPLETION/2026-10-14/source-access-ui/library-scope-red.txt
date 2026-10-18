@@ -1,0 +1,19 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope undefined offers no empty finding or candidate 5284ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope organization-wide offers no empty finding or candidate 5068ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 5163ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 5071ms
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx:107:32
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope undefined offers no empty finding or candidate
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > accessible related documents and library read contracts > an unverified search scope organization-wide offers no empty finding or candidate
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:173:29
+ Test Files  2 failed (2)
+      Tests  4 failed | 13 skipped (17)
+   Start at  00:55:58
+   Duration  23.77s (transform 1.16s, setup 215ms, import 1.64s, tests 20.59s, environment 999ms)

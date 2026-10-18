@@ -1,0 +1,172 @@
+{
+  "capturedAt": "2026-10-14",
+  "qualification": "Bounded source/runtime implementation checks; no clinical, agency, PDF/A or production qualification",
+  "sources": [
+    {
+      "path": "server/routes/report-os.ts",
+      "bytes": 136095,
+      "digestAlgorithm": "sha256",
+      "digest": "d476f4a8644bbf8c7107c4daa5b71ecf629d704769f6954f914e4722f3320cc6"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "bytes": 23851,
+      "digestAlgorithm": "sha256",
+      "digest": "30094bdbd5ee422a5c1bb972ed959a4d678e523a0cb5e8c1dcdf7bc4563276a3"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+      "bytes": 15540,
+      "digestAlgorithm": "sha256",
+      "digest": "d634aba2dd6b75341226f7a46af0b4e3cb5362e778913779a8d7eb0ec24c3bf3"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-bundle-recording.test.ts",
+      "bytes": 6925,
+      "digestAlgorithm": "sha256",
+      "digest": "542c480a2d4e3e505911f41a6321b6cd424efcea7d23f4df46ec3b7031baefce"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-audit-recording.test.ts",
+      "bytes": 21442,
+      "digestAlgorithm": "sha256",
+      "digest": "a121dec93eed89aeaf781de785883777eb430e2232cc337fb51ce5680f85d50a"
+    },
+    {
+      "path": "tests/db/report-pack-export.dbtest.ts",
+      "bytes": 25855,
+      "digestAlgorithm": "sha256",
+      "digest": "10fe0dc88d9cf7f741b475af381fb4d6fb9ff79fbac307a6fbd333b12e03df10"
+    },
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "bytes": 12507,
+      "digestAlgorithm": "sha256",
+      "digest": "7f0453a4c0eee7639a5911db01281f5a8dd7e1d919150b32d617acb7db9280fe"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "bytes": 10715,
+      "digestAlgorithm": "sha256",
+      "digest": "494a9281da5f313f349495d22628806df310a9feb49171eabb52b8bf9515fc39"
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "bytes": 12620,
+      "digestAlgorithm": "sha256",
+      "digest": "e0f5359fe4b15697e1e882007c42790de9213ad859afbb41a94780ef179be099"
+    },
+    {
+      "path": "server/services/entitlements/resolver.ts",
+      "bytes": 6785,
+      "digestAlgorithm": "sha256",
+      "digest": "7a25b8d54c23b17c5f13088a35517e03745c1160f2f6f80d7550bdacdf6a52c0"
+    },
+    {
+      "path": "server/services/report-os/entitlement-map.ts",
+      "bytes": 5164,
+      "digestAlgorithm": "sha256",
+      "digest": "a20777e0a7222051dcab47d69edb847f866f3543affe1d0b0386ac122286e05a"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/route-initial-red.log",
+      "bytes": 24911,
+      "digestAlgorithm": "sha256",
+      "digest": "b37b3d2813d871f70db7f5b565c4fbbaf366fa55fd70cc772038f843f84b55e3",
+      "rawPreservedAt": "/tmp/report-pack-backend-red.txt",
+      "rawBytes": 24912,
+      "rawDigest": "39a21dedbecaa6a4d45f76bbf98bae154f2fc678104a53e3ae372881e4ea9058",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/access-initial-red.log",
+      "bytes": 10878,
+      "digestAlgorithm": "sha256",
+      "digest": "b65288db1779c3c2fe188a3d401dc231a3dd2806ed0ce52f3ec0f7b2b1e8d769",
+      "rawPreservedAt": "/tmp/report-pack-backend-access-red.txt",
+      "rawBytes": 10879,
+      "rawDigest": "fce71097b89cc10e48ce4fb424a5d0e76a823fe5e3aab7cebc5fae494f7a1cc1",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/expanded-selected-red.log",
+      "bytes": 38451,
+      "digestAlgorithm": "sha256",
+      "digest": "39f00bdbd57aeeee86d9f15df56d4136850ad8bc18a65501a081cfb6ceca4bb7",
+      "rawPreservedAt": "/tmp/report-pack-backend-final-red.txt",
+      "rawBytes": 38452,
+      "rawDigest": "1328266e2d74abc35b29e54f0a6d71151a271c147086663a5cd78d4d84afb489",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/route-first-green.log",
+      "bytes": 23783,
+      "digestAlgorithm": "sha256",
+      "digest": "f70e744f4b50b97955f134ca11aa3b87dc5138a82a7ae53c98ff118224aaa46f",
+      "rawPreservedAt": "/tmp/report-pack-backend-first-green.txt",
+      "rawBytes": 23784,
+      "rawDigest": "e24822b8655c60caeb68d0f1fb661749e370ffcdc0f0338a95047ff2a1fcd566",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/route-final-green.log",
+      "bytes": 24914,
+      "digestAlgorithm": "sha256",
+      "digest": "13c7fe0dc91b74e7c92579e37b3aa95bd5df4d6b511ee25d3fe804e3b9d67888",
+      "rawPreservedAt": "/tmp/report-pack-backend-final-green.txt",
+      "rawBytes": 24915,
+      "rawDigest": "2eb4ce5f2d7fbc59b0d30a3be3cef2917e9ab0e1f2b7bacbda250536b979bebf",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/lint-first-red.log",
+      "bytes": 1639,
+      "digestAlgorithm": "sha256",
+      "digest": "344fc105820fab1ded3ce9422dc96bfe25af89d6badbaf29ecb53b69d950f835",
+      "rawPreservedAt": "/tmp/report-pack-backend-lint-first.txt",
+      "rawBytes": 1640,
+      "rawDigest": "b69cf1fa9d361f6e18e26f83e4118e629f29120173bb7c158bb43f1f29effbc8",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/lint-final.log",
+      "bytes": 663,
+      "digestAlgorithm": "sha256",
+      "digest": "330f320695eb83396dbf4b8f76837d510c6128157d1634c755d8cac56ee08cbf",
+      "rawPreservedAt": "/tmp/report-pack-backend-final-lint.txt",
+      "rawBytes": 664,
+      "rawDigest": "922fd0bbbb39eb28118b06780cdd59e39d352de292bedc5237530aec7e4ace16",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/native-green.log",
+      "bytes": 4645,
+      "digestAlgorithm": "sha256",
+      "digest": "c11928c3bee920898d3851e17e01ecf133d7b83bf36102672fd1b22ce8268303",
+      "rawPreservedAt": "/tmp/report-pack-native-first.txt",
+      "rawBytes": 4646,
+      "rawDigest": "57568a857ca72d3f15886dd5dee3c9d667113200f483e0e1c3f54169a0fba410",
+      "normalization": "EOF line breaks normalized only"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/native-observations.json",
+      "bytes": 5871,
+      "digestAlgorithm": "sha256",
+      "digest": "e40a83d43fffda07203f91bed1d8b653e30fe8fb76a5e567dee30ccda4e6ca25"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/synthetic-native-packet.pdf",
+      "bytes": 131328,
+      "digestAlgorithm": "sha256",
+      "digest": "a7a418e6b9e044745e9f3475cab2f3ed038e88a7518331cca830253d893833a3"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/README.md",
+      "bytes": 6807,
+      "digestAlgorithm": "sha256",
+      "digest": "f484616f626fa96004285b61e03fc1d23e364f1701c4249e41334e4e03ad96c5"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "launcherPid": 153635,
+  "mainRuntimePidPreserved": 120498,
+  "port": 5001,
+  "database": "platform_ci_native_recheck_20261013",
+  "runtimeRole": "app_service",
+  "qaAllowedOrigin": "http://127.0.0.1:5001",
+  "composition": "/tmp/report-pack-browser-server.mts",
+  "compositionSha256": "efeef06b37c9a59e8129772460ec4a81e4fb7df6ea2f1094cdd0313675271e26",
+  "qualification": "Isolated actual-route/Vite QA composition; not full application boot/readiness.",
+  "omittedServices": [
+    "early-service/bootstrap writers and seeds",
+    "startup self-test/invariants",
+    "parallel-service bootstrap",
+    "socket/hocuspocus services",
+    "automation/digest/subscription workers",
+    "all periodic sweeps",
+    "telemetry exporters"
+  ],
+  "actualRouteRegistration": [
+    "startup.applyCoreMiddleware",
+    "startup.applyAuthBoundary",
+    "startup.registerPreStartRoutes",
+    "startup.registerPostStartRoutes",
+    "startup.setupFrontendServing"
+  ]
+}

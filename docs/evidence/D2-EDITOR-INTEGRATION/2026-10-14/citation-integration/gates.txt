@@ -1,0 +1,12 @@
+ci:design-system: 0
+ci:token-contrast: 0
+ci:token-cascade: 0
+ci:check-css-selector-shadowing: 0
+ci:check-phantom-tokens: 0
+ci:surface-text-ramp: 0
+ci:component-class-coverage: 0
+ci:canvas-path: 0
+ci:canvas-path:selftest: 0
+ci:single-native-canvas: 0
+ci:ana-surface-context: 0
+ci:sql-interpolation: 0

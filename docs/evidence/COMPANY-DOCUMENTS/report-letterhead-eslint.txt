@@ -1,0 +1,20 @@
+Command: npx eslint server/services/report-os/pdf/writer.ts server/services/report-os/pdf/company-branding.ts server/services/report-os/pdf/run-pdf.ts server/services/report-os/pdf/bundle-pdf.ts server/services/report-os/pdf/__tests__/company-branding.test.ts server/routes/report-os.ts server/routes/__tests__/_report-os-route-harness.ts server/routes/__tests__/report-os-audit-recording.test.ts server/routes/__tests__/report-os-report-pack-export.test.ts server/services/docx/docxFactory.ts server/services/templates/templateRenderAdapter.ts server/services/docx/__tests__/company-letterhead-layout.test.ts
+
+/workspace/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   634:1   warning  File has too many lines (2455). Maximum allowed is 500                         max-lines
+  1483:58  warning  Async arrow function has too many lines (208). Maximum allowed is 100          max-lines-per-function
+  1483:58  warning  Async arrow function has a complexity of 52. Maximum allowed is 15             complexity
+  1887:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  2988:59  warning  Async arrow function has a complexity of 18. Maximum allowed is 15             complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/docx/docxFactory.ts
+  477:8   warning  Async function 'generateRegulatory' has too many lines (184). Maximum allowed is 100  max-lines-per-function
+  477:8   warning  Async function 'generateRegulatory' has a complexity of 42. Maximum allowed is 15     complexity
+  658:1   warning  File has too many lines (557). Maximum allowed is 500                                 max-lines
+  732:10  warning  'styledRuns' is defined but never used                                                @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/report-os/pdf/writer.ts
+   73:3  warning  Constructor has a complexity of 16. Maximum allowed is 15                 complexity
+  108:3  warning  Method 'prepareLetterhead' has a complexity of 20. Maximum allowed is 15  complexity
+
+✖ 11 problems (0 errors, 11 warnings)

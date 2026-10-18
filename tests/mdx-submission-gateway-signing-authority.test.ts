@@ -139,13 +139,18 @@ describe('signing authority — the governed signs on this router', () => {
     expect(transmitFn).not.toHaveBeenCalled();
   });
 
-  it('a rollback is not a signature: it keeps the editor gate and re-authentication only', async () => {
-    signerRole.mockResolvedValue('manager');
-    const res = await request(makeApp({ withAuth: true, role: 'manager' }))
+  it('POST /gateways/transmittals/:id/rollback is not served (app audit, 2026-10-17)', async () => {
+    /* A rollback set a transmittal the agency had received or acknowledged to
+       'rolled_back' here while the agency still held it: a record that
+       contradicts the agency's. No screen calls it since Gateway transmittals
+       became a read-only log. Taking a filing back is a withdrawal sequence,
+       sent from Submission Center. Express answers an unrouted path itself. */
+    signerRole.mockResolvedValue('approver');
+    const res = await request(makeApp({ withAuth: true, role: 'approver' }))
       .post('/api/mdx/gateways/transmittals/1/rollback')
       .send({ reason: 'governed rollback reason', reauth: { password: 'pw-123456' } });
-    // The transmittal does not exist in this tenant: the request got past both gates.
-    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(res.status).toBe(404);
+    expect(res.text).toMatch(/Cannot POST/);
   });
 
   it('GET /gateways tells the screen whether this person may sign a transmit, from the same check', async () => {
@@ -160,6 +165,23 @@ describe('signing authority — the governed signs on this router', () => {
     // Unknown is not "you cannot": the screen offers the form and the server decides.
     signerRole.mockRejectedValueOnce(new Error('down'));
     const unknown = await request(makeApp({ withAuth: true, role: 'approver' })).get('/api/mdx/gateways');
+    expect(unknown.status).toBe(200);
+    expect(unknown.body.meta?.signing).toEqual({ canSign: null });
+  });
+
+  /* 2026-10-17: the transmittal log is the screen's only read now (the gateway
+     roster went with the package transmit), so it carries the same answer for
+     the one signed act left on it, the technical rejection. */
+  it('GET /gateways/transmittals carries the same answer, from the same check', async () => {
+    signerRole.mockResolvedValueOnce('manager');
+    const manager = await request(makeApp({ withAuth: true, role: 'manager' })).get('/api/mdx/gateways/transmittals');
+    expect(manager.status, JSON.stringify(manager.body)).toBe(200);
+    expect(manager.body.meta?.signing).toEqual({ canSign: false });
+    signerRole.mockResolvedValueOnce('approver');
+    const approver = await request(makeApp({ withAuth: true, role: 'approver' })).get('/api/mdx/gateways/transmittals');
+    expect(approver.body.meta?.signing).toEqual({ canSign: true });
+    signerRole.mockRejectedValueOnce(new Error('down'));
+    const unknown = await request(makeApp({ withAuth: true, role: 'approver' })).get('/api/mdx/gateways/transmittals');
     expect(unknown.status).toBe(200);
     expect(unknown.body.meta?.signing).toEqual({ canSign: null });
   });

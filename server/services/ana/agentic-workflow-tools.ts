@@ -17,6 +17,8 @@
 import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
+import { looksLikeProgramUuid } from '../../lib/project-id.js';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
 import { handleUpdatePlan, UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 import {
   AGENT_INSTRUCTIONS_MAX,
@@ -175,6 +177,22 @@ type RegisterFn = (
   handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
 ) => void;
 
+/** Keep the selected program's existing integer anchor in the background row.
+ * The worker must retain the open project after this request has ended. */
+async function investigationProjectId(ctx: ToolContext | undefined): Promise<number | null> {
+  if (typeof ctx?.projectRef !== 'string' || !looksLikeProgramUuid(ctx.projectRef)) return ctx?.projectId ?? null;
+  if (!ctx.organizationId || !ctx.userId) {
+    throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A current organization actor is required.');
+  }
+  if (!ctx.sqlClient) {
+    throw new ProgramReadAccessError(503, 'REQUEST_DB_CONTEXT_REQUIRED', 'The selected project requires its server-provided database context.');
+  }
+  const access = await requireCurrentProgramAccess(ctx.sqlClient, {
+    organizationId: ctx.organizationId, userId: ctx.userId, programId: ctx.projectRef.trim(),
+  });
+  return access.projectId;
+}
+
 /** Register the agentic-workflow tool handlers on the executor's registry. */
 export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
 // The four-agent drafting council (Drafter → Statistician → Critic →
@@ -332,12 +350,13 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
   const context = typeof input.context === 'string' && input.context.trim() ? input.context.trim() : undefined;
   try {
     const { startDeepInvestigation } = await import('./deep-investigation.js');
+    const projectId = await investigationProjectId(ctx);
     const started = await startDeepInvestigation({
       question,
       context,
       organizationId: ctx?.organizationId ?? null,
       userId: ctx?.userId ?? null,
-      projectId: ctx?.projectId ?? null,
+      projectId,
     });
     if (started.status === 'limit_reached') {
       return JSON.stringify({
@@ -363,6 +382,7 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
   } catch (error: any) {
     return JSON.stringify({
       error: `Could not start the investigation: ${error?.message ?? 'unknown error'}`,
+      ...(error instanceof ProgramReadAccessError ? { code: error.code } : {}),
       tool: 'start_deep_investigation',
     });
   }

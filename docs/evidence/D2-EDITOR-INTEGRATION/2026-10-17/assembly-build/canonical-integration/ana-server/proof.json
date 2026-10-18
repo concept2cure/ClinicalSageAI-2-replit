@@ -1,0 +1,78 @@
+{
+  "workstream": "W1 / D2",
+  "canonicalBase": "accf8c6bacfdc2d89b5de9098e22a67fe3f27914",
+  "node": "v22.23.3",
+  "finalCommand": "NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts server/routes/__tests__/authoringAiDraftAccept.test.ts server/routes/__tests__/authoringAiDraftNoProvider.test.ts server/routes/__tests__/authoringAiDraftStructured.test.ts server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts server/routes/__tests__/authoring-draft-program-sources.test.ts server/services/authoring/__tests__/authoring-draft-sources.test.ts server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts",
+  "finalExitCode": 0,
+  "finalCounts": {
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": 10,
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": 7,
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": 11,
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": 10,
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": 10,
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": 5,
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": 2,
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": 3,
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": 13,
+    "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts": 2,
+    "server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts": 2
+  },
+  "logs": [
+    {
+      "path": "initial-integration.txt",
+      "exitCode": 1,
+      "result": "3 failed; 11 passed in 3 files; obsolete source seam and missing admission unit fixture",
+      "rawSha256": "a8d19fc4b6db6a13a89d5b7a78946b74b328e1749e73e3e206b8365471a30c65",
+      "storedSha256": "dcb431b0c5981d0fddc1e6476ff50cd56fac90d805235f79cfe051bd453089a3",
+      "normalization": "UTF-8 line endings, trailing line whitespace removed; one final newline"
+    },
+    {
+      "path": "final-green.txt",
+      "exitCode": 0,
+      "result": "75 passed in 11 files",
+      "rawSha256": "80efac9c24b2b181d468ade4cdc1f0b1299524de28119f8047e1dfe404c12844",
+      "storedSha256": "fbb64a2e54d713af3ed1f7dc0dd59ff20c3c10b352d9dc69aeb5b7832622b6e6",
+      "normalization": "UTF-8 line endings, trailing line whitespace removed; one final newline"
+    }
+  ],
+  "sourceCapture": "Candidate run startup; all owned edits completed before launch; no subsequent mutations until completion.",
+  "sourceStart": {
+    "server/routes/authoring.router.ts": "ea1973f7f5f64203821acd8b925da5962453720f6ea8a91cd366aa1ba624653e",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "8ddcd99c558be189572932e6bce0809a8fe305598c82b0abdcc27cb5bdb0879d",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "efbccd4f86546b8d41ed2a7bbce48aa880a72c2b8f04bdd6fce42a500b4ffeaa",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": "6683ecea3bc34d4e769e8fac77a1a866ffda1fea376e86a13c4f262a52fa4b3d",
+    "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts": "b0e5f81b74b5140a83d1e70029360e777264cdcf260825ded171d96c4fa8d512",
+    "server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts": "00fe71f589b7d669050c823e4e42b87f787dd0a8ab917375cc911dc9eb5b7a58",
+    "server/services/authoring/authoring-draft-sources.ts": "ce5b3731cc696e4ec0796f983044a98d14876ee72618e99811239052ed3a79c5"
+  },
+  "sourceEnd": {
+    "server/routes/authoring.router.ts": "ea1973f7f5f64203821acd8b925da5962453720f6ea8a91cd366aa1ba624653e",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "8ddcd99c558be189572932e6bce0809a8fe305598c82b0abdcc27cb5bdb0879d",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "98fba3fa0a52aab8bbe8efa574520fee3fb15e0136bc7896137de782fe810bc5",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280",
+    "server/routes/__tests__/authoringAiDraftNoProvider.test.ts": "9e03406cd481ebd34a76238dc0951cb9a2aaa9dcf2f91153183f480a9ef4ef09",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "efbccd4f86546b8d41ed2a7bbce48aa880a72c2b8f04bdd6fce42a500b4ffeaa",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/services/authoring/__tests__/authoring-draft-sources.test.ts": "6683ecea3bc34d4e769e8fac77a1a866ffda1fea376e86a13c4f262a52fa4b3d",
+    "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts": "b0e5f81b74b5140a83d1e70029360e777264cdcf260825ded171d96c4fa8d512",
+    "server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts": "00fe71f589b7d669050c823e4e42b87f787dd0a8ab917375cc911dc9eb5b7a58",
+    "server/services/authoring/authoring-draft-sources.ts": "ce5b3731cc696e4ec0796f983044a98d14876ee72618e99811239052ed3a79c5"
+  },
+  "sourceUnchanged": true,
+  "limits": [
+    "No provider or live corpus request.",
+    "PGlite does not qualify native PostgreSQL lock scheduling or RLS enforcement.",
+    "Source-wiring units explicitly stub project admission; separate HTTP/PGlite cases exercise actual fresh project authority.",
+    "No deployment, human review or regulatory-readiness claim."
+  ]
+}

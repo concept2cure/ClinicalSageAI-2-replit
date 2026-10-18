@@ -46,8 +46,9 @@
  *   ICSR_GATEWAY_CERT_PATH         mTLS client certificate (PEM path); also the
  *                                  configuration trigger for the AS2 path
  *   ICSR_GATEWAY_KEY_PATH          mTLS private key (PEM path)
- *   ICSR_GATEWAY_AGENCY_CERT_PATH  Agency certificate (PEM path) — TLS trust
- *                                  anchor; omitted ⇒ platform CA store
+ *   ICSR_GATEWAY_AGENCY_CERT_PATH  Pinned AS2 encryption certificate (required)
+ *   ICSR_GATEWAY_MDN_CERT_PATH     Receipt signer, if different from encryption
+ *   ICSR_GATEWAY_TLS_CA_PATH       Optional TLS CA override; otherwise system trust
  *   HTTPS path (a gateway provider's authenticated upload endpoint):
  *   ICSR_GATEWAY_USERNAME / ICSR_GATEWAY_PASSWORD   HTTP Basic credentials
  *
@@ -63,14 +64,14 @@ import type { IcsrGateway, IcsrTransmissionResult } from './e2b-icsr-message';
 import {
   attemptDelivery,
   buildAs2Headers,
-  classifyAs2Delivery,
+  classifyVerifiedAs2Delivery,
   classifyDelivery,
   headerValue,
   httpsPost,
   postAs2,
-  signAs2Body,
   type DeliveryOutcome,
 } from '../submission-gateways/as2-transport';
+import { buildAs2CmsEnvelope } from '../submission-gateways/as2-cms';
 
 /** Gateway transport configuration, resolved from the environment. */
 export interface IcsrGatewayConfig {
@@ -84,8 +85,12 @@ export interface IcsrGatewayConfig {
   certPath?: string;
   /** Path to the mTLS private key (AS2 path). */
   keyPath?: string;
-  /** Path to the agency's certificate — TLS trust anchor (AS2 path, optional). */
+  /** Pinned agency AS2 encryption certificate (required on the AS2 path). */
   agencyCertPath?: string;
+  /** Pinned agency MDN signer, when different from its encryption certificate. */
+  mdnCertPath?: string;
+  /** Optional TLS CA override; otherwise the platform TLS trust store is used. */
+  tlsCaPath?: string;
   /** Agency AS2 identifier (AS2 path). */
   as2To?: string;
   /** Wire protocol; derived from the credentials present when unset. */
@@ -196,6 +201,8 @@ export function resolveGatewayConfig(): IcsrGatewayConfig | null {
     certPath,
     keyPath: process.env[ENV_KEY_PATH],
     agencyCertPath: process.env[ENV_AGENCY_CERT_PATH],
+    mdnCertPath: process.env.ICSR_GATEWAY_MDN_CERT_PATH,
+    tlsCaPath: process.env.ICSR_GATEWAY_TLS_CA_PATH,
     as2To: process.env[ENV_AS2_TO],
     protocol,
   };
@@ -372,30 +379,33 @@ async function transmitViaAs2(
   if (!config.as2To) missing.push(ENV_AS2_TO);
   if (missing.length > 0) throw new IcsrGatewayNotConfiguredError(built.gateway, missing);
 
-  const [clientCertPem, clientKeyPem, agencyCertPem] = await Promise.all([
+  const [clientCertPem, clientKeyPem, agencyCertPem, mdnCertPem, tlsCaPem] = await Promise.all([
     fs.readFile(config.certPath!, 'utf8'),
     fs.readFile(config.keyPath!, 'utf8'),
     config.agencyCertPath ? fs.readFile(config.agencyCertPath, 'utf8') : Promise.resolve(undefined),
+    config.mdnCertPath ? fs.readFile(config.mdnCertPath, 'utf8') : Promise.resolve(undefined),
+    config.tlsCaPath ? fs.readFile(config.tlsCaPath, 'utf8') : Promise.resolve(undefined),
   ]);
 
   const body = Buffer.from(built.message, 'utf8');
   const as2MessageId = `<${randomUUID()}@${config.username}>`;
+  if (!agencyCertPem) throw new Error('The pinned agency AS2 encryption/signing certificate is required. Nothing was transmitted.');
+  const envelope = await buildAs2CmsEnvelope({ body, contentType: 'application/xml; charset=utf-8', filename: `${messageId}.xml`, clientCertPem, clientKeyPem, agencyCertPem });
   const headers = buildAs2Headers({
     messageId: as2MessageId,
     from: config.username!,
     to: config.as2To!,
-    contentType: 'application/xml; charset=utf-8',
-    body,
-    signaturePem: signAs2Body(body, clientKeyPem),
-    filename: `${messageId}.xml`,
+    contentType: envelope.contentType,
+    body: envelope.body,
+    filename: 'smime.p7m',
     userAgent: 'concept2cure-icsr/1.0',
   });
 
-  const outcome = classifyAs2Delivery(await attemptDelivery(() => postAs2({
-    endpoint: config.url, headers, body,
-    clientCertPem, clientKeyPem, agencyCertPem,
+  const outcome = await classifyVerifiedAs2Delivery(await attemptDelivery(() => postAs2({
+    endpoint: config.url, headers, body: envelope.body,
+    clientCertPem, clientKeyPem, agencyCertPem: tlsCaPem,
     errorPrefix: `ICSR AS2 POST (${built.gateway})`,
-  })), as2MessageId);
+  })), as2MessageId, { agencyCertPem: mdnCertPem ?? agencyCertPem, expectedMic: envelope.mic });
   /* 2026-09-23 (W5/D7, round-2 and round-3 review): an MDN that could not be
      tied to this message (none named, another message, empty or `<>`, no
      readable disposition) is 'receipt-unproven', not 'gateway-rejected'; only

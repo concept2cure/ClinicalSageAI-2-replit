@@ -1,0 +1,225 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots 145ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots 111ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots 102ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > automatically recovers an exact captured workspace that differs from the project row identifier 85ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an ambiguous anchor before extraction 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an deleted anchor before extraction 63ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > rechecks the exact program workspace after extraction before storing derived text 27ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an anchor swap after extraction even if the new anchor has the same workspace 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > a copied claim cannot self-attest the attempt-local workspace admission 64ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 43ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"fileName":"Renamed.csv"} 40ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"mimeType":"text/csv"} 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 49ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 21ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 51ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 74ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 75ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 33ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 91ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > dry-run is read-only and strict invalid options refuse before I/O 58ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy readable text is already complete without fabricated stage history 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > diagnostic malformed rows do not starve runnable slots 71ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " " 99ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable "﻿" 95ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " \n\t" 90ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > exact already-readable dryrun observes completion without claiming a processed count 28ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final-write outage records bounded due retry and never marks readable completion 103ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final and failure-journal outage leaves the durable running lease reclaimable 88ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > automatic attempt budget is bounded; explicit expired-claim retry never resets it 153ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > busy and not-due diagnostics cannot consume runnable slots 94ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":58,"status":"extracted","text":null,"report":{"examined":1,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[{"sourceId":58,"status":"candidate"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > a lost completion COMMIT reply is resolved by durable readable state on retry 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 58ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 195ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 54ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":63,"done":{"ok":false,"processed":false,"status":"blocked","reasonCode":"SOURCE_BYTES_MISMATCH"},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":64,"committed":false,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":0,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":0,"unreadable":[{"sourceId":66,"reason":"EXTRACTION_FAILED"}],"dryRun":false,"completed":0,"failed":1,"blocked":0,"skipped":0,"items":[{"sourceId":66,"status":"extraction_failed","reasonCode":"EXTRACTION_FAILED"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 53ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 89ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds the live matching row using the supplied transaction executor and bound identity 4ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > refuses a missing, foreign or deleted row in held live mode 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds a deleted row only with the explicit retained-record option 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > preserves ordinary behavior when holding is absent or explicitly false 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=false) 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=true) 0ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts
+{
+  "timestamp": "2026-10-14T22:06:43.098Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:06:43.099Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts
+{
+  "timestamp": "2026-10-14T22:06:43.099Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts
+{
+  "timestamp": "2026-10-14T22:06:43.276Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > refuses availability from an extracted label with blank persisted text (null) 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > refuses availability from an extracted label with blank persisted text ("") 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > refuses availability from an extracted label with blank persisted text (" \t\r\n") 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > refuses availability from an extracted label with blank persisted text ("  ﻿") 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > recognizes nonblank loaded text independently of a missing legacy processing record 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > does not fabricate availability when the legacy read did not load text 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > actual persisted source text availability > uses the explicit persisted-text projection rather than extraction words 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for null 1568ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for "" 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for " \t\n\r\u000b\f" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for "                 　﻿" 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for "  Plasma specimen  " 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > evaluates the actual SELECT flag correctly for "​" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > lean SQL agrees with the actual core nonblank text rule > uses actual database clock output for expired-claim presentation 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > observes an expired claim using the SELECT database time without browser time 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not invent expiry when the database observation time was not loaded 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not promote malformed or future private stage metadata into completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > keeps readable retained data available without original-byte availability 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts > sanitized processing state and safe grounding > does not let a failed/stale attempt label erase authoritative persisted text 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > requires one explicit organization and defaults to bounded report-only work 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: undefined 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org=42" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > calls only the canonical tenant wrapper and preserves report caps 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > explicit apply forwards exact-source/retry selection and counts readable completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports extraction_failed as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retryable_failure as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports blocked as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports stale_source as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports busy as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_not_due as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_exhausted as unresolved rather than clean completion 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > keeps bounded diagnostics visible when no runnable source was selected 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > allows an empty clean dry-run without claiming any source was processed 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > whitelists report content and never prints raw private data or provider errors 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > refuses a report for another exact source before printing any source identity 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > closes the loaded service after fatal errors and emits a safe error code 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > reports cleanup failure without emitting its private message 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > rejects invalid arguments with usage exit 2 before any server import 171ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > resolves the real server imports and refuses a missing database without a socket 798ms
+
+ Test Files  4 passed (4)
+      Tests  163 passed (163)
+   Start at  22:06:33
+   Duration  12.22s (transform 1.10s, setup 113ms, import 2.33s, tests 9.21s, environment 0ms)
+

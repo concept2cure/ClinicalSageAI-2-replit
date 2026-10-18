@@ -67,7 +67,7 @@ export type IcsrTransmissionErrorCode =
   | 'GATEWAY_TRANSMIT_FAILED'
   /** Delivery unconfirmed: the agency may hold the report; the row is locked. */
   | 'TRANSMISSION_UNCONFIRMED'
-  /** The ACK carries no readable ICH code; nothing was recorded. */
+  /** The ACK carries no readable ICH code, or no readable message number; nothing was recorded. */
   | 'ACK_UNREADABLE'
   /** The transmission is not in the state the operation requires. */
   | 'INVALID_STATE'
@@ -609,8 +609,11 @@ async function recordTransmissionUnconfirmed(
 /**
  * Record an agency acknowledgment (ACK) against a transmission: parse it and set
  * the status to 'acknowledged' (AA/AE) or 'rejected' (AR), storing the ack code
- * and any errors. Accepted from 'transmitted' and 'transmission_unconfirmed'.
- * Audited, org-scoped.
+ * and any errors. Accepted from 'transmitted' and 'transmission_unconfirmed',
+ * and only when the ACK names this transmission's message number.
+ * `acknowledgedAt` is left null: the agency's acknowledgement time is not read
+ * from the ACK, and the time the platform recorded it is `updatedAt` (and the
+ * audit row). Audited, org-scoped.
  */
 export async function recordIcsrAcknowledgment(
   id: string,
@@ -643,7 +646,17 @@ export async function recordIcsrAcknowledgment(
         `unconfirmed (current: ${current.status}).`,
     );
   }
-  if (ack.acknowledgedMessageNumber && ack.acknowledgedMessageNumber !== current.messageNumber) {
+  // 2026-10-15: an ACK whose message number could not be read skipped this
+  // comparison, so any pasted "AA" closed whichever row was selected. An ACK
+  // that names no message cannot be tied to this one; it is refused.
+  if (!ack.acknowledgedMessageNumber) {
+    throw new IcsrTransmissionError(
+      'ACK_UNREADABLE',
+      `The acknowledgement names no message number, so it cannot be tied to this transmission ` +
+        `(${current.messageNumber}); nothing was recorded.`,
+    );
+  }
+  if (ack.acknowledgedMessageNumber !== current.messageNumber) {
     throw new IcsrTransmissionError(
       'ACK_MISMATCH',
       `The acknowledgement names message ${ack.acknowledgedMessageNumber}; this transmission is ${current.messageNumber}.`,
@@ -658,7 +671,10 @@ export async function recordIcsrAcknowledgment(
       ackCode: ack.ackCode,
       acknowledgedMessageNumber: ack.acknowledgedMessageNumber,
       errors: ack.errors as unknown as Record<string, unknown>[],
-      acknowledgedAt: new Date(),
+      // 2026-10-15: this was `new Date()` — when the platform recorded the
+      // ACK, stored as when the agency acknowledged. The ACK's own time is not
+      // parsed, so it is not stated; updatedAt carries the recording time.
+      acknowledgedAt: null,
       updatedAt: new Date(),
     })
     .where(and(eq(indIcsrTransmissions.id, id), eq(indIcsrTransmissions.organizationId, ctx.organizationId)))

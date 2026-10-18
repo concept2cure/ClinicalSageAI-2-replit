@@ -17,7 +17,7 @@ const { mockSelectRows, mockSelectFields, mockSet, mockUpdateWhere, mockLogActio
   mockSelectRows: vi.fn<() => unknown[]>(() => []),
   mockSelectFields: vi.fn<(fields: Record<string, unknown>) => void>(),
   mockSet: vi.fn<(values: Record<string, unknown>) => void>(),
-  mockUpdateWhere: vi.fn(async () => undefined),
+  mockUpdateWhere: vi.fn<(predicate?: unknown) => Promise<undefined>>(async () => undefined),
   mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
 }));
 
@@ -48,14 +48,27 @@ fakeDb.select = vi.fn((fields: Record<string, unknown>) => {
   mockSelectFields(fields);
   return {
     from: vi.fn(() => ({
-      where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
+      /* The profile READ ends in `.limit()`; the write's own pre-read — the
+         values the fields held before, for the §11.10(e) entry — awaits
+         `.where()` directly, so this is both (2026-10-13). */
+      where: vi.fn(() =>
+        Object.assign(Promise.resolve(mockSelectRows().map(() => ({ snapshot: SNAPSHOT }))), {
+          limit: vi.fn(async () => mockSelectRows()),
+        }),
+      ),
     })),
   };
 });
 fakeDb.update = vi.fn(() => ({
   set: vi.fn((values: Record<string, unknown>) => {
     mockSet(values);
-    return { where: mockUpdateWhere };
+    return {
+      where: vi.fn((predicate: unknown) => {
+        void mockUpdateWhere(predicate);
+        /* `.returning()`, so a zero-row UPDATE cannot pass for a change. */
+        return { returning: vi.fn(async () => [{ id: PROGRAM.id }]) };
+      }),
+    };
   }),
 }));
 
@@ -69,6 +82,9 @@ function getHandler(path: string, method: 'get' | 'put') {
   if (!layer?.route) throw new Error(`Missing route ${method.toUpperCase()} ${path}`);
   return layer.route.stack[layer.route.stack.length - 1].handle;
 }
+
+/** The row as `to_jsonb(row)` returns it: keyed by column name. */
+const SNAPSHOT: Record<string, unknown> = { device_class: 'II', product_code: 'QAS' };
 
 const PROGRAM = {
   id: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70',

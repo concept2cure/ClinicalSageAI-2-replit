@@ -1,0 +1,9 @@
+{
+  "from": "8d06f7156",
+  "to": "87824205c33c4bc3e586060f61eab62ffb26a852",
+  "ownedSourceOverlap": [],
+  "movedFinishReasonClassifierIsByteIdentical": true,
+  "oldSha256": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+  "newSha256": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+  "review": "BatchDraft now preserves explicit provider termination through preview and acceptance. The gateway classifier is an exact shared-file move with compatibility re-exports. No catalogue source contract, native editor or section draft/accept source changed. Requalify compiler/build and incoming component/HTTP boundary tests."
+}

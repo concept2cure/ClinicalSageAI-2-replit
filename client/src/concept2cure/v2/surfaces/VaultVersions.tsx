@@ -19,8 +19,9 @@
 import React, { useRef, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
-import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { VaultVersionCompare } from './VaultVersionCompare';
+import { useVaultCanWrite } from './VaultViewOnly';
 import { downloadBlob, safeFileName } from '../download';
 import {
   APPROVED_STAGES,
@@ -104,8 +105,42 @@ export interface VersionsShape {
   signing?: VaultSigningPosture;
 }
 
+const nullableText = (v: unknown): v is string | null => v === null || typeof v === 'string';
+const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const optionalRows = (v: unknown, guard: (row: unknown) => boolean): boolean =>
+  v === undefined || (Array.isArray(v) && v.every(guard));
+function isPlacement(v: unknown): boolean {
+  return isObject(v) && Number.isSafeInteger(v.submissionId) && Number.isSafeInteger(v.sequenceId) &&
+    nullableText(v.submissionTitle) && nullableText(v.sequenceNumber) && nullableText(v.sequenceStatus) &&
+    typeof v.sectionCode === 'string' && typeof v.operation === 'string';
+}
+function isEstarUse(v: unknown): boolean {
+  return isObject(v) && ['artifact', 'audit'].includes(String(v.record)) && typeof v.recordId === 'string' &&
+    typeof v.exportedAt === 'string' && nullableText(v.chapter) &&
+    (v.retainedAs === null || (isObject(v.retainedAs) && typeof v.retainedAs.documentId === 'string' &&
+      nullableText(v.retainedAs.documentCode) && nullableText(v.retainedAs.version)));
+}
+function isCmcUse(v: unknown): boolean {
+  return isObject(v) && typeof v.linkId === 'string' && typeof v.sourceType === 'string' && typeof v.sourceKey === 'string' &&
+    Array.isArray(v.sections) && v.sections.every(s => typeof s === 'string');
+}
+function isVersionMetadata(v: Record<string, unknown>): boolean {
+  const text = (value: unknown) => value === undefined || nullableText(value);
+  return text(v.version) && text(v.contentHash) && text(v.fileName) && text(v.uploader) &&
+    (v.fileSize == null || (Number.isSafeInteger(v.fileSize) && Number(v.fileSize) >= 0));
+}
+function isVersion(v: unknown): v is VaultVersion {
+  return isObject(v) && typeof v.id === 'string' && v.id.length > 0 && typeof v.createdAt === 'string' &&
+    typeof v.current === 'boolean' && ['none', 'verified', 'unverified'].includes(String(v.link)) &&
+    isVersionMetadata(v) && optionalRows(v.placements, isPlacement) && optionalRows(v.estarUses, isEstarUse) && optionalRows(v.cmcEvidence, isCmcUse);
+}
 export const isVersionsShape: ShapeGuard<VersionsShape> = (v): v is VersionsShape =>
-  !!v && typeof v === 'object' && Array.isArray((v as VersionsShape).versions);
+  isObject(v) && Array.isArray(v.versions) && v.versions.every(isVersion);
+
+/** A previous response supplies no version actions while its replacement is unconfirmed. */
+function confirmedVersions(st: DataState<VersionsShape>): VersionsShape | null {
+  return st.loading || st.error ? null : st.data;
+}
 
 function sizeLabel(bytes: number | null): string {
   if (bytes == null) return 'size not recorded';
@@ -127,7 +162,7 @@ function uploaderLabel(v: VaultVersion): string {
 /** Where a version is placed, in words: each submission sequence and section, with the leaf's operation. */
 export function placedInText(placements: VaultPlacement[] | undefined): string {
   if (!placements) return '';
-  if (placements.length === 0) return ' · not placed in any submission';
+  if (placements.length === 0) return ' · no submission placements are available to you';
   const one = (p: VaultPlacement) =>
     `${p.submissionTitle ?? `submission ${p.submissionId}`}, sequence ${p.sequenceNumber ?? 'not numbered'}, ` +
     `${p.sectionCode} (${p.operation}; sequence ${p.sequenceStatus ?? 'status not recorded'})`;
@@ -179,7 +214,10 @@ interface ExportManifestSummary {
 
 /** What a downloaded export contains, said plainly. */
 function exportSummary(m: ExportManifestSummary, versions: number): { tone: 'ok' | 'error'; text: string } {
-  const rows = m.rowCount ?? 0;
+  const rows = m.rowCount;
+  if (typeof rows !== 'number' || !Number.isSafeInteger(rows) || rows < 0) {
+    return { tone: 'error', text: 'The signed history was downloaded, but its audit record count was not reported. Check the export manifest before relying on it.' };
+  }
   if (rows === 0) {
     return { tone: 'error', text: 'The signed history was downloaded, but it holds no audit records for these versions.' };
   }
@@ -329,10 +367,20 @@ function CheckInWarning({ current }: { current: VaultVersion | undefined }) {
     .join('; ');
   return (
     <div className="vd-dr-err" role="status" data-testid="vault-checkin-warning">
-      {I.alertTriangle} Version {current?.version ?? 'current'} is placed in {open.length} sequence{open.length === 1 ? '' : 's'} not
+      {I.alertTriangle} Version {current?.version ?? 'current'} has {open.length} placement{open.length === 1 ? '' : 's'} in accessible sequences not
       yet transmitted: {list}. Once a new version is added, this version can no longer be transmitted from them. A draft sequence
       can take the new version after it is approved. A frozen or dispatched sequence cannot be changed, so it could not be transmitted.
     </div>
+  );
+}
+
+/** A new version is an ingest, which admits the writing roles only. */
+function NewVersionButton({ uploading, onPick }: { uploading: boolean; onPick: () => void }) {
+  if (!useVaultCanWrite()) return null;
+  return (
+    <button className="sp-ask" disabled={uploading} onClick={onPick}>
+      {I.upload} Upload new version
+    </button>
   );
 }
 
@@ -341,15 +389,16 @@ export function VaultVersions({
 }: Props) {
   const path = versionsPath(projectId, documentId);
   const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
+  const confirmed = confirmedVersions(st);
   const picker = useRef<HTMLInputElement | null>(null);
   const { exporting, exportNote, exportHistory } = useSignedHistoryExport(title);
-  const versions = st.data?.versions ?? [];
+  const versions = confirmed?.versions ?? [];
   const currentId = versions.find((v) => v.current)?.id;
   const [comparing, setComparing] = useState<string | null>(null);
 
   let body: React.ReactNode;
   if (st.loading) body = <div className="vd-d-idx">Loading versions…</div>;
-  else if (st.error || !st.data) {
+  else if (!confirmed) {
     body = (
       <div className="vd-dr-err" role="alert">
         {I.alertTriangle} The versions of this document could not be read. No list is shown because it would be
@@ -366,7 +415,7 @@ export function VaultVersions({
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
         projectId={projectId}
-        signing={st.data.signing ?? null}
+        signing={confirmed.signing ?? null}
       />
     );
   }
@@ -374,6 +423,9 @@ export function VaultVersions({
   return (
     <div data-testid="vault-versions">
       <div className="vd-d-seclbl">Versions</div>
+      {confirmed ? (
+        <div className="vd-d-idx">Submission placements, eSTAR exports and CMC evidence are limited to records you can currently access.</div>
+      ) : null}
       {body}
       {comparing && currentId ? (
         <VaultVersionCompare projectId={projectId} documentId={currentId} againstId={comparing} onClose={() => setComparing(null)} />
@@ -390,9 +442,7 @@ export function VaultVersions({
         }}
       />
       <CheckInWarning current={versions.find((v) => v.current)} />
-      <button className="sp-ask" disabled={uploading} onClick={() => picker.current?.click()}>
-        {I.upload} Upload new version
-      </button>
+      <NewVersionButton uploading={uploading} onPick={() => picker.current?.click()} />
       {versions.length > 0 && (
         <button className="sp-ask" disabled={exporting} onClick={() => void exportHistory(versions.map((v) => v.id))}>
           {I.download} Export signed history

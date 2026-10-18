@@ -1,0 +1,107 @@
+{
+  "database": "platform_ci_fresh_verify_20261014_beb73055",
+  "runtimeRole": "app_service",
+  "runtimeRoleMode": "existing-role-refresh",
+  "passwordMintDisabled": true,
+  "steps": [
+    {
+      "name": "install",
+      "exitCode": 0,
+      "log": "/tmp/project-vault-fresh-schema-install.txt"
+    },
+    {
+      "name": "deploy",
+      "exitCode": 0,
+      "log": "/tmp/project-vault-fresh-schema-deploy.txt"
+    },
+    {
+      "name": "grants",
+      "exitCode": 0,
+      "log": "/tmp/project-vault-fresh-schema-grants.txt"
+    }
+  ],
+  "before": {
+    "roleCount": 25,
+    "roleState": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "adeccb19da366532b7833e86bcb0a371cd400380683c5090e423c02614334fee"
+    },
+    "membershipCount": 5,
+    "membershipState": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "2bdb5e1ea21700e9be08df2dfeddb58981fbd33a87588c47108efda860ed293e"
+    },
+    "globalRoleSettings": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "requiredRoles": [
+      "ana_record_purger",
+      "ana_run_events_purger",
+      "app_service",
+      "artifact_record_purger",
+      "audit_archiver",
+      "gcc_admin_migrator",
+      "gcc_app_reader",
+      "gcc_app_writer",
+      "gcc_auditor",
+      "gcc_shadow_agent"
+    ]
+  },
+  "after": {
+    "roleCount": 25,
+    "roleState": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "adeccb19da366532b7833e86bcb0a371cd400380683c5090e423c02614334fee"
+    },
+    "membershipCount": 5,
+    "membershipState": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "2bdb5e1ea21700e9be08df2dfeddb58981fbd33a87588c47108efda860ed293e"
+    },
+    "globalRoleSettings": {
+      "digestAlgorithm": "SHA-256",
+      "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "requiredRoles": [
+      "ana_record_purger",
+      "ana_run_events_purger",
+      "app_service",
+      "artifact_record_purger",
+      "audit_archiver",
+      "gcc_admin_migrator",
+      "gcc_app_reader",
+      "gcc_app_writer",
+      "gcc_auditor",
+      "gcc_shadow_agent"
+    ]
+  },
+  "created": {
+    "createdDatabase": "platform_ci_fresh_verify_20261014_beb73055"
+  },
+  "verification": {
+    "identity": {
+      "database": "platform_ci_fresh_verify_20261014_beb73055",
+      "owner": "postgres"
+    },
+    "index": [
+      {
+        "name": "irr_org_idx",
+        "valid": true,
+        "unique": false,
+        "leading_column": "organization_id",
+        "method": "btree"
+      }
+    ],
+    "runtime": {
+      "database": "platform_ci_fresh_verify_20261014_beb73055",
+      "role": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false
+    },
+    "rlsCoverageGaps": 0,
+    "parentScopeDelegates": "passed"
+  },
+  "globalRolesAndMembershipsUnchanged": true,
+  "exitCode": 0
+}

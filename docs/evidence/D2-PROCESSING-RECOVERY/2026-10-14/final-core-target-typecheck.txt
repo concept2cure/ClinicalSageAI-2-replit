@@ -1,0 +1,10 @@
+Scope: 7 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/clinical-regulatory-evidence/data-room-processing.ts: 0 target diagnostics
+server/services/clinical-regulatory-evidence/data-room-processing-state.ts: 0 target diagnostics
+server/services/clinical-regulatory-evidence/data-room-processing-store.ts: 0 target diagnostics
+server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts: 0 target diagnostics
+server/services/clinical-regulatory-evidence/data-room-processing-read.ts: 0 target diagnostics
+server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts: 0 target diagnostics
+tests/db/data-room-processing.dbtest.ts: 0 target diagnostics
+Loaded imported/ambient sources: 2440
+Total selected-scope diagnostics: 0

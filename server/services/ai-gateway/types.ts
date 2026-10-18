@@ -212,8 +212,10 @@ export interface ExtendedThinkingConfig {
 export interface PromptCacheConfig {
   /** Mark system prompt blocks with cache_control for reuse */
   enabled: boolean;
-  /** Cache type — currently only 'ephemeral' supported */
+  /** Anthropic cache type */
   type: 'ephemeral';
+  /** Optional cache lifetime; the default is Anthropic's 5-minute TTL */
+  ttl?: '5m' | '1h';
 }
 
 /** Streaming callback for real-time token delivery */
@@ -369,6 +371,11 @@ export interface GatewayMessage {
 export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
+
+  /** @internal Trusted server checkpoint, captured before route awaits and
+   * repeated after outbound capacity is granted for every dispatch attempt.
+   * Never a wire input, metadata field or serialized source authority. */
+  beforeDispatch?: () => Promise<void>;
 
   /**
    * The caller's risk classification for this request, where it has one — the

@@ -391,7 +391,8 @@ router.get('/subawards', async (req, res) => {
   try { res.json(await listSubawards(orgId, Number.isFinite(awardId) ? awardId : undefined)); } catch (err) { fail(res, err); }
 });
 
-const screenSchema = z.object({ screenStatus: z.enum(['cleared', 'excluded']), screenSource: z.string().max(60).optional(), riskLevel: RISK.optional(), reason });
+// The source is stated, never assumed (2026-10-15: it defaulted to SAM exclusions).
+const screenSchema = z.object({ screenStatus: z.enum(['cleared', 'excluded']), screenSource: z.string().trim().min(1).max(60), riskLevel: RISK.optional(), reason });
 router.patch('/subawards/:id/screen', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });

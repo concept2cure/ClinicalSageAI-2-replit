@@ -1,0 +1,363 @@
+Great—moving to **Step 4: Live Data Tokens + Smart Tables + Slash‑Menu**
+This step turns the editor into the single source of truth by letting authors **insert live data** (specs, batch analyses, P.8 stability, control strategy, PPQ, etc.) as **tokenized blocks** with **citations**, **data‑pills**, **refresh**, and **snapshots**. It also wires those tokens to the other CMC tabs (Analytical, Process, Stability, Quality, Manufacturing).
+
+> **No path guessing.** We begin with discovery commands and **only** write files where your repo actually keeps them. After each sub‑step, run the self‑checks.
+
+---
+
+## 4.0 — Discover exact places (read‑only)
+
+Run these in the Replit shell and **save the output**:
+
+```bash
+# Server routing locations (reuse from Step 2)
+fd -td routes server api
+rg -n --hidden -S "app\\.use\\(|app\\.get\\(\"\\*\"" server api
+
+# Existing module APIs (we will call them from the token resolver)
+rg -n --hidden -S "/api/stability|/api/analytical|/api/quality|/api/process|/api/manufacturing" server api
+
+# Client: find the Document Authoring component and editor implementation
+rg -n --hidden -S "Document Authoring|Dossier Structure|Track Changes|Guidance|Common Deficiencies" client
+
+# Client: find where the editor (TipTap/ProseMirror/etc.) is configured
+rg -n --hidden -S "TipTap|ProseMirror|slash|BubbleMenu|FloatingMenu|extensions" client
+
+# Client: find any existing token-like code
+rg -n --hidden -S "Insert token|tokenKey|citation|data pill|smart table|specs table|P\\.8" client
+```
+
+* **Routes dir** → use exactly that.
+* **Server entry** → mount our new router **above** SPA fallback.
+* **Module APIs** → use the endpoints you already expose (no hardcoding new paths).
+* **Authoring component** → the React file that renders the editor you screenshotted.
+* **Editor config** → the file that initializes the editor extensions.
+
+---
+
+## 4.1 — Canonical **Token Catalog** (what exists and what JSON they return)
+
+We’ll register **stable keys** so authors always get predictable blocks:
+
+**Quality / Analytical**
+
+* `QUALITY.SPECS.DS | DP` → `{specs:[{test,attribute,unit,low,high,justification?,method_id}]}`
+* `BATCH.ANALYSES.DS | DP` → `{batches:[{lot, date, results:[{test,value,unit,pass}]}]}`
+* `ANALYTICAL.METHODS.DS | DP` → `{methods:[{id,name,analyte,status,version}]}`
+* `VALIDATION.SUMMARY.DS | DP` → `{runs:[{method_id,parameters:[{name,result,limit,pass}]}]}`
+
+**Stability**
+
+* `P8.TABLES` → `{conditions:[{kind:"LT|ACC|INT", temp, rh, timepoints:[{m, n, result?}]}]}`
+* `P8.TRENDS` → `{trends:[{test, slope, r2, summary}]}`
+* `P8.CONCLUSIONS` → `{text, shelf_life, risks?}`
+* `IN_USE.STABILITY.SUMMARY` → `{design, limits, results?}`
+
+**Process / Manufacturing**
+
+* `PROCESS.FLOW_IMAGE` → `{imageUrl, alt, generatedAt}`
+* `PROCESS.CONTROL_STRATEGY` → `{links:[{cpp,cqa,control,monitoring}]}`
+* `PPQ.SUMMARY` → `{lots:[{id, date, outcome, notes?}]}`
+
+**General**
+
+* `COMPOSITION.TABLE` → `{ingredients:[{name, function, qty, unit}]}`
+* `MANUFACTURER.LIST` → `{sites:[{name, address, role}]}`
+* `CCS.(DS|DP)` → `{materials:[{part, material, supplier, spec}]}`
+* `SUBSTANCE.CAS` → `{cas:"50-78-2", synonyms:[…]}`
+
+Each token **resolves** to a payload + **sourceRefs** (where it came from), and we compute a **SHA‑256** to track immutability.
+
+---
+
+## 4.2 — DB alignment (idempotent)
+
+Add a column to store the hash of each citation snapshot (safe to re‑run):
+
+```sql
+do $$
+begin
+  if not exists (select 1 from information_schema.columns
+                 where table_name='doc_citations' and column_name='payload_sha256') then
+    alter table doc_citations add column payload_sha256 text;
+  end if;
+end$$;
+```
+
+---
+
+## 4.3 — Token Resolver Service (server)
+
+> Create in your **services** area, next to the Step‑3 service. Use TS or JS to match your codebase.
+
+**File:** `…/services/authoring/tokens.service.(ts|js)`
+
+Responsibilities:
+
+1. **Discover** what tokens are allowed for a given `section_code`.
+2. **Resolve** a token key to a **payload** by calling your other modules’ APIs (found in 4.0).
+3. Compute **SHA‑256** over `JSON.stringify(payload)` and return `{payload, sha256, sourceRefs:[…]}`.
+4. Provide **sample previews** (e.g., first 2 rows) for palette search.
+
+Skeleton (TypeScript; adapt to JS if needed):
+
+```ts
+import crypto from "crypto";
+
+export type TokenResolution = {
+  key: string;
+  payload: any;
+  sha256: string;
+  sourceRefs: { module: string; endpoint: string; params?: any }[];
+};
+
+export async function listTokensForSection(sectionCode: string): Promise<{key:string; title:string; preview?:any}[]> {
+  switch (sectionCode) {
+    case "3.2.P.5": return [
+      { key: "QUALITY.SPECS.DP", title: "DP Specifications" },
+      { key: "ANALYTICAL.METHODS.DP", title: "DP Analytical Methods" },
+      { key: "VALIDATION.SUMMARY.DP", title: "DP Method Validation Summary" },
+      { key: "BATCH.ANALYSES.DP", title: "DP Batch Analyses" },
+    ];
+    case "3.2.P.8": return [
+      { key: "P8.TABLES", title: "Stability Tables (LT/ACC)" },
+      { key: "P8.TRENDS", title: "Stability Trends" },
+      { key: "P8.CONCLUSIONS", title: "Stability Conclusions & Commitment" },
+    ];
+    case "3.2.P.3": return [
+      { key: "PROCESS.CONTROL_STRATEGY", title: "CPP→CQA Control Strategy" },
+      { key: "PPQ.SUMMARY", title: "PPQ Lots Summary" },
+      { key: "PROCESS.FLOW_IMAGE", title: "Process Flow Diagram" },
+    ];
+    default: return [
+      { key: "COMPOSITION.TABLE", title: "Composition Table" },
+      { key: "MANUFACTURER.LIST", title: "Manufacturing Sites" },
+    ];
+  }
+}
+
+function sha256(obj:any){ return crypto.createHash("sha256").update(JSON.stringify(obj)).digest("hex"); }
+
+export async function resolveToken(docId: string, sectionCode: string, key: string): Promise<TokenResolution> {
+  // Call your module APIs discovered in 4.0 (no guessing URLs—inject via env or a config)
+  // Examples below assume existing endpoints; replace with the ones you found.
+
+  if (key === "QUALITY.SPECS.DP") {
+    const resp = await fetch(process.env.INTERNAL_BASE + "/api/quality/specs?scope=DP");
+    const payload = await resp.json();
+    return { key, payload, sha256: sha256(payload), sourceRefs:[{module:"Quality", endpoint:"/api/quality/specs?scope=DP"}] };
+  }
+
+  if (key === "P8.TABLES") {
+    const resp = await fetch(process.env.INTERNAL_BASE + "/api/stability/p8/tables?docId="+docId+"&section="+sectionCode);
+    const payload = await resp.json();
+    return { key, payload, sha256: sha256(payload), sourceRefs:[{module:"Stability", endpoint:"/api/stability/p8/tables"}] };
+  }
+
+  // ...add cases for other keys mapped to your real APIs
+
+  throw new Error("Unsupported token key: "+key);
+}
+```
+
+> **Important:** Don’t hardcode URLs. Put a small config near this service, e.g., `internalBase` derived from your server, or call local controllers directly if you share the same process.
+
+---
+
+## 4.4 — Token Resolver Router (server)
+
+**Create** in your routes folder (same style as Step 2):
+
+* `server/routes/authoring.tokens.router.js` **or** `server/src/routes/authoring.tokens.router.ts`
+
+Endpoints:
+
+```
+GET  /api/authoring/tokens?section=3.2.P.5
+POST /api/authoring/tokens/resolve    { doc_id, section_code, key }
+POST /api/authoring/sections/:sectionId/insert-token { key, anchor? }   -> stores citation + returns new cite_id + payload
+POST /api/authoring/sections/:sectionId/refresh-token { cite_id }       -> updates citation snapshot + returns new sha256
+GET  /api/authoring/sections/:sectionId/tokens                             list citations incl. key, sha256, created_at
+```
+
+**Behavior**
+
+* `insert-token`:
+
+  1. call `resolveToken`,
+  2. write `doc_citations (section_id, source=key, payload, payload_sha256)`,
+  3. return `{cite_id, key, payload, sha256}`—the UI will render a **Smart Table/Block** and mark a **tracked change**.
+* `refresh-token`:
+
+  * re‑resolve the key from the old citation’s source; update `payload`, `payload_sha256`, and return new snapshot (UI applies as tracked change).
+* All must return **JSON**, never HTML.
+
+**Mount** above SPA fallback in the server entry:
+
+```js
+app.use("/api/authoring", require("./routes/authoring.tokens.router"));
+```
+
+(or ESM import where appropriate).
+
+**Smoke test**
+
+```bash
+curl -sS "$BASE_URL/api/authoring/tokens?section=3.2.P.5" | jq
+curl -sS -X POST "$BASE_URL/api/authoring/tokens/resolve" \
+  -H "Content-Type: application/json" \
+  -d '{"doc_id":"<DOC_ID>","section_code":"3.2.P.5","key":"QUALITY.SPECS.DP"}' | jq '.sha256!=null'
+```
+
+---
+
+## 4.5 — Editor UI: Slash‑Menu + Smart Tokens
+
+> Work inside the **React file(s)** you found in 4.0 (editor config + authoring component). Do **not** create new trees.
+
+### A) **Token Slash‑Menu**
+
+* Add a command `/Insert token…` that opens a palette.
+* Palette calls **GET** `/api/authoring/tokens?section=<code>`; list grouped by module.
+* On select, call **POST** `/api/authoring/sections/:sectionId/insert-token { key }`.
+* Insert a **TokenNode** into the editor with attributes:
+
+  ```ts
+  {
+    type: "token",                      // custom node
+    attrs: {
+      key: "QUALITY.SPECS.DP",
+      citeId: "<uuid>",
+      sha256: "<hash>",
+      meta: { title:"DP Specifications", createdAt:"…" }
+    }
+  }
+  ```
+
+### B) **TokenNode (TipTap/PM extension)**
+
+* Renders the payload as a **Smart Table/Block**.
+
+* Shows a **data‑pill** (top‑left corner):
+
+  * `token title` • `snapshot time` • buttons: **↺ Refresh**, **🔗 Source**, **❄ Freeze**
+  * **↺ Refresh** calls `/refresh-token`; applies result as a **tracked change** (old vs new).
+  * **🔗 Source** opens the “Data” rail tab with the citation details (sourceRefs).
+  * **❄ Freeze** marks the node as `frozen=true` (disabled refresh) until user resets.
+
+* Token nodes are **read‑only content** (users can’t break the structure).
+
+* Provide a small **“Convert to static text”** action that replaces the node with plain text + footnote (this creates a revision).
+
+### C) **Smart Table Renderers**
+
+Build small renderers used by TokenNode:
+
+* **SpecsTable** – rows `test`, `attribute`, `unit`, `low`, `high`, `justification?`, badge “method validated” if `method_id` maps to a `VALIDATED` method.
+* **BatchAnalysesTable** – one table per lot or matrix view (toggle).
+* **P8Table** – grid by `condition` × `timepoint`; add trend sparkline if available.
+* **ControlStrategyBlock** – CPP→CQA map with short text summary.
+* **PPQSummary** – lot status list with outcome badges.
+
+All components **accept payload JSON** from token resolution; no client calls to other modules (server already resolved).
+
+---
+
+## 4.6 — Right‑rail **Data** tab integration
+
+* Call **GET** `/api/authoring/sections/:sectionId/tokens`; list citations with:
+
+  * Token key & title, snapshot time, sha256
+  * Buttons: **↺ Refresh** (same as TokenNode), **Open in text** (scrolls editor to node), **Copy snapshot JSON** (for audit)
+* Provide **“Refresh all tokens in section”** (bulk refresh → multiple tracked changes).
+
+---
+
+## 4.7 — Sign‑off / Freeze semantics
+
+* On **Submit**/**Sign** (Step 5 later), mark all citations as **frozen** (no refresh allowed) by setting a `frozen_at` (if you prefer to add a column) or flipping a flag in the section’s status.
+* Any post‑approval edit → **new tracked change** and **resign required**.
+* If you want a DB column now, add idempotently:
+
+  ```sql
+  do $$
+  begin
+    if not exists (select 1 from information_schema.columns
+                   where table_name='doc_citations' and column_name='frozen_at') then
+      alter table doc_citations add column frozen_at timestamptz;
+    end if;
+  end$$;
+  ```
+
+---
+
+## 4.8 — Cross‑module mapping (no guessing; discover & wire)
+
+Use the endpoints you found in **4.0**:
+
+* For each token key in 4.1, map **resolveToken** to the existing module endpoint.
+* If a required endpoint is missing, create a **thin module adapter** in that module (e.g., **Quality** exposes `/api/quality/specs?scope=DP|DS`) that returns the JSON shape defined in 4.1.
+* Keep a tiny **config** near `tokens.service`:
+
+  ```ts
+  export const endpoints = {
+    quality: { specs: "/api/quality/specs" },
+    stability: { p8tables: "/api/stability/p8/tables", trends: "/api/stability/p8/trends" },
+    process: { control: "/api/process/control-strategy", ppq: "/api/process/ppq" },
+    analytical: { methods: "/api/analytical/methods", validation: "/api/analytical/validation" }
+  };
+  ```
+
+  And **inject** `INTERNAL_BASE` or call the controllers directly if co‑resident.
+
+---
+
+## 4.9 — Smoke tests (API + UI)
+
+**API**
+
+```bash
+# Palette list
+curl -sS "$BASE_URL/api/authoring/tokens?section=3.2.P.5" | jq '.[] | .key'
+
+# Resolve & insert
+curl -sS -X POST "$BASE_URL/api/authoring/sections/<SEC_ID>/insert-token" \
+  -H "Content-Type: application/json" \
+  -d '{"key":"QUALITY.SPECS.DP"}' | jq '{cite_id,sha256}'
+
+# List tokens
+curl -sS "$BASE_URL/api/authoring/sections/<SEC_ID>/tokens" | jq '.[0]'
+
+# Refresh one
+curl -sS -X POST "$BASE_URL/api/authoring/sections/<SEC_ID>/refresh-token" \
+  -H "Content-Type: application/json" \
+  -d '{"cite_id":"<CITE_ID>"}' | jq '.sha256'
+```
+
+**UI checkpoints**
+
+* `/Insert token…` shows palette based on section code.
+* Inserting a token drops a **Smart Table** with a **data‑pill**.
+* **Refresh** updates snapshot (tracked change).
+* **Data** rail lists all citations and can refresh all.
+* No token node is directly editable; converting to static text works and creates a revision.
+
+---
+
+## 4.10 — Done when
+
+* Token resolver endpoints live under `/api/authoring` and always return JSON.
+* Token insertion writes **doc\_citations** with `payload` + `payload_sha256`.
+* Editor can insert & refresh **Specs**, **Batch Analyses**, **P.8**, **Control Strategy/PPQ** at minimum.
+* Right‑rail **Data** reflects citations with snapshot time and hash.
+* Cross‑module data flows without copy‑paste; you can generate a section with real data in <60 seconds.
+
+---
+
+### Next (Step 5)
+
+* **Export & Evidence Appendix** (DOCX/PDF) with per‑citation footnotes and a **Token Evidence** section listing **sourceRefs** + **payload hashes**.
+* **Submit/Sign** flow (Part‑11‑lite), freeze semantics, and **sequence packaging** hand‑off.
+
+When your agent finishes 4.0–4.9 and you confirm the smoke tests, I’ll deliver **Step 5** immediately with the export pipeline and e‑sign.
+

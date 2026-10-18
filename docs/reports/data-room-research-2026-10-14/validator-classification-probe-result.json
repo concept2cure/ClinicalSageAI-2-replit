@@ -1,0 +1,30 @@
+{
+  "fixture": "synthetic nonempty filenames only; not a valid eCTD dossier",
+  "licensedValidatorConfigured": false,
+  "requireEvalidator": true,
+  "environment": "production",
+  "control": {
+    "selectedValidator": "noop",
+    "ran": false,
+    "gateConfigured": false,
+    "gateCleared": false,
+    "blockerCount": 1
+  },
+  "regression": {
+    "selectedValidator": "fda-criteria-subset",
+    "validatorKind": "internal_subset",
+    "qualifyingRun": false,
+    "assessmentStatus": "not_assessed",
+    "errorCountKnown": true,
+    "reportValidator": "fda-criteria-subset",
+    "ran": true,
+    "errorCount": 0,
+    "reportPassed": true,
+    "notice": "fda-criteria-subset: a license-free subset of FDA eCTD validation criteria. Passing it is NOT equivalent to passing the agency (LORENZ) validator.",
+    "gateConfigured": false,
+    "gateCleared": false,
+    "blockers": [
+      "The internal FDA criteria subset cannot satisfy the required external-validator assessment. Configure and run an external engine for this production dispatch."
+    ]
+  }
+}

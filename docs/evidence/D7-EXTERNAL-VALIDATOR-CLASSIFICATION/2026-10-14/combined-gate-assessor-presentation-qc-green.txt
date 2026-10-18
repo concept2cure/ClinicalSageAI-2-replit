@@ -1,0 +1,338 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=true) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=true) 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=false) 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=false) 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 245ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "Open Submission Center" on the list 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > shows the rule’s title and id, its regions, its corpus severity and where it is enforced 67ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > a finding whose code no rule names says so, instead of passing for a rule 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > renders every gate the server composed, the release signature included, with its own blockers 16ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > no gate is a bare pass or fail: each states its outcome in words, beside its rule 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > never says dispatch is permitted while the server blocks it, and shows no percentage 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 63ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > publishes an invalid zero placeholder with its status and engine provenance to AnA 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows a raw executed subset as not externally assessed 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call a legacy advisory report clean when its observed error count is positive 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project 50ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 4ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 4ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 43ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 8ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > passes a structurally clean FDA package (with a subset-notice info finding) 24ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on a missing backbone, MD5 index, and regional backbone 5ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on an empty (0-byte) leaf file 9ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on file/folder names that violate FDA naming (uppercase / spaces) 7ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > checks the correct regional backbone per region 4ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > is configured only when the opt-in flag is set 0ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > resolver picks the FDA-criteria subset when enabled and LORENZ is absent 0ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > resolver falls back to no-op when neither LORENZ nor the subset is enabled 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > refuses a real clean subset despite configured=true, retaining its scoped diagnostics 27ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies an unavailable resolver without inventing a run 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies the external adapter path while expressly making no licence/provider claim 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > preserves the unrun operational failure envelope without fabricating content errors 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > clears a coherent matching external report only for this control contract 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > retains warnings on a coherent external pass 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > records an actual coherent failed external run and refuses clearance 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing classification even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses explicit unknown even if configured=true 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses runtime unknown class even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing adapter name even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses a selected external path whose configuration is not established 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string false 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses no report without confusing configuration with execution 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity fda-criteria-subset when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity noop when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity unknown when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity LORENZ-EVALIDATOR when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity lorenz-evalidator  when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy ran 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy passed 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with false passed with no errors 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with negative count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with fractional count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with NaN count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with infinite count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unsafe count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with bad warning count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with finding/count disagreement 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with warning/count disagreement 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with count with no findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with passed true with coherent error findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unknown severity 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with invalid date 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with serialized date without caller parsing 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing profile 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'staging', requireEvalidator: true } 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'production', requireEvalidator: false } 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps mismatched advisory evidence invalid rather than passed/not_assessed 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > marks a zero compatibility placeholder as unknown rather than a clean advisory tally 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > retains raw executed subset diagnostics without an external assessment or blocker 0ms
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-14T03:38:53.549Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:38:53.550Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-14T03:38:53.550Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing" 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's Module 1 list (no "1.20 missing" on an amendment) 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > reads the headings from the IND profile, with their ICH M4 titles — not a second list 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > sequence 0000 is the original; another number only when typed original and first 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > Module 1 alone: both headings are blocking errors 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a delete leaf places nothing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it) 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a register that could not be read is not an empty register: still blocking, with the reason 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > asks nothing when no requirement is given (an amendment, another application) 0ms
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+{
+  "timestamp": "2026-10-14T03:38:57.788Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:38:57.789Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+{
+  "timestamp": "2026-10-14T03:38:57.789Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+[database] Database connection successful
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the verdict is byte-identical with and without a provider
+{
+  "timestamp": "2026-10-14T03:38:57.833Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > with a provider: the narrative is present, labelled as model prose, and carries only prose
+{
+  "timestamp": "2026-10-14T03:38:57.834Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming cleared cannot clear a blocked verdict
+{
+  "timestamp": "2026-10-14T03:38:57.835Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming blocked cannot block a cleared verdict — its verdict is never read
+{
+  "timestamp": "2026-10-14T03:38:57.836Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a non-JSON model response leaves the verdict intact and names why the narrative is absent
+{
+  "timestamp": "2026-10-14T03:38:57.836Z",
+  "level": "warn",
+  "message": "[submission-ai-service] dispatch-qc narrative unavailable; deterministic verdict returned without it",
+  "context": {
+    "organizationId": 2,
+    "submissionId": 37,
+    "code": "INVALID_AI_RESPONSE"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a provider error leaves the verdict intact
+{
+  "timestamp": "2026-10-14T03:38:57.837Z",
+  "level": "warn",
+  "message": "[submission-ai-service] dispatch-qc narrative unavailable; deterministic verdict returned without it",
+  "context": {
+    "organizationId": 2,
+    "submissionId": 37,
+    "code": "PROVIDER_UNAVAILABLE"
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the model is handed the deterministic verdict to narrate, not asked for one
+{
+  "timestamp": "2026-10-14T03:38:57.838Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > without a provider: returns the deterministic verdict, narrative null, and never calls the model 2ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the verdict is byte-identical with and without a provider 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > with a provider: the narrative is present, labelled as model prose, and carries only prose 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming cleared cannot clear a blocked verdict 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming blocked cannot block a cleared verdict — its verdict is never read 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a non-JSON model response leaves the verdict intact and names why the narrative is absent 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a provider error leaves the verdict intact 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the model is handed the deterministic verdict to narrate, not asked for one 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > retains the external not_assessed evidence caveat even when the policy gate clears 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > retains the external failed evidence caveat even when the policy gate clears 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > retains the external invalid evidence caveat even when the policy gate clears 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > does not turn a matching passed external report into an advisory warning 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > without an assessment: the hard gate over the counts, and a warning naming what was not checked 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > with an assessment: the verdict IS the assessment dispatch gate, and the checklist reads off its parts 0ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > with an assessment the client-supplied counts are ignored 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains a clean subset execution without treating it as configured external validation 5ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > clears the composed verdict for a configured matching clean external report 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > uses configuration discovery, rather than an adapter name, to enforce readiness 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory failed report as its actual outcome, preserving policy clearance 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory invalid report as its actual outcome, preserving policy clearance 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > serializes an invalid numeric tally as an unknown count with factual status and identities 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > explains an advisory subset execution as not externally assessed even when raw ran is true 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > does not attribute another engine report to the selected internal subset 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains unrun operational diagnostics and tolerates a malformed diagnostic row 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > clears when there are zero validation errors and zero shadow criticals 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an open error-severity validation finding 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an unacknowledged Shadow Review critical 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > reports both blockers when both counts are positive 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > BLOCKS on a count it could not determine — unknown is not zero 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > still clears on genuine zeros — the gate has not been welded shut 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > is pure — the same input yields the same result 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > clears only when every composed gate clears 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > blocks (and unions blockers, order-preserved) when any gate blocks 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > a clean structural gate is blocked by a failing external gate (P0-4 fail-closed) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > handles a single gate 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > clears when every leaf's document is approved 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks on a count it could not determine — unknown is not zero 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > normalizeSeverity > maps engine tokens to error/warning/info 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses the native findings shape 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses a bare array + alternate field names 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses an envelope it does not know, naming what it found 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a "findings" member that is not an array 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding whose severity it cannot map, instead of counting it as info 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding with no severity at all 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a row that is not an object 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > still reads an empty findings list as no findings — a clean report is a clean report 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > reads the agency severity words: High is an error, Medium and Low are warnings, Pass is info 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorXmlReport > parses a LORENZ-style XML report (attrs + child message) 3ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorReport (sniff) > routes XML vs JSON by leading character 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > is not configured without EVALIDATOR_BINARY/ENDPOINT 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > runExternalValidation returns a fail-closed un-run report when no engine is configured 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > tallyFindings > counts only error/warning severities 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > NoopExternalValidator > is not configured and returns an honest un-run report (not a pass) 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > LorenzEValidatorAdapter > is not configured without EVALIDATOR_BINARY and fails closed when validated 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > resolveExternalValidator > falls back to the no-op when no engine is configured 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > staging is advisory: surfaces error count but adds no blocker 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + not configured ⇒ fail closed (could not run) 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran with errors ⇒ blocks on the agency errors 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran clean ⇒ cleared 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > not required ⇒ never blocks even in production with no engine 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > reads the opt-in enforcement flag from the environment 0ms
+
+ Test Files  13 passed (13)
+      Tests  191 passed (191)
+   Start at  03:38:44
+   Duration  14.93s (transform 4.65s, setup 553ms, import 8.85s, tests 1.64s, environment 2.13s)
+

@@ -1,7 +1,9 @@
 # CERv2 Codespace Agent Orchestration Playbook
 
 ## Goal
-Run CERv2 like a serious product team: clear roles, parallel execution, PR discipline, and non-negotiable quality gates.
+Run the existing product in Codespaces with clear roles, scoped parallel execution, and non-negotiable quality gates. The only branch is `concept2cure-v2`; commit and push directly to it incrementally, without PRs. Root [AGENTS.md](../../AGENTS.md) and [CLAUDE.md](../../CLAUDE.md) govern every session.
+
+For the current local editor testing workflow, use the [Codespaces human-testing handoff](../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md). It requires no deployment or hosted environment. The older CER/Phase 4.1 criteria below are historical subsystem guidance, not additional launch scope or proof that those capabilities are ready.
 
 ## Agents
 Custom agents live under `.github/agents/` and map to project responsibilities:
@@ -24,22 +26,19 @@ If your VS Code session supports subagents, run everything inside the orchestrat
    - a command runbook (migrations/tests)
 
 ### Option B — Parallel sessions (Codespaces default)
-If subagents are unavailable, open parallel agent sessions and isolate work by branch.
+If subagents are unavailable, open parallel agent sessions and isolate work by file ownership on the same canonical branch.
 
 1. Open Chat view.
 2. New Session → create sessions for ux, backend, frontend, qa, security.
-3. Each session works on its own branch and submits a PR.
+3. Assign non-overlapping file ownership. Every session works on `concept2cure-v2`; the control tower coordinates incremental direct commits and pushes.
 
-## Branch discipline
-- feat/workbench-shell
-- feat/evidence-objects
-- feat/claims-matrix
-- feat/standards-navigator
-- feat/outcomes-substantiation
-- feat/coauthor-citations
-- feat/preflight-export-ledger
+## Canonical-branch discipline
+- Use only `concept2cure-v2`; do not create a feature branch or alternate worktree.
+- Synchronize with `origin/concept2cure-v2` before publishing and resolve shared-file ownership with the control tower.
+- Commit and push completed, verified increments directly. Do not open a PR or bypass normal Git hooks.
+- Keep implementation, tests, contracts and non-secret evidence in this repository.
 
-## PR checklist (non-negotiable)
+## Increment checklist (non-negotiable)
 - [ ] migrations included
 - [ ] API validation included
 - [ ] tenant scoping enforced
@@ -64,10 +63,10 @@ Provide proof that the feature runs locally or in codespace:
 - [ ] Proof verification endpoint rejects tampered certificate payload.
 - [ ] UI proof explorer shows valid/invalid status and failure reasons.
 
-If the hosted DB is unreachable, add a local Docker Postgres option and document the exact steps.
+Use the explicitly selected local PostgreSQL database in the current human-testing handoff. A Codespaces startup banner does not prove that the schema is installed or that the app is running.
 
-## Mergeability gate
-Do not request review if GitHub shows `mergeable: false`. Resolve conflicts first so the PR is cleanly mergeable.
+## Publication gate
+The control tower verifies the scoped change, synchronizes the canonical branch, and runs the normal publication hooks before a direct push. An incomplete or failed check is recorded as such; it is not an overall pass.
 
 ## Default acceptance criteria
 Every feature must ship with:

@@ -8,11 +8,18 @@
  *   4. Completeness (0–25)
  *
  * All scoring is deterministic. No LLM calls.
+ *
+ * A dimension whose input was not assessed has no score (null) and the total
+ * is renormalised over the measured dimensions; with no claim analysed the
+ * total is null. 2026-10-15: no claims scored 0/25 twice, and no
+ * cross-section comparison scored consistency 25/25 with the driver
+ * "Document sections are highly consistent".
  */
 
 import type {
   DefensibilityScore,
   DefensibilityDriver,
+  DefensibilityDimension,
   ClaimEvidenceReport,
   ConsistencyReport,
 } from './types';
@@ -77,11 +84,12 @@ const COMPLETENESS_MARKERS = {
  * Uses claim/evidence report from Module 1.
  */
 function scoreEvidencePresence(report: ClaimEvidenceReport): {
-  score: number;
+  score: number | null;
   drivers: DefensibilityDriver[];
 } {
   const drivers: DefensibilityDriver[] = [];
-  const total = report.alignments.length || 1;
+  if (report.alignments.length === 0) return { score: null, drivers };
+  const total = report.alignments.length;
   const adequateCount = report.alignments.filter(a => a.evidenceStrength === 'adequate').length;
   const noneCount = report.alignments.filter(a => a.evidenceStrength === 'none').length;
 
@@ -117,11 +125,12 @@ function scoreEvidencePresence(report: ClaimEvidenceReport): {
  * Penalizes overstated and unsupported claims.
  */
 function scoreClaimPrecision(report: ClaimEvidenceReport): {
-  score: number;
+  score: number | null;
   drivers: DefensibilityDriver[];
 } {
   const drivers: DefensibilityDriver[] = [];
-  const total = report.alignments.length || 1;
+  if (report.alignments.length === 0) return { score: null, drivers };
+  const total = report.alignments.length;
 
   const alignedCount = report.alignments.filter(a => a.alignment === 'aligned').length;
   const overstatedCount = report.overstatedCount;
@@ -169,10 +178,11 @@ function scoreClaimPrecision(report: ClaimEvidenceReport): {
  * Uses consistency report from Module 2.
  */
 function scoreConsistency(report: ConsistencyReport): {
-  score: number;
+  score: number | null;
   drivers: DefensibilityDriver[];
 } {
   const drivers: DefensibilityDriver[] = [];
+  if (report.consistencyScore === null) return { score: null, drivers };
 
   // Direct mapping from consistency score (0-100) → (0-25)
   const score = Math.round(report.consistencyScore / 4);
@@ -192,7 +202,7 @@ function scoreConsistency(report: ConsistencyReport): {
       factor: 'strong_consistency',
       impact: 'positive',
       weight: score,
-      detail: 'Document sections are highly consistent',
+      detail: `Consistency ${report.consistencyScore}/100 over ${report.comparisons} cross-section comparisons`,
     });
   }
 
@@ -256,7 +266,23 @@ export function computeDefensibility(
   const consistency = scoreConsistency(consistencyReport);
   const completeness = scoreCompleteness(fullContent);
 
-  const totalScore = evidence.score + claims.score + consistency.score + completeness.score;
+  const dimensions: Record<DefensibilityDimension, number | null> = {
+    evidencePresence: evidence.score,
+    claimPrecision: claims.score,
+    consistency: consistency.score,
+  };
+  const notAssessed = (Object.keys(dimensions) as DefensibilityDimension[]).filter(
+    d => dimensions[d] === null
+  );
+  const measured = [...Object.values(dimensions), completeness.score].filter(
+    (v): v is number => v !== null
+  );
+  // Each dimension is out of 25; the total is rescaled to 0–100 over the
+  // measured ones. No claim analysed: nothing to weigh against evidence.
+  const totalScore =
+    evidence.score === null || claims.score === null
+      ? null
+      : Math.round((measured.reduce((sum, v) => sum + v, 0) / (25 * measured.length)) * 100);
   const allDrivers = [
     ...evidence.drivers,
     ...claims.drivers,
@@ -264,8 +290,10 @@ export function computeDefensibility(
     ...completeness.drivers,
   ];
 
-  let riskLevel: 'low' | 'moderate' | 'high';
-  if (totalScore >= 70) {
+  let riskLevel: DefensibilityScore['riskLevel'];
+  if (totalScore === null) {
+    riskLevel = 'not_assessed';
+  } else if (totalScore >= 70) {
     riskLevel = 'low';
   } else if (totalScore >= 45) {
     riskLevel = 'moderate';
@@ -276,6 +304,8 @@ export function computeDefensibility(
   return {
     score: totalScore,
     riskLevel,
+    partial: notAssessed.length > 0,
+    notAssessed,
     drivers: allDrivers,
     breakdown: {
       evidencePresence: evidence.score,

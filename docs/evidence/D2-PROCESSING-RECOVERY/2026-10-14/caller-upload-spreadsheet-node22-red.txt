@@ -1,0 +1,1502 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-14T04:06:46.544Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-14T04:06:46.546Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791950806546_i1q8ki",
+    "bytes": 5
+  }
+}
+
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable completed separately from the edit receipt 10ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(2) }
+(5 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable already_complete separately from the edit receipt 2ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(2) }
+(5 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for extraction_failed 2ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retryable_failure 1ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for blocked 2ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for stale_source 1ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for busy 1ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_not_due 1ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_exhausted 2ms
+   → expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects 1ms
+   → private extractor storage /private/workbook
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > does not process a conversation-only derivation 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > captures the edited copy and its parent/hash/edit receipt atomically without retiring the original 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > persists lineage but explicitly does not capture a conversation-only edit 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses a requested foreign/missing project before storing bytes or rows 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > refuses if the source bytes no longer match the bytes that were edited 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rechecks source eligibility on the transaction before an edited copy is written 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits (a1111111-1111-4111-8111-111111111111) 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > reserves capture/upload mutation locks before the eligibility recheck, including no-project edits () 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if capture fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > rolls back the upload and capture if audit fails and removes only the newly written bytes 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet upload — parent provenance and project capture > requires an identified tenant and actor for a derivation receipt 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > never removes source or derived bytes after an ambiguous COMMIT failure 1ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > retains honest unverifiable status for an original with no recorded checksum 0ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes 2ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact 1ms
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:06:52.426Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:06:52.898Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:06:52.899Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-10-14T04:06:52.899Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.048Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816048_lcc9x4",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.059Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816059_1o17i1",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.070Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816069_vgkeyi",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.074Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816074_j7fr65",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.079Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816079_mtlnkc",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-10-14T04:06:56.083Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1791950816083_xrgje3",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:06:56.120Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816088_hvjqd7",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:06:56.123Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816088_hvjqd7",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-10-14T04:06:56.123Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816088_hvjqd7",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 25ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 8ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 8ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 6ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 5ms
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source
+{
+  "timestamp": "2026-10-14T04:06:56.134Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816134_y2hlvm",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage
+{
+  "timestamp": "2026-10-14T04:06:56.142Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816142_a001zn",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage
+{
+  "timestamp": "2026-10-14T04:06:56.144Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816142_a001zn",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence
+{
+  "timestamp": "2026-10-14T04:06:56.148Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "protocol.txt",
+    "declaredMime": "text/plain",
+    "signature": "private-scanner-signature"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:06:56.153Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816153_5uye13",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:06:56.154Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816153_5uye13",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-10-14T04:06:56.154Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816153_5uye13",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:06:56.159Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816159_2u6zwt",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:06:56.159Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816159_2u6zwt",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-10-14T04:06:56.159Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816159_2u6zwt",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:06:56.163Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816162_2zvcat",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:06:56.163Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816162_2zvcat",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-10-14T04:06:56.163Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816162_2zvcat",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:06:56.166Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816166_g9gg5i",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:06:56.166Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816166_g9gg5i",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-10-14T04:06:56.166Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816166_g9gg5i",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:06:56.169Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816169_w0fk4j",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:06:56.169Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816169_w0fk4j",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-10-14T04:06:56.169Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816169_w0fk4j",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:06:56.176Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816176_xpqyyd",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:06:56.176Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816176_xpqyyd",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-10-14T04:06:56.176Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816176_xpqyyd",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:06:56.180Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816180_v6pnkz",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:06:56.180Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816180_v6pnkz",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-10-14T04:06:56.180Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816180_v6pnkz",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:06:56.183Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816183_h0v0gn",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:06:56.184Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816183_h0v0gn",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-10-14T04:06:56.184Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816183_h0v0gn",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:06:56.187Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816187_2v3564",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:06:56.187Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816187_2v3564",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-10-14T04:06:56.187Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816187_2v3564",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:06:56.193Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816193_ry06u8",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:06:56.193Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791950816193_ry06u8",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-10-14T04:06:56.193Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816193_ry06u8",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:06:56.196Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816196_96mg0l",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:06:56.196Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950816196_96mg0l",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-10-14T04:06:56.196Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816196_96mg0l",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-10-14T04:06:56.199Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816199_4zra1y",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-10-14T04:06:56.200Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950816199_4zra1y",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:06:56.202Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791950816202_akzf65",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:06:56.202Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1791950816202_akzf65",
+    "sourceId": 16,
+    "checksum": "e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+{
+  "timestamp": "2026-10-14T04:06:56.202Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791950816202_akzf65",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+ × server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage 45ms
+   → expected [ 'scan', 'ownership-read', …(6) ] to deeply equal [ 'scan', 'ownership-read', …(5) ]
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves the numeric artifact/provenance path after successful storage 10ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still checks project ownership before storing original bytes 2ms
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed 5ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete 4ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed 3ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure 3ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked 7ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source 3ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy 4ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due 4ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted 3ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects 6ms
+   → expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111') 3ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 16, ObjectContaining{…} ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12') 3ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 16, ObjectContaining{…} ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it 3ms
+   → expected { …(10) } to match object { sourceId: 16, dataRoom: { …(3) } }
+(12 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+AssertionError: expected [ 'scan', 'ownership-read', …(6) ] to deeply equal [ 'scan', 'ownership-read', …(5) ]
+
+- Expected
++ Received
+
+@@ -3,7 +3,8 @@
+    "ownership-read",
+    "mkdir",
+    "write-file",
+    "database-write",
+    "extract",
+-   "process-capture",
++   "ownership-read",
++   "database-write",
+  ]
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:194:22
+    192|     expect(res.status).toBe(200);
+    193|     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, da…
+    194|     expect(m.events).toEqual(['scan', 'ownership-read', 'mkdir', 'writ…
+       |                      ^
+    195|     expect(m.writeFile).toHaveBeenCalledWith(path.resolve(process.cwd(…
+    196|     expect(m.poolQuery).toHaveBeenCalledWith(expect.stringContaining('…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": true,
+-       "processed": true,
+-       "status": "completed",
+-     },
+-     "readable": true,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:259:22
+    257|     const res = await upload(PROGRAM_ID);
+    258|     expect(res.status).toBe(200);
+    259|     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, da…
+       |                      ^
+    260|       recorded: true, readable: true, processing: { ok: true, processe…
+    261|     } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": true,
+-       "processed": true,
+-       "status": "already_complete",
+-     },
+-     "readable": true,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:259:22
+    257|     const res = await upload(PROGRAM_ID);
+    258|     expect(res.status).toBe(200);
+    259|     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, da…
+       |                      ^
+    260|       recorded: true, readable: true, processing: { ok: true, processe…
+    261|     } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "extraction_failed",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "retryable_failure",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "blocked",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "stale_source",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "busy",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "retry_not_due",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "SAFE_REASON",
+-       "status": "retry_exhausted",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:274:24
+    272|       const res = await upload(PROGRAM_ID);
+    273|       expect(res.status).toBe(200);
+    274|       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, …
+       |                        ^
+    275|         recorded: true, readable: false, processing: { ok: false, proc…
+    276|       } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+AssertionError: expected { …(10) } to match object { status: 'ready', sourceId: 41, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "ok": false,
+-       "processed": false,
+-       "reasonCode": "PROCESSING_UNAVAILABLE",
+-       "status": "retryable_failure",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 41,
+    "status": "ready",
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:285:22
+    283|     const res = await upload(PROGRAM_ID);
+    284|     expect(res.status).toBe(200);
+    285|     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, da…
+       |                      ^
+    286|       processing: { ok: false, processed: false, status: 'retryable_fa…
+    287|     expect(JSON.stringify(res.body)).not.toContain('/private/');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+AssertionError: expected "vi.fn()" to be called with arguments: [ 5, 16, ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:301:37
+    299|     expect(m.createSource).not.toHaveBeenCalled();
+    300|     expect(m.createSupersedingSource).not.toHaveBeenCalled();
+    301|     expect(m.processCapturedSource).toHaveBeenCalledWith(5, 16, expect…
+       |                                     ^
+    302|       bytes: ORIGINAL, programId: scope.programId, expectedWorkspaceId…
+    303|     }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports a historical duplicate as stale without recreating or rebinding it
+AssertionError: expected { …(10) } to match object { sourceId: 16, dataRoom: { …(3) } }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dataRoom": {
+-     "processing": {
+-       "reasonCode": "SOURCE_NOT_CURRENT",
+-       "status": "stale_source",
+-     },
+-     "readable": false,
+      "recorded": true,
+    },
+    "sourceId": 16,
+  }
+
+ ❯ server/routes/__tests__/chat-upload-durability.test.ts:313:22
+    311|     m.processCapturedSource.mockResolvedValue({ ok: false, processed: …
+    312|     const res = await upload(PROGRAM_ID);
+    313|     expect(res.body).toMatchObject({ sourceId: 16, dataRoom: { recorde…
+       |                      ^
+    314|       processing: { status: 'stale_source', reasonCode: 'SOURCE_NOT_CU…
+    315|     expect(m.createSource).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable completed separately from the edit receipt
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+-   "processing": {
+-     "ok": true,
+-     "processed": true,
+-     "status": "completed",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:64:20
+     62|     h.processCapturedSource.mockResolvedValue({ ok: true, processed: t…
+     63|     const result = await saveDerivedUpload(params());
+     64|     expect(result).toMatchObject({ captureStatus: 'captured', sourceId…
+       |                    ^
+     65|       processing: { ok: true, processed: true, status } });
+     66|     expect(result.processing).not.toHaveProperty('extracted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > reports readable already_complete separately from the edit receipt
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+-   "processing": {
+-     "ok": true,
+-     "processed": true,
+-     "status": "already_complete",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:64:20
+     62|     h.processCapturedSource.mockResolvedValue({ ok: true, processed: t…
+     63|     const result = await saveDerivedUpload(params());
+     64|     expect(result).toMatchObject({ captureStatus: 'captured', sourceId…
+       |                    ^
+     65|       processing: { ok: true, processed: true, status } });
+     66|     expect(result.processing).not.toHaveProperty('extracted');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for extraction_failed
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806522_wryxf6",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "extraction_failed",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retryable_failure
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806524_mgmp02",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "retryable_failure",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for blocked
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806525_33dmvp",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "blocked",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for stale_source
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806528_le728b",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "stale_source",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for busy
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806529_hamzip",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "busy",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_not_due
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806529_jqtbpc",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "retry_not_due",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > preserves captured bytes and edit receipt for retry_exhausted
+AssertionError: expected { …(5) } to match object { captureStatus: 'captured', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "captureStatus": "captured",
+    "derivationAudit": {
+      "resourceId": "file_1791950806530_7wppc3",
+    },
+-   "processing": {
+-     "ok": false,
+-     "processed": false,
+-     "reasonCode": "SAFE_REASON",
+-     "status": "retry_exhausted",
+-   },
+    "sourceId": 77,
+  }
+
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:80:22
+     78|       });
+     79|       const result = await saveDerivedUpload(params());
+     80|       expect(result).toMatchObject({ captureStatus: 'captured', source…
+       |                      ^
+     81|         processing: { ok: false, processed: false, status, reasonCode:…
+     82|         derivationAudit: { resourceId: result.fileId } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+ FAIL  server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet processing outcome after capture commit > returns the committed capture when processing unexpectedly rejects
+Error: private extractor storage /private/workbook
+ ❯ server/services/ana/__tests__/derived-spreadsheet-capture.test.ts:88:47
+     86|
+     87|   it('returns the committed capture when processing unexpectedly rejec…
+     88|     h.processCapturedSource.mockRejectedValue(new Error('private extra…
+       |                                               ^
+     89|     const result = await saveDerivedUpload(params());
+     90|     expect(result).toMatchObject({ captureStatus: 'captured', sourceId…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  24 failed | 25 passed (49)
+   Start at  04:06:46
+   Duration  10.06s (transform 6.44s, setup 80ms, import 9.44s, tests 215ms, environment 0ms)
+

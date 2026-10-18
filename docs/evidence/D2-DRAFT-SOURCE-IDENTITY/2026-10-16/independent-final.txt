@@ -1,0 +1,101 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[database] No DATABASE_URL provided, skipping database connection
+
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses no version in the strict new decoder and direct verifier 8ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses string version in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses unknown version in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses null version in the strict new decoder and direct verifier 6ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses missing extraction digest in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses missing span digest in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses invalid extraction digest in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses invalid span digest in the strict new decoder and direct verifier 4ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses missing start in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses coerced start in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses coerced end in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses coerced total in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses fractional start in the strict new decoder and direct verifier 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses unsafe total in the strict new decoder and direct verifier 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > normalizes valid UUID and digests without accepting asserted authority 3ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: V2 group with legacy source 3ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: unknown group version 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: string group version 4ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: V2 group with missing span digest 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: unversioned group with V2 source 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: partially stripped legacy-looking source 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: legacy-looking source with null version 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > refuses saved downgrade or partial-version case: legacy-looking group with null version 4ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > accepts a complete saved V2 group 2ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > does not backfill historical digests or mutate old provenance 9ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > keeps manual historical records available without inventing a source selection 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out malformed identities and historical downgrade controls > admits exactly eight distinct 6,000-unit spans at the aggregate bound 2ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > verifies exact UTF-16 slices past offset 80,000 and preserves digests without raw text 12ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses wrong program despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses changed original bytes despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses catalog belongs to another original despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses withdrawn data despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses superseded data despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses extraction failed despite a syntactically valid V2 receipt 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses actor facade denies despite a syntactically valid V2 receipt 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > allows retained extracted data when the original file is unavailable 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > propagates a canonical catalog refusal for foreign tenant or private-parent access 13ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > snapshots all reference objects before an awaited source lookup can mutate them 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses lossy UTF-8 exact-identity case: unpaired high surrogate 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses lossy UTF-8 exact-identity case: unpaired low surrogate 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses lossy UTF-8 exact-identity case: slice splitting a valid astral pair 7ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > refuses lossy UTF-8 exact-identity case: slice starting inside a valid astral pair 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out UTF-16, source eligibility and immutable-call controls > documents why different unpaired UTF-16 code units cannot be treated as exact UTF-8 identity 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > emits independently computed V2 hashes and text-free audit metadata for a deep relevant window 31ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses a same-length extraction change at the final current-source checkpoint 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses a final ill-formed surrogate replacement despite an unchanged UTF-8 metadata digest 2ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses a changed original availability caveat at the final current-source checkpoint 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses a changed retention disposition caveat at the final current-source checkpoint 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > rechecks an earlier selected source after later selected source reads 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses a stale actor-derived extraction digest even when returned text looks valid 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > does not pass selected source text after final actor revalidation refuses 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > does not pass selected source text after final program revalidation refuses 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > snapshots caller IDs and actor/project context before the first awaited scope lookup 5ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > moves a 12,000-unit opening boundary inward rather than splitting a valid surrogate pair 3ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > refuses ill-formed full extraction even when an otherwise usable excerpt precedes it 5ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for FDA / US biotech clinical 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for EMA / EU pharma 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for PMDA / Japan diagnostics 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for Health Canada / Canadian devices 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for TGA / Australia diagnostics 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > held-out actual producer return checkpoints > retains unassessed evidence semantics for EU IVDR / diagnostics 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > retains complete V2 identity and drops caller text and qualification 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses the unversioned shape for NEW writes 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > accepts an unchanged V2 source at the actual verifier 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction INSIDE the selected span 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction OUTSIDE the selected span 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect extractedTextSha256 even when file bytes and length match 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect spanSha256 even when file bytes and length match 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > preserves stored legacy references under their historical byte-and-length semantics 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a withdrawn source even with a stored legacy receipt 0ms
+
+ Test Files  1 passed (1)
+      Tests  70 passed (70)
+   Start at  22:25:09
+   Duration  5.14s (transform 3.23s, setup 0ms, import 4.52s, tests 159ms, environment 0ms)
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-17T22:25:12.333Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-17T22:25:14.038Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
