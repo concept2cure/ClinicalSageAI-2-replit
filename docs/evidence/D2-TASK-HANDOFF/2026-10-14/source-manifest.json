@@ -1,8 +1,8 @@
 {
   "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
   "branch": "concept2cure-v2",
-  "currentSourceCommit": "6562dd67aeb13edd17a1d9c62f214163a4e8e6a3",
-  "integratedCanonical": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "currentSourceCommit": "22b1f50b964162664791c74638ca2aaedc94e0db",
+  "integratedCanonical": "61a14c5d9406501dcc05c188e3975dcce59317f0",
   "files": [
     {
       "path": "client/src/concept2cure/quality/app.css",
@@ -446,7 +446,11 @@
     },
     {
       "path": "docs/work-orders/README.md",
-      "sha256": "a89f25c6d64f99e440f76acd203de44f976b6ae57a0bec0594b0752a0439c79f"
+      "sha256": "9000b8d73f8e4d29459cb245b23b68eb73f10b08d459be10cf044358086a3cd9"
+    },
+    {
+      "path": "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+      "sha256": "b8d8b05482e6676ede265ca046a95b627c38cc5b4470dda6679943344512a087"
     },
     {
       "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
@@ -501,6 +505,10 @@
       "sha256": "1daae000e5b5b3d25a128873b03cd5c79ac0c9972952778979e97bd6f028b6ba"
     },
     {
+      "path": "server/routes/ana-intelligence.ts",
+      "sha256": "80ae4dace7c889d4e56426e07f19e5684c24ebeaf8695c06e1092f25428fce95"
+    },
+    {
       "path": "server/routes/authoring-assembly.ts",
       "sha256": "f9e3fdade4c188e9ca4a5063a7f76edfcfb93ea0c6e79f02b8e17013c63aac74"
     },
@@ -529,8 +537,20 @@
       "sha256": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7"
     },
     {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "sha256": "cc6d1db2231d4618164e5674eae84010f38578758efbef89318c6db96b98d741"
+    },
+    {
+      "path": "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
+      "sha256": "2dcdc3dee7dafcf22b71cc68910094e0abae2740bb8cae7ed2eca1c7ecbadf71"
+    },
+    {
       "path": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
       "sha256": "10c10d2d6d0fe0a0ca7273bf7c9dbefae60906067a56e9f9322256193d24ebb5"
+    },
+    {
+      "path": "server/services/ana/batch-draft-concurrency.ts",
+      "sha256": "3fdd927d9202b01019004a2167c6d0be1252c83a652c6a63c25b0810c39600d3"
     },
     {
       "path": "server/services/authoring/__tests__/assembly-plan.test.ts",
