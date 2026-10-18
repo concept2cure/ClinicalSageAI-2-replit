@@ -18,6 +18,7 @@ import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { SourceAssemblyAction } from '../editor/SourceAssemblyDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -249,7 +250,7 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk}
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav}
         onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
@@ -395,6 +396,18 @@ function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; pr
     </button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
+}
+
+function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
+  pid: string | null; pinned: number[]; sources: SourceRow[]; onNav: (id: string) => void; disabled: boolean;
+}) {
+  if (!pid || !pinned.length) return null;
+  const selected = pinned.map(id => sources.find(source => source.id === id));
+  return <div data-testid="data-room-build-selected"><SourceAssemblyAction programId={pid} onNav={onNav} disabled={disabled}
+    sources={pinned.map((sourceId, index) => ({ kind: 'data-room', sourceId,
+      ...(selected[index]?.checksum ? { expectedChecksum: selected[index]!.checksum! } : {}) }))}
+    titles={selected.map((source, index) => source?.title || `Source ${pinned[index]}`)}
+    unavailable={selected.some(source => !source) ? 'Refresh the source list before building from this selection.' : null} /></div>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
@@ -735,6 +748,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             context of the next turn, in the one conversation. With sources
             pinned, the pinned set is the one handed over. A data room with
             nothing readable offers neither. */}
+        <DataRoomBuildAction pid={pid} pinned={pinned} sources={sources} onNav={onNav} disabled={uploading || !sourceReadConfirmed} />
         {pinned.length === 0 && groundable.length > 0 && (
           <button
             className="btn ghost"

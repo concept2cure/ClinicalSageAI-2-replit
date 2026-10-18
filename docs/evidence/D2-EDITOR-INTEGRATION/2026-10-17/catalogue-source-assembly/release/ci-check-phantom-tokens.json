@@ -1,0 +1,12 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:check-phantom-tokens"
+  ],
+  "executionBase": "8d06f7156",
+  "exitCode": 0,
+  "rawSha256": "15aa7273c2698cbec9aaa6dbad9a8e076e51cd24023621fe6bd50e3fc4b2fdf5",
+  "output": "[ci:phantom-tokens] 9 phantom token(s) across 55 site(s) (baseline 9).\n[ci:phantom-tokens] OK \u2014 no new phantom tokens.\n"
+}

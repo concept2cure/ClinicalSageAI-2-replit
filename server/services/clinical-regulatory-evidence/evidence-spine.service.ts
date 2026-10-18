@@ -498,9 +498,9 @@ export async function findSupersededCandidate(
   return adaptSource(rows[0]);
 }
 
-export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
+export async function getSource(orgId: number, id: number, executor: RequestSqlClient = pool): Promise<EvidenceSource | null> {
   const c = visibleSourceOrgClause(orgId, 2);
-  const { rows } = await pool.query(
+  const { rows } = await executor.query(
     `SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
             ${capturedBinaryAvailableSql('s')} AS original_file_available,
             ${capturedDispositionChoiceSql('s')} AS disposition

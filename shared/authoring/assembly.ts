@@ -1,10 +1,12 @@
 /** Assembly appends to the one saved authoring document; it never replaces text. */
+import type { AssemblySourceManifest, AssemblySourceSelector } from './assembly-sources';
 export type AssemblySelection = { target: 'document' } | { target: 'section'; code: string };
 
 export interface AssemblyPreviewInput {
   programId: string;
   templateId: string;
   selection: AssemblySelection;
+  sources?: AssemblySourceSelector[];
 }
 
 export interface AssemblyCommitInput extends AssemblyPreviewInput {
@@ -39,6 +41,7 @@ export interface AssemblyPlan {
   limitations: string[];
   rows: AssemblyPlanRow[];
   gaps: string[];
+  sources?: AssemblySourceManifest;
 }
 
 /** Exact saved rows used by the existing editor and retained AnA candidate flow. */

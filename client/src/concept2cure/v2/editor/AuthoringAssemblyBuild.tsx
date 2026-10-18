@@ -1,5 +1,7 @@
-import React, { useId } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import type { AssemblyBuildController } from './assemblyBuildState';
+import { assemblySelectionKey } from './assemblySourceSelection';
+import { AssemblySourcesNotice } from './AssemblySourcesNotice';
 export { useAuthoringAssemblyBuild } from './useAuthoringAssemblyBuild';
 export type { AssemblyBuildController, AssemblyBuildOptions } from './assemblyBuildState';
 const FIELD_STYLE: React.CSSProperties = { display: 'grid', minWidth: 0, gap: 'var(--space-1)' };
@@ -22,14 +24,16 @@ function AssemblyPlanRows({ controller }: { controller: AssemblyBuildController 
 }
 function AssemblyCandidates({ controller }: { controller: AssemblyBuildController }) {
   if (!controller.slots.length) return null;
-  const remaining = controller.slots.some(slot => ['failed', 'not-started'].includes(slot.status));
+  const selected = assemblySelectionKey(controller.sourceSelection);
+  const remaining = controller.slots.some(slot => slot.sourceSelectionKey === selected && ['failed', 'not-started'].includes(slot.status));
   return <div className="ed-source-detail" style={DETAIL_STYLE} data-testid="assembly-candidates">
     <strong>Section candidates</strong>
     <p>Completed candidates stay here while you review another section. Each acceptance uses the existing draft review and source-lineage controls.</p>
-    <ul>{controller.slots.map(slot => <li key={slot.section.id}>
+    <ul>{controller.slots.map(slot => <li key={`${slot.section.id}:${slot.sourceSelectionKey}`}>
       <strong>{slot.section.code} {slot.section.title}</strong> · {slot.status.replace('-', ' ')}
       {slot.message && <p>{slot.message}</p>}
-      {slot.review.draft && slot.status !== 'accepted' && <button type="button" className="btn ghost authoring-oversight-action" onClick={() => controller.review(slot.section.id)}>Review {slot.section.code}</button>}
+      {slot.sourceSelectionKey !== selected && <p>Retained from an earlier source selection. Select those same sources again before continuing this review.</p>}
+      {slot.review.draft && slot.status !== 'accepted' && <button type="button" className="btn ghost authoring-oversight-action" disabled={slot.sourceSelectionKey !== selected} onClick={() => controller.review(slot.section.id)}>Review {slot.section.code}</button>}
     </li>)}</ul>
     {controller.phase === 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" onClick={controller.stop}>Stop preparation</button>}
     {remaining && controller.phase !== 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" disabled={controller.busy || !!controller.disabledReason || controller.phase === 'unknown'} onClick={() => void controller.retryDrafts()}>{controller.targetCode ? 'Retry selected candidate' : 'Retry remaining candidates'}</button>}
@@ -58,8 +62,15 @@ function AssemblyOptions({ controller, noteId }: { controller: AssemblyBuildCont
 /** Existing disclosure/forms/notices; assembly always targets the one open document. */
 export function AuthoringAssemblyBuild({ controller }: { controller: AssemblyBuildController }) {
   const noteId = useId();
+  const disclosure = useRef<React.ElementRef<'details'> | null>(null);
+  const latest = useRef(controller); latest.current = controller;
+  useEffect(() => {
+    if (!controller.disclosureRequest) return;
+    if (disclosure.current) disclosure.current.open = true;
+    void latest.current.loadTemplates();
+  }, [controller.disclosureRequest, controller.sourceSelection]);
   return <section className="authoring-oversight" style={{ minWidth: 0 }} aria-label="Document assembly">
-    <details className="authoring-oversight-options" onToggle={event => { if (event.currentTarget.open) void controller.loadTemplates(); }}>
+    <details ref={disclosure} className="authoring-oversight-options" onToggle={event => { if (event.currentTarget.open) void controller.loadTemplates(); }}>
       <summary className="authoring-oversight-toggle" aria-describedby={noteId}>Build document or section</summary>
       <div className="ed-source-detail" style={DETAIL_STYLE}>
         <p id={noteId}>Assemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.</p>
@@ -67,6 +78,7 @@ export function AuthoringAssemblyBuild({ controller }: { controller: AssemblyBui
         {controller.rosterLoading && <p role="status">Loading templates…</p>}
         {controller.rosterError && <><p role="alert">{controller.rosterError}</p><button type="button" className="btn ghost authoring-oversight-action" disabled={controller.rosterLoading} onClick={() => void controller.loadTemplates()}>Retry templates</button></>}
         {controller.globalCatalogUnavailable && <p role="status">The shared reference store is unavailable. Organization and built-in templates remain listed.</p>}
+        <AssemblySourcesNotice controller={controller} />
         <AssemblyOptions controller={controller} noteId={noteId} />
         {controller.message && <div className="scaf-note" role={controller.phase === 'unknown' ? 'alert' : 'status'}>{controller.message}</div>}
         {controller.phase === 'unknown' && <button type="button" className="btn ghost authoring-oversight-action" onClick={() => void controller.check()}>Check saved document</button>}

@@ -201,8 +201,10 @@ describe('retained AnA section reviews', () => {
     expect(fireToast).not.toHaveBeenCalled();
   });
 
-  it('holds an unknown acceptance until an explicit exact saved-section check', async () => {
-    apiRequest.mockRejectedValueOnce(new TypeError('response lost'));
+  it.each(['lost transport', 'uncertain server commit'])('holds an unknown acceptance after %s until an explicit exact saved-section check', async mode => {
+    apiRequest.mockRejectedValueOnce(mode === 'lost transport' ? new TypeError('response lost')
+      : new ApiRequestError('The save outcome could not be confirmed.', 503,
+        { error: { code: 'DRAFT_ACCEPT_UNCONFIRMED', message: 'The save outcome could not be confirmed.' } }, 'DRAFT_ACCEPT_UNCONFIRMED'));
     function Owner() {
       const [state, update] = useState(initial());
       return <AuthoringAiDraft {...props()} reviewSession={{ state, update, isCurrent: () => true }} />;
