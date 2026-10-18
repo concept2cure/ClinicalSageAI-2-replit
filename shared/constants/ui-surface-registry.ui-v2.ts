@@ -1376,7 +1376,26 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // admin console's. Admin → Settings reads and changes the connector for Claude there
     // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
     // settings writer (server/services/tenant/tenant-settings-writer.ts).
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
+    // 2026-10-18 (ci:launch-scope-api): the Company documents panel, same rule — company
+    // identity, letterhead and the legal-document library ARE organisation settings, and
+    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, AdminSurfaces.tsx).
+    // Both prefixes were refused in production: company-documents was claimed by no surface
+    // at all, and templates/extract resolved to template-library + authoring-engine, neither
+    // of which is a launch surface — so the letterhead import was a button that answered
+    // "Import failed" every time it was pressed, in a release that ships the panel.
+    // Narrow on purpose, and the narrowness is the point: '/api/client-branding' also serves
+    // /upload-logo and /upload-letterhead, and '/api/c2c/templates' is the template library's
+    // whole namespace. Claiming either parent would make every route under it answer as
+    // launch — the same mistake '/api/mdx' made before it was narrowed to /api/mdx/gateways.
+    // Noted, not introduced, and not fixed here: 'admin-console' is a SHELL surface and no
+    // row in available_modules, so moduleEntitlementGate resolves every prefix claimed only
+    // by it through canAccessModule, which answers "Module 'admin-console' does not exist".
+    // That is inert today because MODULE_ENFORCEMENT defaults to 'off' (enforcement-mode.ts),
+    // which is why /api/tenant-config, /api/api-keys, /api/tenant-users, /api/mdx/admin and
+    // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
+    // these two together — one condition across six prefixes, a packaging decision to make
+    // deliberately rather than a line to widen here.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/client-branding/company-documents', '/api/c2c/templates/extract'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

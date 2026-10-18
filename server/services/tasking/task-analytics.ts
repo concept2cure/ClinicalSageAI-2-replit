@@ -32,7 +32,46 @@ export interface TaskAnalytics {
     completedTasks: number;
     avgCompletion: string | null;
   }>;
+  /**
+   * How many people hold assigned work, whatever `teamProductivity` lists.
+   *
+   * `teamProductivity` is bounded (see TEAM_PRODUCTIVITY_CAP), and a bounded
+   * list that does not say so is a silent cap: a reader of ten rows on a board
+   * with thirty assignees has no way to know the other twenty exist. A caller
+   * compares this against `teamProductivity.length` and says what it is
+   * showing.
+   */
+  teamProductivityTotal: number;
+  /**
+   * Assigned to nobody.
+   *
+   * `teamProductivity` groups by `assignee_id` and necessarily excludes rows
+   * that have none, so until this bucket existed the per-assignee totals
+   * simply did not add up to `taskStats.totalTasks` and nothing said where the
+   * difference went. Unassigned work is the work most likely to be missed, so
+   * dropping it out of the aggregation that gets read as "the team's load" is
+   * the wrong direction to be wrong in. Always present — `totalTasks: 0` means
+   * measured and none, which is a different fact from absent.
+   */
+  unassigned: {
+    totalTasks: number;
+    completedTasks: number;
+    avgCompletion: string | null;
+  };
 }
+
+/**
+ * The most assignee rows `teamProductivity` returns.
+ *
+ * It was 10, with no total beside it, so the eleventh-busiest person and
+ * everyone below them was absent from a figure presented as the team's. The
+ * bound is kept — one row per assignee is unbounded in principle, and a
+ * response is not the place to discover that an organisation has ten thousand
+ * members — but raised far above any real roster and reported through
+ * `teamProductivityTotal`, so a caller can always tell a complete list from a
+ * truncated one.
+ */
+export const TEAM_PRODUCTIVITY_CAP = 500;
 
 /**
  * Aggregate the org's task board, optionally narrowed to one project.
@@ -93,8 +132,28 @@ export async function loadTaskAnalytics(
     .from(unifiedTasks)
     .where(and(baseCondition, sql`${unifiedTasks.assigneeId} IS NOT NULL`))
     .groupBy(unifiedTasks.assigneeId)
-    .orderBy(sql`count(*) filter (where ${unifiedTasks.status} = 'completed') desc`)
-    .limit(10);
+    // The id is the tiebreaker. Two people with the same completed count came
+    // back in whatever order the plan produced, so the row that fell off the
+    // bound could differ between two identical requests.
+    .orderBy(
+      sql`count(*) filter (where ${unifiedTasks.status} = 'completed') desc`,
+      sql`${unifiedTasks.assigneeId} asc`,
+    )
+    .limit(TEAM_PRODUCTIVITY_CAP);
+  // Counted in SQL rather than from the rows above, which the bound truncates.
+  const [assigneeCount] = await db
+    .select({ n: sql<number>`count(distinct ${unifiedTasks.assigneeId})::int` })
+    .from(unifiedTasks)
+    .where(and(baseCondition, sql`${unifiedTasks.assigneeId} IS NOT NULL`));
+  // The complement of the predicate above, so the two partition the board.
+  const [unassigned] = await db
+    .select({
+      totalTasks: count(unifiedTasks.id),
+      completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
+      avgCompletion: avg(unifiedTasks.completionPercentage),
+    })
+    .from(unifiedTasks)
+    .where(and(baseCondition, isNull(unifiedTasks.assigneeId)));
   const assignees = await resolveActorNames(byAssignee.map(r => r.assigneeId));
   const teamProductivity = byAssignee.map(({ assigneeId, ...rest }) => ({
     name: actorLabel(assignees, assigneeId),
@@ -107,5 +166,11 @@ export async function loadTaskAnalytics(
     tasksByPriority: tasksByPriority as TaskAnalytics['tasksByPriority'],
     overdueTasks: overdueTasks?.count ?? 0,
     teamProductivity: teamProductivity as TaskAnalytics['teamProductivity'],
+    teamProductivityTotal: Number(assigneeCount?.n ?? 0),
+    unassigned: {
+      totalTasks: Number(unassigned?.totalTasks ?? 0),
+      completedTasks: Number(unassigned?.completedTasks ?? 0),
+      avgCompletion: unassigned?.avgCompletion ?? null,
+    },
   };
 }

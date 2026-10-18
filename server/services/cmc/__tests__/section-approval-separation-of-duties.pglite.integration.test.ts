@@ -55,6 +55,7 @@ import {
 /* The action name comes from the module that WRITES it, so a fixture can never
    drift from the real row: an import of it from anywhere else would be a
    second spelling. */
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { CMC_REGISTER_CREATE } from '../register-audit';
 import { REGISTER_BY_SOURCE_TYPE, readSectionRecordOperators } from '../register-operators';
 
@@ -83,10 +84,7 @@ CREATE TABLE cmc_change_controls (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL, title TEXT, created_by INTEGER,
   deleted_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
-CREATE TABLE audit_logs (
-  id TEXT PRIMARY KEY, tenant_id INTEGER, user_id INTEGER, action TEXT, table_name TEXT,
-  record_id TEXT, actor_id INTEGER, target TEXT, payload_hash TEXT, sha256_chain TEXT,
-  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), new_values JSON);
+${AUDIT_LOGS_PGLITE_DDL}
 `;
 
 const client = { query: (text: string, params?: unknown[]) => holder.pg.query(text, params) };
