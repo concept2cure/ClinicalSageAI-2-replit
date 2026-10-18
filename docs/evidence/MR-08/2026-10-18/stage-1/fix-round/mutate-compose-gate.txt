@@ -1,0 +1,41 @@
+# Each new gate rule disabled in turn; the self-test must fail on the case it guards. 2026-10-18T19:55:58Z
+$ bash docs/evidence/MR-08/2026-10-18/stage-1/fix-round/mutate-compose-gate.sh
+=== rule disabled: if (Object.prototype.hasOwnProperty.call(env, 'SECURITY_SELF_TEST_NONBLOCKING')) {
+FAIL SECURITY_SELF_TEST_NONBLOCKING set on the app
+     expected ["SECURITY_SELF_TEST_NONBLOCKING must not be passed"], got []
+FAIL SECURITY_SELF_TEST_NONBLOCKING left for the operator to set
+     expected ["SECURITY_SELF_TEST_NONBLOCKING must not be passed"], got []
+[ci:compose-boot-contract] self-test: 2 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner.ports !== undefined) {
+FAIL a scanner that publishes a host port
+     expected ["must publish no ports"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner.expose !== undefined) {
+FAIL a scanner with expose
+     expected ["must not expose"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner.profiles !== undefined) {
+FAIL a scanner under a profile
+     expected ["must not be under a profile"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner.network_mode !== undefined) {
+FAIL a scanner with network_mode
+     expected ["must not set network_mode"], got ["service \"app\": scanner \"clamav\" shares no network with the app (scanner: default; app: main, scan)"]
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (!scannerNets.some(n => appNets.includes(n))) {
+FAIL a scanner on no network the app is on
+     expected ["shares no network with the app"], got []
+FAIL a scanner on the default network while the app is not
+     expected ["shares no network with the app"], got []
+[ci:compose-boot-contract] self-test: 2 case(s) failed
+self-test exit=1
+=== rule disabled: if (shared.length) {
+FAIL a scanner on a network an optional-profile service joins
+     expected ["\"litellm\" (profile llm) can reach it"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1

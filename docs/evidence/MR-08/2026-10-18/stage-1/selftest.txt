@@ -1,0 +1,73 @@
+$ npm run ci:compose-boot-contract:selftest
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract:selftest
+> node scripts/ci/check-compose-boot-contract.mjs --self-test
+
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   the connector turned on with no allowlist
+ok   the connector turned on with an allowlist
+ok   list-form environment is read
+ok   a stack with its scanner passes
+ok   no clamav service
+ok   CLAMAV_HOST naming a missing service
+ok   CLAMAV_HOST that may resolve to anything
+ok   depends_on without service_healthy
+ok   list-form depends_on
+ok   a scanner with no healthcheck
+ok   a different digest
+ok   a StreamMaxLength mismatch
+ok   AlertExceedsMax off
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: every case behaves
+exit=0
+
+# Each checkScanner rule commented out in turn (a copy of the gate; ./mutate-compose-gate.sh beside this file): the self-test must fail
+=== rule disabled: if (host.kind === 'absent') {
+FAIL no clamav service
+     expected ["CLAMAV_HOST is not passed to the app"], got ["service \"app\": CLAMAV_HOST must be a literal naming the scanner service in this file; got undefined"]
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (host.kind !== 'literal') {
+FAIL CLAMAV_HOST that may resolve to anything
+     expected ["CLAMAV_HOST must be a literal"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (!scanner || scannerName === serviceName) {
+FAIL CLAMAV_HOST naming a missing service
+     expected ["CLAMAV_HOST \"scanner\" names no service"], got ["service \"app\": scanner \"scanner\" has no healthcheck.test, so nothing can wait for clamd to load its database","service \"app\": depends_on must name \"scanner\" with condition: service_healthy (the list form starts the app before clamd answers)","service \"app\": scanner \"scanner\" image must be clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23 (terraform/stack/variables.tf); got undefined","service \"app\": scanner \"scanner\" CLAMD_CONF_StreamMaxLength must be 100M (FILE_LIMITS.maxUploadBytes, server/config/platform-limits.ts); got undefined","service \"app\": scanner \"scanner\" CLAMD_CONF_AlertExceedsMax must be \"yes\" (a file it could not scan whole is reported, not passed); got undefined"]
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (!test || (Array.isArray(test) && test.length === 0)) {
+FAIL a scanner with no healthcheck
+     expected ["has no healthcheck.test"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (Array.isArray(deps) || deps?.[scannerName]?.condition !== 'service_healthy') {
+FAIL depends_on without service_healthy
+     expected ["depends_on must name \"clamav\" with condition: service_healthy"], got []
+FAIL list-form depends_on
+     expected ["depends_on must name \"clamav\" with condition: service_healthy"], got []
+[ci:compose-boot-contract] self-test: 2 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner?.image !== expect.image) {
+FAIL a different digest
+     expected ["image must be"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (String(senv.CLAMD_CONF_StreamMaxLength) !== expect.streamMaxLength) {
+FAIL a StreamMaxLength mismatch
+     expected ["CLAMD_CONF_StreamMaxLength must be"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (String(senv.CLAMD_CONF_AlertExceedsMax) !== 'yes') {
+FAIL AlertExceedsMax off
+     expected ["CLAMD_CONF_AlertExceedsMax must be \"yes\""], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1

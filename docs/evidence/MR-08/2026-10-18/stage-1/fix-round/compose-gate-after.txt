@@ -1,0 +1,47 @@
+# AFTER: the gate with this round's rules, against the compose files after this round (docker-compose.yml: scanner on c2c-scan, shared only with the app; docker-compose.beta.yml unchanged: c2c-beta holds only db, redis, app, clamav). 2026-10-18T19:55:40Z
+$ npm run ci:compose-boot-contract
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract
+> node scripts/ci/check-compose-boot-contract.mjs
+
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (28 preflight names, 4 excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner.
+exit=0
+
+$ npm run ci:compose-boot-contract:selftest
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract:selftest
+> node scripts/ci/check-compose-boot-contract.mjs --self-test
+
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   the connector turned on with no allowlist
+ok   SECURITY_SELF_TEST_NONBLOCKING set on the app
+ok   SECURITY_SELF_TEST_NONBLOCKING left for the operator to set
+ok   the connector turned on with an allowlist
+ok   list-form environment is read
+ok   a stack with its scanner passes
+ok   no clamav service
+ok   CLAMAV_HOST naming a missing service
+ok   CLAMAV_HOST that may resolve to anything
+ok   depends_on without service_healthy
+ok   list-form depends_on
+ok   a scanner with no healthcheck
+ok   a different digest
+ok   a StreamMaxLength mismatch
+ok   AlertExceedsMax off
+ok   a scanner that publishes a host port
+ok   a scanner with expose
+ok   a scanner under a profile
+ok   a scanner with network_mode
+ok   a scanner on no network the app is on
+ok   a scanner on the default network while the app is not
+ok   a scanner on a network an optional-profile service joins
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: every case behaves
+exit=0

@@ -1,0 +1,4 @@
+# Final working tree (fix round). 2026-10-18T20:08:23Z
+$ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json
+exit=0
+error TS count: 0

@@ -1,0 +1,26 @@
+# docker compose config, both stacks, with a dummy env file (every required variable set to x). 2026-10-18T19:56:15Z
+Docker Compose version v5.1.1
+
+$ docker compose -f docker-compose.yml --env-file <dummy> config --quiet
+time="2026-10-18T19:56:15Z" level=warning msg="/home/user/ClinicalSageAI-2-replit/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+exit=0
+$ docker compose -f docker-compose.yml --env-file <dummy> config --format json | (services, their networks; and the networks)
+  app: networks=c2c,c2c-scan ports=5000->5000
+  clamav: networks=c2c-scan
+  db: networks=c2c ports=5432->5432
+  redis: networks=c2c ports=6379->6379
+  networks: {"c2c":{"driver":"bridge","internal":false},"c2c-scan":{"driver":"bridge","internal":false}}
+
+$ docker compose -f docker-compose.beta.yml --env-file <dummy> config --quiet
+time="2026-10-18T19:56:15Z" level=warning msg="/home/user/ClinicalSageAI-2-replit/docker-compose.beta.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+exit=0
+$ docker compose -f docker-compose.beta.yml --env-file <dummy> config --format json | (services, their networks; and the networks)
+  app: networks=c2c-beta ports=5000->5000
+  clamav: networks=c2c-beta
+  db: networks=c2c-beta ports=5432->5432
+  redis: networks=c2c-beta ports=6379->6379
+  networks: {"c2c-beta":{"driver":"bridge","internal":false}}
+
+# --profile '*' (every optional service started too): who is on the scanner's network
+  docker-compose.yml c2c-scan: app, clamav
+  docker-compose.beta.yml c2c-beta: app, clamav, db, redis
