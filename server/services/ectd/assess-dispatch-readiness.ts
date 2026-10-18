@@ -69,6 +69,7 @@ import {
   type ReadinessFinding,
 } from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
+import { readCompanyLegalSubmissionContext } from './company-legal-context';
 import {
   evaluateDispatchGate,
   evaluateReleaseApprovalGate,
@@ -833,7 +834,9 @@ export async function assessSequenceDispatchReadiness(
   //     assessment, so they cannot disagree with it. Until 2026-09-21 the
   //     validator was handed the integer column alone and every vault-backed
   //     leaf read UNRESOLVED_DOCUMENT (MDX demo pack, finding F5).
-  const documents = await resolveLeafDocuments(leaves, organizationId);
+  const legalTarget = leaves.some(leaf => leaf.documentTable === 'vault_documents' && leaf.lifecycleOp !== 'delete')
+    ? await readCompanyLegalSubmissionContext(queryableFromDrizzle(db), organizationId, sequenceId) : {};
+  const documents = await resolveLeafDocuments(leaves, organizationId, legalTarget);
 
   // 3. Deterministic structural validation over the canonical core.
   const sequenceOptions = readinessOptionsForSequence(sequence, submissionApplicationType, asOf);

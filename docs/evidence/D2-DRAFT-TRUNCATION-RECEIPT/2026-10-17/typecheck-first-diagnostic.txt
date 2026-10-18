@@ -1,0 +1,12 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 5 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 5 exceeds baseline 0 (+5).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    server/services/ana/__tests__/batch-draft-termination-receipt.test.ts(30,30): error TS2339: Property 'message' does not exist on type '{ status: string; error: string; message: string; requestIndex: number; sectionType: string; saved: boolean; authoringDocId: null; } | { status: string; error: string; truncated: boolean; finishReason: string | null; ... 4 more ...; authoringDocId: null; } | { ...; }'.
+    server/services/ana/__tests__/batch-draft-termination-receipt.test.ts(31,30): error TS2339: Property 'message' does not exist on type '{ status: string; error: string; message: string; requestIndex: number; sectionType: string; saved: boolean; authoringDocId: null; } | { status: string; error: string; truncated: boolean; finishReason: string | null; ... 4 more ...; authoringDocId: null; } | { ...; }'.
+    server/services/ana/__tests__/batch-draft-termination-receipt.test.ts(78,52): error TS2339: Property 'error' does not exist on type '{ status: string; error: string; message: string; requestIndex: number; sectionType: string; saved: boolean; authoringDocId: null; } | { status: string; error: string; truncated: boolean; finishReason: string | null; ... 4 more ...; authoringDocId: null; } | { ...; }'.
+    server/services/ana/__tests__/batch-draft-termination-receipt.test.ts(111,32): error TS2339: Property 'sources' does not exist on type '{ status: string; error: string; message: string; requestIndex: number; sectionType: string; saved: boolean; authoringDocId: null; } | { status: string; error: string; truncated: boolean; finishReason: string | null; ... 4 more ...; authoringDocId: null; } | { ...; }'.
+    server/services/ana/__tests__/batch-draft-termination-receipt.test.ts(113,64): error TS2339: Property 'error' does not exist on type '{ status: string; error: string; message: string; requestIndex: number; sectionType: string; saved: boolean; authoringDocId: null; } | { status: string; error: string; truncated: boolean; finishReason: string | null; ... 4 more ...; authoringDocId: null; } | { ...; }'.

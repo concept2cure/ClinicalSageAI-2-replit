@@ -298,6 +298,28 @@ describe('GET /runs/:id/export.pdf records the export before anything is sent', 
     expect(auditEntry()?.details).toMatchObject({ status: 'final', sealVerdict: 'intact' });
   });
 
+  it('uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal', async () => {
+    h.company.settings = { companyDocuments: { revision: 12, companyName: 'Tenant Seven Sponsor', applyToReports: true, letterhead: { header: { text: 'Tenant Seven Regulatory' } } } };
+    const res = await exportPdf();
+    expect(res.status).toBe(200);
+    const text = await pdfText(res.body as Buffer);
+    expect(text).toContain('Tenant Seven Sponsor');
+    expect(text).toContain('Tenant Seven Regulatory');
+    expect(text).toContain('NOT FINAL (COMPLETED)');
+    expect(auditEntry()?.details.companyBranding).toMatchObject({ applied: true, revision: 12, profileHash: expect.stringMatching(/^[a-f0-9]{64}$/), renderer: 'company-letterhead-report-pdf-v1' });
+    const read = h.statements.findIndex(sql => sql.startsWith('SELECT name, settings FROM organizations'));
+    expect(h.params[read]).toEqual([7]);
+  });
+
+  it('refuses unavailable company configuration before sending or recording an export', async () => {
+    h.company.unavailable = true;
+    const res = await exportPdf();
+    expect(res.status).toBe(404);
+    expect(JSON.parse((res.body as Buffer).toString()).error.code).toBe('ORGANIZATION_NOT_FOUND');
+    expect(res.headers['content-disposition']).toBeUndefined();
+    expect(h.audit).not.toHaveBeenCalled();
+  });
+
   it('refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded', async () => {
     h.queued.select.splice(0, 2, [{ ...RUN, status: 'final' }], [typeRow]);
     sealedOnRecord({ seal, sealedDocument: { ...sealedDocument, sections: [{ id: 'as-sealed', title: 'Edited after sealing', blocks: [] }] } });
@@ -364,6 +386,17 @@ describe('GET /bundles/:bundleId/export.pdf (DP-50)', () => {
       details: { runIds: [41, 42], finalAtExport: 1, exportId: expect.any(String), format: 'pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
     });
     expect(h.statements.slice(-5)).toEqual(['BEGIN', tenantStampSql(), '<audit row>', 'COMMIT', '<released>']);
+  });
+
+  it('includes the enabled tenant company header in a manifest and records the presentation revision', async () => {
+    h.gate.mockResolvedValue({ entitled: true, tier: 'enterprise' });
+    h.company.settings = { companyDocuments: { revision: 5, companyName: 'Manifest Sponsor', applyToReports: true } };
+    const res = await exportBundle();
+    expect(res.status).toBe(200);
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: res.body as Buffer });
+    try { expect((await parser.getText()).text).toContain('Manifest Sponsor'); } finally { await parser.destroy(); }
+    expect(auditEntry()?.details.companyBranding).toMatchObject({ applied: true, revision: 5, profileHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
   });
 
   it('answers 503 and sends no PDF when the bundle export cannot be recorded', async () => {

@@ -19,7 +19,7 @@ function leaf(overrides:Partial<SubmissionLeaf>={}):SubmissionLeaf{return {id:1,
 const read=(leaves=[leaf()],client=q,userId=5)=>readSubmissionLeafSourceEvidence(client,{organizationId:7,userId,programId:P,projectId:11,submissionId:1,sequenceId:2,leaves});
 beforeAll(async()=>{
   pg=new PGlite();await pg.exec(`
-    CREATE TABLE organizations(id int PRIMARY KEY,status text);CREATE TABLE users(id int PRIMARY KEY,status text,email text);
+    CREATE TABLE organizations(id int PRIMARY KEY,status text,settings jsonb NOT NULL DEFAULT '{}');CREATE TABLE users(id int PRIMARY KEY,status text,email text);
     CREATE TABLE organization_users(organization_id int,user_id int,role text);
     CREATE TABLE regulatory_programs(id uuid PRIMARY KEY,organization_id int,deleted_at timestamptz);
     CREATE TABLE projects(id int PRIMARY KEY,organization_id int,regulatory_program_id uuid,status text,client_workspace_id int,owner_id int,created_by_id int,settings jsonb);
@@ -38,7 +38,7 @@ beforeAll(async()=>{
     CREATE SCHEMA vault;CREATE TABLE vault.documents(id uuid PRIMARY KEY,organization_id int,program_id uuid,deleted_at timestamptz,supersedes_id uuid,document_code text,storage_version_id text,storage_provider text,content_hash text,mime_type text,document_title text,file_name text);
     CREATE TABLE document_data_dispositions(id int,organization_id int,program_id uuid,vault_document_id uuid,source_sha256 text,linked_ids jsonb);
     CREATE TABLE canonical_documents(canonical_id uuid,organization_id int,source_refs jsonb,stage text,content_hash text,created_at timestamptz);
-    INSERT INTO organizations VALUES(7,'active');INSERT INTO users VALUES(5,'active','owner@example.invalid'),(20,'active','reader@example.invalid');
+    INSERT INTO organizations(id,status) VALUES(7,'active');INSERT INTO users VALUES(5,'active','owner@example.invalid'),(20,'active','reader@example.invalid');
     INSERT INTO regulatory_programs VALUES('${P}',7,NULL),('${S}',7,NULL);
     INSERT INTO projects VALUES(11,7,'${P}','active',NULL,5,5,'{}'),(12,7,'${S}','active',NULL,5,5,'{}');
     INSERT INTO project_visibility_settings VALUES(11,7,'private'),(12,7,'private');
@@ -48,11 +48,29 @@ beforeEach(async()=>{
   statements.length=0;h.gets=0;h.bytes=Buffer.from('Verified retained instruction: preserve the original record and document every correction.');
   await pg.exec(`TRUNCATE c2c_documents,c2c_document_sections,c2c_document_aliases,authoring_documents,authoring_sections,doc_permissions,coauthor_documents,frozen_documents,vault.documents,canonical_documents,document_data_dispositions;
     UPDATE users SET status='active';TRUNCATE organization_users;INSERT INTO organization_users VALUES(7,5,'member'),(7,20,'member');
+    UPDATE organizations SET settings='{}';
     INSERT INTO c2c_documents VALUES('doc-a',7,'${P}','approved','Actual source title'),('doc-b',7,'${S}','approved','Sibling title');`);
   await pg.query('INSERT INTO c2c_document_sections VALUES(101,$1,$2,$3,$4)',['doc-a','actual-source-key',JSON.stringify({text:body}),'approved']);
 });
 afterAll(async()=>{await pg?.close();});
 describe('actual request-q retained-source evidence and late admission',()=>{
+  it('keeps a registered Vault original outside the admitted destination undetermined and refuses an observed scope change after admission',async()=>{
+    await pg.query('INSERT INTO vault.documents(id,organization_id,program_id,storage_version_id,storage_provider,content_hash,mime_type) VALUES($1,7,$2,$3,$4,$5,$6)',[V,P,'retained-v1','local',hash(h.bytes),'text/plain']);
+    await pg.query('INSERT INTO canonical_documents VALUES($1,7,$2,$3,$4,now())',[A,JSON.stringify({vault_documents:{nativeId:V}}),'approved',hash(h.bytes)]);
+    const document={id:V,title:'Company authorization',kind:'authorization',programId:P,vaultDocumentId:V,contentHash:hash(h.bytes),version:'1',agencies:['FDA'],countries:['US'],submissionTypes:['IND'],language:'en',effectiveOn:null,expiresOn:null,active:true,registeredAt:'2026-10-01T00:00:00Z',registeredBy:'5'};
+    const input={organizationId:7,userId:5,programId:P,projectId:11,submissionId:1,sequenceId:2,sequenceRegion:'fda',applicationType:'IND',
+      leaves:[leaf({documentTable:'vault_documents',documentId:null,documentUuid:V,documentContentSha256:hash(h.bytes)})]};
+    const save=(value:typeof document)=>pg.query('UPDATE organizations SET settings=$1::jsonb WHERE id=7',[JSON.stringify({companyDocuments:{legalDocuments:[value]}})]);
+    await save(document);
+    const matching=await readSubmissionLeafSourceEvidence(q,input);
+    expect(matching.leaves[0].contentEvidence).toMatchObject({content:'substantive',lifecycle:'finalized'});
+    await save({...document,agencies:['EMA'],countries:['EU']});
+    await expect(requireSubmissionLeafSourceEvidenceStillCurrent(q,matching.admission)).rejects.toMatchObject({status:503,code:'SUBMISSION_SOURCE_READ_CHANGED'});
+    const blocked=await readSubmissionLeafSourceEvidence(q,input);
+    expect(blocked.leaves[0].contentEvidence).toMatchObject({content:'undetermined',lifecycle:'unverified'});
+    expect((await pg.query('SELECT stage FROM canonical_documents WHERE canonical_id=$1',[A])).rows[0]).toEqual({stage:'approved'});
+  });
+
   it('verifies the canonical section body pin and carries its actual source key, never the filing code',async()=>{
     const result=await read();expect(result.leaves[0].contentEvidence).toMatchObject({content:'substantive',pin:'match',lifecycle:'finalized'});
     expect(result.leaves[0].sourceRef).toMatchObject({section:{id:'101',code:'actual-source-key'},editor:null});

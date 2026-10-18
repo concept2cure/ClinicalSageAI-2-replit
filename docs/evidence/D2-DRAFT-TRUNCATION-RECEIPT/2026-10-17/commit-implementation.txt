@@ -1,0 +1,19 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/ana/AnaToolExecutor.ts (21990 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3272 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 9fc40c80c] Keep cut-off AnA batch sections out of drafted receipts
+ 4 files changed, 278 insertions(+), 2 deletions(-)
+ create mode 100644 server/services/ana/__tests__/batch-draft-termination-receipt.test.ts
+ create mode 100644 server/services/ana/__tests__/batch-draft-termination-tool.test.ts

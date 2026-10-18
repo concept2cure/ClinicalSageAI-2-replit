@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/ana/batch-draft-result.ts",
+    "server/services/ana/AnaToolExecutor.ts"
+  ],
+  "exitCode": 0,
+  "sourceSha256": {
+    "server/services/ana/batch-draft-result.ts": "7c5ea59c852a3692d903237c3410529c88e6c4f5a2cff828c5b9efdea5eb2c78",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02"
+  },
+  "notes": "Focused production-owner lint; existing warnings, if any, are not evidence of a whole-repository lint pass."
+}

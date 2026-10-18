@@ -23,6 +23,7 @@
  */
 
 import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
+import { isTruncated } from '../ai-gateway/finish-reason';
 import type { DocumentDraftResponse } from './AnaDocumentDraftingService';
 
 export interface BatchDraftFailure {
@@ -52,6 +53,11 @@ export function batchSectionRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
 }
 
+function draftTermination(result: DocumentDraftResponse | undefined) {
+  const finishReason = result?.finishReason ?? null;
+  return { finishReason, truncated: result?.truncated === true || isTruncated(finishReason) };
+}
+
 export function batchDraftReceipt(
   rawSections: unknown[],
   requests: Array<{ requestIndex: number; sectionType: string; sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
@@ -69,11 +75,18 @@ export function batchDraftReceipt(
     if (isBatchDraftFailure(result)) {
       return { ...base, status: 'failed', error: result.error, message: result.message };
     }
+    const termination = draftTermination(result);
+    if (termination.truncated) {
+      return { ...base, status: 'failed', error: 'DRAFT_TRUNCATED', truncated: true,
+        finishReason: termination.finishReason,
+        message: 'This draft was cut off. Shorten or split this section before retrying this section only.' };
+    }
     if (!result || !result.content?.trim()) {
       return { ...base, status: 'failed', error: 'DRAFT_FAILED', message: 'No usable draft was returned for this section. Retry this section only.' };
     }
     const context = requests.find(r => r.requestIndex === requestIndex)?.sourceContext;
     return { ...base, status: 'drafted', content: result.content, model: result.model, latencyMs: result.latencyMs,
+      finishReason: termination.finishReason, truncated: false,
       sourceStatus: context?.status ?? 'unassessed',
       sources: context?.sources.map(({ text: _text, ...receipt }) => receipt) ?? [],
       sourceQualification: 'unassessed' };
