@@ -51,6 +51,9 @@ import {
   writeThroughMaterialSpec,
 } from '../cmc-write-through';
 import { linkToModule3, type Module3Linkage, type ProjectSource } from './link-to-module3';
+/* The row and the record of WHO recorded it, in one transaction (§11.10(e)).
+   Shared with the registers whose create lives in its route. */
+import { insertRegisterRow, type RegisterActor } from './register-audit';
 import { projectBelongsToTenant } from './project-membership';
 
 /* ─── Body primitives, shared with the routes ─────────────────────────────── */
@@ -320,6 +323,10 @@ export interface RegisterCreated<Row> extends Module3Linkage {
 }
 
 /**
+ * `actor` is the person recording the row (§11.10(e)) — the route's session,
+ * the interview projector's commit scope. It is required: a create with nobody
+ * to name refuses and writes nothing.
+ *
  * `link` names the program for the registers whose tables carry no project
  * column (drug substance, drug product): the route passes its request so the
  * body's projectId is read; the projector passes the session's project.
@@ -327,14 +334,16 @@ export interface RegisterCreated<Row> extends Module3Linkage {
 export async function createDrugSubstance(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugSubstances.$inferSelect>> {
   const validated = drugSubstanceBody.parse(body);
   const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
-  const [row] = await db
-    .insert(drugSubstances)
-    .values({ ...validated, projectId, organizationId: orgId } as typeof drugSubstances.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'drug_substance', drugSubstances, {
+    ...validated,
+    projectId,
+    organizationId: orgId,
+  } as typeof drugSubstances.$inferInsert);
   const linkage = await linkToModule3('write_through_drug_substance', orgId, row, writeThroughDrugSubstance, link);
   return { row, ...linkage };
 }
@@ -342,14 +351,16 @@ export async function createDrugSubstance(
 export async function createDrugProduct(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugProducts.$inferSelect>> {
   const validated = drugProductBody.parse(body);
   const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
-  const [row] = await db
-    .insert(drugProducts)
-    .values({ ...validated, projectId, organizationId: orgId } as typeof drugProducts.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'drug_product', drugProducts, {
+    ...validated,
+    projectId,
+    organizationId: orgId,
+  } as typeof drugProducts.$inferInsert);
   const linkage = await linkToModule3('write_through_drug_product', orgId, row, writeThroughDrugProduct, link);
   return { row, ...linkage };
 }
@@ -357,15 +368,16 @@ export async function createDrugProduct(
 export async function createContainerClosure(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcContainerClosures.$inferSelect>> {
   const validated = containerClosureBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'container-closures');
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(cmcContainerClosures)
-    .values({ ...withoutGovernedFields(validated), organizationId: orgId } as typeof cmcContainerClosures.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'container_closure', cmcContainerClosures, {
+    ...withoutGovernedFields(validated),
+    organizationId: orgId,
+  } as typeof cmcContainerClosures.$inferInsert);
   const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, link);
   return { row, ...linkage };
 }
@@ -373,13 +385,14 @@ export async function createContainerClosure(
 export async function createMaterialSpec(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcMaterialSpecs.$inferSelect>> {
   const validated = materialSpecBody.parse(body) as Record<string, unknown>;
-  const [row] = await db
-    .insert(cmcMaterialSpecs)
-    .values({ ...withoutOrgId(validated), organizationId: orgId } as typeof cmcMaterialSpecs.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'material_spec', cmcMaterialSpecs, {
+    ...withoutOrgId(validated),
+    organizationId: orgId,
+  } as typeof cmcMaterialSpecs.$inferInsert);
   const linkage = await linkToModule3('write_through_material_spec', orgId, row, writeThroughMaterialSpec, link);
   return { row, ...linkage };
 }
@@ -387,15 +400,16 @@ export async function createMaterialSpec(
 export async function createFormulationRecord(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcFormulationRecords.$inferSelect>> {
   const validated = formulationRecordBody.parse(body) as Record<string, unknown>;
   const conflict = await currentFormulationConflict(orgId, validated, null);
   if (conflict) throw new RegisterWriteRefusal(conflict);
-  const [row] = await db
-    .insert(cmcFormulationRecords)
-    .values({ ...withoutOrgId(validated), organizationId: orgId } as typeof cmcFormulationRecords.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'formulation_record', cmcFormulationRecords, {
+    ...withoutOrgId(validated),
+    organizationId: orgId,
+  } as typeof cmcFormulationRecords.$inferInsert);
   const linkage = await linkToModule3('write_through_formulation_record', orgId, row, writeThroughFormulationRecord, link);
   return { row, ...linkage };
 }
@@ -403,15 +417,16 @@ export async function createFormulationRecord(
 export async function createManufacturingProcess(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof manufacturingProcesses.$inferSelect>> {
   const validated = manufacturingProcessBody.parse(body);
   const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes', undefined, PROCESS_VOCAB);
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(manufacturingProcesses)
-    .values({ ...validated, organizationId: orgId } as typeof manufacturingProcesses.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'manufacturing_process', manufacturingProcesses, {
+    ...validated,
+    organizationId: orgId,
+  } as typeof manufacturingProcesses.$inferInsert);
   const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, link);
   return { row, ...linkage };
 }
@@ -419,15 +434,16 @@ export async function createManufacturingProcess(
 export async function createCharacterizationStudy(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcCharacterizationStudies.$inferSelect>> {
   const validated = characterizationStudyBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'characterization-studies');
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(cmcCharacterizationStudies)
-    .values({ ...withoutGovernedFields(validated), organizationId: orgId } as typeof cmcCharacterizationStudies.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'characterization_study', cmcCharacterizationStudies, {
+    ...withoutGovernedFields(validated),
+    organizationId: orgId,
+  } as typeof cmcCharacterizationStudies.$inferInsert);
   const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, link);
   return { row, ...linkage };
 }

@@ -1,0 +1,201 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Japanese term written inside a sentence (the recorded probe) 15ms
+   → expected { start: +0, end: 500, …(1) } to deeply equal { start: 37501, end: 38001, …(1) }
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Latin term written against Japanese characters 4ms
+   → expected { start: +0, end: 500, …(1) } to deeply equal { start: 37501, end: 38001, …(1) }
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > chooses by the terms of a Japanese instruction sentence 3ms
+   → expected 'opening' to be 'relevant' // Object.is equality
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > matches a compound against text that splits it, over a passage sharing one part 3ms
+   → expected 'opening' to be 'relevant' // Object.is equality
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a Japanese full stop when no line break is in reach 3ms
+   → expected 37200 to be 37500 // Object.is equality
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps UTF-16 source offsets after an astral Han character 2ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > still refuses a Latin term inside a Latin word in a Japanese document 2ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the opening for a query of hiragana only, which carries no term 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > is deterministic 6ms
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > splits at hiragana, drops boilerplate, then adds Han bigrams after whole terms 2ms
+   → expected [ '有害事象の発現率を要約する' ] to deeply equal [ '有害事象', '発現率', '有害', '害事', …(3) ]
+ × server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > separates Latin and Japanese in a mixed query and keeps katakana words whole 1ms
+   → expected [ 'プラセボ群のctcaeグレード' ] to deeply equal [ 'プラセボ群', 'ctcae', 'グレード' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Japanese term written inside a sentence (the recorded probe)
+AssertionError: expected { start: +0, end: 500, …(1) } to deeply equal { start: 37501, end: 38001, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "relevant",
+-   "end": 38001,
+-   "start": 37501,
++   "basis": "opening",
++   "end": 500,
++   "start": 0,
+  }
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:17:51
+     15|   it('finds a Japanese term written inside a sentence (the recorded pr…
+     16|     const text = PREFIX + RESULT + SUFFIX;
+     17|     expect(chooseSourceWindow(text, '有害事象', 500)).toEqual({ start: 375…
+       |                                                   ^
+     18|   });
+     19|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Latin term written against Japanese characters
+AssertionError: expected { start: +0, end: 500, …(1) } to deeply equal { start: 37501, end: 38001, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "relevant",
+-   "end": 38001,
+-   "start": 37501,
++   "basis": "opening",
++   "end": 500,
++   "start": 0,
+  }
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:23:15
+     21|     const text = PREFIX + 'CTCAEグレード3以上の事象を集計した。' + SUFFIX;
+     22|     const w = chooseSourceWindow(text, 'CTCAE grade', 500);
+     23|     expect(w).toEqual({ start: PREFIX.length, end: PREFIX.length + 500…
+       |               ^
+     24|   });
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > chooses by the terms of a Japanese instruction sentence
+AssertionError: expected 'opening' to be 'relevant' // Object.is equality
+
+Expected: "relevant"
+Received: "opening"
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:29:21
+     27|     const text = PREFIX + RESULT + SUFFIX;
+     28|     const w = chooseSourceWindow(text, '有害事象の発現率を要約する', 500);
+     29|     expect(w.basis).toBe('relevant');
+       |                     ^
+     30|     expect(text.slice(w.start, w.end)).toContain(RESULT);
+     31|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > matches a compound against text that splits it, over a passage sharing one part
+AssertionError: expected 'opening' to be 'relevant' // Object.is equality
+
+Expected: "relevant"
+Received: "opening"
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:38:21
+     36|     const text = BACKGROUND.slice(0, 20000) + decoy + BACKGROUND.slice…
+     37|     const w = chooseSourceWindow(text, '有害事象発現率', 500);
+     38|     expect(w.basis).toBe('relevant');
+       |                     ^
+     39|     expect(text.slice(w.start, w.end)).toContain('有害事象の発現率は12％');
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a Japanese full stop when no line break is in reach
+AssertionError: expected 37200 to be 37500 // Object.is equality
+
+- Expected
++ Received
+
+- 37500
++ 37200
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:45:21
+     43|     const text = BACKGROUND + '有害事象 発現率は12％でした。' + SUFFIX;
+     44|     const w = chooseSourceWindow(text, '有害事象', 500);
+     45|     expect(w.start).toBe(BACKGROUND.length);
+       |                     ^
+     46|     expect(text[w.start - 1]).toBe('。');
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps UTF-16 source offsets after an astral Han character
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:52:59
+     50|     const text = '𠮷'.repeat(5000) + '\n' + RESULT + SUFFIX;
+     51|     const w = chooseSourceWindow(text, '有害事象', 500);
+     52|     expect(text.slice(w.start, w.end).startsWith(RESULT)).toBe(true);
+       |                                                           ^
+     53|     expect(w.end - w.start).toBe(500);
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > splits at hiragana, drops boilerplate, then adds Han bigrams after whole terms
+AssertionError: expected [ '有害事象の発現率を要約する' ] to deeply equal [ '有害事象', '発現率', '有害', '害事', …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "有害事象",
+-   "発現率",
+-   "有害",
+-   "害事",
+-   "事象",
+-   "発現",
+-   "現率",
++   "有害事象の発現率を要約する",
+  ]
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:75:8
+     73|   it('splits at hiragana, drops boilerplate, then adds Han bigrams aft…
+     74|     expect(sectionTerms('有害事象の発現率を要約する'))
+     75|       .toEqual(['有害事象', '発現率', '有害', '害事', '事象', '発現', '現率']);
+       |        ^
+     76|   });
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > separates Latin and Japanese in a mixed query and keeps katakana words whole
+AssertionError: expected [ 'プラセボ群のctcaeグレード' ] to deeply equal [ 'プラセボ群', 'ctcae', 'グレード' ]
+
+- Expected
++ Received
+
+  [
+-   "プラセボ群",
+-   "ctcae",
+-   "グレード",
++   "プラセボ群のctcaeグレード",
+  ]
+
+ ❯ server/services/ana/__tests__/draft-source-window-japanese.test.ts:79:51
+     77|
+     78|   it('separates Latin and Japanese in a mixed query and keeps katakana…
+     79|     expect(sectionTerms('Draft プラセボ群のCTCAEグレード')).toEqual(['プラセボ群', 'c…
+       |                                                   ^
+     80|   });
+     81| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+   Start at  17:06:26
+   Duration  3.13s (transform 138ms, setup 136ms, import 44ms, tests 47ms, environment 0ms)
+
