@@ -1,3 +1,25 @@
+-- =============================================================================
+-- 20261018b — the questions on an agency letter, and the record their signed answers are made on
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (11.10(e) audit trail, 11.50/11.70 signature
+--             manifestation and linking), ALCOA+ principles
+-- Purpose: One row per question an agency asked in a project inbox letter,
+--          every text of its response kept append-only, and commitments that
+--          name the letter and question they were made in.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (correspondence with the agency, responses to
+--     information requests)
+--   - Integrity Risk Addressed: an answer to an agency approved by a status
+--     flag, or edited after approval with the approved words lost
+--
+-- Determinism Contract:
+--   - Approval is never stored; it is derived from electronic_signatures and
+--     the digest of the response as it stands (response-logic.ts).
+--   - Any change to the digest recipe requires a new recipe version.
+-- =============================================================================
 -- 20261018b_agency_response_questions.sql
 --
 -- Correspondence & commitments (row D2, Communication Center; row D5, Part 11).
@@ -62,8 +84,14 @@
 -- not hold them. The CHECKs are defined here and nowhere else. Drops nothing.
 -- public + organization_id INTEGER NOT NULL, so the tenant sweeps at the end
 -- of C2C_MIGRATION_FILES give the new table its policy; listed after both
--- parent files and above the final pair. Mirrored in
--- shared/schema/agency-responses.ts and shared/schema/ha-interactions.ts.
+-- parent files and above the final pair.
+--
+-- NOT mirrored in Drizzle, on purpose (header corrected 2026-10-18, review of
+-- the next slice: it named shared/schema/agency-responses.ts, which never
+-- existed). install-fresh runs `drizzle-kit push` before this set, so a Drizzle
+-- definition would create the two tables first, without the CHECKs below, and
+-- CREATE TABLE IF NOT EXISTS would then skip them. The three columns added to
+-- regulatory_commitments are SQL-only too; the services read them with SQL.
 
 CREATE TABLE IF NOT EXISTS public.agency_communication_questions (
   id                     SERIAL PRIMARY KEY,
