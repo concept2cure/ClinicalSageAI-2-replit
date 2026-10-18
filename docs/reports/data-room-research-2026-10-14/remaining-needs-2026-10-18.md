@@ -9,11 +9,20 @@ not certify a production deployment, scientific result, or agency acceptance.
 The [source manifest](remaining-needs-2026-10-18-source-manifest.json) records
 33 source-file SHA256 bindings and distinguishes the subsequent scheduler fix.
 
+Delivery update, 2026-10-18: priority 1's known-cutoff editor defect is fixed in
+`2d2ded13856d899257af394c3d8e29698d1034de`; see
+[editor termination qualification](../../evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/README.md).
+This covers generation and server-loaded candidate refusal, with legacy-safe
+stored finish metadata. It does not establish unknown-status completion or close
+priority 7's broader save-authority design. The original source observations and
+manifest below describe the assessment snapshot; later corrections have their
+own versioned implementation and qualification records.
+
 ## Priorities
 
-| Order | Remaining need and client benefit | Present evidence and boundary | Smallest useful next delivery |
+| Order | Need, status and client benefit | Assessment evidence and boundary | Smallest useful next delivery |
 | --- | --- | --- | --- |
-| 1 | **Refuse known unfinished output at the editor candidate boundary.** Prevent an interrupted draft being offered as usable regulatory content. | Source audit: the actual Authoring draft route parses nonempty gateway content and parks a server-owned candidate without checking the gateway finish reason. The generic BatchDraft cutoff fix is delivered, but does not cover this separate path. | Reuse the canonical termination classifier before candidate creation; preserve honest failure/turn records. Freeze a test of the actual generate → candidate → accept path with `max_tokens`/`length`, explicit cutoff, unknown and normal controls. Define legacy candidate handling separately; a source manifest proves input identity, not output completion. |
+| 1 | **Delivered: known-cutoff editor candidate protection.** Prevent an interrupted draft being offered as usable regulatory content. | Original source audit found the separate Authoring gap. Subsequent implementation `2d2ded138` is qualified by actual generation/store/acceptance and client controls; the earlier generic BatchDraft fix remains intact. | No longer an open known-cutoff defect. Unknown/legacy completion policy, generic save authority and scientific correctness remain separate; see priority 7. |
 | 2 | **Carry Stop through nested source reads and model work.** Reduce wasted processing and make cancellation reliable during long dossier work. | Source audit: the tool's existing signal stops the outer wait, but batch source loading, draft requests and later service waves do not receive it. The gateway already supports cancellation. | Propagate the existing trusted signal, check before reads/dispatch/waves and after awaits, and suppress late successful outcomes. Hold wave one, abort, then prove no later dispatch or read occurs; preserve completed siblings with explicit cancelled outcomes and intentional retry policy. |
 | 3 | **Improve multilingual, table and neighboring-context retrieval.** Help reviewers find the evidence that supports a safety or performance claim. | Japanese embedded-term selection is reproduced; passage search drops the expanded context already produced upstream. Exact Unicode coordinates are fixed. Current source-first assembly shares the selector. | Japanese compound/mixed-script fixtures with expert relevance labels; then a result/header/denominator split across chunks, retaining exact locators, hashes, budgets and withdrawal checks. Do not concatenate expanded text without defining overlap and coordinate identity. |
 | 4 | **Retain extraction evidence and bound OCR work.** Make scanned dossier processing inspectable and predictable. | Capture currently retains text/method/counts but discards available page spans and confidence. Automatic fallback supplies no explicit page budget, and the OCR facade omits the rasterizer's pixel cap. Japanese OCR accuracy is unqualified. | Page/pixel/time budgets, honest partial-coverage receipts, page/confidence/engine identity, and adjudicated multilingual numeric/table fixtures. Keep original-file and extraction identity together; report unprocessed pages explicitly. |
@@ -110,8 +119,9 @@ promise regulatory acceptance or uniqueness from a demo or a model score.
 
 ## Execution order and publication
 
-First close the actual editor cutoff boundary and cancellation propagation;
-then qualify multilingual/context-preserving retrieval and extraction. In
+The known-cutoff editor candidate boundary is now closed by the qualified
+increment above. Next close cancellation propagation, then qualify
+multilingual/context-preserving retrieval and extraction. In
 parallel planning, maintain an honest product × application × market matrix
 and reconcile launch evidence. Broader scientific/filing automation follows
 bounded scope contracts and the repository's launch rules. Existing founder

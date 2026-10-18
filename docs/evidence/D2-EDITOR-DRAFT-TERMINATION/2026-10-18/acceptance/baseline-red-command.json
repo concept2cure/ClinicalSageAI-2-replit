@@ -1,0 +1,24 @@
+{
+  "baseline": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "cwd": "/workspace/Concept2Cure",
+  "argv": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts"
+  ],
+  "environmentOverrides": {
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "testPath": "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts",
+  "testSha256": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16",
+  "startedAt": "2026-10-18T00:41:55Z",
+  "exitCode": 1,
+  "finishedAt": "2026-10-18T00:42:04Z",
+  "rawOutputSha256": "940e61c46eab596fcea1431c5620e2da17e7dd6d28a7be8c59d12b6173eb3a03"
+}
