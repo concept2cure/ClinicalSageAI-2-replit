@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T18:24:37.463Z",
+  "generatedAt": "2026-10-18T18:44:14.897Z",
   "git": {
-    "sha": "08a7ec8841af6db3b70bd98185b6ae7a52550d64",
+    "sha": "10fffa794e8d10955e2f6239615eea99ad947574",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
-    "largeFilesByLines": 110
+    "largeFilesByLines": 111
   },
   "findings": {
     "duplicateBasenames": [
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 170739
+        "bytes": 171460
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2538,12 +2538,12 @@
         "lines": 3046
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3036
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3039
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3030
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3036
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2884,6 +2884,10 @@
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
         "lines": 1555
+      },
+      {
+        "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+        "lines": 1513
       }
     ]
   },
@@ -2905,7 +2909,7 @@
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
       "duplicateGroups": 90,
       "largeByBytes": 3,
-      "largeByLines": 2
+      "largeByLines": 3
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",

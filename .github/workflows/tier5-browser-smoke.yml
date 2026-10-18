@@ -28,7 +28,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: tier5-browser-${{ github.ref }}
+  # Per-SHA on the canonical branch, for the same reason as codeql.yml and
+  # semgrep.yml: config/release-evidence-policy.v1.json requires a COMPLETED
+  # "Tier 5 Browser Smoke / Authenticated app smoke (real browser + DB)" job for
+  # the commit under evaluation, and a group keyed only on the ref let the next
+  # push cancel it — which makes that commit's evidence package unobtainable,
+  # not merely late. Superseding is unchanged on every other ref, where an
+  # in-flight browser run is still the right thing to cancel.
+  group: tier5-browser-${{ github.workflow }}-${{ github.ref }}-${{ github.ref_name == 'concept2cure-v2' && github.sha || 'ref' }}
   cancel-in-progress: true
 
 jobs:
