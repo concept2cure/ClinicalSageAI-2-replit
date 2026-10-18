@@ -1,0 +1,19 @@
+# AFTER (this fix round). 2026-10-18T19:53:41Z
+$ npx vitest run server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > refuses it in production ("true"), naming it 29ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > refuses it in production ("TRUE"), naming it 2ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > refuses it in production (" true "), naming it 2ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > boots in production when it is unset 2ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > is still accepted outside production (development) 2ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > is still accepted outside production (test) 2ms
+ ✓ server/startup/__tests__/env-security-self-test-nonblocking-posture.test.ts > validateEnvironment — SECURITY_SELF_TEST_NONBLOCKING > is still accepted outside production (staging) 2ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  19:53:42
+   Duration  384ms (transform 85ms, setup 68ms, import 19ms, tests 44ms, environment 0ms)
+
+exit=0

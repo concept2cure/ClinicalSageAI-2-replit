@@ -436,7 +436,13 @@ module "ecs" {
 
   # The worker runs the same image, so the same import-time refusals: with less
   # than the full contract it exits at boot. Whether a worker exists at all is
-  # a founder decision (B6+B7); while it does, it can start.
+  # a founder decision (B6+B7). As defined here it CANNOT boot: since MR-08
+  # stage 1 a production process with no CLAMAV_HOST fails the boot security
+  # self-test (clamav_connectivity, server/services/securityHealth.ts) and
+  # exits, and the worker task has no scanner and no CLAMAV_HOST, by design
+  # (tests/boot_contract.tftest.hcl). There is no worker image to run either
+  # (.github/workflows/deploy-aws.yml, "No worker image"). Giving it a scanner
+  # or retiring it is left to MR-14; nothing here changes the worker's behaviour.
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
