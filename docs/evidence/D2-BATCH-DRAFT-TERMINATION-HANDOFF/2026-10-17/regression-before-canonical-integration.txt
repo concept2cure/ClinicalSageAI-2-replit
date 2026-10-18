@@ -1,0 +1,1499 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:20.915Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:20.916Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:20.916Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:21.075Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.010Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.065Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA 83ms
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.091Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.116Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.140Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.164Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA 26ms
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA
+{
+  "timestamp": "2026-10-17T23:51:25.471Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's
+{
+  "timestamp": "2026-10-17T23:51:25.494Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's
+{
+  "timestamp": "2026-10-17T23:51:25.523Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA
+{
+  "timestamp": "2026-10-17T23:51:25.549Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA 306ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1 is also closed in the readers since 737c4e67c: the leaf reads <pre> as markup 1ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's 26ms
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA
+{
+  "timestamp": "2026-10-17T23:51:25.574Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA
+{
+  "timestamp": "2026-10-17T23:51:25.597Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag
+{
+  "timestamp": "2026-10-17T23:51:25.626Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it
+{
+  "timestamp": "2026-10-17T23:51:25.648Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said
+{
+  "timestamp": "2026-10-17T23:51:25.666Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA 25ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it 18ms
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three
+{
+  "timestamp": "2026-10-17T23:51:25.678Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record
+{
+  "timestamp": "2026-10-17T23:51:25.706Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three
+{
+  "timestamp": "2026-10-17T23:51:25.746Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said 11ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record 40ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three 25ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the figure rule reads <template> as a browser does (FIG, closed at HEAD by 737c4e67c) > an external <img> inside <template> is refused, and nothing is written 10ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:26.670Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:26.671Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:26.671Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:26.715Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 52ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result
+{
+  "timestamp": "2026-10-17T23:51:29.549Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's
+{
+  "timestamp": "2026-10-17T23:51:29.582Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model
+{
+  "timestamp": "2026-10-17T23:51:29.610Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 6ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 3ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 18ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 28ms
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record
+{
+  "timestamp": "2026-10-17T23:51:29.637Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify
+{
+  "timestamp": "2026-10-17T23:51:29.663Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim
+{
+  "timestamp": "2026-10-17T23:51:29.689Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 25ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 32ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 12ms
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's
+{
+  "timestamp": "2026-10-17T23:51:29.756Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's
+{
+  "timestamp": "2026-10-17T23:51:29.780Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-17T23:51:29.803Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+{
+  "timestamp": "2026-10-17T23:51:29.804Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-A: words typed inside < … > into the draft: does not verify, and every clause is the accepter's
+{
+  "timestamp": "2026-10-17T23:51:29.825Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 11ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 24ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 22ms
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the recorded draft and the accepter's own paragraph, as one claim: does not verify, and every clause is the accepter's
+{
+  "timestamp": "2026-10-17T23:51:29.849Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the draft with an asterisk AnA never wrote: does not verify, and every clause is the accepter's
+{
+  "timestamp": "2026-10-17T23:51:29.871Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's
+{
+  "timestamp": "2026-10-17T23:51:29.897Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows
+{
+  "timestamp": "2026-10-17T23:51:29.920Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-A: words typed inside < … > into the draft: does not verify, and every clause is the accepter's 24ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the recorded draft and the accepter's own paragraph, as one claim: does not verify, and every clause is the accepter's 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the draft with an asterisk AnA never wrote: does not verify, and every clause is the accepter's 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows 21ms
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: the audit reason, the version summary and lastDraftSource say what verified
+{
+  "timestamp": "2026-10-17T23:51:29.967Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft beside a forged paragraph: the audit reason, the version summary and lastDraftSource say what verified
+{
+  "timestamp": "2026-10-17T23:51:29.989Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a claim with no record behind it: the audit reason, the version summary and lastDraftSource say what verified 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > no claim at all: the audit reason, the version summary and lastDraftSource say what verified 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: the audit reason, the version summary and lastDraftSource say what verified 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft beside a forged paragraph: the audit reason, the version summary and lastDraftSource say what verified 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 276ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 21ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > selects numberless sections independently 56ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > renders one card per document, not one card for the shared number 49ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > accepts each card into its OWN document 50ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > marks the card accepted and reports the version its content superseded 30ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does NOT mark the card accepted when the write fails, and says why 28ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not treat a 200 carrying success:false as a write 29ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not send a second write while the first is in flight 23ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > records the framework the prose was actually drafted against 23ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the accept names the turn record the draft came from, not a model > sends the turn record id the batch returned, and no model 25ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > refuses to draft, and says why, instead of producing sample cards 8ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > produces no cards and sends no drafting request even when run() is invoked 910ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > never renders the fabricated prose, by any label 924ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > does not offer acceptance, and does not call anything accepted 921ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > says the service is unreachable in the header, not that this is a preview 15ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > presets the framework the documents recorded 13ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank when the documents record nothing 9ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank for a framework this build has no option for 10ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > renders a spine with no framework field at all — an older server is not an error 15ms
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:35.429Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:35.430Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:35.431Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-17T23:51:35.485Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified
+{
+  "timestamp": "2026-10-17T23:51:38.527Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified
+{
+  "timestamp": "2026-10-17T23:51:38.590Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 79ms
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified
+{
+  "timestamp": "2026-10-17T23:51:38.618Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp on one line, split at " and " (the splitter keeps " and" on the clause): the clause holding the shown words is the accepter's, though the draft verified
+{
+  "timestamp": "2026-10-17T23:51:38.647Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing
+{
+  "timestamp": "2026-10-17T23:51:38.676Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <xmp class="q"> the record does not have is not AnA's text, and is disclosed
+{
+  "timestamp": "2026-10-17T23:51:38.715Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp on one line, split at " and " (the splitter keeps " and" on the clause): the clause holding the shown words is the accepter's, though the draft verified 27ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing 40ms
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <textarea rows="2"> the record does not have is not AnA's text, and is disclosed
+{
+  "timestamp": "2026-10-17T23:51:38.743Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.767Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > a clause accepted as AnA's, carried into a raw-text region by a later save > loses AnA's name: the words the region now shows were never compared
+{
+  "timestamp": "2026-10-17T23:51:38.793Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <xmp class="q"> the record does not have is not AnA's text, and is disclosed 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <textarea rows="2"> the record does not have is not AnA's text, and is disclosed 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 27ms
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > an HTML draft (control): verifies, and its words are AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.830Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.852Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.874Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.894Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's
+{
+  "timestamp": "2026-10-17T23:51:38.916Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > a clause accepted as AnA's, carried into a raw-text region by a later save > loses AnA's name: the words the region now shows were never compared 37ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > an HTML draft (control): verifies, and its words are AnA's 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 21ms
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted
+{
+  "timestamp": "2026-10-17T23:51:38.937Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing
+{
+  "timestamp": "2026-10-17T23:51:38.957Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > accepting the same draft again names AnA: its clauses are AnA's, carried forward and accepted again
+{
+  "timestamp": "2026-10-17T23:51:38.978Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward
+{
+  "timestamp": "2026-10-17T23:51:39.009Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing 21ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > accepting the same draft again names AnA: its clauses are AnA's, carried forward and accepted again 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward 30ms
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-17T23:51:39.924Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:39.925Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+{
+  "timestamp": "2026-10-17T23:51:39.926Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.000Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.004Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.011Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.013Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "review",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.018Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.022Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "gap-analysis",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.028Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.030Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "vision",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.037Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.039Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.044Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database refusal"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome
+{
+  "timestamp": "2026-10-17T23:51:40.046Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "agent",
+    "reason": "private database rejection"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 22ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/draft' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/review' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/gap-analysis' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/vision' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 5ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/quick' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > recorded keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > refused keeps the generated output and reports the canonical outcome 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > '/agent' carries the actual model-provenance audit outcome > rejected keeps the generated output and reports the canonical outcome 2ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request
+{
+  "timestamp": "2026-10-17T23:51:40.099Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "quick",
+    "reason": "private delayed database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row
+{
+  "timestamp": "2026-10-17T23:51:40.103Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known
+{
+  "timestamp": "2026-10-17T23:51:40.156Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error
+{
+  "timestamp": "2026-10-17T23:51:40.163Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error
+{
+  "timestamp": "2026-10-17T23:51:40.165Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "draft/stream",
+    "reason": "private streaming database rejection"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not send the JSON response before a delayed audit rejection, and recovers on the next request 55ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > distinguishes a tamper-proof-only provenance record from a retrievable chained row 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > keeps the completion frame pending until the actual delayed audit outcome is known 53ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports recorded without turning generated content into a stream error 4ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports refused without turning generated content into a stream error 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > streaming provenance > the done frame reports rejected without turning generated content into a stream error 2ms
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt
+{
+  "timestamp": "2026-10-17T23:51:40.218Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch",
+    "reason": "private batch database rejection"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation
+{
+  "timestamp": "2026-10-17T23:51:40.222Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ai_generation",
+    "resourceType": "ai_drafting_surface",
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed
+[Claude Intelligence] Draft error: private drafting refusal
+{
+  "timestamp": "2026-10-17T23:51:40.226Z",
+  "level": "error",
+  "message": "[ana-intelligence] drafting failed",
+  "context": {
+    "err": "private drafting refusal",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > awaits every drafted result, combines a loss without hiding it behind a later success, and retains per-slot failures and the turn receipt 54ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > reports a successful batch only with the actual chained status of every generation 3ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > batch provenance > does not invent an AI generation or an aggregate audit outcome when every section failed 2ms
+ ✓ server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts > does not write generation provenance when drafting itself failed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > posts the complete result status in snake_case with its own document and recorded machine text 122ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason undefined without inventing a completed finish 35ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason null without inventing a completed finish 31ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason unknown without inventing a completed finish 33ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > keeps original machine text and exact termination metadata when the user edits accepted prose 40ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"max_tokens","truncated":false} while retaining the complete sibling in its original document slot 40ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"length","truncated":false} while retaining the complete sibling in its original document slot 34ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"chunk_timeout","truncated":false} while retaining the complete sibling in its original document slot 30ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":" max_tokens ","truncated":false} while retaining the complete sibling in its original document slot 31ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"unknown","truncated":true} while retaining the complete sibling in its original document slot 34ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"truncated":true} while retaining the complete sibling in its original document slot 31ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"end_turn","truncated":true} while retaining the complete sibling in its original document slot 32ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason end_turn without certifying completeness 24ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason unknown without certifying completeness 23ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason undefined without certifying completeness 29ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason null without certifying completeness 25ms
+stdout | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:51:42.694Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:42.695Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:51:42.695Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:51:42.738Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason max_tokens 30ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason length 5ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason chunk_timeout 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason max_tokens 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason length 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason chunk_timeout 6ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason end_turn 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason unknown 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason undefined 5ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > uses the canonical whitespace-trimmed cutoff vocabulary 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason end_turn with false flag passes only the cutoff gate 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason stop with false flag passes only the cutoff gate 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason stop_sequence with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason unknown with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason unrecognized_vendor_reason with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason undefined with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason null with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > does not add a new rejection for an entirely absent termination report 2ms
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-17T23:51:45.331Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:45.332Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-17T23:51:45.332Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-17T23:51:45.514Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for max_tokens 37ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for length 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for chunk_timeout 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical max_tokens reason despite a false flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical length reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical chunk_timeout reason despite a false flag 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors a canonical cutoff reason when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > keeps a complete generated draft usable and unsaved 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unrecognized_vendor_reason 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > keeps successful source identity and original slots while omitting cutoff prose in a mixed result 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > explicitly instructs saving only drafted slots and repairing cutoff slots 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains blank-response refusal as an ordinary failure 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains source-unavailable refusal and its successful sibling without leaking details 1ms
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T23:51:52.936Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:52.937Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T23:51:52.937Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued
+{
+  "timestamp": "2026-10-17T23:51:53.964Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "2.5",
+    "err": "SOURCE_UNAVAILABLE"
+  }
+}
+
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a spread loaded-context assertion before gateway handoff 6ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a json loaded-context assertion before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a manual loaded-context assertion before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer organizationId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer userId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer projectId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source onStream before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source enableTools before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a same-length extraction correction while the selected context waited 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > passes a genuine identity-bearing context through a private dispatch guard and text-free metadata 4ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > rechecks a retained context immediately before the stubbed provider boundary 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > suppresses returned content if current source identity changes during the response wait 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 0ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > pins request identity, source object and declared project context before the first await 1ms
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-17T23:51:54.748Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:54.750Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-17T23:51:54.750Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 4ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 10ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a round-limit stop and the rounds it ran 2ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a repeated-step stop, and a stop the person made 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps a stop even when nothing else about the turn was worth storing 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps no round count that is not a positive whole number 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a round-limit stop, with its rounds, and says not to reuse the work as complete 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names the limit without a number when the rounds were not kept 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a repeated-step stop 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person stopped 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was already followed by a later answer 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says nothing for a turn she finished 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a loop that ended for want of tools, on an answer that was cut off, did not finish 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > an answer that ended on its own, or whose ending is unknown, leaves the reason as it was 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a stop the loop already reports stands — it already says the turn stopped short 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > the next turn is told, and the record says, that the answer was cut off 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag 3ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason end_turn 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason unknown 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason provider_future_stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason undefined 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 1ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isTruncated > recognises the ceiling reasons every provider emits 1ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isTruncated > does not call a finished generation truncated 0ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isTruncated > does not invent truncation from silence 0ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isTruncated > tolerates surrounding whitespace 0ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isVerifiedComplete > is not the negation of isTruncated — silence confirms nothing 1ms
+ ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts > isVerifiedComplete > confirms only a positively-recorded finish 0ms
+
+ Test Files  13 passed (13)
+      Tests  263 passed (263)
+   Start at  23:51:19
+   Duration  36.66s (transform 7.95s, setup 366ms, import 21.19s, tests 12.26s, environment 912ms)
+

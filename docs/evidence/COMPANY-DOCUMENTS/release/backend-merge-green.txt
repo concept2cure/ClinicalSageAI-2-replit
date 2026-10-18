@@ -1,0 +1,189 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf 17ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an not yet effective registered version through generic upsertLeaf and writes no leaf 9ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong agency registered version through generic upsertLeaf and writes no leaf 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong country registered version through generic upsertLeaf and writes no leaf 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong application type registered version through generic upsertLeaf and writes no leaf 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong registered program registered version through generic upsertLeaf and writes no leaf 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > permits a matching registered draft for preparation and pins its original hash without claiming approval 14ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > keeps ordinary Vault placement available when a different registered document is expired 10ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > does not apply another organization’s registry metadata to this organization’s Vault version 10ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses re-pointing an existing ordinary leaf at an inapplicable legal version and preserves its old pin 15ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 15ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 5ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 13ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 9ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 13ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 12ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 16ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 24ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 13ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 14ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 16ms
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T23:44:33.332Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T23:44:33.336Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T23:44:33.339Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 618ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 8ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > GET returns ordinary settings without private company metadata and preserves the governed profile 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > PATCH returns ordinary settings without private company metadata and preserves the governed profile 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > reset returns ordinary settings without private company metadata and preserves the governed profile 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > refuses a named company profile mutation before acquiring a settings transaction 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > organization settings expose ordinary preferences without private company metadata, even to an admin 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > organization settings refuse a named company profile mutation before acquiring a settings transaction 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > organization settings refuse a named company profile mutation before acquiring a settings transaction 2ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-17T23:44:34.037Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 21ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses spoofed revision and approval through a generic settings door before update or audit 4ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses null clearing through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses removed section through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses in-place mutation through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > also refuses creation through a generic settings door when no company profile exists 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > allows the governed company door and records changed field names with its supplied reason 3ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > records legal archival through the unchanged original Vault reference and digest 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > keeps company prose, legal text and logo bytes out of the append-only audit while retaining provenance 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > preserves the exact company profile during an unrelated settings update 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > rolls back an authorized company change when its chained audit write fails 2ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > returns ordinary preferences without private company or Vault registry metadata 4ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > redacts the profile from an unrelated update result while preserving it in the writer input 3ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > refuses a named company library update before checking paid access or writing 1ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > refuses a named company library update before checking paid access or writing 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > matches the actual project, market, application and current approved version 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"active":false} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"effectiveOn":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"expiresOn":"2026-10-16"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"agencies":["EMA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"countries":["EU"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"submissionTypes":["NDA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"transmitRefusal":"not reviewed"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > never treats an unknown target as matching a restricted document 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > allows genuinely unrestricted applicability without inventing an agency requirement 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > keeps an expiry date valid through that calendar day 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > refuses an approved version when its registered validity has since expired 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > does not apply a retired inventory entry to unrelated Vault filing 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > binds validity to the exact source version and content hash 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"agency":"EMA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"country":"EU"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"submissionType":"NDA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":null} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"today":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > allows matching draft placement without granting approval 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > preserves ordinary Vault files and retired registry entries 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 2ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 1ms
+
+ Test Files  10 passed (10)
+      Tests  141 passed (141)
+   Start at  23:44:20
+   Duration  15.54s (transform 1.96s, setup 154ms, import 5.98s, tests 8.24s, environment 1ms)

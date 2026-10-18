@@ -551,7 +551,8 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
 export const PROGRAM_SPINE_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS organizations (
   id    SERIAL PRIMARY KEY,
-  name  TEXT NOT NULL
+  name  TEXT NOT NULL,
+  settings JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE IF NOT EXISTS regulatory_programs (

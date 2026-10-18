@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf 15ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an not yet effective registered version through generic upsertLeaf and writes no leaf 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong agency registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong country registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong application type registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong registered program registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > permits a matching registered draft for preparation and pins its original hash without claiming approval 11ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > keeps ordinary Vault placement available when a different registered document is expired 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > does not apply another organization’s registry metadata to this organization’s Vault version 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses re-pointing an existing ordinary leaf at an inapplicable legal version and preserves its old pin 13ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  22:54:10
+   Duration  4.96s (transform 1.75s, setup 77ms, import 2.58s, tests 1.93s, environment 0ms)

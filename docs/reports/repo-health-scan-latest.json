@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T23:02:55.137Z",
+  "generatedAt": "2026-10-17T23:57:05.099Z",
   "git": {
-    "sha": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+    "sha": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,10 +12,10 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 232,
+    "duplicateBasenames": 236,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 56,
+    "largeFilesByBytes": 57,
     "largeFilesByLines": 110
   },
   "findings": {
@@ -275,6 +275,20 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 8,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "surfaces",
         "count": 7,
         "paths": [
@@ -285,18 +299,6 @@
           "ui_kits/pdev/Surfaces.jsx",
           "ui_kits/risk/surfaces.jsx",
           "ui_kits/submission/surfaces.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 6,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
         ]
       },
       {
@@ -454,6 +456,16 @@
           "database/schema/projects.ts",
           "server/routes/c2c/projects.ts",
           "ui_kits/home/Projects.jsx"
+        ]
+      },
+      {
+        "basename": "provenance",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/v2/editor/provenance.ts",
+          "server/routes/chat/provenance.ts",
+          "server/services/company-documents/provenance.ts",
+          "server/services/evidence/provenance.ts"
         ]
       },
       {
@@ -730,15 +742,6 @@
         ]
       },
       {
-        "basename": "provenance",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/v2/editor/provenance.ts",
-          "server/routes/chat/provenance.ts",
-          "server/services/evidence/provenance.ts"
-        ]
-      },
-      {
         "basename": "resolution",
         "count": 3,
         "paths": [
@@ -847,6 +850,15 @@
         ]
       },
       {
+        "basename": "validation",
+        "count": 3,
+        "paths": [
+          "server/mcp/tools/validation.ts",
+          "server/services/company-documents/validation.ts",
+          "services/proof/validation.ts"
+        ]
+      },
+      {
         "basename": "academic-knowledge-service",
         "count": 2,
         "paths": [
@@ -927,6 +939,14 @@
         ]
       },
       {
+        "basename": "assembly",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/pdev/surfaces/Assembly.tsx",
+          "shared/authoring/assembly.ts"
+        ]
+      },
+      {
         "basename": "assemblyline.test",
         "count": 2,
         "paths": [
@@ -948,6 +968,14 @@
         "paths": [
           "server/utils/authedOrgId.js",
           "server/utils/authedOrgId.ts"
+        ]
+      },
+      {
+        "basename": "authoring-assembly",
+        "count": 2,
+        "paths": [
+          "server/routes/authoring-assembly.ts",
+          "server/services/authoring/authoring-assembly.ts"
         ]
       },
       {
@@ -1076,6 +1104,22 @@
         "paths": [
           "server/routes/c2c/communication-center.ts",
           "shared/types/communication-center.ts"
+        ]
+      },
+      {
+        "basename": "company-documents",
+        "count": 2,
+        "paths": [
+          "server/routes/company-documents.ts",
+          "shared/company-documents.ts"
+        ]
+      },
+      {
+        "basename": "company-documents.test",
+        "count": 2,
+        "paths": [
+          "server/routes/__tests__/company-documents.test.ts",
+          "shared/__tests__/company-documents.test.ts"
         ]
       },
       {
@@ -2127,14 +2171,6 @@
         ]
       },
       {
-        "basename": "validation",
-        "count": 2,
-        "paths": [
-          "server/mcp/tools/validation.ts",
-          "services/proof/validation.ts"
-        ]
-      },
-      {
         "basename": "vault-search.test",
         "count": 2,
         "paths": [
@@ -2171,7 +2207,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1149235
+        "bytes": 1149500
       },
       {
         "file": "shared/schema.ts",
@@ -2183,7 +2219,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 399590
+        "bytes": 401312
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2191,7 +2227,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 306319
+        "bytes": 308491
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2207,7 +2243,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 187756
+        "bytes": 188702
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2227,7 +2263,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 159117
+        "bytes": 159236
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2262,16 +2298,16 @@
         "bytes": 138809
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 137941
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 137319
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "bytes": 136480
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2371,7 +2407,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 107769
+        "bytes": 107786
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2392,6 +2428,10 @@
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 100392
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 100085
       }
     ],
     "largeFilesByLines": [
@@ -2405,11 +2445,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8567
+        "lines": 8593
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6225
+        "lines": 6265
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2441,7 +2481,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3832
+        "lines": 3845
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2461,7 +2501,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3503
+        "lines": 3505
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2480,16 +2520,16 @@
         "lines": 3119
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 3051
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3046
       },
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3036
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 3032
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2601,7 +2641,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2139
+        "lines": 2142
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2841,26 +2881,26 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 434,
+      "duplicateGroups": 440,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 162,
+      "duplicateGroups": 164,
       "largeByBytes": 0,
       "largeByLines": 4
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 86,
+      "duplicateGroups": 89,
       "largeByBytes": 3,
       "largeByLines": 2
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 58,
-      "largeByBytes": 12,
+      "duplicateGroups": 59,
+      "largeByBytes": 13,
       "largeByLines": 17
     },
     {

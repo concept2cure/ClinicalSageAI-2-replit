@@ -25,7 +25,9 @@
  *
  * @module server/services/report-os/pdf/run-pdf
  */
-import { GREY, MARGIN, Writer, iso } from './writer';
+import { GREY, Writer, iso } from './writer';
+import { prepareReportPdfBranding } from './company-branding';
+import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
 import type { RenderedReport, ReportBlock } from '../render/types';
 import type { RunSealView } from '../sealing/run-seal';
 
@@ -49,10 +51,12 @@ export interface RunPdfInput {
   runBy: string | null;
   exportId: string;
   exportedAt: string;
+  /** Optional export presentation, kept outside the retained/sealed report body. */
+  companyBranding?: CompanyDocumentProfile | null;
 }
 
 /** The admitted retained document and its run facts, independent of export identity. */
-export type RunPdfContent = Omit<RunPdfInput, 'exportId' | 'exportedAt'>;
+export type RunPdfContent = Omit<RunPdfInput, 'exportId' | 'exportedAt' | 'companyBranding'>;
 
 type AnyBlock = Record<string, any>;
 const list = (v: unknown): any[] => (Array.isArray(v) ? v : []);
@@ -136,7 +140,7 @@ function writeReadinessRing(w: Writer, s: Record<string, unknown>, label: string
   w.write(`${label}: ${s.value} of 100`, { size: 10, bold: true, indent: 8 });
   const y = w.reserve(86);
   const p = w.pdf;
-  const cx = MARGIN + 48, cy = y + 40, radius = 30;
+  const cx = w.marginLeft + 48, cy = y + 40, radius = 30;
   p.save().lineWidth(8).strokeColor('#e1e5e9').circle(cx, cy, radius).stroke();
   if (s.value > 0) {
     const steps = Math.max(1, Math.ceil(s.value));
@@ -159,11 +163,12 @@ function writeBars(w: Writer, s: Record<string, unknown>, label: string): boolea
   // The recorded label/value contract used by the canvas.
   w.write(label, { size: 10, bold: true, indent: 8 });
   const max = Math.max(1, ...rows.map((r) => r.value as number));
+  const chartWidth = Math.min(350, w.contentWidth - 16);
   for (const row of rows) {
     w.write(`${row.label}: ${row.value}`, { size: 9, indent: 8 });
     const y = w.reserve(13);
-    w.pdf.save().fillColor('#edf0f2').rect(MARGIN + 8, y, 350, 6).fill();
-    w.pdf.fillColor('#216e58').rect(MARGIN + 8, y, 350 * (row.value as number) / max, 6).fill().restore();
+    w.pdf.save().fillColor('#edf0f2').rect(w.marginLeft + 8, y, chartWidth, 6).fill();
+    w.pdf.fillColor('#216e58').rect(w.marginLeft + 8, y, chartWidth * (row.value as number) / max, 6).fill().restore();
   }
   writeChartExtras(w, s, ['data', 'label'], rows.some((r) => Object.keys(r).some((key) => key !== 'label' && key !== 'value')));
   return true;
@@ -174,7 +179,8 @@ function writeTrend(w: Writer, s: Record<string, unknown>, label: string): boole
   if (!points.length || !points.every(finite)) return false;
   w.write(`${label}: ${points.join(', ')}`, { size: 9, indent: 8 });
   const y = w.reserve(100), low = Math.min(0, ...points), high = Math.max(1, ...points);
-  const coord = (v: number, i: number) => [MARGIN + 8 + i * 350 / Math.max(1, points.length - 1), y + 80 - (v - low) * 70 / (high - low)];
+  const chartWidth = Math.min(350, w.contentWidth - 16);
+  const coord = (v: number, i: number) => [w.marginLeft + 8 + i * chartWidth / Math.max(1, points.length - 1), y + 80 - (v - low) * 70 / (high - low)];
   const p = w.pdf;
   p.save().lineWidth(1.5).strokeColor('#216e58');
   points.forEach((v, i) => { const [x, yy] = coord(v, i); if (i === 0) p.moveTo(x, yy); else p.lineTo(x, yy); });
@@ -228,7 +234,7 @@ export function writeRunPdfContent(w: Writer, input: RunPdfContent): void {
 
 /** Build the saved report's PDF; governance identity is manifested on every page. */
 export async function buildRunPdf(input: RunPdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
-  const w = new Writer({ title: `${input.typeLabel}, run ${input.run.id}`, exportId: input.exportId, exportedAt: input.exportedAt });
+  const w = new Writer({ title: `${input.typeLabel}, run ${input.run.id}`, exportId: input.exportId, exportedAt: input.exportedAt }, await prepareReportPdfBranding(input.companyBranding));
   writeRunPdfContent(w, input);
   w.stampPages((n, total) => `Run #${input.run.id} · Export ${input.exportId} · Exported ${input.exportedAt} (UTC) · Page ${n} of ${total}`,
     input.run.status === 'final' ? undefined : `NOT FINAL (${input.run.status.toUpperCase()})`);

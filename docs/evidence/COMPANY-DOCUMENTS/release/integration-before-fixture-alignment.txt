@@ -1,0 +1,1306 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T23:46:34.513Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:46:34.515Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T23:46:34.515Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T23:46:34.793Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 1596ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=unknown) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=Reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=reports&content=manifest) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[]=reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[kind]=reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 948ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 222ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > applies the current export plan before any constituent body or seal read 71ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=reports) 47ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 12ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes
+{
+  "timestamp": "2026-10-17T23:46:39.811Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "33333333-3333-4333-8333-333333333333",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 459ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 421ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses a missing retained row instead of exporting a subset 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,42]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[],"items":[]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,9007199254740992],"items":[{"runId":42,"runUuid":"00000000-0000-4000-8000-000000000042","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":9007199254740992,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":42,"runUuid":"invalid-retained-uuid","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"organizationId":99}) 15ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"runUuid":"other-run"}) 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"reportTypeId":"other.type"}) 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"scopeId":"PRIVATE-SCOPE-MARKER"}) 20ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a mismatched sealed constituent without exporting the other report 22ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event
+{
+  "timestamp": "2026-10-17T23:46:40.333Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "verification database unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 354ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event 23ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 379ms
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:42.167Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:48.834Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:46:48.835Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:46:48.835Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:49.799Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f891cedf-e1c1-49f9-aeb5-525087876ee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:49.819Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f891cedf-e1c1-49f9-aeb5-525087876ee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:49.830Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f891cedf-e1c1-49f9-aeb5-525087876ee3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:49.891Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:50.097Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_parity.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:50.107Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:50.123Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4e93a1d8-7b5b-41b0-82b3-0a6c892b2f60",
+    "code": "authoring-f891cedf-e1c1-49f9-aeb5-525087876ee3",
+    "type": "MODULE_2",
+    "size": 4436,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+{
+  "timestamp": "2026-10-17T23:46:50.138Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc f891cedf-e1c1-49f9-aeb5-525087876ee3 by a***@canvas.example",
+  "context": {}
+}
+
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > both compile to a materialized PDF leaf with nothing unresolved or unfinalized
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.235Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 44d2110a-dba7-44a8-932f-ebbb87a616bc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.248Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 44d2110a-dba7-44a8-932f-ebbb87a616bc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.257Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 44d2110a-dba7-44a8-932f-ebbb87a616bc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.280Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.308Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.311Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.318Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "636728e9-a7aa-40bb-b36f-77df5ab1356a",
+    "code": "authoring-44d2110a-dba7-44a8-932f-ebbb87a616bc",
+    "type": "MODULE_2",
+    "size": 3247,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+{
+  "timestamp": "2026-10-17T23:46:50.331Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 44d2110a-dba7-44a8-932f-ebbb87a616bc by a***@canvas.example",
+  "context": {}
+}
+
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > the bytes differ — by construction, not by timestamps — and every authored section body is in both
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > (a) is deterministic across compiles; (b) is the stored bytes themselves
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > PIN SEMANTICS DIFFER: the coauthor pin is the copy TEXT, the vault pin is the emitted PDF bytes
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > dispatch readiness, release (freeze/dispatch/transmit) and the transmit blocker rule give the same verdict
+ ↓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version > OPEN GAP: a vault leaf carries no authoring lineage into the governance manifest
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-17T23:46:50.368Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 37e0bf10-2493-4668-a6be-6adbae0aa1b1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-17T23:46:50.376Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 37e0bf10-2493-4668-a6be-6adbae0aa1b1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-17T23:46:50.384Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 37e0bf10-2493-4668-a6be-6adbae0aa1b1 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why 136ms
+   → column o.settings does not exist
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place
+{
+  "timestamp": "2026-10-17T23:46:50.478Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.529Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6ff9d205-c982-4728-8add-f5ee85147e2f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.538Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6ff9d205-c982-4728-8add-f5ee85147e2f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.555Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6ff9d205-c982-4728-8add-f5ee85147e2f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > OPEN GAP: with the engine this repo ships (no Chromium), file-to-vault PDF is refused, so step 4 has no PDF to place 156ms
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.666Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Clinical_Overview_docx.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.668Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.676Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b949fff6-8e97-458e-b7f2-a39d43809669",
+    "code": "authoring-6ff9d205-c982-4728-8add-f5ee85147e2f",
+    "type": "MODULE_2",
+    "size": 9340,
+    "hasText": true
+  }
+}
+
+stdout | server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+{
+  "timestamp": "2026-10-17T23:46:50.689Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 6ff9d205-c982-4728-8add-f5ee85147e2f by a***@canvas.example",
+  "context": {}
+}
+
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17) 232ms
+   → column o.settings does not exist
+ □ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > step 4: placement passes an approved Vault version (or files one) and upsertLeaf records a vault_documents leaf — no product path does yet
+ □ server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > step 4: re-filing an edited document must supersede (supersedes_id) the version a live leaf pins; file-to-vault passes no supersedesDocumentId today
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 663ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 189ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 205ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 347ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 127ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 129ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 137ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 240ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 71ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 127ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 107ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 318ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 86ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 122ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 148ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > includes complete distinct bodies in recorded order with tables, recorded charts, source/calculation evidence and multilingual text 1033ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > keeps each run identity/status on every body and calculation appendix overflow page without marking another run 893ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > marks a legacy final reconstructed copy as unverified on each page and retains missing signature facts 415ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > refuses an empty packet, repeated run, mismatched document identity or contradictory seal/source before rendering 1ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > inherits the canonical glyph refusal instead of substituting packet evidence 154ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 589ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 389ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 1964ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 133ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:47:00.965Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'agency' scope no longer matches the recorded target 44ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'country or region' scope no longer matches the recorded target 24ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'submission type' scope no longer matches the recorded target 23ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 18ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 29ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict 14ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a nda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a BLA supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a anda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > with the 356h filed under 1.1, nothing is missing 8ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > keeps a registered Vault original outside the admitted destination undetermined and refuses an observed scope change after admission 52ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > verifies the canonical section body pin and carries its actual source key, never the filing code 34ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a drafted source with long pinned words is not finalized content 22ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a review source with long pinned words is not finalized content 17ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an empty structured outline stays undetermined rather than becoming content from its title 17ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a retained placeholder with its own valid pin is known non-substantive 16ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > applies each placement pin independently for two leaves naming the same source 16ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an accessible sibling cannot authorize its body for this submission 17ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unassigned private actor is refused before source parent or body reads 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a failed body query is unavailable, never a success with missing sources 16ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > late body alteration and actor revocation refuse already assembled evidence 27ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound unified_documents source never causes a body read or a resolved claim 12ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound rendered_leaf_files source never causes a body read or a resolved claim 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a source executor or reconstructed admission cannot substitute for the actual request 18ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > retained copy proof reads its exact historical seal, not a changed current draft 28ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a moved Vault parent refuses before a second provider fetch 20ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization null before reading labels or retained bytes 19ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization 8 before reading labels or retained bytes 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a transfer to a different still-accessible unique project anchor refuses before repeated bytes 21ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > duplicate Vault pointers fetch bytes once while each retained placement keeps its own pin verdict 32ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a retained provider mutation during the read refuses its old matching byte proof 22ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-10-17T23:47:12.277Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-10-17T23:47:12.278Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 11,
+    "skipped": 3,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-10-17T23:47:12.323Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-10-17T23:47:12.323Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-10-17T23:47:12.324Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+{
+  "timestamp": "2026-10-17T23:47:12.352Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+{
+  "timestamp": "2026-10-17T23:47:12.352Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row
+{
+  "timestamp": "2026-10-17T23:47:12.383Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "6b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row
+{
+  "timestamp": "2026-10-17T23:47:12.384Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "6b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "ivdr",
+    "materialized": 12,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 109ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 35ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped 29ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row 31ms
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing
+{
+  "timestamp": "2026-10-17T23:47:12.412Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "regulatory_program",
+    "resourceId": "8b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c"
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing
+{
+  "timestamp": "2026-10-17T23:47:12.412Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "8b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "ivdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-10-17T23:47:12.447Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-10-17T23:47:12.447Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-10-17T23:47:12.473Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+{
+  "timestamp": "2026-10-17T23:47:12.473Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 4,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 9,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing 28ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 35ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 25ms
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-17T23:47:16.187Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-17T23:47:16.190Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 338ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 626ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 531ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 216ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 459ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 155ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > resolves a vault leaf by its uuid and verifies the pin against content_hash 12ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > reports a pin that no longer matches the stored content as content_changed — never silently passed 4ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when the document belongs to another organization’s programme 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when no such document exists 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > a vault leaf carrying only an integer names nothing (no_pointer) 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > still resolves an integer-keyed leaf, pin verified against sha256(content) 4ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > resolves an unpinned leaf and says the pin was never taken 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > is missing for another organization’s document 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > a pinned leaf whose document content was emptied after filing is content_changed (unverifiable) 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > names an unplaceable table rather than looking it up 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > a leaf with no table is no_pointer 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > resolves a batch in input order, reading each distinct pointer once 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — fresh first 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > compareDocumentPin (pure) > unpinned / unverifiable / match / mismatch 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > looks up exactly the tables the write side verifies and the assembler materializes 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > the pure uuid-keyed set is the write side’s 0ms
+stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-17T23:47:24.305Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval 27ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an upload nobody reviewed is not finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at authoring is not finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at in_review is not finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at approved is finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at placed is finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at packaged is finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at submitted is finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version a later one superseded is not finalized for a new assembly 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approval for different bytes is not an approval of these 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > names the leaf by its file, so the refusal says which document 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > transmit, freeze and dispatch refuse it, naming the document and why 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 17ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 11ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 2ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > uses actual program, sequence destination and application type for a frozen sequence 33ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > does not resolve another tenant or a sequence whose parent organization disagrees 3ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > reads a changed recorded destination afresh, including an already frozen sequence 3ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > keeps an unknown region unknown instead of inventing a destination for restricted documents 0ms
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T23:47:32.683Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:47:32.684Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T23:47:32.684Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T23:47:32.730Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id
+{
+  "timestamp": "2026-10-17T23:47:32.986Z",
+  "level": "error",
+  "message": "[report-os] report run not recorded on the audit chain; rolled back",
+  "context": {
+    "error": "Report run could not be recorded on the audit chain"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded
+{
+  "timestamp": "2026-10-17T23:47:32.998Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "Failed query: insert into \"report_snapshots\" (\"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, default) returning \"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\"\nparams: 41,7,project,11,1,true,{\"reportTypeId\":\"readiness.executive_digest\",\"providers\":[],\"summary\":{\"scopeLabel\":\"Reporting project\",\"computedScope\":\"project\"},\"confidence\":90},5",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 30ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 21ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 652ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 133ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-17T23:47:34.099Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 154ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses unavailable company configuration before sending or recording an export 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 138ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 137ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-17T23:47:34.530Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 131ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 158ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 3ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 73ms
+   → Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-10-17T23:47:38.431Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-10-17T23:47:38.433Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-10-17T23:47:38.433Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 61ms
+ × server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 53ms
+   → Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+ × server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 10ms
+   → Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 1ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so
+{
+  "timestamp": "2026-10-17T23:47:45.714Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 201ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-17T23:47:45.859Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-17T23:47:45.860Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 142ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-17T23:47:46.009Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-17T23:47:46.010Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded
+{
+  "timestamp": "2026-10-17T23:47:46.021Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLE_BLOCKED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 150ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 10ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-17T23:47:46.149Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "bug below the guard"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-17T23:47:46.150Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 129ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 256ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 91ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 226ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 95ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > renders the same bytes from the same recorded export, whenever it is rendered 340ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 155ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: one approved authoring document, placed as a coauthor copy vs filed as a Vault version
+error: column o.settings does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 107, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn', query: 'SELECT o.settings #> \'{companyDocuments,legalDocuments}\' AS company_legal_documents\n       FROM organizations o WHERE o.id=$1', params: [ 1 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+Error: Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ vaultVersionNotTransmittable server/services/vault/vault-lifecycle.ts:164:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:736:32
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:275:7
+ ❯ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts:102:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 113, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '413', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+Error: Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ vaultVersionNotTransmittable server/services/vault/vault-lifecycle.ts:164:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:736:32
+ ❯ Module.assembleSequence server/services/ectd/assemble-from-core.ts:275:7
+ ❯ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts:118:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 113, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '413', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+ FAIL  server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+error: column o.settings does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 107, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn', query: 'SELECT o.settings #> \'{companyDocuments,legalDocuments}\' AS company_legal_documents\n       FROM organizations o WHERE o.id=$1', params: [ 1 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+Error: Failed query: SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id
+     AND succ.program_id = d.program_id
+     AND succ.document_code IS NOT DISTINCT FROM d.document_code
+     AND succ.organization_id = d.organization_id
+     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$1) AS company_legal_documents
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT stage, content_hash FROM canonical_documents
+          WHERE organization_id = $2 AND source_refs ? 'vault_documents'
+            AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+          ORDER BY created_at, canonical_id LIMIT 1
+       ) c ON TRUE
+      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+params: 7,7,33333333-3333-4333-8333-333333333333,7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ vaultVersionNotTransmittable server/services/vault/vault-lifecycle.ts:164:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:736:32
+ ❯ Module.assembleTechnicalFileFromCore server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts:298:7
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:121:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ] }
+Caused by: error: relation "organizations" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 113, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '413', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT NOT EXISTS (SELECT 1 FROM vault.documents succ WHERE succ.supersedes_id = d.id\n     AND succ.program_id = d.program_id\n     AND succ.document_code IS NOT DISTINCT FROM d.document_code\n     AND succ.organization_id = d.organization_id\n     AND succ.deleted_at IS NULL AND d.deleted_at IS NULL) AS current, c.stage, c.content_hash,\n            (SELECT o.settings #> \'{companyDocuments,legalDocuments}\' FROM organizations o WHERE o.id=$1) AS company_legal_documents\n       FROM vault.documents d\n       LEFT JOIN LATERAL (\n         SELECT stage, content_hash FROM canonical_documents\n          WHERE organization_id = $2 AND source_refs ? \'vault_documents\'\n            AND source_refs -> \'vault_documents\' ->> \'nativeId\' = d.id::text\n          ORDER BY created_at, canonical_id LIMIT 1\n       ) c ON TRUE\n      WHERE d.id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL', params: [ 7, 7, '33333333-3333-4333-8333-333333333333', 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  3 failed | 16 passed (19)
+      Tests  5 failed | 181 passed | 6 skipped | 2 todo (194)
+   Start at  23:46:31
+   Duration  76.11s (transform 7.43s, setup 330ms, import 26.67s, tests 46.37s, environment 2ms)

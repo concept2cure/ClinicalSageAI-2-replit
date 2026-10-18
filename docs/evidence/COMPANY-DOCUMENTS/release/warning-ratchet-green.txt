@@ -1,0 +1,9 @@
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (ff5e065a7) -- 65 lintable file(s) changed; linting both versions of each...
+
+    +2  shared/templates/template-spec.ts  (0 -> 2)
+         shared/templates/template-spec.ts:214:8  max-lines-per-function  Function 'normalizeTemplateSpec' has too many lines (106). Maximum allowed is 100.
+         shared/templates/template-spec.ts:214:8  complexity  Function 'normalizeTemplateSpec' has a complexity of 22. Maximum allowed is 15.
+    -1  server/types/pdfkit.d.ts  (1 -> 0)
+    -2  server/services/templates/templateSpec.ts  (2 -> 0)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since origin/concept2cure-v2.

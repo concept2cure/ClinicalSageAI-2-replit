@@ -41,6 +41,9 @@ import { ReportTypeNotComputed, computeRunForType } from '../services/report-os/
 import { buildRunPdf, type RunPdfContent } from '../services/report-os/pdf/run-pdf';
 import { buildBundlePdf, buildReportPackPdf, type ReportPackPdfItem } from '../services/report-os/pdf/bundle-pdf';
 import { ReportingPdfError } from '../services/report-os/pdf/writer';
+import { REPORT_PDF_BRANDING_RENDERER } from '../services/report-os/pdf/company-branding';
+import { companyLetterheadForPurpose, companyProfileHash, CompanyDocumentsError } from '../services/company-documents/profile';
+import type { CompanyDocumentProfile } from '@shared/company-documents';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -1767,6 +1770,12 @@ async function readRetainedRunPdfSource(client: PoolClient, run: typeof reportRu
   return { ...(await readSealForExport(client, run)), runBy: await actorName(client, run.requestedBy) };
 }
 
+/** The presentation snapshot is distinct from the retained/sealed content hash. */
+function reportBrandingAudit(profile: CompanyDocumentProfile | null) {
+  return profile ? { applied: true, revision: profile.revision, profileHash: companyProfileHash(profile), renderer: REPORT_PDF_BRANDING_RENDERER }
+    : { applied: false };
+}
+
 function retainedRunPdfContent(
   run: typeof reportRuns.$inferSelect,
   reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
@@ -1784,7 +1793,10 @@ async function sendRunPdf(
   run: typeof reportRuns.$inferSelect,
   reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
 ) {
-  const source = await inTenantTransaction(run.organizationId, client => readRetainedRunPdfSource(client, run));
+  const { source, companyBranding } = await inTenantTransaction(run.organizationId, async client => ({
+    source: await readRetainedRunPdfSource(client, run),
+    companyBranding: await companyLetterheadForPurpose(run.organizationId, 'report', client),
+  }));
   const { view } = source;
   if (view.verification.verdict === 'mismatch') return refuseSealMismatch(res, run.id, 'exported');
   const status = view.sealed ? 'final' : run.status;
@@ -1794,6 +1806,7 @@ async function sendRunPdf(
     ...retainedRunPdfContent(run, reportType, source),
     exportId,
     exportedAt,
+    companyBranding,
   });
   return sendRecordedPdf(
     req,
@@ -1806,6 +1819,7 @@ async function sendRunPdf(
       details: {
         runUuid: run.runUuid, reportTypeId: run.reportTypeId, status, exportId, exportedAt,
         pages: pdf.pages, sealVerdict: view.sealed ? view.verification.verdict : null,
+        companyBranding: reportBrandingAudit(companyBranding),
       },
     },
     { filename: `report-run-${run.id}.pdf`, buffer: pdf.bytes }
@@ -1855,6 +1869,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
     return await sendRunPdf(req, res, run, reportType);
   } catch (error: any) {
     if (error instanceof ReportingPdfError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    if (error instanceof CompanyDocumentsError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     return serverError(res, logger, 'loading export.pdf', error);
   }
@@ -2300,13 +2315,14 @@ router.get('/bundles', async (req: Request, res: Response) => {
  * recorded on the chain row with how many reports were final.
  */
 async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRecord) {
-  const { now, bundledBy } = await inTenantTransaction(bundle.organizationId, async (client) => {
+  const { now, bundledBy, companyBranding } = await inTenantTransaction(bundle.organizationId, async (client) => {
     const { rows } = await client.query('SELECT id, status FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])', [
       bundle.organizationId,
       bundle.runIds,
     ]);
     const statuses = new Map((rows as Array<{ id: unknown; status: unknown }>).map((r) => [Number(r.id), String(r.status)]));
-    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null) };
+    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null),
+      companyBranding: await companyLetterheadForPurpose(bundle.organizationId, 'report', client) };
   });
   const items = bundle.items.map((i) => ({
     runId: i.runId, label: i.reportTypeLabel, scopeType: i.scopeType, scopeId: i.scopeId,
@@ -2314,7 +2330,7 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
   }));
   const exportId = randomUUID();
   const exportedAt = new Date().toISOString();
-  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt });
+  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding });
   return sendRecordedPdf(
     req,
     res,
@@ -2326,6 +2342,7 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
       details: {
         content: 'manifest', bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
         exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
+        companyBranding: reportBrandingAudit(companyBranding),
       },
     },
     { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes }
@@ -2491,7 +2508,7 @@ async function requireReportPackEntitlement(client: PoolClient, bundle: ReportBu
 async function sendReportPackPdf(req: Request, res: Response, organizationId: number, bundleId: string) {
   const exportId = randomUUID();
   const exportedAt = new Date().toISOString();
-  const { bundle, pdf } = await inTenantTransaction(organizationId, async client => {
+  const { bundle, pdf, companyBranding } = await inTenantTransaction(organizationId, async client => {
     const bundle = await loadBundleById(organizationId, bundleId, onTransaction(client));
     if (!bundle || bundle.organizationId !== organizationId) reportPackNotFound();
     requireCompleteReportPack(bundle);
@@ -2504,18 +2521,20 @@ async function sendReportPackPdf(req: Request, res: Response, organizationId: nu
     const runs = await readReportPackRuns(client, bundle);
     const { items, fingerprints } = await readReportPackSources(client, bundle, runs, types);
     const bundledBy = await actorName(client, bundle.createdBy ?? null);
-    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt });
+    const companyBranding = await companyLetterheadForPurpose(organizationId, 'report', client);
+    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt, companyBranding });
     await requireCurrentReportPackAccess(client, req, bundle, runs);
     await requireReportPackEntitlement(client, bundle);
     await requireReportPackSourcesStillCurrent(client, bundle, fingerprints);
     await requireReportPackInputsStillCurrent(client, bundle, types, bundledBy);
-    return { bundle, pdf };
+    return { bundle, pdf, companyBranding };
   });
   return sendRecordedPdf(req, res, {
     organizationId, action: 'report_os.bundle_exported', resourceType: 'report_bundle', resourceId: bundleId,
     details: { content: 'reports', bundleId, runIds: bundle.runIds,
       reportTypeIds: [...new Set(pdf.constituents.map(item => item.reportTypeId))], exportId, exportedAt, pages: pdf.pages,
       finalAtExport: pdf.constituents.filter(item => item.statusAtRead === 'final').length,
+      companyBranding: reportBrandingAudit(companyBranding),
       constituents: pdf.constituents },
   }, { filename: `report-pack-${bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes });
 }
@@ -2537,7 +2556,7 @@ function sendBundlePdfError(res: Response, error: unknown) {
     const refusal = error.decision;
     return res.status(403).json({ error: `Exporting this bundle requires the ${refusal.requiredTier} plan.`, feature: refusal.feature, requiredTier: refusal.requiredTier, tier: refusal.tier });
   }
-  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError) {
+  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError || error instanceof CompanyDocumentsError) {
     return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
   }
   return serverError(res, logger, 'loading export.pdf', error);
