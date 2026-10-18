@@ -2129,8 +2129,10 @@ export function DocumentWorkbench({
     docSealed,
     editRefusal: readRefusal || currentMetadata?.refused || partialRead
       ? actRefusal(docAccess.placeIntoFiling) : editRefusal,
+    savedSourceReuseRefusal: aiDraftOpen ? 'Close the draft review before reusing saved sources.' : null,
     editorDirty: dirty,
-    isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
+    isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld
+      && !partialRead && !currentMetadata?.refused && !readRefusal,
     onStructureBuilt: async data => {
       if (data.docId !== activeDocId || data.programId !== programId
         || creationScopeRef.current !== assemblyHostScope || !aliveRef.current) return;

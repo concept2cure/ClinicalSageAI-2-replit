@@ -1,0 +1,15 @@
+{
+  "gate": "ci:gateway-bypass",
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:gateway-bypass"
+  ],
+  "executionBase": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "startedAt": "2026-10-18T00:42:40.597707+00:00",
+  "elapsedSeconds": 9.901,
+  "exitCode": 0,
+  "rawSha256": "12d16e0a6843ef261d290b94ea3e832326fc4632370d683ff3d0eba0c5a5c7d2",
+  "output": "[check-gateway-bypass] OK \u2014 no new bypasses (8 baselined site(s) tolerated).\n"
+}

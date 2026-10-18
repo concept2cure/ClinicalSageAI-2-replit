@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-18T00:34:32.497274+00:00",
+  "status": "pass",
+  "serverPort": 5191,
+  "portConnectEx": 111,
+  "ownedServerProcesses": {
+    "43181": "absent",
+    "44076": "absent",
+    "45026": "absent"
+  },
+  "serverStopped": true,
+  "productionSourceDrift": [],
+  "fixtureSourceDrift": [],
+  "fixtureValidationDrift": [],
+  "missingReadmeLinks": [],
+  "trailingWhitespace": [],
+  "runnerCleanup": "Browser runner closes its owned Chromium in finally; all owned Vite servers were stopped. Only new saved-source-reuse browser evidence files were written, with no production edits, Git staging/history operations, provider use, database mutation or deployment. Prior source-first assembly packet was read and copied from, never written."
+}

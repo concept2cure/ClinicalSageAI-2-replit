@@ -1,0 +1,20 @@
+[
+  {
+    "path": "current-read-red.txt.gz",
+    "uncompressedBytes": 20120,
+    "uncompressedSha256": "7c06fafea346e4dd4dfe923d185e900a1c0226258405d3240dfd2867d3a9c723",
+    "archiveSha256": "0a42b18aab0c2110687178b4eb40316b1993cafc3a8909432600be3405d77b0f"
+  },
+  {
+    "path": "integration-node22.txt.gz",
+    "uncompressedBytes": 81071,
+    "uncompressedSha256": "eb35425d905045ddd1cb5fd438900203fa87c8f69a7bf9e11c395cfea73408c8",
+    "archiveSha256": "b6475c63bbac1d1b5a6dd84df2d4008cae49972770bb0cbf87d5e472cd9397f3"
+  },
+  {
+    "path": "lint.json.gz",
+    "uncompressedBytes": 331158,
+    "uncompressedSha256": "93731d81a7dbd7684a5ad25517a9e76a78e5f57d0c832f822ac05fad5f636fcd",
+    "archiveSha256": "8c3e69ae5f45490300a4357dc5e3774b06d88922d8860fe82745b66b8e616cc9"
+  }
+]

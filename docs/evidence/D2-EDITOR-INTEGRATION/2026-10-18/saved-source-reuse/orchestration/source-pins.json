@@ -1,0 +1,19 @@
+{
+  "algorithm": "sha256",
+  "sourceFrozen": true,
+  "files": {
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "21c0a2d9d5ca0e6d5552f78c8cb908b8431d6413c8d3688aecc6d3aee4fecd9b",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "aa55b59e37fe7786613994831ce477906b14dddb501db08e4653984f7be7babc",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts": "dfb6c3c3be6ad59eae3082e0ca107e610bd640dc7b563dce384107c05f7df39a",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts": "d622f1e88d9936a45a057fd57196a2947176b9913212a5f545fb7e66e6099565",
+    "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx": "55cb4ade538376098fdc9d5241a3d89be32fc64ee77370aa86d49d60081d4b4c",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx": "02efda4c8f41893133f12e78e598668b7dce21ff0666d2b7dc2745fd1256aa95",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx": "c77d70f34be7268a22fc57455f967b2bf55f561cebd2d3b1ef3db61f3495275f",
+    "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c"
+  }
+}

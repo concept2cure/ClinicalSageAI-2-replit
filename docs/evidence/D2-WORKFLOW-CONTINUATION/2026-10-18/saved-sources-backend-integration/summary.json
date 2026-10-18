@@ -1,0 +1,31 @@
+{
+  "phase": "aebb968f9 + canonical 3cae08d23 saved-source integration; resolved editor recorded separately",
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "result": {
+    "exitCode": 0,
+    "suitesPassed": 3,
+    "testsPassed": 74,
+    "testsSkipped": 0,
+    "durationSeconds": 55.24
+  },
+  "scope": "Explicit-seam PGlite/server/shared regressions; not provider, Codespace, native or commercial qualification",
+  "files": {
+    "server/routes/authoring-assembly.ts": "71477a587d83ee0b161b22d26648fe3d3eb8ee554f34983f162dbaf7ba1a629c",
+    "server/services/authoring/authoring-saved-assembly-sources.ts": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5",
+    "server/services/authoring/authoring-document-read.ts": "e51ee0204e9b524ed15a5305f8220c6dff016f6f70d458dd990319bd4428d076",
+    "server/services/authoring/authoring-read-scope.ts": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+    "shared/authoring/read-projection.ts": "74482596193d8466626b87f663d986e2bda7f011dafb0817139edeeadbd971ec",
+    "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+    "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts": "dab53058556d525c4b428ee6810eef0b1828bfe7e04812e31d513aa1e5c6b628",
+    "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts": "b505a2563464c32080364c17ef9a8dbde2ed8189171fa58da23337c382c43ad7",
+    "shared/__tests__/saved-assembly-sources.test.ts": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60"
+  },
+  "logSha256": "e0d4896c08c18323188df307f27a353ff2d9ca9a8bdd0c253e25361863f0d817",
+  "build": {
+    "exitCode": 0,
+    "client": "Vite production build completed in 1m11s",
+    "server": "dist/index.js built successfully",
+    "logSha256": "e222f6b5d1ad33ecc71637078dadcbab740a024966c831bb3e082c8cb77efd24"
+  }
+}
