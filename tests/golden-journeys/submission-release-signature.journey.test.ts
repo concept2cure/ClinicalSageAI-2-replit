@@ -137,6 +137,16 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // The chain's ORDER KEY and its BEFORE INSERT trigger. Without this file
+      // writeChainedAuditRow still writes, but chain_seq does not exist, so
+      // chain.ts falls back to the pre-fix (occurred_at, id) walk it announces
+      // on stderr — and this journey, which drives governed writes through the
+      // real writer, claimed coverage of a chain recipe production no longer
+      // uses. assertNoSchemaGaps is what refused to let it; the gap was
+      // otherwise visible only as a log line. The fix itself is proven in
+      // server/services/audit/__tests__/chain-order.pglite.test.ts, which
+      // applies this same file.
+      'migrations/20260921_audit_logs_chain_seq.sql',
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
       // Without this, the signing ceremony's lockout read of users.locked_until
