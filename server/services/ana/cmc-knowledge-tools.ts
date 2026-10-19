@@ -157,6 +157,18 @@ export function cmcGuidance(input: Record<string, unknown>): string {
   }
   const { matches, total } = findCmcGuidance(query, authority || undefined);
   if (matches.length === 0) return JSON.stringify({ found: 0, note: NOT_INDEXED });
+  /* When an authority was named, the list carries that authority's own
+     documents AND the ICH baseline it has adopted (findCmcGuidance says why).
+     Each citation names its issuer — "ICH Q1A(R2) (2003-02)" — and each adopted
+     document SAYS SO, so AnA narrates it as applying through adoption rather
+     than as the authority's own text.
+ 
+     Marked per document, not as one note about the list: `fit` drops entries
+     from the end to meet the result budget, so a note saying "includes the ICH
+     baseline" could describe a document that had been trimmed away. A flag
+     travels with the document it is about, or it leaves with it. */
+  const named = resolveAuthorities(authority || undefined);
+  const adoptedBy = authority && named && named.length > 0 && !named.includes('ICH') ? named.join('/') : null;
   return fit(
     {
       found: total,
@@ -170,8 +182,12 @@ export function cmcGuidance(input: Record<string, unknown>): string {
         url: s.url,
         confidence: s.confidence,
         uncertain: s.uncertainty || undefined,
+        adopted_by: adoptedBy && s.authority === 'ICH' ? adoptedBy : undefined,
       })),
       record: RECORD_NOTE,
+      adopted: adoptedBy
+        ? `A document marked adopted_by applies to ${adoptedBy} through adoption of the ICH guideline. Cite it as ICH and say so; it is not ${adoptedBy}’s own text.`
+        : undefined,
     },
     'documents',
   );
