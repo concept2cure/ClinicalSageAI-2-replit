@@ -53,6 +53,15 @@ vi.mock('../../auditService', () => ({
   },
 }));
 
+/* Every create now asks whether the programme in the body is this
+   organisation's, so the unit test has to answer — and gets a case of its own
+   below for the refusal. Before 2026-10-19 five of these creates wrote the
+   body's projectId with no check at all. */
+const projectIsTenants = vi.fn(async () => true);
+vi.mock('../project-membership', () => ({
+  projectBelongsToTenant: (...a: unknown[]) => projectIsTenants(...(a as [])),
+}));
+
 const writeThrough = vi.fn(async () => ({ ok: true as const, sourceObjectId: 'so-1', sourceHash: 'h', staleSections: [], isNew: true }));
 vi.mock('../../cmc-write-through', () => ({
   writeThroughDrugSubstance: (...a: unknown[]) => writeThrough(...(a as [])),
@@ -83,6 +92,8 @@ beforeEach(() => {
   selected.mockReset();
   selected.mockResolvedValue([]);
   writeThrough.mockClear();
+  projectIsTenants.mockClear();
+  projectIsTenants.mockResolvedValue(true);
 });
 
 const closure = { scope: 'drug_product', componentType: 'primary', systemName: 'Blister', containerDescription: 'PVC/Al', closureDescription: 'Al foil', projectId: 'prog-1' };
@@ -94,6 +105,30 @@ describe('createContainerClosure', () => {
     expect(inserted).not.toHaveBeenCalled();
     expect(audited).not.toHaveBeenCalled();
     expect(writeThrough).not.toHaveBeenCalled();
+  });
+
+  it('refuses a programme that is not this organisation’s, and inserts nothing', async () => {
+    /* The defect this pins: the create wrote the body's projectId straight into
+       the row, so a typo filed an invisible record and another organisation's
+       programme id filed one under a dossier this tenant does not hold — while
+       the guarded creates beside it refused the same body
+       (docs/evidence/CMC-M3-GA/2026-10-19/10-unverified-programme/). */
+    projectIsTenants.mockResolvedValue(false);
+    await expect(createContainerClosure(ORG, { ...closure, status: 'draft' }, ACTOR)).rejects.toBeInstanceOf(RegisterWriteRefusal);
+    expect(projectIsTenants).toHaveBeenCalledWith({ organizationId: ORG, projectId: 'prog-1' });
+    expect(inserted).not.toHaveBeenCalled();
+    expect(audited).not.toHaveBeenCalled();
+    expect(writeThrough).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing of the programme store when the body names no programme', async () => {
+    /* An organisation-wide record is the documented case for these registers;
+       a check that refused it would break the register rather than guard it. */
+    const orgWide = { ...closure };
+    delete (orgWide as { projectId?: unknown }).projectId;
+    await createContainerClosure(ORG, { ...orgWide, status: 'draft' }, ACTOR);
+    expect(projectIsTenants).not.toHaveBeenCalled();
+    expect((inserted.mock.calls[0][0] as Record<string, unknown>).projectId).toBeNull();
   });
 
   it('strips the signature columns and the tenant key, inserts under the caller tenant, and links the row', async () => {

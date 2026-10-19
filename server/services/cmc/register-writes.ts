@@ -362,8 +362,16 @@ export async function createContainerClosure(
   const validated = containerClosureBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'container-closures');
   if (refusal) throw new RegisterWriteRefusal(refusal);
+  /* The program the record is filed under must be this organisation's.
+     Without this the create wrote the body's projectId straight into the
+     row: a typo filed an invisible record, and a programme id belonging
+     to another organisation filed one under a dossier this tenant does
+     not hold. `filedProjectOnCreate` returns null for an absent program,
+     which is an org-wide record, and refuses one that is not ours. */
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const row = await insertRegisterRow(orgId, actor, 'container_closure', cmcContainerClosures, {
     ...withoutSignatureFields(SIGNED_REGISTERS.containerClosures, validated),
+    projectId,
     organizationId: orgId,
   } as typeof cmcContainerClosures.$inferInsert);
   const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, link);
@@ -377,8 +385,16 @@ export async function createMaterialSpec(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcMaterialSpecs.$inferSelect>> {
   const validated = materialSpecBody.parse(body) as Record<string, unknown>;
+  /* The program the record is filed under must be this organisation's.
+     Without this the create wrote the body's projectId straight into the
+     row: a typo filed an invisible record, and a programme id belonging
+     to another organisation filed one under a dossier this tenant does
+     not hold. `filedProjectOnCreate` returns null for an absent program,
+     which is an org-wide record, and refuses one that is not ours. */
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const row = await insertRegisterRow(orgId, actor, 'material_spec', cmcMaterialSpecs, {
     ...withoutOrgId(validated),
+    projectId,
     organizationId: orgId,
   } as typeof cmcMaterialSpecs.$inferInsert);
   const linkage = await linkToModule3('write_through_material_spec', orgId, row, writeThroughMaterialSpec, link);
@@ -392,10 +408,18 @@ export async function createFormulationRecord(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcFormulationRecords.$inferSelect>> {
   const validated = formulationRecordBody.parse(body) as Record<string, unknown>;
+  /* The program the record is filed under must be this organisation's.
+     Without this the create wrote the body's projectId straight into the
+     row: a typo filed an invisible record, and a programme id belonging
+     to another organisation filed one under a dossier this tenant does
+     not hold. `filedProjectOnCreate` returns null for an absent program,
+     which is an org-wide record, and refuses one that is not ours. */
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const conflict = await currentFormulationConflict(orgId, validated, null);
   if (conflict) throw new RegisterWriteRefusal(conflict);
   const row = await insertRegisterRow(orgId, actor, 'formulation_record', cmcFormulationRecords, {
     ...withoutOrgId(validated),
+    projectId,
     organizationId: orgId,
   } as typeof cmcFormulationRecords.$inferInsert);
   const linkage = await linkToModule3('write_through_formulation_record', orgId, row, writeThroughFormulationRecord, link);
@@ -409,10 +433,18 @@ export async function createManufacturingProcess(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof manufacturingProcesses.$inferSelect>> {
   const validated = manufacturingProcessBody.parse(body);
+  /* The program the record is filed under must be this organisation's.
+     Without this the create wrote the body's projectId straight into the
+     row: a typo filed an invisible record, and a programme id belonging
+     to another organisation filed one under a dossier this tenant does
+     not hold. `filedProjectOnCreate` returns null for an absent program,
+     which is an org-wide record, and refuses one that is not ours. */
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes');
   if (refusal) throw new RegisterWriteRefusal(refusal);
   const row = await insertRegisterRow(orgId, actor, 'manufacturing_process', manufacturingProcesses, {
     ...validated,
+    projectId,
     organizationId: orgId,
   } as typeof manufacturingProcesses.$inferInsert);
   const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, link);
@@ -428,8 +460,16 @@ export async function createCharacterizationStudy(
   const validated = characterizationStudyBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'characterization-studies');
   if (refusal) throw new RegisterWriteRefusal(refusal);
+  /* The program the record is filed under must be this organisation's.
+     Without this the create wrote the body's projectId straight into the
+     row: a typo filed an invisible record, and a programme id belonging
+     to another organisation filed one under a dossier this tenant does
+     not hold. `filedProjectOnCreate` returns null for an absent program,
+     which is an org-wide record, and refuses one that is not ours. */
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const row = await insertRegisterRow(orgId, actor, 'characterization_study', cmcCharacterizationStudies, {
     ...withoutSignatureFields(SIGNED_REGISTERS.characterizationStudies, validated),
+    projectId,
     organizationId: orgId,
   } as typeof cmcCharacterizationStudies.$inferInsert);
   const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, link);
