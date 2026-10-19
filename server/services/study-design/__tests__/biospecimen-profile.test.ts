@@ -283,4 +283,3 @@ describe('profileBiospecimens — nothing assumed', () => {
     expect(JSON.stringify(profileBiospecimens(design()))).toBe(JSON.stringify(profileBiospecimens(design())));
   });
 });
-

@@ -18,6 +18,8 @@
  */
 
 import { pool } from '../../db';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { queryRowsClient } from '../../db/queryRowsClient';
 
 // ─── enums ──────────────────────────────────────────────────────────────────
 export const CHANGE_TYPES = [
@@ -121,8 +123,8 @@ export async function createChange(orgId: number, p: {
   reason?: string | null; impactAssessment?: string | null; implementationPlan?: string | null;
   targetImplementationDate?: string | null; qmsDocumentId?: number | null;
   proposedBy?: number | null; metadata?: Record<string, unknown> | null;
-}): Promise<ChangeControlRow> {
-  const { rows } = await pool.query<ChangeControlRow>(
+}, client: RequestSqlClient = pool): Promise<ChangeControlRow> {
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `INSERT INTO qms_change_controls (
        organization_id, change_number, title, description, change_type, classification,
        risk_level, reason, impact_assessment, implementation_plan,
@@ -162,12 +164,12 @@ const IMPLEMENTATION_OVERDUE_SQL =
 /** A register row with the server-computed overdue flag. */
 export type ChangeControlListRow = ChangeControlRow & { implementation_overdue: boolean };
 
-export async function listChanges(orgId: number, opts: { status?: string; changeType?: string } = {}): Promise<ChangeControlListRow[]> {
+export async function listChanges(orgId: number, opts: { status?: string; changeType?: string } = {}, client: RequestSqlClient = pool): Promise<ChangeControlListRow[]> {
   const args: unknown[] = [orgId];
   let where = 'organization_id = $1 AND deleted_at IS NULL';
   if (opts.status) { args.push(opts.status); where += ` AND status = $${args.length}`; }
   if (opts.changeType) { args.push(opts.changeType); where += ` AND change_type = $${args.length}`; }
-  const { rows } = await pool.query<ChangeControlListRow>(
+  const { rows } = await queryRowsClient(client).query<ChangeControlListRow>(
     `SELECT *, ${IMPLEMENTATION_OVERDUE_SQL} AS implementation_overdue
        FROM qms_change_controls WHERE ${where} ORDER BY created_at DESC`,
     args,
@@ -180,8 +182,8 @@ export function nextStatesOf(status: string): ChangeState[] {
   return CHANGE_TRANSITIONS[status as ChangeState] ?? [];
 }
 
-export async function getChange(orgId: number, id: number): Promise<ChangeControlRow | null> {
-  const { rows } = await pool.query<ChangeControlRow>(
+export async function getChange(orgId: number, id: number, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `SELECT * FROM qms_change_controls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
   );
@@ -193,7 +195,7 @@ export async function updateChange(orgId: number, id: number, p: {
   riskLevel?: string | null; reason?: string | null; impactAssessment?: string | null;
   implementationPlan?: string | null; targetImplementationDate?: string | null;
   qmsDocumentId?: number | null; assessedBy?: number | null;
-}): Promise<ChangeControlRow | null> {
+}, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
   // Build a COALESCE-guarded partial update (only provided fields change).
   const sets: string[] = [];
   const args: unknown[] = [];
@@ -209,9 +211,9 @@ export async function updateChange(orgId: number, id: number, p: {
   if (p.targetImplementationDate !== undefined) add('target_implementation_date', p.targetImplementationDate);
   if (p.qmsDocumentId !== undefined) add('qms_document_id', p.qmsDocumentId);
   if (p.assessedBy !== undefined) add('assessed_by', p.assessedBy);
-  if (sets.length === 0) return getChange(orgId, id);
+  if (sets.length === 0) return getChange(orgId, id, client);
   args.push(id, orgId);
-  const { rows } = await pool.query<ChangeControlRow>(
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = now()
       WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
       RETURNING *`,
@@ -230,8 +232,8 @@ export async function updateChange(orgId: number, id: number, p: {
  */
 export async function transitionChange(orgId: number, id: number, to: ChangeState, actor: {
   userId?: number | null; effectivenessReview?: string | null;
-}): Promise<(ChangeControlRow & { from_status: ChangeState }) | null> {
-  const change = await getChange(orgId, id);
+}, client: RequestSqlClient = pool): Promise<(ChangeControlRow & { from_status: ChangeState }) | null> {
+  const change = await getChange(orgId, id, client);
   if (!change) return null;
   const from = change.status as ChangeState;
   const allowed = CHANGE_TRANSITIONS[from] ?? [];
@@ -270,7 +272,7 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
       break;
   }
   args.push(id, orgId);
-  const { rows } = await pool.query<ChangeControlRow>(
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `UPDATE qms_change_controls SET ${sets.join(', ')}
       WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
       RETURNING *`,
@@ -282,19 +284,19 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
 
 /** Soft-delete a change (and, via ON DELETE CASCADE on hard-delete only, its
  *  links — soft-delete keeps links for the audit trail). */
-export async function deleteChange(orgId: number, id: number): Promise<boolean> {
-  const { rowCount } = await pool.query(
+export async function deleteChange(orgId: number, id: number, client: RequestSqlClient = pool): Promise<boolean> {
+  const { rows } = await queryRowsClient(client).query(
     `UPDATE qms_change_controls SET deleted_at = now(), updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL RETURNING id`,
     [id, orgId],
   );
-  return (rowCount ?? 0) > 0;
+  return rows.length > 0;
 }
 
 // ─── Cross-references (changes ↔ deviations / CAPAs / validation / docs) ──────
 
-export async function listLinks(orgId: number, changeId: number): Promise<ChangeLinkRow[]> {
-  const { rows } = await pool.query<ChangeLinkRow>(
+export async function listLinks(orgId: number, changeId: number, client: RequestSqlClient = pool): Promise<ChangeLinkRow[]> {
+  const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
     `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = $2 ORDER BY created_at ASC`,
     [orgId, changeId],
   );
@@ -306,10 +308,10 @@ export async function listLinks(orgId: number, changeId: number): Promise<Change
  * (a change with none is absent). The register read returned no links at all,
  * so every change showed 0 and "No linked records yet" (QA walk 2026-10-08).
  */
-export async function listLinksForChanges(orgId: number, changeIds: number[]): Promise<Map<number, ChangeLinkRow[]>> {
+export async function listLinksForChanges(orgId: number, changeIds: number[], client: RequestSqlClient = pool): Promise<Map<number, ChangeLinkRow[]>> {
   const out = new Map<number, ChangeLinkRow[]>();
   if (changeIds.length === 0) return out;
-  const { rows } = await pool.query<ChangeLinkRow>(
+  const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
     `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = ANY($2::int[])
       ORDER BY change_id, created_at ASC, id ASC`,
     [orgId, changeIds],
@@ -324,8 +326,8 @@ export async function listLinksForChanges(orgId: number, changeIds: number[]): P
 export async function addLink(orgId: number, changeId: number, p: {
   linkType: string; linkedRef: string; linkedLabel?: string | null; linkedId?: number | null;
   relationship?: string; note?: string | null; createdBy?: number | null;
-}): Promise<ChangeLinkRow> {
-  const { rows } = await pool.query<ChangeLinkRow>(
+}, client: RequestSqlClient = pool): Promise<ChangeLinkRow> {
+  const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
     `INSERT INTO qms_change_links (
        organization_id, change_id, link_type, linked_ref, linked_label, linked_id, relationship, note, created_by
      ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'references'),$8,$9)
@@ -338,12 +340,12 @@ export async function addLink(orgId: number, changeId: number, p: {
   return rows[0];
 }
 
-export async function removeLink(orgId: number, changeId: number, linkId: number): Promise<boolean> {
-  const { rowCount } = await pool.query(
-    `DELETE FROM qms_change_links WHERE id = $1 AND change_id = $2 AND organization_id = $3`,
+export async function removeLink(orgId: number, changeId: number, linkId: number, client: RequestSqlClient = pool): Promise<boolean> {
+  const { rows } = await queryRowsClient(client).query(
+    `DELETE FROM qms_change_links WHERE id = $1 AND change_id = $2 AND organization_id = $3 RETURNING id`,
     [linkId, changeId, orgId],
   );
-  return (rowCount ?? 0) > 0;
+  return rows.length > 0;
 }
 
 // ─── Register summary (KPIs for the Change Control surface) ───────────────────
@@ -359,8 +361,8 @@ export interface ChangeControlSummary {
   byStatus: Record<string, number>;
 }
 
-export async function changeControlSummary(orgId: number): Promise<ChangeControlSummary> {
-  const { rows } = await pool.query<{ status: string; n: string; overdue: string }>(
+export async function changeControlSummary(orgId: number, client: RequestSqlClient = pool): Promise<ChangeControlSummary> {
+  const { rows } = await queryRowsClient(client).query<{ status: string; n: string; overdue: string }>(
     `SELECT status,
             COUNT(*) AS n,
             COUNT(*) FILTER (WHERE ${IMPLEMENTATION_OVERDUE_SQL}) AS overdue

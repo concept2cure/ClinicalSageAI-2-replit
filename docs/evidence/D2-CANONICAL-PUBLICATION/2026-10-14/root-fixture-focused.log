@@ -1,0 +1,180 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=true) 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=true) 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=false) 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=false) 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 249ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "Open Submission Center" on the list 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 18ms
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:28:47.876Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:28:47.877Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:28:47.878Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > keeps the persisted creator upload readable and selectable by a viewer 54ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > denies another active member both upload and selected capture 23ms
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner 32ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not turn an unknown unbound capture origin into a creator grant 16ms
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader 18ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists 17ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not let a creator bypass a recorded private workspace 13ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects
+{
+  "timestamp": "2026-10-14T21:28:53.788Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] Captured spreadsheet processing unavailable",
+  "context": {
+    "sourceId": 4,
+    "err": "private workbook extractor /private/source"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction 105ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects 65ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the capture seam fails 53ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the audit seam fails 55ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > refuses a withdrawn source using the real disposition eligibility SQL 97ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rejects another tenant’s project using the canonical ownership query before writes 48ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed 124ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data 126ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:47:28
+     45|     await f.pg.query('UPDATE file_uploads SET user_id=42 WHERE id=$1',…
+     46|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+     47|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+       |                            ^
+     48|     await f.pg.query('UPDATE file_uploads SET user_id=43 WHERE id=$1',…
+     49|     await f.pg.query('UPDATE cre_evidence_sources SET created_by=42 WH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:59:26
+     57|     await f.pg.query(`INSERT INTO concept2cure_artifacts (organization…
+     58|       SELECT $1,id,$2 FROM projects WHERE organization_id=$1`, [f.org,…
+     59|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     60|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:65:26
+     63|     await f.pg.query(`INSERT INTO cre_evidence_sources (organization_i…
+     64|       VALUES ($1,$2,'client_document',43,$3,now())`, [f.org, f.program…
+     65|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     66|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not let a creator bypass a recorded private workspace
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:70:26
+     68|   it('does not let a creator bypass a recorded private workspace', asy…
+     69|     await f.pg.query(`UPDATE cre_evidence_sources SET client_workspace…
+     70|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     71|   });
+     72| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 failed | 26 passed (30)
+   Start at  21:28:42
+   Duration  11.41s (transform 2.03s, setup 204ms, import 4.65s, tests 5.45s, environment 481ms)
+

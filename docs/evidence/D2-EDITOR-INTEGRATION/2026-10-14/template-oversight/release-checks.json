@@ -1,0 +1,173 @@
+{
+  "verifiedAt": "2026-10-14T20:00:13.243Z",
+  "integrationBase": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "toolchain": {
+    "node": "22.23.3",
+    "typescript": "5.6.3"
+  },
+  "regression": {
+    "status": "pass",
+    "files": 72,
+    "tests": 963,
+    "sourceBasis": "269d2c18 plus original frozen implementation; before the final empty-JSON availability amendment",
+    "selection": "regression-test-files.json",
+    "results": "regression-before-json-fix.txt"
+  },
+  "finalSavedTemplateReview": {
+    "status": "pass",
+    "files": 2,
+    "tests": 73,
+    "sourceBasis": "71444466 plus final implementation",
+    "results": "TEST_EVAL.md",
+    "overlapsRegression": true
+  },
+  "postSyncProtocolAndSourceImport": {
+    "status": "pass",
+    "files": 4,
+    "tests": 97,
+    "sourceBasis": "71444466 plus final implementation",
+    "results": "post-sync-protocol-source-checks.txt"
+  },
+  "renderedUi": {
+    "status": "pass",
+    "files": 1,
+    "tests": 13,
+    "results": "ui-after.txt",
+    "overlapsRegression": true
+  },
+  "browser": {
+    "status": "pass",
+    "contexts": 4,
+    "cases": 24,
+    "stageCaptures": 72,
+    "prefillCallbacks": 96,
+    "nativeEditorCount": 1,
+    "results": "BROWSER_EVAL.md",
+    "reconciliation": "browser-post-capture-reconciliation.json",
+    "syntheticApisOnly": true
+  },
+  "compiler": {
+    "status": "pass",
+    "errors": 0,
+    "baseline": 0,
+    "command": "npm run ci:typecheck:no-regression -- --incremental",
+    "sourceLog": "/workspace/scratch/template-oversight-typecheck-final.log",
+    "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+    "selectedOutput": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)\n[ci:typecheck-no-regression] OK — error count 0 matches baseline.",
+    "initialFailure": "One TS2571 in the test fixture was corrected with its actual query result type; baseline unchanged."
+  },
+  "build": {
+    "status": "pass",
+    "command": "npm run build",
+    "sourceLog": "/workspace/scratch/template-oversight-build.log",
+    "sha256": "98ad40b33b84eee93d6711192e8564dc25836672fdf7db6488b9968ded4554e5",
+    "selectedOutput": "- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n✓ built in 18.92s\n✅ Server build complete → dist/index.js",
+    "warnings": "Existing large-chunk notice and bundler advisory output remain; build completed."
+  },
+  "strictLint": {
+    "backend": "0 errors / 0 warnings in owned production helpers",
+    "tests": "0 errors / 0 warnings in three backend test files and the new UI suite",
+    "browserFixture": "0 errors / 0 warnings in seven executable files",
+    "existingWarnings": "Workbench 13 and provenance 1; no per-file warning growth."
+  },
+  "warningRatchet": {
+    "status": "pass",
+    "command": "npm run ci:eslint-ratchet -- --since 71444466 --gate",
+    "sourceLog": "/workspace/scratch/template-oversight-warning-ratchet.log",
+    "sha256": "8cbc9388fa74f94af9283108b9b08664959056e400fce87cadf57740accae6ce",
+    "selectedOutput": "[ci:eslint-warning-ratchet] --since 71444466 (71444466b) -- 20 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 71444466."
+  },
+  "gates": [
+    {
+      "command": "ci:single-native-canvas",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-single-native-canvas.log",
+      "sha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+      "selectedOutput": "[single-native-canvas] ok — @napi-rs/canvas 0.1.80: one copy"
+    },
+    {
+      "command": "ci:canvas-path",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-canvas-path.log",
+      "sha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+      "selectedOutput": "✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline"
+    },
+    {
+      "command": "ci:check-editor-integrity",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-check-editor-integrity.log",
+      "sha256": "2c9b48c540443fa84db09d38e181da247351deb9d2e92fabd1823ab8f27af13c",
+      "selectedOutput": "  @tiptap/pm (14 file(s))\n  @tiptap/react (1 file(s))\n  @tiptap/starter-kit (17 file(s))\n\nEditor extension integrity check PASSED."
+    },
+    {
+      "command": "ci:design-system",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-design-system.log",
+      "sha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+      "selectedOutput": "[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces."
+    },
+    {
+      "command": "ci:token-cascade",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-token-cascade.log",
+      "sha256": "092b65ae81f0d4c2fe663645f61493ce252d86ddf8e4aa1e9cf91e0857a5a19e",
+      "selectedOutput": "  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                41/41    \n  ok   client/src/concept2cure/v2/styles/translation-v2.css                             39/39    \n  ok   client/src/styles/projects-prototype.css                                         24/24    \n\n[token-cascade] PASS — all 40 stylesheets resolve cleanly."
+    },
+    {
+      "command": "ci:token-contrast",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-token-contrast.log",
+      "sha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+      "selectedOutput": "✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios."
+    },
+    {
+      "command": "ci:surface-text-ramp",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-surface-text-ramp.log",
+      "sha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+      "selectedOutput": "[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets."
+    },
+    {
+      "command": "ci:sql-interpolation",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-sql-interpolation.log",
+      "sha256": "ddf1fe94b23bfd0c15df244640fce6cfaebce0d82b7d7044b97f370228f733a9",
+      "selectedOutput": "[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1012 baselined interpolation(s) in 218 file(s); the baseline may only shrink."
+    },
+    {
+      "command": "ci:check-phantom-tokens",
+      "status": "pass",
+      "exitCode": 0,
+      "sourceLog": "/workspace/scratch/template-oversight-final-ci-check-phantom-tokens.log",
+      "sha256": "f39f1302a7dbdf7ebbd2e439408ef5e5283acedf5792b9c6d6af3351794eeaf3",
+      "selectedOutput": "[ci:phantom-tokens] 9 phantom token(s) across 53 site(s) (baseline 9).\n[ci:phantom-tokens] OK — no new phantom tokens."
+    }
+  ],
+  "imports": {
+    "requiredCheck": "The normal pre-push hook checks the committed range against the canonical remote; it must pass before publication.",
+    "initialWorkingTreeInvocation": "No committed diff; not used as patch qualification.",
+    "browserRelativeImportProof": "16 relative imports / 13 tracked production targets passed.",
+    "optionalRepositoryWideDiagnostic": "repository-wide-import-diagnostic.json; 15 failures only in unchanged legacy sources, retained separately."
+  },
+  "publication": {
+    "branch": "concept2cure-v2",
+    "method": "Normal git commit and push, with hooks enabled; receipt is Git history.",
+    "baselineRelaxations": false,
+    "newDependencies": false,
+    "newMigrations": false,
+    "newEditor": false
+  },
+  "limitations": [
+    "Local UI/SQL fixture qualification does not establish live AnA/provider execution or deployment.",
+    "Browser axe incomplete rules remain for manual review.",
+    "Existing older outline/read/search authorization is a separate follow-through."
+  ]
+}

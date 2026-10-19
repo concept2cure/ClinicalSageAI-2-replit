@@ -1,0 +1,79 @@
+{
+  "scope": "read-only local owned fresh/native QA arbiter diagnosis; not hosted DB inspection",
+  "executed": "physical catalog SELECT and exact EXPLAIN without ANALYZE in owner READ ONLY transactions only",
+  "sourceEdits": false,
+  "ddl": false,
+  "dml": false,
+  "files": [
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/shared/schema.ts",
+      "bytes": 862248,
+      "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9"
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/server/routes/admin/access-management.ts",
+      "bytes": 10393,
+      "sha256": "78f2ee285be7377eacd2848435485a7104100995147bc0a2346cd3e278f8ef23"
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/migrations/20260928_platform_role_grants_platform_writes.sql",
+      "bytes": 4489,
+      "sha256": "d0b712dd35e1dd503a7549c4f0a7f871a985964138732c6a81f83b253c2df18c"
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/scripts/db/migration-set.mjs",
+      "bytes": 229280,
+      "sha256": "4cb6f1ec23eb5a0a63be3df60ac80aac3b0de8ce1331a06f1c1b9918bb3fe99f"
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/scripts/db/install-fresh.mjs",
+      "bytes": 99629,
+      "sha256": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d"
+    },
+    {
+      "path": "/workspace/ClinicalSageAI-2-replit/scripts/db/readiness-contract.mjs",
+      "bytes": 13545,
+      "sha256": "8fa8c13de6eeea96e1533b64f8c787a5674c0d44fbe02175e245ec228e4cfb4a"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-readonly.json",
+      "bytes": 4128,
+      "sha256": "f9b55b0591e8046a31d6946b996233dbb7a3e8bc5504f973de6dbfade53e0d8f"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-readonly.txt",
+      "bytes": 411,
+      "sha256": "5f5c295f631b6ce8f6a7cde55d1b8379fd088ee8ce935748c0f6f9b26b8836d8"
+    },
+    {
+      "path": "/tmp/diagnose-platform-role-grant-arbiter.mjs",
+      "bytes": 4643,
+      "sha256": "05dd99911a2f0cabf628e0f7807ec352b5d9fe017be48fd930ab5927399d4919"
+    },
+    {
+      "path": "/tmp/run-platform-role-grant-arbiter-readonly.py",
+      "bytes": 1834,
+      "sha256": "470090945cafd62b67df106f1699ad2a493b21ad2b82b6e7ae41cbd7c66c745d"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-correction-proposal.md",
+      "bytes": 5253,
+      "sha256": "a753d6626694c14ce023c5ff3e5450f730a7f31b5f9ced558d3d519e10876b5b"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-proposal/canonical-migration.patch",
+      "bytes": 2459,
+      "sha256": "86cdef6eae63499d9b5486e4a809d7d88354d1eb374ca81775142716af0b8ff4"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-proposal/proposal-pins.json",
+      "bytes": 637,
+      "sha256": "5df5e684b20f0cd328a1060eea13f03a96f4d12ae42d291437178adde7550780"
+    },
+    {
+      "path": "/tmp/platform-role-grant-arbiter-proposal/migrations/20260928_platform_role_grants_platform_writes.sql",
+      "bytes": 5946,
+      "sha256": "2b6d51100453669238596671b0891373334fe505b34b9d04cea46a586a0a14d1"
+    }
+  ]
+}

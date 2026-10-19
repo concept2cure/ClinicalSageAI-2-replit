@@ -9,6 +9,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger.js';
+import { CsrScopeError } from '../services/csr/project-scope';
 
 const logger = createScopedLogger('csr-builder-routes');
 
@@ -215,6 +216,7 @@ router.post('/build', async (req: Request, res: Response) => {
       sections: job.sections,
     });
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     logger.error('Build failed', { err: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: safeErrorMessage(err, 'CSR build failed') });
   }
@@ -232,14 +234,14 @@ router.post('/draft-section', async (req: Request, res: Response) => {
     }
 
     const { sectionNumber, studyInfo } = validation.data;
-    const result = await draftCSRSection(sectionNumber, studyInfo);
+    const result = await draftCSRSection(sectionNumber, studyInfo, getAuthContext(req));
 
     res.json({
       success: true,
       sectionNumber,
       content: result.content,
       isAI: result.isAI,
-      provider: result.isAI ? 'claude-ai-gateway' : 'template',
+      provider: result.isAI ? 'ai-gateway' : 'template',
     });
   } catch (err) {
     logger.error('Section draft failed', { err: err instanceof Error ? err.message : String(err) });

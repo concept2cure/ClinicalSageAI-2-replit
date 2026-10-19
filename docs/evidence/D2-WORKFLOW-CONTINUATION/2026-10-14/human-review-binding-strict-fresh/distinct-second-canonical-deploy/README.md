@@ -1,0 +1,9 @@
+# Fresh Authoring review bindings — distinct second canonical deployment
+
+After root reviewed the exact first-deploy index increment, one additional canonical deploy-migrate ran on the same newly created retained QA database. Actual exits were deployment **0**, final read-only physical validator **0**, and launcher **0**. No installer rerun, repair, trigger/policy bypass, manual index alteration, password mint or original QA mutation occurred.
+
+The final physical snapshot exactly matches the recorded actual deploy1 diagnostic: all five target stores' columns, indexes, constraints, policies, ENABLE/FORCE RLS and empty row counts are identical. Physical SHA256 is `ccbf222dd6a018c47911abf99d69109e547d43a4d8b18a3082ca6332b24fbd51`. The three nullable Authoring review binding columns, their no-default semantics and the existing document/reviewer/tenant unique key remain intact. Both sharing/review creator journal hashes match current files and apply_count is **2**. Hashed global pg_authid attributes match the pre-creation and first-deployment values; role memberships remain outside that comparison.
+
+This phase uses a distinct private launcher, protected log, stage record and before/after 14 critical source pins. It compares deployment-to-deployment, not the fresh-install snapshot. The earlier failed equality validator and the truthful 11-index first-deploy increment remain unchanged in the separate first-attempt phase. The second launcher rejects URL override query options and terminates a process group on timeout; no timeout occurred.
+
+This is strict fresh provisioning plus canonical deployment replay and bounded physical Authoring/sharing/review schema verification. Empty fresh stores do not prove old verdict preservation; the complete installer dependency graph, application API/browser authorization, providers, exports, scientific validity and regulatory compliance are not qualified here.

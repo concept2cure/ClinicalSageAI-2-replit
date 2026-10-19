@@ -13,12 +13,15 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { NOTIFICATION_CATEGORIES } from '../../shared/constants/notifications';
 
 import { createScopedLogger } from '../utils/logger';
 import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError, noContent,
 } from '../lib/api-response';
-import { pool } from '../db';
+import { requestPgClient } from '../db/requestDb';
+import { noticePositiveId } from '../../shared/types/notification-navigation';
+import { NotificationTargetRefusal, resolveNotificationRecordTarget } from '../services/notifications/notification-record-target';
 import {
   createNotification, listNotifications, markRead, markAllRead, archive, unreadCount,
 } from '../services/notifications/notification-service';
@@ -40,12 +43,7 @@ function getUserId(req: Request): number | null {
 }
 
 const SEVERITY = ['info', 'warning', 'critical'] as const;
-const CATEGORIES = [
-  'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
-  'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
-  'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
-  'admin', 'system',
-] as const;
+const CATEGORIES = NOTIFICATION_CATEGORIES;
 
 const listQuery = z.object({
   unread:   z.enum(['true', 'false']).optional(),
@@ -72,6 +70,7 @@ router.get('/notifications', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
   try {
@@ -81,7 +80,7 @@ router.get('/notifications', async (req: Request, res: Response) => {
       category:        parsed.data.category,
       severity:        parsed.data.severity,
       limit:           parsed.data.limit,
-    });
+    }, requestPgClient(req));
     return ok(res, rows, { count: rows.length });
   } catch (err) {
     return serverError(res, log, 'list', err);
@@ -94,10 +93,26 @@ router.get('/notifications/unread-count', async (req: Request, res: Response) =>
   if (orgId === null) return orgRequired(res);
   if (userId === null) return clientError(res, 401, 'User context required');
   try {
-    const n = await unreadCount(orgId, userId);
+    const n = await unreadCount(orgId, userId, requestPgClient(req));
     return ok(res, { unread: n });
   } catch (err) {
     return serverError(res, log, 'unread-count', err);
+  }
+});
+
+router.get('/notifications/:id/target', async (req: Request, res: Response) => {
+  const organizationId = getOrgId(req); const userId = getUserId(req);
+  if (!organizationId || !userId) return clientError(res,401,'Authenticated organization membership required');
+  if (!noticePositiveId(req.params.id)) return clientError(res,422,'Invalid notification identity');
+  res.set('Cache-Control','no-store');
+  try {
+    const target = await resolveNotificationRecordTarget({client:requestPgClient(req),organizationId,userId,
+      email:typeof req.user?.email === 'string' ? req.user.email : null,notificationId:Number(req.params.id)});
+    return ok(res,target);
+  } catch (error) {
+    if (error instanceof NotificationTargetRefusal) return res.status(error.status).json({error:error.message});
+    log.error('notification target lookup unavailable');
+    return res.status(503).json({error:'The linked record could not be checked. Try again.'});
   }
 });
 
@@ -121,7 +136,7 @@ router.post('/notifications', async (req: Request, res: Response) => {
       actionUrl:       p.actionUrl ?? null,
       metadata:        p.metadata ?? {},
       expiresAt:       p.expiresAt ? new Date(p.expiresAt) : null,
-    });
+    }, requestPgClient(req));
     return created(res, { id });
   } catch (err) {
     return serverError(res, log, 'create', err);
@@ -136,7 +151,7 @@ router.post('/notifications/:id/read', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   try {
-    const ok2 = await markRead(orgId, id, userId);
+    const ok2 = await markRead(orgId, id, userId, requestPgClient(req));
     if (!ok2) return notFoundInTenant(res, 'Notification');
     return noContent(res);
   } catch (err) {
@@ -150,7 +165,7 @@ router.post('/notifications/read-all', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   if (userId === null) return clientError(res, 401, 'User context required');
   try {
-    const n = await markAllRead(orgId, userId);
+    const n = await markAllRead(orgId, userId, requestPgClient(req));
     return ok(res, { updated: n });
   } catch (err) {
     return serverError(res, log, 'mark-all-read', err);
@@ -159,11 +174,13 @@ router.post('/notifications/read-all', async (req: Request, res: Response) => {
 
 router.post('/notifications/:id/archive', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
+  const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   try {
-    const ok2 = await archive(orgId, id);
+    const ok2 = await archive(orgId, id, userId, requestPgClient(req));
     if (!ok2) return notFoundInTenant(res, 'Notification');
     return noContent(res);
   } catch (err) {
@@ -179,14 +196,14 @@ router.get('/notification-subscriptions', async (req: Request, res: Response) =>
   if (orgId === null) return orgRequired(res);
   if (userId === null) return clientError(res, 401, 'User context required');
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `SELECT category, email_enabled, push_enabled, in_app_enabled, updated_at
          FROM mdx_notification_subscriptions
         WHERE organization_id = $1 AND user_id = $2
         ORDER BY category`,
       [orgId, userId],
     );
-    return ok(res, rows);
+    return ok(res, rows, { channels: { inApp: true, email: false, push: false } });
   } catch (err) {
     return serverError(res, log, 'sub-list', err);
   }
@@ -210,15 +227,19 @@ router.put('/notification-subscriptions/:category', async (req: Request, res: Re
   const parsed = subBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  if (p.emailEnabled === true || p.pushEnabled === true) {
+    return clientError(res, 422, 'Email and push notifications are not available. In-app preferences can be saved.');
+  }
+  if (Object.keys(p).length === 0) return clientError(res, 422, 'A notification preference is required');
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `INSERT INTO mdx_notification_subscriptions (
          organization_id, user_id, category, email_enabled, push_enabled, in_app_enabled
        ) VALUES ($1, $2, $3, COALESCE($4,false), COALESCE($5,false), COALESCE($6,true))
-       ON CONFLICT (user_id, category) DO UPDATE SET
-         email_enabled  = COALESCE(EXCLUDED.email_enabled, mdx_notification_subscriptions.email_enabled),
-         push_enabled   = COALESCE(EXCLUDED.push_enabled, mdx_notification_subscriptions.push_enabled),
-         in_app_enabled = COALESCE(EXCLUDED.in_app_enabled, mdx_notification_subscriptions.in_app_enabled),
+       ON CONFLICT (organization_id, user_id, category) DO UPDATE SET
+         email_enabled  = COALESCE($4, mdx_notification_subscriptions.email_enabled),
+         push_enabled   = COALESCE($5, mdx_notification_subscriptions.push_enabled),
+         in_app_enabled = COALESCE($6, mdx_notification_subscriptions.in_app_enabled),
          updated_at     = NOW()
        RETURNING *`,
       [

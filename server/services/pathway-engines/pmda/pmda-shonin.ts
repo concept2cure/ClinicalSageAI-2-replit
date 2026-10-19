@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * PMDA Shōnin pathway engine (Japan — medical-device marketing approval 承認)
  *
@@ -48,7 +49,7 @@
  * @module server/services/pathway-engines/pmda/pmda-shonin
  */
 
-export interface PmdaInputLeaf {
+export interface PmdaInputLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -78,7 +79,7 @@ export interface PmdaSlot {
   basis: string;
 }
 
-export interface PmdaSlotStatus extends PmdaSlot {
+export interface PmdaSlotStatus extends PmdaSlot, PathwayEvidenceSlot  {
   present: boolean;
   sources: string[];
   applicability: PmdaApplicability;
@@ -178,14 +179,18 @@ function applicabilityOf(n: PmdaNecessity, clinicalDataRequired: boolean | undef
   return 'undetermined';
 }
 
-function evalSlot(slot: SlotDef, leaves: PmdaInputLeaf[], clinicalDataRequired: boolean | undefined): PmdaSlotStatus {
-  const sources = leaves.filter((l) => slot.match(l)).map((l) => l.sectionCode || l.title);
+function evalSlot(slot: SlotDef, leaves: PmdaInputLeaf[], clinicalDataRequired: boolean | undefined, sourceAware?: boolean): PmdaSlotStatus {
+  const matched = leaves.filter((l) => slot.match(l));
+  const sources = matched.map((l) => l.sectionCode || l.title);
+  const proof = matchedSourceEvidence(matched, sourceAware, sources.length > 0);
   const { match, ...rest } = slot;
   const applicability = applicabilityOf(slot.necessity, clinicalDataRequired);
-  return { ...rest, required: applicability === 'required', present: sources.length > 0, sources, applicability };
+  return { ...rest, ...proof, required: applicability === 'required', sources, applicability };
 }
 
 export interface AssessPmdaInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: PmdaInputLeaf[];
   /**
    * Whether this device needs clinical trial results (臨床試験の試験成績).
@@ -198,9 +203,9 @@ export interface AssessPmdaInput {
 /** Assess Japan Shōnin (device marketing approval) readiness from canonical leaves. */
 export function assessPmdaShonin(input: AssessPmdaInput): PmdaResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  const sections = SHONIN_SECTIONS.map((s) => evalSlot(s, leaves, input.clinicalDataRequired));
-  const missingRequired = sections.filter((s) => s.required && !s.present).map((s) => s.id);
-  const undetermined = sections.filter((s) => s.applicability === 'undetermined' && !s.present).map((s) => s.id);
+  const sections = SHONIN_SECTIONS.map((s) => evalSlot(s, leaves, input.clinicalDataRequired, input.sourceAware));
+  const missingRequired = sections.filter((s) => s.required && !s.present && !s.contentUndetermined).map((s) => s.id);
+  const undetermined = sections.filter((s) => !s.present && (s.applicability === 'undetermined' || (s.required && s.contentUndetermined))).map((s) => s.id);
   return { sections, summary: { missingRequired, undetermined, ready: missingRequired.length === 0 && undetermined.length === 0 } };
 }
 

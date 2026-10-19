@@ -132,4 +132,3 @@ AssertionError: the author locked their own document: expected 200 to be 403 // 
       Tests  4 failed | 1 passed (5)
    Start at  14:51:07
    Duration  3.21s (transform 1.76s, setup 119ms, import 208ms, tests 2.70s, environment 0ms)
-

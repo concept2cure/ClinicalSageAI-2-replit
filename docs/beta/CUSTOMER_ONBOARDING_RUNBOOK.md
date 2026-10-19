@@ -54,14 +54,22 @@ inside Concept2Cure.RI.
 
 ### Day 2 — Demo data + walkthrough
 
-1. **Optional: seed the OR-801 demo project** so the customer can
-   evaluate workflows before importing their own data:
+1. **Optional: a labelled demonstration program** so the customer can
+   evaluate workflows before importing their own data. Create it through
+   the product's own API with the launch-demo pack:
    ```bash
-   ORG_SLUG=<slug> npm run db:seed:mdx-beta
+   DEMO_SEED_TOKEN=<customer-admin bearer token> npm run demo:seed -- --pack mdx --base-url <url>
    ```
-   The seed is idempotent and creates 5 device programs + 7 Q-Subs.
-   Mark the project as `is_demo = true` in the metadata so it doesn't
-   contaminate production reporting.
+   Every record it creates is titled `[Demo · MDX]`, is audited as the
+   signed-in user, is listed in `docs/evidence/DEMO/mdx/manifest.json`, and
+   is removed again with `--purge`.
+
+   Removed 2026-10-15: `npm run db:seed:mdx-beta`. It wrote five device
+   programs and seven Q-Submissions with invented Q-numbers, FDA feedback,
+   meetings and ESG receipts straight into the database — into the
+   `concept2cure` organisation whatever `ORG_SLUG` said — with nothing
+   marking them as demonstration data. Never seed agency correspondence a
+   regulator did not send into a customer environment.
 
 2. **Customer success walkthrough call.** ~60 minutes. Cover:
    - Project creation + RA team invite flow.

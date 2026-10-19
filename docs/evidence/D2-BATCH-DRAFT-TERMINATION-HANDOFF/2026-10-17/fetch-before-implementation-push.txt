@@ -1,0 +1,3 @@
+From https://github.com/concept2cure/ClinicalSageAI-2-replit
+ * branch                concept2cure-v2 -> FETCH_HEAD
+   788f8a118..8d06f7156  concept2cure-v2 -> origin/concept2cure-v2

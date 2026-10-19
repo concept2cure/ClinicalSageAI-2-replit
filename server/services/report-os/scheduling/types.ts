@@ -26,8 +26,8 @@ export type DeliveryChannel = 'platform' | 'external';
  * - `dayOfWeek` (0=Sun..6=Sat) selects the day for `weekly` cadence.
  * - `dayOfMonth` (1..28) selects the day for `monthly` cadence (clamped to
  *   1..28 so it is valid in every month).
- * - `timeZoneOffsetMinutes` is carried for the caller; the next-run math
- *   operates in UTC and ignores it (see `computeNextRun`).
+ * - `timeZone` is an IANA timezone, including its daylight-saving transitions.
+ * - Legacy `timeZoneOffsetMinutes` is minutes east of UTC; defaults to UTC.
  */
 export interface ReportSchedule {
   cadence: CadencePreset;
@@ -35,6 +35,7 @@ export interface ReportSchedule {
   minute?: number;
   dayOfWeek?: number;
   dayOfMonth?: number;
+  timeZone?: string;
   timeZoneOffsetMinutes?: number;
 }
 

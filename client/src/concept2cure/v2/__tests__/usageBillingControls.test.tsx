@@ -1,68 +1,53 @@
 // @vitest-environment jsdom
 /**
- * Usage & billing — the three controls that did nothing.
+ * Usage & billing — the controls that did nothing, or claimed too much.
  *
  * "Buy more", "Manage" (auto-reload) and "Copy link" (referral) all rendered as
- * real, enabled, focusable buttons with no `onClick` between them. Two are now
- * wired to the endpoints that already existed; the third was deleted, because
- * it advertised a referral programme the product cannot honour.
+ * real, enabled, focusable buttons with no `onClick` between them. The referral
+ * card was deleted because it advertised a programme the product cannot honour.
  *
- * "Buy more" is the one that costs money. A customer out of credits presses it
- * and, until now, nothing happened — no navigation, no error, no sign the click
- * registered. That is the failure this file exists to keep closed.
+ * "Buy more" and auto-reload were then wired to real endpoints — but they sat on
+ * a credit balance nothing ever draws down (credit-ledger.ts `debitCredits` has
+ * no caller). Selling top-ups of a balance that use never spends is the larger
+ * defect, so the balance, "Buy more" and auto-reload are no longer shown
+ * (settings/integrity audit 2026-10-17, finding 4). The Stripe portal stays
+ * reachable from Plans & licensing ("Manage billing").
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({
-  apiRequest,
-  redactInternals: (x: unknown) => x,
-  serverMessage: (b: unknown) => (b as { error?: string } | null)?.error ?? null,
-}));
+vi.mock('@/lib/queryClient', () => ({ apiRequest, redactInternals: (x: unknown) => x, serverMessage: (b: unknown) => (b as { error?: string } | null)?.error ?? null }));
 vi.mock('@/utils/authToken', () => ({ getAuthToken: () => 't', getJwtOrgId: () => 1 }));
 vi.mock('../surfaceContext', () => ({ usePublishSurfaceContext: () => {} }));
-
 import { UsageBilling } from '../surfaces/UsageBilling';
-
-const CREDITS = {
-  balanceCents: 4200,
-  ledger: [],
-  autoReload: { enabled: false, thresholdCents: 1000, topupCents: 5000 },
+const credits = {
+  balanceCents: 4200, ledger: [],
+  autoReload: { enabled: false, requestedEnabled: false, available: false, thresholdCents: 1000, topupCents: 5000 },
+  capabilities: { balanceMode: 'administrative_allocation', purchase: { available: false }, autoReload: { available: false }, usageDebit: { available: false } },
 };
-
-const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b } as unknown as Response);
-function apiError(status: number, body: unknown) {
-  const e = new Error((body as { error?: string })?.error ?? `HTTP ${status}`) as Error & {
-    name: string; status: number; payload: unknown;
-  };
-  e.name = 'ApiRequestError'; e.status = status; e.payload = body;
-  return e;
-}
-
-function route(over: Partial<Record<string, (body?: unknown) => Promise<Response>>> = {}) {
-  apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-    const key = `${method} ${url}`;
-    if (over[key]) return over[key]!(body);
-    if (method === 'GET' && url === '/api/billing/credits') return ok(CREDITS);
+const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b } as Response);
+function route(reloadRequested = false, portal: unknown = { portalUrl: 'https://billing.stripe.test/s/1' }) {
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url === '/api/billing/credits') return ok({ ...credits, autoReload: { ...credits.autoReload, requestedEnabled: reloadRequested } });
+    if (method === 'GET' && url === '/api/billing/invoices') return ok({ invoices: [] });
     if (method === 'GET') return ok({});
-    throw apiError(404, { error: `unrouted ${key}` });
+    if (method === 'POST' && url === '/api/billing/portal') return ok(portal);
+    if (method === 'PUT' && url === '/api/billing/credits/auto-reload') return ok({ autoReload: { ...credits.autoReload }, auditTrail: { persisted: true, chained: true } });
+    throw new Error(`unexpected ${method} ${url}`);
   });
 }
-
-const props = { surface: { id: 'usage' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
-
+const props = { surface: { id: 'billing' } as never, onAsk: () => {}, onNav: () => {}, segment: 'biopharma' };
 beforeEach(() => { apiRequest.mockReset(); });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-/** Credits and auto-reload live on the Billing tab, not the default one. */
+/** Opens the Billing tab. */
 async function mount() {
   /* `{...(props as never)}` typechecked as a spread of `never`, which TS
      rejects outright (TS2698). `props` is already shaped to the surface's
      contract above, so it spreads as itself. */
   render(<UsageBilling {...props} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/credits'));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/invoices'));
   const billingTab = screen
     .getAllByRole('button')
     .find((b) => /^billing$/i.test((b.textContent ?? '').trim()));
@@ -70,92 +55,20 @@ async function mount() {
   fireEvent.click(billingTab as HTMLButtonElement);
 }
 
-describe('Buy more', () => {
-  it('opens the real Stripe portal', async () => {
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
-    route({ 'POST /api/billing/portal': async () => ok({ portalUrl: 'https://billing.stripe.test/s/1' }) });
+describe('credits are not presented as metered', () => {
+  it('no balance, no Buy more, no auto-reload control, and no credits read', async () => {
+    route();
     await mount();
-
-    const btn = await screen.findByRole('button', { name: /buy more/i });
-    fireEvent.click(btn);
-
-    await waitFor(() =>
-      expect(apiRequest).toHaveBeenCalledWith('POST', '/api/billing/portal', expect.anything()),
-    );
-    await waitFor(() =>
-      expect(open).toHaveBeenCalledWith('https://billing.stripe.test/s/1', '_blank', 'noopener'),
-    );
-    open.mockRestore();
-  });
-
-  it('says so when no portal link comes back, rather than doing nothing', async () => {
-    // Silently doing nothing while looking successful is the same defect this
-    // fixes, just wearing a handler.
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
-    route({ 'POST /api/billing/portal': async () => ok({}) });
-    await mount();
-    fireEvent.click(await screen.findByRole('button', { name: /buy more/i }));
-    await waitFor(() => expect(document.body.textContent).toMatch(/did not return a link|Could not open/i));
-    expect(open).not.toHaveBeenCalled();
-    open.mockRestore();
-  });
-
-  it('surfaces the server refusal', async () => {
-    route({ 'POST /api/billing/portal': async () => { throw apiError(403, { error: 'Billing access is restricted.' }); } });
-    await mount();
-    fireEvent.click(await screen.findByRole('button', { name: /buy more/i }));
-    await waitFor(() => expect(document.body.textContent).toMatch(/Billing access is restricted/));
+    expect(screen.queryByRole('button', { name: /buy more/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /turn on|turn off/i })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\$42\.00|Current balance|Auto-reload/i);
+    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/billing/credits');
   });
 
   it('makes no price claim it cannot honour', async () => {
-    // The button carried "Up to 30% off". Nothing computes or applies a
-    // discount — no volume tier, no coupon, no promotion code reaches Stripe.
     route();
     await mount();
     expect(document.body.textContent).not.toMatch(/30% off/i);
-  });
-});
-
-describe('auto-reload', () => {
-  it('requires a reason before it writes, then sends it', async () => {
-    const put = vi.fn(async () => ok({ autoReload: { enabled: true, thresholdCents: 1000, topupCents: 5000 } }));
-    route({ 'PUT /api/billing/credits/auto-reload': put });
-    await mount();
-
-    const btn = await screen.findByRole('button', { name: /turn on|turn off/i });
-    fireEvent.click(btn);
-
-    const dialog = await screen.findByRole('dialog');
-    // Nothing written yet.
-    expect(apiRequest.mock.calls.filter((c: unknown[]) => c[0] === 'PUT')).toHaveLength(0);
-
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'enabling top-up for Q3' } });
-    fireEvent.change(dialog.querySelector('input[type="text"]')!, { target: { value: 'yes' } });
-    fireEvent.click(
-      Array.from(dialog.querySelectorAll('button')).find((b) => /confirm|apply|save|continue/i.test(b.textContent ?? ''))!,
-    );
-
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'PUT');
-      expect(call, 'the write must reach the server').toBeTruthy();
-      expect((call![2] as { reason: string }).reason).toBe('enabling top-up for Q3');
-    });
-  });
-
-  it('reports the refusal a non-admin gets', async () => {
-    // The endpoint is admin/owner only, so 403 is the common real case.
-    route({
-      'PUT /api/billing/credits/auto-reload': async () => { throw apiError(403, { error: 'Admin access required' }); },
-    });
-    await mount();
-    fireEvent.click(await screen.findByRole('button', { name: /turn on|turn off/i }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'attempting change' } });
-    fireEvent.change(dialog.querySelector('input[type="text"]')!, { target: { value: 'yes' } });
-    fireEvent.click(
-      Array.from(dialog.querySelectorAll('button')).find((b) => /confirm|apply|save|continue/i.test(b.textContent ?? ''))!,
-    );
-    await waitFor(() => expect(document.body.textContent).toMatch(/Admin access required/));
   });
 });
 

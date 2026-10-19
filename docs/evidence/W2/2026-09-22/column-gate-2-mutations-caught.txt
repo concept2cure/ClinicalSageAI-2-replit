@@ -1,7 +1,7 @@
 # Mutation test of tests/schema-contract/column-reachability-guard.contract.test.ts
 # Each row re-introduces one known weakness into the implementation and shows which contract tests fail; the file is restored after each run.
 == first-ALTER-action-only: Tests  1 failed | 25 passed (26)
-    × tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > reads every action of a multi-clause ALTER, not only the 
+    × tests/schema-contract/column-reachability-guard.contract.test.ts > what a migration ADDS > reads every action of a multi-clause ALTER, not only the
 == co-occurrence-matcher: Tests  5 failed | 21 passed (26)
     × tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > does not read an output alias as a table (documents
     × tests/schema-contract/column-reachability-guard.contract.test.ts > what a statement REFERENCES > resolves an alias to its own relation and schema (d

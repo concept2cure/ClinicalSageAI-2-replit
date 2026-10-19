@@ -1,0 +1,9 @@
+
+/workspace/ClinicalSageAI-2-replit/server/export/authoring-images.ts
+  74:1  warning  Function 'jpegSize' has a complexity of 16. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+  628:1   warning  File has too many lines (961). Maximum allowed is 500            max-lines
+  953:73  warning  Arrow function has too many lines (174). Maximum allowed is 100  max-lines-per-function
+
+✖ 3 problems (0 errors, 3 warnings)

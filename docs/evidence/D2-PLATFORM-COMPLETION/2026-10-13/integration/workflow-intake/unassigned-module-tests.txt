@@ -1,0 +1,264 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:12:25.099Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:12:25.100Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:12:25.100Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > previews exact saved selection/model-knownness without creating authoring evidence 92ms
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained
+{
+  "timestamp": "2026-10-13T21:12:29.221Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2e2bc236-3779-4bb0-98e7-11b2fbf93f2a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained 161ms
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+CRITICAL: Failed to create audit trail: error: Injected workflow audit failure
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 157,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function workflow_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '8b7d02e9-29c9-4fc2-997a-c9ba0a6d87da',
+    '2b6f3388-d5ee-476b-a83f-33cdc1dfdf63',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<p>Participants received study treatment. Impurity B was &lt;LOQ in all batches.</p>\n',
+    null,
+    '48fafd896c7c85cf4f7eb5275e2e34cb4044fe0554fa3d6fb8e4b28b46d00f9b',
+    'Exercise the workflow atomic rollback',
+    {
+      provenance: [Object],
+      drafted: true,
+      workflowSourceOrigin: [Object],
+      section_code: '11.1'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '4c5ae1ac-07d1-4410-a0fe-9bd4be98ac99',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+{
+  "timestamp": "2026-10-13T21:12:29.485Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected workflow audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > reopens the exact actor draft without replacing edits 109ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses a source changed after preview and preserves all authoring evidence 28ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses private-source previews and a different target program before prose/create 30ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure 83ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:12:33.656Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:12:33.657Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:12:33.657Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T21:12:34.958Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 85e15191-f59e-4d7f-9b10-cf0a68da89a2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T21:12:34.977Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 85e15191-f59e-4d7f-9b10-cf0a68da89a2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-13T21:12:34.993Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 85e15191-f59e-4d7f-9b10-cf0a68da89a2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > direct from-draft private project boundary > refuses direct private-program source references before reading source text or creating evidence 88ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-13T21:12:35.064Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1c80f7aa-3b66-4cfb-b47e-ac775daeb6fc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 156ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 51ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T21:12:35.174Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c11399cf-f8c0-4b02-863e-0c3a158a0bfc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T21:12:35.188Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c11399cf-f8c0-4b02-863e-0c3a158a0bfc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-13T21:12:35.201Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c11399cf-f8c0-4b02-863e-0c3a158a0bfc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T21:12:35.289Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ea8d0d85-b165-4972-a33e-9da5e9239eb2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T21:12:35.304Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ea8d0d85-b165-4972-a33e-9da5e9239eb2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-13T21:12:35.315Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ea8d0d85-b165-4972-a33e-9da5e9239eb2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 145ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-13T21:12:35.348Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8488c0e3-5894-4315-bd80-9572ce062da1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-13T21:12:35.391Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f5275cfc-936e-4d1e-8cd4-5ed7412bc935 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 74ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 36ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it) 40ms
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  21:12:17
+   Duration  17.94s (transform 4.95s, setup 136ms, import 1.26s, tests 16.11s, environment 0ms)

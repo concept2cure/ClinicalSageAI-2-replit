@@ -90,6 +90,8 @@
  * Re-running inserts nothing new.
  */
 
+import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
+
 async function tableExists(client, table) {
   const { rows } = await client.query('SELECT to_regclass($1) AS t', [`public.${table}`]);
   return Boolean(rows[0]?.t);
@@ -115,28 +117,13 @@ async function resolveUserId(client, email, admin) {
    Mirror the resolve-or-create pattern used by 70-vault so a missing parent
    degrades to a skipped part rather than aborting the orchestrator tx. */
 
-async function resolveWorkspaceId(client, org, admin) {
+async function resolveWorkspaceId(client, org) {
   if (!(await tableExists(client, 'client_workspaces'))) return null;
   try {
     await client.query('SAVEPOINT sp_pgm_ws');
-    let { rows } = await client.query(
-      'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-      [org.id],
-    );
-    if (!rows[0]) {
-      await client.query(
-        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-         VALUES ($1, 'Concept2Cure Therapeutics', 'concept2cure', 'active', $2)
-         ON CONFLICT (organization_id, slug) DO NOTHING`,
-        [org.id, admin.id],
-      );
-      ({ rows } = await client.query(
-        'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-        [org.id],
-      ));
-    }
+    const id = await ensureOrganizationWorkspace(client, org.id);
     await client.query('RELEASE SAVEPOINT sp_pgm_ws');
-    return rows[0]?.id ?? null;
+    return id;
   } catch {
     await client.query('ROLLBACK TO SAVEPOINT sp_pgm_ws');
     return null;
@@ -152,7 +139,7 @@ async function resolveProjectId(client, org, admin) {
   );
   if (existing.rows[0]) return existing.rows[0].id;
 
-  const wsId = await resolveWorkspaceId(client, org, admin);
+  const wsId = await resolveWorkspaceId(client, org);
   const name = 'Concept2Cure regulatory workspace';
   const desc = 'Container program for demo regulatory correspondence.';
 

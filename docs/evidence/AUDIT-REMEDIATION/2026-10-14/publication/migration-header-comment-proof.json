@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-14T21:53:49.991151+00:00",
+  "scope": "Comment-only publication audit headers; no SQL statements changed.",
+  "files": [
+    {
+      "path": "migrations/20260510_notifications_and_clinical.sql",
+      "beforeSha256": "1e8b241d43c8bc35c0ebd26823745ba34ae31c92ca3ccb65d5720426573bfbc7",
+      "afterSha256": "66295c517f0df3fcbae99b9380eed666edc7ef386e271c6b064ee4a0c2562aef",
+      "strippedSqlBeforeSha256": "867d9200d2f1658f4cfc542dcc3e5baabae75bf748c723ed8cc4d3fa8a34d872",
+      "strippedSqlAfterSha256": "867d9200d2f1658f4cfc542dcc3e5baabae75bf748c723ed8cc4d3fa8a34d872",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "db/migrations/20261014_ai_feedback_persistence.sql",
+      "beforeSha256": "a267eca5f0a19e7afe47578501c410858c5aca12d21bbbea483f15ab4337599b",
+      "afterSha256": "dccaa2fe870859cea59f2ba84aa3e13653811d1d6bb1037a412b4a14d29859db",
+      "strippedSqlBeforeSha256": "c4b8f7d4b0bff4aac3e0f671c4bf1562e38244698c732d3c20f87710aa56c97f",
+      "strippedSqlAfterSha256": "c4b8f7d4b0bff4aac3e0f671c4bf1562e38244698c732d3c20f87710aa56c97f",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "db/migrations/20261014_orchestrator_continuation_inputs.sql",
+      "beforeSha256": "a8a17b351be1bcb12bc197ed12218d4766bb1abe3b03c27056d6632e9b6bee50",
+      "afterSha256": "b402b3a875a0e8c188c1e95e884c42e47a9022dd8510715e24134cacbf88bc99",
+      "strippedSqlBeforeSha256": "76435a5703e1f70d15c78fe7f4de17adbe63db81e00c3682d222726f7ff6f79f",
+      "strippedSqlAfterSha256": "76435a5703e1f70d15c78fe7f4de17adbe63db81e00c3682d222726f7ff6f79f",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "db/migrations/20261014_qms_controlled_authoring_content.sql",
+      "beforeSha256": "681dbfef5ca9234199d3cab54a07125d09a2bcbe8e171645c468d046e6120253",
+      "afterSha256": "8f60332d4c8ff9e516b55f8cdd6a1042f9c398cc8cd7214b866060f5d5a068cc",
+      "strippedSqlBeforeSha256": "015a231ed3e6be4f89dbb0244d08dc1863e428e5c77ffb4fbc083fc2aed87127",
+      "strippedSqlAfterSha256": "015a231ed3e6be4f89dbb0244d08dc1863e428e5c77ffb4fbc083fc2aed87127",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "migrations/20261014_ectd_transmit_attempt_binding.sql",
+      "beforeSha256": "228b407d6fa43fab542691cafa00898024ce414d0bdd59dda8cf464e8b7672a6",
+      "afterSha256": "cc1be265741a99d3a2c49a822a6684c1f987202c8a7352efe5da2b219a6252b2",
+      "strippedSqlBeforeSha256": "7793a7145d68591d6a923c62685647ca31426860cc2708507196ef6a7f9f3e56",
+      "strippedSqlAfterSha256": "7793a7145d68591d6a923c62685647ca31426860cc2708507196ef6a7f9f3e56",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "migrations/20261014_immutable_report_record_indexes.sql",
+      "beforeSha256": "747dc212ca8ae25c78d87d3b0aaf0c5eb7a27f2666699cb98499cddb2516d86e",
+      "afterSha256": "448e404c26d645524ec68aadad6c6737217ab3ff8d22b1d7fa097a43989d6946",
+      "strippedSqlBeforeSha256": "7a1e059cf8f1dd826e668b277d863a773013c12586c1034e61fe3f5316dd5e6e",
+      "strippedSqlAfterSha256": "7a1e059cf8f1dd826e668b277d863a773013c12586c1034e61fe3f5316dd5e6e",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "migrations/20261014_notification_recipient_receipts.sql",
+      "beforeSha256": "6cf015344684938b349bc0d6e3a86fce16ebf62af43e5a1d6a963d27026b687e",
+      "afterSha256": "f9ed8be09b5299277037267be6ca32ce75cf98bd27a24e33c444255098882e42",
+      "strippedSqlBeforeSha256": "91cbb1e78e6dbddc30ff0d6b6c4a5245a1a87faaf82d75b95f6789256dfa21ad",
+      "strippedSqlAfterSha256": "91cbb1e78e6dbddc30ff0d6b6c4a5245a1a87faaf82d75b95f6789256dfa21ad",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    },
+    {
+      "path": "migrations/20261014_protocol_program_scope.sql",
+      "beforeSha256": "433430973a7528525bb2d5a3dee1172fc3059c50d67bb9cbed84e7d0a0a22f28",
+      "afterSha256": "dcca8bae2969c0f2f63e4876b017bdc06513e2f7f325cd82cb49c1409ed88bd3",
+      "strippedSqlBeforeSha256": "c894d5b3e50b762f41ac8cb791b7575c7633bfccd7ec6485da497b659101984b",
+      "strippedSqlAfterSha256": "c894d5b3e50b762f41ac8cb791b7575c7633bfccd7ec6485da497b659101984b",
+      "originalBytesRetainedVerbatim": true,
+      "requiredHeaderWithinFirst40Lines": true
+    }
+  ]
+}

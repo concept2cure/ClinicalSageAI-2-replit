@@ -1,0 +1,31 @@
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 6ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 4ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 17ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > says in its description and step detail that it matches by kind and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing
+TypeError: Cannot read properties of undefined (reading 'params')
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on
+TypeError: Cannot read properties of null (reading 'states')
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed
+TypeError: .toMatch() expects to receive a string, but got undefined
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing
+TypeError: Cannot read properties of null (reading 'incomplete')
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling
+TypeError: Cannot read properties of undefined (reading 'sql')
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > fits the result budget with many misfiled, unspecific and noted documents
+TypeError: Cannot read properties of null (reading 'misfiled')
+ Test Files  1 failed (1)
+      Tests  6 failed | 15 passed (21)
+   Duration  3.91s (transform 2.22s, setup 124ms, import 3.24s, tests 51ms, environment 0ms)

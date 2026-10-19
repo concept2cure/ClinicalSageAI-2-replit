@@ -18,9 +18,20 @@
  *
  * HONESTY (regulated product): the submission gate treats an empty findings set
  * as "clean / ready to file", so a findings READ FAILURE must never degrade to
- * an empty array — it fails closed with 503. Fields with no faithful persisted
- * source (program.app, program.filing, finding.factId, the verified-consistent
+ * an empty array — it fails closed with 503. So does a failed assumption or
+ * decision read (2026-10-15): [] there read as "no records". Fields with no
+ * faithful persisted source (program.app, program.filing, finding.factId, the verified-consistent
  * "checks" list) are returned as documented null / [] and are NEVER fabricated.
+ *
+ * THE GATE is `gate`, counted by contradictionEngineService.projectGate over
+ * every finding the project holds — not over `findings`, which is a page (most
+ * severe first, `limit` rows). It fails closed with 503 like the findings read.
+ * Each finding carries the severity and authority the engine recorded,
+ * including any regulator overlay rule applied when it was detected
+ * (regulatorBody + overlayRuleId). The surface used to re-score both in the
+ * browser from two hard-coded overlay rules — one of them, an EMA dosage rule,
+ * in no organisation's rule table — under an FDA/EMA toggle. Removed
+ * 2026-10-15; the recorded authority is the one checkPromotionBlocked enforces.
  *
  * @module server/routes/governed-intelligence-inconsistency-routes
  */
@@ -30,6 +41,7 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { query as dbQuery } from '../db.js';
 import { contradictionEngineService } from '../services/contradiction-engine-service';
+import type { ProjectGate } from '../services/contradiction-engine-service';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
 
@@ -67,6 +79,10 @@ interface InconsistencyFinding {
   resolvedAt: string | null;
   /** No fact-linkage column exists on contradiction_findings — always null. */
   factId: string | null;
+  /** The regulator body the finding was detected against, as stored. */
+  regulatorBody: string | null;
+  /** The overlay rule the engine applied at detection, or null when none was. */
+  overlayRuleId: string | null;
 }
 
 interface InconsistencyAssumption {
@@ -109,6 +125,8 @@ interface InconsistencyCheck {
 
 interface InconsistencyBoard {
   program: InconsistencyProgram;
+  /** Counted over every finding of the project; `findings` may be a page of them. */
+  gate: ProjectGate;
   findings: InconsistencyFinding[];
   assumptions: InconsistencyAssumption[];
   decisions: InconsistencyDecision[];
@@ -196,13 +214,14 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
       // 2) Findings — the promotion-gating data. Fail CLOSED on read error:
       //    an empty findings set is interpreted downstream as "clean / ready to
       //    file", so we must never emit [] when we simply could not read.
+      //    The gate is counted over all of them, so it fails closed the same way.
       let findingRecords;
+      let gate: ProjectGate;
       try {
-        findingRecords = await contradictionEngineService.searchFindings({
-          organizationId: orgId,
-          projectId,
-          limit,
-        });
+        [findingRecords, gate] = await Promise.all([
+          contradictionEngineService.searchFindings({ organizationId: orgId, projectId, limit }),
+          contradictionEngineService.projectGate(orgId, projectId),
+        ]);
       } catch (error) {
         logger.error('contradiction findings read failed', { projectId, err: errMsg(error) });
         return res
@@ -210,28 +229,22 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
           .json({ success: false, error: 'Contradiction findings store unavailable' });
       }
 
-      // 3) Assumptions + decisions — supporting context only. Degrade to [] on
-      //    failure so a registry hiccup never blocks the safety-critical board.
-      const [assumptionsSettled, decisionsSettled] = await Promise.allSettled([
-        assumptionRegistryService.search({ organizationId: orgId, projectId, limit }),
-        decisionRecordService.search({ organizationId: orgId, projectId, limit }),
-      ]);
-      if (assumptionsSettled.status === 'rejected') {
-        logger.warn('assumption registry read failed (degraded to empty)', {
-          projectId,
-          err: errMsg(assumptionsSettled.reason),
-        });
+      // 3) Assumptions + decisions. A failed read fails the board, as the
+      //    findings read does. Until 2026-10-15 it degraded to [], and the
+      //    surface said "No assumption records yet" over a read that failed.
+      let assumptionRecords;
+      let decisionRecords;
+      try {
+        [assumptionRecords, decisionRecords] = await Promise.all([
+          assumptionRegistryService.search({ organizationId: orgId, projectId, limit }),
+          decisionRecordService.search({ organizationId: orgId, projectId, limit }),
+        ]);
+      } catch (error) {
+        logger.error('assumption / decision records read failed', { projectId, err: errMsg(error) });
+        return res
+          .status(503)
+          .json({ success: false, error: 'Assumption registry or decision ledger unavailable' });
       }
-      if (decisionsSettled.status === 'rejected') {
-        logger.warn('decision records read failed (degraded to empty)', {
-          projectId,
-          err: errMsg(decisionsSettled.reason),
-        });
-      }
-      const assumptionRecords =
-        assumptionsSettled.status === 'fulfilled' ? assumptionsSettled.value : [];
-      const decisionRecords =
-        decisionsSettled.status === 'fulfilled' ? decisionsSettled.value : [];
 
       // ── Map to the display shape ────────────────────────────────────────────
 
@@ -261,6 +274,8 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
           // HONESTY: contradiction_findings has no fact-linkage column; the CMC
           // "change value everywhere" affordance has no persisted backing datum.
           factId: null,
+          regulatorBody: f.regulatorBody,
+          overlayRuleId: f.overlayRuleId,
         };
       });
 
@@ -303,6 +318,7 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
 
       const board: InconsistencyBoard = {
         program,
+        gate,
         findings,
         assumptions,
         decisions,

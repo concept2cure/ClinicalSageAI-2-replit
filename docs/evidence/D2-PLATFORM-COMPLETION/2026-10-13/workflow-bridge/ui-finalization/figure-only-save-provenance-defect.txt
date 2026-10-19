@@ -1,0 +1,5 @@
+QA fixture only. Read-only observed lineage rows after a figure-only save; no adoption/signing event.
+3d58d288-8e82-46b9-b4c7-aeac67c337a0|0|87|machine_draft|workflow_import||a1ee7232bc400373b43f147ab7eae14cd1e8c083946c524df9e80ece5c721d6a|2026-10-13 22:15:54.922048+00
+bf15ec4b-4c1f-4f8f-b48b-4343019be38a|88|322|machine_draft|workflow_import||63b9de910256641c5d6a33e760c3d0d639df663ee84fb97799145bce80c9a4a4|2026-10-13 22:15:54.922048+00
+7882f8b8-8939-4367-add5-1e7de24dec54|0|170|author_assertion||25|f6a924eebcc8b92cce90406fcab68010620375d00a0a479a75aa32d7288710dd|
+ff66924c-bcc8-443c-a723-b492649fa223|171|673|author_assertion||25|a172264efe89a78edf0b67946f719f871cf148c6b2f1fff9e770df5806881350|

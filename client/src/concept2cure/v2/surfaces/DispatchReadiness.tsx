@@ -13,9 +13,11 @@ import {
   type Discovery,
   type GateState,
   type GateView,
+  type ExternalValidation,
   type ReadinessFinding,
   type RuleView,
 } from './programSequence';
+import { filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
 import '../styles/project-home-v2.css';
 
 /* The wire types, the open program's sequence discovery and the server's
@@ -30,6 +32,10 @@ function notReadySummary(state: GateState, programLabel: string | null, discover
   if (state === 'no-submission' && discovery.state === 'no-submission') {
     /* "No submission" is said only when none is recorded to the program: one
        of another type (an EU MAA beside the IND) is named, not denied. */
+    const documentClass = filingDocumentClassOf(discovery.programType);
+    if (documentClass) {
+      return `Dispatch readiness: the open program (${p}) is ${filingTypeInSentence(documentClass.docType, true)}, authored here and not built as a sequence, so there is no sequence to gate.`;
+    }
     const type = programTypeLabel(discovery.programType);
     const others = otherSubmissionsLine(discovery.otherSubmissions);
     return (
@@ -80,11 +86,58 @@ function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
 }
 
 /** One composed gate: the rule it enforces, its outcome in words, its own blockers. */
-function GateCard({ gate }: { gate: GateView }) {
+function GateOutcome({ gate }: { gate: GateView }) {
+  if (gate.key === 'external' && gate.assessmentStatus) {
+    const labels = {
+      passed: 'External validation passed.', failed: 'External validation failed.',
+      invalid: 'External validation report invalid.', not_assessed: 'Not assessed.',
+    };
+    return <>{labels[gate.assessmentStatus]} {gate.assessmentNote ?? gate.notAssessed} {!gate.cleared && 'Blocks dispatch:'}</>;
+  }
+  return <>{gate.cleared && gate.notAssessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}</>;
+}
+
+function externalValidationSummary(ev: ExternalValidation): string {
+  switch (ev.assessmentStatus) {
+    case 'passed': return 'external validation passed';
+    case 'failed': return 'external validation failed (advisory)';
+    case 'invalid': return 'external validation report invalid (advisory)';
+    case 'not_assessed': return 'external validation not assessed';
+    default:
+      if (ev.qualifyingRun === false || ev.errorCountKnown === false) return 'external validation not assessed';
+      if (ev.ran && ev.errorCount > 0) return 'external validation failed (advisory)';
+      return ev.ran ? 'external validator clean' : 'external validator not run';
+  }
+}
+
+function externalValidationFacts(ev: ExternalValidation): Record<string, unknown> {
+  return {
+    externalValidationCleared: ev.cleared,
+    externalValidationStatus: ev.assessmentStatus ?? null,
+    externalValidationNote: ev.assessmentNote ?? null,
+    externalValidatorKind: ev.validatorKind ?? null,
+    externalSelectedValidator: ev.selectedValidatorName ?? null,
+    externalReportedValidator: ev.reportedValidatorName ?? null,
+    externalValidationRan: ev.ran,
+    externalQualifyingRun: ev.qualifyingRun ?? null,
+    externalErrorCountKnown: ev.errorCountKnown ?? null,
+  };
+}
+
+function gateWithLegacyErrors(suppliedGate: GateView, externalValidation: ExternalValidation): GateView {
+  // Older responses have no factual status, but their positive observed count
+  // still cannot be displayed as a successful external validation.
+  return suppliedGate.key === 'external' && suppliedGate.assessmentStatus == null && externalValidation.ran && externalValidation.errorCount > 0
+    ? { ...suppliedGate, assessmentStatus: 'failed', assessmentNote: `The supplied report carries ${externalValidation.errorCount} error-severity finding(s). The gate's blocking policy is shown separately.` }
+    : suppliedGate;
+}
+
+function GateCard({ gate: suppliedGate, externalValidation }: { gate: GateView; externalValidation: ExternalValidation }) {
+  const gate = gateWithLegacyErrors(suppliedGate, externalValidation);
   /* A gate that does not block because its check never ran is not "Satisfied".
      The external validator's card read "…report for this package carries no
      errors — Satisfied." over a package no validator had seen. */
-  const unassessed = gate.cleared && Boolean(gate.notAssessed);
+  const unassessed = gate.cleared && (Boolean(gate.notAssessed) || (gate.key === 'external' && gate.assessmentStatus != null && gate.assessmentStatus !== 'passed'));
   return (
     <div data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
       <div className="dr2-gate-top">
@@ -92,7 +145,7 @@ function GateCard({ gate }: { gate: GateView }) {
         <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
       </div>
       <div className="dr2-gate-detail">
-        {unassessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
+        <GateOutcome gate={gate} />
         {!gate.cleared && (
           <ul style={{ margin: '2px 0 0', paddingLeft: 16 }}>
             {gate.blockers.map((b, i) => <li key={i}>{b}</li>)}
@@ -158,7 +211,13 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
               unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
               shadowReviewRunCount: a.shadowReviewRunCount,
               shadowReviewMissing: a.shadowReviewMissing,
-              externalValidationCleared: a.externalValidation?.cleared ?? null,
+              // A gate that cleared without assessing what it guards (an advisory
+              // validator, a clinical hold, a Shadow Review waived by signature),
+              // in the server's words, so AnA never narrates it as passed.
+              notAssessed: (Array.isArray(a.gates) ? a.gates : [])
+                .filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim())
+                .map((g) => ({ gate: g.key, note: g.notAssessed })),
+              ...externalValidationFacts(a.externalValidation),
               leafCount: a.leafCount,
             }
           : {}),
@@ -227,6 +286,9 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
        which type is missing and names the others (programSequence.ts). */
     const words = noSubmissionWords(discovery, discovery.programLabel);
     const type = programTypeLabel(discovery.programType);
+    /* A filing document class is not told to create a submission the
+       platform refuses for it (noSubmissionWords says why there is none). */
+    const documentClass = filingDocumentClassOf(discovery.programType);
     return (
       <div className="dr2">
         {head}
@@ -234,6 +296,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           icon={I.rocket}
           title={words.title}
           hint={
+            documentClass ? words.hint :
             `${words.hint} ` +
             (type ? `Create its ${type} submission in the Submission Center and build a sequence; this` : 'This') +
             " screen does not stand in another program's filing for it."
@@ -272,12 +335,18 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
      rather than a local reconstruction. */
   const gateViews: GateView[] = Array.isArray(a.gates) ? a.gates : [];
 
-  /* AnA answer-first verdict */
+  /* AnA answer-first verdict. A gate that cleared without assessing what it
+     guards is not "proven clear": the lead says how many, and a Shadow Review
+     waived by signature (P-34) is never counted as zero criticals found. */
+  const unassessed = gateViews.filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim());
+  const shadowWaived = unassessed.some((g) => g.key === 'shadowPresence');
   const lead = gate.cleared
     ? {
           tone: 'good',
-          h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
-          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.ran ? ', external validator clean' : ', external validator not run'}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
+          h: unassessed.length
+            ? <>Your sequence is <b>cleared to dispatch</b>. {unassessed.length === 1 ? 'One gate' : `${unassessed.length} gates`} cleared without being assessed; each says why below.</>
+            : <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
+          b: <>0 open validation errors, {shadowWaived ? 'no Shadow Review run (waived by signature)' : '0 unacknowledged Shadow Review criticals'}, {externalValidationSummary(ev)}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
       }
     : {
         tone: 'urgent',
@@ -319,7 +388,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
       {/* the composed gates — each the rule it enforces, its outcome in words */}
       {gateViews.length > 0 && (
         <div className="dr2-gates">
-          {gateViews.map((g) => <GateCard key={g.key} gate={g} />)}
+          {gateViews.map((g) => <GateCard key={g.key} gate={g} externalValidation={ev} />)}
         </div>
       )}
 

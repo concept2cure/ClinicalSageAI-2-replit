@@ -187,21 +187,33 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
   if (!parts) return;
   const { orgId, userId, reason, meaning } = parts;
 
+  // Authority and credential reads use the same tenant-pinned client as the
+  // signed act. Resolving the lazy client opens no domain transaction; absent
+  // request context refuses before checking credentials on any shared pool.
+  let client: RequestDbClient;
+  try {
+    client = requestPgClient(req) as unknown as RequestDbClient;
+  } catch (err) {
+    serverError(res, log, 'opening the signing transaction', err);
+    return;
+  }
+
   // Step 3a (§11.10(g)): the platform's one signing-authority policy
   // (checkSigningAuthority), from the persisted membership, never the token or
   // the body. Until 2026-10-01 these routes had none, so a viewer who knew their
   // own password signed an IRB approval. Until 2026-10-08 (P-27) they asked a
   // copy of it, whose failed role lookup answered 500 rather than 503.
-  const authority = await checkSigningAuthority(userId, orgId);
+  const authority = await checkSigningAuthority(userId, orgId, client);
   if (authority) {
     refusal(res, authority.status, authority.code, authority.message);
     return;
   }
 
-  // Step 4, before any connection is taken: a refused signer writes nothing.
+  // Step 4, before the domain transaction: a refusal signs nothing. Failed
+  // credential accounting remains durable on this tenant-pinned connection.
   let verified: SignerReverification;
   try {
-    verified = await reverifySigner(userId, { password: parts.password, mfaToken: parts.mfaToken }, signerReverificationDeps());
+    verified = await reverifySigner(userId, { password: parts.password, mfaToken: parts.mfaToken }, signerReverificationDeps(client));
   } catch (err) {
     serverError(res, log, 'verifying the signer', err);
     return;
@@ -215,15 +227,7 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
 
   // Steps 5-7 run on the request's own connection, which the auth boundary
   // pinned with this tenant's session variables; the request releases it when
-  // the response ends. A request with no tenant connection refuses here rather
-  // than signing on a shared-pool connection.
-  let client: RequestDbClient;
-  try {
-    client = requestPgClient(req) as unknown as RequestDbClient;
-  } catch (err) {
-    serverError(res, log, 'opening the signing transaction', err);
-    return;
-  }
+  // the response ends.
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId, act.tenantRole);

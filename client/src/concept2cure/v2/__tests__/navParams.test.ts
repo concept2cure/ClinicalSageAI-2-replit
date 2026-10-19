@@ -10,10 +10,11 @@
  * honest (no match → null, never a fabricated group); and the pre-emptive
  * lock_info action annotates the toggle without ever engaging a drive.
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   NAV_PARAMS_TTL_MS,
+  NAV_PARAMS_EVENT,
   clearNavParams,
   consumeNavParams,
   resolveSurfaceIdForTarget,
@@ -25,6 +26,18 @@ import { INITIAL_DRIVE_STATE, driveReducer } from '../liveDrive';
 afterEach(() => clearNavParams());
 
 describe('stash → consume', () => {
+  it('notifies a mounted destination with the resolved id while retaining one-shot consumption', () => {
+    const receive = vi.fn((event: Event) => {
+      expect((event as CustomEvent).detail.surfaceId).toBe('tasks');
+      expect(consumeNavParams('tasks')).toEqual({ taskId: 'TASK-7' });
+    });
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    try {
+      stashNavParamsForTarget('task-board', { taskId: 'TASK-7' });
+      expect(receive).toHaveBeenCalledTimes(1);
+      expect(consumeNavParams('tasks')).toBeNull();
+    } finally { window.removeEventListener(NAV_PARAMS_EVENT, receive); }
+  });
   it('delivers params to the RESOLVED surface (aliases applied), exactly once', () => {
     // 'intelligence' is a registry id whose surface is 'global-ri' via alias.
     expect(resolveSurfaceIdForTarget('intelligence')).toBe('global-ri');

@@ -158,4 +158,3 @@ AssertionError: expected 'SELECT id, compilation_name, compilat…' to match /ex
       Tests  7 failed (7)
    Start at  04:06:15
    Duration  642ms (transform 234ms, setup 73ms, import 284ms, tests 21ms, environment 0ms)
-

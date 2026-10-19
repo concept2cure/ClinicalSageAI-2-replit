@@ -268,15 +268,29 @@ function specifiers(raw) {
       // same offsets. m.index + the match's own offset to the opening quote.
       const quoteAt = m.index + m[0].indexOf(m[1]);
       const spec = raw.slice(quoteAt + 1, quoteAt + 1 + m[2].length);
-      if (spec) out.push({ spec, index: m.index });
+      if (spec) out.push({ spec, index: m.index, typeOnly: isTypeOnlyStatement(code, m.index) });
     }
   }
   return out;
 }
 
+/**
+ * Is the `from` at `index` the end of an `import type …` / `export type …`
+ * statement? Those are erased before anything runs, so they may name a
+ * declaration file (`shared/types/database.d.ts`), which a value import may
+ * not: a runtime import of a `.d.ts` fails exactly as a missing file does.
+ * Read from the blanked code, so a `type` inside a string or comment is not
+ * one.
+ */
+function isTypeOnlyStatement(code, index) {
+  const head = code.slice(0, index);
+  const at = Math.max(head.lastIndexOf('import'), head.lastIndexOf('export'));
+  return at >= 0 && /^(import|export)\s+type\s/.test(code.slice(at, index));
+}
+
 const lineOf = (src, index) => src.slice(0, index).split('\n').length;
 
-function resolves(rawSpec, fromFile) {
+function resolves(rawSpec, fromFile, typeOnly = false) {
   // Vite resource queries — `./x?raw`, `./y?url`, `./z?worker&inline`. The file
   // on disk is the part before the `?`; the suffix asks the bundler for a
   // different representation of it.
@@ -303,6 +317,8 @@ function resolves(rawSpec, fromFile) {
 
   for (const e of RESOLVE_EXTS) if (fs.existsSync(base + e)) return true;
   for (const e of CODE_EXTS) if (fs.existsSync(path.join(base, 'index' + e))) return true;
+  // A type-only import is satisfied by a declaration file; nothing loads it.
+  if (typeOnly && (fs.existsSync(base + '.d.ts') || fs.existsSync(path.join(base, 'index.d.ts')))) return true;
   // A directory with a package.json main, or any directory at all that a
   // bundler could resolve — treated as resolving, since being wrong here costs
   // a false failure on a gate whose whole value is that it never cries wolf.
@@ -328,14 +344,14 @@ for (const file of testFiles) {
   } catch {
     continue;
   }
-  for (const { spec, index } of specifiers(src)) {
+  for (const { spec, index, typeOnly } of specifiers(src)) {
     const isLocal = spec.startsWith('.') || ALIASES.some(([a]) => spec.startsWith(a));
     if (!isLocal) {
       skippedBare += 1;
       continue;
     }
     checked += 1;
-    if (!resolves(spec, file)) {
+    if (!resolves(spec, file, typeOnly)) {
       broken.push({
         file: path.relative(repoRoot, file),
         line: lineOf(src, index),

@@ -46,7 +46,7 @@
  * handle immediately after the write and never waits for the round-trip.
  *
  * ── Tenant scope: which of these queries carries one, and how ───────────────
- * Pool access is scoped by AsyncLocalStorage, not by the connection: 
+ * Pool access is scoped by AsyncLocalStorage, not by the connection:
  * `poolInstrumentation.runQueryScoped` reads `getTenantScope()` AT QUERY TIME and
  * pins `app.current_tenant_id` from it, and once RLS_ENFORCE=on — which
  * production is the only permitted setting for — an unscoped query is rejected

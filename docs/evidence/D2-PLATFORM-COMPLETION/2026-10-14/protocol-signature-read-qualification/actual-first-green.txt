@@ -1,0 +1,125 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T08:38:02.122Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 184ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 131ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 76ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 68ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 40ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 100ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 207ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 92ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 61ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 61ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 33ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 48ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the read qualifies recorded meanings without rewriting historical signatures > reports a real matching approval signature as unassessed and preserves every stored field 222ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the read qualifies recorded meanings without rewriting historical signatures > does not infer a signing-time verdict from the current live author set 271ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the read qualifies recorded meanings without rewriting historical signatures > authorship remains a declared authorship statement without independent approval assurance 108ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > missing or changed binding remains held without rewriting historical signatures > holds missing-digest while retaining the exact historical signature fields 384ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > missing or changed binding remains held without rewriting historical signatures > holds missing-basis while retaining the exact historical signature fields 129ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > missing or changed binding remains held without rewriting historical signatures > holds contradictory-basis while retaining the exact historical signature fields 399ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > missing or changed binding remains held without rewriting historical signatures > keeps content drift held while retaining the declared historical approval 289ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > unrecognized metadata and meanings do not supply historical policy assurance > a valid manifest hash and caller-shaped assurance metadata do not establish a historical independence check 187ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > unrecognized metadata and meanings do not supply historical policy assurance > keeps an unknown historical meaning as a generic unassessed policy fact 99ms
+stdout | server/routes/__tests__/protocol-export-binding.http.test.ts
+{
+  "timestamp": "2026-10-14T08:38:13.069Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T08:38:13.070Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/protocol-export-binding.http.test.ts
+{
+  "timestamp": "2026-10-14T08:38:13.070Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/protocol-export-binding.http.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/protocol-export-binding.http.test.ts > controlled protocol export HTTP hold > returns a named SIGNATURE_CONTENT_CHANGED refusal with status 409 and no exported content 32ms
+ ✓ server/routes/__tests__/protocol-export-binding.http.test.ts > controlled protocol export HTTP hold > returns a named SIGNATURE_NOT_CURRENT refusal with status 409 and no exported content 6ms
+ ✓ server/routes/__tests__/protocol-export-binding.http.test.ts > controlled protocol export HTTP hold > returns a named SIGNATURE_VERIFICATION_UNAVAILABLE refusal with status 503 and no exported content 5ms
+ ✓ server/routes/__tests__/protocol-export-binding.http.test.ts > controlled protocol export HTTP hold > returns a named SIGNATURE_UNREADABLE refusal with status 503 and no exported content 4ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason 3ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a revoked signature says so first, and still names who signed 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a protocol that is not finalized says no signature applies 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > the export’s status line and signature block > a decision recorded on someone’s behalf names them 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > historical signatures never attest to changed or unverified current content > qualifies the changed record as historical if the pure renderer is called directly 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > historical signatures never attest to changed or unverified current content > qualifies the unverified record as historical if the pure renderer is called directly 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > preserves the declared approval without claiming independent approval 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > preserves the declared authorship without claiming independent approval 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > preserves the declared review without claiming independent approval 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > preserves the declared responsibility without claiming independent approval 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > keeps qualification out of draft content imports 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > never prints a matching-current-content claim for changed history 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > never prints a matching-current-content claim for unverified history 0ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-signature.test.ts > content binding and historical independence are separate export facts > never prints a matching-current-content claim for revoked history 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 475ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 164ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action 190ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled 125ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads markdown through the existing Export drawer and carries the exact qualified server copy 212ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads pdf through the existing Export drawer and carries the exact qualified server copy 149ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads docx through the existing Export drawer and carries the exact qualified server copy 187ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 78ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 11ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 16ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > qualifies a legacy approval record without changing its declared meaning 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > qualifies a legacy authorship record without changing its declared meaning 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > qualifies a legacy review record without changing its declared meaning 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > qualifies a legacy responsibility record without changing its declared meaning 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > preserves the changed warning and does not claim a current content match 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > preserves the unverified warning and does not claim a current content match 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > preserves the revoked warning and does not claim a current content match 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > does not invent a policy question or verdict for an unknown historical meaning 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > the signature line separates recorded meaning from independent approval > does not promote arbitrary qualification metadata into independence assurance 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 346ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 40ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 106ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review still offers the signature, to anyone who may record it 83ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason 20ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > assembleProtocolExport + renderProtocolMarkdown > assembles ordered parts and renders markdown with all sections 3ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > maps to PRS elements and is ready when primary outcome + eligibility + synopsis present 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > flags missing primary outcome 1ms
+ ✓ server/services/protocol-export/__tests__/protocol-export-logic.test.ts > buildCtGovRegistrationDraft > marks observational study type 0ms
+
+ Test Files  7 passed (7)
+      Tests  78 passed (78)
+   Start at  08:37:58
+   Duration  22.98s (transform 4.51s, setup 462ms, import 7.65s, tests 11.00s, environment 2.05s)
+

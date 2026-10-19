@@ -437,16 +437,19 @@ export const ANA_SURFACE_CTX = {
         icon: 'penLine',
         prompt: 'Draft the IND annual report / DSUR from the current study status.',
       },
+      /* Decision P-32, 2026-10-15: "Open a safety report" (a SUSAR 7-day
+         report) left this list with the IND screen's safety-report card. IND
+         safety reporting is not in this release, and its routes are refused. */
       {
-        label: 'Open a safety report',
-        icon: 'alertTriangle',
-        prompt: 'Start a SUSAR 7-day safety report and walk me through the required fields.',
+        label: 'Assemble the cover letter',
+        icon: 'checkSquare',
+        prompt: 'Assemble the IND cover letter (m1.2) for the next amendment and list what is missing.',
       },
     ],
     suggestions: [
       'What is outstanding on Forms 1571/1572/3674?',
       'Draft the next protocol amendment',
-      'What safety reports are due?',
+      'Is a Letter of Authorization on file for each referenced file?',
     ],
   },
   biostatistics: {

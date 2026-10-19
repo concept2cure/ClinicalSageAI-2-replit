@@ -13,13 +13,14 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
-import { mountConcept2cureBodyParser, mountPreAuthBodyParsers } from '../middleware';
+import { mountConcept2cureBodyParser, mountPreAuthBodyParsers, mountReportSnapshotBodyParser } from '../middleware';
 
 function app(signedIn: boolean) {
   const a = express();
   mountPreAuthBodyParsers(a);
   a.use('/api', (_req: Request, res: Response, next: NextFunction) => (signedIn ? next() : res.status(401).json({ error: { code: 'AUTH_001' } })));
   mountConcept2cureBodyParser(a);
+  mountReportSnapshotBodyParser(a);
   const echo = (req: Request, res: Response) =>
     res.json({
       parsed: typeof req.body === 'object' && req.body !== null && Object.keys(req.body).length > 0,
@@ -28,6 +29,7 @@ function app(signedIn: boolean) {
     });
   a.post('/api/concept2cure/echo', echo);
   a.post('/api/other/echo', echo);
+  a.post('/api/audit/reports/convert', echo);
   return a;
 }
 
@@ -59,5 +61,26 @@ describe('the /api/concept2cure body is read only after the auth boundary', () =
     expect((await request(app(true)).post('/api/other/echo').set(json).send(megabytes(3))).status).toBe(413);
     const r = await request(app(true)).post('/api/other/echo').set(json).send({ a: 1 });
     expect(r.body.parsed).toBe(true);
+  });
+});
+
+describe('the retained report conversion parser is bounded and authenticated', () => {
+  it('an anonymous malformed large snapshot reaches the auth refusal before JSON parsing', async () => {
+    const r = await request(app(false)).post('/api/audit/reports/convert').set(json).send(megabytes(3).slice(0, -1));
+    expect(r.status).toBe(401);
+  });
+
+  it('accepts a signed-in multilingual snapshot above the generic limit and scrubs its envelope', async () => {
+    const snapshot = `{"__proto__":{"polluted":true},"data":${JSON.stringify('中文报告'.repeat(300_000))}}`;
+    expect(Buffer.byteLength(snapshot)).toBeGreaterThan(2 * 1024 * 1024);
+    const r = await request(app(true)).post('/api/audit/reports/convert').set(json).send(snapshot);
+    expect(r.status).toBe(200);
+    expect(r.body.parsed).toBe(true);
+    expect(r.body.ownProto).toBe(false);
+  });
+
+  it('refuses a body over 10 MB and leaves adjacent audit routes at 2 MB', async () => {
+    expect((await request(app(true)).post('/api/audit/reports/convert').set(json).send(megabytes(11))).status).toBe(413);
+    expect((await request(app(true)).post('/api/audit/reports/convert-other').set(json).send(megabytes(3))).status).toBe(413);
   });
 });

@@ -5,14 +5,18 @@
  * - Context-aware content generation for each section
  * - Regulatory guidance integration
  * - Inline citations with source verification
- * - Content validation against FDA requirements
+ * - Section-requirement coverage from the CTD record (deterministic); the model
+ *   narrates and never supplies a score or verdict
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 import { logger } from '../utils/logger.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { ai } from '../lib/unified-ai-client';
+import { resolveSectionBriefSource } from './ind/ctd/index';
+import { normalizeCtdCode } from '../../shared/regulatory/section-code';
 
 // Initialize clients
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -215,8 +219,7 @@ async function fetchRegulatoryGuidelines(sectionCode) {
       .in('reference_id', sources);
 
     if (error) {
-      logger.warn(`Error fetching guidelines: ${error.message}`);
-      return 'Unable to fetch specific guidelines. Please refer to general FDA guidance for IND submissions.';
+      throw new Error(`Error fetching guidelines: ${error.message}`);
     }
 
     if (!guidelines || guidelines.length === 0) {
@@ -226,6 +229,8 @@ async function fetchRegulatoryGuidelines(sectionCode) {
         const guidelinesText = await readFile(guidelinesPath, 'utf8');
         return guidelinesText;
       } catch (fileError) {
+        // No file is "none on file"; any other failure is a failed read.
+        if (fileError?.code !== 'ENOENT') throw fileError;
         logger.info(`No file guidelines found for section ${sectionCode}`);
         return 'Please refer to FDA and ICH guidelines for IND submissions.';
       }
@@ -244,8 +249,11 @@ async function fetchRegulatoryGuidelines(sectionCode) {
 
     return guidelinesText;
   } catch (error) {
+    // 2026-10-15: a failed read was returned AS the guideline text ('Unable to
+    // fetch …'), drafted against, and served by GET …/guidance with 200. It is
+    // an error now; the store's own message stays in the log.
     logger.error(`Error in fetchRegulatoryGuidelines: ${error.message}`);
-    return 'Unable to fetch guidelines due to an internal error.';
+    throw new Error(`Regulatory guidelines for section ${sectionCode} could not be read.`);
   }
 }
 
@@ -594,15 +602,157 @@ async function extractEntities(content, sectionCode, submissionId) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION-REQUIREMENT COVERAGE (deterministic, from the CTD record)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** A line that opens with a CTD code: "3.2.P.4 Control …", "## 3.2.P.4", "**3.2.P.4.**". */
+const HEADING_CODE =
+  /^\s*(?:#{1,6}\s+)?(?:[*_]{1,2}\s*)?(?:(?:section|module)\s+)?(m?\d+(?:\.[0-9A-Za-z]+)*)\.?(?=[\s:)*_–—-]|$)/i;
+
+/** The CTD codes a text uses as headings, spelled as the record spells them. */
+function headingCodesIn(text) {
+  const codes = new Set();
+  for (const line of String(text ?? '').split(/\r?\n/)) {
+    const match = HEADING_CODE.exec(line);
+    const code = match ? normalizeCtdCode(match[1]) : null;
+    if (code) codes.add(code);
+  }
+  return codes;
+}
+
+const COVERAGE_MEASURES =
+  'Sections the CTD record lists within this section as required for an IND, found as a heading ' +
+  '(the section code at the start of a line) in the text. A heading present is a structural fact, ' +
+  'not a judgment that the content under it is adequate.';
+
+/**
+ * What the CTD record (server/services/ind/ctd) says a section must contain,
+ * measured against a text deterministically — and nothing more.
+ *
+ * - A section the record lists as containing others (3.2.P, 4.2, 2.6): which
+ *   of the contained sections it marks required for an IND appear as headings;
+ *   `percent` is present / required, rounded.
+ * - A section the record describes in prose (2.5, 3.2.P.1): its key content
+ *   elements are descriptions, which no deterministic check verifies (the
+ *   authoring scan takes the same position, routes/authoring.router.ts). They
+ *   are listed with `elements_verified: false`; `percent` is null, with why.
+ * - A parent with no section required for an IND, or a code the record does
+ *   not index: not measured, with why.
+ *
+ * Pure: no I/O, no model.
+ *
+ * @param {string} sectionCode
+ * @param {string} content
+ */
+export function sectionRequirementCoverage(sectionCode, content) {
+  const src = resolveSectionBriefSource(sectionCode);
+  const coverage = {
+    section_code: String(sectionCode ?? ''),
+    measures: COVERAGE_MEASURES,
+    record_match: src ? src.kind : 'not_indexed',
+    answered_by: !src ? null : src.kind === 'parent' ? src.requested : src.entry.code,
+    required_headings: [],
+    present_headings: [],
+    missing_headings: [],
+    percent: null,
+    not_assessed: null,
+    elements: [],
+    elements_verified: false,
+  };
+  if (!src) {
+    coverage.not_assessed = `The CTD record has no entry for section "${coverage.section_code}", so nothing was measured.`;
+    return coverage;
+  }
+  if (src.kind !== 'parent') {
+    coverage.elements = [...src.entry.keyContentElements];
+    coverage.not_assessed =
+      `The record states what ${src.entry.code} must contain as ${coverage.elements.length} descriptions; ` +
+      'no deterministic check verifies a description, so they are listed, not measured.';
+    return coverage;
+  }
+  const headings = headingCodesIn(content);
+  coverage.required_headings = src.children.filter((c) => c.requiredFor.includes('IND')).map((c) => c.code);
+  coverage.present_headings = coverage.required_headings.filter((c) => headings.has(c));
+  coverage.missing_headings = coverage.required_headings.filter((c) => !headings.has(c));
+  if (coverage.required_headings.length === 0) {
+    coverage.not_assessed = `The record marks none of the sections within ${src.requested} as required for an IND, so nothing was measured.`;
+  } else {
+    coverage.percent = Math.round((coverage.present_headings.length / coverage.required_headings.length) * 100);
+  }
+  return coverage;
+}
+
+/** Told to every narration call: the model narrates around the coverage, it does not score. */
+const NARRATION_RULES = `The platform has measured the section against its CTD record; those facts are given below. Do not restate them as a figure and do not contradict them.
+Do not give a score, percentage, rating, pass/fail, validity or compliance verdict, and do not state which required elements are present or missing.
+Return a JSON object with:
+{
+  "narrative": a short review commentary on the content,
+  "suggestions": array of specific drafting suggestions
+}`;
+
+/** The coverage as the lines a narration prompt carries. */
+function coverageFacts(coverage) {
+  const lines = [`Record coverage of section ${coverage.section_code} (deterministic):`];
+  if (coverage.percent === null) {
+    lines.push(`- Not measured: ${coverage.not_assessed}`);
+  } else {
+    lines.push(`- Required headings (IND): ${coverage.required_headings.join(', ')}`);
+    lines.push(`- Present as headings: ${coverage.present_headings.join(', ') || 'none'}`);
+    lines.push(`- Missing as headings: ${coverage.missing_headings.join(', ') || 'none'}`);
+  }
+  if (coverage.elements.length > 0) {
+    lines.push(`- What the record says it must contain (descriptions, not verified): ${coverage.elements.join('; ')}`);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * What a model reply contributes: its narrative and suggestions, nothing else.
+ * A score, verdict or element list it volunteers is dropped. Throws when the
+ * reply is not a JSON object.
+ */
+function narrationFrom(aiResult) {
+  const raw = String(aiResult?.content ?? '');
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end < start) throw new Error('The narration reply was not a JSON object.');
+  const parsed = JSON.parse(raw.slice(start, end + 1));
+  return {
+    narrative: typeof parsed.narrative === 'string' && parsed.narrative.trim() ? parsed.narrative.trim() : null,
+    suggestions: Array.isArray(parsed.suggestions)
+      ? parsed.suggestions.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim())
+      : null,
+    narration: { status: 'narrated', narrated_by: aiResult.model ?? null },
+  };
+}
+
+/** A narration that could not be produced. The coverage beside it stands. */
+function narrationUnavailable() {
+  return {
+    narrative: null,
+    suggestions: null,
+    narration: { status: 'unavailable', reason: 'The model narration could not be produced; the record coverage is unaffected.' },
+  };
+}
+
 /**
  * Validate content against regulatory requirements
+ *
+ * 2026-10-15: this asked a model for { valid, score 0-100, missingElements },
+ * returned and stored what it said, and answered score 0 / valid false for an
+ * error. The figure is now the record coverage; the model narrates, and a
+ * narration that fails is marked unavailable.
  *
  * @param {string} content - Generated content
  * @param {string} sectionCode - Section code
  * @param {Object} context - Context information
- * @returns {Promise<Object>} - Validation results
+ * @returns {Promise<Object>} - { coverage, narrative, suggestions, narration }
  */
 async function validateContent(content, sectionCode, context) {
+  const coverage = sectionRequirementCoverage(sectionCode, content);
+  let narration;
   try {
     // Regulatory review of a draft: only a model approved for high-risk
     // regulatory work may serve it (approved-models.ts). It pinned gpt-4o as a
@@ -613,22 +763,15 @@ async function validateContent(content, sectionCode, context) {
       messages: [
         {
           role: 'system',
-          content: `You are a regulatory affairs expert validating IND submission content.
-          Check if the content meets FDA requirements for the specified section.
-          Return a JSON object with:
-          {
-            "valid": boolean,
-            "issues": array of issues found,
-            "suggestions": array of improvement suggestions,
-            "missingElements": array of required elements that are missing,
-            "score": number from 0-100 representing compliance level
-          }`,
+          content: `You are a regulatory affairs expert reviewing IND submission content.\n${NARRATION_RULES}`,
         },
         {
           role: 'user',
-          content: `Validate this content for IND section ${sectionCode}:
+          content: `Review this content for IND section ${sectionCode}:
 
           ${content}
+
+          ${coverageFacts(coverage)}
 
           Context:
           Submission Phase: ${context.submission.phase || 'Not specified'}
@@ -638,29 +781,26 @@ async function validateContent(content, sectionCode, context) {
       ],
       response_format: { type: 'json_object' },
     });
-
-    const validation = JSON.parse(aiResult.content);
-
-    // Log validation result
-    await supabase.from('ind_content_validations').insert({
-      submission_id: context.submission.id,
-      section_code: sectionCode,
-      content_hash: Buffer.from(content).toString('base64').slice(0, 20), // Short hash as identifier
-      validation_result: validation,
-      created_at: new Date().toISOString(),
-    });
-
-    return validation;
+    narration = narrationFrom(aiResult);
   } catch (error) {
-    logger.error(`Error validating content: ${error.message}`);
-    return {
-      valid: false,
-      issues: [`Error during validation: ${error.message}`],
-      suggestions: ['Try again or consult regulatory guidelines manually'],
-      missingElements: [],
-      score: 0,
-    };
+    logger.error(`Error narrating validation: ${error.message}`);
+    narration = narrationUnavailable();
   }
+
+  const validation = { coverage, ...narration };
+
+  // Log validation result
+  await supabase.from('ind_content_validations').insert({
+    submission_id: context.submission.id,
+    section_code: sectionCode,
+    // SHA-256 of the whole content. It was the base64 of the first 15 bytes,
+    // so two drafts with the same opening "hashed" alike.
+    content_hash: createHash('sha256').update(content).digest('hex'),
+    validation_result: validation,
+    created_at: new Date().toISOString(),
+  });
+
+  return validation;
 }
 
 /**
@@ -723,7 +863,9 @@ export async function generateSectionContent(submissionId, sectionCode, options 
       prompt_length: prompt.length,
       response_length: generatedContent.length,
       citation_count: contentWithCitations.citations.length,
-      validation_score: validation.score,
+      // No score: this held the model's compliance figure (to 2026-10-15). The
+      // record coverage is stored in ind_content_validations.
+      validation_score: null,
       created_at: new Date().toISOString(),
     });
 
@@ -733,8 +875,10 @@ export async function generateSectionContent(submissionId, sectionCode, options 
       citations: contentWithCitations.citations,
       validation: validation,
       references: references,
-      prompt_tokens: Math.round(prompt.length / 4), // Rough estimate of token count
-      completion_tokens: Math.round(generatedContent.length / 4), // Rough estimate
+      // length / 4 estimates, named as such: they were returned as
+      // prompt_tokens / completion_tokens, the provider's own usage fields.
+      estimated_prompt_tokens: Math.round(prompt.length / 4),
+      estimated_completion_tokens: Math.round(generatedContent.length / 4),
       section_code: sectionCode,
       model: aiResult.model,
     };
@@ -820,8 +964,9 @@ Reference relevant FDA guidelines or scientific literature as needed.
       content: response,
       citations: responseWithCitations.citations,
       references: references,
-      prompt_tokens: Math.round(prompt.length / 4), // Rough estimate
-      completion_tokens: Math.round(response.length / 4), // Rough estimate
+      // length / 4 estimates, named as such (they were prompt_tokens / completion_tokens).
+      estimated_prompt_tokens: Math.round(prompt.length / 4),
+      estimated_completion_tokens: Math.round(response.length / 4),
       is_followup: true,
     };
   } catch (error) {
@@ -932,9 +1077,13 @@ export async function getRegulatoryGuidance(sectionCode) {
 /**
  * Analyze existing content and suggest improvements
  *
+ * 2026-10-15: the figure was a model's completeness_score (0 for an empty
+ * section) beside its own regulatory_gaps. It is the record coverage now; the
+ * model narrates.
+ *
  * @param {string} submissionId - The IND submission ID
  * @param {string} sectionCode - The section code (e.g., '2.7.1')
- * @returns {Promise<Object>} - Analysis and suggestions
+ * @returns {Promise<Object>} - { coverage, narrative, suggestions, narration, section_code }
  */
 export async function analyzeContent(submissionId, sectionCode) {
   try {
@@ -949,43 +1098,39 @@ export async function analyzeContent(submissionId, sectionCode) {
       throw new Error(`Error fetching content: ${error.message}`);
     }
 
-    if (!blocks || blocks.length === 0) {
-      return {
-        analysis: 'No content to analyze.',
-        suggestions: ['Begin by adding content to this section.'],
-        regulatory_gaps: [],
-        completeness_score: 0,
-      };
-    }
-
     // Format existing content
     const content = formatExistingContent(blocks);
+    const coverage = sectionRequirementCoverage(sectionCode, content);
+
+    if (!blocks || blocks.length === 0) {
+      return {
+        coverage,
+        narrative: null,
+        suggestions: null,
+        narration: { status: 'not_run', reason: 'The section has no content to narrate.' },
+        section_code: sectionCode,
+      };
+    }
 
     // Get regulatory guidelines for this section
     const guidelines = await fetchRegulatoryGuidelines(sectionCode);
 
-    // Regulatory review of existing content (regulatory gaps, completeness).
+    // Regulatory review of existing content: narration around the record coverage.
     const aiResult = await ai.chat({
       taskType: 'regulatory_review',
       callerModule: 'indCopilot.analyzeContent',
       messages: [
         {
           role: 'system',
-          content: `You are a regulatory affairs expert analyzing IND submission content.
-          Evaluate the content against FDA requirements and best practices.
-          Return a JSON object with:
-          {
-            "analysis": summary of strengths and weaknesses,
-            "suggestions": array of specific improvement suggestions,
-            "regulatory_gaps": array of regulatory requirements not adequately addressed,
-            "completeness_score": number from 0-100
-          }`,
+          content: `You are a regulatory affairs expert analyzing IND submission content.\n${NARRATION_RULES}`,
         },
         {
           role: 'user',
           content: `Analyze this content for IND section ${sectionCode}:
 
           ${content}
+
+          ${coverageFacts(coverage)}
 
           Regulatory Guidelines:
           ${guidelines}`,
@@ -994,7 +1139,7 @@ export async function analyzeContent(submissionId, sectionCode) {
       response_format: { type: 'json_object' },
     });
 
-    const analysis = JSON.parse(aiResult.content);
+    const analysis = { coverage, ...narrationFrom(aiResult) };
 
     // Log the analysis
     await supabase.from('ind_content_analyses').insert({
@@ -1136,25 +1281,32 @@ export async function generateBatchSectionContent(submissionId, sectionCodes, op
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Cross-check generated IND section content against a checklist of known
- * FDA requirements.  Returns a scored compliance report.
+ * Cross-check IND section content against what the CTD record requires of the
+ * section (sectionRequirementCoverage), with a model narration around it.
+ *
+ * 2026-10-15: this asked a model for a 0-100 score and a pass /
+ * conditional_pass / fail verdict, called it `passed` at 70, and answered
+ * score 0 / passed false for an error or empty content. The figure is now the
+ * record coverage; a narration that fails is marked unavailable.
  *
  * @param {string} content      - Section content to check
  * @param {string} sectionCode  - CTD section code
- * @returns {Promise<{score: number, issues: Array, passed: boolean}>}
+ * @returns {Promise<{section_code: string, coverage: Object, narrative: string|null, suggestions: string[]|null, narration: Object}>}
  */
 export async function checkFDACompliance(content, sectionCode) {
+  const coverage = sectionRequirementCoverage(sectionCode, content);
   if (!content || !content.trim()) {
     return {
-      score: 0,
-      issues: [{ type: 'empty_content', message: 'No content provided' }],
-      passed: false,
+      section_code: sectionCode,
+      coverage,
+      narrative: null,
+      suggestions: null,
+      narration: { status: 'not_run', reason: 'No content was provided.' },
     };
   }
 
   const prompt = `
-You are an FDA regulatory compliance expert.
-Review the following IND section content for compliance with 21 CFR 312 and ICH CTD guidelines.
+Review the following IND section content against 21 CFR 312 and the ICH CTD guidelines.
 
 Section: ${sectionCode}
 
@@ -1163,13 +1315,9 @@ Content:
 ${content.slice(0, 3000)}
 ---
 
-Return a JSON object with:
-{
-  "score": <integer 0-100>,
-  "issues": [ { "severity": "high|medium|low", "description": "..." } ],
-  "missing_elements": ["..."],
-  "overall_assessment": "pass|conditional_pass|fail"
-}
+${coverageFacts(coverage)}
+
+${NARRATION_RULES}
 
 Return only valid JSON.`;
 
@@ -1181,7 +1329,7 @@ Return only valid JSON.`;
         messages: [
           {
             role: 'system',
-            content: 'You are an FDA IND compliance auditor. Return only valid JSON.',
+            content: 'You are an FDA IND compliance reviewer. You narrate; you do not score. Return only valid JSON.',
           },
           { role: 'user', content: prompt },
         ],
@@ -1190,23 +1338,10 @@ Return only valid JSON.`;
       })
     );
 
-    // Was `aiResult.content` — an undefined name here — so every check threw
-    // and was reported as a failed compliance check with score 0.
-    const raw = completion.content.trim();
-    const jsonStart = raw.indexOf('{');
-    const parsed = JSON.parse(raw.slice(jsonStart));
-
-    return {
-      score: parsed.score ?? 0,
-      issues: parsed.issues ?? [],
-      missing_elements: parsed.missing_elements ?? [],
-      overall_assessment: parsed.overall_assessment ?? 'fail',
-      passed: (parsed.score ?? 0) >= 70,
-      section_code: sectionCode,
-    };
+    return { section_code: sectionCode, coverage, ...narrationFrom(completion) };
   } catch (err) {
-    logger.error(`FDA compliance check failed: ${err.message}`);
-    return { score: 0, issues: [{ type: 'check_error', message: err.message }], passed: false };
+    logger.error(`FDA compliance narration failed: ${err.message}`);
+    return { section_code: sectionCode, coverage, ...narrationUnavailable() };
   }
 }
 
@@ -1220,4 +1355,5 @@ export default {
   streamSectionContent,
   generateBatchSectionContent,
   checkFDACompliance,
+  sectionRequirementCoverage,
 };

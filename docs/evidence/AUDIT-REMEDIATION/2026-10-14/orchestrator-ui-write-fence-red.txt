@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > discovers saved runs for the open UUID program without requiring a pasted id 249ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > starts from the selected program and exposes missing source inputs 51ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > forwards the real signature ceremony then offers continuation retry without a second signature 118ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > reports discovery failure instead of an empty run history 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > keeps the latest selected run and excludes late audit and signature results from a previous run 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > clears the former program run before a delayed response can become a signing target 35ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > retains the recorded signature notice while the refreshed run is still loading 88ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > fences run changes throughout the signature ceremony and a delayed signing write 81ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > fences run changes throughout the signature ceremony and a delayed signing write
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx:132:89
+    130|   fireEvent.click(screen.getByRole('button', { name: 'Confirm package …
+    131|   try {
+    132|     expect((screen.getByLabelText('Saved package runs') as HTMLSelectE…
+       |                                                                                         ^
+    133|     expect((screen.getByLabelText('Orchestrator run id') as HTMLInputE…
+    134|     expect((screen.getByRole('button', { name: /Load run/ }) as HTMLBu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  04:15:59
+   Duration  1.82s (transform 365ms, setup 109ms, import 495ms, tests 703ms, environment 403ms)
+

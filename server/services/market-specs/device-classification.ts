@@ -154,17 +154,18 @@ function shown(value: unknown): string {
  * Read a facts object against its closed key set. `null`/`undefined` (the whole object or one value) means not
  * given. An unknown key, a non-boolean where a boolean is read, or a value outside a closed set is refused.
  */
-function readFacts(framework: 'MDR' | 'IVDR', raw: unknown, spec: Readonly<Record<string, FactSpec>>): Record<string, unknown> {
+function readFacts(framework: 'MDR' | 'IVDR' | 'FDA', raw: unknown, spec: Readonly<Record<string, FactSpec>>): Record<string, unknown> {
+  const verdict = framework === 'FDA' ? 'pathway' : 'class';
   if (raw === undefined || raw === null) return {};
   if (typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new DeviceClassificationFactError(`${framework} facts must be an object of named facts; got ${shown(raw)}. No class is stated.`);
+    throw new DeviceClassificationFactError(`${framework} facts must be an object of named facts; got ${shown(raw)}. No ${verdict} is stated.`);
   }
   const keys = Object.keys(raw);
   const unknown = keys.filter((k) => !Object.prototype.hasOwnProperty.call(spec, k));
   if (unknown.length > 0) {
     throw new DeviceClassificationFactError(
       `${framework} facts: ${unknown.map(shown).join(', ')} ${unknown.length === 1 ? 'is' : 'are'} not a fact the engine reads. `
-      + `The facts it reads: ${Object.keys(spec).join(', ')}. No class is stated, because ignoring a fact would state the class of a device without it.`,
+      + `The facts it reads: ${Object.keys(spec).join(', ')}. No ${verdict} is stated, because ignoring a fact would state the ${verdict} of a device without it.`,
     );
   }
   const read: Record<string, unknown> = {};
@@ -176,7 +177,7 @@ function readFacts(framework: 'MDR' | 'IVDR', raw: unknown, spec: Readonly<Recor
     if (problem) bad.push(`${k}: ${shown(value)} ${problem}`);
     else read[k] = value;
   }
-  if (bad.length > 0) throw new DeviceClassificationFactError(`${framework} facts: ${bad.join('; ')}. No class is stated.`);
+  if (bad.length > 0) throw new DeviceClassificationFactError(`${framework} facts: ${bad.join('; ')}. No ${verdict} is stated.`);
   return read;
 }
 
@@ -1202,22 +1203,56 @@ export interface FdaPathwayFacts {
 }
 
 export interface FdaPathwayRecommendation {
-  pathway: FdaPathway;
+  /** 'undetermined' when a fact that decides the pathway was not supplied (see `missingFacts`). */
+  pathway: FdaPathway | 'undetermined';
   rationale: string;
   caveat: string;
+  /** Facts to supply before a pathway can be stated; empty when one is. */
+  missingFacts: string[];
 }
+
+/** Every FDA fact and how it is read; the mapped type makes a new fact without an entry a compile error. */
+const FDA_FACT_SPEC: { readonly [K in keyof Required<FdaPathwayFacts>]: FactSpec } = Object.freeze({
+  fdaClass: ['I', 'II', 'III'], predicateAvailable: BOOL, exempt: BOOL, novelLowModerateRisk: BOOL,
+});
+
+const FDA_MISSING_PREDICATE = 'predicateAvailable (whether a legally marketed predicate device exists)';
+const FDA_MISSING_DE_NOVO = 'novelLowModerateRisk (whether the device, if it has no predicate, is of low-to-moderate risk: a De Novo candidate)';
 
 const FDA_CAVEAT =
   'Heuristic recommendation from the supplied facts — confirm against the FDA product classification database (21 CFR 862–892) and the device’s classification regulation.';
 
-/** Recommend an FDA premarket pathway from structured facts. */
+/**
+ * Recommend an FDA premarket pathway from structured facts. Until 2026-10-15 PMA was the
+ * fall-through for anything no branch caught (no facts, or a stated Class I or II device),
+ * with "No predicate available" nobody had said, and facts were read by truthiness
+ * (predicateAvailable: 'no' meant a predicate exists). An unstated deciding fact now gives
+ * 'undetermined' with `missingFacts`.
+ * @throws DeviceClassificationFactError for an unknown key, an unreadable value, or
+ *   contradictory facts (a Class III device stated 510(k)-exempt; a Class I or II device
+ *   whose other facts leave only PMA).
+ */
 export function recommendFdaPathway(facts: FdaPathwayFacts): FdaPathwayRecommendation {
-  if (facts.exempt) return { pathway: 'exempt', rationale: 'Device type is 510(k)-exempt per its classification regulation.', caveat: FDA_CAVEAT };
-  if (facts.fdaClass === 'III') return { pathway: 'pma', rationale: 'Class III devices require Premarket Approval (reasonable assurance of safety and effectiveness).', caveat: FDA_CAVEAT };
-  if (facts.predicateAvailable) return { pathway: '510k', rationale: 'A legally marketed predicate exists; demonstrate substantial equivalence via 510(k).', caveat: FDA_CAVEAT };
-  if (facts.novelLowModerateRisk) return { pathway: 'de_novo', rationale: 'Novel low-to-moderate-risk device with no predicate; request De Novo classification with special controls.', caveat: FDA_CAVEAT };
-  // No predicate and not clearly low-risk novel → PMA is the conservative default for higher risk.
-  return { pathway: 'pma', rationale: 'No predicate available and risk not established as low-to-moderate; PMA is the conservative default (re-evaluate against the classification database).', caveat: FDA_CAVEAT };
+  const f = readFacts('FDA', facts, FDA_FACT_SPEC) as FdaPathwayFacts;
+  if (f.exempt === true && f.fdaClass === 'III') {
+    throw new DeviceClassificationFactError('FDA facts: exempt: true contradicts fdaClass: "III" (a 510(k) exemption is for a Class I or II device type). No pathway is stated.');
+  }
+  const stated = (pathway: FdaPathway, rationale: string): FdaPathwayRecommendation => ({ pathway, rationale, caveat: FDA_CAVEAT, missingFacts: [] });
+  if (f.exempt === true) return stated('exempt', 'Device type is 510(k)-exempt per its classification regulation.');
+  if (f.fdaClass === 'III') return stated('pma', 'Class III devices require Premarket Approval (reasonable assurance of safety and effectiveness).');
+  if (f.predicateAvailable === true) return stated('510k', 'A legally marketed predicate exists; demonstrate substantial equivalence via 510(k).');
+  if (f.novelLowModerateRisk === true) return stated('de_novo', 'Novel low-to-moderate-risk device with no predicate; request De Novo classification with special controls.');
+  if (f.predicateAvailable === false && f.novelLowModerateRisk === false) {
+    if (f.fdaClass) {
+      throw new DeviceClassificationFactError(`FDA facts: fdaClass: "${f.fdaClass}" contradicts predicateAvailable: false with novelLowModerateRisk: false, which leave only PMA (a Class III route). No pathway is stated.`);
+    }
+    return stated('pma','Recorded that no legally marketed predicate exists and that the device is not a low-to-moderate-risk De Novo candidate, so neither 510(k) nor De Novo is open: PMA.');
+  }
+  const missingFacts = [
+    ...(f.predicateAvailable === undefined ? [FDA_MISSING_PREDICATE] : []),
+    ...(f.novelLowModerateRisk === undefined ? [FDA_MISSING_DE_NOVO] : []),
+  ];
+  return { pathway: 'undetermined', rationale: `The pathway cannot be determined without: ${missingFacts.join('; ')}.`, caveat: FDA_CAVEAT, missingFacts };
 }
 
 export default { classifyMdr, classifyIvdr, recommendFdaPathway };

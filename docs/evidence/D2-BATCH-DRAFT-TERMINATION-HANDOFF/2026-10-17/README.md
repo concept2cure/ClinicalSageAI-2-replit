@@ -1,0 +1,34 @@
+# D2 — BatchDraft termination handoff
+
+The generic BatchDraft screen discarded generation finish status. A response cut off at the output limit could appear ready, and its acceptance request omitted the very fields the existing server refuses. The earlier AnA-tool receipt fix did not cover this separate UI.
+
+The screen now retains each card's exact reported finish reason and cutoff flag. Known/explicit cutoffs become error cards with shorten/split/redraft guidance, no ready count, no editable prose and no Accept control. Completed siblings keep their own document identities. Usable acceptance requests carry `finish_reason` and `truncated` together with edited content, the original machine text and its turn record; editing preserves the original generation status. Saved state still waits for a successful response.
+
+The pure classifier moved unchanged into `shared/ai/finish-reason.ts`; the existing gateway module re-exports the same three symbols for all server consumers. There is one vocabulary, with no server module imported into the browser. Production changes are restricted to that shared module, its server compatibility export and `BatchDraft.tsx`.
+
+A pre-push fetch incorporated concurrent company-document/letterhead work through upstream `8d06f71566d01380dc772c1d5f4fa0494aa215c7` (103 files, including 69 code files), with a normal merge `951cc559701130d6fc61140e24fcc3ab2a69251f`. No owned source/test, prior proof binding or instruction file overlaps. Our three production hashes remain unchanged. Because transitive/global type context changed, focused regression and whole TypeScript were repeated successfully on the combined tree; pre-integration green records remain under `*-before-canonical-integration*`. This patch does not qualify all incoming company-document work. See `canonical-final-incoming.json` and the compatibility review.
+
+## Contract and proof
+
+Baseline `45fbf8d8f9ce65da6f67ab805da2551f6621fdc9` incorporated the prior published increment and a metadata-only health refresh. The [approved contract](CONTRACT.md) was pushed directly as `788f8a11865ebebcddba13f0f32cb008a94a7a57` before implementation.
+
+- [Actual component proof](component-owner-proof.md): twelve intended baseline failures and four passing controls became 16/16 passed on byte-identical test assertions. React, hooks and the API client are real; fetch supplies explicit fixtures. Covers exact wire status, unknown/absent compatibility, edited/original text, cutoff readiness and mixed-sibling identity/recovery.
+- [Independent route proof](independent-review.md): actual Express/loopback HTTP controls pass 18/18 before and after. Reported cutoffs return 422 before requestDb lookup. Complete/unknown/absent controls stop at a fixture HTTP418 sentinel, explicitly not accepted; no database handle/query/write is represented by that fixture. These are existing-policy positive controls, not baseline failures.
+- [Final regression](regression-final-manifest.json): 263 tests across thirteen focused suites, all passed with bound sources unchanged. Includes both new suites and existing helper/tool-trace/service/AnA-receipt/component acceptance, real PGlite attribution/readers/shown-word and HTTP audit controls. The component/route counts overlap this cohort and are not additive.
+- [Final whole-program TypeScript](typecheck-final-manifest.json): zero errors against the unchanged zero baseline, all bound source/configuration bytes unchanged during execution.
+- [Preproduction whole TypeScript](typecheck-baseline-manifest.json): both new test files compiled with zero errors before production edits; source bytes stayed fixed. Final whole-program proof is recorded separately.
+- [Browser boundary](browser-manifest.json): the shared classifier bundles for browser/es2022 with one source input, zero runtime imports, the three existing exports and exact baseline implementation bytes. This is an isolated shared-module check; canonical component tests exercise alias resolution. No full client build/deployment claim.
+- [Compatibility review](compatibility-review.md): independent final source/hash review found no blocking issue; service, route, existing AnA receipts, source checks, attribution and transaction logic are unchanged by the patch.
+- [Production lint](production-owner-lint-summary.json): zero errors; UI retains seven existing warnings by count and rule, both helpers have zero. Existing numeric length/complexity warning messages may change. New tests and verification runners have zero errors/warnings in their retained lint reports. No warning baseline was increased.
+
+Exact commands, timestamps, before/after hashes and transcripts are retained alongside the runners. Canonical Vitest mocks PostgreSQL; the existing PGlite suites execute embedded fixture SQL, not native production-role/RLS qualification. No live model, provider or agency calls were used.
+
+## Limits and records
+
+Unknown/absent reasons remain unconfirmed under the existing legacy/manual policy. The server wire is snake_case; unsupported camelCase fields do not attest anything. Client-reported status is not a trusted generation receipt and can be omitted or forged by another caller. This correction restores the normal screen-to-server handoff; it does not certify scientific completeness, qualify content/provider/agency readiness, or close D2. Trusted receipt/write authority and batch cancellation remain separate candidates. No route-policy, schema, dependency, model, provider, surface or filing-scope expansion is included.
+
+Initial component test lint diagnostics were corrected before the frozen meaningful baseline; no runtime assertion was changed to get green. Raw transcripts and baseline source snapshots are retained byte-for-byte, including terminal whitespace. Whitespace preflight applies to authored Markdown/JSON/code, preserving raw `.txt` proof bytes and recorded digests. All work remains in this repository and is published directly to `concept2cure-v2`.
+
+## Direct publication
+
+Implementation [`e42a5e59b19a9874f32f4cc08d388533d909f6c3`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/e42a5e59b19a9874f32f4cc08d388533d909f6c3) is incorporated in published canonical source head `4c31ce4571487a7b0a89695d118a9707c5330a9b`. The final fetch incorporated only the two automated repository-health reports from `9577ec43944c86ca688e53997553f2397ba56f74`, with a normal merge; every qualified source/configuration byte stayed unchanged. The source push passed all normal hooks, including zero-error whole TypeScript and no new lint warnings. [Push transcript](push-implementation.txt), [qualification index](QUALIFICATION.json) and [pre-evidence-commit remote observation](PUBLICATION.json) are retained here. Complete evidence is committed directly to the same branch after the source push; no PR or external work product is used.

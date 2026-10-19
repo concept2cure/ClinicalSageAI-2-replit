@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order 2ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall 3ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1 14ms
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T22:05:52.074Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T22:05:52.076Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T22:05:52.076Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+[database] Database connection successful
+
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface) 2188ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Authoring "Start from" seed 37ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Projects blueprint is not module 5 and does not cite E6 §7 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the medical-writing advisor and the IND question flow list the canonical headings 32ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > front matter: title page, confidentiality statement, table of contents; body codes stay 1–6 0ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > sub-sections 4.1–4.3 and 5.1–5.3 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the IB builder takes its sub-sections from it 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the open-document brief for an IB shows the front matter and sub-sections 34ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the M4E clinical overview outline > ends with 2.5.7 Literature References 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  22:05:48
+   Duration  3.97s (transform 2.45s, setup 144ms, import 1.14s, tests 2.32s, environment 0ms)
+

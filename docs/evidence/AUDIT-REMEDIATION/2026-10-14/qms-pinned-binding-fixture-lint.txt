@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/qms-effective-only-by-signature.test.ts
+  50:1  warning  Async function 'fakeQuery' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)
+

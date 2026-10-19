@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T20:36:14.685Z","pid":48660,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T20:36:14.686Z","pid":48660,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T20:36:14.686Z","pid":48660,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ❯ server/routes/__tests__/defense-shadow-binding.dbtest.ts (8 tests | 8 skipped) 171ms
+     ↓ uses genuine authenticated pinned app_service scope, not owner or a mocked database
+     ↓ admits the exact own packet, using the actual schema and programme UUID
+     ↓ refuses foreign or another programme packet IDs before outbound shared-token requests
+     ↓ honors private project membership and immediate grant/revocation
+     ↓ rejects foreign programmes before an object lookup can grant access
+     ↓ binds proof exports to both the requested programme and their actual parent packet
+     ↓ binds rendered binary jobs through both programme identities and the proof packet
+     ↓ keeps unavailable verification distinct from missing records and recovers
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-binding.dbtest.ts [ server/routes/__tests__/defense-shadow-binding.dbtest.ts ]
+error: column "program_id" of relation "render_jobs" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ server/routes/__tests__/defense-shadow-binding.dbtest.ts:101:3
+     99|   mismatchedProof = await makeProof(program,foreignPacket,hash(randomU…
+    100|   render = randomUUID(); mismatchedRender = randomUUID();
+    101|   await owner.query(`INSERT INTO predicate.render_jobs(id,proof_pack_i…
+       |   ^
+    102|     VALUES ($1,$2,'defense_packet_docx','COMPLETED',$3,$4),($5,$6,'def…
+    103|   [render,proof,hash('inputs'),program,mismatchedRender,foreignProof,h…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 skipped (8)
+   Start at  20:36:12
+   Duration  1.75s (transform 753ms, setup 68ms, import 1.33s, tests 171ms, environment 0ms)
+

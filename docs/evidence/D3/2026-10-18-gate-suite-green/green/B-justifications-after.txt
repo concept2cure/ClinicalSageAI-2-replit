@@ -1,0 +1,1 @@
+[ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 88 inline tenant-isolation-safe suppression(s), every one with a reason.

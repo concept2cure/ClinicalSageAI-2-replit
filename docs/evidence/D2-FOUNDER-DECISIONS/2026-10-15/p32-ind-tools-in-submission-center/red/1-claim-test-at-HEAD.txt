@@ -1,0 +1,100 @@
+# red at HEAD 18d58cbb2 (nothing changed but this test): npx vitest run --config vitest.config.ts server/services/entitlements/__tests__/ind-haq-launch-claim.test.ts
+ × P-32: the IND and agency-question screens are served > /api/ind-checklist, called by a launch screen, is in launch scope 7ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/cover-letter, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/cover-letter/pdf, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/briefing-book, called by a launch screen, is in launch scope 3ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/briefing-book/pdf, called by a launch screen, is in launch scope 6ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/loa, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/loa/pdf, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/right-of-reference, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/right-of-reference/pdf, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/annual-report, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/annual-report/pdf, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/annual-report/file, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/amendment-plan, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-lifecycle/amendment/file, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/, called by a launch screen, is in launch scope 5ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/program-facts, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/1571/build, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/1571/pdf, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/1571/artifact, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/ind-forms/1571/official-upload, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/haq-manager/rounds, called by a launch screen, is in launch scope 1ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/haq-manager/questions, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/haq-manager/letters/L-1/questions/934/review, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/haq-manager/letters/L-1/questions/934/approve, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ × P-32: the IND and agency-question screens are served > /api/haq-manager/letters/L-1/assemble, called by a launch screen, is in launch scope 0ms
+   → expected 'out-of-scope' to be 'launch' // Object.is equality
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > enumerated the safety routes from the routers (a vacuous list would pass everything below) 1ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/classify is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr/message is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/pdf is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/file is not in launch scope 2ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/safety-reports is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/safety-reports/{reportId} is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports/overdue is not in launch scope 5ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/icsr-transmissions is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/icsr-transmissions is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit is not in launch scope 0ms
+ ✓ P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge is not in launch scope 0ms
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report is claimed by pharmacovigilance alone: out-of-scope 3ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/classify is claimed by pharmacovigilance alone: out-of-scope 1ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr is claimed by pharmacovigilance alone: out-of-scope 5ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr/message is claimed by pharmacovigilance alone: out-of-scope 1ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/pdf is claimed by pharmacovigilance alone: out-of-scope 1ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/file is claimed by pharmacovigilance alone: out-of-scope 1ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/safety-reports/{reportId} is claimed by pharmacovigilance alone: out-of-scope 0ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit is claimed by pharmacovigilance alone: out-of-scope 0ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge is claimed by pharmacovigilance alone: out-of-scope 1ms
+   → expected [ 'ind-checklist' ] to deeply equal [ 'pharmacovigilance' ]
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/safety-reports stays unclaimed (refused in production as unattributed) 1ms
+   → expected 'out-of-scope' to be 'unmapped' // Object.is equality
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports stays unclaimed (refused in production as unattributed) 0ms
+   → expected 'out-of-scope' to be 'unmapped' // Object.is equality
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports/overdue stays unclaimed (refused in production as unattributed) 1ms
+   → expected 'out-of-scope' to be 'unmapped' // Object.is equality
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/icsr-transmissions stays unclaimed (refused in production as unattributed) 0ms
+   → expected 'out-of-scope' to be 'unmapped' // Object.is equality
+ × P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/icsr-transmissions stays unclaimed (refused in production as unattributed) 2ms
+   → expected 'out-of-scope' to be 'unmapped' // Object.is equality
+ ✓ P-32: nothing is claimed that no screen calls > /api/ind-master-data has no screen caller and is not in launch scope 0ms
+ × P-32: nothing is claimed that no screen calls > the IND lifecycle routes production serves are exactly the called ones, plus the named sub-routes 5ms
+   → POST /api/ind-lifecycle/cover-letter/pdf-from-records: expected [] to include 'POST /api/ind-lifecycle/cover-letter/…'
+⎯⎯⎯⎯⎯⎯ Failed Tests 40 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  40 failed | 16 passed (56)

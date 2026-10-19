@@ -26,6 +26,8 @@
  * and one that arrives without a role is one this check cannot vouch for.
  */
 import { getTenantScope } from '../../db/tenantStore.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership.js';
 
 export interface VaultWriteRefusal {
@@ -36,8 +38,10 @@ export interface VaultWriteRefusal {
 }
 
 /** Null when the acting role may write the Vault; otherwise the refusal to return. */
-export function vaultWriteRefusal(): VaultWriteRefusal | null {
-  const role = String(getTenantScope()?.role ?? '').toLowerCase();
+export function vaultWriteRefusal(currentRole?: string | null): VaultWriteRefusal | null {
+  // Transaction callers provide their freshly read role. Omitting the argument
+  // retains the existing request preflight; null never inherits a stale grant.
+  const role = String(currentRole === undefined ? getTenantScope()?.role ?? '' : currentRole ?? '').toLowerCase();
   if (GOVERNED_WRITE_ROLES.has(role)) return null;
   return {
     ok: false,
@@ -48,4 +52,15 @@ export function vaultWriteRefusal(): VaultWriteRefusal | null {
         'Nothing was changed. An administrator can give you member access.'
       : 'No organization role is attached to this request, so nothing in the Vault was changed.',
   };
+}
+
+/** On the actual writer transaction: current parent permission and the existing
+ * Vault write-role policy. A read grant alone never grants this write. */
+export async function requireCurrentVaultProgramWrite(q: RequestSqlClient, input: {
+  organizationId: number; userId: number | undefined; programId: string;
+}) {
+  const access = await requireCurrentProgramAccess(q, { ...input, forShare: true });
+  const refusal = vaultWriteRefusal(access.actor.role);
+  if (refusal) throw new ProgramReadAccessError(refusal.status, refusal.code, refusal.message);
+  return access;
 }

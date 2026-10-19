@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > accepts the exact builtin template UUID discovered in the IND catalogue 54ms
+   → expected undefined to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > accepts the exact builtin template UUID discovered in the IND catalogue
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ind-template-reference.test.ts:9:35
+      7|     const template = getIndAuthoringTemplates().find(t => t.entryId ==…
+      8|     const page = JSON.parse(await documentTemplateTool({ template_id: …
+      9|     expect(page.outlineAvailable).toBe(true);
+       |                                   ^
+     10|     expect(page.template.id).toBe(template.id);
+     11|     expect(page.template.kind).toBe('preparation');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  03:48:48
+   Duration  1.33s (transform 867ms, setup 93ms, import 929ms, tests 58ms, environment 0ms)

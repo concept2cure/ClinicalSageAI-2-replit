@@ -17,10 +17,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
+import { randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vcmp ';
-const CODE = 'DBTEST-VCMP';
+const RUN = randomUUID().slice(0, 12);
+const PROBE = `dbtest-vcmp-${RUN} `;
+const CODE = `DBTEST-VCMP-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
@@ -65,48 +68,31 @@ const compare = async (t: Tenant, documentId: string, against: string) =>
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vcmp-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vcmp-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Comparo 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  const current = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-parent` });
+  return current;
 }
 
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE tenant_id IN (SELECT id FROM organizations WHERE slug LIKE 'dbtest-vcmp-%')`,
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vcmp@example.test', 'Cory Comparer', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'Cory Comparer', 'not-a-real-hash') RETURNING id`,
+    [`dbtest-vcmp-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  await assertVaultFixtureRuntime(mine);
 
   const first = await ingest(mine, textV1, 'stability-protocol.txt', { documentCode: `${CODE}-DOC`, documentTitle: 'Stability protocol' });
   expect(first.status, JSON.stringify(first.body)).toBe(201);
@@ -120,8 +106,9 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
+  // Retain new namespaces, source bytes and append-only history, including failures.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe('compare two versions of a Vault document', () => {

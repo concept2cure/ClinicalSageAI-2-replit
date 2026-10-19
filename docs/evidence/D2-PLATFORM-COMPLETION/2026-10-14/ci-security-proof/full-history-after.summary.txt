@@ -1,0 +1,8 @@
+Command: gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .
+Version: 8.28.0
+HEAD: 920b230bd1509a41347fe653605babdabea2ae78
+Shallow: false
+Exit: 0
+1:14AM INF 10195 commits scanned.
+1:14AM INF scanned ~609068651 bytes (609.07 MB) in 49.6s
+1:14AM INF no leaks found

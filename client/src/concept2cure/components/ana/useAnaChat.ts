@@ -1597,10 +1597,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               targetAgency: ac?.regulatorBody ?? undefined,
             }
           : undefined;
-      const documentContext = ac
+      // The registry type of the open document: the pack's, else the one the
+      // surface states (surfaceContext.documentType → module_context.document_type).
+      const turnModuleContext = sendOpts?.moduleContext ?? options.moduleContext;
+      const statedType = typeof turnModuleContext?.document_type === 'string' ? turnModuleContext.document_type : undefined;
+      const documentType = ac?.documentType ?? statedType;
+      const documentContext = ac || documentType
         ? {
-            section: ac.sectionCode,
-            module: ac.moduleCode,
+            section: ac?.sectionCode,
+            module: ac?.moduleCode,
+            ...(documentType ? { documentType } : {}),
           }
         : undefined;
       const authoringContextOut = ac
@@ -1613,9 +1619,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             sectionCode: ac.sectionCode,
             moduleCode: ac.moduleCode,
             sectionTitle: ac.sectionTitle,
+            sectionId: ac.sectionId,
+            sectionUpdatedAt: ac.sectionUpdatedAt,
+            dossierId: ac.dossierId,
+            linkedSectionCodes: ac.linkedSectionCodes,
+            sourceArtifactIds: ac.sourceArtifactIds,
             regulatorBody: ac.regulatorBody,
             domainTrack: ac.domainTrack,
             submissionType: ac.submissionType,
+            ...(ac.documentType ? { documentType: ac.documentType } : {}),
           }
         : undefined;
 
@@ -1771,8 +1783,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           try {
             // Nested ({ error: { code } }) from the route; top-level ({ code })
             // from the platform's usage limiter.
-            const j = (await res.clone().json()) as { error?: { code?: string } | string; code?: string };
+            const j = (await res.clone().json()) as { error?: { code?: string; details?: unknown } | string; code?: string };
             code = (typeof j?.error === 'object' ? j.error?.code : undefined) ?? j?.code;
+            // An enforced pre-stream refusal can carry the real audit outcome
+            // before any SSE warning is possible. Keep its bounded notice on
+            // this reply while preserving the original refusal below.
+            const details = typeof j?.error === 'object' && j.error ? j.error.details : undefined;
+            const receipt = details && typeof details === 'object' && !Array.isArray(details)
+              ? (details as Record<string, unknown>).auditTrail : undefined;
+            const audit = receipt && typeof receipt === 'object' && !Array.isArray(receipt)
+              ? receipt as Record<string, unknown> : null;
+            const warning = audit?.persisted === false && audit.code === 'AUDIT_ROW_NOT_PERSISTED'
+              ? 'The request was refused, but its audit entry could not be confirmed. Review the audit history before retrying.'
+              : audit?.persisted === true && audit.chained === false
+                ? 'The request audit entry was stored, but is unavailable in the readable audit trail.'
+                : null;
+            if (warning) setMessages(prev => prev.map(m => m.id === assistantId
+              ? { ...m, warnings: [...new Set([...(m.warnings || []), warning])] } : m));
           } catch {
             /* not JSON: keep the status-only error */
           }

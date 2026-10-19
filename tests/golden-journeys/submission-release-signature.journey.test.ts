@@ -137,8 +137,28 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // The chain's ORDER KEY and its BEFORE INSERT trigger. Without this file
+      // writeChainedAuditRow still writes, but chain_seq does not exist, so
+      // chain.ts falls back to the pre-fix (occurred_at, id) walk it announces
+      // on stderr — and this journey, which drives governed writes through the
+      // real writer, claimed coverage of a chain recipe production no longer
+      // uses. assertNoSchemaGaps is what refused to let it; the gap was
+      // otherwise visible only as a log line. The fix itself is proven in
+      // server/services/audit/__tests__/chain-order.pglite.test.ts, which
+      // applies this same file.
+      'migrations/20260921_audit_logs_chain_seq.sql',
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
+      // regulatory_programs, which the continuation store below FKs. Built from
+      // its own migration, as the IND journey does, rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // The continuation store prepareOrchestratorRelease reads before the
+      // signing ceremony. Without it that read threw and the route answered 503
+      // release_record_verification_unavailable for every attempt after the
+      // first — fail-closed and correct, but it meant the locked-account and
+      // suspended-account steps below were "blocked" by an absent relation
+      // rather than by the account checks they exist to prove.
+      'db/migrations/20261014_orchestrator_continuation_inputs.sql',
       // Without this, the signing ceremony's lockout read of users.locked_until
       // throws and every signature attempt — correct password or not — is
       // refused (ledger C-20, which found it in the route's former verifier).
@@ -317,6 +337,28 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
 
     // ── KNOWN-BAD: locked account cannot sign, even with the right password ─
     // (negative-journey follow-ups from the 2026-07-30 auth/e-sig audit)
+    //
+    // 2026-10-18: this step and `suspended-account-cannot-sign` below do not
+    // reach the account checks they name, and the fixture is no longer why.
+    // With the continuation store absent they answered 503
+    // release_record_verification_unavailable; with it present (added above)
+    // they answer 409 SIGNATURE_SNAPSHOT_INVALID, "The release record identity
+    // did not verify" — verifyAwaitingReleasePayload
+    // (submission-orchestrator-continuation.ts:52) refusing the run's seeded
+    // `package.sign` payload because its signedSnapshot has no leaves array, no
+    // validatorOutcome, or an identity that does not match the run. So the
+    // seeded run is stale against the current snapshot contract, and every
+    // attempt is refused before reverifySigner is ever called.
+    //
+    // Both refusals are fail-closed and no signature is written, so nothing
+    // here is a Part 11 hole — and the lock itself is proven directly, on the
+    // same ceremony this route calls, by
+    // server/services/part11/__tests__/reverify-signer.test.ts:170 (423 /
+    // ACCOUNT_LOCKED), plus the QMS approval and task sign-off surfaces. What
+    // these two steps cannot do is prove it HERE until the seeded package.sign
+    // payload carries a snapshot that verifies. Weakening the predicate to
+    // accept the 409 would make the journey claim a lock proof it does not
+    // have, so it is left failing and named instead.
     await R.expectBlocked('locked-account-cannot-sign', async () => {
       await jdb.pool.query(
         `UPDATE users SET locked_until = NOW() + interval '1 hour' WHERE id = $1`,

@@ -1,0 +1,7 @@
+
+/workspace/Concept2Cure/server/services/ectd/external-validator/lorenz-adapter.ts
+   81:28  warning  Arrow function has a complexity of 22. Maximum allowed is 15  complexity
+  116:35  warning  Arrow function has a complexity of 26. Maximum allowed is 15  complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+

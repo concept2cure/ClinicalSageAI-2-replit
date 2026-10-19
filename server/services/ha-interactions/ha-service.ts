@@ -104,6 +104,14 @@ export interface CommitmentInput {
   sourceInteractionId?: number | null;
   regulatoryBasis?: string | null;
   dueDate?: string | null;
+  /**
+   * A commitment made in an answer to an agency letter names where it was made
+   * (2026-10-18). The caller resolves all three from the question row it read
+   * in this organization and project, never from the request body.
+   */
+  projectId?: number | null;
+  sourceCommunicationEventId?: string | null;
+  sourceQuestionId?: number | null;
 }
 
 /**
@@ -121,9 +129,14 @@ export async function createCommitmentTx(client: Queryable, orgId: number, userI
   }
   const { rows } = await client.query(
     `INSERT INTO regulatory_commitments
-       (organization_id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, created_by)
-     VALUES ($1,$2,$3,$4,$5,'open',$6,$7,$8) RETURNING id`,
-    [orgId, input.submissionId ?? null, input.sourceInteractionId ?? null, input.commitmentType, input.description, input.regulatoryBasis ?? null, input.dueDate ?? null, userId],
+       (organization_id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, created_by,
+        project_id, source_communication_event_id, source_question_id)
+     VALUES ($1,$2,$3,$4,$5,'open',$6,$7,$8,$9,$10,$11) RETURNING id`,
+    [
+      orgId, input.submissionId ?? null, input.sourceInteractionId ?? null, input.commitmentType, input.description,
+      input.regulatoryBasis ?? null, input.dueDate ?? null, userId,
+      input.projectId ?? null, input.sourceCommunicationEventId ?? null, input.sourceQuestionId ?? null,
+    ],
   );
   const id = Number(rows[0].id);
 
@@ -139,14 +152,60 @@ export async function createCommitmentTx(client: Queryable, orgId: number, userI
   return { id, provenanceLinkIds };
 }
 
-export async function fulfillCommitmentTx(client: Queryable, orgId: number, id: number, fulfilledDate: string | null): Promise<void> {
-  const r = await client.query(
-    `UPDATE regulatory_commitments
-        SET status = 'fulfilled', fulfilled_date = COALESCE($3, CURRENT_DATE), updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released')`,
-    [id, orgId, fulfilledDate],
+/**
+ * Where a commitment may be reached from (2026-10-18). A commitment made in an
+ * answer to a project's agency letter carries that project; it is listed and
+ * changed only through that project's routes, behind project admission and
+ * the letter's visibility tier (routes/c2c/agency-responses.ts). The
+ * organisation's own routes and AnA's tools reach only commitments that belong
+ * to no project. Every function below takes the scope and matches it exactly.
+ */
+export interface CommitmentScope {
+  projectId: number | null;
+}
+export const ORG_LEVEL: CommitmentScope = Object.freeze({ projectId: null });
+
+/** A fulfilment date is a fact about the past (yyyy-mm-dd, a real date). */
+export function fulfilmentDateRefusal(fulfilledDate: string | null, today: string): string | null {
+  if (fulfilledDate == null) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fulfilledDate)) return 'Use yyyy-mm-dd for the date fulfilled.';
+  const t = new Date(`${fulfilledDate}T00:00:00Z`);
+  if (Number.isNaN(t.getTime()) || t.toISOString().slice(0, 10) !== fulfilledDate) return 'That date does not exist.';
+  /* One day of slack past the server's UTC day: a person east of UTC is
+     already on the next calendar day, and their "today" must be accepted. A
+     date beyond that has not happened anywhere. */
+  const limit = new Date(`${today}T00:00:00Z`);
+  limit.setUTCDate(limit.getUTCDate() + 1);
+  if (t.getTime() > limit.getTime()) return 'A commitment cannot be fulfilled on a date that has not happened yet.';
+  return null;
+}
+
+export async function fulfillCommitmentTx(
+  client: Queryable,
+  orgId: number,
+  id: number,
+  fulfilledDate: string | null,
+  scope: CommitmentScope = ORG_LEVEL,
+  today: string = new Date().toISOString().slice(0, 10),
+): Promise<void> {
+  const refused = fulfilmentDateRefusal(fulfilledDate, today);
+  if (refused) throw new HaError('BAD_INPUT', refused);
+  const found = await client.query(
+    `SELECT status FROM regulatory_commitments
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND project_id IS NOT DISTINCT FROM $3
+      LIMIT 1 FOR UPDATE`,
+    [id, orgId, scope.projectId],
   );
-  if ((r as any).rowCount === 0) throw new HaError('INVALID_STATE', 'Commitment not found, or already in a terminal state.');
+  if (found.rows.length === 0) throw new HaError('NOT_FOUND', 'Commitment not found here.');
+  if (['fulfilled', 'waived', 'released'].includes(String(found.rows[0].status))) {
+    throw new HaError('INVALID_STATE', 'That commitment is already fulfilled, waived or released.');
+  }
+  await client.query(
+    `UPDATE regulatory_commitments
+        SET status = 'fulfilled', fulfilled_date = COALESCE($3::date, CURRENT_DATE), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $4`,
+    [id, orgId, fulfilledDate, scope.projectId],
+  );
 }
 
 export interface MilestoneInput {
@@ -154,10 +213,18 @@ export interface MilestoneInput {
   dueDate?: string | null;
 }
 
-export async function addMilestoneTx(client: Queryable, orgId: number, userId: number, commitmentId: number, m: MilestoneInput): Promise<{ id: number }> {
+export async function addMilestoneTx(
+  client: Queryable,
+  orgId: number,
+  userId: number,
+  commitmentId: number,
+  m: MilestoneInput,
+  scope: CommitmentScope = ORG_LEVEL,
+): Promise<{ id: number }> {
   const owner = await client.query(
-    `SELECT id FROM regulatory_commitments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [commitmentId, orgId],
+    `SELECT id FROM regulatory_commitments
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND project_id IS NOT DISTINCT FROM $3 LIMIT 1`,
+    [commitmentId, orgId, scope.projectId],
   );
   if (owner.rows.length === 0) throw new HaError('NOT_FOUND', 'Commitment not found for this organization.');
   const { rows } = await client.query(
@@ -180,13 +247,59 @@ export async function listInteractions(orgId: number, submissionId?: number): Pr
   return rows;
 }
 
-export async function listCommitments(orgId: number, submissionId?: number): Promise<any[]> {
-  const params: unknown[] = [orgId];
-  let sql = `SELECT id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, fulfilled_date
-               FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL`;
-  if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
-  sql += ` ORDER BY due_date ASC NULLS LAST, id`;
-  const { rows } = await pool.query(sql, params);
+/**
+ * The commitments in one scope (CommitmentScope): the organisation's own
+ * (project_id IS NULL) by default, or one project's. Each names the letter and
+ * question it was made in, and that letter's visibility tier, which the
+ * project route applies before anything is shown.
+ */
+export async function listCommitments(
+  orgId: number,
+  submissionId?: number,
+  scope: CommitmentScope = ORG_LEVEL,
+  client: Queryable = pool as unknown as Queryable,
+): Promise<any[]> {
+  // DATE columns read as their own text: node-pg turns a DATE into a local
+  // midnight, which a server east or west of UTC serialised as the day before
+  // or a timestamp, and the overdue rule (ha-logic toDays) reads yyyy-mm-dd.
+  // Two literal statements (with and without the submission filter): no SQL
+  // text is assembled at run time.
+  const { rows } = submissionId != null
+    ? await client.query(
+        `SELECT rc.id, rc.submission_id, rc.source_interaction_id, rc.commitment_type, rc.description, rc.status,
+            rc.regulatory_basis, to_char(rc.due_date, 'YYYY-MM-DD') AS due_date,
+            to_char(rc.fulfilled_date, 'YYYY-MM-DD') AS fulfilled_date,
+            rc.project_id, rc.source_communication_event_id, rc.source_question_id,
+            c.communication_type AS source_communication_type,
+            c.audit_metadata->>'visibilityTier' AS source_visibility_tier,
+            q.question_ref AS source_question_ref
+       FROM regulatory_commitments rc
+       LEFT JOIN concept2cure_agency_communications c
+         ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
+       LEFT JOIN agency_communication_questions q
+         ON q.id = rc.source_question_id AND q.organization_id = rc.organization_id
+      WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
+         AND rc.submission_id = $3
+       ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
+        [orgId, scope.projectId, submissionId],
+      )
+    : await client.query(
+        `SELECT rc.id, rc.submission_id, rc.source_interaction_id, rc.commitment_type, rc.description, rc.status,
+            rc.regulatory_basis, to_char(rc.due_date, 'YYYY-MM-DD') AS due_date,
+            to_char(rc.fulfilled_date, 'YYYY-MM-DD') AS fulfilled_date,
+            rc.project_id, rc.source_communication_event_id, rc.source_question_id,
+            c.communication_type AS source_communication_type,
+            c.audit_metadata->>'visibilityTier' AS source_visibility_tier,
+            q.question_ref AS source_question_ref
+       FROM regulatory_commitments rc
+       LEFT JOIN concept2cure_agency_communications c
+         ON c.event_id = rc.source_communication_event_id AND c.organization_id = rc.organization_id
+       LEFT JOIN agency_communication_questions q
+         ON q.id = rc.source_question_id AND q.organization_id = rc.organization_id
+      WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
+       ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
+        [orgId, scope.projectId],
+      );
   return rows;
 }
 

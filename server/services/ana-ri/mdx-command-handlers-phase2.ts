@@ -263,9 +263,9 @@ export async function postMarketDocumentCreate(
   const notOwned = await refuseUnownedProgram(action, programId, ctx);
   if (notOwned) return notOwned;
 
-  // Dates are optional: the engine substitutes a flagged DRAFT trailing-12-month
-  // period for report-style types, so an unparseable value must not silently
-  // become "now" — leave it undefined and let the engine flag it.
+  // Dates are optional: the engine stores an undeclared date as null and the
+  // type's reporting-period finding keeps the gate closed, so an unparseable value
+  // must not silently become "now" — leave it undefined and let the engine flag it.
   const parseDate = (v: unknown): Date | undefined => {
     if (typeof v !== 'string' || !v.trim()) return undefined;
     const d = new Date(v);
@@ -492,6 +492,32 @@ export async function evidenceSufficiencyAssess(
 
 // ─── Reviewer simulation run (persisted; gated) ─────────────────────────────
 
+/** A ctd_programs id: a positive integer (or its digits); 'invalid' for anything else given. */
+function parseCtdProgramId(raw: unknown): number | undefined | 'invalid' {
+  if (raw == null) return undefined;
+  const n = typeof raw === 'number' || (typeof raw === 'string' && /^\d+$/.test(raw)) ? Number(raw) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : 'invalid';
+}
+
+/** Says which fact groups the caller sent that the simulator does not take. */
+function notUsedClause(params: Record<string, unknown>): string {
+  const notUsed = (['packet', 'intel', 'reports'] as const).filter(k => params[k] != null);
+  return notUsed.length
+    ? ` Not used: ${notUsed.join(', ')} (packet and nonclinical facts are read from the program's records).`
+    : '';
+}
+
+/**
+ * The simulator's refusal of the request (a packet not on record, or no packet
+ * store on the database), as a refusal. 2026-10-15: it reached the model as
+ * EXECUTION_FAILED "Action failed: …".
+ */
+function simulatorRefusal(action: string, err: unknown): CommandResult | null {
+  if (!(err instanceof Error) || err.name !== 'ReviewerSimulationInputError') return null;
+  const code = (err as { code?: unknown }).code;
+  return { success: false, action, message: err.message, error: typeof code === 'string' ? code : 'INVALID_INPUT' };
+}
+
 export async function reviewerSimulationRun(
   ctx: CommandContext,
   params: Record<string, unknown>,
@@ -507,23 +533,34 @@ export async function reviewerSimulationRun(
   if (!params.program || typeof params.program !== 'object') {
     return { success: false, action, message: 'program object is required.', error: 'INVALID_INPUT' };
   }
-  if (!params.intel || typeof params.intel !== 'object') {
-    return { success: false, action, message: 'intel object is required.', error: 'INVALID_INPUT' };
+  // The ctd_programs id whose nonclinical studies the preclinical personas read.
+  const ctdProgramId = parseCtdProgramId(params.ctdProgramId);
+  if (ctdProgramId === 'invalid') {
+    return {
+      success: false,
+      action,
+      message: 'ctdProgramId must be a positive integer (the ctd_programs id).',
+      error: 'INVALID_INPUT',
+    };
   }
+  // 2026-10-15: an `intel` object was required and the model's intel, packet and
+  // reports were passed on, so the model supplied the figures the questions
+  // printed. The simulator reads those facts from the records; they are not
+  // passed, and the message says they were not used.
 
   try {
     const result = await runReviewerSimulation({
       organizationId: ctx.organizationId,
       programId,
       program: params.program as any,
-      packet: (params.packet as any) ?? null,
-      intel: params.intel as any,
-      reports: params.reports as any,
       personas: Array.isArray(params.personas) ? (params.personas as any) : undefined,
       defensePacketId: typeof params.defensePacketId === 'string' ? params.defensePacketId : undefined,
+      ctdProgramId,
       trigger: 'ana',
       triggeredBy: `ana:${ctx.userId}`,
       dryRun: false,
+    }, {
+      executor: (await import('../../db.js')).pool, userId: ctx.userId,
     });
 
     // WO-16C #133: was `void auditService.logAction({…})`.
@@ -549,10 +586,10 @@ export async function reviewerSimulationRun(
       action,
       // Serialization boundary: a typed SimulatorResult is a plain JSON object.
       data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
-      message: `Ran reviewer simulation on program ${programId}.${auditNote(agentAuditTrail)}`,
+      message: `Ran reviewer simulation on program ${programId}.${notUsedClause(params)}${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
-    return mapServiceError(action, err);
+    return simulatorRefusal(action, err) ?? mapServiceError(action, err);
   }
 }
 
@@ -743,8 +780,8 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
       '(Art. 85), PMCF Plan / Evaluation (Annex XIV Part B), PSUR (Art. 86) or ' +
       'SSCP (Art. 32). Code and version are assigned per program; returns the ' +
       'compliance-gate validation — relay its findings. Report-style types take a ' +
-      'reporting period; omitted, a DRAFT trailing-12-month period is set and ' +
-      'flagged. Does not invent clinical conclusions. Requires confirm + reason.',
+      'reporting period; omitted, none is set and the gate reports it not declared. ' +
+      'Does not invent clinical conclusions. Requires confirm + reason.',
     parameters:
       'programId (UUID), documentType (pms_plan|pms_report|pmcf_plan|pmcf_evaluation|psur|sscp), ' +
       'deviceName or relatedCerReportId, deviceClass?, regulation? (MDR|IVDR), title?, ' +
@@ -795,7 +832,7 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
       'Run a multi-persona reviewer simulation against a program. Persists ' +
       'the run. Requires confirm + reason.',
     parameters:
-      'programId (UUID), program (object), intel (object), packet?, reports?, personas?, defensePacketId?, confirm="yes", reason',
+      'programId (UUID), program (object), personas?, defensePacketId?, ctdProgramId?, confirm="yes", reason',
     example: '"Run a reviewer simulation on OR-801 with the standard 8-persona panel."',
   },
 ];

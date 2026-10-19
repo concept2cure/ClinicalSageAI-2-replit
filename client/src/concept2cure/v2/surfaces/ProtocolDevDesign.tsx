@@ -24,11 +24,12 @@
  */
 import React, { useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
-import { PaneHead, KV } from './ProtocolDevShared';
+import { PaneHead, KV, type PaneAction } from './ProtocolDevShared';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm, type C2CFormFieldOption } from '../C2CForm';
 import { ProjectionsPanel } from './ProtocolDevProjections';
 import { PlanningInputsPanel } from './ProtocolDevPlanningInputs';
+import { CreateDesignDrawer } from './ProtocolDevCreateDesign';
 
 type Obj = Record<string, unknown>;
 const MIN_REASON = 8;
@@ -76,7 +77,7 @@ function isDesignList(value: unknown): value is DesignRow[] {
 }
 
 /** This tenant's persisted designs, for the bind drawer's picker. */
-function useTenantDesigns(active: boolean) {
+function useTenantDesigns(active: boolean, programId?: string) {
   const [rows, setRows] = useState<DesignRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -84,7 +85,7 @@ function useTenantDesigns(active: boolean) {
     let live = true;
     void (async () => {
       try {
-        const j = await send('GET', '/api/study-design');
+        const j = await send('GET', programId ? `/api/study-design?program_id=${encodeURIComponent(programId)}` : '/api/study-design');
         if (!live) return;
         if (isDesignList(j.designs)) setRows(j.designs);
         else setError('The server answered without a list of designs.');
@@ -93,19 +94,20 @@ function useTenantDesigns(active: boolean) {
       }
     })();
     return () => { live = false; };
-  }, [active]);
+  }, [active, programId]);
   return { rows, error };
 }
 
 interface BindDrawerProps {
+  programId?: string;
   documentId: number;
   onCancel: () => void;
   onDone: () => void;
   onError: (m: string) => void;
 }
 
-function BindDrawer({ documentId, onCancel, onDone, onError }: BindDrawerProps) {
-  const { rows, error } = useTenantDesigns(true);
+function BindDrawer({ documentId, programId, onCancel, onDone, onError }: BindDrawerProps) {
+  const { rows, error } = useTenantDesigns(true, programId);
 
   if (error) {
     return (
@@ -137,7 +139,7 @@ function BindDrawer({ documentId, onCancel, onDone, onError }: BindDrawerProps) 
         key="bind-none"
         config={{
           eyebrow: 'Protocol · study design', title: 'Bind a study design',
-          sub: 'This organisation has no persisted study design yet. Design one in Biostatistics and persist it; it can then be bound here.',
+          sub: 'No persisted study design is available in this scope. Close this picker and use Create a study design on this tab.',
           submitLabel: 'Close', fields: [],
         }}
         onCancel={onCancel}
@@ -270,17 +272,30 @@ export interface StudyDesignTabProps {
   onToast?: (m: string) => void;
 }
 
+type DesignDrawer = 'bind' | 'unbind' | 'create';
+function designTabActions(bound: boolean, canWrite: boolean, programId: string | undefined, open: (drawer: DesignDrawer) => void): PaneAction[] {
+  if (bound) return [{ label: 'Unbind study design', icon: 'close', onAct: () => open('unbind'), variant: 'outline', disabled: !canWrite }];
+  return [
+    { label: 'Bind a study design', icon: 'link', onAct: () => open('bind'), variant: 'primary', disabled: !canWrite },
+    { label: 'Create a study design', icon: 'plus', onAct: () => open('create'), variant: 'outline', disabled: !canWrite || !programId },
+  ];
+}
+
+function createDrawerProgram(drawer: DesignDrawer | null, canWrite: boolean, programId: string | undefined): string | undefined {
+  return drawer === 'create' && canWrite ? programId : undefined;
+}
+
 export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: StudyDesignTabProps) {
-  const [drawer, setDrawer] = useState<'bind' | 'unbind' | null>(null);
+  const [drawer, setDrawer] = useState<DesignDrawer | null>(null);
   const documentId = Number(doc.id);
   const sd = (doc.studyDesign ?? null) as PdevStudyDesignView | null;
+  const programId = typeof doc.programId === 'string' ? doc.programId : undefined;
+  const createProgramId = createDrawerProgram(drawer, canWrite, programId);
 
   const done = (message: string) => { setDrawer(null); onToast?.(message); onChanged?.(); };
   const failed = (m: string) => { setDrawer(null); onError?.(m); };
 
-  const actions = sd
-    ? [{ label: 'Unbind study design', icon: 'close', onAct: () => setDrawer('unbind'), variant: 'outline', disabled: !canWrite }]
-    : [{ label: 'Bind a study design', icon: 'link', onAct: () => setDrawer('bind'), variant: 'primary', disabled: !canWrite }];
+  const actions = designTabActions(Boolean(sd), canWrite, programId, setDrawer);
 
   return (
     <div className="pd-pane" role="region" aria-label="Study design">
@@ -297,6 +312,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
           design is read-only — it generates nothing into the protocol’s sections.
         </div>
       )}
+      {!sd && !programId && <div className="pde-note">This protocol has no recorded program. Select or start a program-filed protocol to create a new study design here; existing tenant designs can still be bound.</div>}
 
       {sd && !sd.resolved && (
         <div className="pde-refusal" role="alert">
@@ -318,11 +334,15 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
       {drawer === 'bind' && canWrite && (
         <BindDrawer
           documentId={documentId}
+          programId={programId}
           onCancel={() => setDrawer(null)}
           onDone={() => done('Study design bound — the protocol now renders the design gates’ findings.')}
           onError={failed}
         />
       )}
+      {createProgramId && <CreateDesignDrawer documentId={documentId} programId={createProgramId}
+        onCancel={() => setDrawer(null)} onSaved={() => onToast?.('Study design saved; binding is pending.')}
+        onDone={() => done('Study design created and bound — the recorded inputs and their gate findings are available.')}/>}
       {drawer === 'unbind' && canWrite && (
         <UnbindDrawer
           documentId={documentId}

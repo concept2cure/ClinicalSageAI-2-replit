@@ -1,20 +1,24 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
 import { I } from '../icons';
-import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
-import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { SourceAssemblyAction } from '../editor/SourceAssemblyDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -24,7 +28,12 @@ import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import { useProgramMarkets } from './programSequence';
+import { ComingLater } from './ProjectComingLater';
+import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
+import { sourceReadView } from '@shared/data-room-processing-status';
+import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
+import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -97,6 +106,8 @@ interface ProgramRow {
   readiness?: number | null;
   /** When the server measured `readiness` (ISO); null with no figure. */
   readinessAsOf?: string | null;
+  /** Whether this caller may change the project; absent on an older server. */
+  canChange?: boolean;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -226,8 +237,8 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, available }: {
-  pid: string; name: string | null; onNav: (id: string) => void; available: (id: string) => boolean;
+function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
+  pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
 }) {
   const [toast, fireToast] = useToast();
   return (
@@ -240,7 +251,8 @@ function ProjectEvidence({ pid, name, onNav, available }: {
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} />
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav}
+        onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
   );
@@ -252,49 +264,6 @@ function ProjectEvidence({ pid, name, onNav, available }: {
    Submit tab and by ProjectStatusLine under the project header. Slice 24's
    one-verdict-per-project panels were generalised into ProjectMarkets.tsx. */
 
-/** What this stage does not do in this release: one line of words and no
- *  button (FILING_SPINE.md §2). It replaced a "Not in this release" panel that
- *  stood where a stage's tools would be. */
-function ComingLater({ stage, device = false }: { stage: string; device?: boolean }) {
-  const meta = PJ_LIFECYCLE.find((s) => s.id === stage);
-  /* A device project's line does not promise IND or variation tracking. */
-  const words = (device && meta?.laterDevice) || meta?.later;
-  if (!words) return null;
-  return (
-    <p className="pj-desc pj-later" data-testid="pj-coming-later">
-      <b>Coming later:</b> {words}
-    </p>
-  );
-}
-
-function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
-  const meta = PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '', blurb: '' };
-  /* A tool outside the launch scope is not offered: a card that opens a "not
-     in this release" panel is not a thing this project can do. A stage left
-     with no tool says what comes later instead. */
-  const tools = (PJ_STAGE_TOOLS[stage] || []).filter(t => available(t.id));
-  /* The coming-later line sits under the card, bare, as it does on Submit
-     (filing-spine design review, open item 10, 2026-10-08). */
-  return (
-    <div className="pj-stagebody">
-      <section className="pj-sec">
-        <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
-        {tools.length > 0 && (
-          <div className="pj-tools">
-            {tools.map(t => (
-              <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
-                <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-                <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
-                <span className="pj-tool-go">{I.right}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-      <ComingLater stage={stage} />
-    </div>
-  );
-}
 
 /* ════ Data room ════════════════════════════════════════════════════════════
    The project's sources — every client document this project's documentation is
@@ -308,65 +277,6 @@ function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: st
 /** The most sources "Write from these sources" hands to one turn. */
 const HANDOFF_LIMIT = 10;
 
-interface SourceRow {
-  id: number;
-  title: string | null;
-  checksum: string | null;
-  ingestionStatus: string | null;
-  extractionStatus: string | null;
-  createdAt: string | null;
-  mimeType: string | null;
-  fileSize: number | null;
-  artifactId: string | null;
-  origin: string | null;
-  extractionMethod: string | null;
-  /** False once a re-upload superseded it. Absent on a server that predates it. */
-  isCurrent?: boolean;
-  dataEligible?: boolean;
-  originalFileAvailable?: boolean;
-  disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
-  /** Recorded citations of this source. Absent on a server that predates it. */
-  usage?: { sections: number; documents: number; changedSections: number } | null;
-  /** Where a search matched in the text read from the file (ts_headline). Null outside a search. */
-  snippet?: string | null;
-  /** What the catalog found the source IS, by rule (S3). Absent on a server that predates it. */
-  catalog?: SourceCatalog | null;
-}
-
-/** The deterministic catalog facts of a source; a null field was not found, never guessed. */
-interface SourceCatalog {
-  studyRef: number | null;
-  trialRegistryIdentifier: string | null;
-  protocolNumber: string | null;
-  documentDate: string | null;
-  dataCutDate: string | null;
-  dataset: {
-    format: string | null;
-    tableCount: number;
-    tables: Array<{ name: string; standard: string | null; domain: string | null; rowCount: number; columnCount: number }>;
-  } | null;
-}
-
-/** One page of the project's Data Room, as GET /:id/sources answers it. */
-interface SourcesPage {
-  sources: SourceRow[];
-  window?: { shown: number; truncated: boolean };
-  /** Every source matching the read; currentTotal counts each re-uploaded file once. */
-  total?: number;
-  currentTotal?: number;
-}
-
-/** How many sources one page of the Data Room shows. */
-const SOURCES_PAGE = 200;
-
-/** The Data Room read: a full-text search over what was read from each file, and its page. */
-function sourcesUrl(pid: string, term: string, offset: number): string {
-  const params = new URLSearchParams();
-  if (term) params.set('q', term);
-  if (offset > 0) params.set('offset', String(offset));
-  const qs = params.toString();
-  return `/api/c2c/projects/${pid}/sources${qs ? `?${qs}` : ''}`;
-}
 
 /** A section drafted from a source that has since changed. */
 interface ChangedUsageRow {
@@ -380,6 +290,15 @@ interface ChangedUsageRow {
   citedAt: string | null;
 }
 
+interface ChangedUsageRead { changes: ChangedUsageRow[]; count: number }
+
+const isChangedUsageRead: ShapeGuard<ChangedUsageRead> = (value): value is ChangedUsageRead => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<ChangedUsageRead>;
+  return Array.isArray(read.changes) && read.count === read.changes.length &&
+    read.changes.every(row => row && typeof row.citationId === 'string' && typeof row.sectionId === 'string' && typeof row.sourceId === 'number');
+};
+
 /**
  * "Used in" — the back-reference, from recorded citations only.
  *
@@ -392,27 +311,31 @@ interface ChangedUsageRow {
  * not the same as "cited nowhere", and guessing would be the fabrication this
  * surface exists to avoid.
  */
-function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
+function usedIn(s: SourceRow, scope: SourcesPage['usageScope']): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
   if (!s.usage) return null;
   const { sections, documents, changedSections } = s.usage;
+  if (scope !== 'accessible-citations' || ![sections, documents, changedSections].every(n => Number.isSafeInteger(n) && n >= 0)
+    || changedSections > sections || documents > sections) return {
+    label: 'Citation usage unavailable', tone: 'muted', title: 'Citation counts could not be verified for your current access.',
+  };
   if (sections === 0) {
     return {
-      label: 'Not cited yet',
+      label: 'No accessible citations',
       tone: 'muted',
-      title: 'No section records a citation of this source',
+      title: 'No citations are visible with your current access. This is not a finding about other documents.',
     };
   }
-  const where = `Used in ${sections} section${sections === 1 ? '' : 's'}`;
-  const docs = documents > 0 ? ` · ${documents} document${documents === 1 ? '' : 's'}` : '';
+  const where = `Used in ${sections} accessible section${sections === 1 ? '' : 's'}`;
+  const docs = documents > 0 ? ` · ${documents} accessible document${documents === 1 ? '' : 's'}` : '';
   if (changedSections > 0) {
     return {
       label: `${where}${docs} · ${changedSections} written against older content`,
       tone: 'warn',
       title:
-        'This source changed after those sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
+        'This source changed after those accessible sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
     };
   }
-  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections that recorded a citation of this source' };
+  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections visible with your current access that recorded a citation of this source' };
 }
 
 function prettyBytes(n: number | null): string | null {
@@ -438,80 +361,60 @@ function kindLabel(mime: string | null): string {
 /**
  * Whether this source's text is actually available to draft from.
  *
- * Reported from the source's own `extraction_status`, never inferred. A
+ * Reported from persisted text availability and recorded processing state. A
  * document whose text could not be read is shown as such: it is still stored
  * and still has an identity, but a section drafted "from" it would not be
  * grounded in anything, and hiding that would be the worst kind of quiet
  * failure on a regulatory surface.
  */
 function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted' } {
-  if (s.disposition === 'remove_data') return { label: 'Data withdrawn', tone: 'warn' };
-  if (s.disposition === 'supersede') return { label: 'Replaced by newer data', tone: 'muted' };
-  if (s.disposition === 'keep_data') return { label: 'Data retained · original unavailable', tone: 'muted' };
-  if (s.extractionStatus === 'extracted') {
-    return { label: s.extractionMethod?.includes('ocr') ? 'Read via OCR' : 'Read', tone: 'ok' };
-  }
-  if (s.extractionStatus === 'failed') return { label: 'Text not readable', tone: 'warn' };
-  return { label: 'Not processed yet', tone: 'muted' };
+  return sourceReadView(s);
 }
 
-function sourceCanGround(s: SourceRow): boolean {
-  return s.extractionStatus === 'extracted' && s.isCurrent !== false && s.dataEligible !== false;
+
+function sourceReadTitle(source: SourceRow): string {
+  return sourceReadView(source).detail ?? 'Reported from persisted source text and processing state';
 }
 
 function sourcePinTitle(s: SourceRow): string {
   if (s.dataEligible === false || s.isCurrent === false) return 'This source is excluded from active data use';
+  if (!sourceCanGround(s)) return 'This source has no confirmed readable text, so it cannot ground a draft';
   if (s.originalFileAvailable === false) return 'Use the retained extracted text as context for AnA; the original file is unavailable';
-  return s.extractionStatus === 'extracted'
+  return sourceCanGround(s)
     ? 'Use this source as context for AnA'
     : 'This source has no readable text, so it cannot ground a draft';
 }
 
-/**
- * What the catalog found a source is: protocol, registry id, data cut-off, and
- * for a table or define.xml its CDISC standard, domain and size. Facts only;
- * a fact not found is left out, never filled in.
- */
-function catalogFacts(c: SourceCatalog | null | undefined): string[] {
-  if (!c) return [];
-  const facts: string[] = [];
-  if (c.protocolNumber) facts.push(`Protocol ${c.protocolNumber}`);
-  if (c.trialRegistryIdentifier) facts.push(c.trialRegistryIdentifier);
-  if (c.dataCutDate) facts.push(`data cut-off ${c.dataCutDate}`);
-  else if (c.documentDate) facts.push(`dated ${c.documentDate}`);
-  const t = c.dataset?.tables[0];
-  if (t) {
-    const kind = t.standard ? `${t.standard}${t.domain ? ` ${t.domain}` : ''}` : 'table';
-    facts.push(c.dataset!.format === 'define-xml'
-      ? `define.xml · ${c.dataset!.tableCount} dataset${c.dataset!.tableCount === 1 ? '' : 's'}`
-      : `${kind} · ${t.columnCount} columns · ${t.rowCount} rows`);
-  }
-  return facts;
+function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; projectId: string | null; onPull: (s: SourceRow) => void }) {
+  const reasonId = useId();
+  if (!projectId) return null;
+  const unavailable = sourceImportUnavailableReason(source);
+  return <div className="source-work-action">
+    <button type="button" className="btn ghost" disabled={Boolean(unavailable)} onClick={() => onPull(source)}
+      title={unavailable ?? undefined} aria-describedby={unavailable ? reasonId : undefined}
+      aria-label={`Work on ${source.title || `source ${source.id}`} in editor`}>
+      {I.penLine} Work on document
+    </button>
+    {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
+  </div>;
 }
 
-function SourceCatalogLine({ catalog }: { catalog?: SourceCatalog | null }) {
-  const facts = catalogFacts(catalog);
-  if (facts.length === 0) return null;
-  return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }} data-testid="source-catalog">
-      {facts.join(' · ')}
-    </span>
-  );
-}
-
-/** Where a search matched in the text read from the file; nothing outside a search. */
-function SourceSnippet({ show, text }: { show: boolean; text?: string | null }) {
-  if (!show || !text) return null;
-  return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }}>
-      &hellip;{text.replace(/<\/?b>/g, '')}&hellip;
-    </span>
-  );
+function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
+  pid: string | null; pinned: number[]; sources: SourceRow[]; onNav: (id: string) => void; disabled: boolean;
+}) {
+  if (!pid || !pinned.length) return null;
+  const selected = pinned.map(id => sources.find(source => source.id === id));
+  return <div data-testid="data-room-build-selected"><SourceAssemblyAction programId={pid} onNav={onNav} disabled={disabled}
+    sources={pinned.map((sourceId, index) => ({ kind: 'data-room', sourceId,
+      ...(selected[index]?.checksum ? { expectedChecksum: selected[index]!.checksum! } : {}) }))}
+    titles={selected.map((source, index) => source?.title || `Source ${pinned[index]}`)}
+    unavailable={selected.some(source => !source) ? 'Refresh the source list before building from this selection.' : null} /></div>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
+  const [pullSource, setPullSource] = useState<SourceRow | null>(null);
   const [q, setQ] = useState('');
   // The search the server runs: settled after the person stops typing, and a
   // new search starts from the first page.
@@ -528,21 +431,24 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<SourcesPage>(
+  const sourceRead = useLiveData<SourcesPage>(
     pid ? sourcesUrl(pid, term, offset) : null,
     [pid, reloadKey, term, offset],
-    hasKeys<SourcesPage>('sources'),
+    isSourcesPage,
   );
+  const state = !sourceRead.loading && !sourceRead.error && !sourceRead.data
+    ? { ...sourceRead, error: 'The source list could not be verified.', empty: false }
+    : sourceRead;
 
   // Sections in this project drafted from a source that has since changed. Read
   // separately because it answers a different question from the source list, and
-  // an older server that does not serve it simply yields nothing rather than a
-  // fabricated all-clear.
-  const changed = useLiveData<{ changes: ChangedUsageRow[]; count: number }>(
+  // a failed or unverified read cannot establish that no citations are affected.
+  const changed = useLiveData<ChangedUsageRead>(
     pid ? `/api/c2c/projects/${pid}/source-changes` : null,
     [pid, reloadKey],
+    isChangedUsageRead,
   );
-  const changes = changed.data?.changes ?? [];
+  const changes = !changed.loading && !changed.error ? changed.data?.changes ?? [] : [];
 
   // Same upload path as AnA's composer — one file, one identity.
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
@@ -555,6 +461,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   }, [settled]);
 
   const sources = state.data?.sources ?? [];
+  const citationUsageScope = state.data?.usageScope;
   // A refreshed lifecycle decision must retire local and cross-surface pins.
   // A retained-data pin resolves the recorded extraction when its original
   // file is unavailable; withdrawn and replaced data cannot ground a draft.
@@ -570,7 +477,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
      counted. The server counts the whole room (currentTotal), not this page. */
   const current = sources.filter(s => s.isCurrent !== false && s.dataEligible !== false);
   const total = state.data?.currentTotal ?? current.length;
-  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+  const readable = current.filter(sourceCanGround).length;
   const truncated = state.data?.window?.truncated === true;
   const searching = term.length > 0;
   const matched = state.data?.total ?? sources.length;
@@ -586,7 +493,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   /* Hand a set of sources to AnA. It resolves each source back to the upload
      its bytes live in and grounds the turn on exactly those documents, not on
      whatever its own retrieval would have picked. */
+  const sourceReadConfirmed = !state.loading && !state.error && Boolean(state.data);
   const handOff = (ids: number[], words: string) => {
+    if (!sourceReadConfirmed || uploading || !ids.every(id => groundable.includes(id))) return;
     window.C2C_SOURCE_PINS = ids.map(String);
     onAsk(words);
   };
@@ -595,12 +504,15 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     <section className="pj-sec">
       <div className="pj-sec-h">
         <h2>Data room</h2>
+        {pid && <button type="button" className="btn ghost" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>}
         <span className="sec-sub">
           {/* A failed read must not read as "no sources". Someone who just
               dropped a file in here would take an empty list as data loss. */}
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
-            : searching
+            : state.loading
+              ? searching ? 'searching this project’s sources — no matching count is confirmed yet' : 'loading this project’s sources — counts are not confirmed yet'
+              : searching
               ? `${matched} source${matched === 1 ? '' : 's'} match \u201c${term}\u201d in their title or text`
               : total > 0
                 ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable on this page${truncated || offset > 0 ? ` (showing ${offset + 1}\u2013${offset + sources.length})` : ''} — what this project's documents are written from`
@@ -647,6 +559,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           regulated text is not something this surface should do. The point is
           that the affected sections are findable at all: before this they left
           no trace anywhere. */}
+      {!changed.loading && (changed.error || !changed.data) && (
+        <p className="sec-sub" role="status">
+          Source-change citations could not be verified for your current access. No affected-citation count is confirmed.
+        </p>
+      )}
       {changes.length > 0 && (
         <div
           className="sp-tone-warn"
@@ -657,8 +574,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           }}
         >
           <b>
-            {changes.length} section{changes.length === 1 ? '' : 's'} in this project{' '}
-            {changes.length === 1 ? 'was' : 'were'} drafted from a source that has since changed.
+            {changes.length} accessible citation{changes.length === 1 ? '' : 's'} shown in this project{' '}
+            point{changes.length === 1 ? 's' : ''} to a source that has since changed.
           </b>
           <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
             {changes.slice(0, 6).map((c) => (
@@ -690,7 +607,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords, a.extractionCoverage)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
@@ -727,7 +644,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <div className="pj-srcs">
               {rows.map((s) => {
                 const rs = readState(s);
-                const use = usedIn(s);
+                const use = usedIn(s, citationUsageScope);
                 const size = prettyBytes(s.fileSize);
                 return (
                   <div
@@ -779,10 +696,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     <span
                       className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
                       style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}
-                      title="Reported by the source's own extraction status"
+                      title={sourceReadTitle(s)}
                     >
                       {rs.label}
                     </span>
+                    <SourceWorkButton source={s} projectId={pid} onPull={setPullSource} />
                     {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
                       key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
                       title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
@@ -814,6 +732,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       {/* The caller's chat files with no project yet (PF-07): one audited adopt
           brings a file into this Data Room, and the list reloads. */}
       {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
+      {pid && pullSource && <SourceImportDialog programId={pid}
+        source={{ kind: 'data-room', sourceId: pullSource.id }} title={pullSource.title || `Source ${pullSource.id}`}
+        onClose={() => setPullSource(null)} onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />}
+
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
         {available('source-tracer') && (
@@ -827,11 +749,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             context of the next turn, in the one conversation. With sources
             pinned, the pinned set is the one handed over. A data room with
             nothing readable offers neither. */}
+        <DataRoomBuildAction pid={pid} pinned={pinned} sources={sources} onNav={onNav} disabled={uploading || !sourceReadConfirmed} />
         {pinned.length === 0 && groundable.length > 0 && (
           <button
             className="btn ghost"
             style={{ fontSize: 12, padding: '4px 12px' }}
-            disabled={uploading}
+            disabled={uploading || !sourceReadConfirmed}
             title={`Ask AnA to draft from ${handedWords} in this data room`}
             onClick={() => handOff(
               handed,
@@ -845,6 +768,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           <button
             className="btn"
             style={{ fontSize: 12, padding: '4px 12px' }}
+            disabled={uploading || !sourceReadConfirmed}
             onClick={() => handOff(
               pinned,
               `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
@@ -936,14 +860,21 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
 const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
 
-function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null }) {
   const available = useSurfaceAvailable();
+  const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
   const state = useLiveData<WorkViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
     [ident],
     hasKeys<WorkViewRow>('items'),
   );
+  useEffect(() => {
+    if (!state.loading && !state.error && targetId) {
+      targetRef.current?.focus();
+      targetRef.current?.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [state.loading, state.error, state.data, targetId]);
   return (
     <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
@@ -968,7 +899,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           render={(d) => {
             const items = d.items ?? [];
             const open = items.filter((w) => w.status !== 'done');
-            const shown = open.slice(0, WORK_SHOWN);
+            const target = targetId ? items.find((w) => w.id === targetId) : null;
+            const shown = target
+              ? [target, ...open.filter((w) => w.id !== target.id).slice(0, WORK_SHOWN - 1)]
+              : open.slice(0, WORK_SHOWN);
+            const hiddenOpen = open.length - shown.filter((w) => w.status !== 'done').length;
             const done = items.length - open.length;
             return (
               <>
@@ -976,7 +911,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   {shown.map((w) => {
                     const due = fmtDue(w.dueAt);
                     return (
-                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}
+                        ref={w.id === targetId ? targetRef : undefined}
+                        tabIndex={w.id === targetId ? -1 : undefined}
+                        data-work-target={w.id === targetId || undefined}
+                        aria-label={w.id === targetId ? `Requested task: ${w.title}` : undefined}>
                         <div className="pj-file-top">
                           <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
                           <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
@@ -995,7 +934,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   })}
                 </div>
                 <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {hiddenOpen > 0 ? `+${hiddenOpen} more open · ` : ''}
                   {done > 0 ? `${done} done · ` : ''}
                   {items.length} item{items.length === 1 ? '' : 's'} total
                 </div>
@@ -1009,6 +948,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           }}
         />
       )}
+      <MissingRequestedWork targetId={targetId} state={state} />
       {/* The board these rows live on, by its own id. This sent people to
           the `task-board` alias, which the project no longer names
           (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
@@ -1680,6 +1620,13 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
+  const pinProgram = useRef(pid);
+  useEffect(() => {
+    if (pinProgram.current === pid) return;
+    pinProgram.current = pid;
+    window.C2C_SOURCE_PINS = [];
+  }, [pid]);
+
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
@@ -1694,7 +1641,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const markets = useProgramMarkets(pid);
   const reviews = useProjectReviews(pid);
 
+  const [workTarget, setWorkTarget] = useState<string | null>(null);
   const [stage, setStage] = useState('author');
+  useEffect(() => {
+    const target = consumeNavParams('project-home')?.workId;
+    if (target) { setWorkTarget(target); setStage('review'); }
+  }, []);
 
   const prog = progState.data;
 
@@ -1714,7 +1666,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
-  const submissionType = sel?.code || prog?.code || prog?.program_type || null;
+  /* A filing document class is named by its label ("Prior Approval
+     Supplement"), never its key ("pas"). */
+  const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
   const indication = prog?.indication ?? null;
   // Program identity facts (WO-9 Click 1). Read from the row only — never from
@@ -1740,7 +1694,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      selection made from the MDX workspace (the old Workspace grid's medtech
      segment). Only a project that is read and is neither is an eCTD filing. */
   const deviceFiling = deviceProgram || clientType === 'MDX';
-  const ectdFiling = !!prog && !deviceFiling;
+  /* A filing document class (a PAS, a CSR, a meeting package) is authored
+     here and never built as a sequence, so it is no eCTD filing either
+     (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
+  const documentClass = filingDocumentClassOf(prog?.program_type);
+  const ectdFiling = !!prog && !deviceFiling && !documentClass;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1955,7 +1913,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
           and the documents in review, from the reads the tabs show. */}
       {pid && !progState.error && (
-        <ProjectStatusLine markets={markets} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+        <ProjectStatusLine markets={markets} documentClass={documentClass} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
@@ -2006,8 +1964,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />
-              <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
+              <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
             </div>
           )}
 
@@ -2016,7 +1974,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} documentClass={documentClass} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
@@ -2027,11 +1985,13 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
             </div>
           )}
 
-          {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
+          {/* Respond: add the agency's letter, draft the answer from it with
+              AnA, start the response sequence (F15). */}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
 
           {/* Author — the project's documents, each opened by id, then module
               completion, the person's work, records and the team. */}
@@ -2054,3 +2014,14 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
     </div>
   );
 }
+
+function MissingRequestedWork({ targetId, state }: {
+  targetId?: string | null; state: ReturnType<typeof useLiveData<WorkViewRow>>;
+}) { return <>
+      {targetId && !state.loading && !state.error && state.data &&
+        !(state.data.items ?? []).some((w) => w.id === targetId) && (
+          <div role="alert" className="sp-tone-warn">{state.data.summary?.partial
+            ? 'The program work record is incomplete because a store could not be read. The requested task could not be located; retry the read.'
+            : "The requested task is not available in this program's work record. No other task was opened in its place."}</div>
+        )}
+  </>; }

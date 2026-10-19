@@ -11,13 +11,14 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('../download', async original => ({ ...(await original<typeof import('../download')>()), downloadBlob: vi.fn(() => true) }));
 
 import { VaultVersions, cmcEvidenceText, estarText, placedInText } from '../surfaces/VaultVersions';
 
@@ -62,11 +63,12 @@ describe('where each version is placed (VR-14a)', () => {
       .toBe(' · placed in IND 123456, sequence 0000, 3.2.P.8.1 (new; sequence dispatched)');
   });
 
-  it('a version placed nowhere says so, and a row the server said nothing about claims nothing', async () => {
+  it('an empty placement read makes no claim about inaccessible submissions, and an omitted read claims nothing', async () => {
     onVersions = () => ok({ versions: [version(V2, '2.0', true, []), version(V1, '1.0', false)] });
     mount();
-    expect((await screen.findByTestId(`vault-version-placed-${V2}`)).textContent).toBe(' · not placed in any submission');
+    expect((await screen.findByTestId(`vault-version-placed-${V2}`)).textContent).toBe(' · no submission placements are available to you');
     expect(screen.getByTestId(`vault-version-placed-${V1}`).textContent).toBe('');
+    expect(screen.getByTestId('vault-versions').textContent).not.toMatch(/not placed in any submission|hidden|private/i);
   });
 
   it('names each official eSTAR export that attached a version, and claims nothing when there is none', async () => {
@@ -117,7 +119,7 @@ describe('the check-in warning names the open sequences the current version is p
     mount();
     const warning = await screen.findByTestId('vault-checkin-warning');
     expect(warning.textContent).toContain('IND 123456, sequence 0001 (frozen)');
-    expect(warning.textContent).toContain('Version 2.0 is placed in 1 sequence not');
+    expect(warning.textContent).toContain('Version 2.0 has 1 placement in accessible sequences not');
   });
 
   it('W2 says nothing when the agency already holds that sequence', async () => {
@@ -146,5 +148,26 @@ describe('the check-in warning names the open sequences the current version is p
     mount();
     await settled();
     expect(screen.queryByTestId('vault-checkin-warning')).toBeNull();
+  });
+});
+
+describe('unconfirmed versions and signed-history counts remain unknown', () => {
+  it('a malformed placement field reports a failed read and exposes no version actions', async () => {
+    onVersions = () => ok({ versions: [{ ...version(V2, '2.0', true), placements: null }] });
+    mount();
+    expect((await screen.findByRole('alert')).textContent).toContain('versions of this document could not be read');
+    expect(screen.queryByTestId(`vault-version-${V2}`)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Export signed history' })).toBeNull();
+    expect(screen.getByTestId('vault-versions').textContent).not.toMatch(/no submission placements|not placed/i);
+  });
+
+  it('a downloaded export without a recorded row count claims no zero audit history', async () => {
+    onVersions = () => ok({ versions: [version(V2, '2.0', true, [])] });
+    apiRequest.mockImplementation(async (_method: string, url: string) => url.endsWith('/versions') ? onVersions()
+      : ({ ok: true, status: 200, json: async () => ({ export: { data: [], manifest: {}, signature: 'retained-signature' } }) }) as Response);
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Export signed history' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('audit record count was not reported');
+    expect(screen.getByTestId('vault-versions').textContent).not.toMatch(/holds no audit records|0 audit records/i);
   });
 });

@@ -1,0 +1,401 @@
+{
+  "version": 1,
+  "scope": "catalog-only counted SQL interpolations and their transitive fixed fragment providers",
+  "verdict": "No runtime data value is interpolated into SQL text at the 32 reviewed sites.",
+  "countedSites": 32,
+  "files": [
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "bytes": 15295,
+      "sha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "scannerCount": 14,
+      "astCount": 14,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 72,
+          "column": 60,
+          "function": "admittedProgram",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "[documentId, organizationId]"
+        },
+        {
+          "line": 72,
+          "column": 88,
+          "function": "admittedProgram",
+          "expression": "currentClause",
+          "category": "finite_literal_clause",
+          "reason": "Empty text or fixed AND NOT plus supersededSql(d). currentOnly selects a finite SQL branch and is never copied into SQL text; every alias is literal d.",
+          "boundValuesExpression": "[documentId, organizationId]"
+        },
+        {
+          "line": 106,
+          "column": 57,
+          "function": "loadDocumentForOrg",
+          "expression": "textCol",
+          "category": "finite_literal_projection",
+          "reason": "Only d.extracted_text or NULL::text AS extracted_text. includeText selects a fixed projection; its runtime value is not serialized into SQL.",
+          "boundValuesExpression": "[documentId, organizationId, programId]"
+        },
+        {
+          "line": 107,
+          "column": 15,
+          "function": "loadDocumentForOrg",
+          "expression": "vaultDispositionChoiceSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; matching(vault,d) uses fixed vault column names and the ordered disposition projection is constant SQL.",
+          "boundValuesExpression": "[documentId, organizationId, programId]"
+        },
+        {
+          "line": 108,
+          "column": 15,
+          "function": "loadDocumentForOrg",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "[documentId, organizationId, programId]"
+        },
+        {
+          "line": 117,
+          "column": 15,
+          "function": "loadDocumentForOrg",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "[documentId, organizationId, programId]"
+        },
+        {
+          "line": 117,
+          "column": 43,
+          "function": "loadDocumentForOrg",
+          "expression": "currentClause",
+          "category": "finite_literal_clause",
+          "reason": "Empty text or fixed AND NOT plus supersededSql(d). currentOnly selects a finite SQL branch and is never copied into SQL text; every alias is literal d.",
+          "boundValuesExpression": "[documentId, organizationId, programId]"
+        },
+        {
+          "line": 217,
+          "column": 57,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "textCol",
+          "category": "finite_literal_projection",
+          "reason": "Only d.extracted_text or NULL::text AS extracted_text. includeText selects a fixed projection; its runtime value is not serialized into SQL.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 218,
+          "column": 15,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "vaultDispositionChoiceSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; matching(vault,d) uses fixed vault column names and the ordered disposition projection is constant SQL.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 219,
+          "column": 15,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 220,
+          "column": 19,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "supersededSql('d')",
+          "category": "canonical_predicate",
+          "reason": "supersededSql receives the source-code literal d; its sole transitive VALID_LINK invocation receives literal succ and trusted literal d. Both names and every lineage condition are fixed at these audited call sites.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 228,
+          "column": 81,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 228,
+          "column": 109,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "programClause",
+          "category": "generated_bind_placeholder_clause",
+          "reason": "Starts empty; optional fixed program equality and ANY predicates use only locally generated $n from params.length. Program UUID and copied allowed-program array are pushed into the separate values array. With the present definitions, placeholders are only $3 and $4.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 228,
+          "column": 125,
+          "function": "loadDocumentForAdmittedScope",
+          "expression": "currentClause",
+          "category": "finite_literal_clause",
+          "reason": "Empty text or fixed AND NOT plus supersededSql(d). currentOnly selects a finite SQL branch and is never copied into SQL text; every alias is literal d.",
+          "boundValuesExpression": "params"
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "bytes": 36497,
+      "sha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "scannerCount": 4,
+      "astCount": 4,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 464,
+          "column": 15,
+          "function": "listProjectDocumentsRaw",
+          "expression": "vaultDispositionChoiceSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; matching(vault,d) uses fixed vault column names and the ordered disposition projection is constant SQL.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 465,
+          "column": 15,
+          "function": "listProjectDocumentsRaw",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 479,
+          "column": 67,
+          "function": "listProjectDocumentsRaw",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "params"
+        },
+        {
+          "line": 479,
+          "column": 96,
+          "function": "listProjectDocumentsRaw",
+          "expression": "programFilter",
+          "category": "generated_bind_placeholder_clause",
+          "reason": "Starts empty; optional fixed program equality/ANY clauses use locally generated $3/$4, and currentOnly adds fixed supersededSql(d). All actual program IDs/arrays are values-array binds, never clause text.",
+          "boundValuesExpression": "params"
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "bytes": 30417,
+      "sha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "scannerCount": 3,
+      "astCount": 3,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 573,
+          "column": 15,
+          "function": "readCatalogRecord",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        },
+        {
+          "line": 573,
+          "column": 62,
+          "function": "readCatalogRecord",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        },
+        {
+          "line": 574,
+          "column": 15,
+          "function": "readCatalogRecord",
+          "expression": "supersededSql('d')",
+          "category": "canonical_predicate",
+          "reason": "supersededSql receives the source-code literal d; its sole transitive VALID_LINK invocation receives literal succ and trusted literal d. Both names and every lineage condition are fixed at these audited call sites.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-search-query.ts",
+      "bytes": 3608,
+      "sha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903",
+      "scannerCount": 7,
+      "astCount": 7,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 20,
+          "column": 65,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "countParams"
+        },
+        {
+          "line": 21,
+          "column": 17,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "supersededSql('d')",
+          "category": "canonical_predicate",
+          "reason": "supersededSql receives the source-code literal d; its sole transitive VALID_LINK invocation receives literal succ and trusted literal d. Both names and every lineage condition are fixed at these audited call sites.",
+          "boundValuesExpression": "countParams"
+        },
+        {
+          "line": 22,
+          "column": 59,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "countAllowed",
+          "category": "generated_bind_placeholder_clause",
+          "reason": "Only empty text or fixed ANY($3::uuid[]) SQL. countParams starts with two items; push of the copied allowed-program array returns 3. Array contents are sent separately as bound value 3.",
+          "boundValuesExpression": "countParams"
+        },
+        {
+          "line": 29,
+          "column": 15,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "hitParams"
+        },
+        {
+          "line": 35,
+          "column": 42,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "hitParams"
+        },
+        {
+          "line": 36,
+          "column": 19,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "supersededSql('d')",
+          "category": "canonical_predicate",
+          "reason": "supersededSql receives the source-code literal d; its sole transitive VALID_LINK invocation receives literal succ and trusted literal d. Both names and every lineage condition are fixed at these audited call sites.",
+          "boundValuesExpression": "hitParams"
+        },
+        {
+          "line": 38,
+          "column": 61,
+          "function": "queryCatalogMeaningIndex",
+          "expression": "hitAllowed",
+          "category": "generated_bind_placeholder_clause",
+          "reason": "Only empty text or fixed ANY($6::uuid[]) SQL. hitParams starts with five items; push of the copied allowed-program array returns 6. Array contents are bound separately.",
+          "boundValuesExpression": "hitParams"
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "bytes": 5891,
+      "sha256": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+      "scannerCount": 1,
+      "astCount": 1,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 33,
+          "column": 9,
+          "function": "catalogMembershipRole",
+          "expression": "opts.hold ? 'FOR SHARE OF ou, u, o' : ''",
+          "category": "finite_literal_lock_clause",
+          "reason": "hold selects exactly FOR SHARE OF ou, u, o or empty text. No option, actor ID, organization ID or role string is copied into the statement. Actor and organization IDs remain $1/$2 binds.",
+          "boundValuesExpression": "[args.userId, args.organizationId]"
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-write-integrity.ts",
+      "bytes": 5439,
+      "sha256": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+      "scannerCount": 3,
+      "astCount": 3,
+      "sqlRawCalls": 0,
+      "sites": [
+        {
+          "line": 30,
+          "column": 15,
+          "function": "lockedCatalogSource",
+          "expression": "vaultDataEligibleSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias identifier validation; eligible(vault,d,false) and matching(vault,d) contain only fixed vault column names, fixed disposition choices and correlated column references. No caller value enters generated text.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        },
+        {
+          "line": 30,
+          "column": 62,
+          "function": "lockedCatalogSource",
+          "expression": "vaultBinaryAvailableSql('d')",
+          "category": "canonical_predicate",
+          "reason": "Literal alias d passes eligibility.alias validation; eligible(vault,d,true) selects fixed absence-of-disposition SQL. Source IDs/hashes remain column references, not interpolated JavaScript values.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        },
+        {
+          "line": 31,
+          "column": 15,
+          "function": "lockedCatalogSource",
+          "expression": "supersededSql('d')",
+          "category": "canonical_predicate",
+          "reason": "supersededSql receives the source-code literal d; its sole transitive VALID_LINK invocation receives literal succ and trusted literal d. Both names and every lineage condition are fixed at these audited call sites.",
+          "boundValuesExpression": "[args.documentId, args.programId, args.organizationId]"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "bytes": 9446,
+      "sha256": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f"
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "bytes": 12701,
+      "sha256": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733"
+    },
+    {
+      "path": "server/services/vault/vault-version-family.ts",
+      "bytes": 8142,
+      "sha256": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526"
+    },
+    {
+      "path": "server/services/document-data-disposition/program-lock.ts",
+      "bytes": 556,
+      "sha256": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.mjs",
+      "bytes": 5817,
+      "sha256": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "bytes": 5625,
+      "sha256": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1"
+    }
+  ],
+  "canonicalDependencyTrace": {
+    "disposition": "vaultDataEligibleSql/vaultBinaryAvailableSql/vaultDispositionChoiceSql -> eligible or matching with literal kind vault -> alias(d). The vault arm does not execute recordedLineageEligibleSql; that imported dependency serves captured/upload paths only.",
+    "version": "supersededSql(d) -> VALID_LINK(succ,d); these audited aliases are source-code literals. supersededSql itself does not validate arbitrary aliases, so this finding cannot authorize nonliteral future callers.",
+    "programLock": "reserveCatalogWrite -> lockDocumentDispositionProgram supplies organization/program IDs as separate values binds; no returned fragment enters any counted interpolation.",
+    "suggestionUpdate": "Governance UPDATE strings SUGGEST/SUGGEST_WITH_VECTOR contain only fixed columns and $1..$13. sql(true/false) selects one of those constants. keyData JSON, vector literal, actor, attribution and document hashes are all values-array binds. This variable-query path is outside the gate regex but was manually reviewed."
+  },
+  "limitations": [
+    "The ratchet is a coarse count and does not inspect value semantics or caller provenance.",
+    "The gate cannot generally see preassembled SQL variables or string concatenation; this audit reviewed local clause builders and governance fixed UPDATE selection but is not a repository-wide injection proof.",
+    "Counts and findings apply only to the exact hashed sources and listed helper dependencies.",
+    "Fixed alias/fragment safety does not prove authorization, RLS effectiveness, regulatory compliance or provider delivery.",
+    "No app, gate, baseline, branch, index or remote state is modified by this audit."
+  ]
+}

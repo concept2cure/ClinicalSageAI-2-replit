@@ -11,7 +11,7 @@
  *   GET /api/mdx/analytics/ana-usage                AnA tool invocation counts
  *
  * Each endpoint returns the canonical { data, meta? } envelope. Optional
- * tables degrade to empty aggregates via safeAggregate() rather than 500.
+ * unavailable tables or columns are reported as unavailable, never zero activity.
  */
 
 import { Router, Request, Response } from 'express';
@@ -19,7 +19,8 @@ import { createScopedLogger } from '../utils/logger';
 import {
   ok, orgRequired, serverError,
 } from '../lib/api-response';
-import { pool } from '../db';
+import { requestPgClient, MissingRequestDbContextError, type RequestSqlClient } from '../db/requestDb';
+import { VerificationUnavailableError, isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-analytics');
@@ -31,25 +32,32 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Run an aggregate; swallow missing-table / missing-column errors so
- *  surface degrades gracefully when an upstream table isn't provisioned. */
-async function safeAgg<T>(sql: string, args: unknown[], fallback: T): Promise<T> {
+/** A source that could not be read is not an initialized source with no rows. */
+function analyticsError(res: Response, action: string, error: unknown) {
+  if (isVerificationUnavailable(error) || error instanceof MissingRequestDbContextError) {
+    return respondVerificationUnavailable(res, log, 'Analytics data', error, {
+      code: 'ANALYTICS_UNAVAILABLE', message: 'Analytics data is unavailable because a required source or its tenant database scope could not be read. No zero activity is being reported.',
+    });
+  }
+  return serverError(res, log, action, error);
+}
+async function safeAgg<T>(client: RequestSqlClient, sql: string, args: unknown[], fallback: T): Promise<T> {
   try {
-    const { rows } = await pool.query(sql, args);
+    const { rows } = await client.query(sql, args);
     return (rows[0] as unknown as T) ?? fallback;
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
-    if (code === '42P01' || code === '42703') return fallback;
+    if (code === '42P01' || code === '42703') throw new VerificationUnavailableError('Analytics data', code);
     throw err;
   }
 }
-async function safeRows<T extends Record<string, unknown>>(sql: string, args: unknown[]): Promise<T[]> {
+async function safeRows<T extends Record<string, unknown>>(client: RequestSqlClient, sql: string, args: unknown[]): Promise<T[]> {
   try {
-    const { rows } = await pool.query<T>(sql, args);
-    return rows;
+    const { rows } = await client.query(sql, args);
+    return rows as T[];
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
-    if (code === '42P01' || code === '42703') return [];
+    if (code === '42P01' || code === '42703') throw new VerificationUnavailableError('Analytics data', code);
     throw err;
   }
 }
@@ -60,7 +68,7 @@ router.get('/analytics/portfolio', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const programs = await safeAgg<{ total: number; active: number; blocked: number; complete: number }>(
+    const programs = await safeAgg<{ total: number; active: number; blocked: number; complete: number }>(requestPgClient(req),
       `SELECT
           COUNT(*)::int                                                        AS total,
           COUNT(*) FILTER (WHERE status = 'active')::int                       AS active,
@@ -70,7 +78,7 @@ router.get('/analytics/portfolio', async (req: Request, res: Response) => {
       [orgId], { total: 0, active: 0, blocked: 0, complete: 0 },
     );
 
-    const byPathway = await safeRows<{ regulatory_path: string; n: number }>(
+    const byPathway = await safeRows<{ regulatory_path: string; n: number }>(requestPgClient(req),
       `SELECT regulatory_path, COUNT(*)::int AS n
          FROM regulatory_programs
         WHERE organization_id = $1 AND deleted_at IS NULL AND regulatory_path IS NOT NULL
@@ -78,7 +86,7 @@ router.get('/analytics/portfolio', async (req: Request, res: Response) => {
       [orgId],
     );
 
-    const submissions = await safeAgg<{ total: number; received: number; in_review: number }>(
+    const submissions = await safeAgg<{ total: number; received: number; in_review: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE status IN ('received','ack1_received','ack2_received','ack3_received'))::int AS received,
               COUNT(*) FILTER (WHERE status = 'review_started')::int AS in_review
@@ -87,7 +95,7 @@ router.get('/analytics/portfolio', async (req: Request, res: Response) => {
     );
 
     return ok(res, { programs, byPathway, submissions });
-  } catch (err) { return serverError(res, log, 'portfolio', err); }
+  } catch (err) { return analyticsError(res, 'portfolio', err); }
 });
 
 /* ─── Submissions cycle times ───────────────────────────────── */
@@ -96,7 +104,7 @@ router.get('/analytics/submissions', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const byRegion = await safeRows<{ region: string; total: number; rejected: number; received: number; avg_to_ack_seconds: number | null }>(
+    const byRegion = await safeRows<{ region: string; total: number; rejected: number; received: number; avg_to_ack_seconds: number | null }>(requestPgClient(req),
       `SELECT region,
               COUNT(*)::int                                            AS total,
               COUNT(*) FILTER (WHERE status = 'rejected')::int         AS rejected,
@@ -107,7 +115,7 @@ router.get('/analytics/submissions', async (req: Request, res: Response) => {
         GROUP BY region`,
       [orgId],
     );
-    const byErrorClass = await safeRows<{ error_class: string; n: number }>(
+    const byErrorClass = await safeRows<{ error_class: string; n: number }>(requestPgClient(req),
       `SELECT error_class, COUNT(*)::int AS n
          FROM submission_transmittals
         WHERE organization_id = $1 AND error_class IS NOT NULL
@@ -125,7 +133,7 @@ router.get('/analytics/submissions', async (req: Request, res: Response) => {
       })),
       byErrorClass,
     });
-  } catch (err) { return serverError(res, log, 'submissions', err); }
+  } catch (err) { return analyticsError(res, 'submissions', err); }
 });
 
 /* ─── Cycle times by kit milestone (sections) ───────────────── */
@@ -135,7 +143,7 @@ router.get('/analytics/cycle-times', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   try {
     /* Mean days from draft_source='ana' creation to accept (per category). */
-    const sections = await safeRows<{ category: string; avg_days: number | null; n: number }>(
+    const sections = await safeRows<{ category: string; avg_days: number | null; n: number }>(requestPgClient(req),
       `SELECT category,
               EXTRACT(EPOCH FROM AVG(accepted_at - drafted_at)) / 86400 AS avg_days,
               COUNT(*) FILTER (WHERE accepted_at IS NOT NULL)::int      AS n
@@ -151,7 +159,7 @@ router.get('/analytics/cycle-times', async (req: Request, res: Response) => {
         accepted: r.n,
       })),
     });
-  } catch (err) { return serverError(res, log, 'cycle-times', err); }
+  } catch (err) { return analyticsError(res, 'cycle-times', err); }
 });
 
 /* ─── Blocker root causes ───────────────────────────────────── */
@@ -160,7 +168,7 @@ router.get('/analytics/blockers', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const byCategory = await safeRows<{ category: string; open: number; closed: number }>(
+    const byCategory = await safeRows<{ category: string; open: number; closed: number }>(requestPgClient(req),
       `SELECT category,
               COUNT(*) FILTER (WHERE status = 'open')::int  AS open,
               COUNT(*) FILTER (WHERE status != 'open')::int AS closed
@@ -168,7 +176,7 @@ router.get('/analytics/blockers', async (req: Request, res: Response) => {
         GROUP BY category ORDER BY open DESC`,
       [orgId],
     );
-    const validationFindings = await safeRows<{ validator: string; severity: string; n: number; resolved: number }>(
+    const validationFindings = await safeRows<{ validator: string; severity: string; n: number; resolved: number }>(requestPgClient(req),
       `SELECT validator, severity,
               COUNT(*)::int                              AS n,
               COUNT(*) FILTER (WHERE resolved = true)::int AS resolved
@@ -178,7 +186,7 @@ router.get('/analytics/blockers', async (req: Request, res: Response) => {
         ORDER BY n DESC`,
       [orgId],
     );
-    const riskRollup = await safeAgg<{ total: number; high_residual: number; accepted: number }>(
+    const riskRollup = await safeAgg<{ total: number; high_residual: number; accepted: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                  AS total,
               COUNT(*) FILTER (WHERE residual_risk >= 15)::int AS high_residual,
               COUNT(*) FILTER (WHERE status = 'accepted')::int AS accepted
@@ -186,7 +194,7 @@ router.get('/analytics/blockers', async (req: Request, res: Response) => {
       [orgId], { total: 0, high_residual: 0, accepted: 0 },
     );
     return ok(res, { byCategory, validationFindings, risk: riskRollup });
-  } catch (err) { return serverError(res, log, 'blockers', err); }
+  } catch (err) { return analyticsError(res, 'blockers', err); }
 });
 
 /* ─── Clinical roll-up ──────────────────────────────────────── */
@@ -195,7 +203,7 @@ router.get('/analytics/clinical', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const studies = await safeAgg<{ total: number; enrolling: number; completed: number; planned_total: number; enrolled_total: number }>(
+    const studies = await safeAgg<{ total: number; enrolling: number; completed: number; planned_total: number; enrolled_total: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                              AS total,
               COUNT(*) FILTER (WHERE status = 'enrolling')::int           AS enrolling,
               COUNT(*) FILTER (WHERE status = 'completed')::int           AS completed,
@@ -204,14 +212,14 @@ router.get('/analytics/clinical', async (req: Request, res: Response) => {
          FROM clinical_studies WHERE organization_id = $1 AND deleted_at IS NULL`,
       [orgId], { total: 0, enrolling: 0, completed: 0, planned_total: 0, enrolled_total: 0 },
     );
-    const safety = await safeAgg<{ total: number; serious: number; uade: number }>(
+    const safety = await safeAgg<{ total: number; serious: number; uade: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                       AS total,
               COUNT(*) FILTER (WHERE serious = true)::int          AS serious,
               COUNT(*) FILTER (WHERE unanticipated = true)::int    AS uade
          FROM clinical_study_aes WHERE organization_id = $1`,
       [orgId], { total: 0, serious: 0, uade: 0 },
     );
-    const endpoints = await safeAgg<{ total: number; met: number; primary_met: number }>(
+    const endpoints = await safeAgg<{ total: number; met: number; primary_met: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                       AS total,
               COUNT(*) FILTER (WHERE met = true)::int              AS met,
               COUNT(*) FILTER (WHERE endpoint_kind = 'primary' AND met = true)::int AS primary_met
@@ -219,7 +227,7 @@ router.get('/analytics/clinical', async (req: Request, res: Response) => {
       [orgId], { total: 0, met: 0, primary_met: 0 },
     );
     return ok(res, { studies, safety, endpoints });
-  } catch (err) { return serverError(res, log, 'clinical', err); }
+  } catch (err) { return analyticsError(res, 'clinical', err); }
 });
 
 /* ─── AnA usage ─────────────────────────────────────────────── */
@@ -228,22 +236,21 @@ router.get('/analytics/ana-usage', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    /* AnA tool invocations are recorded via the global audit middleware
-       as table_name='tool_run' or similar; we read whatever audit-logs
-       has, swallowing schema errors. */
-    const draftedSections = await safeAgg<{ pending: number; accepted: number }>(
+    /* Recorded draft, thread and memory counts. These sources do not provide
+       per-tool acceptance attribution; unavailable schemas remain explicit. */
+    const draftedSections = await safeAgg<{ pending: number; accepted: number }>(requestPgClient(req),
       `SELECT COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NULL)::int AS pending,
               COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NOT NULL)::int AS accepted
          FROM cerv2_510k_sections WHERE organization_id = $1`,
       [orgId], { pending: 0, accepted: 0 },
     );
-    const threads = await safeAgg<{ total: number; pinned: number }>(
+    const threads = await safeAgg<{ total: number; pinned: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                    AS total,
               COUNT(*) FILTER (WHERE (metadata->>'pinned')::boolean = true)::int AS pinned
          FROM chat_threads WHERE organization_id = $1`,
       [orgId], { total: 0, pinned: 0 },
     );
-    const memoryAtoms = await safeAgg<{ total: number; verified: number; critical: number }>(
+    const memoryAtoms = await safeAgg<{ total: number; verified: number; critical: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int                                     AS total,
               COUNT(*) FILTER (WHERE is_verified_by_user = true)::int AS verified,
               COUNT(*) FILTER (WHERE importance_level = 'critical')::int AS critical
@@ -251,7 +258,7 @@ router.get('/analytics/ana-usage', async (req: Request, res: Response) => {
       [orgId], { total: 0, verified: 0, critical: 0 },
     );
     return ok(res, { draftedSections, threads, memoryAtoms });
-  } catch (err) { return serverError(res, log, 'ana-usage', err); }
+  } catch (err) { return analyticsError(res, 'ana-usage', err); }
 });
 
 /* ── GET /api/mdx/analytics — kit-shaped aggregate ───────────────────────────
@@ -260,12 +267,15 @@ router.get('/analytics/ana-usage', async (req: Request, res: Response) => {
  * routes above return server-native metric objects; this route assembles the
  * exact kit shape from the tables we have. Facets with no backing source
  * (reviewer velocity = FDA public decision corpus; per-tool AnA usage) return
- * empty arrays — honest empties, not fixtures. Every query is empty-safe. */
+ * null — unavailable sources, never zero activity or fixtures. */
 router.get('/analytics', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  if (req.query.pathway !== undefined && req.query.pathway !== 'all') {
+    return res.status(400).json({ error: 'ANALYTICS_PATHWAY_UNAVAILABLE', message: 'Pathway filtering is unavailable across the current analytics sources. Use organization-wide analytics.' });
+  }
   try {
-    const prog = await safeAgg<{ total: number; active: number; submitted: number; approved: number }>(
+    const prog = await safeAgg<{ total: number; active: number; submitted: number; approved: number }>(requestPgClient(req),
       `SELECT COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE status = 'active')::int AS active,
               COUNT(*) FILTER (WHERE status = 'submitted')::int AS submitted,
@@ -273,23 +283,23 @@ router.get('/analytics', async (req: Request, res: Response) => {
          FROM regulatory_programs WHERE organization_id = $1 AND deleted_at IS NULL`,
       [orgId], { total: 0, active: 0, submitted: 0, approved: 0 },
     );
-    const draft = await safeAgg<{ pending: number; accepted: number }>(
+    const draft = await safeAgg<{ pending: number; accepted: number }>(requestPgClient(req),
       `SELECT COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NULL)::int AS pending,
               COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NOT NULL)::int AS accepted
          FROM cerv2_510k_sections WHERE organization_id = $1`,
       [orgId], { pending: 0, accepted: 0 },
     );
     const acceptRate = draft.accepted + draft.pending > 0
-      ? Math.round((draft.accepted / (draft.accepted + draft.pending)) * 100) : 0;
+      ? Math.round((draft.accepted / (draft.accepted + draft.pending)) * 100) : null;
 
     const kpis = [
       { label: 'Programs', metric: String(prog.total), meta: `${prog.active} active` },
-      { label: 'Submissions cleared', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
-      { label: 'AnA acceptance rate', metric: String(acceptRate), unit: '%', meta: `${draft.accepted} accepted · ${draft.pending} pending` },
+      { label: 'Approved programs', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
+      { label: 'AnA acceptance rate', metric: acceptRate == null ? '—' : String(acceptRate), unit: acceptRate == null ? '' : '%', meta: acceptRate == null ? 'No recorded AnA drafts' : `${draft.accepted} accepted · ${draft.pending} pending` },
     ];
 
     // Blockers grouped from the live c2c_blockers registry.
-    const blockerRows = await safeRows<{ cause: string; count: number; pathway: string | null }>(
+    const blockerRows = await safeRows<{ cause: string; count: number; pathway: string | null }>(requestPgClient(req),
       `SELECT COALESCE(blocker_type, 'other') AS cause, COUNT(*)::int AS count,
               MAX(document_family) AS pathway
          FROM c2c_blockers WHERE org_id = $1 AND status = 'open'
@@ -297,39 +307,35 @@ router.get('/analytics', async (req: Request, res: Response) => {
       [orgId],
     );
     const blockers = blockerRows.map((b) => ({
-      cause: b.cause, count: b.count, median: 0, owner: '',
-      pathway: b.pathway ?? 'mixed', trend: 'flat',
+      cause: b.cause, count: b.count, median: null, owner: null,
+      pathway: b.pathway ?? 'not recorded', trend: null,
     }));
 
     // 24-month submission pace from actual submission dates (oldest → newest).
-    const paceRows = await safeRows<{ ym: string; n: number }>(
+    const paceRows = await safeRows<{ ym: string; n: number }>(requestPgClient(req),
       `SELECT to_char(date_trunc('month', actual_submission_date), 'YYYY-MM') AS ym, COUNT(*)::int AS n
          FROM regulatory_programs
-        WHERE organization_id = $1 AND actual_submission_date IS NOT NULL
-          AND actual_submission_date >= (now() - interval '24 months')
+        WHERE organization_id = $1 AND deleted_at IS NULL AND actual_submission_date IS NOT NULL
+          AND actual_submission_date >= (date_trunc('month', CURRENT_DATE) - interval '23 months')
         GROUP BY 1 ORDER BY 1`,
       [orgId],
     );
     const paceMap = new Map(paceRows.map((r) => [r.ym, r.n]));
     const pace24m: number[] = [];
     for (let i = 23; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
+      const now = new Date();
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
       pace24m.push(paceMap.get(d.toISOString().slice(0, 7)) ?? 0);
     }
 
     // kpis / blockers / pace24m are LIVE from tenant data above. The three
-    // facets below need sources we don't hold as tenant data — per-phase
-    // cycle-time-vs-peer medians, FDA public reviewer velocity, and per-tool
-    // AnA accept rates. We return them as `null` (NOT []) so the client falls
-    // back to illustrative fixtures WITH an honest "sample data" banner,
-    // rather than rendering blank sections that look like real zeros.
-    // Fabricating these would violate the reporting truthfulness contract.
+    // facets below need sources we do not hold. Null means unavailable,
+    // not zero activity; the client names those missing sources explicitly.
     return ok(res, {
       kpis, blockers, pace24m,
       phases: null, reviewers: null, anaUsage: null,
     });
-  } catch (err) { return serverError(res, log, 'analytics-aggregate', err); }
+  } catch (err) { return analyticsError(res, 'analytics-aggregate', err); }
 });
 
 export default router;

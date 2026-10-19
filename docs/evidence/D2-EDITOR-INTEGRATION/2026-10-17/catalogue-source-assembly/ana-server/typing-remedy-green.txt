@@ -1,0 +1,147 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:05:21.287Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:05:23.978Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:05:23.979Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:05:23.979Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 60ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 17ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 14ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch 156ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback 170ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt 349ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate 245ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
+{
+  "timestamp": "2026-10-18T00:05:26.011Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate 464ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept 321ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control 283ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4322:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+{
+  "timestamp": "2026-10-18T00:05:27.018Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "edb87df1-0b16-4a69-b49e-c3a6bb4a5757",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails 396ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-18T00:05:27.395Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-18T00:05:27.399Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "73a23796-e9ca-429c-90df-2af1508a8f0f",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 382ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-18T00:05:27.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-18T00:05:27.784Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "9c8491c3-1831-4721-af12-d03786824b43",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 383ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4322:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+{
+  "timestamp": "2026-10-18T00:05:28.167Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept rollback unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "a47858fc-4aca-4194-a654-58838e717b19",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 384ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  00:05:15
+   Duration  12.34s (transform 3.94s, setup 116ms, import 628ms, tests 11.29s, environment 0ms)

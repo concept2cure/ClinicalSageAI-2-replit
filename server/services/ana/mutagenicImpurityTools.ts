@@ -75,7 +75,7 @@ export const CLASSIFY_MUTAGENIC_IMPURITY: AnaTool = {
       },
       cohortOfConcernStructure: {
         type: 'boolean',
-        description: 'Whether the compound belongs to a Cohort of Concern structural class (aflatoxin-like, N-nitroso, alkyl-azoxy). Default false.',
+        description: 'Whether the compound belongs to a Cohort of Concern structural class (aflatoxin-like, N-nitroso, alkyl-azoxy). Required: ask the user; it is never assumed false.',
       },
       specificStructuralAlerts: {
         type: 'array',
@@ -83,7 +83,7 @@ export const CLASSIFY_MUTAGENIC_IMPURITY: AnaTool = {
         description: 'List of specific structural alerts or functional groups identified (e.g., "N-nitroso", "aromatic amine", "alkyl halide", "epoxide"). Used for Cohort of Concern evaluation.',
       },
     },
-    required: ['amesMutagenicity', 'structuralAlertsPresent', 'carcinogenicityData', 'impurityRelationship'],
+    required: ['amesMutagenicity', 'structuralAlertsPresent', 'carcinogenicityData', 'impurityRelationship', 'cohortOfConcernStructure'],
   },
 };
 
@@ -129,7 +129,7 @@ export const CALCULATE_TTC: AnaTool = {
       },
       numberOfMutagenicImpurities: {
         type: 'number',
-        description: 'Number of mutagenic impurities (Class 2 + Class 3) present in the drug substance. Default 1. If >1, guidance on TTC allocation is provided.',
+        description: 'Number of mutagenic impurities (Class 2 + Class 3) present in the drug substance. If >1, guidance on TTC allocation is provided. Left out, the result says the combined-intake question was not assessed.',
       },
       isOncologyIndication: {
         type: 'boolean',
@@ -201,7 +201,7 @@ export const DESIGN_PURGE_STUDY: AnaTool = {
     'factor concept explanation, individual purge mechanism scores (reactivity: ' +
     '1-100, solubility: 1-10, volatility: 1-10, ionizability: 1-10), overall ' +
     'purge factor estimate (product of individual scores), cumulative purge ' +
-    'across downstream steps, acceptable purge factor guidance, spiking study ' +
+    'from supplied per-step factors only, acceptable purge factor guidance, spiking study ' +
     'design recommendations (when recommended, spike levels, analytical ' +
     'requirements), documentation requirements, and process optimization ' +
     'suggestions for enhanced impurity removal. ' +
@@ -252,7 +252,12 @@ export const DESIGN_PURGE_STUDY: AnaTool = {
       },
       numberOfDownstreamSteps: {
         type: 'number',
-        description: 'Number of synthetic/purification steps between the impurity introduction point and the final API. Default 0.',
+        description: 'Number of synthetic/purification steps between the impurity introduction point and the final API. A step earns purge credit only through downstreamStepPurgeFactors; otherwise it is reported as unquantified.',
+      },
+      downstreamStepPurgeFactors: {
+        type: 'array',
+        items: { type: 'number' },
+        description: 'Measured (spiking study) or predicted purge factor of each downstream step, in process order (e.g., [10, 3]). The only source of downstream purge credit; do not estimate values the user has not given.',
       },
       apiBoilingPointC: {
         type: 'number',
@@ -281,7 +286,7 @@ export const ASSESS_NITROSAMINE_RISK: AnaTool = {
     'Assess nitrosamine impurity risk per FDA 2021 and EMA 2023 nitrosamine ' +
     'guidances. Returns a three-step risk assessment (Step 1: identify root ' +
     'cause potential — vulnerable amines, nitrosating agents/conditions; ' +
-    'Step 2: risk ranking — high/medium/low/no_risk; Step 3: confirmatory ' +
+    'Step 2: risk ranking — high/medium/low/no_risk/not_assessed; Step 3: confirmatory ' +
     'testing requirements), identified root causes (sodium nitrite in synthesis, ' +
     'cross-contamination from shared equipment, degradation of nitrosamide ' +
     'impurities, rubber gaskets/stoppers as NDMA source, excipient-drug ' +
@@ -327,11 +332,11 @@ export const ASSESS_NITROSAMINE_RISK: AnaTool = {
       excipientsConcern: {
         type: 'array',
         items: { type: 'string' },
-        description: 'List of excipients of concern for nitrite content (e.g., ["sodium starch glycolate", "povidone", "croscarmellose sodium"]).',
+        description: 'List of excipients of concern for nitrite content (e.g., ["sodium starch glycolate", "povidone", "croscarmellose sodium"]). Use [] to state none; left out, excipients are reported as not assessed.',
       },
       drugSubstanceDegradationRisk: {
         type: 'boolean',
-        description: 'Whether the drug substance has a degradation pathway that could form N-nitroso compounds.',
+        description: 'Whether the drug substance has a degradation pathway that could form N-nitroso compounds. Left out, it is reported as not assessed (absent is not false).',
       },
       apiStructureDescription: {
         type: 'string',
@@ -406,7 +411,7 @@ export const CONTROL_MUTAGENIC_IMPURITY: AnaTool = {
       compoundClass: {
         type: 'string',
         enum: ['not_coc', 'CoC_aflatoxin_like', 'CoC_nitrosamine', 'CoC_alkyl_azoxy'],
-        description: 'Whether the impurity belongs to a Cohort of Concern category. Affects AI and control stringency.',
+        description: 'Whether the impurity belongs to a Cohort of Concern category ("not_coc" if reviewed and not). Affects AI and control stringency. Required: never assumed.',
       },
       nitrosamineIdentity: {
         type: 'string',
@@ -417,7 +422,7 @@ export const CONTROL_MUTAGENIC_IMPURITY: AnaTool = {
         description: 'Whether the analytical method for this impurity has been validated per ICH Q2(R2).',
       },
     },
-    required: ['impurityClass', 'drugProductType', 'maxDailyDoseG', 'treatmentDuration', 'developmentPhase'],
+    required: ['impurityClass', 'drugProductType', 'maxDailyDoseG', 'treatmentDuration', 'developmentPhase', 'compoundClass'],
   },
 };
 

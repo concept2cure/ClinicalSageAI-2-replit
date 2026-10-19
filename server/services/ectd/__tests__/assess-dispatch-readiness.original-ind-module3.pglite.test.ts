@@ -113,20 +113,8 @@ const m3Errors = (a: Awaited<ReturnType<typeof assess>>) =>
   a.readiness.findings.filter((f) => f.code === 'IND_MODULE3_REQUIRED');
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = harness.db;
-  await harness.pglite.exec(`
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-  `);
 });
 
 afterAll(async () => {

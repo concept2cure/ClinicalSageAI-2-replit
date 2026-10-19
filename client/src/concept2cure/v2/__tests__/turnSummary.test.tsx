@@ -134,14 +134,14 @@ describe('6. the footer says what the record is', () => {
 
 describe('7. held and failed rows say the server\'s sentence, word for word', () => {
   const held = (step: string, heldBack: boolean, message: string): TimelineEvent[] => [
-    { seq: 1, at: at(0), round: 1, kind: 'step', phase: 'announced', step, task: null, source: 'vault', label: 'Saving a document to the Vault', preview: 'Plan' },
-    { seq: 2, at: at(1), round: 1, kind: 'step', phase: 'awaiting_approval', step, task: null, source: 'vault', label: 'Saving a document to the Vault', preview: 'Plan' },
-    { seq: 3, at: at(9), round: 1, kind: 'step', phase: 'finished', step, task: null, source: 'vault', label: 'Saving a document to the Vault', preview: 'Plan', status: 'error', heldBack, message, usedModel: null, ms: 3, facts: [] },
+    { seq: 1, at: at(0), round: 1, kind: 'step', phase: 'announced', step, task: null, source: 'authoring', label: 'Saving an AnA draft in the editor', preview: 'Plan' },
+    { seq: 2, at: at(1), round: 1, kind: 'step', phase: 'awaiting_approval', step, task: null, source: 'authoring', label: 'Saving an AnA draft in the editor', preview: 'Plan' },
+    { seq: 3, at: at(9), round: 1, kind: 'step', phase: 'finished', step, task: null, source: 'authoring', label: 'Saving an AnA draft in the editor', preview: 'Plan', status: 'error', heldBack, message, usedModel: null, ms: 3, facts: [] },
   ];
   it.each([
-    ['declined', true, 'You declined saving a document to the Vault, so it did not run.'],
-    ['no answer', true, "Saving a document to the Vault did not run: it needs a person's authorisation (nobody decided in time)."],
-    ['authorised, then failed', false, "AnA couldn't finish saving a document to the Vault and continued without it."],
+    ['declined', true, 'You declined saving an AnA draft in the editor, so it did not run.'],
+    ['no answer', true, "Saving an AnA draft in the editor did not run: it needs a person's authorisation (nobody decided in time)."],
+    ['authorised, then failed', false, "AnA couldn't finish saving an AnA draft in the editor and continued without it."],
   ])('%s', (_c, heldBack, sentence) => {
     const { container } = render(<TurnSummary turn={turnWith({ timeline: held('s1', heldBack, sentence) })} live={false} />);
     const note = container.querySelector('.ana-activity-note');

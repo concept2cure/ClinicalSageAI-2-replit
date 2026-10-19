@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { probeAuditRowOutcome } from '../../../lib/queryClient';
 import { buildAuthHeaders, saveFailureFor, useFetchJson, type SaveFailure } from './useFetchJson';
 
 /** Mutators need the same Bearer + x-organization-id headers as the read
@@ -202,6 +203,7 @@ export function useEstarRegistration(): UseEstarRegistrationResult {
           headers: jsonHeaders(),
           body: JSON.stringify(patch),
         });
+        probeAuditRowOutcome('PUT', '/api/510k/estar/registration', res);
         if (!res.ok) {
           setSaveFailure(saveFailureFor(res.status));
           return null;
@@ -478,6 +480,7 @@ export function useEstarSubmissions(
           headers: jsonHeaders(),
           body: JSON.stringify(input),
         });
+        probeAuditRowOutcome('POST', '/api/510k/estar/submissions', res);
         if (!res.ok) return null;
         const j = (await res.json()) as EstarSubmissionView;
         refresh();
@@ -498,6 +501,7 @@ export function useEstarSubmissions(
           headers: jsonHeaders(),
           body: JSON.stringify({ status: nextStatus, ...extra }),
         });
+        probeAuditRowOutcome('PATCH', `/api/510k/estar/submissions/${encodeURIComponent(id)}`, res);
         if (!res.ok) return null;
         const j = (await res.json()) as EstarSubmissionView;
         refresh();
@@ -525,6 +529,7 @@ export function useEstarSubmissions(
             ...(input.fdaTrackingNumber ? { fdaTrackingNumber: input.fdaTrackingNumber } : {}),
           }),
         });
+        probeAuditRowOutcome('PATCH', `/api/510k/estar/submissions/${encodeURIComponent(id)}`, res);
         if (!res.ok) {
           /* The server's own code, when it gave one — never a guess. */
           let code: string | null = null;

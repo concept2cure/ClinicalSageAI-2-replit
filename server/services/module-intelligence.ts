@@ -51,7 +51,13 @@ export interface DocumentType {
   requiredFields: string[]; // Fields that must be populated
   regulatoryBasis: string; // Which regulation requires this
   aiDraftable: boolean; // Can AnA draft this?
-  estimatedHours: number; // Estimated time to complete
+  /**
+   * Effort to complete, only where a sourced estimate exists; absent or null
+   * is "not estimated". 2026-10-15: every entry carried a hard-coded figure
+   * (57 across both fields, none sourced) that AnA's prompt printed as an
+   * estimate; they were removed.
+   */
+  estimatedHours?: number | null;
 }
 
 export interface WorkflowStage {
@@ -60,7 +66,8 @@ export interface WorkflowStage {
   description: string;
   requiredDocuments: string[];
   approvalRequired: boolean;
-  estimatedDays: number;
+  /** As DocumentType.estimatedHours: absent or null is "not estimated". */
+  estimatedDays?: number | null;
 }
 
 export interface RegulatoryReference {
@@ -83,7 +90,9 @@ export interface EvidenceRequirement {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getMedicalDeviceIntelligence(project: ProjectSummary | null): ModuleIntelligence {
-  const defType = resolveToDeficiencyType(project?.submissionType || '510k');
+  // 2026-10-15: an unrecorded type was read as '510k' and given the 510(k) block below.
+  const recordedType = project?.submissionType || null;
+  const defType = recordedType ? resolveToDeficiencyType(recordedType) : null;
   const is510k = defType === '510k', isPMA = defType === 'pma', isDeNovo = defType === 'de_novo';
 
   const basePrompt = `
@@ -104,7 +113,10 @@ You are operating in Medical Device regulatory mode. Your expertise covers:
 - Unique Device Identification (UDI) per 21 CFR 830
 
 ### Current Submission Context
+${recordedType ? '' : "This project's submission type is not recorded — do not assume a pathway."}
 ${
+  /* 2026-10-15: said "~90 calendar days". FDA's 510(k) goal is 90 FDA days:
+     the review clock stops while the submission is on hold. */
   is510k
     ? `This is a **510(k) Premarket Notification** (21 CFR 807 Subpart E).
 Key requirements:
@@ -114,7 +126,7 @@ Key requirements:
 - If Special 510(k): summary of changes + risk analysis showing no new questions of safety/effectiveness
 - If Abbreviated 510(k): reliance on guidance document/special controls
 - eSTAR submission format per FDA guidance
-- Review time: ~90 calendar days (traditional), ~30 days (special)`
+- Review goal: 90 FDA days for a traditional 510(k) — review-clock days, not counting time on hold awaiting the sponsor's response to an additional-information request; ~30 days (special)`
     : ''
 }
 ${
@@ -178,7 +190,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['device_name', 'indications', 'population', 'prescription_otc'],
         regulatoryBasis: '21 CFR 807.87(e)',
         aiDraftable: true,
-        estimatedHours: 2,
       },
       {
         id: 'se-comparison',
@@ -189,7 +200,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['subject_device', 'predicate_device', 'technology', 'indications'],
         regulatoryBasis: '21 CFR 807.87(f)',
         aiDraftable: true,
-        estimatedHours: 8,
       },
       {
         id: 'performance-testing',
@@ -200,7 +210,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['test_standards', 'test_results', 'acceptance_criteria'],
         regulatoryBasis: '21 CFR 807.87(g)',
         aiDraftable: true,
-        estimatedHours: 16,
       },
       {
         id: 'risk-analysis',
@@ -212,7 +221,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['hazards', 'risk_estimation', 'risk_evaluation', 'risk_controls'],
         regulatoryBasis: 'ISO 14971:2019',
         aiDraftable: true,
-        estimatedHours: 20,
       },
       {
         id: 'biocompatibility',
@@ -223,7 +231,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['materials', 'body_contact', 'duration', 'testing_matrix'],
         regulatoryBasis: 'ISO 10993-1:2018',
         aiDraftable: true,
-        estimatedHours: 12,
       },
       {
         id: 'software-doc',
@@ -234,7 +241,6 @@ When the user asks me to analyze or draft, I will:
         requiredFields: ['software_class', 'architecture', 'requirements', 'test_plan'],
         regulatoryBasis: 'IEC 62304:2015',
         aiDraftable: true,
-        estimatedHours: 40,
       },
     ],
     workflowStages: [
@@ -244,7 +250,6 @@ When the user asks me to analyze or draft, I will:
         description: 'Determine product code, classification, and regulatory pathway',
         requiredDocuments: ['device-description'],
         approvalRequired: false,
-        estimatedDays: 5,
       },
       {
         id: 'predicate-selection',
@@ -252,7 +257,6 @@ When the user asks me to analyze or draft, I will:
         description: 'Identify and analyze predicate devices from FDA 510(k) database',
         requiredDocuments: ['predicate-analysis'],
         approvalRequired: true,
-        estimatedDays: 10,
       },
       {
         id: 'testing-strategy',
@@ -260,7 +264,6 @@ When the user asks me to analyze or draft, I will:
         description: 'Define testing plan against applicable consensus standards',
         requiredDocuments: ['test-plan', 'risk-analysis'],
         approvalRequired: true,
-        estimatedDays: 15,
       },
       {
         id: 'testing-execution',
@@ -268,7 +271,6 @@ When the user asks me to analyze or draft, I will:
         description: 'Execute bench, biocompatibility, and clinical tests',
         requiredDocuments: ['test-reports'],
         approvalRequired: false,
-        estimatedDays: 60,
       },
       {
         id: 'submission-assembly',
@@ -276,7 +278,6 @@ When the user asks me to analyze or draft, I will:
         description: 'Compile eSTAR or eCopy, all test reports, and administrative forms',
         requiredDocuments: ['estar-complete'],
         approvalRequired: true,
-        estimatedDays: 20,
       },
       {
         id: 'submission-review',
@@ -284,7 +285,6 @@ When the user asks me to analyze or draft, I will:
         description: 'FDA review period with potential Additional Information requests',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 90,
       },
     ],
     regulatoryReferences: [
@@ -372,9 +372,13 @@ When the user asks me to analyze or draft, I will:
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getEctdCoauthorIntelligence(project: ProjectSummary | null): ModuleIntelligence {
-  const rawType = project?.submissionType || 'ind';
-  const defType = resolveToDeficiencyType(rawType);
-  const submissionType = getSubmissionTypeContext(rawType)?.displayName ?? rawType.toUpperCase(), phase = project?.phase || 'Phase 1';
+  // 2026-10-15: an unrecorded type and phase were read as 'ind' and 'Phase 1'.
+  const rawType = project?.submissionType || null;
+  const defType = rawType ? resolveToDeficiencyType(rawType) : null;
+  const submissionType = rawType
+    ? getSubmissionTypeContext(rawType)?.displayName ?? rawType.toUpperCase()
+    : 'not recorded — do not assume one';
+  const phase = project?.phase || 'not recorded';
 
   return {
     moduleId: 'ectd-coauthor',
@@ -472,7 +476,6 @@ Before any section is finalized, you verify:
         requiredFields: ['drug_substance', 'drug_product', 'manufacturing'],
         regulatoryBasis: 'ICH M4Q(R1)',
         aiDraftable: true,
-        estimatedHours: 40,
       },
       {
         id: 'nonclinical-overview',
@@ -483,7 +486,6 @@ Before any section is finalized, you verify:
         requiredFields: ['pharmacology', 'pk', 'toxicology'],
         regulatoryBasis: 'ICH M4S(R2)',
         aiDraftable: true,
-        estimatedHours: 30,
       },
       {
         id: 'clinical-overview',
@@ -494,7 +496,6 @@ Before any section is finalized, you verify:
         requiredFields: ['study_results', 'safety_data', 'efficacy_data'],
         regulatoryBasis: 'ICH M4E(R2)',
         aiDraftable: true,
-        estimatedHours: 60,
       },
       {
         id: 'written-summary-27',
@@ -505,7 +506,6 @@ Before any section is finalized, you verify:
         requiredFields: ['biopharmaceutics', 'pk_human', 'efficacy', 'safety'],
         regulatoryBasis: 'ICH M4E(R2)',
         aiDraftable: true,
-        estimatedHours: 80,
       },
       {
         id: 'drug-substance-32s',
@@ -516,7 +516,6 @@ Before any section is finalized, you verify:
         requiredFields: ['general_info', 'manufacture', 'characterization', 'control', 'stability'],
         regulatoryBasis: 'ICH Q-series',
         aiDraftable: true,
-        estimatedHours: 100,
       },
       {
         id: 'drug-product-32p',
@@ -527,7 +526,6 @@ Before any section is finalized, you verify:
         requiredFields: ['description', 'development', 'manufacture', 'control', 'stability'],
         regulatoryBasis: 'ICH Q-series',
         aiDraftable: true,
-        estimatedHours: 120,
       },
       {
         id: 'csr-535',
@@ -538,7 +536,6 @@ Before any section is finalized, you verify:
         requiredFields: ['protocol', 'results', 'safety', 'efficacy', 'appendices'],
         regulatoryBasis: 'ICH E3',
         aiDraftable: true,
-        estimatedHours: 200,
       },
     ],
     workflowStages: [
@@ -548,7 +545,6 @@ Before any section is finalized, you verify:
         description: 'Define scope, timeline, and team assignments per CTD module',
         requiredDocuments: ['submission-plan'],
         approvalRequired: true,
-        estimatedDays: 10,
       },
       {
         id: 'data-gathering',
@@ -556,7 +552,6 @@ Before any section is finalized, you verify:
         description: 'Collect source data from labs, clinics, manufacturing',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 30,
       },
       {
         id: 'drafting',
@@ -564,7 +559,6 @@ Before any section is finalized, you verify:
         description: 'AI-assisted drafting of each CTD section with expert review',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 60,
       },
       {
         id: 'internal-review',
@@ -572,7 +566,6 @@ Before any section is finalized, you verify:
         description: 'Subject matter expert review of all sections',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 20,
       },
       {
         id: 'qc-review',
@@ -580,7 +573,6 @@ Before any section is finalized, you verify:
         description: 'Quality control check for cross-references, formatting, completeness',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 10,
       },
       {
         id: 'publishing',
@@ -588,7 +580,6 @@ Before any section is finalized, you verify:
         description: 'Generate eCTD XML backbone, finalize PDFs, validate with eCTD validator',
         requiredDocuments: ['ectd-xml', 'validated-pdfs'],
         approvalRequired: true,
-        estimatedDays: 5,
       },
       {
         id: 'submission',
@@ -596,7 +587,6 @@ Before any section is finalized, you verify:
         description: 'Submit via FDA ESG or EU eSubmission gateway',
         requiredDocuments: ['submission-receipt'],
         approvalRequired: true,
-        estimatedDays: 1,
       },
     ],
     regulatoryReferences: [
@@ -755,7 +745,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['inn', 'cas', 'structure', 'molecular_formula', 'properties'],
         regulatoryBasis: 'ICH M4Q S.1',
         aiDraftable: true,
-        estimatedHours: 4,
       },
       {
         id: 'drug-substance-mfg',
@@ -766,7 +755,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['manufacturer', 'process_description', 'controls', 'process_validation'],
         regulatoryBasis: 'ICH Q11',
         aiDraftable: true,
-        estimatedHours: 40,
       },
       {
         id: 'drug-substance-specs',
@@ -777,7 +765,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['specifications_table', 'analytical_methods', 'batch_data'],
         regulatoryBasis: 'ICH Q6A/Q6B',
         aiDraftable: true,
-        estimatedHours: 20,
       },
       {
         id: 'drug-substance-stability',
@@ -788,7 +775,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['protocol', 'conditions', 'results', 'shelf_life'],
         regulatoryBasis: 'ICH Q1A(R2)',
         aiDraftable: true,
-        estimatedHours: 16,
       },
       {
         id: 'drug-product-dev',
@@ -799,7 +785,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['formulation_rationale', 'cqas', 'cpps', 'design_space'],
         regulatoryBasis: 'ICH Q8(R2)',
         aiDraftable: true,
-        estimatedHours: 60,
       },
       {
         id: 'drug-product-mfg',
@@ -810,7 +795,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['batch_formula', 'process_flow', 'equipment', 'process_validation'],
         regulatoryBasis: 'ICH Q7',
         aiDraftable: true,
-        estimatedHours: 30,
       },
       {
         id: 'stability-protocol',
@@ -821,7 +805,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         requiredFields: ['conditions', 'timepoints', 'test_parameters', 'acceptance_criteria'],
         regulatoryBasis: 'ICH Q1A(R2)/Q1B',
         aiDraftable: true,
-        estimatedHours: 8,
       },
     ],
     workflowStages: [
@@ -831,7 +814,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         description: 'Complete physico-chemical characterization and structure elucidation',
         requiredDocuments: ['analytical-reports'],
         approvalRequired: false,
-        estimatedDays: 30,
       },
       {
         id: 'method-development',
@@ -839,7 +821,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         description: 'Develop and validate analytical methods per ICH Q2',
         requiredDocuments: ['method-validation'],
         approvalRequired: true,
-        estimatedDays: 45,
       },
       {
         id: 'process-development',
@@ -847,7 +828,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         description: 'Define manufacturing process, identify CQAs/CPPs',
         requiredDocuments: ['process-description', 'risk-assessment'],
         approvalRequired: true,
-        estimatedDays: 60,
       },
       {
         id: 'specifications',
@@ -856,7 +836,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
           'Establish acceptance criteria based on batch data and compendial requirements',
         requiredDocuments: ['specifications-justification'],
         approvalRequired: true,
-        estimatedDays: 15,
       },
       {
         id: 'stability-initiation',
@@ -864,7 +843,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         description: 'Initiate ICH stability studies and compile results',
         requiredDocuments: ['stability-protocol', 'stability-data'],
         approvalRequired: true,
-        estimatedDays: 180,
       },
       {
         id: 'cmc-compilation',
@@ -872,7 +850,6 @@ author and review CTD Module 3 content with deep ICH Q-series expertise.
         description: 'Assemble Module 3 sections with all supporting data',
         requiredDocuments: ['module-3-sections'],
         approvalRequired: true,
-        estimatedDays: 30,
       },
     ],
     regulatoryReferences: [
@@ -1056,7 +1033,6 @@ Every document generated will:
         requiredFields: ['title', 'scope', 'procedure', 'responsibilities'],
         regulatoryBasis: '21 CFR 211.22',
         aiDraftable: true,
-        estimatedHours: 8,
       },
       {
         id: 'protocol',
@@ -1067,7 +1043,6 @@ Every document generated will:
         requiredFields: ['objectives', 'design', 'endpoints', 'statistics'],
         regulatoryBasis: 'ICH E6(R3) Appendix B',
         aiDraftable: true,
-        estimatedHours: 80,
       },
       {
         id: 'ib',
@@ -1078,7 +1053,6 @@ Every document generated will:
         requiredFields: ['compound_info', 'nonclinical', 'clinical', 'safety'],
         regulatoryBasis: 'ICH E6(R3) Appendix A',
         aiDraftable: true,
-        estimatedHours: 60,
       },
       {
         id: 'briefing',
@@ -1089,7 +1063,6 @@ Every document generated will:
         requiredFields: ['background', 'questions', 'data_summary'],
         regulatoryBasis: 'FDA Meeting Management',
         aiDraftable: true,
-        estimatedHours: 40,
       },
       {
         id: 'icf',
@@ -1100,7 +1073,6 @@ Every document generated will:
         requiredFields: ['study_description', 'risks', 'benefits', 'alternatives'],
         regulatoryBasis: '21 CFR 50.25',
         aiDraftable: true,
-        estimatedHours: 16,
       },
       {
         id: 'deviation-report',
@@ -1111,7 +1083,6 @@ Every document generated will:
         requiredFields: ['description', 'impact', 'root_cause', 'capa'],
         regulatoryBasis: '21 CFR 211.192',
         aiDraftable: true,
-        estimatedHours: 8,
       },
       {
         id: 'validation-protocol',
@@ -1122,7 +1093,6 @@ Every document generated will:
         requiredFields: ['scope', 'acceptance_criteria', 'test_plan'],
         regulatoryBasis: 'FDA Process Validation Guidance',
         aiDraftable: true,
-        estimatedHours: 20,
       },
     ],
     workflowStages: [
@@ -1132,7 +1102,6 @@ Every document generated will:
         description: 'Choose template and configure document parameters',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 1,
       },
       {
         id: 'ai-draft',
@@ -1140,7 +1109,6 @@ Every document generated will:
         description: 'Generate initial draft with AI, review and refine',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 5,
       },
       {
         id: 'sme-review',
@@ -1148,7 +1116,6 @@ Every document generated will:
         description: 'Subject matter expert review with tracked changes',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 5,
       },
       {
         id: 'qa-check',
@@ -1156,7 +1123,6 @@ Every document generated will:
         description: 'Quality assurance formatting and content check',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 2,
       },
       {
         id: 'approval',
@@ -1164,7 +1130,6 @@ Every document generated will:
         description: 'Electronic signature per 21 CFR Part 11',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 2,
       },
       {
         id: 'distribution',
@@ -1172,7 +1137,6 @@ Every document generated will:
         description: 'Controlled distribution to relevant parties',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 1,
       },
     ],
     regulatoryReferences: [
@@ -1269,7 +1233,6 @@ document management system for Concept2Cure.
         description: 'Upload or create document with metadata classification',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 1,
       },
       {
         id: 'classify',
@@ -1277,7 +1240,6 @@ document management system for Concept2Cure.
         description: 'Auto or manual classification by document type and CTD section',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 1,
       },
       {
         id: 'review',
@@ -1285,7 +1247,6 @@ document management system for Concept2Cure.
         description: 'Route for review with tracked changes and comments',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 5,
       },
       {
         id: 'approve',
@@ -1293,7 +1254,6 @@ document management system for Concept2Cure.
         description: 'Electronic approval with 21 CFR Part 11 signature',
         requiredDocuments: [],
         approvalRequired: true,
-        estimatedDays: 2,
       },
       {
         id: 'effective',
@@ -1301,7 +1261,6 @@ document management system for Concept2Cure.
         description: 'Document becomes effective and available for use',
         requiredDocuments: [],
         approvalRequired: false,
-        estimatedDays: 1,
       },
     ],
     regulatoryReferences: [
@@ -1482,7 +1441,7 @@ export function detectActiveModule(intelligence: UserIntelligence): string | nul
     if (contextModuleMap[sessionContext]) return contextModuleMap[sessionContext];
   }
 
-  // Infer from submission type via the canonical bridge
+  // Infer from a RECORDED submission type via the canonical bridge
   const rawSubType = intelligence.activeProject?.submissionType;
   if (rawSubType) {
     const moduleByType: Record<string, string> = { '510k': '510k-submission', pma: '510k-submission', de_novo: '510k-submission', ind: 'ind-filing', nda: 'nda-bla', bla: 'nda-bla', cer: 'ce-marking', ectd: 'ectd-coauthor' };
@@ -1490,9 +1449,12 @@ export function detectActiveModule(intelligence: UserIntelligence): string | nul
     if (hit) return hit;
   }
 
-  // Infer from industry mode
-  if (intelligence.organization.industryMode === 'medtech') return '510k-submission';
-  if (intelligence.organization.industryMode === 'medical_writing') return 'doc-canvas';
+  // Infer from industry mode — the organization profile is null when it could not be read
+  const industryMode = intelligence.organization?.industryMode ?? null;
+  if (industryMode === 'medtech') return '510k-submission';
+  if (industryMode === 'medical_writing') return 'doc-canvas';
 
-  return 'ectd-coauthor'; // Default for biotech/pharma
+  // Default for a recorded biotech/pharma-side industry. 2026-10-15: this was
+  // also the answer for an industry nobody recorded (read as 'biotech').
+  return industryMode ? 'ectd-coauthor' : null;
 }

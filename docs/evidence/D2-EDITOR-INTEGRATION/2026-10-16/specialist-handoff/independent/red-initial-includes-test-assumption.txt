@@ -1,0 +1,952 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 438ms
+   → expected null to match object { …(4) }
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 390ms
+   → Unable to find an accessible element with the role "button" and name "Open in document editor"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Reporting & analytics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Protocol Design Recommendations":
+  [36m<h1 />[39m
+
+  Name "Study Design":
+  [36m<h2 />[39m
+
+  Name "General Best Practices":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-analyze":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Analyze protocol":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+  [36m/>[39m
+
+  Name "Design Recommendations":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab on"[39m
+  [36m/>[39m
+
+  Name "Statistical Insights":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "IND Readiness":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "Refine":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Protocol synopsis":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Protocol synopsis"[39m
+    [33mclass[39m=[32m"ra-ta"[39m
+    [33mplaceholder[39m=[32m"Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..."[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr />[39m
+
+  --------------------------------------------------
+  emphasis:
+
+  Name "":
+  [36m<em />[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ra"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — evidence[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mReporting & analytics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDrop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-calm"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour analysis of Synthetic protocol is ready[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI read the [0m
+          [0mPhase [0m
+          [0m2[0m
+          [0m [0m
+          [0msynthetic indication[0m
+          [0m [0m
+          [0mprotocol and drafted your [0m
+          [36m<b>[39m
+            [0mDesign Recommendations[0m
+          [36m</b>[39m
+          [0m — [0m
+          [0mthe design looks sound on the parameters I could read[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mAt N=[0m
+          [0m240[0m
+          [0m over [0m
+          [0m24[0m
+          [0m weeks[0m
+          [0m, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. [0m
+          [0mMatched against 0 similar CSRs.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mEverything is drafted as a real document, not a chart — read it, adjust, and send it to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRe-analyze[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[3...
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 143ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 134ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 145ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 138ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 147ms
+   → expected <div class="de-toast" …(2)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 142ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 306ms
+   → expected 'Sample Size Rationale filed to the do…' to match /saved/i
+ × client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 288ms
+   → expected 'Sample Size Rationale filed to the do…' to match /saved/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation
+AssertionError: expected null to match object { …(4) }
+
+- Expected:
+{
+  "docId": "saved-specialist-document",
+  "docType": null,
+  "programId": "0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a",
+  "sectionCode": "recommendations",
+}
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:150:24
+    148|     await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-a…
+    149|     expect(targets).toHaveLength(1);
+    150|     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGR…
+       |                        ^
+    151|     expect(peekEditorTarget()).toBeNull();
+    152|     expect(authoringCalls().map(([, url]) => url)).toEqual(['/api/auth…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open in document editor"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Reporting & analytics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Protocol Design Recommendations":
+  [36m<h1 />[39m
+
+  Name "Study Design":
+  [36m<h2 />[39m
+
+  Name "General Best Practices":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-analyze":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Analyze protocol":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+  [36m/>[39m
+
+  Name "Design Recommendations":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab on"[39m
+  [36m/>[39m
+
+  Name "Statistical Insights":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "IND Readiness":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "Refine":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Protocol synopsis":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Protocol synopsis"[39m
+    [33mclass[39m=[32m"ra-ta"[39m
+    [33mplaceholder[39m=[32m"Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..."[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr />[39m
+
+  --------------------------------------------------
+  emphasis:
+
+  Name "":
+  [36m<em />[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ra"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — evidence[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mReporting & analytics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDrop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-calm"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour analysis of Synthetic protocol is ready[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI read the [0m
+          [0mPhase [0m
+          [0m2[0m
+          [0m [0m
+          [0msynthetic indication[0m
+          [0m [0m
+          [0mprotocol and drafted your [0m
+          [36m<b>[39m
+            [0mDesign Recommendations[0m
+          [36m</b>[39m
+          [0m — [0m
+          [0mthe design looks sound on the parameters I could read[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mAt N=[0m
+          [0m240[0m
+          [0m over [0m
+          [0m24[0m
+          [0m weeks[0m
+          [0m, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. [0m
+          [0mMatched against 0 similar CSRs.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mEverything is drafted as a real document, not a chart — read it, adjust, and send it to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRe-analyze[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[3...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openReport client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:138:48
+    136|   return { ...view, onNav };
+    137| }
+    138| function openReport() { fireEvent.click(screen.getByRole('button', { n…
+       |                                                ^
+    139| const settle = () => act(async () => { await Promise.resolve(); await …
+    140|
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:158:56
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:179:23
+    177|     });
+    178|     await settle();
+    179|     expect(onNav).not.toHaveBeenCalled();
+       |                       ^
+    180|     expect(peekEditorTarget()).toBeNull();
+    181|     expect(document.querySelector('.de-toast')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status
+AssertionError: expected <div class="de-toast" …(2)>…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="de-toast"
+  data-tone="error"
+  role="alert"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-triangle-alert"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+      />
+      <path
+        d="M12 9v4"
+      />
+      <path
+        d="M12 17h.01"
+      />
+    </svg>
+  </span>
+  The document was created but its text didn’t save — Synthetic section refusal. Staying here so you don’t lose it.
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:194:49
+    192|     await settle();
+    193|     expect(onNav).not.toHaveBeenCalled();
+    194|     expect(document.querySelector('.de-toast')).toBeNull();
+       |                                                 ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "document-authoring",
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:202:23
+    200|     await waitFor(() => expect(authoringCalls()).toHaveLength(2)); unm…
+    201|     await act(async () => pending.resolve(sectionReceipt())); await se…
+    202|     expect(onNav).not.toHaveBeenCalled();
+       |                       ^
+    203|     expect(peekEditorTarget()).toBeNull();
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim
+ FAIL  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim
+AssertionError: expected 'Sample Size Rationale filed to the do…' to match /saved/i
+
+- Expected:
+/saved/i
+
++ Received:
+"Sample Size Rationale filed to the dossier under Module 5 — open it from Document authoring."
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx:216:21
+    214|     const message = document.querySelector('.de-toast')?.textContent ?…
+    215|     expect(authoringCalls()).toHaveLength(2);
+    216|     expect(message).toMatch(/saved/i);
+       |                     ^
+    217|     expect(message).not.toMatch(/filed to the dossier/i);
+    218|     if (bound === false) expect(message).toContain('Not bound to a fil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  21:22:34
+   Duration  3.94s (transform 707ms, setup 167ms, import 866ms, tests 2.28s, environment 445ms)

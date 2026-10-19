@@ -46,6 +46,21 @@ vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
   getTenantScope: () => ({ tenantId: '7', role: 'member', source: 'request' }),
 }));
+// This fixture supplies the current member and request executor. The cases
+// isolate tool presentation/provenance; native access suites prove sharing/RLS.
+const requestExecutor = vi.hoisted(() => ({ query: vi.fn(async () => ({ rows: [] })) }));
+vi.mock('../../c2c/current-program-access.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: async (_q: unknown, input: { userId: number; programId?: string | null }) => ({
+    scope: 'verified-accessible-programs', actor: { userId: input.userId, role: 'member' },
+    programIds: input.programId ? [input.programId] : [], reconciliationRequired: false,
+  }),
+  requireCurrentProgramAccess: async (_q: unknown, input: { userId: number }) => ({ actor: { userId: input.userId, role: 'member' } }),
+  requireProgramScopeStillCurrent: async () => undefined,
+}));
+// Source preview/callback admission is exercised by upload/native suites;
+// these isolated affordance tests supply an unchanged eligible uploaded file.
+vi.mock('../../vault/vault-upload-source-admission.js', () => ({ assertVaultUploadSource: async () => undefined }));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument }));
 vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../c2c/program-access.js')>()),
@@ -54,8 +69,13 @@ vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
 }));
 vi.mock('../../../db.js', () => ({ pool: {}, getPool: () => ({}), db: {} }));
 
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => {
+  const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
+  return ({
+  withAnaSourceReadScope: syntheticReadWrapper,
+  revalidateActorSourceScope: async () => {},
   isDocumentCatalogEnabled: vi.fn(async () => true),
+  loadDocumentForActor: (input: any, opts: any) => syntheticActorDocument(input, opts, loadDocumentForOrg),
   loadDocumentForOrg,
   completeCatalog,
   listProjectDocuments: vi.fn(async () => ({
@@ -73,7 +93,7 @@ vi.mock('../../vault/document-catalog.service.js', () => ({
     status: 'extraction_failed', method: 'none', confidence: null,
     error: 'none', charCount: 0, wordCount: null,
   })),
-}));
+}); });
 
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 
@@ -81,7 +101,7 @@ type Handler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<st
 const handlers = new Map<string, Handler>();
 registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 
-const CTX: ToolContext = { organizationId: 42, userId: 7 };
+const CTX: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor };
 const CHAT_ID = 'file_1712345678_ab12cd';
 const VAULT_ID = '00000000-0000-4000-8000-000000000001';
 
@@ -113,14 +133,15 @@ describe('read_project_document — a chat upload id', () => {
     expect(r.error).toMatch(/read_uploaded_document/);
     // The one thing it must never say.
     expect(r.error).not.toMatch(/not found/i);
-    expect(r.error).toMatch(/The file exists/);
+    expect(r.error).toMatch(/has not verified.*availability/);
+    expect(r.error).not.toMatch(/The file exists/);
   });
 
   it('a genuinely unknown vault id still says plainly that the vault does not hold it', async () => {
     const r = await call('read_project_document', { document_id: VAULT_ID });
     expect(r.ok).toBe(false);
     expect(r.idSpace).toBe('unknown');
-    expect(r.error).toMatch(/No vault document with id/);
+    expect(r.error).toMatch(/No accessible vault document with id/);
     expect(r.error).toMatch(/list_project_documents/);
   });
 });
@@ -158,7 +179,7 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
     }, OPEN);
     expect(r.ok).toBe(true);
     expect(r.documentId).toBe(VAULT_ID);
-    expect(loadUploadedFile).toHaveBeenCalledWith(CHAT_ID, 42);
+    expect(loadUploadedFile).toHaveBeenCalledWith(CHAT_ID, 42, expect.objectContaining({ userId: 7 }));
     expect(ingestVaultDocument).toHaveBeenCalledTimes(1);
     const passed = ingestVaultDocument.mock.calls[0][0];
     expect(passed).toMatchObject({

@@ -3,20 +3,20 @@
 
 ## 0. the DELETE trigger function as installed by the UNAMENDED migration (Phase A applied it as postgres)
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname IN ('enforce_audit_logs_no_delete','audit_logs_archive_delete');
-           proname            | prosecdef |  owner   
+           proname            | prosecdef |  owner
 ------------------------------+-----------+----------
  enforce_audit_logs_no_delete | f         | postgres
 (1 row)
 
 SELECT position('app.audit_archive_bypass' in prosrc) > 0 AS trigger_reads_guc FROM pg_proc WHERE proname = 'enforce_audit_logs_no_delete';
- trigger_reads_guc 
+ trigger_reads_guc
 -------------------
  t
 (1 row)
 
 
 ## 1. seed one audit_logs row (as owner)
-INSERT INTO audit_logs (tenant_id, action, table_name, record_id) VALUES (1, 'x', 'x', 'p0-8a-red') RETURNING id 
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id) VALUES (1, 'x', 'x', 'p0-8a-red') RETURNING id
 INSERT 0 1
 33180a8c-db1f-4718-b315-3885197d4718
 
@@ -24,7 +24,7 @@ INSERT 0 1
 SET ROLE app_service_repro;
 SET
 SELECT current_user, session_user;
-   current_user    | session_user 
+   current_user    | session_user
 -------------------+--------------
  app_service_repro | postgres
 (1 row)
@@ -47,7 +47,7 @@ DELETE 1
 COMMIT;
 COMMIT
 SELECT count(*) AS rows_left FROM audit_logs WHERE id = '33180a8c-db1f-4718-b315-3885197d4718';
- rows_left 
+ rows_left
 -----------
          0
 (1 row)

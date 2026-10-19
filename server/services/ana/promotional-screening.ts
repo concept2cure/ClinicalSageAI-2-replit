@@ -131,7 +131,10 @@ interface TermOfArt {
   basis: E3Basis;
 }
 
-const CHECKED = '2026-10-04';
+// 2026-10-15: the five FDA/ICH entries below were `regulator-text`, but each was
+// matched only in a WebSearch extract of the page (b3-writing-gate-register-facts.md:
+// "not a full-text read"), which is recall.
+const SEARCH_EXTRACT = 'Search extract of the regulator page on 2026-10-04; the page itself was not read (egress blocked). Verbatim re-read owed.';
 
 /** "All patients" plus at most a short locative ("at participating sites"); no conjunction or relative clause. */
 const LOCATIVE_WORD = '(?!(?:and|or|but|who|that|which|were|was|had|have|has)\\b)[\\w-]+';
@@ -159,12 +162,12 @@ const SUBMISSION_TERMS_OF_ART: TermOfArt[] = [
   {
     categories: ['superiority'],
     pattern: /\bBreakthrough Therapy (?:designat|status)/gi,
-    basis: { ref: 'FD&C Act 506(a) (Breakthrough Therapy designation, FDASIA 902)', confidence: 'regulator-text', url: 'https://www.fda.gov/regulatory-information/food-and-drug-administration-safety-and-innovation-act-fdasia/fact-sheet-breakthrough-therapies', checked: CHECKED },
+    basis: { ref: 'FD&C Act 506(a) (Breakthrough Therapy designation, FDASIA 902)', confidence: 'recall', url: 'https://www.fda.gov/regulatory-information/food-and-drug-administration-safety-and-innovation-act-fdasia/fact-sheet-breakthrough-therapies', note: SEARCH_EXTRACT },
   },
   {
     categories: ['superiority'],
     pattern: /\b(?:best supportive care|best overall response)\b/gi,
-    basis: { ref: 'FDA review usage: best supportive care; RECIST 1.1 best overall response', confidence: 'regulator-text', url: 'https://www.fda.gov/media/194468/download', checked: CHECKED },
+    basis: { ref: 'FDA review usage: best supportive care; RECIST 1.1 best overall response', confidence: 'recall', url: 'https://www.fda.gov/media/194468/download', note: SEARCH_EXTRACT },
   },
   {
     categories: ['superiority'],
@@ -187,12 +190,12 @@ const SUBMISSION_TERMS_OF_ART: TermOfArt[] = [
     categories: ['causal_overreach'],
     // Endpoint usage only; "a clinical cure for hepatitis C" is a claim, not an endpoint.
     pattern: /\b(?:clinical|microbiolog\w*) cure (?:rates?|at|endpoint|visit|assessment|was (?:assessed|defined|evaluated|achieved in))\b|\b(?:rate|proportion) of (?:patients with )?(?:clinical |microbiolog\w* )?cure\b|\bcure rate\b|\btest[- ]of[- ]cure\b/gi,
-    basis: { ref: 'FDA cUTI guidance: clinical and microbiological response at the test-of-cure visit', confidence: 'regulator-text', url: 'https://www.fda.gov/files/drugs/published/Complicated-Urinary-Tract-Infections---Developing-Drugs-for-Treatment.pdf', checked: CHECKED },
+    basis: { ref: 'FDA cUTI guidance: clinical and microbiological response at the test-of-cure visit', confidence: 'recall', url: 'https://www.fda.gov/files/drugs/published/Complicated-Urinary-Tract-Infections---Developing-Drugs-for-Treatment.pdf', note: SEARCH_EXTRACT },
   },
   {
     categories: ['causal_overreach'],
     pattern: /\b(?:baseline )?(?:pathogens?|organisms?|isolates?|uropathogens?) (?:was|were) (?:\w+ly )?eradicated\b|\bmicrobiolog\w* eradication\b/gi,
-    basis: { ref: 'FDA antibacterial microbiology guidance: microbiologic eradication', confidence: 'regulator-text', url: 'https://www.fda.gov/media/77442/download', checked: CHECKED },
+    basis: { ref: 'FDA antibacterial microbiology guidance: microbiologic eradication', confidence: 'recall', url: 'https://www.fda.gov/media/77442/download', note: SEARCH_EXTRACT },
   },
   {
     categories: ['causal_overreach'],
@@ -209,7 +212,11 @@ const SUBMISSION_TERMS_OF_ART: TermOfArt[] = [
     // The consent statement; the verb sits next to the subject (an optional short locative only).
     categories: ['absolute'],
     pattern: new RegExp(`${CENSUS_SUBJECT} (?:provided|gave|signed)(?: (?:written|oral|verbal))? (?:informed )?consent\\b`, 'gi'),
-    basis: { ref: 'ICH E3 §5.3 Patient Information and Consent', confidence: 'regulator-text', url: 'https://www.fda.gov/media/84857/download', checked: CHECKED },
+    // The URL was fda.gov/media/84857, FDA's copy of the E3 Q&A (R1), not E3 (2026-10-05-record F2).
+    basis: {
+      ref: 'ICH E3 §5.3 Patient Information and Consent', confidence: 'recall', url: 'https://www.fda.gov/media/71271/download',
+      note: 'Search extract of 2026-10-04, recorded against fda.gov/media/84857 (the E3 Q&A, not E3); E3 itself was not read. Verbatim re-read owed.',
+    },
   },
   {
     // Disposition census; outcome verbs ("responded", "achieved", "works in") stay flagged, and so does a census

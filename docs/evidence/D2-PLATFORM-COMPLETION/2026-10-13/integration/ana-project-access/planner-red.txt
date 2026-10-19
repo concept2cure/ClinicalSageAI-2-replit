@@ -1,0 +1,23 @@
+Sanitized local Vitest evidence: test names and final results only.
+Application output, fixture identities and SQL metadata omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses an unrelated member before reading Vault titles or standing 27ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > reads recorded standing for an active shared member and for the project creator 13ms
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks a normalized share after revocation instead of trusting old JSON or a prior successful call 17ms
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks the live organization role after an administrator is downgraded 18ms
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a creator who is no longer an organization member 12ms
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a requested private project without a pinned actor 9ms
+ × server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > fails closed before source reads when membership verification fails 14ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > keeps the general plan available without a project or actor and performs no database query 9ms
+ ✓ server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > keeps static plan steps and the registered IND reference catalogue database-free 16ms
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses an unrelated member before reading Vault titles or standing
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks a normalized share after revocation instead of trusting old JSON or a prior successful call
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > rechecks the live organization role after an administrator is downgraded
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a creator who is no longer an organization member
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > refuses a requested private project without a pinned actor
+ FAIL  server/services/ana/__tests__/submission-plan-private-access.pglite.test.ts > registered submission plan uses current private-project access > fails closed before source reads when membership verification fails
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  20:38:13
+   Duration  11.69s (transform 5.60s, setup 99ms, import 8.18s, tests 3.09s, environment 0ms)

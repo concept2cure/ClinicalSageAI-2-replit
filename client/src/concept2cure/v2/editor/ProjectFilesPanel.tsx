@@ -42,23 +42,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, ErrorState } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
 import { pdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
 import { isVaultDoc, vaultStatus, vaultFileIconKey, type VaultDoc, type VaultFolder } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
+import { SectionActions, SelectedFileActions, VaultSourceImport } from './ProjectFileActions';
+import { DataRoomSourcesPanel } from './DataRoomSourcesPanel';
+import { IndDocumentLibrary } from './IndDocumentLibrary';
+import { useProjectVaultSearch, SEARCH_RESULTS_CHANGED, type SearchHit } from './projectVaultSearch';
 
 /** The read model's envelope, unwrapped — the fields this rail reads. */
 interface VaultRead {
   program?: string; tree: VaultFolder[]; documentCount?: number; pendingStore?: boolean;
   unavailable?: Array<{ branch: string; reason: string }>;
   uploadsWindow?: { shown: number; total: number; truncated: boolean };
-}
-
-interface SearchHit {
-  id: string; title: string; fileName: string | null; documentType: string | null; size: string | null;
-  folderId: string | null; ctdSection: string | null; placementStatus: string | null; snippet: string | null;
 }
 
 export interface ProjectFilesPanelProps {
@@ -76,9 +75,15 @@ export interface ProjectFilesPanelProps {
    *  the citation picker); a vault upload is citable when its hash matches. */
   projectSources?: ProjectSource[];
   /** Insert a citation node through the editor. False when nothing was inserted. */
-  onCite?: (sourceId: string) => boolean;
+  onCite?: (sourceId: string) => boolean | Promise<boolean>;
   /** Insert plain reference text through the editor. False when nothing was inserted. */
   onInsertReference?: (text: string) => boolean;
+  /** The host guards unsaved work before opening the returned exact document. */
+  onOpenDocument?: (docId: string) => void;
+  /** External source-library hosts navigate after publishing an assembly target. */
+  onNav?: (id: string) => void;
+  /** Uses the host's existing conversation for IND preparation and source study. */
+  onAsk?: (text: string) => void;
 }
 
 const NO_SOURCES: ProjectSource[] = [];
@@ -94,8 +99,10 @@ interface ViewerState { doc: VaultDoc; url: string; hash: string | null }
 function hitToDoc(h: SearchHit): VaultDoc {
   return {
     id: h.id, num: h.ctdSection || '', title: h.title, type: h.documentType || '',
-    status: h.placementStatus || 'unfiled', pct: null, owner: '', ver: '', updated: '',
+    status: h.placementStatus || 'unfiled', pct: null, owner: '', updated: '',
     preview: (h.snippet || '').replace(/<\/?b>/g, ''), src: 'upload', docId: h.id, sizeLabel: h.size || undefined,
+    originalFileAvailable: h.originalFileAvailable, disposition: h.disposition,
+    earlierVersion: h.current === false, ver: h.version ? `v${h.version}` : '',
   };
 }
 
@@ -146,7 +153,12 @@ function flattenVaultDocs(nodes: Array<VaultDoc | VaultFolder>): VaultDoc[] {
  *  a selection survives the search box being typed into. */
 function findSelectedDoc(selectedId: string | null, treeDocs: VaultDoc[], hits: SearchHit[]): VaultDoc | null {
   if (!selectedId) return null;
-  return treeDocs.find(d => d.id === selectedId) ?? hits.map(hitToDoc).find(d => d.id === selectedId) ?? null;
+  const treeDoc = treeDocs.find(doc => doc.id === selectedId);
+  const hit = hits.find(row => row.id === selectedId);
+  if (!hit) return treeDoc ?? null;
+  // Search is a newer read than the browse tree. Keep its recorded availability
+  // authoritative while retaining the same file's checksum and filing metadata.
+  return { ...treeDoc, ...hitToDoc(hit), hash: treeDoc?.hash, filing: treeDoc?.filing };
 }
 
 /** The data-room source a vault upload IS — same bytes, checksum to content
@@ -172,25 +184,6 @@ async function readProjectVault(programId: string): Promise<VaultReadResult> {
     return { ok: true, vault: { ...json.data, tree: Array.isArray(json.data.tree) ? json.data.tree : [] } };
   } catch (e) {
     return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The vault could not be reached.') };
-  }
-}
-
-type VaultSearchResult = { ok: true; hits: SearchHit[]; total: number } | { ok: false; message: string };
-
-/** The search read — same contract as the tree read: results, or a reason. */
-async function searchProjectVault(programId: string, q: string): Promise<VaultSearchResult> {
-  try {
-    const url = `/api/c2c/project-vault/${encodeURIComponent(programId)}/search?q=${encodeURIComponent(q)}&limit=25`;
-    const res = await apiRequest('GET', url);
-    const json = (await res.json().catch(() => null)) as
-      | { success?: boolean; data?: { results?: SearchHit[]; total?: number }; message?: string } | null;
-    if (!res.ok || !json?.data) {
-      return { ok: false, message: serverMessage(json) ?? `The vault could not be searched (HTTP ${res.status}).` };
-    }
-    const hits = Array.isArray(json.data.results) ? json.data.results : [];
-    return { ok: true, hits, total: typeof json.data.total === 'number' ? json.data.total : 0 };
-  } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The vault could not be searched.') };
   }
 }
 
@@ -242,12 +235,17 @@ function useProjectVaultRead(programId: string | null) {
   const [state, setState] = useState<ReadState>('idle');
   const [vault, setVault] = useState<VaultRead | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
+  const alive = useRef(true);
+  const readSequence = useRef(0);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; readSequence.current += 1; }; }, []);
 
   const load = useCallback(async () => {
     if (!programId) return;
+    const sequence = ++readSequence.current;
     setState('loading');
     setReadError(null);
     const result = await readProjectVault(programId);
+    if (!alive.current || sequence !== readSequence.current) return;
     if (!result.ok) { setState('error'); setReadError(result.message); return; }
     setVault(result.vault);
     setState('ready');
@@ -255,36 +253,6 @@ function useProjectVaultRead(programId: string | null) {
 
   useEffect(() => { void load(); }, [load]);
   return { state, vault, readError, load };
-}
-
-/** The debounced search. An empty box is the browse view (the server says so
- *  itself — EMPTY_QUERY — rather than "everything matched"). */
-function useProjectVaultSearch(programId: string | null, query: string) {
-  const [searchState, setSearchState] = useState<ReadState>('idle');
-  const [hits, setHits] = useState<SearchHit[]>([]);
-  const [hitsTotal, setHitsTotal] = useState(0);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const q = query.trim();
-    if (!programId || !q) {
-      setSearchState('idle'); setHits([]); setHitsTotal(0); setSearchError(null);
-      return;
-    }
-    let alive = true;
-    setSearchState('loading');
-    const t = setTimeout(async () => {
-      const result = await searchProjectVault(programId, q);
-      if (!alive) return;
-      if (!result.ok) { setSearchState('error'); setSearchError(result.message); return; }
-      setHits(result.hits);
-      setHitsTotal(result.total);
-      setSearchState('ready');
-    }, 250);
-    return () => { alive = false; clearTimeout(t); };
-  }, [query, programId]);
-
-  return { searchState, hits, hitsTotal, searchError };
 }
 
 /** The viewer's object URL, owned in one place: released when the file
@@ -320,11 +288,14 @@ function useVaultPdfViewer() {
 function useVaultFileActions(opts: {
   programId: string | null; sectionCode: string | null; fireToast: FireToast;
   sourceFor: (doc: VaultDoc) => ProjectSource | null;
-  onCite: (sourceId: string) => boolean; onInsertReference: (text: string) => boolean;
+  onCite: (sourceId: string) => boolean | Promise<boolean>; onInsertReference: (text: string) => boolean;
   showPdf: (doc: VaultDoc, blob: Blob, hash: string | null) => void;
 }) {
   const { programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf } = opts;
   const [opening, setOpening] = useState<string | null>(null);
+  const citing = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const openDoc = async (doc: VaultDoc) => {
     if (!programId || opening) return;
@@ -333,23 +304,32 @@ function useVaultFileActions(opts: {
     if (!docId) return fireToast(nothingToOpen, 'error');
     setOpening(doc.id);
     try {
-      presentOpenedFile({ file: await downloadVaultFile(programId, docId, doc), doc, fireToast, showPdf });
+      const file = await downloadVaultFile(programId, docId, doc);
+      if (alive.current) presentOpenedFile({ file, doc, fireToast, showPdf });
     } catch (e) {
-      fireToast(redactInternals(e instanceof Error ? e.message : '', `${doc.title} was not opened.`), 'error');
+      if (alive.current) fireToast(redactInternals(e instanceof Error ? e.message : '', `${doc.title} was not opened.`), 'error');
     } finally {
-      setOpening(null);
+      if (alive.current) setOpening(null);
     }
   };
 
-  const cite = (doc: VaultDoc) => {
+  const cite = async (doc: VaultDoc) => {
+    if (citing.current) return;
     const src = sourceFor(doc);
     if (!src) return;
-    const ok = onCite(String(src.id));
-    fireToast(
-      ok ? `Cited “${src.title ?? doc.title}” in ${sectionCode ?? 'the open section'} — the citation numbers from its position and the section now records this source.`
-        : 'Couldn’t insert the citation — the canvas is not editable right now (source mode, a frozen document, or no caret).',
-      ok ? 'ok' : 'error',
-    );
+    citing.current = true;
+    try {
+      const ok = await onCite(String(src.id));
+      if (alive.current) fireToast(
+        ok ? `Cited “${src.title ?? doc.title}” in ${sectionCode ?? 'the open section'} — the citation numbers from its position and the section now records this source.`
+          : 'Couldn’t insert the citation — the source or editable section could not be confirmed. Try again in the current section.',
+        ok ? 'ok' : 'error',
+      );
+    } catch {
+      if (alive.current) fireToast('Couldn’t insert the citation — source registration could not be confirmed. Try again.', 'error');
+    } finally {
+      citing.current = false;
+    }
   };
 
   const insertRef = (doc: VaultDoc) => {
@@ -443,10 +423,12 @@ type RowsProps = Omit<TreeProps, 'nodes' | 'depth'>;
 function VaultSearchResults(props: RowsProps & {
   query: string; programName: string | null; searchState: ReadState;
   hits: SearchHit[]; hitsTotal: number; searchError: string | null; onRetry: () => void;
+  hasMore: boolean; pageBusy: boolean; pageError: string | null; loadMore: () => Promise<void>;
 }) {
-  const { query, programName, searchState, hits, hitsTotal, searchError, selectedId, onSelectDoc, onRetry } = props;
+  const { query, programName, searchState, hits, hitsTotal, searchError, selectedId, onSelectDoc, onRetry,
+    hasMore, pageBusy, pageError, loadMore } = props;
   return (
-    <div className="pf-list" role="region" aria-label="Search results">
+    <div className="pf-list" role="region" aria-label="Search results" aria-busy={searchState === 'loading' || pageBusy}>
       {searchState === 'loading' && hits.length === 0 ? (
         <div role="status" className="scaf-note" style={{ padding: 12 }}>Searching the vault…</div>
       ) : searchState === 'error' ? (
@@ -462,6 +444,14 @@ function VaultSearchResults(props: RowsProps & {
           {hits.map(h => (
             <VaultDocRow key={h.id} doc={hitToDoc(h)} depth={0} active={selectedId === h.id} onToggle={() => onSelectDoc(h.id)} />
           ))}
+          {pageError && <ErrorState icon={I.alertTriangle} title="More results could not be loaded"
+            message={pageError} retry={pageError === SEARCH_RESULTS_CHANGED ? onRetry : () => void loadMore()}
+            retryLabel={pageError === SEARCH_RESULTS_CHANGED ? 'Refresh search' : 'Try again'} busy={pageBusy} />}
+          {hasMore && !pageError && <div className="pf-search pf-actions">
+            <button type="button" className="btn ghost" onClick={() => void loadMore()} disabled={pageBusy}>
+              {pageBusy ? 'Loading more results…' : 'More results'}
+            </button>
+          </div>}
         </>
       )}
     </div>
@@ -523,25 +513,6 @@ function VaultBrowseBody(props: RowsProps & {
   );
 }
 
-/** The two section actions — cite a source, refer to anything else — which
- *  the viewer pane and the selected row both offer, on the same rule. */
-function SectionActions(props: {
-  sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
-  onCite: () => void; onInsertRef: () => void; citeTestId?: string; refTestId?: string;
-}) {
-  const { sectionOpen, sectionCode, source, onCite, onInsertRef, citeTestId, refTestId } = props;
-  if (!sectionOpen) return null;
-  return source ? (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onCite} data-testid={citeTestId}>
-      {I.quote} Cite in {sectionCode ? `§${sectionCode}` : 'this section'}
-    </button>
-  ) : (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onInsertRef} data-testid={refTestId}>
-      {I.link} Insert reference
-    </button>
-  );
-}
-
 /** The PDF pane: the served hash it was verified against, the document, and
  *  the same two section actions a row offers.
  *
@@ -575,40 +546,14 @@ function PdfViewerPane(props: {
   );
 }
 
-/** The selected row's footer: what the file is, what can be done with it, and
- *  why a file that is not a data-room source cannot be cited. */
-function SelectedFileActions(props: {
-  doc: VaultDoc; sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
-  busy: boolean; onOpen: () => void; onCite: () => void; onInsertRef: () => void; editorAttached: boolean;
-}) {
-  const { doc, busy, onOpen, editorAttached, ...actions } = props;
-  const { sectionOpen, source } = props;
-  return (
-    <div className="pf-sel" data-testid="pf-selected">
-      <div className="pf-sel-t">{doc.title}</div>
-      {doc.hash && <div className="pf-sel-m" title={`SHA-256 ${doc.hash}`}>SHA-256 {doc.hash.slice(0, 12)}…</div>}
-      {doc.filing?.folderLabel && <div className="pf-sel-m">{doc.filing.folderLabel}</div>}
-      <div className="pf-actions">
-        {(doc.src === 'upload' || doc.docId) && (
-          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} disabled={busy} onClick={onOpen}>
-            {I.eye} {busy ? 'Opening…' : 'Open'}
-          </button>
-        )}
-        <SectionActions {...actions} citeTestId="pf-cite" refTestId="pf-insert-reference" />
-        {editorAttached && !sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}
-      </div>
-      {sectionOpen && !source && (
-        <div className="pf-sel-m" data-testid="pf-not-citable">
-          Not a data-room source, so it cannot be cited — a citation claims a source the reference list resolves. Add the file to the project’s data room to cite it; a reference inserts as text.
-        </div>
-      )}
-    </div>
-  );
+/** Reset only the files rail on a scope switch; the editor keeps its leave guard. */
+export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
+  return <ProjectFilesForProgram key={props.programId ?? 'no-program'} {...props} />;
 }
 
-export function ProjectFilesPanel({
+function ProjectFilesForProgram({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onClose, fireToast,
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav,
 }: ProjectFilesPanelProps) {
   const editorAttached = Boolean(onCite && onInsertReference);
   const { state, vault, readError, load } = useProjectVaultRead(programId);
@@ -617,6 +562,8 @@ export function ProjectFilesPanel({
   const { viewer, showPdf, closeViewer } = useVaultPdfViewer();
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lane, setLane] = useState<'vault' | 'data-room' | 'ind'>('vault');
+  const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
 
   const sourceFor = useCallback((doc: VaultDoc) => matchingProjectSource(doc, projectSources), [projectSources]);
   const allDocs = useMemo(() => flattenVaultDocs(vault?.tree ?? []), [vault]);
@@ -654,6 +601,17 @@ export function ProjectFilesPanel({
     <>
       {header}
       <div className="pf-search">
+      <div className="cdl-scope" role="group" aria-label="Document sources">
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => setLane('vault')}>Vault</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => setLane('data-room')}>Data room</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
+      </div>
+      </div>
+      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} onNav={onNav} />}
+      {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={onAsk} onOpenDocument={onOpenDocument}
+        onFindSources={text => { setQuery(text); setLane('vault'); }} />}
+      {lane === 'vault' && <>
+      <div className="pf-search">
         <label className="sr-only" htmlFor="pf-search-input">Search the project vault</label>
         <input
           id="pf-search-input" className="c2c-input" type="search" placeholder="Search titles and text…"
@@ -661,7 +619,7 @@ export function ProjectFilesPanel({
         />
       </div>
       {query.trim() ? (
-        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={() => setQuery(q => q + '')} />
+        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={search.retrySearch} />
       ) : (
         <VaultBrowseBody {...rows} state={state} vault={vault} readError={readError}
           programName={programName} onRetry={() => void load()} editorAttached={editorAttached} />
@@ -669,8 +627,11 @@ export function ProjectFilesPanel({
       {selected && (
         <SelectedFileActions doc={selected} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
           busy={opening === selected.id} onOpen={() => void openDoc(selected)} editorAttached={editorAttached}
+          onPull={() => setPullDoc(selected)}
           onCite={() => cite(selected)} onInsertRef={() => insertRef(selected)} />
       )}
+      </>}
+      <VaultSourceImport doc={pullDoc} programId={programId} onClose={() => setPullDoc(null)} onOpenDocument={onOpenDocument} />
     </>
   );
 }

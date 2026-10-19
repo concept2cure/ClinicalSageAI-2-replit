@@ -26,7 +26,7 @@ record_grant_award	server/services/ana/AnaToolExecutor.ts:12080	gov:recordGovern
 record_literature	server/services/ana/AnaToolExecutor.ts:1766	verb:recordLiteratureEntries
 register_controlled_substance	server/services/ana/AnaToolExecutor.ts:12657	gov:recordGovernedAction, verb:createSubstanceTx, verb:recordGovernedAction
 remember_document_in_project	server/services/ana/AnaToolExecutor.ts:1506	verb:ingestProjectDocument
-resolve_validation_finding	server/services/ana/AnaToolExecutor.ts:8834	sql:UPDATE submission_validation_findings 
+resolve_validation_finding	server/services/ana/AnaToolExecutor.ts:8834	sql:UPDATE submission_validation_findings
 review_cs_balance	server/services/ana/AnaToolExecutor.ts:12947	gov:recordGovernedAction
 review_inspection_readiness	server/services/ana/AnaToolExecutor.ts:12854	gov:recordGovernedAction
 review_protocol_portfolio	server/services/ana/AnaToolExecutor.ts:11855	gov:recordGovernedAction

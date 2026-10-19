@@ -1,0 +1,58 @@
+{
+  "before": {
+    "mdx_notifications": {
+      "count": 21,
+      "row_digest": "635bcce08e127fac6f5b2e8f9bea82ac"
+    },
+    "mdx_notification_receipts": {
+      "count": 0,
+      "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "mdx_notification_subscriptions": {
+      "count": 0,
+      "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+  },
+  "runs": [
+    {
+      "run": 1,
+      "exit": 0,
+      "after": {
+        "mdx_notifications": {
+          "count": 21,
+          "row_digest": "635bcce08e127fac6f5b2e8f9bea82ac"
+        },
+        "mdx_notification_receipts": {
+          "count": 0,
+          "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+        },
+        "mdx_notification_subscriptions": {
+          "count": 0,
+          "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+        }
+      },
+      "unrelated_rows_identical": true,
+      "log": "/workspace/audit/notification-fixture-isolation-run-1.log"
+    },
+    {
+      "run": 2,
+      "exit": 0,
+      "after": {
+        "mdx_notifications": {
+          "count": 21,
+          "row_digest": "635bcce08e127fac6f5b2e8f9bea82ac"
+        },
+        "mdx_notification_receipts": {
+          "count": 0,
+          "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+        },
+        "mdx_notification_subscriptions": {
+          "count": 0,
+          "row_digest": "d41d8cd98f00b204e9800998ecf8427e"
+        }
+      },
+      "unrelated_rows_identical": true,
+      "log": "/workspace/audit/notification-fixture-isolation-run-2.log"
+    }
+  ]
+}

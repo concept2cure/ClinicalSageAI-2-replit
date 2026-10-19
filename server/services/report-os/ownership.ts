@@ -4,8 +4,9 @@
  * A program group, delivery, captured letter or prediction names projects and
  * submissions by id; an id from another tenant must read as not found rather
  * than become a membership, a computed result or a stored record pointing across
- * the boundary. report_program_group_projects has no organization column and no
- * RLS policy, so nothing below the app would stop it. These lived in
+ * the boundary. Membership rows now carry the parent organization, validated
+ * same-organization keys and canonical row security. The application also
+ * checks current project access before reads and writes. These lived in
  * routes/report-os.ts; the prediction run needed them too (reporting review
  * 2026-10-01), so they moved here rather than being copied. A client workspace
  * id in a body is the same kind of claim (IAM-15's P1-7b rule; the review's

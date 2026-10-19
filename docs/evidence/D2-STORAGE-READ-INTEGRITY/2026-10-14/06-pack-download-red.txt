@@ -1,0 +1,232 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > reports a provider integrity refusal and records no successful download
+[IVDR-Binder] Download pack: StorageIntegrityError: The stored file SHA-256 differs from its recorded identity. No content was returned.
+    at /workspace/Concept2Cure/server/routes/__tests__/ivdr-pack-download-integrity.test.ts:109:35
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  reason: 'digest_mismatch',
+  code: 'STORAGE_INTEGRITY_FAILED'
+}
+
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded pdf artifact with its actual digest 18ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded docx artifact with its actual digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded zip artifact with its actual digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded manifest artifact with its actual digest 2ms
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement pdf from the wrong pack identity 7ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement docx from the wrong pack identity 3ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement zip from the wrong pack identity 3ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement manifest from the wrong pack identity 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf whose recorded pack byte length was changed 4ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx whose recorded pack byte length was changed 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip whose recorded pack byte length was changed 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest whose recorded pack byte length was changed 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf with no recorded artifact digest 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx with no recorded artifact digest 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip with no recorded artifact digest 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest with no recorded artifact digest 2ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > requests authoritative artifact hashes and sizes from the scoped pack row 4ms
+   → expected 'SELECT id, project_id, pack_type, pac…' to contain 'pdf_sha256'
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > reports a provider integrity refusal and records no successful download 4ms
+   → expected 500 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > keeps missing/foreign pack identity absent without reaching storage 2ms
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not record a successful download when the stored version is missing 2ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not emit a provider-supplied digest unrelated to the verified bytes 3ms
+   → expected 'd17b6664ab8265aa8604cf64be1af8e930a1d…' to be '064e1bf222500d0cad3bbb90e8aff93122e41…' // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses to substitute a snapshot when the recorded original manifest is missing 2ms
+   → expected 200 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement pdf from the wrong pack identity
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement docx from the wrong pack identity
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement zip from the wrong pack identity
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement manifest from the wrong pack identity
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:75:24
+     73|     storage.get.mockResolvedValue(stored(CHANGED));
+     74|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+     75|     expect(res.status).toBe(409);
+       |                        ^
+     76|     expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
+     77|     expect(res.headers['x-content-sha256']).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf whose recorded pack byte length was changed
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx whose recorded pack byte length was changed
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip whose recorded pack byte length was changed
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest whose recorded pack byte length was changed
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:84:24
+     82|     pack[`${format}_size_bytes`] = GOOD.length + 1;
+     83|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+     84|     expect(res.status).toBe(409);
+       |                        ^
+     85|     expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
+     86|     expect(downloaded()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf with no recorded artifact digest
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx with no recorded artifact digest
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip with no recorded artifact digest
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest with no recorded artifact digest
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:92:24
+     90|     pack[`${format}_sha256`] = null;
+     91|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+     92|     expect(res.status).toBe(409);
+       |                        ^
+     93|     expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
+     94|     expect(downloaded()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > requests authoritative artifact hashes and sizes from the scoped pack row
+AssertionError: expected 'SELECT id, project_id, pack_type, pac…' to contain 'pdf_sha256'
+
+- Expected
++ Received
+
+- pdf_sha256
++ SELECT id, project_id, pack_type, pack_version, status,
++                 manifest_hash_sha256, snapshot_hash_sha256,
++                 manifest_vault_version_id,
++                 pdf_vault_version_id,
++                 docx_vault_version_id,
++                 zip_vault_version_id
++          FROM ivdr_packs
++          WHERE id = $1 AND organization_id = $2
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:102:24
+    100|     expect(call).toBeDefined();
+    101|     for (const format of FORMATS) {
+    102|       expect(call![0]).toContain(`${format}_sha256`);
+       |                        ^
+    103|       expect(call![0]).toContain(`${format}_size_bytes`);
+    104|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > reports a provider integrity refusal and records no successful download
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:111:24
+    109|     storage.get.mockRejectedValue(new StorageIntegrityError('digest_mi…
+    110|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+    111|     expect(res.status).toBe(409);
+       |                        ^
+    112|     expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
+    113|     expect(downloaded()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not record a successful download when the stored version is missing
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:128:26
+    126|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+    127|     expect(res.status).toBe(404);
+    128|     expect(downloaded()).toHaveLength(0);
+       |                          ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not emit a provider-supplied digest unrelated to the verified bytes
+AssertionError: expected 'd17b6664ab8265aa8604cf64be1af8e930a1d…' to be '064e1bf222500d0cad3bbb90e8aff93122e41…' // Object.is equality
+
+Expected: "064e1bf222500d0cad3bbb90e8aff93122e413d20befda0ead41ce7a05a63303"
+Received: "d17b6664ab8265aa8604cf64be1af8e930a1de737e14a4ae28671bbce8f4c7a8"
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:135:45
+    133|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+    134|     expect(res.status).toBe(200);
+    135|     expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
+       |                                             ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses to substitute a snapshot when the recorded original manifest is missing
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:148:26
+    146|     try {
+    147|       const res = await request(app()).get(`/api/ivdr/packs/${PACK}/do…
+    148|       expect(res.status).toBe(404);
+       |                          ^
+    149|       expect(res.body.code).toBe('PACK_ARTIFACT_MISSING');
+    150|       expect(downloaded()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 5 passed (22)
+   Start at  03:01:50
+   Duration  512ms (transform 101ms, setup 63ms, import 154ms, tests 78ms, environment 0ms)
+

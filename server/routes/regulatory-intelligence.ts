@@ -6,8 +6,8 @@
  *
  *   POST   /api/regulatory-intelligence/score
  *          Score an in-flight submission draft. Returns rule-based completeness,
- *          predictive CRL/RTF/first-cycle probabilities, and a blended readiness
- *          score with recommendations.
+ *          predictive CRL/RTF/first-cycle probabilities, and the refuse-to-file
+ *          score (refuseToFileScore) with recommendations.
  *
  *   POST   /api/regulatory-intelligence/outcomes/recorded
  *          Notify the layer that one or more submission outcomes have landed.
@@ -38,6 +38,8 @@
 import express, { Router, type Request, type Response, type NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
+import { authedUserId } from '../utils/authedActor.js';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin.js';
 import {
   scoreSubmissionDraft,
   computeReadiness,
@@ -323,9 +325,30 @@ router.get('/agency-requirements', asyncHandler(async (req: Request, res: Respon
   }
   const documentType = typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
   const includeUnvalidated = req.query.includeUnvalidated === 'false' ? false : true;
-  const data = await getAgencyRequirements({ agency, documentType, includeUnvalidated });
+  // Unvalidated rows are this organization's own (2026-10-15: every tenant's).
+  const data = await getAgencyRequirements({ organizationId: guard.orgId, agency, documentType, includeUnvalidated });
   res.json({ success: true, data });
 }));
+
+/**
+ * Platform standing that may WRITE reference data every tenant is served.
+ *
+ * Two surfaces ask it: validating an agency requirement, and re-seeding the
+ * document templates whose section codes authored text binds to. One constant,
+ * because it is one question — two with the same contents drift apart.
+ *
+ * Deliberately not `requirePlatformAdmin`, which also admits `support`: a
+ * support session reads across the platform, it does not re-key every
+ * customer's regulatory outlines.
+ */
+const PLATFORM_CURATOR_ROLES = ['super_admin', 'platform_admin'] as const;
+
+/** The session user, when they hold platform curator standing; else null. */
+async function platformCuratorId(req: Request): Promise<number | null> {
+  const userId = authedUserId(req);
+  if (userId === null || !Number.isSafeInteger(userId) || userId < 1) return null;
+  return (await holdsPlatformRole(req, PLATFORM_CURATOR_ROLES)) ? userId : null;
+}
 
 router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Response) => {
   const guard = requireAuthedOrgId(req, res);
@@ -338,15 +361,28 @@ router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Resp
   if (typeof body.requirementSummary !== 'string' || body.requirementSummary.trim().length === 0) {
     return res.status(400).json({ error: 'invalid_request', message: 'requirementSummary is required' });
   }
+  /* 2026-10-15: `validateImmediately` and `validatedBy` were taken from the
+     body, so any member of any tenant could record a requirement 'validated'
+     under any name (or "org:N"), and GET /agency-requirements serves it to
+     every tenant. Validating needs platform curator standing; the validator
+     is the session's user. Anyone else's requirement is recorded unvalidated. */
+  const wantsValidation = !!body.validateImmediately;
+  const curatorId = wantsValidation ? await platformCuratorId(req) : null;
   const result = await promotePatternToRequirement({
+    organizationId: guard.orgId,
     patternId,
     requirementSummary: body.requirementSummary,
     requirementDetail: typeof body.requirementDetail === 'string' ? body.requirementDetail : undefined,
     submissionType: typeof body.submissionType === 'string' ? body.submissionType : undefined,
-    validateImmediately: !!body.validateImmediately,
-    validatedBy: typeof body.validatedBy === 'string' ? body.validatedBy : `org:${guard.orgId}`,
+    curator: curatorId === null ? null : { userId: curatorId },
   });
-  res.status(201).json({ success: true, data: result });
+  res.status(201).json({
+    success: true,
+    data: result,
+    ...(wantsValidation && curatorId === null
+      ? { note: 'Recorded unvalidated: validating an agency requirement, which every tenant is served, needs platform curator standing.' }
+      : {}),
+  });
 }));
 
 // ─── Growth-mindset extensions ──────────────────────────────────────────────
@@ -541,8 +577,30 @@ router.post('/templates/validate', asyncHandler(async (req: Request, res: Respon
 router.post('/templates/seed', asyncHandler(async (req: Request, res: Response) => {
   const guard = requireAuthedOrgId(req, res);
   if (!guard.ok) return;
+  /* 2026-10-18: this was guarded by authentication alone, and seedTemplates()
+     is unconditional and global — it UPDATEs every seeded template row, then
+     replaces that template's section rows from source. document_templates has
+     no organization column and no RLS policy, so one member of one tenant
+     could re-key the outlines every OTHER tenant's authored text binds to
+     (filingSectionKey joins on the code). A cross-tenant INTEGRITY surface,
+     and the quietest kind: afterwards both stores are internally consistent,
+     so no agreement check can report it.
+     Safe to gate only since the boot seeder started correcting drift
+     (template-seeds.ts, 2026-10-18). Before that this route was the ONLY way
+     to apply a corrected section_code, so a gate here would have removed the
+     sole path to a correction; now the deploy is that path. */
+  const curatorId = await platformCuratorId(req);
+  if (curatorId === null) {
+    return res.status(403).json({
+      error: 'forbidden',
+      message:
+        'Refreshing the regulatory document templates needs platform curator standing, '
+        + 'because every tenant is served the same templates. A corrected template reaches '
+        + 'this environment on the next deploy.',
+    });
+  }
   const data = await seedTemplates();
-  log.info(`Template seeding by org=${guard.orgId}: ${JSON.stringify(data)}`);
+  log.info(`Template seeding by curator=${curatorId} org=${guard.orgId}: ${JSON.stringify(data)}`);
   res.json({ success: true, data });
 }));
 

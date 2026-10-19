@@ -56,8 +56,12 @@ describe('POST /api/global-markets/plan', () => {
     const payload = res.json.mock.calls[0][0];
     expect(payload.data).toBeDefined();
     expect(Array.isArray(payload.data.marketPlans)).toBe(true);
-    // 12 markets have live gateways
-    expect(payload.data.transmitCapableMarkets.length).toBeGreaterThan(0);
+    // 2026-10-15: pinned a non-empty list on the claim that markets had live
+    // gateways. The platform transmits to neither; each plan carries the blocker.
+    expect(payload.data.transmitCapableMarkets).toEqual([]);
+    for (const mp of payload.data.marketPlans) {
+      expect(mp.blockers.some((b: string) => /cannot transmit/.test(b))).toBe(true);
+    }
   });
 
   it('rejects an invalid body (400)', async () => {

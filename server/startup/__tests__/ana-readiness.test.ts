@@ -29,6 +29,7 @@ import {
 import { setSchemaReadiness, resetSchemaReadinessForTests } from '../readiness-state';
 import { mountFastPathHealthEndpoints } from '../inline-endpoints';
 import { isolateLaneEnvironment, LANE, laneGateway, resetEmbeddingLaneFixtures } from './support/embedding-lane';
+import { resetEmbeddingProvider } from '../../services/ai-gateway/embeddings/embedding-provider';
 
 // The gateway is stubbed so each provider posture can be reproduced exactly.
 // `gatewayStub` is reassigned per test; `getGateway` reads it at call time.
@@ -75,16 +76,34 @@ function gateway(opts: { providers: string[]; deterministic?: boolean }) {
   };
 }
 
+// The lane that answers, for cases whose subject is not the embedding lane: the
+// keyless self-hosted lane (LANE), so a case's provider posture stays what it
+// sets. The default OpenAI lane has refused a keyless call before any request
+// since 1bd3af0bc (docs/design/EMBEDDING_CREDENTIAL_READINESS.md), and its key
+// would enable the OpenAI chat provider too. The R4 cases below replace this
+// with the environment each states (isolateLaneEnvironment).
+const savedLaneEnv: Partial<Record<keyof typeof LANE, string | undefined>> = {};
+
 beforeEach(async () => {
   resetAnaReadinessForTests();
   resetSchemaReadinessForTests();
   gatewayStub = gateway({ providers: ['anthropic'] });
   getGatewayThrows = null;
   await resetEmbeddingLaneFixtures();
+  for (const k of Object.keys(LANE) as Array<keyof typeof LANE>) {
+    savedLaneEnv[k] = process.env[k];
+    process.env[k] = LANE[k];
+  }
+  resetEmbeddingProvider();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  for (const k of Object.keys(LANE) as Array<keyof typeof LANE>) {
+    if (savedLaneEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedLaneEnv[k];
+  }
+  resetEmbeddingProvider();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -340,7 +359,8 @@ describe('evaluateAnaReadiness — an embedding lane an organization must elect 
   });
 
   it('outside production nothing needs an election, so the default embedding lane does not change the verdict', async () => {
-    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+    // The default lane is OpenAI, which needs its key to embed at all (1bd3af0bc); a clearly fake one.
+    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test', OPENAI_API_KEY: 'sk-test-fake-embedding-lane' });
 
     expect(await evaluateAnaReadiness()).toBe('ready');
   });

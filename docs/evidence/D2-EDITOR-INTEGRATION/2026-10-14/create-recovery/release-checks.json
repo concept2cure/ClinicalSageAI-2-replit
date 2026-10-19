@@ -1,0 +1,366 @@
+{
+  "scope": "W1 / D2 existing editor creation interaction increment; Codespaces only",
+  "base": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "creationTests": {
+    "passed": 107,
+    "newCases": 81,
+    "legacyCases": 26
+  },
+  "workbenchTests": {
+    "passed": 19
+  },
+  "broadEditorRegression": {
+    "files": 78,
+    "passedFiles": 77,
+    "passedTests": 916,
+    "failedTests": 1,
+    "durationSeconds": 468.2,
+    "correctedLegacyFilePassed": 4,
+    "singleFullGreenRun": false,
+    "qualification": "The source-refresh fixture used prose instead of actual canonical refusal codes; final targeted file asserts specific actionable meanings. Final notice-placement changes separately qualified by 107 creation,19 Workbench and20 browser cases."
+  },
+  "browser": {
+    "status": "pass",
+    "caseCount": 20,
+    "captureCount": 52,
+    "productionFilesPinned": 14,
+    "fixtureFilesPinned": 11,
+    "sourcePinsMatchCurrent": true,
+    "fixturePinsMatchCurrent": true,
+    "explicitCreationPosts": 16,
+    "otherMutations": [],
+    "explicitUnknownRecoveryReads": 16,
+    "successfulScopedHostRefreshCallbacks": 8,
+    "exactDocumentNavigationHandoffs": 4,
+    "exactCreatedSectionOpenCases": 4,
+    "heldCases": 4,
+    "unexpectedRequests": 0,
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "axeViolations": 0,
+    "axeIncompleteRules": [
+      "aria-prohibited-attr",
+      "color-contrast",
+      "label-content-name-mismatch"
+    ],
+    "nativeViewportCount": 8,
+    "minNativeViewportWidth": 300,
+    "minNativeViewportHeight": 279,
+    "qualification": [
+      "Explicitly synthetic local API records; no database, authorization, persistence, provider or deployed-environment claim.",
+      "Unknown outcomes use deliberately mismatched successful receipts. Failed recovery is a successful HTTP response with wrong-scope rows; production tests separately exercise HTTP/network failures.",
+      "The native Workbench document case records its exact editorTarget/onNav handoff boundary after the real unsaved-work decision. The local fixture does not emulate the shell router or claim a deployed reopen.",
+      "The native Workbench section case opens the exact returned section through its actual section refresh, leave guard and canonical RichSectionEditor.",
+      "All original style tokens and product components are imported directly; this host adds no product CSS or alternate editor.",
+      "Axe incomplete rules are retained per capture and require manual review; this is not a complete accessibility audit."
+    ]
+  },
+  "compiler": {
+    "firstRunErrors": 8,
+    "firstCompilerExit": 2,
+    "cause": "New Workbench AuthDoc fixture omitted product_code/section_count; corrected explicitly.",
+    "final": {
+      "errors": 0,
+      "compilerExit": 0,
+      "unchangedBaseline": 0,
+      "base": "4997d35e",
+      "receipt": "release-compilerPostIntegration.txt"
+    },
+    "intermediateRun": {
+      "errors": 1,
+      "compilerExit": 2,
+      "cause": "Membership-role annotation in the current-role follow-up; fixed explicitly without baseline changes.",
+      "receipt": "release-compilerIntermediate.txt"
+    },
+    "preIntegrationFinal": {
+      "errors": 0,
+      "compilerExit": 0,
+      "unchangedBaseline": 0,
+      "receipt": "release-compilerPreIntegrationFinal.txt"
+    }
+  },
+  "build": "pass",
+  "lint": {
+    "newHookAndComponentErrors": 0,
+    "newHookAndComponentWarnings": 0,
+    "initialScopedRatchetNetWarnings": -1,
+    "baselineChanges": false
+  },
+  "verificationReceipts": {
+    "compilerBefore": {
+      "sha256": "1252dd60f89e31b2d7e2cf5033f75bc9c64323dc234ddfcc4c121c22a90f621c",
+      "selectedOutput": "release-compilerBefore.txt"
+    },
+    "broadRegression": {
+      "sha256": "73f37bb7ab4677d7322058a24980a1d5dce755820ce3d248c0ce2ed2013fadfa",
+      "selectedOutput": "release-broadRegression.txt"
+    },
+    "buildFinal": {
+      "sha256": "137c46ee0ce2615bbe120393e408339d8f5adc34d7dce019c07e2c32dc2adf87",
+      "selectedOutput": "release-buildFinal.txt"
+    },
+    "warningRatchet": {
+      "sha256": "86afda2819246eb76ab78a1ee6ea87212c2f18fb5cbfdc7026dcac86af1260b5",
+      "selectedOutput": "release-warningRatchet.txt"
+    },
+    "gate:single-native-canvas": {
+      "status": "pass",
+      "sha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+      "output": "[single-native-canvas] ok \u2014 @napi-rs/canvas 0.1.80: one copy\n"
+    },
+    "gate:canvas-path": {
+      "status": "pass",
+      "sha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+      "output": "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline\n"
+    },
+    "gate:check-editor-integrity": {
+      "status": "pass",
+      "sha256": "d7d07f752527d948ffc1c58b3d45ccdc0416ff0a878ec1cb161756ce516e9f36",
+      "output": "Found 30 @tiptap/* packages in package.json\nFound 14 unique @tiptap/* imports in client/src/\n\n\u2713 All @tiptap/* imports are satisfied by package.json\n\n  @tiptap/core (52 file(s))\n  @tiptap/extension-collaboration (1 file(s))\n  @tiptap/extension-document (1 file(s))\n  @tiptap/extension-highlight (1 file(s))\n  @tiptap/extension-paragraph (1 file(s))\n  @tiptap/extension-placeholder (1 file(s))\n  @tiptap/extension-subscript (2 file(s))\n  @tiptap/extension-superscript (2 file(s))\n  @tiptap/extension-table (11 file(s))\n  @tiptap/extension-text (1 file(s))\n  @tiptap/extension-text-align (1 file(s))\n  @tiptap/pm (14 file(s))\n  @tiptap/react (1 file(s))\n  @tiptap/starter-kit (17 file(s))\n\nEditor extension integrity check PASSED.\n"
+    },
+    "gate:design-system": {
+      "status": "pass",
+      "sha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+      "output": "[design-system] OK \u2014 no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.\n"
+    },
+    "gate:token-cascade": {
+      "status": "pass",
+      "sha256": "f3d8594f10e248823db6ce2b1d05c32ad7f70cf68ace812bb9c8057f8040439d",
+      "output": "  ok   client/src/concept2cure/_shared/components/EsignModal.css                        26/26    \n  ok   client/src/concept2cure/_shared/components/governed-confirm-dialog.css           24/24    \n  ok   client/src/concept2cure/components/ana/styles.module.css                         50/50    \n  ok   client/src/concept2cure/components/concept2cure-auth/styles.module.css           33/33    \n  ok   client/src/concept2cure/components/session/IdleSessionGuard.module.css           6/6      \n  ok   client/src/concept2cure/mdx/app.css                                              73/73    \n  ok   client/src/concept2cure/mdx/drafter.css                                          31/31    \n  ok   client/src/concept2cure/mdx/files-tree.css                                       24/24    \n  ok   client/src/concept2cure/mdx/pathway-tabs.css                                     35/35    \n  ok   client/src/concept2cure/pdev/app.css                                             51/51    \n  ok   client/src/concept2cure/quality/app.css                                          38/38    \n  ok   client/src/concept2cure/v2/styles/admin-access.css                               36/36    \n  ok   client/src/concept2cure/v2/styles/ana-v2.css                                     26/26    \n  ok   client/src/concept2cure/v2/styles/app-v2.css                                     57/57    \n  ok   client/src/concept2cure/v2/styles/auth-entry.css                                 32/32    \n  ok   client/src/concept2cure/v2/styles/authoring-v2.css                               52/52    \n  ok   client/src/concept2cure/v2/styles/commcenter-v2.css                              27/27    \n  ok   client/src/concept2cure/v2/styles/coverage-v2.css                                42/42    \n  ok   client/src/concept2cure/v2/styles/device-v2.css                                  36/36    \n  ok   client/src/concept2cure/v2/styles/discovery-onboarding.css                       7/7      \n  ok   client/src/concept2cure/v2/styles/ectd-v2.css                                    34/34    \n  ok   client/src/concept2cure/v2/styles/insights-v2.css                                29/29    \n  ok   client/src/concept2cure/v2/styles/intelligence-v2.css                            29/29    \n  ok   client/src/concept2cure/v2/styles/journey-v2.css                                 39/39    \n  ok   client/src/concept2cure/v2/styles/licensing-access-requests.css                  7/7      \n  ok   client/src/concept2cure/v2/styles/licensing-enforcement.css                      7/7      \n  ok   client/src/concept2cure/v2/styles/licensing-history.css                          5/5      \n  ok   client/src/concept2cure/v2/styles/misc-surfaces-v2.css                           38/38    \n  ok   client/src/concept2cure/v2/styles/onboarding-review.css                          22/22    \n  ok   client/src/concept2cure/v2/styles/project-home-v2.css                            34/34    \n  ok   client/src/concept2cure/v2/styles/protocol-dev-editing.css                       14/14    \n  ok   client/src/concept2cure/v2/styles/pyramid-v2.css                                 33/33    \n  ok   client/src/concept2cure/v2/styles/rbm-v2.css                                     36/36    \n  ok   client/src/concept2cure/v2/styles/redline.css                                    3/3      \n  ok   client/src/concept2cure/v2/styles/research-v2.css                                44/44    \n  ok   client/src/concept2cure/v2/styles/review-decision.css                            7/7      \n  ok   client/src/concept2cure/v2/styles/rich-section-editor.css                        18/18    \n  ok   client/src/concept2cure/v2/styles/submission-v2.css                              13/13    \n  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                41/41    \n  ok   client/src/concept2cure/v2/styles/translation-v2.css                             39/39    \n  ok   client/src/styles/projects-prototype.css                                         24/24    \n\n[token-cascade] PASS \u2014 all 41 stylesheets resolve cleanly.\n"
+    },
+    "gate:token-contrast": {
+      "status": "pass",
+      "sha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+      "output": "\u2705 token-contrast: 131 pairs checked \u2014 text \u2265 4.5:1, non-text \u2265 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.\n"
+    },
+    "gate:surface-text-ramp": {
+      "status": "pass",
+      "sha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+      "output": "[ci:surface-text-ramp] OK \u2014 3 generated ramp sheet(s) match the stylesheets.\n"
+    },
+    "gate:sql-interpolation": {
+      "status": "pass",
+      "sha256": "23a753844f8f219ad46d50e8c25e2b283cc085bd73b535251faa646114aff747",
+      "output": "[ci:sql-interpolation] OK \u2014 no new value interpolated into SQL text. 1011 baselined interpolation(s) in 218 file(s); the baseline may only shrink.\n"
+    },
+    "gate:check-phantom-tokens": {
+      "status": "pass",
+      "sha256": "f39f1302a7dbdf7ebbd2e439408ef5e5283acedf5792b9c6d6af3351794eeaf3",
+      "output": "[ci:phantom-tokens] 9 phantom token(s) across 53 site(s) (baseline 9).\n[ci:phantom-tokens] OK \u2014 no new phantom tokens.\n"
+    },
+    "compilerPostIntegration": {
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+      "selectedOutput": "release-compilerPostIntegration.txt"
+    },
+    "uiPostIntegration": {
+      "sha256": "302d24efc58ab2f84cf24861e1efc6a8cea99a14df3b9d436e3e00ef5097f959",
+      "selectedOutput": "release-uiPostIntegration.txt"
+    },
+    "buildPostIntegration": {
+      "sha256": "0f80d146eeca3ea724155653341bcc548c0c98990118b9c942bce82713b499f3",
+      "selectedOutput": "release-buildPostIntegration.txt"
+    },
+    "postIntegrationGate:single-native-canvas": {
+      "status": "pass",
+      "sha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+      "output": "[single-native-canvas] ok \u2014 @napi-rs/canvas 0.1.80: one copy\n"
+    },
+    "postIntegrationGate:canvas-path": {
+      "status": "pass",
+      "sha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+      "output": "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline\n"
+    },
+    "postIntegrationGate:check-editor-integrity": {
+      "status": "pass",
+      "sha256": "d7d07f752527d948ffc1c58b3d45ccdc0416ff0a878ec1cb161756ce516e9f36",
+      "output": "Found 30 @tiptap/* packages in package.json\nFound 14 unique @tiptap/* imports in client/src/\n\n\u2713 All @tiptap/* imports are satisfied by package.json\n\n  @tiptap/core (52 file(s))\n  @tiptap/extension-collaboration (1 file(s))\n  @tiptap/extension-document (1 file(s))\n  @tiptap/extension-highlight (1 file(s))\n  @tiptap/extension-paragraph (1 file(s))\n  @tiptap/extension-placeholder (1 file(s))\n  @tiptap/extension-subscript (2 file(s))\n  @tiptap/extension-superscript (2 file(s))\n  @tiptap/extension-table (11 file(s))\n  @tiptap/extension-text (1 file(s))\n  @tiptap/extension-text-align (1 file(s))\n  @tiptap/pm (14 file(s))\n  @tiptap/react (1 file(s))\n  @tiptap/starter-kit (17 file(s))\n\nEditor extension integrity check PASSED.\n"
+    },
+    "postIntegrationGate:design-system": {
+      "status": "pass",
+      "sha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+      "output": "[design-system] OK \u2014 no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.\n"
+    },
+    "postIntegrationGate:token-cascade": {
+      "status": "pass",
+      "sha256": "f3d8594f10e248823db6ce2b1d05c32ad7f70cf68ace812bb9c8057f8040439d",
+      "output": "  ok   client/src/concept2cure/_shared/components/EsignModal.css                        26/26    \n  ok   client/src/concept2cure/_shared/components/governed-confirm-dialog.css           24/24    \n  ok   client/src/concept2cure/components/ana/styles.module.css                         50/50    \n  ok   client/src/concept2cure/components/concept2cure-auth/styles.module.css           33/33    \n  ok   client/src/concept2cure/components/session/IdleSessionGuard.module.css           6/6      \n  ok   client/src/concept2cure/mdx/app.css                                              73/73    \n  ok   client/src/concept2cure/mdx/drafter.css                                          31/31    \n  ok   client/src/concept2cure/mdx/files-tree.css                                       24/24    \n  ok   client/src/concept2cure/mdx/pathway-tabs.css                                     35/35    \n  ok   client/src/concept2cure/pdev/app.css                                             51/51    \n  ok   client/src/concept2cure/quality/app.css                                          38/38    \n  ok   client/src/concept2cure/v2/styles/admin-access.css                               36/36    \n  ok   client/src/concept2cure/v2/styles/ana-v2.css                                     26/26    \n  ok   client/src/concept2cure/v2/styles/app-v2.css                                     57/57    \n  ok   client/src/concept2cure/v2/styles/auth-entry.css                                 32/32    \n  ok   client/src/concept2cure/v2/styles/authoring-v2.css                               52/52    \n  ok   client/src/concept2cure/v2/styles/commcenter-v2.css                              27/27    \n  ok   client/src/concept2cure/v2/styles/coverage-v2.css                                42/42    \n  ok   client/src/concept2cure/v2/styles/device-v2.css                                  36/36    \n  ok   client/src/concept2cure/v2/styles/discovery-onboarding.css                       7/7      \n  ok   client/src/concept2cure/v2/styles/ectd-v2.css                                    34/34    \n  ok   client/src/concept2cure/v2/styles/insights-v2.css                                29/29    \n  ok   client/src/concept2cure/v2/styles/intelligence-v2.css                            29/29    \n  ok   client/src/concept2cure/v2/styles/journey-v2.css                                 39/39    \n  ok   client/src/concept2cure/v2/styles/licensing-access-requests.css                  7/7      \n  ok   client/src/concept2cure/v2/styles/licensing-enforcement.css                      7/7      \n  ok   client/src/concept2cure/v2/styles/licensing-history.css                          5/5      \n  ok   client/src/concept2cure/v2/styles/misc-surfaces-v2.css                           38/38    \n  ok   client/src/concept2cure/v2/styles/onboarding-review.css                          22/22    \n  ok   client/src/concept2cure/v2/styles/project-home-v2.css                            34/34    \n  ok   client/src/concept2cure/v2/styles/protocol-dev-editing.css                       14/14    \n  ok   client/src/concept2cure/v2/styles/pyramid-v2.css                                 33/33    \n  ok   client/src/concept2cure/v2/styles/rbm-v2.css                                     36/36    \n  ok   client/src/concept2cure/v2/styles/redline.css                                    3/3      \n  ok   client/src/concept2cure/v2/styles/research-v2.css                                44/44    \n  ok   client/src/concept2cure/v2/styles/review-decision.css                            7/7      \n  ok   client/src/concept2cure/v2/styles/rich-section-editor.css                        18/18    \n  ok   client/src/concept2cure/v2/styles/submission-v2.css                              13/13    \n  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                41/41    \n  ok   client/src/concept2cure/v2/styles/translation-v2.css                             39/39    \n  ok   client/src/styles/projects-prototype.css                                         24/24    \n\n[token-cascade] PASS \u2014 all 41 stylesheets resolve cleanly.\n"
+    },
+    "postIntegrationGate:token-contrast": {
+      "status": "pass",
+      "sha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+      "output": "\u2705 token-contrast: 131 pairs checked \u2014 text \u2265 4.5:1, non-text \u2265 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.\n"
+    },
+    "postIntegrationGate:surface-text-ramp": {
+      "status": "pass",
+      "sha256": "74a9c4b2e91219da3a76fd0b0e78f763081fe31bc78f8849cfa85a32b0a20e08",
+      "output": "[ci:surface-text-ramp] OK \u2014 3 generated ramp sheet(s) match the stylesheets.\n"
+    },
+    "postIntegrationGate:sql-interpolation": {
+      "status": "pass",
+      "sha256": "23a753844f8f219ad46d50e8c25e2b283cc085bd73b535251faa646114aff747",
+      "output": "[ci:sql-interpolation] OK \u2014 no new value interpolated into SQL text. 1011 baselined interpolation(s) in 218 file(s); the baseline may only shrink.\n"
+    },
+    "postIntegrationGate:check-phantom-tokens": {
+      "status": "pass",
+      "sha256": "f39f1302a7dbdf7ebbd2e439408ef5e5283acedf5792b9c6d6af3351794eeaf3",
+      "output": "[ci:phantom-tokens] 9 phantom token(s) across 53 site(s) (baseline 9).\n[ci:phantom-tokens] OK \u2014 no new phantom tokens.\n"
+    }
+  },
+  "humanSession": "Not run; executable worksheet provided.",
+  "currentRoleFinding": {
+    "status": "resolved by following server increment",
+    "regression": {
+      "files": 18,
+      "passed": 291,
+      "singleRun": true,
+      "receipt": "current-role/post-sync-verification.json"
+    },
+    "sourcePins": [
+      {
+        "path": "server/services/c2c/program-access.ts",
+        "sha256": "d2d0dd697ea15fbfac097a5eb45b385562df6d9f35a30987ce8977c9231bfa81",
+        "match": true
+      },
+      {
+        "path": "server/services/authoring/authoring-permissions.ts",
+        "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+        "match": true
+      },
+      {
+        "path": "server/middleware/authoringObjectAuthorization.ts",
+        "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac",
+        "match": true
+      },
+      {
+        "path": "server/routes/authoring.router.ts",
+        "sha256": "4f999eda26c295f4fcf41657d7a95918b7ba5a7c7c5bb0d8c3435cb659446d2e",
+        "match": true
+      },
+      {
+        "path": "server/services/authoring/__tests__/authoring-current-role.test.ts",
+        "sha256": "7f7e177d0500eaf0412d82fd91b5af0d3a54969c88e31ddf745ebbbf04f75e85",
+        "match": true
+      },
+      {
+        "path": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+        "sha256": "ed67ce3d5d848806cd954266cb727ee352fb7bd2022fc8693e4e44c44f6a0fd7",
+        "match": true
+      },
+      {
+        "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+        "sha256": "cb6d5b8ca9d7490917eee3a7361788c37697268dd36979c24117d4337d5cfad9",
+        "match": true
+      }
+    ],
+    "policy": "Current read-only membership precedes durable object grants and stale token roles; same-account/same-org current identity supplies authority. Existing canonical role list and ACL/frozen/tenant restrictions retained."
+  },
+  "deployment": "None; local Codespaces workflow only.",
+  "integrationBase": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "integrationQualification": "Clean explicit-path stash/ff/pop to4997d35e; incoming452files, zero overlap with239taskpaths; no task stash remains. Own source hashes unchanged, affected UI/backend/native runtime and compiler/build replayed separately.",
+  "postIntegrationUi": {
+    "files": 4,
+    "passed": 130,
+    "durationSeconds": 44.12,
+    "receipt": "release-uiPostIntegration.txt"
+  },
+  "postIntegrationBuild": {
+    "status": "pass",
+    "durationSeconds": 41.7,
+    "receipt": "release-buildPostIntegration.txt",
+    "advisory": "Existing Vite chunk-size advisory retained."
+  },
+  "interactionSourceSha256": {
+    "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx": "13d852782f869eaaf81b2bb5ed12a88089ef3b0c9d5ecbdf307befc486d2abc7",
+    "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx": "46a0c14aa83125f876dffbdae36f44bf3439c1c2ef6c7cf29090db8f37a74f41",
+    "client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx": "8865a8fa94f73d30c33e90314dc9e8d7514472eabf7ffb649fbad79a1ec1401c",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "6d55f18aacf3cfe3b8683a7573338801e8dfbe323fbc393c0c577e65acbc8528",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx": "4e04ec13f1d2db962df4238f9cdce00a36901f94ac90eb17841bd1a9e93207f8",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "8746f8c0c65db27b724dcada76d51ee24c4c0a3cf361733b7f7d9d185283aded",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "ef3884db3e24de05b3ab5d53fcd74d0f95ce007fc604b720ac476c29beb93400",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs": "2f8bd1783309d7fe9b2ee5bb8298fccdfde92a2ca3107a0b4bd88e537c36c4bb",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs": "3456f0bab8f39b15b7fab47dd9adbd68c016b0471b181b03208736afc24c93bc",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/import-proof.mjs": "9ed9db4a434c8ebd487e4c185c8b04421c01066fa86cf096bd90767f95feb746",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/mock-api.mjs": "75087fda4fc247cfacbee2041e1efe8d3a4fa6110108fcbd7833ac8c608155a5",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx": "e7ea3eeebe14e838394770fb7c6f7a04bc9fc2a1fa016f1a7fc13f522e930605",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/server.mjs": "1e3a6138a10d75d201fde3e6558246e7cfeb0c1a39ca84bfbefedfbd370aaf43",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs": "e21596e17d99aac884c09587f4ec97b5c1825f8a497f97ab4a7bb774b7659671",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/visual-checks.mjs": "2c07fc6b5753491bd8bb4d2cacb8fdac5e900bcb6d01e619398cebd86d5b850f",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs": "93957225ea6775512ff488951995890868f0094557074122691da52909f34a02"
+  },
+  "postIntegrationWarningRatchet": {
+    "status": "pass",
+    "files": 21,
+    "netWarnings": -1,
+    "perFileWarningGrowth": 0,
+    "baselinesEdited": false,
+    "receipt": "release-warningRatchetPostIntegration.txt",
+    "rawSha256": "2dcdd2d78edd68999bf346069c7a56184977c39fe69f51fb2535c78091347937"
+  },
+  "firstPublication": {
+    "commit": "2df2adde85d0c83695f3090557f68151605d79ed",
+    "normalHooks": "passed",
+    "remote": "origin/concept2cure-v2",
+    "receipt": "first-increment-publication.txt",
+    "rawSha256": "ad06e70118127276ab33f24c2f9214e92e8d5bccd68fac14e4a022018b166a8c"
+  },
+  "realLocalRuntime": {
+    "node": "v22.23.3",
+    "base": "4997d35ebd6a17bfb33df7860195d832bc094921",
+    "requests": 115,
+    "templatesListed": 305,
+    "starts": 11,
+    "seededSections": 714,
+    "currentViewerDenials": {
+      "oldAdminJwt": 403,
+      "freshViewerJwt": 403,
+      "documentCountUnchanged": true,
+      "membershipRestored": true
+    },
+    "vault": {
+      "status": 201,
+      "downloadStatus": 200,
+      "bytes": 9151,
+      "sha256": "7eeb2ac57bad24282c8ebeee37cbe497828ff98ffaa9feac012cd17fe5289a3f",
+      "draftMarking": true,
+      "exactParagraph": true,
+      "approval": {
+        "carried": false,
+        "reason": "It is not approved in Authoring (status: draft)."
+      }
+    },
+    "runtimeRole": {
+      "role": {
+        "rolname": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false
+      },
+      "observedRequestConnections": [
+        {
+          "usename": "app_service",
+          "state": "active",
+          "wait_event_type": "Lock"
+        }
+      ],
+      "lockReleased": true
+    },
+    "cleanup": {
+      "serverStopped": true,
+      "ownContainerAndAnonymousVolumeRemoved": true,
+      "temporaryWrapperRemoved": true,
+      "ownProjectBytesRemoved": true
+    },
+    "readiness": {
+      "status": 503,
+      "failedDependencies": [
+        "ana"
+      ],
+      "anaState": "no_provider"
+    },
+    "scope": "Local editor API and working-draft Vault qualification. No human browser, provider-backed AnA, untrusted-upload scanner, deployment, submission or agency readiness claim.",
+    "receipt": "local-runtime/post-sync-node22/summary.json"
+  },
+  "secondPublication": {
+    "method": "Normal direct commit/push to concept2cure-v2; no PR, no hook bypass.",
+    "receipt": "Final commit and remote ancestry; no pre-publication claim of hook outcome."
+  }
+}

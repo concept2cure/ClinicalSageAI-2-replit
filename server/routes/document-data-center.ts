@@ -2,15 +2,27 @@
  * Document Data Center API Routes
  * Integrated file vault with 3-axis tagging for 510(k) submissions
  */
-import express from 'express';
-import documentDataCenterService from '../services/DocumentDataCenterService';
+import express, { type RequestHandler } from 'express';
+import { requireCurrentProjectActor, ProjectAdmissionRefusal } from './c2c/project-access';
+import documentDataCenterService, { DocumentDataCenterRefusal } from '../services/DocumentDataCenterService';
 const router = express.Router();
+
+// Resolve membership before receiving bytes; a stale JWT must not author a
+// new organisation-scoped document or mutate its metadata.
+const requireContentWriter: RequestHandler = async (req, res, next) => {
+  try { await requireCurrentProjectActor(req, true); next(); }
+  catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) { res.status(error.status).json({ error: error.message, code: error.code }); return; }
+    res.status(503).json({ error: 'Current document access could not be verified.' });
+  }
+};
 
 // Reference data initialization will happen on-demand per tenant
 // when they first access the Document Data Center
 
 // Upload document with AI tagging
 router.post('/upload', 
+  requireContentWriter,
   documentDataCenterService.getUploadMiddleware(),
   async (req, res) => {
     try {
@@ -97,10 +109,11 @@ router.post('/search/deep', async (req, res) => {
 });
 
 // Update document tags
-router.patch('/files/:id/tags', async (req, res) => {
+router.patch('/files/:id/tags', requireContentWriter, async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-    const documentId = parseInt(req.params.id);
+    const documentId = Number(req.params.id);
+    if (!Number.isSafeInteger(documentId) || documentId<=0) return res.status(400).json({error:'Invalid document id'});
     // SECURITY (21 CFR Part 11): the actor recorded against this tag mutation
     // must come from the verified JWT, never from a client-supplied header.
     const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
@@ -119,6 +132,7 @@ router.patch('/files/:id/tags', async (req, res) => {
 
     res.json(result);
   } catch (error) {
+    if (error instanceof DocumentDataCenterRefusal) return res.status(404).json({error:'Document not found'});
     console.error('Error updating tags:', error);
     res.status(500).json({ error: 'Failed to update document tags' });
   }

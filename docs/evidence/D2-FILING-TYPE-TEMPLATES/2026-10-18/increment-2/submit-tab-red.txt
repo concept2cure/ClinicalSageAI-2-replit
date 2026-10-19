@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx > the Submit tab of a filing document class project > offers no market, no compile and no readiness, and says why in the platform's terms 308ms
+   → expected <button type="button" …(1)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx > the Submit tab of a filing document class project > an application project keeps its doors 85ms
+ × client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx > the Submit tab of a filing document class project > the status line does not promise a market to a class project 17ms
+   → expected 'No market yetNo document in review' to contain 'Authored here, not sequenced'
+ × client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx > the Submit tab of a filing document class project > a class is named by its label, never its key 2ms
+   → expected 'pas' to be 'Prior Approval Supplement' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/documentClassSubmitTab.test.tsx > Submission Readiness on a filing document class project > says there is nothing to gate, and never tells it to create a submission 5025ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to contain 'Nothing to gate for VX-9 PAS'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

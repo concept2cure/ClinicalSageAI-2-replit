@@ -1,0 +1,168 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T23:44:35.944Z","pid":71933,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T23:44:35.952Z","pid":71933,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T23:44:35.952Z","pid":71933,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts
+[database] Database connection successful { timestamp: '2026-10-13T23:44:37.376Z', poolSize: 1 }
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts
+[database] Database connection successful
+
+stderr | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts
+[database] Database connection successful { timestamp: '2026-10-13T23:44:41.991Z', poolSize: 2 }
+
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > actual authenticated native controls > proves actual runtime app_service, non-owner NOSUPERUSER/NOBYPASSRLS and FORCE RLS 4ms
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > actual authenticated native controls > proves the same real sharing policy admits public/owner/member and refuses an unassigned private actor 20ms
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > actual authenticated native controls > serves the authorized public document search and relationship to an actor with both parents
+[database] Database connection successful { timestamp: '2026-10-13T23:44:42.325Z', poolSize: 3 }
+
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > actual authenticated native controls > serves authorized public, private owner and explicitly assigned member detail through real authentication 101ms
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > actual authenticated native controls > serves the authorized public document search and relationship to an actor with both parents 61ms
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses an unassigned actor before private project metadata 38ms
+   → {"id":"aca0bb82-d5fe-4ce9-9706-0e7f0db5fb68","code":"NQA-aca0bb82-privateA","name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateA QA project","program_type":"IND","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"Invented QA product","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":[],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":43,"team_members":[],"created_at":"2026-10-13T23:44:36.539Z","updated_at":"2026-10-13T23:54:36.539Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 404 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses an unassigned actor before private Vault snippets or identity 22ms
+   → {"success":true,"data":{"query":"parentqadc07446334c2488181db7c9c0acb19a6","total":1,"limit":25,"offset":0,"includeSuperseded":false,"results":[{"id":"7be2fd97-43e5-4b0b-9f4c-1a87cc8b0013","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateA QA document","fileName":"privateA.txt","documentType":"REPORT","size":"—","folderId":null,"ctdSection":null,"placementStatus":"unfiled","version":"1.0","current":true,"originalFileAvailable":true,"disposition":null,"snippet":"<b>parentqadc07446334c2488181db7c9c0acb19a6</b> privateA: invented parent access QA data, not clinical evidence"}]}}: expected 200 to be 404 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > pages the accessible portfolio rather than a newer private project 23ms
+   → {"data":[{"id":"99b17716-6fd9-406c-8824-b4b0c3874bc0","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project","ws":"Biotech","code":"NQA-99b17716-privateB","stage":"Planning","readiness":null,"status":"active","lead":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 ownerB","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 14"}],"meta":{"count":1,"limit":1,"offset":0,"hasMore":true}}: expected '99b17716-6fd9-406c-8824-b4b0c3874bc0' to be '42c80a0c-33c9-4873-b763-722aeaf3fb2a' // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > counts and pages only accessible library documents 18ms
+   → {"success":true,"data":{"query":"parentqadc07446334c2488181db7c9c0acb19a6","total":4,"limit":1,"offset":0,"includeSuperseded":false,"results":[{"originalFileAvailable":true,"disposition":null,"id":"909054f7-6920-42b8-8e63-e481ce6321d5","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA document","fileName":"privateB.txt","documentType":"REPORT","sizeBytes":null,"folderId":null,"ctdSection":null,"placementStatus":"unfiled","version":"1.0","current":true,"snippet":"<b>parentqadc07446334c2488181db7c9c0acb19a6</b> privateB: invented parent access QA data, not clinical evidence","program":{"id":"99b17716-6fd9-406c-8824-b4b0c3874bc0","name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project"},"size":"—"}]}}: expected 4 to be 1 // Object.is equality
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > rechecks current organization membership for a previously authenticated public reader 39ms
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > denies a now-viewer lead mutation despite the retained member JWT and lead identity 28ms
+   → {"ok":true,"projectId":"5cf713e8-a0c5-4489-9217-deaec96a21bd"}: expected 200 to be 403 // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > does not return a private counterpart from an accessible public document relationship 23ms
+   → expected '{"success":true,"data":{"relationship…' not to contain '909054f7-6920-42b8-8e63-e481ce6321d5'
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses a privately bound source selected into an owned target through conversation adoption 229ms
+   → {"status":201,"body":{"adopted":true,"sourceId":4,"processed":true},"before":0,"after":1}: expected [ 403, 404, 409 ] to include 201
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses an unassigned actor before private project metadata
+AssertionError: {"id":"aca0bb82-d5fe-4ce9-9706-0e7f0db5fb68","code":"NQA-aca0bb82-privateA","name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateA QA project","program_type":"IND","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"Invented QA product","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":[],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":43,"team_members":[],"created_at":"2026-10-13T23:44:36.539Z","updated_at":"2026-10-13T23:54:36.539Z","application_number":null,"product_type":"drug","device_class":null,"regulatory_path":null,"product_code":null,"sponsor_name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2","predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessAsOf":null}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:153:59
+    151|   it('refuses an unassigned actor before private project metadata',asy…
+    152|     const response = await get(actors.unassigned,`/api/c2c/projects/${…
+    153|     expect(response.status,JSON.stringify(response.body)).toBe(404);
+       |                                                           ^
+    154|   });
+    155|   it('refuses an unassigned actor before private Vault snippets or ide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses an unassigned actor before private Vault snippets or identity
+AssertionError: {"success":true,"data":{"query":"parentqadc07446334c2488181db7c9c0acb19a6","total":1,"limit":25,"offset":0,"includeSuperseded":false,"results":[{"id":"7be2fd97-43e5-4b0b-9f4c-1a87cc8b0013","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateA QA document","fileName":"privateA.txt","documentType":"REPORT","size":"—","folderId":null,"ctdSection":null,"placementStatus":"unfiled","version":"1.0","current":true,"originalFileAvailable":true,"disposition":null,"snippet":"<b>parentqadc07446334c2488181db7c9c0acb19a6</b> privateA: invented parent access QA data, not clinical evidence"}]}}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:157:59
+    155|   it('refuses an unassigned actor before private Vault snippets or ide…
+    156|     const response = await get(actors.unassigned,`/api/c2c/project-vau…
+    157|     expect(response.status,JSON.stringify(response.body)).toBe(404);
+       |                                                           ^
+    158|   });
+    159|   it('pages the accessible portfolio rather than a newer private proje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > pages the accessible portfolio rather than a newer private project
+AssertionError: {"data":[{"id":"99b17716-6fd9-406c-8824-b4b0c3874bc0","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project","ws":"Biotech","code":"NQA-99b17716-privateB","stage":"Planning","readiness":null,"status":"active","lead":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 ownerB","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 14"}],"meta":{"count":1,"limit":1,"offset":0,"hasMore":true}}: expected '99b17716-6fd9-406c-8824-b4b0c3874bc0' to be '42c80a0c-33c9-4873-b763-722aeaf3fb2a' // Object.is equality
+
+Expected: "42c80a0c-33c9-4873-b763-722aeaf3fb2a"
+Received: "99b17716-6fd9-406c-8824-b4b0c3874bc0"
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:162:69
+    160|     const response = await get(actors.unassigned,'/api/c2c/projects?li…
+    161|     expect(response.status,JSON.stringify(response.body)).toBe(200);
+    162|     expect(response.body.data[0]?.id,JSON.stringify(response.body)).to…
+       |                                                                     ^
+    163|     expect(response.body.meta.hasMore).toBe(false);
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > counts and pages only accessible library documents
+AssertionError: {"success":true,"data":{"query":"parentqadc07446334c2488181db7c9c0acb19a6","total":4,"limit":1,"offset":0,"includeSuperseded":false,"results":[{"originalFileAvailable":true,"disposition":null,"id":"909054f7-6920-42b8-8e63-e481ce6321d5","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA document","fileName":"privateB.txt","documentType":"REPORT","sizeBytes":null,"folderId":null,"ctdSection":null,"placementStatus":"unfiled","version":"1.0","current":true,"snippet":"<b>parentqadc07446334c2488181db7c9c0acb19a6</b> privateB: invented parent access QA data, not clinical evidence","program":{"id":"99b17716-6fd9-406c-8824-b4b0c3874bc0","name":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project"},"size":"—"}]}}: expected 4 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 4
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:168:68
+    166|     const response = await get(actors.unassigned,`/api/c2c/project-vau…
+    167|     expect(response.status,JSON.stringify(response.body)).toBe(200);
+    168|     expect(response.body.data.total,JSON.stringify(response.body)).toB…
+       |                                                                    ^
+    169|     expect(response.body.data.results[0]?.id).toBe(programs.public.doc…
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > denies a now-viewer lead mutation despite the retained member JWT and lead identity
+AssertionError: {"ok":true,"projectId":"5cf713e8-a0c5-4489-9217-deaec96a21bd"}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:183:59
+    181|     await owner.query("UPDATE organization_users SET role='viewer' WHE…
+    182|     const response = await post(actors.downgraded,`/api/c2c/projects/$…
+    183|     expect(response.status,JSON.stringify(response.body)).toBe(403);
+       |                                                           ^
+    184|   });
+    185|   it('does not return a private counterpart from an accessible public …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > does not return a private counterpart from an accessible public document relationship
+AssertionError: expected '{"success":true,"data":{"relationship…' not to contain '909054f7-6920-42b8-8e63-e481ce6321d5'
+
+Expected: "909054f7-6920-42b8-8e63-e481ce6321d5"
+Received: "{"success":true,"data":{"relationships":[{"id":"71be380e-1084-4279-9f4c-c5b401ef3b0f","type":"references","direction":"outgoing","label":"References","note":"Native QA relationship; both source parents are available to this fixture actor.","createdAt":"2026-10-13T23:44:42.066Z","createdBy":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 ownerB","other":{"documentId":"909054f7-6920-42b8-8e63-e481ce6321d5","title":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA document","version":"1.0","documentType":"REPORT","programId":"99b17716-6fd9-406c-8824-b4b0c3874bc0","programName":"native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project","superseded":false}}]}}"
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:188:47
+    186|     const response = await get(actors.unassigned,`/api/c2c/project-vau…
+    187|     expect(response.status,JSON.stringify(response.body)).toBe(200);
+    188|     expect(JSON.stringify(response.body)).not.toContain(programs.priva…
+       |                                               ^
+    189|     expect(JSON.stringify(response.body)).not.toContain(programs.priva…
+    190|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts > expected parent privacy behavior — evidence baseline before repair > refuses a privately bound source selected into an owned target through conversation adoption
+AssertionError: {"status":201,"body":{"adopted":true,"sourceId":4,"processed":true},"before":0,"after":1}: expected [ 403, 404, 409 ] to include 201
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts:195:100
+    193|     const response = await post(actors.ownerA,`/api/c2c/projects/${pro…
+    194|     const after = (await owner.query('SELECT count(*)::int AS n FROM c…
+    195|     expect([403,404,409],JSON.stringify({status:response.status,body:r…
+       |                                                                                                    ^
+    196|     expect(after).toBe(before);
+    197|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  23:44:31
+   Duration  11.64s (transform 6.24s, setup 73ms, import 4.58s, tests 6.61s, environment 0ms)

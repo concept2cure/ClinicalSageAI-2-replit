@@ -13,7 +13,7 @@
  * @module server/routes/c2c/exports
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
@@ -27,6 +27,7 @@ import {
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
   type ExportGovernance,
 } from '../../services/export/exportReviewGate';
 import { createScopedLogger } from '../../utils/logger';
@@ -37,12 +38,15 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor, verifyProjectAccess } from './project-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { setAuditRowHeaders } from '../../services/audit/audit-write-outcome';
 import { clientIpKey } from '../../utils/client-ip';
 import { resolveDocumentPath } from '../../utils/document-file-roots';
 import {
@@ -59,6 +63,18 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+router.param('projectId', projectAdmissionMiddleware({ forWrite: false }));
+function exportActorAdmission(forWrite: boolean): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      await requireCurrentProjectActor(req, forWrite);
+      next();
+    } catch (error) {
+      const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current organization access could not be verified. Nothing was changed.');
+      sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+    }
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DOCX EXPORT FOR CHAT ARTIFACTS
@@ -89,12 +105,21 @@ function validateExportGovernance(req: Request, res: Response): ExportGovernance
  * routes produce gets an EXPORT_GENERATED audit row carrying the SHA-256 of the
  * exact bytes delivered, and is not delivered when that row does not persist.
  * Until then they returned the file and recorded nothing
- * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/).
+ * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/). 2026-10-15: the row also
+ * records the review assertion that passed the gate, which was recorded
+ * nowhere — as an assertion, with the user who made it.
  */
 async function deliverRecordedExport(
   req: Request,
   res: Response,
-  file: { buffer: Buffer; mimeType: string; filename: string; sourceType: ExportSourceType; title: string },
+  file: {
+    buffer: Buffer;
+    mimeType: string;
+    filename: string;
+    sourceType: ExportSourceType;
+    title: string;
+    governance: ExportGovernance;
+  },
 ): Promise<void> {
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
@@ -110,7 +135,7 @@ async function deliverRecordedExport(
       filename: file.filename,
       mimeType: file.mimeType,
       buffer: file.buffer,
-      metadata: { title: file.title },
+      metadata: { title: file.title, reviewAttestation: exportReviewAttestation(file.governance, userId) },
     });
   } catch (err) {
     if (isUnauditedExportRefusal(err)) {
@@ -126,7 +151,7 @@ async function deliverRecordedExport(
  * Generate a DOCX file from title + content and return as a download.
  * Used by the Copilot to export AI-generated documents.
  */
-router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
+router.post('/artifacts/export-docx', exportActorAdmission(true), async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       title: z.string().min(1).max(500),
@@ -148,6 +173,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.docx`,
       sourceType: 'export_docx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -166,7 +192,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
  * POST /api/concept2cure/artifacts/export-pdf
  * Generate a PDF from artifact content
  */
-router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
+router.post('/artifacts/export-pdf', exportActorAdmission(true), async (req: Request, res: Response) => {
   // Validate input
   const { title, content } = req.body;
   if (!title || !content) {
@@ -389,6 +415,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       filename: `${safeTitle}.pdf`,
       sourceType: 'export_pdf',
       title: String(title),
+      governance,
     });
   } catch (error: any) {
     logger.error('Failed to export PDF', { error: error.message });
@@ -405,45 +432,33 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
  * Generate a PowerPoint presentation from title + content and return as a download.
  * Used by AnA to export AI-generated presentations, training decks, and briefings.
  */
-router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
+router.post('/artifacts/export-pptx', exportActorAdmission(true), async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
-      nanoBanana: z.boolean().optional(), // opt-in to Nano Banana cover image
+      nanoBanana: z.boolean().optional(), // refused below
     });
     const { title, content, nanoBanana } = schema.parse(req.body);
+    // Refused (2026-10-15). With Nano Banana configured, this flag replaced the
+    // export with generatePresentation({ topic: title }): a deck the model wrote
+    // from the title alone, without this content or EXPORT_REVIEW_NOTICE, its
+    // cover image never put in the file. It was delivered and recorded as this
+    // artifact's export. A generated deck is POST /api/nano-banana/presentation.
+    if (nanoBanana) {
+      return sendError(
+        res,
+        422,
+        'nanoBanana is not available on an export: Nano Banana writes its own slides from the title, ' +
+          'so the file would not be this content. Send the export without it; a generated deck is ' +
+          'POST /api/nano-banana/presentation.',
+        undefined,
+        'NANO_BANANA_NOT_AN_EXPORT'
+      );
+    }
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
     const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
-
-    // If Nano Banana is enabled and configured, generate the full presentation with cover
-    if (nanoBanana) {
-      try {
-        const { isConfigured, generatePresentation } = await import(
-          '../../services/nanoBananaService'
-        );
-        if (isConfigured()) {
-          const result = await generatePresentation({
-            topic: title,
-            slideCount: Math.min(exportBody.split(/\n---\n/).length || 6, 12),
-            audience: 'scientific',
-            generateImages: true,
-          });
-          const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          return await deliverRecordedExport(req, res, {
-            buffer: result.pptxBuffer,
-            mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            filename: `${safeFilename}.pptx`,
-            sourceType: 'export_pptx',
-            title,
-          });
-        }
-      } catch (nbErr: any) {
-        // Fall through to standard PPTX generation
-        console.warn('[pptx-export] Nano Banana enhancement failed, falling back:', nbErr.message);
-      }
-    }
 
     const { generatePptxBuffer } = await import('../../services/pptxGenerator');
     const buffer = await generatePptxBuffer(title, exportBody);
@@ -455,6 +470,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.pptx`,
       sourceType: 'export_pptx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -467,11 +483,11 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
 
 /* ── Download of a rendered file ──────────────────────────────────────────── */
 
-router.get('/documents/download/:filename', async (req: Request, res: Response) => {
+router.get('/documents/download/:filename', exportActorAdmission(false), async (req: Request, res: Response) => {
   try {
     // ── Export role check ───────────────────────────────────────────
     const exportRole = (req.userRole || 'user').toLowerCase();
-    const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(exportRole);
+    const canExport = GOVERNED_WRITE_ROLES.has(exportRole);
     if (!canExport) {
       return sendError(res, 403, 'Your role does not permit document exports');
     }
@@ -519,7 +535,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       .createHash('sha256')
       .update(`${safe}:${fileStat.size}:${fileStat.mtimeMs}`)
       .digest('hex');
-    await logAuditEntry(req, 'EXPORT', 'artifact', safe, null, {
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'artifact', safe, null, {
       filename: safe,
       fileSize: fileStat.size,
       exportHash,
@@ -527,6 +543,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       exportedBy: req.userEmail || 'unknown',
       exportedByRole: req.userRole || 'user',
     });
+    setAuditRowHeaders(res, auditTrailFromEntry(auditOutcome));
 
     // ── Provenance: record export event ───────────────────────────────
     try {
@@ -735,13 +752,13 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     };
 
     // Audit trail
-    await logAuditEntry(req, 'EXPORT', 'submission_package', String(projectDbId), null, {
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'submission_package', String(projectDbId), null, {
       readinessPercent,
       eligibleCount,
       totalArtifacts,
     });
 
-    return sendSuccess(res, manifest);
+    return sendSuccess(res, manifest, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logConcept2cureError('submission package export', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to generate submission package');

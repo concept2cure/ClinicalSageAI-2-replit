@@ -1,0 +1,88 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 119ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ × client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives 58ms
+   → expected null to be 'replacement-access' // Object.is equality
+ × client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled 3ms
+   → expected 'Bearer replacement-access' to be 'Bearer access-1' // Object.is equality
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > still revokes the settled rotated pair when the original session remains current 1ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 22ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 3ms
+ × client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old SESSION_IDLE answer 61ms
+   → expected null to match object { id: '9', organizationId: '7' }
+ × client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old AUTH_002 answer 55ms
+   → expected null to match object { id: '9', organizationId: '7' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives
+AssertionError: expected null to be 'replacement-access' // Object.is equality
+
+- Expected:
+"replacement-access"
+
++ Received:
+null
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:152:52
+    150|     expect((logoutCall()!.init.headers as Record<string, string>).Auth…
+    151|     expect(bodyOf(logoutCall())).toEqual({ terminateAllSessions: false…
+    152|     expect(localStorage.getItem(KEYS.accessToken)).toBe('replacement-a…
+       |                                                    ^
+    153|     expect(localStorage.getItem(KEYS.refreshToken)).toBe('replacement-…
+    154|     expect(svc.getUser()).toMatchObject({ id: '9', organizationId: '7'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled
+AssertionError: expected 'Bearer replacement-access' to be 'Bearer access-1' // Object.is equality
+
+Expected: "Bearer access-1"
+Received: "Bearer replacement-access"
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:172:82
+    170|     finish(okJson({ accessToken: 'late-old-access', refreshToken: 'lat…
+    171|     await signingOut;
+    172|     expect((logoutCall()!.init.headers as Record<string, string>).Auth…
+       |                                                                                  ^
+    173|     expect(bodyOf(logoutCall())).toEqual({ terminateAllSessions: false…
+    174|     expect(localStorage.getItem(KEYS.accessToken)).toBe('replacement-a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old SESSION_IDLE answer
+ FAIL  client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old AUTH_002 answer
+AssertionError: expected null to match object { id: '9', organizationId: '7' }
+
+- Expected:
+{
+  "id": "9",
+  "organizationId": "7",
+}
+
++ Received:
+null
+
+ ❯ client/src/services/portal/__tests__/authService-session-end.test.ts:133:35
+    131|     finish(jsonResponse(401, { error: { code, message: 'Old session re…
+    132|     expect((await request).success).toBe(false);
+    133|     expect(authService.getUser()).toMatchObject({ id: '9', organizatio…
+       |                                   ^
+    134|     expect(localStorage.getItem(KEYS.accessToken)).toBe('replacement-a…
+    135|     expect(localStorage.getItem(KEYS.refreshToken)).toBe('replacement-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 10 passed (14)
+   Start at  05:10:34
+   Duration  2.06s (transform 202ms, setup 213ms, import 60ms, tests 348ms, environment 1.07s)
+

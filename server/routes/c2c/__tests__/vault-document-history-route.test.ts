@@ -18,7 +18,19 @@ vi.mock('../../../db.js', () => ({
 vi.mock('../../audit-trail-ledger.routes.js', () => ({ readRecordAuditHistory }));
 vi.mock('../../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization, and every
+   /:documentId on the document being this organization's (read on the request's
+   own connection). Its program reads are answered from seats
+   (support/current-member.ts); an unseated caller is refused as the real gate
+   refuses. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../project-vault';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOC = '22222222-2222-4222-8222-222222222222';
@@ -28,6 +40,8 @@ function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3 };
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -43,12 +57,18 @@ const familyRows = [
 ];
 const verdict = { store: 'audit_logs', ok: true, rowsChecked: 3, legacyRows: 0, sequencedRows: 3 };
 
+/** The document row as vault.documents holds it: it names its organization. */
+const docRow = { id: DOC, organization_id: 7 };
+
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, 3, 'member');
+  seatProgram(7, PROGRAM);
   query.mockImplementation(async (sql: string) =>
     /WITH RECURSIVE/.test(sql) ? { rows: familyRows }
     : /FROM regulatory_programs/.test(sql) && !/vault\.documents/.test(sql) ? { rows: [{ id: PROGRAM }] }
-    : /FROM vault\.documents/.test(sql) ? { rows: [{ id: DOC }] }
+    : /FROM vault\.documents/.test(sql) ? { rows: [docRow] }
     : { rows: [] });
   clientQuery.mockResolvedValue({ rows: [] });
   readRecordAuditHistory.mockResolvedValue({ data: [entry], meta: { chain: verdict } });
@@ -72,7 +92,7 @@ describe('document history route', () => {
   it('reads its own trail when it has no live family (a deleted version)', async () => {
     query.mockImplementation(async (sql: string) =>
       /WITH RECURSIVE/.test(sql) ? { rows: [] }
-      : /FROM vault\.documents/.test(sql) ? { rows: [{ id: DOC }] }
+      : /FROM vault\.documents/.test(sql) ? { rows: [docRow] }
       : { rows: [{ id: PROGRAM }] });
     const res = await request(app()).get(url);
     expect(res.status).toBe(200);

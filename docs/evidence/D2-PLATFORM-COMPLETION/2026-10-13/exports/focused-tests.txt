@@ -1,0 +1,170 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+··················stderr | server/middleware/__tests__/sanitizeInputOrdering.test.ts > sanitizeInput in the correct (post-parser) order > drops prototype-pollution keys from a real JSON body
+[SECURITY] Blocked prototype pollution attempt: __proto__
+[SECURITY] Blocked prototype pollution attempt: constructor
+[SECURITY] Blocked prototype pollution attempt: prototype
+
+stderr | server/middleware/__tests__/sanitizeInputOrdering.test.ts > sanitizeInput in the correct (post-parser) order > scrubs query parameters regardless of body-parser position (Express 5 getter-backed req.query)
+[SECURITY] Blocked prototype pollution attempt: constructor
+
+···stdout | server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountConcept2cureBodyParser scrubs the parsed Concept2Cure body
+{
+  "timestamp": "2026-10-13T18:59:46.877Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T18:59:46.878Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountConcept2cureBodyParser scrubs the parsed Concept2Cure body
+{
+  "timestamp": "2026-10-13T18:59:46.878Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountConcept2cureBodyParser scrubs the parsed Concept2Cure body
+[database] Database connection successful
+
+stderr | server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountConcept2cureBodyParser scrubs the parsed Concept2Cure body
+[SECURITY] Blocked prototype pollution attempt: __proto__
+[SECURITY] Blocked prototype pollution attempt: constructor
+[SECURITY] Blocked prototype pollution attempt: prototype
+
+stderr | server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountPreAuthBodyParsers followed by the step-6b sanitizeInput mount scrubs /api bodies
+[SECURITY] Blocked prototype pollution attempt: __proto__
+[SECURITY] Blocked prototype pollution attempt: constructor
+[SECURITY] Blocked prototype pollution attempt: prototype
+
+··stdout | server/startup/__tests__/pre-auth-body-limit.test.ts
+{
+  "timestamp": "2026-10-13T18:59:50.679Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T18:59:50.680Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/startup/__tests__/pre-auth-body-limit.test.ts
+{
+  "timestamp": "2026-10-13T18:59:50.681Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/startup/__tests__/pre-auth-body-limit.test.ts
+[database] Database connection successful
+
+·stderr | server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > a signed-in body is scrubbed of prototype pollution after it is parsed
+[SECURITY] Blocked prototype pollution attempt: __proto__
+
+···stderr | server/startup/__tests__/pre-auth-body-limit.test.ts > the retained report conversion parser is bounded and authenticated > accepts a signed-in multilingual snapshot above the generic limit and scrubs its envelope
+[SECURITY] Blocked prototype pollution attempt: __proto__
+
+···stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-13T18:59:55.762Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T18:59:55.763Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-13T18:59:55.763Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection successful
+
+····stderr | server/routes/__tests__/audit-compliance-reports.test.ts > POST /api/audit/reports/convert — a saved sealed snapshot > refuses release when the conversion cannot be recorded
+[audited-export] export not recorded: audit write unavailable
+
+······stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-13T19:00:00.049Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+··········stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-13T19:00:00.114Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+··························stdout | server/services/audit/compliance-reports/__tests__/signed-report.test.ts
+{
+  "timestamp": "2026-10-13T19:00:04.825Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:00:04.828Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/signed-report.test.ts
+{
+  "timestamp": "2026-10-13T19:00:04.829Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+····················
+
+ Test Files  8 passed (8)
+      Tests  96 passed (96)
+   Start at  18:59:15
+   Duration  54.22s (transform 10.00s, setup 745ms, import 19.81s, tests 29.47s, environment 1ms)

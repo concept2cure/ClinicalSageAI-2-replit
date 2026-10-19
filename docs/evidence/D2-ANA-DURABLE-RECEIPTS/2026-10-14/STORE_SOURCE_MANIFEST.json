@@ -1,0 +1,60 @@
+{
+  "runtime": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+  "testClaim": "60/60 focused controls across two suites; controlled sequential query/policy fixtures, no real PostgreSQL claim",
+  "tests": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/source-admission-receipt-store.test.ts",
+    "server/services/ana/__tests__/source-admission-receipt-history.test.ts",
+    "--config",
+    "vitest.config.ts"
+  ],
+  "typecheck": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/owned-target-typecheck.cjs",
+    "server/services/ana/source-admission-receipt-store.ts",
+    "server/services/ana/source-admission-receipt-history.ts",
+    "server/services/ana/__tests__/source-admission-receipt-store.test.ts",
+    "server/services/ana/__tests__/source-admission-receipt-history.test.ts"
+  ],
+  "lint": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/ana/source-admission-receipt-store.ts",
+    "server/services/ana/source-admission-receipt-history.ts",
+    "server/services/ana/__tests__/source-admission-receipt-store.test.ts",
+    "server/services/ana/__tests__/source-admission-receipt-history.test.ts",
+    "--format",
+    "json"
+  ],
+  "failFirst": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/legacy-gap.vitest.config.ts"
+  ],
+  "ownedFiles": [
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "bytes": 6248,
+      "sha256": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9"
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-history.ts",
+      "bytes": 7493,
+      "sha256": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf"
+    },
+    {
+      "path": "server/services/ana/__tests__/source-admission-receipt-store.test.ts",
+      "bytes": 8718,
+      "sha256": "14d2429716229644ed75ce129663a7f197b1b49b5bb3d8930d6c1fad6ea9ac86"
+    },
+    {
+      "path": "server/services/ana/__tests__/source-admission-receipt-history.test.ts",
+      "bytes": 8591,
+      "sha256": "c5883c8cf6fe88e5420690c27248b006944a556f6b0fd876bd534c6dee3c5cc5"
+    }
+  ]
+}

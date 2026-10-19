@@ -41,6 +41,8 @@ vi.mock('../../services/part11/resolve-signer-role.js', () => ({ resolveSignerOr
  */
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+  GOVERNED_WRITE_ROLES: new Set(['owner','admin','approver','reviewer']),
   invalidateOrgMembershipCache: () => undefined,
 }));
 

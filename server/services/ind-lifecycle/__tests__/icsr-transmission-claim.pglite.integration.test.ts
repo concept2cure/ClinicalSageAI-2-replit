@@ -30,6 +30,8 @@
  * FAERS send. Pinned below: 'transmission_unconfirmed' every time.
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import type { MtlsPki, MtlsServer } from '../../submission-gateways/__tests__/support/mtls-pki';
 
@@ -41,6 +43,7 @@ vi.mock('../../audit/audit-write-outcome', () => ({
 
 import { makeMtlsPki, startMtlsServer } from '../../submission-gateways/__tests__/support/mtls-pki';
 import { busyLoop, startSeparateProcessServer } from '../../submission-gateways/__tests__/support/separate-process-tls-server';
+import { as2CmsFixture, receiptReport } from '../../submission-gateways/__tests__/support/as2-cms-fixture';
 import type { IcsrGatewayConfig } from '../icsr-gateway-transport';
 import { transmitIcsrTransmission, IcsrTransmissionError } from '../ind-icsr-transmission-persistence';
 
@@ -51,6 +54,7 @@ const MESSAGE = '<?xml version="1.0" encoding="UTF-8"?>\n<ichicsrMessage><M.1.1>
 let harness: IndPgliteDb;
 let pki: MtlsPki;
 let server: MtlsServer;
+let cmsFixture: ReturnType<typeof as2CmsFixture>;
 let rowId: string;
 
 const as2Config = (client: 'trusted' | 'rogue' = 'trusted'): IcsrGatewayConfig => ({
@@ -58,7 +62,9 @@ const as2Config = (client: 'trusted' | 'rogue' = 'trusted'): IcsrGatewayConfig =
   username: 'SPONSOR-AS2',
   certPath: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
   keyPath: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
-  agencyCertPath: pki.paths.ca,
+  agencyCertPath: join(cmsFixture.directory, 'agency.pem'),
+  mdnCertPath: join(cmsFixture.directory, 'agency.pem'),
+  tlsCaPath: pki.paths.ca,
   as2To: 'FDA-FAERS',
   protocol: 'as2',
 });
@@ -72,19 +78,25 @@ const statusOf = async (): Promise<{ status: string; transport_receipt_id: strin
 const transmit = (config: IcsrGatewayConfig) => transmitIcsrTransmission(rowId, ctx, { config }).catch((e: unknown) => e);
 
 const acceptingMdn: MtlsServer['respond'] = (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'message/disposition-notification', 'Message-ID': '<mdn-icsr@FDA>' });
-  res.end(`Original-Message-ID: ${String(req.headers['message-id'])}\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n`);
+  const entity = cmsFixture.roundtrip(req.body, 'agency', pki.clientCertPem);
+  expect(entity.includes(Buffer.from(MESSAGE))).toBe(true);
+  const mic = createHash('sha256').update(entity).digest('base64');
+  const receipt = cmsFixture.signedReceipt(receiptReport(String(req.headers['message-id']), mic));
+  res.writeHead(200, { 'Content-Type': receipt.contentType, 'Message-ID': '<mdn-icsr@FDA>' });
+  res.end(receipt.body);
 };
 
 beforeAll(async () => {
   harness = await createIndPgliteDb();
   holder.db = harness.db;
   pki = makeMtlsPki();
+  cmsFixture = as2CmsFixture();
   server = await startMtlsServer(pki);
 }, 60_000);
 afterAll(async () => {
   await server.close();
   pki.cleanup();
+  cmsFixture.cleanup();
   await harness.close();
 });
 beforeEach(async () => {

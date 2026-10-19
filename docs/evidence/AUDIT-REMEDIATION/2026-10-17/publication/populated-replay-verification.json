@@ -1,0 +1,111 @@
+{
+  "database": "c2c_audit_oct17_final_tls",
+  "verified": true,
+  "migrationCount": 408,
+  "tables": [
+    {
+      "table": "public.audit_logs",
+      "retainedRows": 71,
+      "sha256": "3c715e14057b61e6ae4d59f5d5be8b03a95cbd8f5f49b144b8de87b9940e615e",
+      "unchanged": true
+    },
+    {
+      "table": "audit.tamper_proof_log",
+      "retainedRows": 4,
+      "sha256": "40fd647e9c967e89a40209526959904df8be849c1b584549d88e52444bedf1f7",
+      "unchanged": true
+    },
+    {
+      "table": "public.ana_source_read_receipts",
+      "retainedRows": 5,
+      "sha256": "c72f685cc70e4b6acf3ec751d28a57d83f3fb41e713f2e85aff7cea30eb5765e",
+      "unchanged": true
+    },
+    {
+      "table": "public.cre_evidence_sources",
+      "retainedRows": 467,
+      "sha256": "fb77638cb7f11664bd37f262ea5f6501bb236a32d5046960edb6adfd0be5d9be",
+      "unchanged": true
+    },
+    {
+      "table": "public.qms_document_versions",
+      "retainedRows": 5,
+      "sha256": "99f9f71de73d2b987f3f1a303e91039f491d0c94ea52a08659c99340bd3b706e",
+      "unchanged": true
+    },
+    {
+      "table": "public.electronic_signatures",
+      "retainedRows": 17,
+      "sha256": "b5e4d3cf8a0c7f7d48161450641c7a771cc29c249e07572c682641d0bc0b21f4",
+      "unchanged": true
+    },
+    {
+      "table": "public.submission_orchestrator_inputs",
+      "retainedRows": 1,
+      "sha256": "a35c655c7b81437e8555b3f7bda836ed2f522d3d7eeb4224b473f97ea7b97d21",
+      "unchanged": true
+    },
+    {
+      "table": "intelligence.agency_requirements",
+      "retainedRows": 6,
+      "sha256": "6589119049628a8391834617f73008f51e89936e4f4fa48f9c9b11944f9e6468",
+      "unchanged": true
+    }
+  ],
+  "files": [
+    {
+      "id": "dbtest-dataroom-mvcz2qpj-034d48e7c48f",
+      "sha256": "c4796b159117a63c23e4d9f0d406ae2dc8e2ca22f2ca6c42609e611caf1d49e2",
+      "unchanged": true
+    },
+    {
+      "id": "dbtest-dataroom-mvcz2qpj-6c3ae88e0b36",
+      "sha256": "c13796f5ff02a0fc2a8dddfdc1b471910f913242aad0e7376f40c473387fd80b",
+      "unchanged": true
+    },
+    {
+      "id": "dbtest-dataroom-mvcz2qpj-fbaae4cfc44b",
+      "sha256": "8e9bbebf214ab8207a2a2a976500366754c4b0a90b41a7057f24b131591e9fa1",
+      "unchanged": true
+    },
+    {
+      "id": "syn_adopt_bf2afaac-ae43-4cf7-aed5-5c38bf4b2032_after",
+      "sha256": "f08543a23117b73be4632a2ecb0cc97a845f2dca21e1bd7eb69ca3360bd93b9a",
+      "unchanged": true
+    },
+    {
+      "id": "syn_adopt_bf2afaac-ae43-4cf7-aed5-5c38bf4b2032_before",
+      "sha256": "cfa1fdf55d8aa4178541fe815a01bf9d78fb1ad29d9e798c9cdf5f848bcff4bb",
+      "unchanged": true
+    },
+    {
+      "id": "syn_adopt_bf2afaac-ae43-4cf7-aed5-5c38bf4b2032_healthy",
+      "sha256": "60ecd81ee0d77917f60e5e09c3131b809b9d43e83888f5f0a2adf2726df28355",
+      "unchanged": true
+    }
+  ],
+  "journal": {
+    "canonicalCount": 408,
+    "minApplyCount": 3,
+    "allHashesMatchCurrent": true
+  },
+  "grants": {
+    "role": "app_service",
+    "exists": true,
+    "attrs": {
+      "rolname": "app_service",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "rolcanlogin": true
+    },
+    "relations": 1305,
+    "denied": [],
+    "excess": [],
+    "ownedAppendOnly": [],
+    "ownedInOverrideSchemas": 0,
+    "schemasWithoutUsage": []
+  },
+  "rlsCoverage": {
+    "unprotected": []
+  }
+}

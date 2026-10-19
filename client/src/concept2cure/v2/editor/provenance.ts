@@ -11,7 +11,11 @@
  * document with no record gets NO origin line rather than a guessed one.
  */
 
-export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human';
+import { isWorkflowImportOrigin, isWorkflowSourceKind, WORKFLOW_SOURCE_LABELS, type AuthoringImportOrigin, type WorkflowImportOrigin, type WorkflowSectionOrigin } from '@shared/authoring/source-import';
+import { workflowOriginMatches } from '../authoringHandoff';
+import { parseRecordedTemplateSource, type RecordedTemplateSource } from '@shared/authoring/recorded-template-source';
+
+export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human' | 'template';
 
 export interface DocumentProvenance {
   source: ProvenanceSource;
@@ -22,6 +26,8 @@ export interface DocumentProvenance {
   turnId: string | null;
   authorName: string | null;
   note: string | null;
+  importSource?: AuthoringImportOrigin & { warnings: string[]; reason: string };
+  templateSource?: RecordedTemplateSource;
 }
 
 const str = (v: unknown): string | null => {
@@ -29,6 +35,37 @@ const str = (v: unknown): string | null => {
   const s = String(v).trim();
   return s.length > 0 ? s : null;
 };
+
+function workflowImportedOrigin(r: Record<string, unknown>): DocumentProvenance['importSource'] {
+  const origin = r as unknown as WorkflowImportOrigin;
+  if (!workflowOriginMatches(origin, String(r.programId ?? ''), origin.selection)
+    || typeof r.reason !== 'string' || !r.reason.trim() || !Array.isArray(r.warnings)
+    || !r.warnings.every(w => typeof w === 'string')) return undefined;
+  return r as unknown as NonNullable<DocumentProvenance['importSource']>;
+}
+
+/** Only a complete, source-bound import record can identify an original. */
+function importOrigin(raw: unknown): DocumentProvenance['importSource'] {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  if (isWorkflowSourceKind(r.kind)) return workflowImportedOrigin(r);
+  if ((r.kind !== 'vault' && r.kind !== 'data-room') || (r.conversion !== 'docx-structure' && r.conversion !== 'extracted-text')) return undefined;
+  if (!['id', 'programId', 'title', 'fileName', 'mimeType', 'reason'].every(key => typeof r[key] === 'string' && (r[key] as string).trim())) return undefined;
+  if (typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(r.sha256)) return undefined;
+  if (!Array.isArray(r.warnings) || !r.warnings.every(w => typeof w === 'string')) return undefined;
+  return r as unknown as NonNullable<DocumentProvenance['importSource']>;
+}
+
+export function workflowOriginLine(section: WorkflowSectionOrigin): string {
+  const origin = section.originalAuthorship === 'unknown' ? 'Original authorship not recorded' : `${section.originalAuthorship} origin`;
+  return `${origin} · ${section.model ? `recorded model name ${section.model}; qualification evidence not recorded` : 'model not recorded'}`;
+}
+
+function importedLine(original: DocumentProvenance['importSource'], note: string | null): string {
+  if (!original) return 'Imported' + (note ? ` · ${note}` : '');
+  const kind = isWorkflowImportOrigin(original) ? WORKFLOW_SOURCE_LABELS[original.kind] : original.kind === 'vault' ? 'Vault' : 'data room';
+  return `Working copy of “${original.title}” · ${kind} source ${original.id}`;
+}
 
 /**
  * @param raw  The stored provenance JSON, or anything else (null → null).
@@ -38,7 +75,7 @@ const str = (v: unknown): string | null => {
  */
 export function describeProvenance(
   raw: unknown,
-  opts: { inThisConversation?: boolean } = {},
+  opts: { inThisConversation?: boolean; templateId?: string | null } = {},
 ): DocumentProvenance | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -48,6 +85,18 @@ export function describeProvenance(
   const turnId = str(r.turnId ?? r.turn_id);
   const authorName = str(r.authorName ?? r.author_name ?? r.author);
   const note = str(r.note);
+
+  if (source === 'template') {
+    try {
+      const raw = r.templateSource;
+      const id = opts.templateId === undefined && raw && typeof raw === 'object' && 'id' in raw ? raw.id : opts.templateId;
+      const templateSource = parseRecordedTemplateSource(raw, id);
+      if (!templateSource) return null;
+      const origin = templateSource.filingContext ? 'a regulatory template' : 'an IND template';
+      return { source: 'template', line: `Created from ${origin} · ${templateSource.kind === 'preparation' ? 'preparation worksheet' : 'working scaffold'}`,
+        model: null, conversationId: null, turnId: null, authorName, note, templateSource };
+    } catch { return null; }
+  }
 
   if (source === 'ana') {
     const where = opts.inThisConversation
@@ -78,14 +127,16 @@ export function describeProvenance(
     };
   }
   if (source === 'import') {
+    const original = importOrigin(r.importSource);
     return {
       source: 'import',
-      line: 'Imported' + (note ? ` · ${note}` : ''),
+      line: importedLine(original, note),
       model: null,
       conversationId: null,
       turnId: null,
       authorName,
       note,
+      ...(original ? { importSource: original } : {}),
     };
   }
   if ((source === 'human' || source === 'author' || source === null) && authorName) {

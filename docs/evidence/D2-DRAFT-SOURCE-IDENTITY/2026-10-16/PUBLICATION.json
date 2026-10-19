@@ -1,0 +1,57 @@
+{
+  "observedAtUtc": "2026-10-17T22:33:15.323549+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "publishedImplementationAndQualification": "c6aba3b5dc48e60c5f52733ffc42fa5f7cb87d50",
+  "remoteObservation": {
+    "sha": "c6aba3b5dc48e60c5f52733ffc42fa5f7cb87d50",
+    "ref": "refs/heads/concept2cure-v2",
+    "matchesLocal": true
+  },
+  "directPush": true,
+  "pullRequest": false,
+  "forcePush": false,
+  "normalHooksPassed": true,
+  "pushTranscript": "push-implementation.txt",
+  "pushTranscriptSha256": "240845fec419097ab42fc53cc61d693a0aca61081d59bfc903e674ab0c8b2b9e",
+  "productionSources": {
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0"
+  },
+  "wholeProjectTypecheck": {
+    "errors": 0,
+    "sourceBindingsStillCurrent": true,
+    "manifest": "typecheck-final-manifest.json"
+  },
+  "testCheckpoints": {
+    "combined": {
+      "files": 43,
+      "passed": 710,
+      "note": "Before runtime-equivalent test-only duplicate-key correction; exact bindings retained."
+    },
+    "correction": {
+      "passed": 31,
+      "productionChanged": false
+    },
+    "independent": {
+      "passed": 70,
+      "baselineExpectedFailures": 6,
+      "baselinePassingControls": 3
+    },
+    "actualHttpLifecycle": {
+      "passed": 10
+    },
+    "nativePostgresReservation": {
+      "passed": 6,
+      "independentlyObservedBarriers": 6,
+      "ownedFixtureRemoved": true
+    },
+    "countsOverlap": true
+  },
+  "publicationScope": "Source integrity within Vault/Authoring; does not close launch D2 or establish deployment, provider use, scientific qualification or agency acceptance.",
+  "remainingPublicationStep": "Commit and push this verification record, the evidence index and the completed hook transcripts; no application change."
+}

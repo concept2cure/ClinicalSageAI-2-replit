@@ -1,0 +1,61 @@
+{
+  "ciRun": 38463370149,
+  "publishedCommit": "a64d422ac14c5eb177734c18f4224e0517bc50b4",
+  "localCheckoutIncludesPendingWorkflowBridge": true,
+  "database": "platform_ci_native_recheck_20261013",
+  "databaseVersion": "PostgreSQL 16.15",
+  "provisioning": [
+    "scripts/db/install-fresh.mjs: exit 0",
+    "scripts/db/deploy-migrate.mjs: exit 0"
+  ],
+  "tests": {
+    "proofFixtures": {
+      "files": 4,
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "nativeFixtures": {
+      "files": 4,
+      "passed": 128,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "fontAndAuditExports": {
+      "files": 4,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    }
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 5,
+    "newWarnings": 0
+  },
+  "coverage": {
+    "oldRunAssertionFailures": 65,
+    "oldRunPassedTests": 48771,
+    "oldRunActualFailedFiles": 25,
+    "numericCoverageProduced": false,
+    "baselineLowered": false
+  },
+  "limits": [
+    "Local tests use synthetic data and development signing/audit configuration.",
+    "Current remote full-suite coverage and CI success remain unverified.",
+    "No production model, scientific qualification, agency validator or accepted transport chain was certified."
+  ],
+  "sha256": {
+    ".github/workflows/ci.yml": "40f69b3795144ffcdbc177a296fae7efc982c56618d5914ece9557f1130e268f",
+    "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts": "160477059ac2a54edceb1ed0ac9d6360f43a21e2395930b1ac54368d771f2ae3",
+    "tests/schema-contract/c2c-section-save.contract.test.ts": "2255f0b00f506e82eeec17cfdfbdfdf38874a15c2c7027f0d8008c9efb5a42c6",
+    "tests/schema-contract/c2c-section-has-content.contract.test.ts": "ece34147579c0a62d83d45c0618d1e413a3244e3db3929aa8a6465e7375f9b58",
+    "tests/schema-contract/c2c-section-ana-backlink.contract.test.ts": "db5a94bb1490870eb0b290f36901d77464586afd57d0f53f23ffb4a1a2c03ad0",
+    "tests/db/entitlement-grants-resolution.dbtest.ts": "ca1b943e49b0ba12435e1960f547ad36cfaaac98563ba912d0ffd07a02a85690",
+    "tests/db/signup-launch-catalog.dbtest.ts": "7662b6892a5f5380467a17d15090af6fb3a9a86e20414d6f17ba3a5c8a2d55be",
+    "server/middleware/__tests__/delegated-credential-scope.dbtest.ts": "290cc7118ba5c144ae87f7b37ee854c8e80518318077243764b5ef1b7d7bb601"
+  }
+}

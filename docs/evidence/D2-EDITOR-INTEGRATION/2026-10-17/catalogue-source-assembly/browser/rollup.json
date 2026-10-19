@@ -1,0 +1,43 @@
+{
+  "status": "pass",
+  "testedHead": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+  "caseCount": 10,
+  "passed": 10,
+  "stages": 34,
+  "screenshots": 33,
+  "counts": {
+    "commits": 12,
+    "previews": 20,
+    "generations": 8,
+    "accepts": 4
+  },
+  "explicitSourcePreviewAndCommitRequests": 32,
+  "manifestCandidateRequests": 8,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unexpectedRequests": 0,
+  "productionFrozenDuringCapture": true,
+  "refreshedAfterPublisherGuard": [
+    "client/src/concept2cure/v2/editorTarget.ts"
+  ],
+  "readOnly": {
+    "status": "pass",
+    "authoringMutations": 0
+  },
+  "pendingProjectAba": {
+    "status": "pass",
+    "authoringMutations": 0,
+    "navigationCallbacks": 0
+  },
+  "manualWheel": {
+    "status": "pass",
+    "sourceFrozen": true,
+    "lastReviewReachable": true,
+    "reviewHeadingReachable": true,
+    "nativeEditorReachable": true,
+    "disclosureCollapsedForReview": true,
+    "wheelStepsToLastReview": 2,
+    "wheelStepsToEditorAfterReview": 6
+  },
+  "qualification": "Actual ProjectHome/Data Room, shared source target dialog, canonical editorTarget channel, DocumentWorkbench/build controller/AI review and product styles; synthetic HTTP/auth only. Fixture host switches to the actual editor at the onNav boundary, without mounting the full shell or conversation thread. Exact source request receipts do not prove backend admission, source-window verification, provider consumption or lineage. No deployment, human-review or accessibility-compliance claim."
+}

@@ -71,4 +71,3 @@ AssertionError: a session signed out on another instance still opened the gate: 
       Tests  1 failed | 19 skipped (20)
    Start at  04:03:43
    Duration  3.91s (transform 1.49s, setup 72ms, import 233ms, tests 3.29s, environment 0ms)
-

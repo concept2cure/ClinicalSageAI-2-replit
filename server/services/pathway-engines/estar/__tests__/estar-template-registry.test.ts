@@ -59,10 +59,10 @@ describe('eSTAR template registry', () => {
     expect(r.cleared).toBe(true);
     expect(r.blockers).toHaveLength(0);
     // Surfaces the current FDA program version for the family (nIVD → 7.1),
-    // and that the vendored file (7.0) is not it.
+    // and the newly pinned file matches it.
     expect(r.programVersion).toBe('7.1');
-    expect(r.vendoredVersion).toBe('7.0');
-    expect(r.versionCurrent).toBe(false);
+    expect(r.vendoredVersion).toBe('7.1');
+    expect(r.versionCurrent).toBe(true);
   });
 
   it('fails closed in production when the required template is missing and required', () => {
@@ -108,26 +108,26 @@ describe('eSTAR template registry', () => {
 
 // WO-8 Phase 3: De Novo and PMA are produced on the vendored 510(k)-named files.
 describe('eSTAR template registry — De Novo and PMA on the vendored files', () => {
-  it('files De Novo and PMA on the same vendored v7.0 PDFs as 510(k) — FDA ships one file per family', () => {
+  it('files De Novo and PMA on the same vendored v7.1 PDFs as 510(k) — FDA ships one file per family', () => {
     // nIVD family: one physical file for all three marketing pathways.
     for (const type of ['510k', 'de_novo', 'pma'] as const) {
       expect(descriptorFor(type, 'device')).toMatchObject({
         family: 'nivd',
         expectedFileName: 'eSTAR-510k-non-ivd.pdf',
-        version: '7.0',
+        version: '7.1',
       });
       expect(descriptorFor(type, 'ivd')).toMatchObject({
         family: 'ivd',
         expectedFileName: 'eSTAR-510k-ivd.pdf',
-        version: '7.0',
+        version: '7.1',
       });
     }
     // The descriptor ids stay distinct (each pathway carries its own field map).
     expect(descriptorFor('de_novo', 'device')?.id).toBe('de_novo-device');
     expect(descriptorFor('pma', 'ivd')?.id).toBe('pma-ivd');
-    // PreSTAR2 is not vendored: those three stay unpinned.
+    // One current official PreSTAR PDF carries all three request types.
     for (const type of ['q_sub', 'ide', '513g'] as const) {
-      expect(descriptorFor(type, 'prestar')?.version).toBe('unset');
+      expect(descriptorFor(type, 'prestar')).toMatchObject({ version: '3.1', expectedFileName: 'PreSTAR-q-sub.pdf' });
     }
   });
 
@@ -152,7 +152,7 @@ describe('eSTAR template registry — De Novo and PMA on the vendored files', ()
       expect(r.cleared).toBe(true);
       expect(r.blockers).toEqual([]);
       expect(r.programVersion).toBe('7.1');
-      expect(r.versionCurrent).toBe(false);
+      expect(r.versionCurrent).toBe(true);
     }
     // The PreSTAR template is still absent, so a Q-Sub still fails closed.
     const qsub = assessEstarTemplateReadiness({

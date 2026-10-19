@@ -1,0 +1,8 @@
+Scope: 5 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/vault/document-catalog-governance.service.ts: 0 target diagnostics
+server/services/vault/document-catalog-admission.ts: 0 target diagnostics
+server/services/vault/document-catalog-write-integrity.ts: 0 target diagnostics
+server/services/vault/__tests__/catalog-governance-integrity.test.ts: 0 target diagnostics
+server/services/vault/__tests__/catalog-write-result.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 1272
+Total selected-scope diagnostics: 0

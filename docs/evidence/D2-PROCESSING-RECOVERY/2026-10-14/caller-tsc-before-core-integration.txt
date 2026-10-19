@@ -1,0 +1,79 @@
+server/middleware/orgMembership.ts(337,11): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(338,10): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(348,11): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(349,10): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(371,37): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(372,45): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(465,30): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(466,27): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(471,11): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(472,42): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(566,31): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(566,71): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(61,25): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(70,22): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(70,39): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(119,20): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(120,25): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(167,12): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(167,24): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(174,17): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(175,15): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(176,16): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/project-access.ts(46,19): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/project-access.ts(47,51): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/project-access.ts(81,27): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/projects.ts(1563,217): error TS2694: Namespace '"/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing"' has no exported member 'SourceProcessingResult'.
+server/routes/c2c/projects.ts(1568,18): error TS2353: Object literal may only specify known properties, and 'expectedWorkspaceId' does not exist in type '{ bytes: Buffer; fileName: string; mimeType: string; programId: string | null; processedBy: string; }'.
+server/routes/c2c/projects.ts(1570,43): error TS2339: Property 'processed' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/c2c/projects.ts(1570,67): error TS2339: Property 'status' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/c2c/projects.ts(1570,84): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/c2c/projects.ts(1570,116): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/workspace/Concept2Cure/server/metrics.js' implicitly has an 'any' type.
+server/routes/c2c/shared.ts(197,12): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(200,26): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(200,52): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(200,81): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(348,19): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(357,18): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(358,15): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(359,15): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(360,33): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(384,21): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(385,21): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/chat/upload.ts(31,15): error TS2305: Module '"../../services/clinical-regulatory-evidence/data-room-processing.js"' has no exported member 'SourceProcessingResult'.
+server/routes/chat/upload.ts(68,43): error TS2339: Property 'processed' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/chat/upload.ts(68,67): error TS2339: Property 'status' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/chat/upload.ts(69,16): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/chat/upload.ts(69,48): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/routes/chat/upload.ts(597,9): error TS2353: Object literal may only specify known properties, and 'expectedWorkspaceId' does not exist in type '{ bytes: Buffer; fileName: string; mimeType: string; programId: string | null; processedBy: string; }'.
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/ana/AnaToolExecutor.ts(49,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. '/workspace/Concept2Cure/server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(169,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. '/workspace/Concept2Cure/server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/ana/uploaded-file-access.ts(364,87): error TS2694: Namespace '"/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing"' has no exported member 'SourceProcessingResult'.
+server/services/ana/uploaded-file-access.ts(374,18): error TS2353: Object literal may only specify known properties, and 'expectedWorkspaceId' does not exist in type '{ bytes: Buffer; fileName: string; mimeType: string; programId: string | null; processedBy: string; }'.
+server/services/ana/uploaded-file-access.ts(376,43): error TS2339: Property 'processed' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/services/ana/uploaded-file-access.ts(376,67): error TS2339: Property 'status' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/services/ana/uploaded-file-access.ts(377,16): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/services/ana/uploaded-file-access.ts(377,48): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture | undefined; }'.
+server/services/authoring/authoring-permissions.ts(104,21): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(104,37): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(107,24): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(107,43): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(114,16): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(114,41): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/cmc/link-to-module3.ts(34,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/workspace/Concept2Cure/server/metrics.js' implicitly has an 'any' type.
+server/services/concept2cure/governedDocumentContractService.ts(254,66): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,38): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,60): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(608,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(674,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/memory/document-text-extraction.ts(41,54): error TS2339: Property 'default' does not exist on type 'typeof import("/workspace/Concept2Cure/node_modules/pdf-parse/dist/pdf-parse/esm/index")'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/workspace/Concept2Cure/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

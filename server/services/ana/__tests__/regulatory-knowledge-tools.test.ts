@@ -23,7 +23,7 @@ function handlers(pool?: KnowledgeQueryable): Record<string, Handler> {
 }
 
 const PROGRAM = '11111111-2222-4333-8444-555555555555';
-const CTX = { organizationId: 7, projectRef: PROGRAM };
+const CTX = { organizationId: 7, userId: 3, projectRef: PROGRAM };
 
 /** A pool that owns PROGRAM for org 7 and answers the Vault read with `rows`. */
 type VaultRow = { ctd_section: string | null; placement_status: string; document_title: string; folder_id?: string | null; evidence_kind?: string | null };
@@ -34,6 +34,10 @@ function fakePool(rows: VaultRow[], opts: { fail?: boolean } = {}) {
     async query(sql, params) {
       calls.push({ sql, params });
       if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) return { rows: params?.[0] === PROGRAM && params?.[1] === 7 ? [{ id: PROGRAM }] : [] };
+      if (/FROM organization_users/.test(sql)) return { rows: [{ role: 'member' }] };
+      if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) return { rows: params?.[0] === PROGRAM && params?.[1] === 7 ? [{ id: 42, clientWorkspaceId: null }] : [] };
+      if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{ id: 42, owner_id: 3, created_by_id: 3,
+        settings: {}, visibility: 'private', members: [], review_assigned: false }] };
       if (/FROM vault\.documents/.test(sql)) {
         if (opts.fail) throw new Error('relation "vault.documents" does not exist');
         return { rows };
@@ -107,6 +111,8 @@ describe('plan_submission_from_database_lock', () => {
       doc('2.7.6', 'Synopses', 'suggested'),
     ]);
     const out = JSON.parse(await handlers(pool).plan_submission_from_database_lock({}, CTX));
+    const anchorCall = calls.find((c) => /WHERE regulatory_program_id\s*=\s*\$1/.test(c.sql))!;
+    expect(anchorCall.params).toEqual([PROGRAM, 7]);
     const vaultCall = calls.find((c) => /vault\.documents/.test(c.sql))!;
     expect(vaultCall.params?.slice(0, 2)).toEqual([7, PROGRAM]);
     const s = out.standing;
@@ -118,6 +124,17 @@ describe('plan_submission_from_database_lock', () => {
     expect(s.blocked).toContain('m2_7_4 waits on iss');
     expect(s.next).toContain('iss (assumes integrated_data done; not visible here)');
     expect(s.filed_ahead_of_sources).toContain('m2_5 is filed but m2_7_clinpharm, m2_7_4 is not');
+  });
+
+  it.each([
+    { scope: 'another organization', context: { ...CTX, organizationId: 8 }, code: 'ANA_PROJECT_NOT_FOUND' },
+    { scope: 'a member without private-project access', context: { ...CTX, userId: 4 }, code: 'ANA_PROJECT_ACCESS_DENIED' },
+  ])('does not read the Vault for $scope', async ({ context, code }) => {
+    const { pool, calls } = fakePool([]);
+    const out = JSON.parse(await handlers(pool).plan_submission_from_database_lock({}, context));
+    expect(out.standing).toBeNull();
+    expect(out.code).toBe(code);
+    expect(calls.some((call) => /vault\.documents/.test(call.sql))).toBe(false);
   });
 
   it('a step the Vault cannot hold is never reported missing, and never as what a step waits on', async () => {

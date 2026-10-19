@@ -158,8 +158,6 @@ describe('bootstrapDocumentCatalogToggles — a row it could not create is said,
     expect(said).toContain('permission denied for table feature_toggles');
   });
 });
-
-
 describe('bootstrapDocumentCatalogToggles — the catalog row is created on (S4, 2026-10-08)', () => {
   /* Founder decision: the catalog is on by default, now that AnA's writes are
      suggestions a person confirms. The per-upload embedding stays off. Only a

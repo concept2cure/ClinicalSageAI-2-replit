@@ -1,0 +1,8 @@
+
+/workspace/ClinicalSageAI-2-replit/docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/recognized-standards/verify-canonical-dataset.mjs
+  34:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  40:18  warning  'structuredClone' is not defined                                                         no-undef
+  43:1   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 3 problems (0 errors, 3 warnings)
+

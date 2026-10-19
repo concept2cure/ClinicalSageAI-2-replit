@@ -1,0 +1,364 @@
+{
+  "phase": "owned_lint_reconciliation_verified",
+  "historicalFiles": 16,
+  "historicalWarnings": 29,
+  "activeOwnedFiles": 2,
+  "changesPermitted": [
+    "console.log -> console.info with same stdout arguments",
+    "never-reassigned identity: let -> const",
+    "literal ANSI regex -> equivalent constructed regex"
+  ],
+  "records": [
+    {
+      "path": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/probe-hold-lock.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/pre-publication-tooling/probe-hold-lock.mjs.txt",
+      "oldSha256": "dcf20a5dfd602e4822746aae3222e3b2e08a72c75f4b0446a890111c3a206f2a",
+      "originalBytes": 832,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "308c751011e3f2986640202acce970df2ee1da49ca0282618e2757406d66b4c7",
+      "updatedBytes": 835,
+      "edits": {
+        "consoleInfo": 3,
+        "identityConst": 0,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-owned-postgres-fixture.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/pre-publication-tooling/run-owned-postgres-fixture.mjs.txt",
+      "oldSha256": "8acdee9f3573e91d7624b07b0276a8902b14346e44fba5fc351eeaec9cdb802b",
+      "originalBytes": 7195,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "f1e1ff605f285b08915c2be8d9741322f7ed09fd2635440c830b63195d837056",
+      "updatedBytes": 7199,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 1,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-owned-postgres-fixture.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/pre-publication-tooling/run-owned-postgres-fixture.mjs.txt",
+      "oldSha256": "b9fc1050977aa25ac3706f0c486c3b5f2d4ef68812631982dc7dd3c813de3dd7",
+      "originalBytes": 6425,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "d5fe9740436ef9291f82366fb970cfe49641a57e257d24c01f52578a4fd0d819",
+      "updatedBytes": 6429,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 1,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-owned-postgres-fixture.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/pre-publication-tooling/run-owned-postgres-fixture.mjs.txt",
+      "oldSha256": "0bf02f5001e131d0aca304363271dc42b3cf99d0de89a56d8822e5603fcb600f",
+      "originalBytes": 6437,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "e36d042a3d5c22390c654914721dba47f18dbd817e47e83494120209c0623987",
+      "updatedBytes": 6441,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 1,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-final-regression.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/pre-publication-tooling/run-final-regression.mjs.txt",
+      "oldSha256": "3d419fa0ac6b06523c31aa95af418d14c5d8a548f652b78d96312412eb9db821",
+      "originalBytes": 12841,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "c9a2fb0aa8547b3bc43ffe3542539c29d2bb8602ecb0e57b8d6df2db45331a76",
+      "updatedBytes": 12876,
+      "edits": {
+        "consoleInfo": 1,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-final-regression.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/pre-publication-tooling/run-final-regression.mjs.txt",
+      "oldSha256": "ac8bf0965e9a2e49da7d065bd7b5928b2cb13e22b63cf9ad69b7c44bb3b8b71f",
+      "originalBytes": 11711,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "1c06aebf6c8bb661e7860170c3a0b9897091fd221c353d02a37b565958149d05",
+      "updatedBytes": 11746,
+      "edits": {
+        "consoleInfo": 1,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-tools-scoped-check.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/pre-publication-tooling/run-tools-scoped-check.mjs.txt",
+      "oldSha256": "1b2d1d3fab5cb3a385175047cc8fe89d5061926dcfd8f87104a64058356c0acf",
+      "originalBytes": 3069,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "d7f75460ed121df17732189536859e48fb3edd59e344578a00a8aa8430865a4f",
+      "updatedBytes": 3071,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 0,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres-fixture.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/pre-publication-tooling/race-postgres-fixture.mjs.txt",
+      "oldSha256": "226609fa7e8f07714920b675689f1a3d03816e78c8686cc5e54b3c7423ce8dd4",
+      "originalBytes": 5092,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "67400fd372602ba44d99618a4cbeadcd49e923edbc2e8998a565bdfbd0c0394a",
+      "updatedBytes": 5094,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 0,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-final-regression.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/pre-publication-tooling/run-final-regression.mjs.txt",
+      "oldSha256": "fd539218c4ea9f2b3836dd58feeb585f30b2999aa5383cffc126a6021cd2cf41",
+      "originalBytes": 4607,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "c433fe06d28c72eadb58542f80f11e1e8bb4ee8fb93257794fd9c37428b3cd74",
+      "updatedBytes": 4642,
+      "edits": {
+        "consoleInfo": 1,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-independent.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/pre-publication-tooling/run-independent.mjs.txt",
+      "oldSha256": "b118a5ad91325c22e4e5d26059c4094bbd4ab481c1f3cbb9b8c4279587a6f76d",
+      "originalBytes": 3761,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "6033f94d9b391e949a0543413b36840835e945ec5a6351ecf630b486441a1fc5",
+      "updatedBytes": 3795,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-independent.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/pre-publication-tooling/run-independent.mjs.txt",
+      "oldSha256": "ee96824f290565f47ade8c6b9db64d166ceb7d3df08be810d48705edf8499c2c",
+      "originalBytes": 5295,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "a6443b4fc71a03595455a6307102a721115bc74c71013af381bca1e7c8c745df",
+      "updatedBytes": 5329,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/run-independent-review.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/pre-publication-tooling/run-independent-review.mjs.txt",
+      "oldSha256": "68cfe0545bb9a126c0dcfd522e5622180efe2587e6ed7420c54a737ff2882ccc",
+      "originalBytes": 5056,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "e37f5ad9640dabf39c5f45d038c4a3b9b85aa99b17f8ff609d3e6a15250e14aa",
+      "updatedBytes": 5090,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-core.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/pre-publication-tooling/run-independent-core.mjs.txt",
+      "oldSha256": "6e357c2125b8f74be960c91de452f9d75a56c278d77a2003beace5cda6493931",
+      "originalBytes": 3763,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "c976bc2798075c73895c6dd6353eb1e971276f582948981fde0eb38ccd875b76",
+      "updatedBytes": 3797,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-program-snapshot.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/pre-publication-tooling/run-independent-program-snapshot.mjs.txt",
+      "oldSha256": "c24e6a21e7d6ece656de126841759ebb35a7c77977588da7e410dd3f13153f76",
+      "originalBytes": 3488,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "4ed02c6c3743966246d418ae49664e1f67b08f2019cdff362c504276bae62f42",
+      "updatedBytes": 3522,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-tools.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/pre-publication-tooling/run-independent-tools.mjs.txt",
+      "oldSha256": "52a8ab5e962e297e81e5611ddf96ebdc1b2d1d4eb5413856cbf853b42f5ff266",
+      "originalBytes": 3262,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "fe67df0ca2f636e3a0184ee18f0f9db04018a99093aa9abd7f2679c1841e08df",
+      "updatedBytes": 3296,
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/reports/data-room-catalog-context-probe.mjs",
+      "scope": "historical",
+      "originalCopy": "docs/reports/pre-publication-tooling/data-room-catalog-context-probe.mjs.txt",
+      "oldSha256": "b9b3621211b7fba0c12ae6872d470dcc120266e3aa57cdb2e47c9ae3b3a32532",
+      "originalBytes": 965,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "c1bdc3e18fbc9c8e0719dc72dc8c46ecb404884058970f189ab2e2c699e76578",
+      "updatedBytes": 966,
+      "edits": {
+        "consoleInfo": 1,
+        "identityConst": 0,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-final-regression.mjs",
+      "scope": "active_canonical",
+      "originalCopy": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/run-final-regression.mjs.txt",
+      "oldSha256": "aede44567409b6faf390a7e420cece05f3e5d61ee08c3aacbd33741901a5a10f",
+      "originalBytes": 13060,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "c42436b2b8e2fa4e1c78be921ed6dc3b7b6a34061a6b4ccae30ce5b0bc8e8517",
+      "updatedBytes": 13095,
+      "edits": {
+        "consoleInfo": 1,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true,
+      "sourceReleasedToRoot": true,
+      "newHashCheckpoint": "After lint-only edits, before root-owned publication-baseline source-binding correction"
+    },
+    {
+      "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-owned-postgres-fixture.mjs",
+      "scope": "active_canonical",
+      "originalCopy": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/run-owned-postgres-fixture.mjs.txt",
+      "oldSha256": "8acdee9f3573e91d7624b07b0276a8902b14346e44fba5fc351eeaec9cdb802b",
+      "originalBytes": 7195,
+      "archiveVerifiedBeforeEdit": true,
+      "newSha256": "f1e1ff605f285b08915c2be8d9741322f7ed09fd2635440c830b63195d837056",
+      "updatedBytes": 7199,
+      "edits": {
+        "consoleInfo": 2,
+        "identityConst": 1,
+        "ansiExpression": 0
+      },
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/run-independent.mjs",
+      "scope": "active_canonical_independent_owner",
+      "originalCopy": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/run-independent.mjs.txt",
+      "oldSha256": "724448a6bf63a6c24c19b162de29ac91d654208ee6af6a35190008fc2202bfea",
+      "newSha256": "6a8d01dcbe05bc39761988f7d904d35a9441a876d20e665f8d897702b901410d",
+      "originalBytes": 4779,
+      "updatedBytes": 4816,
+      "archiveVerifiedBeforeEdit": false,
+      "originalRestoredByOwnerAfterEdit": true,
+      "restorationProof": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/pre-publication-tooling/independent-owner-preansi-source-hashes.json.txt",
+      "edits": {
+        "consoleInfo": 0,
+        "identityConst": 0,
+        "ansiExpression": 1
+      },
+      "ansiReplacement": "new RegExp(String.fromCharCode(27) + '\\\\[[0-9;]*m', 'g')",
+      "minimalTransformVerified": true,
+      "originalArchiveStillVerified": true
+    }
+  ],
+  "historicalWarningEdits": 29,
+  "ownedFilesChanged": 18,
+  "applicationOrHistoricalLogManifestEdits": false,
+  "independentlyOwnedActiveFiles": 1,
+  "historicalLogsAndManifestsPreserved": true,
+  "recordsCount": 19,
+  "validation": {
+    "syntaxCheckedFiles": 19,
+    "archiveHashChecks": 19,
+    "minimalCheckpointHashChecks": 19,
+    "ansiCorpusCases": 12,
+    "ansiUpdatedRunners": 11,
+    "stdoutCases": 4,
+    "corruptArchiveRejected": true,
+    "changedAnsiGrammarRejected": true,
+    "lintFiles": 20,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "checksReport": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/TOOLING_RECONCILIATION_CHECKS.json",
+    "checksSha256": "0c32b5973af68f6f7d86e8d1067768edd4e8d5ab489c422b0b56bac2a57d3657",
+    "lintReport": "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/TOOLING_ESLINT.json",
+    "lintSha256": "48cc5f69fb1dbebcccff4d3abbc720e517abc57bfd7b77ce9729048da9ed9878"
+  }
+}

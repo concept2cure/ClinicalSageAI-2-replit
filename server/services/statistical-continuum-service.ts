@@ -8,7 +8,11 @@ import {
   type TlfShell,
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { SapGeneratorService, type SapRequestData } from './sap-generator-service';
+import {
+  SapGeneratorService,
+  requireSapInputs,
+  type SapAssumptionCapture,
+} from './sap-generator-service';
 import { ai } from '../lib/unified-ai-client';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -34,7 +38,8 @@ interface ProtocolData {
   title: string;
   indication: string;
   phase: string;
-  sampleSize: number;
+  /** As given at initialize; absent when it was not (it was recorded as 200). */
+  sampleSize?: number;
   primaryEndpoint: string;
   secondaryEndpoints?: string[];
   arms?: string[] | number;
@@ -136,7 +141,7 @@ export class StatisticalContinuumService {
   async generateSAP(
     threadId: number,
     organizationId: number
-  ): Promise<{ thread: StatisticalThread; sapContent: string }> {
+  ): Promise<{ thread: StatisticalThread; sapContent: string; assumptionCapture: SapAssumptionCapture }> {
     // Retrieve the thread
     const [thread] = await db
       .select()
@@ -158,8 +163,10 @@ export class StatisticalContinuumService {
       throw new Error(`Thread ${threadId} has no protocol snapshot`);
     }
 
-    // Build SapRequestData from protocol snapshot
-    const sapRequest: SapRequestData = {
+    // Build SapRequestData from protocol snapshot. What the snapshot lacks is
+    // refused by name (SapInputRefusal) or, if optional, printed as not
+    // specified — never filled in.
+    const sapRequest = requireSapInputs({
       protocol_id: thread.protocolId?.toString(),
       indication: protocol.indication,
       phase: protocol.phase,
@@ -171,7 +178,7 @@ export class StatisticalContinuumService {
       blinding: protocol.blinding,
       duration_weeks: protocol.durationWeeks,
       dropout_rate: protocol.dropoutRate,
-    };
+    });
 
     // Generate SAP
     const sapResult = await this.sapService.generateSAP(sapRequest);
@@ -190,7 +197,7 @@ export class StatisticalContinuumService {
       .where(eq(statisticalThreads.id, threadId))
       .returning();
 
-    return { thread: updated, sapContent: sapResult.sapContent };
+    return { thread: updated, sapContent: sapResult.sapContent, assumptionCapture: sapResult.assumptionCapture };
   }
 
   /**
@@ -238,7 +245,9 @@ export class StatisticalContinuumService {
     };
 
     // A model failure or a refusal to draft on an unapproved model propagates
-    // with its own type, so the caller can say which it was.
+    // with its own type, so the caller can say which it was. The duration is
+    // the protocol's or 'Not specified'; an absent one was sent as 24 weeks
+    // until 2026-10-15.
     const aiResponse = await ai.chat(
       {
         // Drafting a regulated deliverable: only a model approved for high-risk
@@ -268,7 +277,7 @@ Phase: ${protocol?.phase || 'Not specified'}
 Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
 Secondary Endpoints: ${protocol?.secondaryEndpoints?.join(', ') || 'Not specified'}
 Sample Size: ${protocol?.sampleSize || 'Not specified'}
-Duration: ${protocol?.durationWeeks || 24} weeks
+Duration: ${protocol?.durationWeeks ? `${protocol.durationWeeks} weeks` : 'Not specified'}
 
 SAP Summary:
 ${sapContent.substring(0, 3000)}`,

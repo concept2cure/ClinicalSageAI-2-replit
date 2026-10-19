@@ -1,0 +1,180 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-14T04:08:32.498Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-14T04:08:32.599Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:08:32.600Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-14T04:08:32.600Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > carries a conversation-only workbook’s exact existing derivation into its adopted capture 217ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when an exact recorded ancestor has remove_data 94ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when an exact recorded ancestor has supersede 92ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > admits an edited descendant after keep_data and preserves its unassessed qualification 125ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when the exact recorded derivation contradicts the child digest 28ms
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > retains the committed capture and audit when the processing seam rejects
+{
+  "timestamp": "2026-10-14T04:08:36.492Z",
+  "level": "warn",
+  "message": "[c2c-projects] Adopted capture processing unavailable",
+  "context": {
+    "sourceId": 12,
+    "err": "private extractor path /private/source"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > captures verified bytes with pending extraction and its same-transaction audit, preserving the upload 74ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > retains the committed capture and audit when the processing seam rejects 37ms
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the capture seam fails
+{
+  "timestamp": "2026-10-14T04:08:36.638Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "8b9b5a36-8fc8-4c54-84c9-6adc7d24ca0a",
+    "err": "capture test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the audit seam fails
+{
+  "timestamp": "2026-10-14T04:08:36.669Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "0b3b64a9-6890-4d88-928c-39b55fc538ad",
+    "err": "audit seal test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture bytes altered after the recorded upload digest
+{
+  "timestamp": "2026-10-14T04:08:36.693Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "2b3cfe65-75e6-4148-b3e9-912c2196c88d",
+    "orgId": 1011,
+    "storagePath": "uploads/org-1011/2b3cfe65-75e6-4148-b3e9-912c2196c88d",
+    "recordedSha256": "71f499bb9714f91faaa2e6d74ebd67a6d7fa438d52365cd9c7ca45c1c843b0fd",
+    "actualSha256": "daae6d0f6649a3b05d956576f480532de9f095273c0f9558f11444c93f8fc463",
+    "recordedSize": 26,
+    "actualSize": 21
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > repeated adoption returns the same source without another capture or audit 88ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the capture seam fails 57ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the audit seam fails 32ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture bytes altered after the recorded upload digest 23ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture missing bytes 19ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > preserves the missing-checksum refusal 30ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rechecks the actual SQL path after byte verification and before capture 24ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rechecks the actual SQL checksum after byte verification and before capture 24ms
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-99999/foreign
+{
+  "timestamp": "2026-10-14T04:08:36.814Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "49c642ad-8a07-4a20-8629-ee5704bdc079",
+    "orgId": 1016
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/unscoped/ownerless
+{
+  "timestamp": "2026-10-14T04:08:36.843Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "4c70051c-a6a8-45ff-8656-70907520cc12",
+    "orgId": 1017
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/../org-99999/foreign
+{
+  "timestamp": "2026-10-14T04:08:36.873Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "c3e0e93d-50c1-482e-b5a7-0bcfec498df9",
+    "orgId": 1018
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/
+{
+  "timestamp": "2026-10-14T04:08:36.903Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "3d005da8-f09e-4e6d-b4e6-ce0fef9811b0",
+    "orgId": 1019
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-99999/foreign 24ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/unscoped/ownerless 30ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/../org-99999/foreign 30ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/ 30ms
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > uses the real organization-wide eligibility predicate to refuse a withdrawn upload into another project 85ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects
+{
+  "timestamp": "2026-10-14T04:08:40.126Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] Captured spreadsheet processing unavailable",
+  "context": {
+    "sourceId": 4,
+    "err": "private workbook extractor /private/source"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction 79ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects 51ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the capture seam fails 46ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the audit seam fails 43ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > refuses a withdrawn source using the real disposition eligibility SQL 76ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rejects another tenant’s project using the canonical ownership query before writes 37ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed 91ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data 98ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  04:08:30
+   Duration  9.68s (transform 1.98s, setup 86ms, import 4.01s, tests 5.27s, environment 0ms)
+

@@ -1,0 +1,121 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots 138ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots 113ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots 90ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling 41ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > automatically recovers an exact captured workspace that differs from the project row identifier 31ms
+   → expected +0 to be 1 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID 57ms
+   → expected [ 9 ] to deeply equal [ 10 ]
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an ambiguous anchor before extraction 61ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an deleted anchor before extraction 60ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > rechecks the exact program workspace after extraction before storing derived text 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an anchor swap after extraction even if the new anchor has the same workspace 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > a copied claim cannot self-attest the attempt-local workspace admission 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"fileName":"Renamed.csv"} 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"mimeType":"text/csv"} 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 52ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 84ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > dry-run is read-only and strict invalid options refuse before I/O 52ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy readable text is already complete without fabricated stage history 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > diagnostic malformed rows do not starve runnable slots 62ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " " 81ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable "﻿" 82ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " \n\t" 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > exact already-readable dryrun observes completion without claiming a processed count 25ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final-write outage records bounded due retry and never marks readable completion 95ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final and failure-journal outage leaves the durable running lease reclaimable 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > automatic attempt budget is bounded; explicit expired-claim retry never resets it 132ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > busy and not-due diagnostics cannot consume runnable slots 82ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":58,"status":"extracted","text":null,"report":{"examined":1,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[{"sourceId":58,"status":"candidate"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > a lost completion COMMIT reply is resolved by durable readable state on retry 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 55ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 179ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 50ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":63,"done":{"ok":false,"processed":false,"status":"blocked","reasonCode":"SOURCE_BYTES_MISMATCH"},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":64,"committed":false,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":0,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":0,"unreadable":[{"sourceId":66,"reason":"EXTRACTION_FAILED"}],"dryRun":false,"completed":0,"failed":1,"blocked":0,"skipped":0,"items":[{"sourceId":66,"status":"extraction_failed","reasonCode":"EXTRACTION_FAILED"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 65ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 48ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 85ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > automatically recovers an exact captured workspace that differs from the project row identifier
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:149:100
+    147|     const projectId = await anchor(), id = await seed('pending', { wor…
+    148|     expect(projectId).not.toBe(900);
+    149|     expect((await processPendingSources(ORG, { ...opts(), sourceId: id…
+       |                                                                                                    ^
+    150|     const row = await state(id);
+    151|     expect(row.client_workspace_id).toBe(900);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID
+AssertionError: expected [ 9 ] to deeply equal [ 10 ]
+
+- Expected
++ Received
+
+  [
+-   10,
++   9,
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:164:97
+    162|     const valid = await seed('pending', { workspace: 900 });
+    163|     const report = await processPendingSources(ORG, { ...opts(), limit…
+    164|     expect(report.items.filter(item => item.status === 'candidate').ma…
+       |                                                                                                 ^
+    165|     expect(report.items.find(item => item.sourceId === id)?.status).to…
+    166|     expect((await processCapturedSource(ORG, id, input({ expectedWorks…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 50 passed (52)
+   Start at  22:04:07
+   Duration  5.97s (transform 650ms, setup 70ms, import 1.12s, tests 4.56s, environment 0ms)
+

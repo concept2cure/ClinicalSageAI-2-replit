@@ -10,6 +10,12 @@ import {
   PRODUCT_TYPES,
   type ProductType,
 } from '@shared/constants/domain/product-types';
+import {
+  filingDocumentClassForFiling,
+  filingDocumentClassOf,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
@@ -30,6 +36,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { RegistryPicker } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -107,6 +114,13 @@ const SEG_LABELS: Record<string, string> = {
 export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   const id = (sel?.id ?? '').toLowerCase();
   const pw = (sel?.pathway ?? '').toLowerCase();
+  // A filing that is a document, not an application — a supplement, an annual
+  // report, an IND amendment, a meeting package, a designation request, a CSR —
+  // is its own class, decided before any pathway rule below. Every one of them
+  // used to fall to the 'ctd' default and was scaffolded as a 73-node NDA, the
+  // CSR to the closing 'ind' (shared/regulatory/filing-document-classes.ts).
+  const documentClass = filingDocumentClassForFiling(id);
+  if (documentClass) return documentClass.docType;
   if (id.includes('510k')) return '510k';
   if (id.includes('de_novo') || pw === 'denovo') return 'de_novo';
   if (id.includes('pma')) return 'pma';
@@ -171,6 +185,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (id.includes('nda') || pw === 'ctd') return 'nda';
   if (id.includes('ind') || pw === 'ind') return 'ind';
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
+}
+
+/** A filing document class as the review step names it ("Prior Approval Supplement"), or null for an application. */
+function documentClassLabel(programType: string): string | null {
+  const label = filingDocumentClassOf(programType)?.label;
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
 }
 
 /** The three steps, in order. One list, read by the step rail, the sub-heading
@@ -263,7 +283,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
      the person states it. From the filing type, not the lane: a 510(k) picked
      from any tab is a device filing, and a pharma filing picked from the device
      tab is not. */
-  const fixedClass = productTypeForFilingType(programType, uiSeg);
+  // A filing document class asks, unless the filing names its class itself (an
+  // sBLA is a biologics licence supplement): filing-document-classes.ts.
+  const fixedClass = productTypeForFilingType(programType, uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
   const asksClass = fixedClass === null;
   const recordedClass: string | null = fixedClass ?? (statedClass || null);
   const isDeviceFiling = usesDeviceClassification(fixedClass);
@@ -518,6 +540,18 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
               </p>
 
+              <ProjectDiscoveryHandoff
+                fields={{ name, target, indication, intendedUse }}
+                isDeviceFiling={isDeviceFiling}
+                disabled={creating}
+                onApply={(fields) => {
+                  if (fields.name !== undefined) setName(current => current.trim() ? current : fields.name!);
+                  if (fields.target !== undefined) setTarget(current => current.trim() ? current : fields.target!);
+                  if (fields.indication !== undefined) setIndication(current => current.trim() ? current : fields.indication!);
+                  if (fields.intendedUse !== undefined) setIntendedUse(current => current.trim() ? current : fields.intendedUse!);
+                }}
+              />
+
               <div className="npw-fields">
                 <label className="npw-field">
                   <span className="npw-field-l">Project name</span>
@@ -594,7 +628,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                       {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      Required. A {programType.toUpperCase()} covers drugs and biologics; the program records which.
+                      Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.
                     </span>
                   </label>
                 )}
@@ -760,7 +794,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 </div>
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
-                  <dd>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                  {/* A filing document class names itself: its pathway key is the
+                      'ctd' default, which read "CTD" for a supplement or a CSR. */}
+                  <dd>{documentClassLabel(programType) ?? (selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
                 </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
@@ -769,7 +805,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
                   <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programType) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dd>{workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>

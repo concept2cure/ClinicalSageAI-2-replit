@@ -3,7 +3,7 @@ tests/boot_contract.tftest.hcl... in progress
   run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 279, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
 │  279:     condition = alltrue([
 │  280:       for c in [module.ecs.api_container, module.ecs.worker_container] :
@@ -14,7 +14,7 @@ tests/boot_contract.tftest.hcl... in progress
 │     │ aws_s3_bucket.vault.bucket is "c2c-prod-vault"
 │     │ module.ecs.api_container is object with 8 attributes
 │     │ module.ecs.worker_container is object with 6 attributes
-│ 
+│
 │ Both containers must name S3 and this stack's vault bucket.
 ╵
   run "production_names_are_the_ones_the_deploy_workflow_targets"... pass

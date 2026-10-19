@@ -49,6 +49,18 @@ export interface RenderedSection {
   decorations: Array<{ start: number; end: number }>;
 }
 
+/** Current accepted record: deletions remain until accepted; insertions are proposals. */
+export function acceptedSectionText(rendered: RenderedSection): string {
+  let cursor = 0;
+  let text = '';
+  for (const span of rendered.spans) {
+    text += rendered.text.slice(cursor, span.labelStart);
+    if (span.kind === 'deletion') text += rendered.text.slice(span.bodyStart, span.bodyEnd);
+    cursor = span.bodyEnd + 1;
+  }
+  return text + rendered.text.slice(cursor);
+}
+
 /** The label delimiters never appear in content: a stored ⟦ or ⟧ becomes [ or ]. */
 export function escapeDelimiters(t: string): string {
   return t.replace(/⟦/g, '[').replace(/⟧/g, ']');

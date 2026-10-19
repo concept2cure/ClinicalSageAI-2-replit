@@ -1,0 +1,10 @@
+--- a/server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
++++ b/server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+@@ -37,2 +37,2 @@
+-  query: async (sql: string, params?: unknown[]) => {
+-    const r = await pglite.query<Record<string, unknown>>(sql, params);
++  query: async <R = Record<string, unknown>>(sql: string, params?: unknown[]) => {
++    const r = await pglite.query<R>(sql, params);
+@@ -44 +44 @@
+-};
++} satisfies import('../span-lineage.service').Queryable;

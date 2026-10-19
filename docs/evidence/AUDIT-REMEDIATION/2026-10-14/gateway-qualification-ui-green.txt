@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > states qualification is unverified even when gateway credentials are configured 253ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > lists gateways with credential status and the transmittal log 24ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > transmits with the governed reason + §11 re-auth and reports the gateway ref 73ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces a 401 re-auth rejection honestly (nothing left the platform) 81ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > the transmittal log names who transmitted, from the server-resolved person 31ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > the transmit form asks the signer to declare the §11.50 meaning 65ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces the 409 active-transmittal lock with the holder id 67ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > renders the structural gate’s findings on a 422 (errors first) so the refusal is actionable, and clears them on the next attempt 156ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > records regulatory identifiers through the governed PUT route and says the cleared bundle must be assembled again 84ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > sends no contact when none of its fields is filled (a 510(k) or a non-US package needs none) 52ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > surfaces a refused identifier (400) with the server’s own reason, and records nothing 61ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > assembles through the canonical packager and reports the bundle as ready to transmit 43ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > says so when the assembly’s governed-action ledger entry could not be written 52ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > shows a bundle assembled WITH error findings in the findings card, fetched from preflight, and offers to record identifiers when that is the finding 60ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > renders a packager REFUSAL (422) with its findings 76ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a transmit refusal that carries no findings (package never assembled) says so — never that findings were recorded on a bundle 86ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > says when the findings for an assembled-with-errors bundle could not be loaded, instead of an empty table under an error count 67ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a lost ledger entry on a SUCCESSFUL transmission is announced as an alert, never an unqualified success 58ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > Reload findings re-runs preflight for the last package, replaces the card’s findings, and says when the summary could not be saved 57ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a reload whose preflight itemizes nothing says so, and never reports "no error-severity findings" 50ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > offers the submission type a follow-up sequence needs, and says what the sequence did to what is already on file 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a follow-up refused for want of a submission type shows the server’s own reason 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > SENDS what the form collected: the submission type and the withdrawals reach the server 41ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a submission type the region cannot file shows the terms that would work 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > recording identifiers removes only the identifiers finding; an unrelated finding stays on the card 55ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > recording identifiers from the card’s own button clears the card it came from, and a lost ledger entry is announced as an alert 54ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > offers the org’s packages as ONE picker across transmit, assemble and identifiers, and falls back to the numeric id — saying so — when the list cannot be loaded 99ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > polls the live gateway status for a transmittal 33ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does not call a platform-composed record the agency’s bytes 39ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does call a genuine agency MDN the agency’s own bytes 37ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — real dispatch layer > does not claim a rollback retracted the submission at the agency 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown 409 reaches the active-transmittal branch with the holder id 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown 412 says the gateway credentials are not configured 35ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a thrown identifiers 404 reaches its own branch 35ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError) > a network failure (not an ApiRequestError) still reads as a failure, never a success 58ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > the success confirmation names the signer and the declared meaning 39ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > does not claim a signature when the ledger transaction that carries it was lost 35ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the declared signature meaning is shown back > the transmittal log shows the meaning recorded on the transmittal with its signature 14ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > records it from the transmittal row: posts the notice, reason, meaning and re-auth, and says the sequence is off file 40ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a refusal closes the drawer and shows the server’s own sentence 41ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a request that never completed does not claim that nothing changed 44ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > is offered only on a package transmittal with no rejection recorded, and a recorded one is shown on its row 51ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a transmit refused because the sequence is already on file shows the server’s sentence, not "already active — roll it back" 63ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — an agency technical rejection (sweep F19) > a refused rollback closes the drawer and shows the server’s reason 55ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a person whose role does not sign is not offered Transmit or Technical rejection, and is told why 61ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a signer is offered both 35ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > an authority the server could not read hides nothing: unknown is not "you cannot" 38ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code 45ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > marks the package the signer created, and the one with no recorded creator 29ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > marks nothing when the answer could not be read — unknown is not "you cannot" 30ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — the picker says which packages this signer may not transmit > the assemble form is not marked — only transmitting is refused to the creator 32ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > separates configured credentials from agency qualification 41ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > lists each gateway's environments with the choice and whether it can send 9ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a read that fails says so and shows no account 9ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing your own account sends identifier, certificate, key, reason and password, then reads again 208ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a refused change says it was not changed, in the server's words 56ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing the platform account sends no identifier and no secret 0ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > the transmittal log says whose account each transmittal went out under > as recorded on the row, and nothing when it was not recorded 0ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > configured FDA credentials plus implemented offline transport never establish agency acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > regional generic protocol adapters remain unverified rather than becoming qualified by discovery 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > a missing runtime implementation is reported unavailable even if the same account has credentials 0ms
+
+ Test Files  3 passed (3)
+      Tests  62 passed (62)
+   Start at  03:16:12
+   Duration  6.89s (transform 1.36s, setup 229ms, import 1.91s, tests 3.20s, environment 965ms)
+

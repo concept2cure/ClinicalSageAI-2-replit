@@ -90,4 +90,3 @@ AssertionError: promise resolved "{ user: { id: '7001', …(3) }, …(2) }" inst
       Tests  1 failed | 35 skipped (36)
    Start at  04:06:18
    Duration  7.05s (transform 275ms, setup 85ms, import 354ms, tests 6.43s, environment 0ms)
-

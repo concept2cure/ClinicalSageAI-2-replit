@@ -1,0 +1,19 @@
+{
+  "qualification": "Second independent review of all41 exact original line matches against five source files and redacted scan Match spans; no unknown value or scanner suppression. Original browser141seal is byte-identical.",
+  "records": [
+    {
+      "path": "independent-summary.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 305,
+      "decodedHexDigest": "ca11314c7b2b0953ae203c610f458bf50672c18e7c9a5baa1eca77d09872b1d4",
+      "archivedHexDigest": "755f00d6a048e8efab128b4fe8dfb1052c27c7928759f5546d453be68a0fd994"
+    },
+    {
+      "path": "independent-exact-review.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 17335,
+      "decodedHexDigest": "d86552bac4f0d2d9c353ebd199facc6495328f75ad789bd600d31e11c31712cb",
+      "archivedHexDigest": "27b9749c00b6a42194dbdab7450570bbf128361a9ee183c455654999cd27de56"
+    }
+  ]
+}

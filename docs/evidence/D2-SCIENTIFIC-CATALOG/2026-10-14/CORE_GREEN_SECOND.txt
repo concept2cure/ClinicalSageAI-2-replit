@@ -1,0 +1,117 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total 139ms
+   → Existing clinical engine must bind study, population, total arm and count.: expected 'failed' to be 'passed' // Object.is equality
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF02: Randomized count cannot use treated count 34ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF03: Drug arm cannot use placebo count 10ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF04: Incomplete clinical frame 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF05: CMC batch/method result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF06: CMC batch substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF07: CMC method substitution 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF08: CMC scalar cannot strip criterion bound 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF09: CMC specification bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF10: Source precision retained 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF11: Device configuration/software result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF12: Device configuration substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF13: Device software substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF14: Device criterion cannot become measured scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF15: Device criterion bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF16: Complete diagnostic sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF17: Diagnostic assay substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF18: Diagnostic specimen substitution 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF19: Diagnostic cutoff substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF20: Diagnostic denominator substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF21: Diagnostic reference substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF22: Diagnostic population substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF23: Comparator agreement remains agreement 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF24: Agreement cannot establish sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF25: Missing diagnostic context 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF26: Analytical LoD design/matrix/lot 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF27: Analytical lot/matrix substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF28: Analytical CV property substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF29: Scientific notation cannot be rewritten 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF30: Range preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF31: Range endpoint cannot establish scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF32: Approximation cannot establish exact scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF33: Approximation preserved 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF34: Remote heading is not a local relation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF35: Large multi-subject anchor 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF36: Unsupported Japanese interpretation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF37: OCR remains unqualified context 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-document: Wrong source document 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-bytes: Wrong original-byte hash 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-text: Wrong extraction hash 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-range: Shifted exact quote range 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-quote: Fabricated exact quote 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF39: Unsupported computed result 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-status: Candidate cannot claim acceptance 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-actor: Candidate cannot supply authority 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-locator: Unsupported fabricated original locator 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > returns only preview scope for an exact explicit source row 6ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > keeps legacy wrong-assay value-presence meaning explicit 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong batchAsWritten even if stated remotely 2ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong methodAsWritten even if stated remotely 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong productRef even if stated remotely 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses a value stated only elsewhere 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > missing mandatory context is not established 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > missing witnesses are not established 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses a remote repeated witness 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > independently recomputes supplied text identity 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > same bytes with changed extraction do not inherit source binding 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong quote 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong offset 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong end 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > keeps canonical digest independent of key order 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > does not establish ocr context 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > does not establish unsupported_language_or_layout context 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > takes a private candidate snapshot 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field accepted 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field actorId 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field scientificQualification 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects computation and unsupported source locator 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset NaN 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset Infinity 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset 1.5 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset -1 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset 9007199254740992 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects all input limits, unknown paths and duplicate witnesses 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 99.2 against 99.20 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 99.20 against 99.20 as scalar binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 0.5 against < 0.5 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > < 0.5 against < 0.5 as bound binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 0.5 against approximately 0.5 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > approximately 0.5 against approximately 0.5 as approximate binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1-2 against 1-2 as range binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1-2 against 1-2 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 10 against 10³ as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 103 against 10³ as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > stable against stable as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1.20e-3 against 1.20e-3 as scalar binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > preserves bound direction 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > cannot ignore source negation or compound subjects 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total
+AssertionError: Existing clinical engine must bind study, population, total arm and count.: expected 'failed' to be 'passed' // Object.is equality
+
+Expected: "passed"
+Received: "failed"
+
+ ❯ server/services/vault/__tests__/scientific-source-facts.test.ts:34:54
+     32|       expect(result.candidateSha256).toMatch(/^[a-f0-9]{64}$/);
+     33|       if (item.expected === 'pass') {
+     34|         expect(result.context.state, item.rationale).toBe('passed');
+       |                                                      ^
+     35|       } else if (item.expected === 'not_established') {
+     36|         expect(result.context.state, item.rationale).toBe('not_establi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 87 passed (88)
+   Start at  06:25:17
+   Duration  1.10s (transform 416ms, setup 84ms, import 474ms, tests 242ms, environment 0ms)
+

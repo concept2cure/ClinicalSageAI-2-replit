@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > new editor asks use the guarded canonical conversation > prefills the current conversation with exact saved identity and sends nothing on arrival 731ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > new editor asks use the guarded canonical conversation > holds dirty work without writing the handoff, and Cancel keeps both work and location 459ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > new editor asks use the guarded canonical conversation > uses the same leave guard for saved source requests, excluding unsaved text after explicit leave 826ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > save disposition supplies only a confirmed saved version > overlays the returned PATCH timestamp before navigation instead of waiting for a React render 368ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > save disposition supplies only a confirmed saved version > keeps the editor and pending handoff intact when the deliberate save is refused 620ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > save disposition supplies only a confirmed saved version > removes an obsolete timestamp if the successful save response names no confirmed version 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > workflow copies preserve exact conversation scope after reconciliation > names the saved unbound copy without implying its project IND filing is its binding 314ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > project decisions and canonical conversation handoffs share the same guard > does not prefill a conversation while a dirty project switch remains cancelled 626ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx > project decisions and canonical conversation handoffs share the same guard > does not let an old save-and-conversation choice erase the newer project decision 396ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  00:27:00
+   Duration  8.03s (transform 1.56s, setup 210ms, import 2.20s, tests 4.35s, environment 754ms)

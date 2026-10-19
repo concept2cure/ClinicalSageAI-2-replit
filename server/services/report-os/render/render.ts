@@ -8,6 +8,8 @@
 
 import type { ReportRunStatus, TruthfulnessEvaluation } from '../truthfulness';
 import type { ReportBlock, ReportSection, RenderedReport } from './types';
+import type { InsightAtomRef } from '../providers/types';
+import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-currency-matrix';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -23,6 +25,8 @@ export interface RenderInput {
     observedAt: string;
     status: 'ready' | 'partial' | 'missing';
     blocker?: string | null;
+    atoms?: InsightAtomRef[];
+    calculation?: Record<string, unknown>;
   }>;
   /**
    * Not rendered. No engine behind this renderer measures a confidence (the
@@ -127,6 +131,7 @@ function readinessGapsOf(summary: Record<string, unknown> | null | undefined): R
  * reading of a record that does not say.
  */
 export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
+  if (labelCurrencyMatrixOf(asRecord(summary?.domain))) return true;
   /* A market assessment is the second evaluation that can set this, and it
      writes its own key: `summary.module1.missingHeadings` is a list when it
      could match this program's content against the agency's headings, and null
@@ -165,6 +170,8 @@ function gapsSectionFor(
   generatedAt: string,
   blockers: string[],
 ): ReportSection {
+  const labelMatrix = labelCurrencyMatrixOf(asRecord(summary.domain));
+  if (labelMatrix) return { id: 'gaps', title: 'Gaps', blocks: [{ kind: 'gap-list', items: labelMatrix.gaps }] };
   /* A market assessment's gaps are its own, and are read FIRST because its runs
      write no `summary.regulatory` for the readiness branches below to find. */
   const m1 = module1Gaps(summary);
@@ -280,16 +287,17 @@ function humanize(key: string): string {
  * drawn, so the register read as the readiness digest under another title
  * (QA 2026-10-08, j8). The counts are the organisation's, and the section says so.
  */
-function domainSection(domain: Record<string, unknown>): ReportSection {
+function domainSection(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection {
+  const provenance = providers.flatMap((p) => p.atoms ?? []);
   const blocks: ReportBlock[] = [
     {
       kind: 'summary',
-      text: "Counts are the organisation's records of this kind; they are not limited to one program.",
+      text: computedScope === 'project' ? 'Counts are limited to this project’s recorded awards, proposals and their associated records.' : "Counts are the organisation's records of this kind; they are not limited to one program.",
     },
   ];
   for (const [key, value] of Object.entries(domain)) {
     if (typeof value === 'number') {
-      blocks.push({ kind: 'metric', label: humanize(key), value });
+      blocks.push({ kind: 'metric', label: humanize(key), value, ...(provenance.length ? { provenance } : {}) });
     } else if (asRecord(value)) {
       const entries = Object.entries(value as Record<string, unknown>);
       blocks.push(
@@ -299,6 +307,7 @@ function domainSection(domain: Record<string, unknown>): ReportSection {
               kind: 'table',
               columns: [humanize(key.replace(/^by/, '')), 'Count'],
               rows: entries.map(([k, v]) => [k, typeof v === 'number' || typeof v === 'string' ? v : null]),
+              ...(provenance.length ? { provenance } : {}),
             },
       );
     } else if (Array.isArray(value) && value.length > 0) {
@@ -312,11 +321,17 @@ function domainSection(domain: Record<string, unknown>): ReportSection {
             const row = asRecord(item) ?? {};
             return columns.map((c) => (typeof row[c] === 'number' || typeof row[c] === 'string' ? (row[c] as string | number) : null));
           }),
+          ...(provenance.length ? { provenance } : {}),
         });
       }
     }
   }
   return { id: 'register', title: 'Register', blocks };
+}
+
+function renderedDomainSections(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection[] {
+  const labelMatrix = labelCurrencyMatrixOf(domain);
+  return labelMatrix ? renderLabelCurrencyMatrix(labelMatrix, providers.flatMap(provider => provider.atoms ?? [])) : [domainSection(domain, providers, computedScope)];
 }
 
 /**
@@ -396,7 +411,7 @@ function module1CoverageBlocks(module1: Record<string, unknown> | null): ReportB
       ...(required != null ? { unit: `of ${required}` } : {}),
     },
     missing.length === 0
-      ? { kind: 'summary', text: 'Every required Module 1 heading has a document recorded under it.' }
+      ? { kind: 'summary', text: 'Every required Module 1 heading has recorded placement under it; this is not a determination of document completeness or approval.' }
       : {
           kind: 'table',
           columns: ['Heading', 'Title', 'State'],
@@ -426,7 +441,7 @@ function marketSection(module1: Record<string, unknown> | null): ReportSection {
   return {
     id: 'market-module1',
     title: 'Module 1 content for this market',
-    blocks: [...module1CoverageBlocks(module1), ...module1ConditionalBlocks(module1)],
+    blocks: [{ kind: 'summary', text: typeof module1?.coverageBasis === 'string' ? module1.coverageBasis : 'This stored assessment matches recorded CTD placements. Content existence, quality and approval were not retained as evidence in this run.' }, ...module1CoverageBlocks(module1), ...module1ConditionalBlocks(module1)],
   };
 }
 
@@ -438,6 +453,7 @@ function marketSection(module1: Record<string, unknown> | null): ReportSection {
 function readinessBlocks(input: RenderInput): ReportBlock[] {
   const regulatory = asRecord(input.summary.regulatory);
   const score = regulatory?.readinessScore;
+  const provenance = input.providers.find((p) => p.provider === 'submission_readiness')?.atoms ?? [];
   if (regulatory && typeof score === 'number') {
     const level = typeof regulatory.readinessLevel === 'string' ? regulatory.readinessLevel : null;
     const against = typeof regulatory.applicationDisplayName === 'string' ? regulatory.applicationDisplayName : null;
@@ -446,7 +462,7 @@ function readinessBlocks(input: RenderInput): ReportBlock[] {
         kind: 'summary',
         text: `Submission readiness ${score}%${level ? ` (${level.replace(/_/g, ' ')})` : ''}${against ? `, evaluated against ${against}` : ''}.`,
       },
-      { kind: 'metric', label: 'Submission readiness', value: score, unit: '%' },
+      { kind: 'metric', label: 'Submission readiness', value: score, unit: '%', ...(provenance.length ? { provenance } : {}) },
       ...(level ? [{ kind: 'metric' as const, label: 'Readiness level', value: level }] : []),
     ];
   }
@@ -461,6 +477,27 @@ function readinessBlocks(input: RenderInput): ReportBlock[] {
 function scopeNameOf(input: RenderInput): string {
   const label = input.summary.scopeLabel;
   return typeof label === 'string' && label.trim() ? label.trim() : `${input.scopeType} ${input.scopeId}`;
+}
+
+function computationMetadata(summary: Record<string, unknown>, scopeType: string) {
+  const computedScope = typeof summary.computedScope === 'string' ? summary.computedScope
+    : typeof summary.domainScope === 'string' ? summary.domainScope : scopeType;
+  const provenance = asRecord(summary.provenance);
+  return { computedScope, ...(provenance ? { provenance } : {}) };
+}
+
+function providerReadinessSection(providers: RenderInput['providers']): ReportSection {
+  const providerRows: Array<Array<string | number | null>> = providers.map(p => [
+    p.provider,
+    p.status,
+    p.blocker ?? '—',
+  ]);
+  return {
+    id: 'provider-readiness',
+    title: 'Provider readiness',
+    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
+  };
+
 }
 
 export function renderReport(input: RenderInput): RenderedReport {
@@ -496,20 +533,13 @@ export function renderReport(input: RenderInput): RenderedReport {
   else if (!domain) execBlocks.push(...readinessBlocks(input));
 
   sections.push({ id: 'executive-summary', title: 'Executive summary', blocks: execBlocks });
-  if (domain) sections.push(domainSection(domain));
+  const metadata = computationMetadata(input.summary, input.scopeType);
+  const { computedScope } = metadata;
+  if (domain) sections.push(...renderedDomainSections(domain, input.providers, computedScope));
   if (market) sections.push(marketSection(module1 ?? null));
 
   // 2. Provider readiness.
-  const providerRows: Array<Array<string | number | null>> = input.providers.map(p => [
-    p.provider,
-    p.status,
-    p.blocker ?? '—',
-  ]);
-  sections.push({
-    id: 'provider-readiness',
-    title: 'Provider readiness',
-    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows }],
-  });
+  sections.push(providerReadinessSection(input.providers));
 
   // 3. Blockers (only when present).
   if (input.blockers.length) {
@@ -522,6 +552,7 @@ export function renderReport(input: RenderInput): RenderedReport {
 
   // 4. Gaps (always present; supports requireExplicitGaps).
   sections.push(gapsSectionFor(input.summary, generatedAt, input.blockers));
+  if (input.summary.complianceAssessment === 'not_evaluated') sections.push({ id: 'assessment-limits', title: 'Assessment limits', blocks: [{ kind: 'summary', text: 'Artifact approval is lifecycle evidence. Compliance controls, audit-trail integrity and signatures were not assessed by this report.' }] });
 
   const scopeLabel = input.summary.scopeLabel;
   const report: RenderedReport = {
@@ -531,6 +562,7 @@ export function renderReport(input: RenderInput): RenderedReport {
     ...(typeof scopeLabel === 'string' && scopeLabel.trim() ? { scopeLabel: scopeLabel.trim() } : {}),
     generatedAt,
     status: input.status,
+    ...metadata,
     sections,
   };
   if (input.truthfulness) {

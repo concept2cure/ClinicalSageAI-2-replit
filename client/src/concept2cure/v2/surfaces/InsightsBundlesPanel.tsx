@@ -24,13 +24,20 @@ import { I } from '../icons';
 import {
   BUNDLE_NEEDS_PROJECT_NOTE,
   BUNDLE_PDF_IS_A_MANIFEST,
+  BUNDLE_REPORTS_PDF_NOTE,
+  bundleRegisterCaveat,
   createBundle,
   whenText,
+  type BundlePdfContent,
   type BundleRow,
 } from './insightsLibraryModel';
 import { PanelAlert, PanelHead, StatusTag, isRowList, readFailureOf, rowsOf } from './insightsLibraryShared';
 
-function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => void }) {
+function BundleCard({ bundle, exporting, onExport }: {
+  bundle: BundleRow;
+  exporting: boolean;
+  onExport: (content: BundlePdfContent) => void;
+}) {
   return (
     <div className="rl-card">
       <div className="rl-card-h">{bundle.name}</div>
@@ -45,9 +52,15 @@ function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => v
         ))}
       </ul>
       <div className="rl-card-meta">Status shown is the status at bundling; the manifest prints it beside the status at export.</div>
-      <button type="button" className="rl-card-run" onClick={onExport}>
-        {I.download} Export manifest PDF
-      </button>
+      <div className="rl-head-acts" aria-busy={exporting}>
+        <button type="button" className="rl-card-run" disabled={exporting} onClick={() => onExport('manifest')}>
+          {I.download} Export manifest PDF
+        </button>
+        <button type="button" className="rl-card-run" disabled={exporting} onClick={() => onExport('reports')}>
+          {I.download} Export reports PDF
+        </button>
+      </div>
+      {exporting && <div className="rl-card-meta" role="status">Preparing PDF…</div>}
     </div>
   );
 }
@@ -96,19 +109,24 @@ function BundleForm({
 export function BundlesPanel({
   pendingRunIds,
   canWrite,
+  pendingExports,
   onExport,
   onSaved,
   onClearPending,
 }: {
   pendingRunIds: number[];
   canWrite: boolean;
-  onExport: (bundleId: string, name: string) => void;
+  pendingExports: ReadonlySet<string>;
+  onExport: (bundleId: string, name: string, content: BundlePdfContent) => void;
   onSaved: (msg: string) => void;
   onClearPending: () => void;
 }) {
   const [attempt, setAttempt] = useState(0);
   const bundles = useLiveData<unknown>('/api/report-os/bundles', ['/api/report-os/bundles', attempt], isRowList);
   const rows = useMemo(() => rowsOf<BundleRow>(bundles.data), [bundles.data]);
+  /* A bounded register read that does not say it was bounded is a silent cap
+     on a governed register. Null — and so no note — whenever it was not. */
+  const registerCaveat = useMemo(() => bundleRegisterCaveat(bundles.meta), [bundles.meta]);
 
   const [name, setName] = useState('');
   const [note, setNote] = useState<string | null>(null);
@@ -134,12 +152,18 @@ export function BundlesPanel({
     <div className="rl">
       <PanelHead
         title="Bundles"
-        sub="A named set of governed reports, with a manifest PDF listing each one and its status."
+        sub="A named set of governed reports. Export an index or the retained report bodies."
       />
 
       <div className="ro-dash-note" role="note" data-testid="rl-bundle-manifest-note">
-        {I.info} {BUNDLE_PDF_IS_A_MANIFEST} {BUNDLE_NEEDS_PROJECT_NOTE}
+        {I.info} {BUNDLE_PDF_IS_A_MANIFEST} {BUNDLE_REPORTS_PDF_NOTE} {BUNDLE_NEEDS_PROJECT_NOTE}
       </div>
+
+      {registerCaveat && (
+        <div className="ro-dash-note" role="status" data-testid="rl-bundle-register-caveat">
+          {I.info} {registerCaveat}
+        </div>
+      )}
 
       <PanelAlert note={note} />
 
@@ -178,7 +202,7 @@ export function BundlesPanel({
       ) : (
         <div className="rl-grid">
           {rows.map((b) => (
-            <BundleCard key={b.bundleId} bundle={b} onExport={() => onExport(b.bundleId, b.name)} />
+            <BundleCard key={b.bundleId} bundle={b} exporting={pendingExports.has(b.bundleId)} onExport={(content) => onExport(b.bundleId, b.name, content)} />
           ))}
         </div>
       )}

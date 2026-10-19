@@ -58,4 +58,3 @@ AssertionError: {"error":"Failed to upload file","code":"UPLOAD_ERROR"}: expecte
       Tests  1 failed (1)
    Start at  18:33:05
    Duration  9.11s (transform 6.52s, setup 62ms, import 99ms, tests 8.72s, environment 0ms)
-

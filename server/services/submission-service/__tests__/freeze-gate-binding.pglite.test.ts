@@ -148,7 +148,7 @@ const chainRows = async (seqId: number) =>
   )).rows;
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);

@@ -71,20 +71,20 @@ beforeAll(async () => {
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS organizations (id INTEGER PRIMARY KEY, settings JSONB NOT NULL DEFAULT '{}'::jsonb);
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT,
       content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ,
-      -- Last, so the positional INSERT below is unchanged. NULL: the reader
-      -- (7fd5d6af) then asks getStorageProviderFor for the default store.
+      -- NULL asks getStorageProviderFor for the default store.
       storage_provider TEXT,
-      -- VR-14: the version family the transmit rule reads (is this version
-      -- current?). Appended, so the positional INSERT below is unchanged.
+      -- VR-14: the tenant and version family the transmit rule reads.
       organization_id INTEGER, supersedes_id UUID, document_code TEXT
     );
+    INSERT INTO organizations (id) VALUES (${ORG});
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}', ${ORG}, NULL);
-    INSERT INTO vault.documents VALUES
-      ('${VAULT_DOC}', '${PROGRAM}', 'ver-1', '${createHash('sha256').update(PDF).digest('hex')}', 'cer.pdf', NULL);
+    INSERT INTO vault.documents (id, program_id, storage_version_id, content_hash, file_name, organization_id) VALUES
+      ('${VAULT_DOC}', '${PROGRAM}', 'ver-1', '${createHash('sha256').update(PDF).digest('hex')}', 'cer.pdf', ${ORG});
     -- VR-14: a vault leaf is transmitted only when its version is approved on
     -- its VR-13 lifecycle record, for these bytes.
     INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
@@ -95,8 +95,8 @@ beforeAll(async () => {
     INSERT INTO coauthor_documents (id, organization_id, title, content, status, module_number) VALUES
       ${OTHER_SLOTS.map(([code, title], i) => `(${300 + i}, ${ORG}, '${title}', '<p>${code} body</p>', 'approved', '${code}')`).join(',\n      ')};
 
-    INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
-    VALUES (1, 'MDR TF', 'mdr', 'medtech', 'eu', ${ORG}, ${USER});
+    INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+    VALUES (1, 'MDR TF', 'mdr', 'medtech', 'eu', ${ORG}, ${USER}, '${PROGRAM}');
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by) VALUES
       (1, 1, 'eu', '0000', ${ORG}, ${USER}),
       (2, 1, 'eu', '0001', ${ORG}, ${USER});

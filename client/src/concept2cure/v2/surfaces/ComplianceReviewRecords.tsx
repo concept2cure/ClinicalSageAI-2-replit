@@ -47,17 +47,17 @@ function useReviewStatus() {
   return { load, refresh };
 }
 
-/** The periodic reviews card. Shown to the members who may run reports; nothing is read until it is opened. */
+/** Due state is read on arrival; signing remains an explicit human action. */
 export function ReviewRecords({ canRun, result }: { canRun: boolean; result: RunResult | null }) {
   const headingId = useId();
   const { load, refresh } = useReviewStatus();
   const [open, setOpen] = useState(false);
   const [signedNote, setSignedNote] = useState<string | null>(null);
+  useEffect(() => { if (canRun) void refresh(); }, [canRun, refresh]);
   if (!canRun) return null;
   const start = () => {
     setOpen(true);
     setSignedNote(null);
-    void refresh();
   };
   return (
     <section className="pj-card" aria-labelledby={headingId} style={{ margin: '0 0 18px', gap: 10 }}>
@@ -71,18 +71,25 @@ export function ReviewRecords({ canRun, result }: { canRun: boolean; result: Run
       {!open && (
         <div><button type="button" className="btn ghost" onClick={start}>Record review</button></div>
       )}
-      {open && load.state === 'loading' && <div style={muted} aria-busy="true">Loading the review records…</div>}
-      {open && load.state === 'error' && (
+      {load.state === 'loading' && <div style={muted} aria-busy="true">Loading the review records…</div>}
+      {load.state === 'error' && (
         <ErrorState title="Couldn’t load the review records" message={load.message} retry={() => void refresh()} />
       )}
+      {!open && load.state === 'ready' && <LatestReviews reviews={load.reviews} />}
       {open && load.state === 'ready' && (
         <ReviewPanel
           reviews={load.reviews} result={result} onCancel={() => setOpen(false)}
-          onSigned={(note) => { setSignedNote(note); setOpen(false); }}
+          onSigned={(note) => { setSignedNote(note); setOpen(false); void refresh(); }}
         />
       )}
     </section>
   );
+}
+
+function LatestReviews({ reviews }: { reviews: ReviewsState }) {
+  return <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }} aria-label="Latest signed reviews">
+    {REVIEW_KINDS.map(k => <li key={k} data-state={reviews.status[k].state}>{statusLine(k, reviews.status[k])}</li>)}
+  </ul>;
 }
 
 function ReviewPanel({ reviews, result, onCancel, onSigned }: {
@@ -90,11 +97,7 @@ function ReviewPanel({ reviews, result, onCancel, onSigned }: {
 }) {
   return (
     <>
-      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }} aria-label="Latest signed reviews">
-        {REVIEW_KINDS.map((k) => (
-          <li key={k} data-state={reviews.status[k].state}>{statusLine(k, reviews.status[k])}</li>
-        ))}
-      </ul>
+      <LatestReviews reviews={reviews} />
       {reviews.canSign ? (
         <ReviewForm status={reviews.status} result={result} onCancel={onCancel} onSigned={onSigned} />
       ) : (

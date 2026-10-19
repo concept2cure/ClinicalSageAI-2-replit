@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T00:43:44.186Z","pid":91449,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T00:43:44.188Z","pid":91449,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T00:43:44.188Z","pid":91449,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T00:43:44.364Z', poolSize: 1 }
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > control: a clean canonical protocol finalizes with a matching real content signature
+[protocol-native-probe:clean-control] {"documentId":99,"signatureId":94,"status":"finalized","version":"1.0","signatures":1,"versions":1,"bindingBasis":"protocol-document-content-sha256","digestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > control: a clean canonical protocol finalizes with a matching real content signature 908ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state
+[database] Database connection successful { timestamp: '2026-10-14T00:43:51.491Z', poolSize: 2 }
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state
+[protocol-native-probe:same-client-structural-regression] {"documentId":100,"sectionId":1288,"sectionKey":"synopsis","signingPid":4656,"independentPoolPid":4659,"refusalCode":"INVALID_STATE","finalized":false,"status":"in_development","returnedCompleteness":null,"currentReadyToFinalize":true,"snapshotSectionStatus":null,"signatures":0,"versions":0}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state 407ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a content writer queued behind finalization and preserves the signed digest
+[protocol-native-probe:finalizer-first-content-writer] {"documentId":101,"sectionId":1301,"holderPid":4660,"finalizerPid":4656,"writerPid":4659,"finalizedStatus":201,"finalizedError":null,"writerStatus":409,"writerError":"INVALID_STATE","status":"finalized","signatures":1,"versions":1,"queuedContentCommitted":false,"signedDigest":"f00a0bbcb5babb830d670a59533aa47d235bd240167967de4c066c352cc2cacc","currentDigest":"f00a0bbcb5babb830d670a59533aa47d235bd240167967de4c066c352cc2cacc","digestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a content writer queued behind finalization and preserves the signed digest 1015ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'header' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-header] {"documentId":102,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'header' queued after the actual finalizer without changing its content/version 1590ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'synopsis' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-synopsis] {"documentId":103,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'synopsis' queued after the actual finalizer without changing its content/version 1615ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'minor snapshot' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-minor snapshot] {"documentId":104,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'minor snapshot' queued after the actual finalizer without changing its content/version 1425ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'objective' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-objective] {"documentId":105,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'objective' queued after the actual finalizer without changing its content/version 1589ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'eligibility' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-eligibility] {"documentId":106,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'eligibility' queued after the actual finalizer without changing its content/version 1583ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit rename' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-visit rename] {"documentId":107,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit rename' queued after the actual finalizer without changing its content/version 1487ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'remove assessment' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-remove assessment] {"documentId":108,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'remove assessment' queued after the actual finalizer without changing its content/version 1348ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-visit] {"documentId":109,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit' queued after the actual finalizer without changing its content/version 1624ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'team' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-team] {"documentId":110,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'team' queued after the actual finalizer without changing its content/version 1542ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'assessment' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-assessment] {"documentId":111,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'assessment' queued after the actual finalizer without changing its content/version 1456ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > uses same-client newly completed statuses rather than the old committed pool status 215ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization
+[protocol-native-probe:finalizer-first-design-bind] {"documentId":113,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization
+[protocol-native-probe:finalizer-first-design-unbind] {"documentId":114,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization 2805ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > keeps supplemental signedContent:false checks available after finalization 207ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before set cell reaches a held child row
+[protocol-native-probe:mutable-set cell] {"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before set cell reaches a held child row 1527ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before clear cell reaches a held child row
+[protocol-native-probe:mutable-clear cell] {"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before clear cell reaches a held child row 1447ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before remove visit reaches a held child row
+[protocol-native-probe:mutable-remove visit] {"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before remove visit reaches a held child row 1399ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > writer-first and stale snapshot finalization ordering > signs the committed SoA content of an actual writer queued first 1389ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > writer-first and stale snapshot finalization ordering > refuses a stale repeatable-read finalizer queued behind the real SoA writer parent update 201ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > exports genuine clean finalized current content while preserving all retained rows 436ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > holds a legacy digest drift export without rewriting the genuine signature or history 297ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > holds export as unverified when canonical binding reads fail on the actual restricted snapshot 507ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > does not upgrade an explicit read-committed executor into a verified current-content claim 220ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[protocol-native-concurrency:summary] {"tag":"protocol-native-concurrency-91449-mv7dzpr3-7f7c01a1","database":"platform_ci_native_recheck_20261013","cases":{"clean-control":{"documentId":99,"signatureId":94,"status":"finalized","version":"1.0","signatures":1,"versions":1,"bindingBasis":"protocol-document-content-sha256","digestMatches":true},"same-client-structural-regression":{"documentId":100,"sectionId":1288,"sectionKey":"synopsis","signingPid":4656,"independentPoolPid":4659,"refusalCode":"INVALID_STATE","finalized":false,"status":"in_development","returnedCompleteness":null,"currentReadyToFinalize":true,"snapshotSectionStatus":null,"signatures":0,"versions":0},"finalizer-first-content-writer":{"documentId":101,"sectionId":1301,"holderPid":4660,"finalizerPid":4656,"writerPid":4659,"finalizedStatus":201,"finalizedError":null,"writerStatus":409,"writerError":"INVALID_STATE","status":"finalized","signatures":1,"versions":1,"queuedContentCommitted":false,"signedDigest":"f00a0bbcb5babb830d670a59533aa47d235bd240167967de4c066c352cc2cacc","currentDigest":"f00a0bbcb5babb830d670a59533aa47d235bd240167967de4c066c352cc2cacc","digestMatches":true},"finalizer-first-header":{"documentId":102,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-synopsis":{"documentId":103,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-minor snapshot":{"documentId":104,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-objective":{"documentId":105,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-eligibility":{"documentId":106,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-visit rename":{"documentId":107,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-remove assessment":{"documentId":108,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-visit":{"documentId":109,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-team":{"documentId":110,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-assessment":{"documentId":111,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-design-bind":{"documentId":113,"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-design-unbind":{"documentId":114,"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"mutable-set cell":{"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true},"mutable-clear cell":{"signerPid":4656,"writerPid":4659,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true},"mutable-remove visit":{"signerPid":4659,"writerPid":4656,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}},"runtime":{"database":"platform_ci_native_recheck_20261013","role":"app_service","rolsuper":false,"rolbypassrls":false,"enforcement":"on"},"stores":[{"relname":"c2c_ana_actions","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"electronic_signatures","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_documents","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_sections","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_versions","relrowsecurity":true,"relforcerowsecurity":true}],"organizationId":1465190}
+
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  00:43:39
+   Duration  38.63s (transform 5.19s, setup 138ms, import 6.47s, tests 31.34s, environment 0ms)

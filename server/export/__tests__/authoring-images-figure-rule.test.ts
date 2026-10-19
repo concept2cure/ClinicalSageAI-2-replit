@@ -96,9 +96,9 @@ describe('a figure resolves under the src its image block carries', () => {
   it('still files a governed reference and an inline PNG (guard)', async () => {
     const ref = '/api/authoring/images/file_1727500000000_k3v9qa';
     const inline = `data:image/png;base64,${PNG_B64}`;
-    const images = await resolveAuthoringImages([img(ref), img(inline)], ORG);
+    const images = await resolveAuthoringImages([img(ref), img(inline)], ORG, { userId: 42 });
 
-    expect(h.loadUploadedFile).toHaveBeenCalledWith('file_1727500000000_k3v9qa', ORG);
+    expect(h.loadUploadedFile).toHaveBeenCalledWith('file_1727500000000_k3v9qa', ORG, { userId: 42 });
     expect(images.get(ref)).toMatchObject({ mimeType: 'image/png', width: 1, height: 1 });
     expect(images.get(inline)).toMatchObject({ mimeType: 'image/png', width: 1, height: 1 });
     expect(images.get(inline)?.buffer.equals(PNG_BYTES)).toBe(true);

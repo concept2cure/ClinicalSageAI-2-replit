@@ -138,7 +138,7 @@ describe('it behaves like a modal dialog', () => {
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     const labelledBy = dialog.getAttribute('aria-labelledby');
     expect(labelledBy).toBeTruthy();
-    expect(document.getElementById(labelledBy!)?.textContent).toMatch(/place into submission/i);
+    expect(document.getElementById(labelledBy!)?.textContent).toMatch(/place into filing/i);
   });
 
   it('moves focus into the dialog on open', async () => {

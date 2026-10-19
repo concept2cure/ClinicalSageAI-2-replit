@@ -32,11 +32,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 const H = vi.hoisted(() => ({
   query: vi.fn(),
   txQuery: vi.fn(),
   release: vi.fn(),
+  discard: vi.fn(),
   compare: vi.fn(),
   failures: vi.fn(),
   account: { mfa: false, locked: false, active: true },
@@ -44,6 +46,8 @@ const H = vi.hoisted(() => ({
   recordGoverned: vi.fn(),
   persistSignature: vi.fn(),
 }));
+// Fresh program/private-object authorization has a real persistence regression in the QMS lifecycle suite.
+vi.mock('../../services/authoring/authoring-program-access',()=>({authorizeAuthoringProgram:async()=>({principal:{id:'7',email:null,roles:['ADMIN']}}),AuthoringProgramAccessError:class extends Error{}}));
 
 vi.mock('../../db', () => ({
   pool: {
@@ -94,16 +98,28 @@ const DRAFT = {
   id: 11, organization_id: ORG, doc_number: 'SOP-001', title: 'Design control', doc_type: 'sop',
   category: 'design', version: '1.0', status: 'draft', effective_date: null, next_review_date: '2027-01-01',
   author_id: AUTHOR, approver_id: null, approved_at: null, superseded_by_id: null, artifact_id: null,
-  metadata: { sections: [{ key: 'purpose', body: 'Controls design inputs.' }] },
+  authoring_document_id: '00000000-0000-4000-8000-000000000011',
+  metadata: { sections: [{ key: 'purpose', label: 'Purpose' }] },
 };
 /** The approvable state: a draft that was sent for review. */
 const IN_REVIEW = { ...DRAFT, status: 'in_review' };
+const AUTHORED_CONTENT = { documentId: DRAFT.authoring_document_id, programId: '00000000-0000-4000-8000-000000000012', title: DRAFT.title,
+  sections: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Controls design inputs.', orderIndex: 1 }] };
 
-function app(userId = SIGNER) {
+function app(userId = SIGNER, pinned = true) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId };
+    // The admitted request owns one connection; the two scripts distinguish
+    // reads before BEGIN from the same connection's transaction statements.
+    let inTransaction = false;
+    if (pinned) (req as unknown as { dbClient: RequestSqlClient }).dbClient = { query: async (sql: string, params?: unknown[]) => {
+      if (/^BEGIN/.test(sql)) inTransaction = true;
+      const result = await (inTransaction ? H.txQuery : H.query)(sql, params);
+      if (/^(COMMIT|ROLLBACK)/.test(sql)) inTransaction = false;
+      return result;
+    }, discard: H.discard };
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
@@ -117,7 +133,10 @@ function scriptTransaction(row: Record<string, unknown> | null) {
   H.txQuery.mockImplementation(async (sql: string) => {
     const text = String(sql);
     if (text.startsWith('BEGIN') || text.startsWith('COMMIT') || text.startsWith('ROLLBACK')) return { rows: [] };
+    if (text.includes('FROM authoring_documents')) return { rows: [{ id: DRAFT.authoring_document_id, title: DRAFT.title, client_program_id: AUTHORED_CONTENT.programId }] };
+    if (text.includes('FROM authoring_sections')) return { rows: [{ id: 'section', code: 'qms-purpose', title: 'Purpose', content: 'Controls design inputs.', order_index: 1 }] };
     if (text.includes('FOR UPDATE')) return { rows: row ? [row] : [] };
+    if (text.startsWith('INSERT INTO qms_document_versions') || text.startsWith('UPDATE authoring_documents')) return { rows: [] };
     if (text.startsWith('UPDATE qms_documents')) {
       return { rows: row ? [{ ...row, status: 'effective', approver_id: SIGNER, approved_at: '2026-09-21T10:00:00.000Z' }] : [] };
     }
@@ -127,10 +146,41 @@ function scriptTransaction(row: Record<string, unknown> | null) {
 
 const txStatements = () => H.txQuery.mock.calls.map((c) => String(c[0]).split(/\s+/)[0]);
 
+describe('QMS approval rechecks on the reserved request connection', () => {
+  it('refuses an actor now demoted after an earlier allowed authority read without writing or signing', async () => {
+    H.role.mockResolvedValueOnce('admin').mockResolvedValue('viewer');
+    const response = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(403);
+    expect(response.body.details.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(H.txQuery.mock.calls.some(call => String(call[0]).includes('FOR UPDATE'))).toBe(true);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.release).not.toHaveBeenCalled();
+  });
+
+  it('returns safe unavailable when current authority cannot be read on the actual signing client', async () => {
+    H.role.mockResolvedValueOnce('admin').mockRejectedValueOnce(new Error('Private database diagnostic for this fixture'));
+    const response = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(503);
+    expect(response.body.details.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(response.body)).not.toContain('Private database diagnostic');
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(txStatements().at(-1)).toBe('ROLLBACK');
+  });
+
+  it('has no pooled fallback when the request-owned database context is missing', async () => {
+    const response = await request(app(SIGNER, false)).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(500);
+    expect(H.txQuery).not.toHaveBeenCalled(); expect(H.query).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+});
+
 beforeEach(() => {
   H.query.mockReset();
   H.txQuery.mockReset();
   H.release.mockReset();
+  H.discard.mockReset();
   H.compare.mockReset();
   H.failures.mockReset();
   H.account = { mfa: false, locked: false, active: true };
@@ -221,7 +271,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
     expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
     expect(H.persistSignature).not.toHaveBeenCalled();
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(H.release).not.toHaveBeenCalled(); // Response completion owns release.
   });
 
   it('refuses a document that is not in_review with 409', async () => {
@@ -257,7 +307,35 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
 
 });
 
+describe('POST /api/mdx/qms/documents/:id/approve — controlled-text authorship', () => {
+  it.each([AUTHOR, null])('refuses a protected controlled-text contributor regardless of original author %s', async authorId => {
+    scriptTransaction({ ...IN_REVIEW, author_id: authorId,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [SIGNER] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(403); expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on malformed protected authorship without signing or mutation', async () => {
+    scriptTransaction({ ...IN_REVIEW,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [String(SIGNER)] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(409); expect(res.body.details.code).toBe('QMS_INVALID_AUTHORSHIP');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', () => {
+  it('permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author', async () => {
+    scriptTransaction({ ...IN_REVIEW, author_id: null,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [8] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(200);
+    expect(H.persistSignature).toHaveBeenCalledTimes(1);
+    expect(H.persistSignature.mock.calls[0][1].extraManifest).toMatchObject({ twoPersonRule: 'enforced' });
+  });
   it('signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(200);
@@ -266,7 +344,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(res.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
 
     // The write order: read under lock, update, ledger pair, signature, commit.
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'COMMIT']);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
     expect(H.recordGoverned).toHaveBeenCalledTimes(1);
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
 
@@ -280,7 +358,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(params.authenticationMethod).toBe('password');
     expect(params.secondFactorVerified).toBe(false);
     expect(params.binding.basis).toBe(QMS_DOCUMENT_BINDING_BASIS);
-    expect(params.binding.digest).toBe(computeQmsDocumentContentDigest(IN_REVIEW as any));
+    expect(params.binding.digest).toBe(computeQmsDocumentContentDigest({ ...IN_REVIEW, metadata: { ...IN_REVIEW.metadata, authoringContent: AUTHORED_CONTENT } } as any));
     expect(params.binding.digest).toMatch(/^[0-9a-f]{64}$/);
     expect(params.actionId).toBe('act_1');
     expect(params.sha256Chain).toBe('chain-1');
@@ -307,11 +385,27 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     expect(params.secondFactorVerified).toBe(true);
   });
 
+  it('returns explicit recovery and discards the request connection when the COMMIT reply is lost', async () => {
+    const scripted = H.txQuery.getMockImplementation()!;
+    H.txQuery.mockImplementation(async (...args: unknown[]) => {
+      const result = await scripted(...args);
+      if (args[0] === 'COMMIT') throw new Error('Synthetic private COMMIT diagnostic');
+      return result;
+    });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(503);
+    expect(res.body.details).toMatchObject({ code: 'QMS_SIGNATURE_COMMIT_UNCONFIRMED', recordId: 11, recoveryUrl: '/api/mdx/qms/documents/11' });
+    expect(txStatements().at(-1)).toBe('COMMIT');
+    expect(txStatements()).not.toContain('ROLLBACK');
+    expect(H.discard).toHaveBeenCalledOnce();
+    expect(JSON.stringify(res.body)).not.toContain('Synthetic private COMMIT diagnostic');
+  });
+
   it('rolls the approval back when the signature row cannot be written — never effective without a signature', async () => {
     H.persistSignature.mockRejectedValue(new Error('electronic_signatures insert failed'));
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(500);
-    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLLBACK']);
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'ROLLBACK']);
+    expect(H.release).not.toHaveBeenCalled(); // Response completion owns release.
   });
 });

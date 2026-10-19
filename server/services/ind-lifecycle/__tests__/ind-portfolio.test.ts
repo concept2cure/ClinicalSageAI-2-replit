@@ -60,9 +60,9 @@ describe('buildIndPortfolio', () => {
   });
 });
 
-const digest = (drifted: number, neverVerified: number): DriftDigest => ({
+const digest = (drifted: number, neverVerified: number, recordedUnderPreviousGate = 0): DriftDigest => ({
   entries: [],
-  summary: { total: drifted + neverVerified, drifted, neverVerified },
+  summary: { total: drifted + neverVerified + recordedUnderPreviousGate, drifted, neverVerified, recordedUnderPreviousGate },
 });
 
 describe('buildPortfolioDrift', () => {
@@ -71,9 +71,11 @@ describe('buildPortfolioDrift', () => {
       { submission: { id: 1, title: 'Clean IND' }, drift: digest(0, 0) },
       { submission: { id: 2, title: 'Drifted IND' }, drift: digest(2, 1) },
       { submission: { id: 3, title: 'Unverified IND' }, drift: digest(0, 1) },
+      // P-33: last verified under the previous gate — listed, and counted on its own, never as drift.
+      { submission: { id: 4, title: 'Pre-P-33 IND' }, drift: digest(0, 0, 3) },
     ]);
-    expect(p.submissions.map((s) => s.submissionId)).toEqual([2, 3]); // clean one excluded
-    expect(p.totals).toEqual({ submissionsWithIssues: 2, sequencesDrifted: 2, sequencesNeverVerified: 2 });
+    expect(p.submissions.map((s) => s.submissionId)).toEqual([2, 3, 4]); // clean one excluded
+    expect(p.totals).toEqual({ submissionsWithIssues: 3, sequencesDrifted: 2, sequencesNeverVerified: 2, sequencesRecordedUnderPreviousGate: 3 });
   });
 
   it('is empty when every submission is clean', () => {
@@ -96,7 +98,7 @@ const digestWithEntry = (reason: 'drifted' | 'never_verified', overrides: any = 
       ...overrides,
     },
   ],
-  summary: { total: 1, drifted: reason === 'drifted' ? 1 : 0, neverVerified: reason === 'never_verified' ? 1 : 0 },
+  summary: { total: 1, drifted: reason === 'drifted' ? 1 : 0, neverVerified: reason === 'never_verified' ? 1 : 0, recordedUnderPreviousGate: 0 },
 });
 
 describe('portfolioDriftToCsv', () => {

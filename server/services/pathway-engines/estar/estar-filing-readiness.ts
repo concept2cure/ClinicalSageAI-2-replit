@@ -45,6 +45,7 @@ import {
 import { mapToEstar, type EstarType, type DeviceFlags } from './estar-mapper';
 import { mapToPma, type PmaSubmissionType } from '../pma/pma-mapper';
 import { mapToPreStar, type QSubType } from '../prestar/prestar-mapper';
+import { PRESTAR_COMPLETION_NOTE } from './estar-field-map';
 
 /** A canonical content leaf — shape shared by every readiness mapper. */
 export interface FilingLeaf {
@@ -233,6 +234,8 @@ export interface EstarFilingReadinessResult {
   templateAvailable: boolean;
   fieldMapPopulated: boolean;
   officialTemplateProducible: boolean;
+  /** Shared administrative mapping does not qualify an automated request. */
+  requestSpecificAutomationQualified?: boolean;
   // Template version currency (vendored template vs FDA's current version).
   vendoredTemplateVersion: string | null;
   templateVersionCurrent: boolean;
@@ -274,6 +277,7 @@ export function assessEstarFilingReadiness(
 
   // 4. Template version currency (one comparison, in estar-versions; fails closed).
   const family: EstarTemplateFamily = resolved?.family ?? 'nivd';
+  const requestSpecificAutomationQualified = family !== 'prestar';
   const versionCurrency = templateVersionCurrency(family, input.vendoredTemplateVersion);
   const versionTableStale = input.asOf ? isVersionTableStale(input.asOf) : true;
 
@@ -305,6 +309,7 @@ export function assessEstarFilingReadiness(
     blockers.push(`Cannot produce a submittable eSTAR: ${what}.`);
   }
   if (versionCurrency.blocker) blockers.push(versionCurrency.blocker);
+  if (!requestSpecificAutomationQualified) blockers.push(PRESTAR_COMPLETION_NOTE);
 
   return {
     catalogKey: input.catalogKey,
@@ -325,10 +330,11 @@ export function assessEstarFilingReadiness(
     templateAvailable,
     fieldMapPopulated,
     officialTemplateProducible,
+    requestSpecificAutomationQualified,
     vendoredTemplateVersion: versionCurrency.vendoredVersion,
     templateVersionCurrent: versionCurrency.current,
     versionTableStale,
-    canFileNow: eligible && content.ready && officialTemplateProducible && versionCurrency.current,
+    canFileNow: eligible && content.ready && officialTemplateProducible && versionCurrency.current && requestSpecificAutomationQualified,
     blockers,
   };
 }

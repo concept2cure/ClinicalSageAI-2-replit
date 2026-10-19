@@ -58,7 +58,11 @@ export async function getFeatureStoreIds(
 function rowToEntity(row: any): any {
   try {
     const data = JSON.parse(row.content);
-    return { id: row.id, ...data, createdAt: row.createdAt, updatedAt: row.updatedAt };
+    // The row's id and timestamps win over anything stored in its content: an
+    // `id` in the content — mission-control accepted one from request bodies —
+    // was read back as the entity's id, and getById / update then addressed
+    // another row (2026-10-15).
+    return { ...data, id: row.id, createdAt: row.createdAt, updatedAt: row.updatedAt };
   } catch {
     return { id: row.id, createdAt: row.createdAt, updatedAt: row.updatedAt };
   }

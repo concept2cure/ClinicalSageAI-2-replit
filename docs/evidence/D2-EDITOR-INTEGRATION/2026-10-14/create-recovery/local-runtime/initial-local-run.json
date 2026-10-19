@@ -1,0 +1,31 @@
+{
+  "automated": true,
+  "installFresh": {
+    "exitCode": 0,
+    "node": "24.19.0 parent; Node22.23.3 npx/Drizzle via PATH",
+    "publicTables": 808,
+    "rlsPolicies": 1011,
+    "governedContentFiles": 42
+  },
+  "deployMigrate": {
+    "exitCode": 0,
+    "files": 382,
+    "runtimeGrants": 1299,
+    "authoringSubsystemTables": 19,
+    "tenantIsolationPolicyTables": 19
+  },
+  "nodeRuntime": "22.23.3",
+  "postgresImage": "pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a",
+  "knownDiagnosticCorrections": [
+    "First harness incorrectly set DATABASE_URL=app_service, preventing owner-only startup auth seed. Corrected to documented DATABASE_URL=owner plus APP_DATABASE_URL=app_service; 401 retained in initial-harness-auth-observation.json.",
+    "First pg_stat_activity polling reused a transaction statistics snapshot. pg_stat_clear_snapshot between probes allowed actual HTTP app_service observation; lock always rolled back.",
+    "Unknown program filter returns existing GET API200 with empty documents, not404. First expectation corrected; no production behavior changed."
+  ],
+  "blockingFinding": {
+    "currentViewerPatchStatus": 200,
+    "currentViewerCreateStatus": 201,
+    "freshViewerJwtAlsoAllowed": true,
+    "beyondCacheWaitMs": 70049,
+    "originalMembershipRestored": true
+  }
+}

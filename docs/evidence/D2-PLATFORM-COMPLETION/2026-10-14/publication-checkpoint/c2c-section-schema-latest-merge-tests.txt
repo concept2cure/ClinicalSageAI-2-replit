@@ -1,0 +1,567 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:57:45.236Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:57:45.437Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:57:45.439Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:57:45.439Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content 6909ms
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:57:49.139Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:57:49.145Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:57:49.146Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:57:49.146Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content 2621ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > editor default  { text } 2695ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > backfill shape  { paragraphs } 1726ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { markdown } 2124ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { xml } 1891ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > bare JSON string 1884ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > scaffold placeholder {} → no content 2091ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty text → no content 1662ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > whitespace-only text → no content 1681ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty paragraphs list → no content 1684ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > unrelated keys only → no content 1893ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty JSON string → no content 1695ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > a NULL content column does not error 1861ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > the key useSectionSave.ts actually sends is one the predicate accepts 1829ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > no route computes has_content from the paragraphs key alone 3986ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the fragment is not an injection surface > refuses anything that is not a plain or qualified identifier 1729ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:58:23.223Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:58:23.296Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:23.296Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:58:23.297Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it 3552ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:58:25.798Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:58:25.805Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:25.806Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:58:25.806Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked 2375ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:58:28.058Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:58:28.065Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:28.066Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:58:28.066Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented 2228ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T05:58:30.453Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T05:58:30.459Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:30.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T05:58:30.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save 2400ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T05:58:32.643Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T05:58:32.649Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:32.649Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T05:58:32.650Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next 2193ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T05:58:34.774Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T05:58:34.781Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:34.781Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T05:58:34.781Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected 2119ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T05:58:38.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T05:58:38.483Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:38.483Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T05:58:38.484Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500 3446ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T05:58:40.757Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T05:58:40.764Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:40.765Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T05:58:40.765Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version 2142ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T05:58:43.072Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T05:58:43.079Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:43.080Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T05:58:43.080Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger 2315ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T05:58:45.475Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T05:58:45.481Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:45.482Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T05:58:45.482Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write 2398ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T05:58:48.911Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T05:58:48.921Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:48.922Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T05:58:48.922Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored 3521ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T05:58:53.765Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T05:58:53.772Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:53.773Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T05:58:53.773Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human 4814ms
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > no route may set a GUC with a bind parameter > server/ contains no parameterised SET — the whole bug class, fenced 3054ms
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  05:57:38
+   Duration  78.10s (transform 2.17s, setup 132ms, import 650ms, tests 76.54s, environment 0ms)

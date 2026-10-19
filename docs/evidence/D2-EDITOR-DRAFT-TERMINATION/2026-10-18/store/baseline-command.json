@@ -1,0 +1,26 @@
+{
+  "purpose": "Frozen fail-first candidate-store termination metadata retention proof; real PGlite, no external DB/provider.",
+  "baselineCommit": "66d9984972f5b3de470e6db1247f8a0d457cb9de",
+  "cwd": "/workspace/Concept2Cure",
+  "argv": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts"
+  ],
+  "environmentOverrides": {
+    "PATH_prefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "startedAt": "2026-10-18T00:41:15.030558+00:00",
+  "durationSeconds": 2.748,
+  "exitCode": 1,
+  "testFile": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+  "testSha256": "8df82fe0ad2e1c52923393d988af9da17c1c74dac41531a57ae70123eaa72122",
+  "logFile": "docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/store/baseline-red.txt",
+  "logSha256": "ad42eb0b2b23c0d198f4018b4496ef337e40ed9c97fd7a4665998c511b02a26e"
+}

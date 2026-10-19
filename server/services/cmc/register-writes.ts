@@ -51,6 +51,10 @@ import {
   writeThroughMaterialSpec,
 } from '../cmc-write-through';
 import { linkToModule3, type Module3Linkage, type ProjectSource } from './link-to-module3';
+/* The row and the record of WHO recorded it, in one transaction (§11.10(e)).
+   Shared with the registers whose create lives in its route. */
+import { insertRegisterRow, type RegisterActor } from './register-audit';
+import { SIGNED_REGISTERS, signedRegisterByPath, withoutSignatureFields } from './signed-record';
 import { projectBelongsToTenant } from './project-membership';
 
 /* ─── Body primitives, shared with the routes ─────────────────────────────── */
@@ -70,27 +74,6 @@ export const optionalDate = z.preprocess(
  *  The canonical pair lives in server/utils/authedOrgId.ts; re-exported here
  *  for the CMC routers that import it from this module. */
 export { withoutTenantKey, withoutOrgId };
-
-/**
- * Strip the tenant key AND the signature columns. Who qualified a record, and
- * when, is written only by the governed /qualify path under a verified
- * signature — never by a create or an ordinary edit.
- */
-export function withoutGovernedFields<T extends Record<string, unknown>>(
-  data: T,
-): Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'> {
-  const {
-    organizationId: _org,
-    qualifiedBy: _by,
-    qualificationDate: _on,
-    ...rest
-  } = data as {
-    organizationId?: unknown;
-    qualifiedBy?: unknown;
-    qualificationDate?: unknown;
-  } & T;
-  return rest as Omit<T, 'organizationId' | 'qualifiedBy' | 'qualificationDate'>;
-}
 
 /* ─── The register bodies ─────────────────────────────────────────────────── */
 
@@ -229,19 +212,27 @@ export interface QualificationVocab {
   path: string;
 }
 
-/** A reference standard, container closure or study is `qualified`, signed at /qualify. */
-export const QUALIFICATION_VOCAB: QualificationVocab = {
-  signedValue: 'qualified',
-  verb: 'Qualification',
-  path: 'qualify',
-};
-
-/** A manufacturing process is `validated`, signed at /validate. Same rule, other words. */
-export const PROCESS_VOCAB: QualificationVocab = {
-  signedValue: 'validated',
-  verb: 'Process validation',
-  path: 'validate',
-};
+/**
+ * A register's signing words, read from the one descriptor table
+ * (services/cmc/signed-record.ts `SIGNED_REGISTERS`). Until 2026-10-18 these
+ * were two exported constants that every call site chose between, so adding a
+ * register meant adding a third constant and remembering to pass it — and the
+ * eight registers that had no constant simply had no rule.
+ *
+ * An unknown path throws rather than defaulting to `qualified`: a refusal
+ * naming the wrong endpoint is worse than a crash in the one test that would
+ * see it.
+ */
+export function vocabFor(registerPath: string): QualificationVocab {
+  const register = signedRegisterByPath(registerPath);
+  if (!register) {
+    throw new Error(
+      `[cmc] no signed register is registered for "${registerPath}". ` +
+        'Add it to SIGNED_REGISTERS (services/cmc/signed-record.ts) before guarding its status.',
+    );
+  }
+  return { signedValue: register.signedValue, verb: register.verb, path: register.signPath };
+}
 
 /**
  * Why a self-declared qualification is refused, or null when the write is an
@@ -258,8 +249,8 @@ export function ungovernedQualificationRefusal(
   status: unknown,
   registerPath: string,
   storedStatus?: unknown,
-  vocab: QualificationVocab = QUALIFICATION_VOCAB,
 ): string | null {
+  const vocab = vocabFor(registerPath);
   const signed = vocab.signedValue;
   const incoming = String(status ?? '').trim().toLowerCase();
   const stored = String(storedStatus ?? '').trim().toLowerCase();
@@ -320,6 +311,10 @@ export interface RegisterCreated<Row> extends Module3Linkage {
 }
 
 /**
+ * `actor` is the person recording the row (§11.10(e)) — the route's session,
+ * the interview projector's commit scope. It is required: a create with nobody
+ * to name refuses and writes nothing.
+ *
  * `link` names the program for the registers whose tables carry no project
  * column (drug substance, drug product): the route passes its request so the
  * body's projectId is read; the projector passes the session's project.
@@ -327,14 +322,16 @@ export interface RegisterCreated<Row> extends Module3Linkage {
 export async function createDrugSubstance(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugSubstances.$inferSelect>> {
   const validated = drugSubstanceBody.parse(body);
   const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
-  const [row] = await db
-    .insert(drugSubstances)
-    .values({ ...validated, projectId, organizationId: orgId } as typeof drugSubstances.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'drug_substance', drugSubstances, {
+    ...validated,
+    projectId,
+    organizationId: orgId,
+  } as typeof drugSubstances.$inferInsert);
   const linkage = await linkToModule3('write_through_drug_substance', orgId, row, writeThroughDrugSubstance, link);
   return { row, ...linkage };
 }
@@ -342,14 +339,16 @@ export async function createDrugSubstance(
 export async function createDrugProduct(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugProducts.$inferSelect>> {
   const validated = drugProductBody.parse(body);
   const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
-  const [row] = await db
-    .insert(drugProducts)
-    .values({ ...validated, projectId, organizationId: orgId } as typeof drugProducts.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'drug_product', drugProducts, {
+    ...validated,
+    projectId,
+    organizationId: orgId,
+  } as typeof drugProducts.$inferInsert);
   const linkage = await linkToModule3('write_through_drug_product', orgId, row, writeThroughDrugProduct, link);
   return { row, ...linkage };
 }
@@ -357,15 +356,16 @@ export async function createDrugProduct(
 export async function createContainerClosure(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcContainerClosures.$inferSelect>> {
   const validated = containerClosureBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'container-closures');
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(cmcContainerClosures)
-    .values({ ...withoutGovernedFields(validated), organizationId: orgId } as typeof cmcContainerClosures.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'container_closure', cmcContainerClosures, {
+    ...withoutSignatureFields(SIGNED_REGISTERS.containerClosures, validated),
+    organizationId: orgId,
+  } as typeof cmcContainerClosures.$inferInsert);
   const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, link);
   return { row, ...linkage };
 }
@@ -373,13 +373,14 @@ export async function createContainerClosure(
 export async function createMaterialSpec(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcMaterialSpecs.$inferSelect>> {
   const validated = materialSpecBody.parse(body) as Record<string, unknown>;
-  const [row] = await db
-    .insert(cmcMaterialSpecs)
-    .values({ ...withoutOrgId(validated), organizationId: orgId } as typeof cmcMaterialSpecs.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'material_spec', cmcMaterialSpecs, {
+    ...withoutOrgId(validated),
+    organizationId: orgId,
+  } as typeof cmcMaterialSpecs.$inferInsert);
   const linkage = await linkToModule3('write_through_material_spec', orgId, row, writeThroughMaterialSpec, link);
   return { row, ...linkage };
 }
@@ -387,15 +388,16 @@ export async function createMaterialSpec(
 export async function createFormulationRecord(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcFormulationRecords.$inferSelect>> {
   const validated = formulationRecordBody.parse(body) as Record<string, unknown>;
   const conflict = await currentFormulationConflict(orgId, validated, null);
   if (conflict) throw new RegisterWriteRefusal(conflict);
-  const [row] = await db
-    .insert(cmcFormulationRecords)
-    .values({ ...withoutOrgId(validated), organizationId: orgId } as typeof cmcFormulationRecords.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'formulation_record', cmcFormulationRecords, {
+    ...withoutOrgId(validated),
+    organizationId: orgId,
+  } as typeof cmcFormulationRecords.$inferInsert);
   const linkage = await linkToModule3('write_through_formulation_record', orgId, row, writeThroughFormulationRecord, link);
   return { row, ...linkage };
 }
@@ -403,15 +405,16 @@ export async function createFormulationRecord(
 export async function createManufacturingProcess(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof manufacturingProcesses.$inferSelect>> {
   const validated = manufacturingProcessBody.parse(body);
-  const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes', undefined, PROCESS_VOCAB);
+  const refusal = ungovernedQualificationRefusal(validated.validationStatus, 'manufacturing-processes');
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(manufacturingProcesses)
-    .values({ ...validated, organizationId: orgId } as typeof manufacturingProcesses.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'manufacturing_process', manufacturingProcesses, {
+    ...validated,
+    organizationId: orgId,
+  } as typeof manufacturingProcesses.$inferInsert);
   const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, link);
   return { row, ...linkage };
 }
@@ -419,15 +422,16 @@ export async function createManufacturingProcess(
 export async function createCharacterizationStudy(
   orgId: number,
   body: unknown,
+  actor: RegisterActor,
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof cmcCharacterizationStudies.$inferSelect>> {
   const validated = characterizationStudyBody.parse(body) as Record<string, unknown>;
   const refusal = ungovernedQualificationRefusal(validated.status, 'characterization-studies');
   if (refusal) throw new RegisterWriteRefusal(refusal);
-  const [row] = await db
-    .insert(cmcCharacterizationStudies)
-    .values({ ...withoutGovernedFields(validated), organizationId: orgId } as typeof cmcCharacterizationStudies.$inferInsert)
-    .returning();
+  const row = await insertRegisterRow(orgId, actor, 'characterization_study', cmcCharacterizationStudies, {
+    ...withoutSignatureFields(SIGNED_REGISTERS.characterizationStudies, validated),
+    organizationId: orgId,
+  } as typeof cmcCharacterizationStudies.$inferInsert);
   const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, link);
   return { row, ...linkage };
 }

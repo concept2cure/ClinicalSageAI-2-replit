@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > reads the exact saved section and shows the existing source disclosure 62ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > reports a refused read and retries without showing a false empty guide 144ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > refuses malformed requirement lists without presenting partial guidance 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > never mixes a late earlier section response into the current section 10ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  03:58:55
+   Duration  1.19s (transform 183ms, setup 166ms, import 217ms, tests 235ms, environment 441ms)

@@ -16,7 +16,8 @@
  * the lane lists. Here the aggregate's answer is mocked; its definitions are
  * proven on PostgreSQL in tests/db/data-room-processing.dbtest.ts.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
@@ -32,11 +33,13 @@ import createProjectVaultRoutes from '../c2c/project-vault';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
-function app() {
+let authorityDb: PGlite;
+function app(options: { userId?: number; withClient?: boolean; claimedRole?: string } = {}) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3 };
+    Object.assign(req, { user: { organizationId: 7, id: options.userId ?? 3, role: options.claimedRole ?? 'member' },
+      ...(options.withClient === false ? {} : { dbClient: { query } }) });
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -56,11 +59,35 @@ function source(n: number, dossier: Record<string, unknown> | null = null) {
 
 let stageCounts = { captured: 0, classified: 0, filed: 0, needs_review: 0 };
 
-beforeEach(() => {
+beforeAll(async () => {
+  authorityDb = new PGlite();
+  await authorityDb.exec(`
+    CREATE TABLE organizations (id int PRIMARY KEY,status text);
+    CREATE TABLE users (id int PRIMARY KEY,status text);
+    CREATE TABLE organization_users (organization_id int,user_id int,role text);
+    CREATE TABLE regulatory_programs (id uuid PRIMARY KEY,organization_id int,deleted_at timestamptz);
+    CREATE TABLE projects (id int PRIMARY KEY,organization_id int,regulatory_program_id uuid,
+      owner_id int,created_by_id int,settings jsonb,status text,client_workspace_id int);
+    CREATE TABLE project_visibility_settings (project_id int,organization_id int,visibility text);
+    CREATE TABLE project_members (project_id int,organization_id int,user_id int,role text,status text);
+    CREATE TABLE concept2cure_artifacts (id int,organization_id int,project_id int);
+    CREATE TABLE concept2cure_review_assignments (artifact_id int,organization_id int,reviewer_id int,status text);
+    INSERT INTO organizations VALUES (7,'active');
+    INSERT INTO users VALUES (3,'active'),(99,'active');
+    INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
+    INSERT INTO projects VALUES (42,7,'${PROGRAM}',3,3,'{}','active',NULL);
+    INSERT INTO project_visibility_settings VALUES (42,7,'private');
+  `);
+});
+afterAll(async () => { await authorityDb?.close(); });
+
+beforeEach(async () => {
+  await authorityDb.exec("TRUNCATE organization_users; INSERT INTO organization_users VALUES (7,3,'member');");
   vi.clearAllMocks();
   stageCounts = { captured: 0, classified: 0, filed: 0, needs_review: 0 };
-  query.mockImplementation(async (sql: string) => {
+  query.mockImplementation(async (sql: string, params?: unknown[]) => {
     const q = String(sql);
+    if (/^\s*SELECT ou\.role|^\s*SELECT id FROM regulatory_programs|^\s*SELECT id, client_workspace_id|^\s*SELECT p\.id, p\.owner_id/.test(q)) return authorityDb.query(q, params);
     if (/AS needs_review/.test(q)) return { rows: [stageCounts] };
     if (/COUNT\(\*\)::int AS total/.test(q)) return { rows: [{ total: 0, unfiled: 0 }] };
     if (/SELECT id, name, product_type/.test(q)) return { rows: [{ id: PROGRAM, name: 'P', product_type: null }] };
@@ -68,14 +95,46 @@ beforeEach(() => {
   });
 });
 
-const dataRoom = async () => (await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`)).body.data.dataRoom;
+const dataRoom = async () => {
+  const response = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+  expect(response.status, JSON.stringify(response.body)).toBe(200);
+  return response.body.data.dataRoom;
+};
 
 describe('data room — the window', () => {
+  it('does not disclose source counts for a private parent without persisted sharing', async () => {
+    await authorityDb.exec("INSERT INTO organization_users VALUES (7,99,'viewer')");
+    listClientDocuments.mockResolvedValue([source(1)]);
+    stageCounts = { captured: 250, classified: 2, filed: 1, needs_review: 3 };
+    const response = await request(app({ userId: 99, claimedRole: 'super_admin' })).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(response.status).toBe(404);
+    expect(listClientDocuments).not.toHaveBeenCalled();
+    expect(query.mock.calls.some(([sql]) => /AS needs_review/.test(String(sql)))).toBe(false);
+  });
+
+  it('does not manufacture a request database client from the pool', async () => {
+    const response = await request(app({ withClient: false })).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(response.status).toBe(503);
+    expect(listClientDocuments).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [false, { state: 'failed', retryable: true, reasonCode: 'PERSISTENCE_FAILED', leaseExpiresAt: null, nextRetryAt: '2026-10-14T04:10:00.000Z' }, 'Processing needs retry'],
+    [null, null, 'Text availability unconfirmed'],
+    [true, null, 'Read'],
+  ])('projects recorded readability independently of captured/classified/filed (%j)', async (textAvailable, processing, label) => {
+    listClientDocuments.mockResolvedValue([{ ...source(1), isCurrent: true, dataEligible: true, textAvailable, processing }]);
+    const room = await dataRoom();
+    expect(room.sources[0].readState).toBe(label);
+    expect(room.sources[0].stage).toBe('captured');
+  });
   it('asks for current sources only, one past the window', async () => {
     listClientDocuments.mockResolvedValue([]);
     await dataRoom();
-    const [, opts] = listClientDocuments.mock.calls[0];
-    expect(opts).toMatchObject({ programId: PROGRAM, currentOnly: true, limit: 201 });
+    const [client, organizationId, opts] = listClientDocuments.mock.calls[0];
+    expect(client).toMatchObject({ query });
+    expect(organizationId).toBe(7);
+    expect(opts).toMatchObject({ userId: 3, programId: PROGRAM, currentOnly: true, limit: 201 });
   });
 
   it('a full window says so and lists only the window, while the counts cover the whole project', async () => {

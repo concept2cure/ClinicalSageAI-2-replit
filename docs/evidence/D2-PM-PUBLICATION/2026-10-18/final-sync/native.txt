@@ -1,0 +1,45 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/project-schedule-atomic.dbtest.ts
+
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-18T00:27:22.775Z","pid":13138,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-18T00:27:22.776Z","pid":13138,"hostname":"3b32dff3a1d2","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-18T00:27:22.776Z","pid":13138,"hostname":"3b32dff3a1d2","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > stage failure restores the exact existing plan, milestones, goals and revision history 199ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_retire failure restores the exact existing plan, milestones, goals and revision history 155ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > goal_insert failure restores the exact existing plan, milestones, goals and revision history 150ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > revision failure restores the exact existing plan, milestones, goals and revision history 158ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > response failure restores the exact existing plan, milestones, goals and revision history 176ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > a first-generation failure leaves no header, milestone, goal or revision 55ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > returns the committed full view, retains plan identity and increments the version once 141ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'omitted' 80ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > schedule generation is one native transaction > preserves existing goal rows when goals are 'empty' 77ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > preserves 'row.status only' without a task FK or fabricated completion fields 89ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > preserves 'metadata.scheduleStatus only' without a task FK or fabricated completion fields 75ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > leaves a completed row physically unchanged, keeps its task FK, and changes only allowed planning fields elsewhere 84ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 preserves milestone identity and execution records > accepts a canonical pathway alias without replacing the existing completed milestone 84ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 records the previous baseline and new work > records the exact prior rows, proposal, version transition and supplied reason; genuinely new keys start uncompleted 88ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'pathway' changes without altering plan, actuals, goals or revisions 69ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'framework' changes without altering plan, actuals, goals or revisions 65ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'title' changes without altering plan, actuals, goals or revisions 83ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'description' changes without altering plan, actuals, goals or revisions 67ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'category' changes without altering plan, actuals, goals or revisions 72ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'regulatory basis' changes without altering plan, actuals, goals or revisions 65ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'dependencies' changes without altering plan, actuals, goals or revisions 68ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'removed key' changes without altering plan, actuals, goals or revisions 77ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'missing key' changes without altering plan, actuals, goals or revisions 94ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'duplicate key' changes without altering plan, actuals, goals or revisions 70ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > refuses 'orphan rows' changes without altering plan, actuals, goals or revisions 82ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > a late revision fault rolls back preserved actuals, FK references and newly planned dates 87ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > PM-02 refuses conflicts and rolls back failed replanning > a late response fault rolls back preserved actuals, FK references and newly planned dates 90ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: true) 137ms
+ ✓ tests/db/project-schedule-atomic.dbtest.ts > same-project generation serializes across actual PostgreSQL clients > produces complete per-call views and one final milestone set (existing plan: false) 112ms
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  00:27:20
+   Duration  5.40s (transform 1.06s, setup 95ms, import 220ms, tests 4.81s, environment 0ms)
+

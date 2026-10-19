@@ -1,0 +1,26 @@
+Mutation check of the scanner client's guards, 2026-10-18T20:34:16Z. Each mutant is applied alone to server/utils/virusScan.ts, then restored.
+== mutant: close with no reply reads as PONG
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when the peer accepts and closes without a reply
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 29 passed (30)
+== mutant: pingClamd parses the port with Number() (connect guard kept)
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when CLAMAV_PORT is the right port written with a decimal point
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when CLAMAV_PORT is the right port written with hexadecimal
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when CLAMAV_PORT is the right port written with an exponent
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 27 passed (30)
+== mutant: connect guards removed (port rule kept)
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when connect() throws
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — a CLAMAV_PORT that is not a port > resolves unreachable, and never rejects, when connect() throws
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 28 passed (30)
+== mutant: scanBuffer parses the port with Number()
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — a CLAMAV_PORT that is not a port > resolves unreachable, and never rejects, for "3310.0"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 29 passed (30)
+== mutant: scanBuffer parses the port with Number() — re-run after the scanBuffer test was made machine-independent, with nothing listening on 3310 (the local clamd stopped for the run)
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — a CLAMAV_PORT that is not a port > resolves unreachable when CLAMAV_PORT is the right port written with a decimal point
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — a CLAMAV_PORT that is not a port > resolves unreachable when CLAMAV_PORT is the right port written with hexadecimal
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — a CLAMAV_PORT that is not a port > resolves unreachable when CLAMAV_PORT is the right port written with an exponent
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 28 passed (31)

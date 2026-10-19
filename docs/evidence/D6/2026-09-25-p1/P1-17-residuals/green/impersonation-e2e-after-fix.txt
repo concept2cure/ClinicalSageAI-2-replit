@@ -587,4 +587,3 @@ stdout | server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gat
       Tests  119 passed (119)
    Start at  13:12:31
    Duration  9.14s (transform 3.89s, setup 656ms, import 7.82s, tests 8.23s, environment 1ms)
-

@@ -27,7 +27,7 @@
  * @module client/src/concept2cure/lineage/DocumentAttributionBar
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   fetchDocumentAttribution,
@@ -82,6 +82,8 @@ interface Segment {
 }
 
 function segmentsOf(s: DocumentAttributionSummary): Segment[] {
+  const accepted = machineLabel(s, 'accepted_machine_draft', true);
+  const unaccepted = machineLabel(s, 'machine_draft', false);
   return [
     {
       key: 'fromSources',
@@ -101,16 +103,16 @@ function segmentsOf(s: DocumentAttributionSummary): Segment[] {
     },
     {
       key: 'machineDrafted',
-      label: 'AI draft, accepted',
-      hint: 'drafted by AI, accepted by a person',
+      label: accepted.label,
+      hint: accepted.hint,
       chars: s.byKind.machineDrafted,
       fill: MUTED,
       textured: false,
     },
     {
       key: 'machineDraftedUnaccepted',
-      label: 'AI draft, not accepted',
-      hint: 'drafted by AI; nobody has accepted it',
+      label: unaccepted.label,
+      hint: unaccepted.hint,
       chars: s.byKind.machineDraftedUnaccepted,
       fill: WARN,
       textured: true,
@@ -124,6 +126,19 @@ function segmentsOf(s: DocumentAttributionSummary): Segment[] {
       textured: true,
     },
   ];
+}
+
+/** Presentation only: each bucket keeps the server's precedence and count. */
+function machineLabel(summary: DocumentAttributionSummary, kind: string, accepted: boolean) {
+  const spans = (summary.spans ?? []).filter(span => span.provenanceKind === kind);
+  const imported = spans.filter(span => span.machineAuthorId === 'workflow_import');
+  if (imported.length > 0 && imported.length === spans.length) return {
+    label: accepted ? 'Imported content, accepted' : 'Imported content, awaiting review',
+    hint: 'copied from a saved workflow; original authorship remains in the source receipt',
+  };
+  const label = imported.length > 0 ? 'Machine or imported draft' : 'Machine draft';
+  return { label: `${label}, ${accepted ? 'accepted' : 'not accepted'}`,
+    hint: accepted ? 'created by a machine, accepted by a person' : 'created by a machine; nobody has accepted it' };
 }
 
 /** Whole numbers that still sum to 100, so the legend never reads 99% or 101%. */
@@ -326,7 +341,7 @@ export function DocumentAttributionBar({
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children }: { children: ReactNode }) {
   return (
     <section
       aria-label="Document attribution"

@@ -29,6 +29,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
+  authService: { getUser: () => ({ id: '7', organizationId: '9' }),
+    captureSessionReadGuard: () => ({ sameRevision: () => true }) },
 }));
 
 /* jsdom has no layout; ProseMirror asks for client rects on mount. */

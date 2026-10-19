@@ -32,6 +32,7 @@ import { EmptyState, type DataState } from '../dataConnect';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { stashNavParamsForTarget } from '../navParams';
 import { SC_REGIONS, SC_SEQ_STATUS } from '../fixtures/submission';
+import { classNotSequencedReason, type FilingDocumentClass } from '@shared/regulatory/filing-document-classes';
 import type { ReviewItem } from '../fixtures/review-data';
 import {
   programTypeLabel,
@@ -62,7 +63,13 @@ function sequenceLine(q: LatestSequence, a: DispatchReadinessAssessment | null):
 
 /** The server's gates it cleared without assessing (GateView.notAssessed). */
 function unassessedGates(a: DispatchReadinessAssessment | null) {
-  return (Array.isArray(a?.gates) ? a.gates : []).filter((g) => g.cleared && Boolean(g.notAssessed));
+  return (Array.isArray(a?.gates) ? a.gates : []).filter((g) => g.cleared && (g.assessmentStatus === 'not_assessed' || (g.assessmentStatus == null && Boolean(g.notAssessed))));
+}
+
+/** Factual external result: policy clearance alone never supplies a pass. */
+function externalIssue(a: DispatchReadinessAssessment | null) {
+  const source = Array.isArray(a?.gates) ? a.gates.find((g) => g.key === 'external') : a?.externalValidation;
+  return source?.assessmentStatus === 'failed' || source?.assessmentStatus === 'invalid' ? source : null;
 }
 
 export type VerdictTone = 'ok' | 'blocked' | 'warn' | 'idle';
@@ -85,9 +92,12 @@ const NO_VERDICT_WORDS: Record<Exclude<MarketRead['state'], 'verdict'>, VerdictW
 
 /** What a cleared verdict did not assess, counted from the server's gates. */
 function clearedCaveat(a: DispatchReadinessAssessment | null): string {
+  const issue = externalIssue(a);
+  if (issue) return issue.assessmentStatus === 'failed' ? ' · external validation failed (advisory)' : ' · external validation report invalid (advisory)';
   const unassessed = unassessedGates(a).length;
   if (unassessed > 0) return ` · ${unassessed} gate${unassessed === 1 ? '' : 's'} not assessed`;
   const noBreakdown = !Array.isArray(a?.gates);
+  if (noBreakdown && a?.externalValidation?.assessmentStatus === 'not_assessed') return ' · external validation not assessed';
   return noBreakdown && a?.externalValidation?.ran === false ? ' · external validator not run' : '';
 }
 
@@ -97,7 +107,7 @@ export function marketVerdict(read: MarketRead): VerdictWords {
   if (read.state !== 'verdict') return NO_VERDICT_WORDS[read.state];
   const { gate, assessment } = read;
   if (!gate) return { text: 'No verdict from the server', tone: 'warn', icon: I.alertTriangle, failed: false };
-  if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: 'ok', icon: I.shieldCheck, failed: false };
+  if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: externalIssue(assessment) ? 'warn' : 'ok', icon: I.shieldCheck, failed: false };
   const n = gate.blockers.length;
   const text = n > 0 ? `Dispatch blocked · ${n} blocker${n === 1 ? '' : 's'}` : 'Dispatch blocked';
   return { text, tone: 'blocked', icon: I.lock, failed: false };
@@ -107,24 +117,32 @@ export function marketVerdict(read: MarketRead): VerdictWords {
  *  clears a gate whose check did not run and is not required here; a bare
  *  "Cleared to dispatch" would overclaim (slice 24 review). */
 function NotAssessedLines({ a }: { a: DispatchReadinessAssessment | null }) {
+  const issue = externalIssue(a);
   const unassessed = unassessedGates(a);
-  if (unassessed.length > 0) {
+  if (issue || unassessed.length > 0) {
     return (
       <>
+        {issue && (
+          <p className="pj-mkt-note" data-testid="pj-market-validation-status" data-gate="external">
+            <span aria-hidden="true">{I.alertTriangle}</span>{' '}
+            <b>{issue.assessmentStatus === 'failed' ? 'External validation failed' : 'External validation report invalid'}</b>. {issue.assessmentNote}
+          </p>
+        )}
         {unassessed.map((g) => (
           <p key={g.key} className="pj-mkt-note" data-testid="pj-market-not-assessed" data-gate={g.key}>
             <span aria-hidden="true">{I.alertTriangle}</span>{' '}
-            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.notAssessed}
+            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.assessmentNote ?? g.notAssessed}
           </p>
         ))}
       </>
     );
   }
   // A response with no gate breakdown still says whether the validator ran.
-  if (a?.externalValidation && a.externalValidation.ran === false) {
+  if (!Array.isArray(a?.gates) && a?.externalValidation && (a.externalValidation.assessmentStatus === 'not_assessed' || a.externalValidation.ran === false)) {
     return (
       <p className="pj-mkt-note" data-testid="pj-market-not-assessed" data-gate="external">
-        <span aria-hidden="true">{I.alertTriangle}</span> External validator not run: the package has not been checked against it.
+        <span aria-hidden="true">{I.alertTriangle}</span>{' '}
+        {a.externalValidation.assessmentStatus === 'not_assessed' ? <>External validation not assessed. {a.externalValidation.assessmentNote}</> : 'External validator not run: the package has not been checked against it.'}
       </p>
     );
   }
@@ -296,13 +314,31 @@ function MarketsBody({ markets, onOpen, center }: {
 /** The Submit tab's market list. "Open Submission Center" opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-export function ProjectMarkets({ markets, onNav, available, ectdFiling }: {
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChange, documentClass = null }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
   /** The project is read and is not a device or diagnostic filing. */
   ectdFiling: boolean;
+  /** Whether the caller may change the project (the detail read's canChange); undefined when not read. */
+  canChange?: boolean;
+  /** The project is a filing document class (a PAS, a CSR, a meeting package): null for an application. */
+  documentClass?: FilingDocumentClass | null;
 }) {
+  /* A filing document class has no market: it is authored here and this
+     platform builds no sequence for it, so Add a market (refused,
+     NOT_AN_APPLICATION), Compile (a CTD backbone) and readiness (an
+     application's sequence) are not offered beside it (review finding,
+     2026-10-18). */
+  if (documentClass) {
+    return (
+      <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
+        <div className="pj-sec-h"><h2 id="pj-markets-h">Markets</h2></div>
+        <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced"
+          hint={classNotSequencedReason(documentClass)} />
+      </section>
+    );
+  }
   const center = available('submission-center');
   return (
     <section className="pj-sec" aria-labelledby="pj-markets-h" data-testid="pj-markets">
@@ -329,9 +365,17 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling }: {
             </button>
           )}
           {center && (
-            <button type="button" className="btn primary pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
-              {I.plus} Add a market
-            </button>
+            <>
+              {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
+              <button type="button" className="btn primary pj-mkt-btn" disabled={canChange === false}
+                aria-describedby={canChange === false ? 'pj-mkt-add-why' : undefined}
+                onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
+                {I.plus} Add a market
+              </button>
+              {canChange === false && (
+                <span id="pj-mkt-add-why" className="sec-sub">Only this project's lead or an organization manager can add a market.</span>
+              )}
+            </>
           )}
           {/* The Submission Center reads the open project, so it opens on this one. */}
           {center && (
@@ -379,7 +423,11 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
 /** The line under the project header: each market's verdict and the number
  *  of documents in review, from the same reads the Submit and Review tabs
  *  show. Nothing in it is computed beyond counting rows the server returned. */
-export function ProjectStatusLine({ markets, reviews }: { markets: ProgramMarkets; reviews: ReviewCountRead }) {
+export function ProjectStatusLine({ markets, reviews, documentClass = null }: {
+  markets: ProgramMarkets; reviews: ReviewCountRead;
+  /** A filing document class has no market to wait for: "No market yet" would promise one. */
+  documentClass?: FilingDocumentClass | null;
+}) {
   const { list } = markets;
   const lineRef = React.useRef<HTMLDivElement>(null);
   /* A Retry unmounts itself while its read runs; focus stays on the line. */
@@ -401,7 +449,7 @@ export function ProjectStatusLine({ markets, reviews }: { markets: ProgramMarket
       </span>
     );
   } else if (markets.markets.length === 0) {
-    marketItems = <span className="pj-status-item" data-tone="idle">No market yet</span>;
+    marketItems = <span className="pj-status-item" data-tone="idle">{documentClass ? 'Authored here, not sequenced' : 'No market yet'}</span>;
   } else {
     marketItems = markets.markets.map((m) => {
       const v = marketVerdict(m.read);

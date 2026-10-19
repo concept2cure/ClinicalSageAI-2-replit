@@ -13,7 +13,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 vi.mock('../db', () => ({ db: undefined }));
 vi.mock('../SmartFieldLinking.js', () => ({ smartFieldLinking: {} }));
-vi.mock('../CrossReferenceMapping.js', () => ({ default: class {} }));
 
 import { DynamicContentAssembly } from '../DynamicContentAssembly';
 

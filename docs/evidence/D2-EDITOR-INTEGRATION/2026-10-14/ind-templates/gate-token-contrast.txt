@@ -1,0 +1,6 @@
+
+> concept2cure-riai@1.0.0 ci:token-contrast
+> node scripts/ci/check-token-contrast.mjs
+
+✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.
+   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.

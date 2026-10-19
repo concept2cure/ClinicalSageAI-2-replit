@@ -259,23 +259,40 @@ export interface CerAssessment {
   sectionsNeedingClinicalData: string[];
   presentCount: number;
   totalRequired: number;
-  /** True when equivalence is claimed and the equivalence section is present. */
-  equivalenceAddressed: boolean;
+  /**
+   * True when the equivalence section is present or equivalence is recorded as not
+   * claimed; false when it is claimed and the section is absent; null when the claim is
+   * not recorded and the section is absent, so whether it is required is unknown.
+   */
+  equivalenceAddressed: boolean | null;
+  /** Facts to record before readiness can be stated (the equivalence claim, when equivalenceAddressed is null). */
+  missingFacts: string[];
 }
+
+const EQUIVALENCE_CLAIM_FACT =
+  'equivalenceClaimed (whether equivalence to another device is claimed; if it is, the Equivalence section is required)';
 
 /**
  * Assess a CER against the canonical structure. The equivalence section is required
  * only when `equivalenceClaimed` is true. A section "needs clinical data" is
  * surfaced (not a blocker) so the author/reviewer can confirm substantiation.
+ *
+ * An unrecorded claim is not "not claimed": until 2026-10-15 it gave
+ * equivalenceAddressed true (even for an empty CER) and a CER with no Equivalence
+ * section was ready. Now, unless that section is present, it is not ready and
+ * `missingFacts` names the claim.
  */
 export function assessCerStructure(
   presentSectionIds: string[],
   opts: { equivalenceClaimed?: boolean } = {}
 ): CerAssessment {
   const present = new Set(presentSectionIds);
+  const claimed = opts.equivalenceClaimed;
+  const equivalenceAddressed =
+    present.has('equivalence') || claimed === false ? true : claimed === true ? false : null;
 
   const required = CER_SECTIONS.filter((s) => {
-    if (s.equivalenceOnly) return opts.equivalenceClaimed === true;
+    if (s.equivalenceOnly) return claimed === true;
     return s.required;
   });
 
@@ -285,12 +302,13 @@ export function assessCerStructure(
     .map((s) => s.id);
 
   return {
-    ready: missingRequiredSections.length === 0,
+    ready: missingRequiredSections.length === 0 && equivalenceAddressed !== null,
     missingRequiredSections,
     sectionsNeedingClinicalData,
     presentCount: required.length - missingRequiredSections.length,
     totalRequired: required.length,
-    equivalenceAddressed: opts.equivalenceClaimed === true ? present.has('equivalence') : true,
+    equivalenceAddressed,
+    missingFacts: equivalenceAddressed === null ? [EQUIVALENCE_CLAIM_FACT] : [],
   };
 }
 

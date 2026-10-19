@@ -1,0 +1,42 @@
+# BLOCKED: the compose stack's app image could not be built on this host, so 'docker compose -f docker-compose.beta.yml up' (work order step 1 red case and step 6 as written) was not run.
+# One attempt, 10-minute limit, started 2026-10-18T19:57:20Z.
+$ timeout 600 docker compose -f docker-compose.beta.yml --env-file <dummy env> build --progress plain app
+--progress is a global compose flag, better use `docker compose --progress xx build ...
+time="2026-10-18T19:57:20Z" level=warning msg="/home/user/ClinicalSageAI-2-replit/docker-compose.beta.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Image clinicalsageai-2-replit-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 550B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile.optimized
+#2 transferring dockerfile: 12.51kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-slim
+#3 ERROR: unexpected status from HEAD request to https://registry-1.docker.io/v2/library/node/manifests/22-slim: 429 Too Many Requests
+------
+ > [internal] load metadata for docker.io/library/node:22-slim:
+------
+Dockerfile.optimized:3
+
+--------------------
+
+   1 |     # Multi-stage Docker build for reduced image size
+
+   2 |     # Build stage
+
+   3 | >>> FROM node:22-slim AS builder
+
+   4 |     
+
+   5 |     WORKDIR /app
+
+--------------------
+
+failed to solve: node:22-slim: failed to resolve source metadata for docker.io/library/node:22-slim: unexpected status from HEAD request to https://registry-1.docker.io/v2/library/node/manifests/22-slim: 429 Too Many Requests
+
+exit=1
+2026-10-18T19:57:22Z
+
+# Local images at the time (no node:22-slim base cached, so the build cannot proceed offline):
+clamav/clamav:<none> 57deb108fc4c

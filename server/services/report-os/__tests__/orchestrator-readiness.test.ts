@@ -30,6 +30,35 @@ beforeEach(() => {
 });
 
 describe('computeInitialRun — one readiness verdict', () => {
+  it('uses a validated explicit regional registry instead of the stored default', async () => {
+    q.results.push([{ status: 'approved', count: 3 }], [{ metadata: { registryId: 'US_IND' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1', { explicitRegistryId: 'EU_MAA' });
+    expect(run.summary.regulatory).toMatchObject({ registryId: 'EU_MAA', regionCode: 'EU', agency: 'EMA' });
+  });
+
+  it('rejects an unresolved explicit registry rather than falling back to project metadata', async () => {
+    await expect(computeInitialRun(1, 'project', '1', { explicitRegistryId: 'NOT_A_REGISTRY' })).rejects.toMatchObject({ code: 'INVALID_REPORT_REGISTRY' });
+    expect(q.results).toHaveLength(0);
+  });
+  it('resolves an explicit submission type and records the selected request as provenance', async () => {
+    q.results.push([], [{ metadata: { registryId: 'EU_MAA' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1', { explicitSubmissionType: 'IND' });
+    expect(run.summary.regulatory).toMatchObject({ registryId: 'US_IND', regionCode: 'US' });
+    expect(run.providers.find(p => p.provider === 'submission_readiness')?.atoms).toContainEqual({ sourceTable: 'report_request', sourceField: 'submissionType', transformation: 'manual_entry' });
+    expect((run.summary.regulatory as { gaps: unknown[] }).gaps.length).toBeGreaterThan(0);
+  });
+  it('rejects conflicting explicit registry and submission type before reading source records', async () => {
+    await expect(computeInitialRun(1, 'project', '1', { explicitRegistryId: 'EU_MAA', explicitSubmissionType: 'IND' })).rejects.toMatchObject({ code: 'INVALID_REPORT_REGISTRY' });
+    expect(q.results).toHaveLength(0);
+  });
+
+  it('never calls one approved artifact a compliance assurance check', async () => {
+    q.results.push([{ status: 'approved', count: 1 }], [{ metadata: {} }]);
+    const run = await computeInitialRun(1, 'project', '1');
+    expect(run.providers.map((p) => p.provider)).not.toContain('compliance_audit');
+    expect(run.providers.find((p) => p.provider === 'artifact_approval')).toMatchObject({ status: 'ready' });
+    expect(run.summary.complianceAssessment).toBe('not_evaluated');
+  });
   it('says readiness was not computed for a project with no registry context, even with approved artifacts', async () => {
     q.results.push([{ status: 'approved', count: 3 }], [{ metadata: {} }]);
     const run = await computeInitialRun(1, 'project', '1');

@@ -1,0 +1,24 @@
+{
+  "mode": "Independent read-only client/saved-source integration review; no tests run by reviewer",
+  "incomingCommit": "3cae08d236ba5be6dd96284bca2c47b4605c007d",
+  "mergeCommit": "909dd60d20e633f353b93d85a627c51fbdde03a1",
+  "textualConflicts": 0,
+  "productionGuardHashesUnchanged": true,
+  "fixtureIssueResolved": "Add savedReuseRevision:0 required by incoming Owner type; retain historical source and renew hash.",
+  "findings": [
+    "Saved-source history revalidates current document/project access, audit record and exact sources.",
+    "Reuse adopts selectors only, invalidates plan and requires fresh preview; no candidate or finish status is fabricated.",
+    "Actual transport/review/queue and server generate/accept/candidate modules unchanged by incoming feature.",
+    "Existing retained-candidate/queue-stop controls remain appropriate after fixture counter initialization."
+  ],
+  "rootVerification": {
+    "tests": 286,
+    "suites": 20,
+    "exitCode": 0,
+    "stableInputs": 38
+  },
+  "limits": [
+    "Read-only source review plus root canonical tests, not live browser/provider/agency acceptance.",
+    "Incoming source feature is not independently certified beyond the recorded regression cohort."
+  ]
+}

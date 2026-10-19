@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > blocks acceptance while the actual editor has unsaved text 100ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > retains each controlled candidate, edits and reason when sections change 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after section change 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after session change 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after project round trip 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after unmount 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance until an explicit exact saved-section check 169ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 109ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > shows the wait as AnA's live record — what is running and a clock — then removes it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 20ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 26ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 262ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 26ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  22:50:00
+   Duration  5.08s (transform 1.84s, setup 229ms, import 2.47s, tests 1.11s, environment 953ms)

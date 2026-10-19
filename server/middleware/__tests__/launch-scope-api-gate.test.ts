@@ -190,6 +190,27 @@ describe('the real registry, launch scope on', () => {
     expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
   });
 
+  /* 2026-10-17 (audit, FILING_SPINE F12 + LX-13): transmit runs on the sequence
+     (POST /api/submissions/sequences/:id/transmit). Gateway transmittals is a
+     read-only log, and the package-model transmit it offered — with its gateway
+     roster and separation-of-duties dry run — has no launch caller, so
+     production refuses it. The log, its status poll, its ACK and the signed
+     technical rejection stay. */
+  it('refuses the package transmit, and passes the transmittal log and its reads', async () => {
+    for (const p of ['/api/mdx/gateways/fda/esg/transmit', '/api/mdx/gateways/transmit-independence', '/api/mdx/gateways']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/gateways/transmittals/3/status',
+      '/api/mdx/gateways/transmittals/3/ack',
+      '/api/mdx/gateways/transmittals/3/technical-rejection',
+      '/api/submissions/sequences/7/transmit',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
      a hidden app's routes answer as launch. dossier-map claimed all of
      /api/global-ri and /api/rim; project-home and program-journey claimed
@@ -385,7 +406,6 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
     '/api/cmc/module3-os/uploaded-sources/p-1',
     '/api/cmc/module3-os/section-labels',
-    '/api/cmc/variations/classify',
     '/api/cmc/projects/p-1/process-capability',
     '/api/cmc/stability/studies',
     '/api/cmc/status',
@@ -413,6 +433,10 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
         '/api/cmc/module3-os/compile/p-1',
         '/api/cmc/module3-os/guard/final-export/p-1',
         '/api/cmc/module3-os/place-into-submission/p-1',
+        // Attributed to the deferred UI; the actual handler refuses with 409
+        // under launch enforcement (register-link-recovery.routes.test.ts).
+        '/api/cmc/variations/classify',
+        '/api/cmc/module3-os/register-links/p-1',
       ]) {
         expect((await run(gate, p)).passed, p).toBe(true);
       }
@@ -441,5 +465,139 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     expect(prefixes.filter((p) => p === '/api/cmc' || p === '/api/cmc/module3-os')).toEqual([]);
     const uncalled = prefixes.filter((pre) => !cmcCalls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
     expect(uncalled, `cmc apiPrefixes no CMC screen calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
+  });
+});
+
+/* The IND lifecycle and forms screen is a feature of the Submission Center app
+   (decision P-32, 2026-10-15). While `ind-checklist` claimed the bare
+   '/api/ind-lifecycle', putting it in the catalog would have made every route
+   under it answer launch — the 312.32 IND safety report, the E2B(R3) ICSR
+   composer and the ICSR transmit to an agency gateway among them. It now claims
+   the segments its screen calls; the safety namespaces are claimed by
+   `pharmacovigilance`, outside the release, so production refuses them 403
+   LAUNCH_SCOPE even where unattributed paths are only reported. The
+   /api/haq-manager store is retired (2026-10-18): agency questions are
+   answered on the project inbox, under Communication's and Project home's
+   claims, with approval a signed act. No surface claims the old namespace, so
+   production refuses it as unclaimed. Asked of the real registry and the real
+   catalog. */
+describe('the real registry with the IND tools in Submission Center, agency questions locked (P-32)', () => {
+  /** Claimed by an out-of-scope surface: refused whatever LAUNCH_SCOPE_API_UNATTRIBUTED says. */
+  const SAFETY = [
+    '/api/ind-lifecycle/safety-report',
+    '/api/ind-lifecycle/safety-report/classify',
+    '/api/ind-lifecycle/safety-report/pdf',
+    '/api/ind-lifecycle/safety-report/file',
+    '/api/ind-lifecycle/safety-report/icsr',
+    '/api/ind-lifecycle/safety-report/icsr/message',
+    '/api/ind-lifecycle/safety-reports/7',
+    '/api/ind-lifecycle/icsr-transmissions/7/transmit',
+    '/api/ind-lifecycle/icsr-transmissions/7/acknowledge',
+  ];
+  /** The retired agency-questions store's paths: claimed by nothing now. */
+  const HAQ = [
+    '/api/haq-manager/rounds',
+    '/api/haq-manager/questions',
+    '/api/haq-manager/letters/L-1/questions/934/approve',
+    '/api/haq-manager/letters/L-1/assemble',
+  ];
+  /** Claimed by nothing: refused in production (enforce), reported elsewhere. */
+  const UNCLAIMED = [
+    ...HAQ,
+    '/api/ind-lifecycle',
+    '/api/ind-lifecycle/submission/7/safety-reports',
+    '/api/ind-lifecycle/submission/7/icsr-transmissions',
+    '/api/ind-lifecycle/submission/7/cockpit',
+    '/api/ind-lifecycle/sequence/7/dispatch-gate',
+    '/api/ind-lifecycle/portfolio',
+    '/api/ind-lifecycle/readiness',
+    '/api/ind-master-data',
+  ];
+  const CALLED = [
+    '/api/ind-checklist',
+    '/api/ind-lifecycle/clock',
+    '/api/ind-lifecycle/cover-letter',
+    '/api/ind-lifecycle/briefing-book/pdf',
+    '/api/ind-lifecycle/loa',
+    '/api/ind-lifecycle/right-of-reference/pdf',
+    '/api/ind-lifecycle/annual-report/file',
+    '/api/ind-lifecycle/amendment-plan',
+    '/api/ind-lifecycle/amendment/file',
+    '/api/ind-forms/',
+    '/api/ind-forms/1571/build',
+  ];
+
+  it('the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not', () => {
+    expect(LAUNCH_SURFACE_IDS.has('ind-checklist')).toBe(true);
+    expect(LAUNCH_SURFACE_IDS.has('haq-manager')).toBe(false);
+    expect(LAUNCH_SURFACE_IDS.has('pharmacovigilance')).toBe(false);
+  });
+
+  it('refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported', async () => {
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'report' });
+    for (const p of SAFETY) {
+      const { res, passed } = await run(gate, p);
+      expect({ p, passed, status: res.statusCode, code: res.body?.error?.code }).toEqual({ p, passed: false, status: 403, code: 'LAUNCH_SCOPE' });
+    }
+  });
+
+  it('the gate production builds refuses the unclaimed IND routes too, and serves what the screens call', async () => {
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+    for (const p of [...SAFETY, ...UNCLAIMED]) {
+      const { res, passed } = await run(gate, p);
+      expect({ p, passed, status: res.statusCode, code: res.body?.error?.code }).toEqual({ p, passed: false, status: 403, code: 'LAUNCH_SCOPE' });
+    }
+    for (const p of CALLED) expect((await run(gate, p)).passed, p).toBe(true);
+  });
+
+  /* The walker ci:launch-scope-api runs, over each screen's own import graph. */
+  const walk = checkLaunchScopeApi(REAL, buildPrefixMap(), LAUNCH_SURFACE_IDS);
+  const callsOf = (id: string) => [...walk.all].filter(([, e]) => e.surfaces.has(id));
+  const owned = (p: string) => /^\/api\/(ind-lifecycle|ind-forms|ind-checklist|ind-master-data|haq-manager)(\/|$)/.test(p);
+
+  it('every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse', () => {
+    expect(walk.unresolved).toEqual([]);
+    const ind = callsOf('ind-checklist').filter(([p]) => owned(p));
+    // A wrong walk root would make the assertions below pass over nothing.
+    expect(ind.length).toBeGreaterThanOrEqual(20);
+    expect(ind.map(([p]) => p)).toContain('/api/ind-lifecycle/clock');
+    expect(ind.filter(([, e]) => e.verdict !== 'launch').map(([p, e]) => `${e.verdict} ${p}`)).toEqual([]);
+    expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.surfaces.join(', ')}`)).toEqual([]);
+    // No launch or shell screen reaches the agency-questions API.
+    expect([...walk.all].filter(([p]) => p.startsWith('/api/haq-manager')).map(([p, e]) => `${p} ← ${[...e.surfaces].join(', ')}`)).toEqual([]);
+  });
+
+  it('the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph', () => {
+    const named = callsOf('ind-checklist').map(([p]) => p);
+    expect(named.filter((p) => /\/(safety-reports?|icsr-transmissions)(\/|$)/.test(p))).toEqual([]);
+  });
+
+  it('claims no IND prefix the IND screen does not call', () => {
+    const prefixes = UI_SURFACES.find((s) => s.id === 'ind-checklist')?.apiPrefixes ?? [];
+    expect(prefixes.length).toBeGreaterThan(0);
+    // A mount root admits every handler mounted under it, called or not.
+    expect(prefixes.filter((p) => p === '/api/ind-lifecycle')).toEqual([]);
+    const calls = callsOf('ind-checklist');
+    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    expect(uncalled, `ind-checklist apiPrefixes no screen of it calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
+  });
+
+  it('the locked agency-questions surface claims nothing, and no surface claims the retired store', () => {
+    // A locked surface claiming the inbox paths it renders would lock them for
+    // Communication and Respond, which are in the catalog.
+    expect(UI_SURFACES.find((s) => s.id === 'haq-manager')?.apiPrefixes).toEqual([]);
+    expect(UI_SURFACES.filter((s) => s.apiPrefixes.some((p) => p.startsWith('/api/haq-manager'))).map((s) => s.id)).toEqual([]);
+  });
+
+  it('answers launch for the agency-response paths Communication and Respond call', async () => {
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+    for (const p of [
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/response',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/approve',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/commitments',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/response-package',
+      '/api/ha-interactions/commitments/3/fulfill',
+    ]) expect((await run(gate, p)).passed, p).toBe(true);
   });
 });

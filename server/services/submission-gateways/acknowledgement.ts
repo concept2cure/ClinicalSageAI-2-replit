@@ -88,7 +88,8 @@ export function platformTransmittalRecord(input: PlatformRecordInput): GatewayAc
     transmissionId,
     contentType: 'text/plain',
     buffer: Buffer.from(`${lines.join('\n')}\n`, 'utf8'),
-    receivedAt: ackReceivedAt ?? new Date(),
+    receivedAt: ackReceivedAt,
+    generatedAt: new Date(),
     provenance: 'platform-record',
   };
 }

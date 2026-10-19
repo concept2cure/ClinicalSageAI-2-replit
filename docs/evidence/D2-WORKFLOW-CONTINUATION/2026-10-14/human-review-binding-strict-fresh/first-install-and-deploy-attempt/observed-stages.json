@@ -1,0 +1,37 @@
+{
+  "database": "platform_ci_review_binding_blank_20261014_51cb8284",
+  "results": [
+    {
+      "stage": [
+        "/tmp/authoring-review-binding-strict-fresh-prep/create.mjs"
+      ],
+      "exit": 0
+    },
+    {
+      "stage": [
+        "scripts/db/install-fresh.mjs"
+      ],
+      "exit": 0
+    },
+    {
+      "stage": [
+        "/tmp/authoring-review-binding-strict-fresh-prep/validate.mjs",
+        "installed"
+      ],
+      "exit": 0
+    },
+    {
+      "stage": [
+        "scripts/db/deploy-migrate.mjs"
+      ],
+      "exit": 0
+    },
+    {
+      "stage": [
+        "/tmp/authoring-review-binding-strict-fresh-prep/validate.mjs",
+        "deploy1"
+      ],
+      "exit": 1
+    }
+  ]
+}

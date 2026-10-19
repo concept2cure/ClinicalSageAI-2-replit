@@ -86,4 +86,3 @@ Covered: auth-schema.ts in full, the migration header and statements, migration-
 6. The finding breaks none of the repository's rules (CLAUDE.md, the design constitution, 21 CFR Part 11, WCAG 2.2 AA). The failure is fail-closed: HTTP 500 AUTH_010, not a fabricated or empty result.
 
 7. It is not already listed as open under docs/evidence/reviews/, but it is not a defect, so there is nothing to file.
-

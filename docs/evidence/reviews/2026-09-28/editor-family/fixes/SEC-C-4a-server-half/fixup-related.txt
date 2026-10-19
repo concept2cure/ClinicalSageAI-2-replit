@@ -346,4 +346,3 @@ stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints >
       Tests  21 passed (21)
    Start at  19:14:09
    Duration  8.02s (transform 8.93s, setup 226ms, import 6.67s, tests 7.63s, environment 0ms)
-

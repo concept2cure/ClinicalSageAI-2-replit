@@ -28,11 +28,15 @@ import {
   concept2cureRateLimiter,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sendError,
   sendSuccess,
 } from './shared';
+import { getOrganizationId } from './shared';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './project-access';
+import { readCsrProjectActor, CsrScopeError } from '../../services/csr/project-scope';
 
 const logger = createScopedLogger('concept2cure-context-intelligence');
 const router = Router();
@@ -867,65 +871,86 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 /**
  * POST /api/concept2cure/feedback
  * Persist user feedback (thumbs up/down) on AI responses.
- * Critical for RLHF quality loop — was previously console.info only.
+ * Stores personal feedback labels; this does not establish model training or
+ * bind the supplied labels to a native message/conversation record.
  */
-router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const organizationId =
-      Number((req as any).tenantContext?.organizationId) ||
-      Number((req as any).tenantId) ||
-      Number((req as any).user?.organizationId);
-    if (!organizationId) {
-      return sendError(res, 403, 'Organization context required');
-    }
-    const userId = getUserId(req);
-    const { messageId, positive, conversationId, comment } = req.body;
+const feedbackLabel = z.union([z.string().trim().min(1).max(200), z.number().int().nonnegative()]).transform(String);
+const feedbackSchema = z.object({
+  messageId: feedbackLabel,
+  positive: z.boolean(),
+  conversationId: feedbackLabel.nullable().optional(),
+  comment: z.string().max(4000).nullable().optional(),
+  projectId: z.union([z.string().min(1).max(200), z.number().int().positive()]).optional(),
+});
 
-    if (messageId === undefined || positive === undefined) {
-      return sendError(res, 400, 'messageId and positive (boolean) are required');
-    }
+async function persistFeedback(res: Response, input: {
+  organizationId: number; userId: number; messageId: string; conversationId?: string | null;
+  positive: boolean; comment?: string | null;
+}): Promise<number | Response> {
+  const { organizationId, userId, messageId, conversationId, positive, comment } = input;
 
     try {
-      await pool.query(
-        `CREATE TABLE IF NOT EXISTS ai_feedback (
-          id SERIAL PRIMARY KEY,
-          organization_id INTEGER NOT NULL,
-          user_id INTEGER,
-          message_id TEXT NOT NULL,
-          conversation_id TEXT,
-          positive BOOLEAN NOT NULL,
-          comment TEXT,
-          created_at TIMESTAMP DEFAULT NOW()
-        )`
-      );
-      await pool.query(
+      const result = await pool.query<{ id: number }>(
         `INSERT INTO ai_feedback (organization_id, user_id, message_id, conversation_id, positive, comment)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          organizationId,
-          userId,
-          String(messageId),
-          conversationId || null,
-          positive,
-          comment || null,
-        ]
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [organizationId, userId, messageId, conversationId ?? null, positive, comment ?? null]
       );
-    } catch (dbErr: any) {
-      console.warn('[Feedback] DB persist failed:', dbErr.message);
+      const feedbackId = Number(result.rows[0]?.id);
+      if (result.rows.length !== 1 || !Number.isSafeInteger(feedbackId) || feedbackId <= 0) {
+        return sendError(res, 503, 'The server could not confirm whether this feedback was saved. Have its status checked before submitting it again.', undefined, 'FEEDBACK_SAVE_UNCONFIRMED');
+      }
+      return feedbackId;
+    } catch (error) {
+      const code = (error as { code?: string })?.code;
+      // PostgreSQL rejected these statements before committing. A network or
+      // lost-response error cannot prove rollback of an autocommitted INSERT.
+      const refused = typeof code === 'string' && /^(22|23|42)[0-9A-Z]{3}$/.test(code);
+      logger.warn('Feedback persistence could not be confirmed', { code: code ?? null, outcome: refused ? 'refused' : 'unconfirmed' });
+      return sendError(res, 503, refused ? 'The feedback was not recorded. Its database write was refused.' :
+        'The server could not confirm whether this feedback was saved. Have its status checked before submitting it again.',
+      undefined, refused ? 'FEEDBACK_NOT_RECORDED' : 'FEEDBACK_SAVE_UNCONFIRMED');
     }
 
+}
+
+async function feedbackActor(req: Request, res: Response, organizationId: number): Promise<number | Response> {
+    try {
+      // Personal feedback is open to active members, including viewers. It is
+      // not document edit authority and cannot revive an offboarded tenant.
+      return (await readCsrProjectActor(pool, organizationId, getUserId(req))).userId;
+    } catch (error) {
+      if (error instanceof CsrScopeError && error.status === 403) return sendError(res, 403, 'Current active organization membership is required.', undefined, 'FEEDBACK_MEMBERSHIP_REQUIRED');
+      logger.warn('Feedback membership check unavailable', { code: (error as { code?: string })?.code ?? null });
+      return sendError(res, 503, 'Current membership could not be verified. No feedback was submitted.', undefined, 'FEEDBACK_ACCESS_UNAVAILABLE');
+    }
+}
+
+router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const parsed = feedbackSchema.safeParse(req.body);
+    if (!parsed.success) return sendError(res, 400, 'Feedback requires a bounded message label and a boolean decision.', undefined, 'INVALID_FEEDBACK');
+    const organizationId = getOrganizationId(req);
+    const userId = await feedbackActor(req, res, organizationId);
+    if (typeof userId !== 'number') return userId;
+    const { messageId, positive, conversationId, comment, projectId } = parsed.data;
+    if (projectId !== undefined) await requireProjectAdmission(req, String(projectId), false);
+
+    const feedbackId = await persistFeedback(res, { organizationId, userId, messageId, conversationId, positive, comment });
+    if (typeof feedbackId !== 'number') return feedbackId;
+
     // Also log to audit trail for compliance
-    await logAuditEntry(req, 'FEEDBACK', 'ai_response', String(messageId), null, {
+    const auditOutcome = await logAuditEntry(req, 'FEEDBACK', 'ai_response', messageId, null, {
       positive,
       conversationId,
     });
 
-    // Feed back to RIM learning loop (non-blocking)
-    try {
+    // A real optional project may receive the existing RIM signal. Opaque
+    // conversation labels never become an inferred project or a project zero.
+    if (projectId !== undefined) try {
       const { interceptFeedback } = await import('../../services/intelligence/rim-interceptors.js');
       interceptFeedback({
         organizationId,
-        projectId: req.body.projectId ? Number(req.body.projectId) : 0,
+        projectId: Number(String(projectId).replace(/^proj_/, '')),
         userId,
         feedbackType: positive ? 'accepted' : 'rejected',
       });
@@ -933,9 +958,10 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
       /* non-blocking */
     }
 
-    return sendSuccess(res, { recorded: true });
+    return sendSuccess(res, { recorded: true, id: feedbackId }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
-    logConcept2cureError('feedback submission', error);
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
+    logger.error('Feedback request failed', { code: error?.code ?? null });
     return sendError(res, 500, 'Failed to record feedback');
   }
 });

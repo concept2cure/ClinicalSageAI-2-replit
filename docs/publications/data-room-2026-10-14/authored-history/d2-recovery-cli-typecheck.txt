@@ -1,0 +1,32 @@
+scripts/process-data-room-captures.mjs(122,24): error TS2551: Property 'processPendingSourcesForTenant' does not exist on type 'typeof import("/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing")'. Did you mean 'processPendingSources'?
+scripts/process-data-room-captures.mjs(125,47): error TS2551: Property 'processPendingSourcesForTenant' does not exist on type 'typeof import("/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing")'. Did you mean 'processPendingSources'?
+server/export/authoring-images.ts(37,8): error TS2307: Cannot find module '@shared/authoring/figure-refs' or its corresponding type declarations.
+server/middleware/orgMembership.ts(371,43): error TS2339: Property 'userId' does not exist on type 'User'.
+server/middleware/orgMembership.ts(372,51): error TS2339: Property 'organizationId' does not exist on type 'User'.
+server/services/ana/project-scope-admission.ts(45,11): error TS2322: Type '(sql: string, params: unknown[]) => Promise<{ rows: { id: number; clientWorkspaceId: unknown; }[]; }>' is not assignable to type '{ readonly organizations: RelationalQueryBuilder<ExtractTablesWithRelations<typeof import("/workspace/Concept2Cure/shared/schema")>, { tsName: "organizations"; dbName: "organizations"; columns: { ...; }; relations: ExtractTableRelationsFromSchema<...>; primaryKey: AnyColumn[]; }>; ... 473 more ...; readonly enableme...'.
+  Type '(sql: string, params: unknown[]) => Promise<{ rows: { id: number; clientWorkspaceId: unknown; }[]; }>' is not assignable to type '(text: string, params?: unknown[]) => Promise<{ rows: ProgramAnchorRow[]; }>'.
+    Type 'Promise<{ rows: { id: number; clientWorkspaceId: unknown; }[]; }>' is not assignable to type 'Promise<{ rows: ProgramAnchorRow[]; }>'.
+      Type '{ rows: { id: number; clientWorkspaceId: unknown; }[]; }' is not assignable to type '{ rows: ProgramAnchorRow[]; }'.
+        Types of property 'rows' are incompatible.
+          Type '{ id: number; clientWorkspaceId: unknown; }[]' is not assignable to type 'ProgramAnchorRow[]'.
+            Type '{ id: number; clientWorkspaceId: unknown; }' is not assignable to type 'ProgramAnchorRow'.
+              Types of property 'clientWorkspaceId' are incompatible.
+                Type 'unknown' is not assignable to type 'number'.
+server/services/ana/uploaded-file-access.ts(364,87): error TS2694: Namespace '"/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/data-room-processing"' has no exported member 'SourceProcessingResult'.
+server/services/ana/uploaded-file-access.ts(374,18): error TS2353: Object literal may only specify known properties, and 'expectedWorkspaceId' does not exist in type '{ bytes: Buffer; fileName: string; mimeType: string; programId: string; processedBy: string; }'.
+server/services/ana/uploaded-file-access.ts(376,43): error TS2339: Property 'processed' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture; }'.
+server/services/ana/uploaded-file-access.ts(376,67): error TS2339: Property 'status' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture; }'.
+server/services/ana/uploaded-file-access.ts(377,16): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture; }'.
+server/services/ana/uploaded-file-access.ts(377,48): error TS2339: Property 'reasonCode' does not exist on type '{ ok: boolean; extracted?: ExtractedCapture; }'.
+server/services/audit/audit-write-outcome.ts(195,69): error TS2339: Property 'code' does not exist on type 'AuditRowOutcome'.
+  Property 'code' does not exist on type '{ persisted: true; chained: boolean; }'.
+server/services/authoring/authoring-html-sanitizer.ts(47,29): error TS2307: Cannot find module '@shared/authoring/figure-refs' or its corresponding type declarations.
+server/services/authoring/authoring-permissions.ts(104,27): error TS2339: Property 'id' does not exist on type 'User'.
+server/services/authoring/authoring-permissions.ts(104,43): error TS2339: Property 'userId' does not exist on type 'User'.
+server/services/authoring/authoring-permissions.ts(107,30): error TS2339: Property 'roles' does not exist on type 'User'.
+server/services/authoring/authoring-permissions.ts(107,49): error TS2339: Property 'role' does not exist on type 'User'.
+server/services/authoring/authoring-permissions.ts(114,22): error TS2339: Property 'email' does not exist on type 'User'.
+server/services/authoring/authoring-permissions.ts(114,46): error TS2339: Property 'email' does not exist on type 'User'.
+server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts(43,16): error TS2339: Property 'DATABASE_URL' does not exist on type '{ SKIP_DB_STARTUP_TEST: string; }'.
+server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts(44,16): error TS2339: Property 'APP_DATABASE_URL' does not exist on type '{ SKIP_DB_STARTUP_TEST: string; }'.
+server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts(45,16): error TS2339: Property 'DATABASE_URL_DEV' does not exist on type '{ SKIP_DB_STARTUP_TEST: string; }'.

@@ -1,0 +1,47 @@
+Data Room (corrected async fixture)
+
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > hides earlier actionable sources immediately while a different search is pending 68ms
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"22222222-2222-4222-8222-222222222222","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 5012ms
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 5008ms
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","extractionMethod":"text","isCurrent":true,"dataEligible":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":50},"window":{"shown":1,"truncated":false}}) 5006ms
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId":"11111111-1111-4111-8111-111111111111","sources":[{"id":9,"title":"Protocol source","checksum":null,"extractionStatus":"extracted","extractionMethod":"text","isCurrent":true,"originalFileAvailable":true}],"total":1,"currentTotal":1,"page":{"limit":50,"offset":0},"window":{"shown":1,"truncated":false}}) 5007ms
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > resets search, page and selected import when the project changes 180ms
+Vault confirmation
+
+ × client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > waits for confirmation and holds repeated clicks 232ms
+ × client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > reports a refused insertion without claiming a citation 56ms
+ × client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx > Vault citation outcomes follow the confirmed editor insertion > does not report an old citation outcome after the rail is unmounted 43ms
+Editor and backend scope
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > records the authoritative source checksum and one citation audit, preserving the existing response 27ms
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > refuses a superseded canonical source through the generic entry without a citation or audit 17ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > reads the second page so a registered source in a prior section gives the current marker its correct number 5697ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > does not offer superseded, withdrawn or unreadable project sources as new citation choices 461ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > ignores a prior project source read that finishes after switching to another project 603ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses normal source retirement before creating or re-affirming a citation 82ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refresh of a retired source without changing its recorded checksum 36ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refreshing a legacy same-organization cross-project citation 30ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered own-project markers take no number or reference entry 198ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered other-project markers take no number or reference entry 33ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > an association elsewhere in the document cannot legitimize an earlier pasted marker 35ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > withdrawn recorded data cannot lend its name to a new bibliography 100ms
+ × server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > valid retained citations resolve through the supplied render executor, with no global-pool read 95ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation registration precedes the in-text marker > inserts no marker when the authoritative source registration is refused 398ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation registration precedes the in-text marker > holds insertion until confirmation and keeps the exact selected position 128ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation registration precedes the in-text marker > does not insert when the picker was cancelled during registration 314ms
+  Name "Insert table (3 columns × 3 rows, header row)":
+    aria-label="Insert table (3 columns × 3 rows, header row)"
+    title="Insert table (3 columns × 3 rows, header row)"
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation registration precedes the in-text marker > does not insert into content that changed while registration was pending 137ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation registration precedes the in-text marker > applies the same confirmation gate to insertion through the mounted editor handle 68ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation choices and incomplete resolution > offers only eligible insertion choices while keeping historical names available for existing markers 80ms
+ × client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx > citation choices and incomplete resolution > does not print a plausible number while the source catalogue is incomplete 41ms
+  Name "Insert table (3 columns × 3 rows, header row)":
+    aria-label="Insert table (3 columns × 3 rows, header row)"
+    title="Insert table (3 columns × 3 rows, header row)"
+Recorded metadata
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > reads eligible recorded metadata for an unfiled document through the existing citation list 137ms
+
+Sources-rail freshness
+ × client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx > the existing editor reads the whole project citation catalogue > refreshes current catalogue and association facts when the existing Sources rail is reopened 6379ms

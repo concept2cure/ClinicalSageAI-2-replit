@@ -966,4 +966,3 @@ stderr | server/services/submission-gateways/__tests__/governed-transmit-pretran
       Tests  399 passed (399)
    Start at  06:58:43
    Duration  32.96s (transform 4.70s, setup 606ms, import 17.14s, tests 9.63s, environment 3ms)
-

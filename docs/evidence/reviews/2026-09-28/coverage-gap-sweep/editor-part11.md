@@ -295,4 +295,3 @@ Coverage:
 Coverage:
 - Covered: the four named files; the server middleware, the permission service and the permissions routes; the task route gate; the skill and the design docs; the three review folders; and the git log of the site.
 - Not covered: I did not run the app or reproduce the 403 live against Postgres. I did not check whether the org role in the client's useAuth user would be enough to gate Assign review.
-

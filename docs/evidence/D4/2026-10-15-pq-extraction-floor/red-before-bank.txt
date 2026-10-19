@@ -1,0 +1,12 @@
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+  - extraction sample below the protocol floor of 10 per document type: 510k=4, cer=4, ind=4
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+  - mean section coverage 0.000 is below 0.85
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0
+  - extraction sample below the protocol floor of 10 per document type: 510k=4, cer=4, ind=4
+PQ PQ-DRAFT-001 v0.1.0 (draft) — claude-opus-4 → claude-opus-5-5 [anthropic], 30 generation task(s), gold bank 0.4.0

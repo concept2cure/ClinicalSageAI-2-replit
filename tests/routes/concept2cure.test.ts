@@ -155,6 +155,9 @@ vi.mock('../../server/db', () => {
     delete: vi.fn(() => ({
       where: vi.fn().mockResolvedValue(undefined),
     })),
+    // Ordinary create/archive now enlist their related business writes together.
+    // Real rollback behavior is proved by o01-core-project-audits.pglite.test.ts.
+    transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
   };
 
   /*

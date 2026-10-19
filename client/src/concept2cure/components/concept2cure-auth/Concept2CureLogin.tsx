@@ -24,7 +24,8 @@ import {
 } from '@/services/portal/authService';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
-import { computeRedirect, parseSsoHandoff } from '../../auth/redirectUtils';
+import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff } from '../../auth/redirectUtils';
+import { OrganizationSso } from './OrganizationSso';
 import { takeSignOutReason, type SessionEndReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
@@ -160,6 +161,7 @@ function MfaCodeInput({
           inputMode="numeric"
           maxLength={1}
           autoComplete="one-time-code"
+          aria-label={`Digit ${i + 1}`}
         />
       ))}
     </div>
@@ -190,6 +192,7 @@ export const Concept2CureLogin: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  const [ssoReturnTo, setSsoReturnTo] = useState<string | null>(null);
   // Why the last session ended on its own account (inactivity, lifetime), read
   // once from where the auth service left it (P1-1).
   const [signedOut] = useState(() => takeSignOutReason());
@@ -215,6 +218,25 @@ export const Concept2CureLogin: React.FC = () => {
   // of this effect finds no fragment and does nothing.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const mfaHandoff = parseSsoMfaHandoff(window.location.hash);
+    if (mfaHandoff) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      if (!authService.adoptMfaChallenge(mfaHandoff.challenge)) {
+        setError({ message: t('error.signInFailed') });
+        return;
+      }
+      const methods: MfaMethod[] = [{ type: mfaHandoff.method, isEnabled: true, isPrimary: true }];
+      if (mfaHandoff.method === 'totp') methods.push({ type: 'backup_code', isEnabled: true, isPrimary: false });
+      setAvailableMfaMethods(methods); setMfaMethod(mfaHandoff.method);
+      setMaskedEmail(mfaHandoff.maskedEmail); setResendCountdown(mfaHandoff.method === 'email' ? 60 : 0);
+      setSsoReturnTo(mfaHandoff.returnTo); setView('mfa');
+      return;
+    }
+    if (new URLSearchParams(window.location.hash.replace(/^#/, '')).has('mfa')) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      setError({ message: t('error.signInFailed') });
+      return;
+    }
     const handoff = parseSsoHandoff(window.location.hash);
     if (!handoff) return;
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
@@ -230,6 +252,7 @@ export const Concept2CureLogin: React.FC = () => {
         setSuccessMessage(t('success.signedIn'));
         setLocation(computeRedirect(handoff.returnTo ? `?returnTo=${encodeURIComponent(handoff.returnTo)}` : '', user));
       })
+      .catch(() => setError({ message: t('error.signInFailed') }))
       .finally(() => setIsLoading(false));
   }, [setLocation, t]);
 
@@ -343,12 +366,12 @@ export const Concept2CureLogin: React.FC = () => {
       setView('success');
       setSuccessMessage(t('success.verified'));
       window.setTimeout(() => {
-        setLocation(computeRedirect(undefined, undefined, () => authService.getUser()));
+        setLocation(computeRedirect(ssoReturnTo ? `?returnTo=${encodeURIComponent(ssoReturnTo)}` : undefined, undefined, () => authService.getUser()));
       }, 350);
     } finally {
       setIsLoading(false);
     }
-  }, [mfaCode, mfaMethod, setLocation, verifyMfa]);
+  }, [mfaCode, mfaMethod, setLocation, ssoReturnTo, verifyMfa]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -559,6 +582,8 @@ export const Concept2CureLogin: React.FC = () => {
             </form>
           )}
 
+          {view === 'sign-in' && <OrganizationSso disabled={isLoading} />}
+
           {/* ─── MFA ─── */}
           {view === 'mfa' && (
             <div className={styles.form}>
@@ -618,6 +643,7 @@ export const Concept2CureLogin: React.FC = () => {
                     setView('sign-in');
                     setPassword('');
                     setMfaCode('');
+                    setSsoReturnTo(null);
                   }}
                 >
                   <ArrowLeft size={12} strokeWidth={1.75} />

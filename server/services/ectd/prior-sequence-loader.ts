@@ -3,10 +3,11 @@
  * lifecycle operator's PriorLeaf shape, tenant-scoped.
  *
  * This is the read half of the sequence-manifest feature (compile paths that
- * persist a leaf manifest onto ectd_compilations are the write half). Given an application + a prior sequence number, it fetches
- * that sequence's compilation row for the caller's organization and returns its
- * published leaves, so a new sequence can be diffed against exactly what shipped
- * — without the caller hand-supplying every prior href.
+ * persist a leaf manifest onto ectd_compilations are the write half). Given an
+ * application + a prior sequence number, it returns the state on file at the
+ * agency through that sequence for the caller's organization — only compiles
+ * that were sent or acknowledged — so a new sequence can be diffed against
+ * exactly what shipped, without the caller hand-supplying every prior href.
  *
  * The pool is injected so the query is unit-testable with a stub; production
  * callers pass the app's pg pool. The organization filter is ALWAYS applied —
@@ -17,17 +18,6 @@
 
 import { manifestToPriorLeaves } from './sequence-manifest';
 import type { PriorLeaf } from './lifecycle-operator';
-
-/**
- * The leaves ONE stored manifest leaves on file. A manifest records its
- * sequence's withdrawals (operation 'delete'); the leaf a delete names is off
- * file after that sequence, so a single-sequence read must not hand it to the
- * lifecycle diff as a leaf on file. The fold below handles this across
- * sequences; this is the same rule for the two single-sequence reads.
- */
-function onFileLeaves(manifest: unknown): PriorLeaf[] {
-  return manifestToPriorLeaves(manifest).filter((l) => (l.operation ?? '').trim().toLowerCase() !== 'delete');
-}
 
 /** Minimal pg-pool surface this loader needs. */
 export interface PoolLike {
@@ -41,66 +31,91 @@ export interface LoadPriorSequenceArgs {
 }
 
 /**
- * Load the published leaves of a prior sequence as PriorLeaf[] for lifecycle
- * diffing. Returns an empty array when any identifier is missing or no matching
- * compilation with a manifest exists (a first sequence legitimately has no
- * prior). The newest matching compilation wins.
+ * A prior sequence named for lifecycle diffing that is not on file at the agency
+ * for this organization and application. Nothing can be diffed against it: an
+ * empty prior would make every leaf `new`, telling the agency it was never filed.
+ */
+export class PriorSequenceNotFoundError extends Error {
+  readonly code = 'PRIOR_SEQUENCE_NOT_FOUND';
+  constructor(detail: string) {
+    super(`PRIOR_SEQUENCE_NOT_FOUND: ${detail}`);
+    this.name = 'PriorSequenceNotFoundError';
+  }
+}
+
+/**
+ * The state on file at the agency after a NAMED prior sequence, as PriorLeaf[]
+ * for lifecycle diffing: the filed history of the submission that filed it, up
+ * to and including it, folded by loadLatestPriorManifestBySubmission (each leaf
+ * carries the sequence that holds it). The application number finds that
+ * submission through the named sequence's filed compile.
+ *
+ * Throws when an identifier is missing, and PriorSequenceNotFoundError when the
+ * named sequence is not on file (never compiled, compiled but never sent or
+ * acknowledged, or only rehearsed). 2026-10-15: this read the newest compile of
+ * that one sequence (a never-sent preview counted as on file; leaves filed in
+ * earlier sequences were missing) and answered [] when nothing matched, which
+ * the AnA tool reported as every leaf `new`. loadLatestPriorManifest, its
+ * application-number sibling with the same read and no production caller, was
+ * removed with it; loadLatestPriorManifestBySubmission is the canonical read.
  */
 export async function loadPriorSequenceManifest(
   pool: PoolLike,
   args: LoadPriorSequenceArgs,
 ): Promise<PriorLeaf[]> {
   const { organizationId, applicationNumber, priorSequenceNumber } = args;
-  if (!organizationId || !applicationNumber || !priorSequenceNumber) return [];
+  if (!organizationId || !applicationNumber || !priorSequenceNumber) {
+    const missing = [
+      !organizationId && 'organization',
+      !applicationNumber && 'application number',
+      !priorSequenceNumber && 'prior sequence number',
+    ].filter(Boolean);
+    throw new Error(`Cannot load a prior sequence without its ${missing.join(' and ')}; nothing was read.`);
+  }
+  if (!/^\d{4}$/.test(priorSequenceNumber) || priorSequenceNumber === '9999') {
+    throw new Error(`Prior sequence "${priorSequenceNumber}" is not a four-digit eCTD sequence that another can follow.`);
+  }
 
-  const res = await pool.query(
-    `SELECT leaf_manifest
-       FROM ectd_compilations
-      WHERE organization_id = $1
-        AND application_number = $2
-        AND sequence_number = $3
-        AND leaf_manifest IS NOT NULL
-      ORDER BY compiled_at DESC NULLS LAST, id DESC
-      LIMIT 1`,
+  const filed = await pool.query(
+    `SELECT DISTINCT c.submission_id
+       FROM ectd_compilations c
+       JOIN ectd_sequences s
+         ON s.submission_id = c.submission_id
+        AND s.sequence_number = c.sequence_number
+        AND s.organization_id = c.organization_id
+        AND s.deleted_at IS NULL
+      WHERE c.organization_id = $1
+        AND c.application_number = $2
+        AND c.sequence_number = $3
+        AND c.leaf_manifest IS NOT NULL
+        AND c.compilation_type IS DISTINCT FROM 'rehearsal'
+        AND s.dispatch_status IN ('sent', 'acknowledged')`,
     [organizationId, applicationNumber, priorSequenceNumber],
   );
-
-  if (!res?.rows?.length) return [];
-  return onFileLeaves(res.rows[0].leaf_manifest);
-}
-
-/**
- * Load the manifest of the MOST RECENT sequence strictly before `currentSequence`
- * for this application — the natural prior when exporting a new sequence without
- * naming the predecessor. Sequence numbers are zero-padded 4-digit strings, so
- * lexical `<` ordering is correct. Returns the prior sequence number alongside
- * its leaves (empty leaves + empty number when there is no prior). Always
- * organization-scoped.
- */
-export async function loadLatestPriorManifest(
-  pool: PoolLike,
-  args: { organizationId: number; applicationNumber: string; currentSequence: string },
-): Promise<{ priorSequenceNumber: string; leaves: PriorLeaf[] }> {
-  const { organizationId, applicationNumber, currentSequence } = args;
-  if (!organizationId || !applicationNumber || !currentSequence) {
-    return { priorSequenceNumber: '', leaves: [] };
+  const submissionIds = (filed?.rows ?? []).map((r) => Number(r.submission_id)).filter(Number.isInteger);
+  const named = `sequence ${priorSequenceNumber} of application ${applicationNumber}`;
+  if (submissionIds.length === 0) {
+    throw new PriorSequenceNotFoundError(
+      `${named} is not on file for this organization: no compile of it with a leaf manifest was sent or ` +
+        'acknowledged (a preview or rehearsal compile is not filed).',
+    );
   }
-  const res = await pool.query(
-    `SELECT sequence_number, leaf_manifest
-       FROM ectd_compilations
-      WHERE organization_id = $1
-        AND application_number = $2
-        AND sequence_number < $3
-        AND leaf_manifest IS NOT NULL
-      ORDER BY sequence_number DESC, compiled_at DESC NULLS LAST, id DESC
-      LIMIT 1`,
-    [organizationId, applicationNumber, currentSequence],
-  );
-  if (!res?.rows?.length) return { priorSequenceNumber: '', leaves: [] };
-  return {
-    priorSequenceNumber: String(res.rows[0].sequence_number ?? ''),
-    leaves: onFileLeaves(res.rows[0].leaf_manifest),
-  };
+  if (submissionIds.length > 1) {
+    throw new Error(
+      `${named} was filed under more than one submission (${submissionIds.join(', ')}); the prior state is ambiguous, so none was loaded.`,
+    );
+  }
+
+  // The fold reads strictly before its bound, so the bound is the next sequence.
+  const fold = await loadLatestPriorManifestBySubmission(pool, {
+    organizationId,
+    submissionId: submissionIds[0],
+    currentSequence: String(Number(priorSequenceNumber) + 1).padStart(4, '0'),
+  });
+  if (fold.priorSequenceNumber !== priorSequenceNumber) {
+    throw new PriorSequenceNotFoundError(`${named} is not in the filed history of submission ${submissionIds[0]}.`);
+  }
+  return fold.leaves;
 }
 
 /**

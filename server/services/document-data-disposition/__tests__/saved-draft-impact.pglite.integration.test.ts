@@ -17,6 +17,41 @@ async function draft(f: DispositionFixture, status = 'draft', sourceId = f.vault
 }
 
 describe('saved project-source references contribute to withdrawal impact', () => {
+  it.each(['vault', 'data-room'] as const)('counts an exact imported %s origin, and blocks its active approval', async kind => {
+    const f = await h.seed();
+    const before = await f.service.preview(f.scope);
+    const id = randomUUID();
+    await f.pg.query(`INSERT INTO authoring_documents (id,tenant_id,status,client_program_id,provenance)
+      VALUES ($1,$2,'draft',$3,$4)`, [id, f.org, f.program, JSON.stringify({ source: 'import', importSource: {
+      kind, id: kind === 'vault' ? f.vault : String(f.capture), programId: f.program, sha256: 'a'.repeat(64),
+    } })]);
+    const draftPreview = await f.service.preview(f.scope);
+    expect(draftPreview.counts.downstreamReferences).toBe(before.counts.downstreamReferences + 1);
+    expect(draftPreview.approvals.active).toBe(0);
+    await f.pg.query("UPDATE authoring_documents SET status='FROZEN' WHERE id=$1", [id]);
+    const sealedPreview = await f.service.preview(f.scope);
+    expect(sealedPreview.approvals.active).toBe(1);
+    expect(sealedPreview.allowedChoices).toEqual([]);
+  });
+
+  it('does not count an import with another project, tenant, source ID or original hash', async () => {
+    const f = await h.seed();
+    const before = await f.service.preview(f.scope);
+    const variants = [
+      { tenant: f.org + 100, program: f.program, id: f.vault, hash: 'a'.repeat(64) },
+      { tenant: f.org, program: randomUUID(), id: f.vault, hash: 'a'.repeat(64) },
+      { tenant: f.org, program: f.program, id: randomUUID(), hash: 'a'.repeat(64) },
+      { tenant: f.org, program: f.program, id: f.vault, hash: 'b'.repeat(64) },
+    ];
+    for (const variant of variants) await f.pg.query(`INSERT INTO authoring_documents (id,tenant_id,status,client_program_id,provenance)
+      VALUES ($1,$2,'FROZEN',$3,$4)`, [randomUUID(), variant.tenant, variant.program, JSON.stringify({ source: 'import', importSource: {
+      kind: 'vault', id: variant.id, programId: variant.program, sha256: variant.hash,
+    } })]);
+    const after = await f.service.preview(f.scope);
+    expect(after.counts).toEqual(before.counts);
+    expect(after.approvals.active).toBe(0);
+  });
+
   it('counts a saved draft without claiming approval or blocking retained data', async () => {
     const f = await h.seed();
     const before = await f.service.preview(f.scope);

@@ -1,0 +1,34 @@
+[
+  {
+    "command": [
+      "git",
+      "fetch",
+      "origin",
+      "concept2cure-v2"
+    ],
+    "exitCode": 0,
+    "output": "From https://github.com/concept2cure/ClinicalSageAI-2-replit\n * branch                concept2cure-v2 -> FETCH_HEAD\n   8d06f7156..87824205c  concept2cure-v2 -> origin/concept2cure-v2\n"
+  },
+  {
+    "command": [
+      "git",
+      "rev-list",
+      "--left-right",
+      "--count",
+      "HEAD...origin/concept2cure-v2"
+    ],
+    "exitCode": 0,
+    "output": "0\t5\n"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "HEAD",
+      "origin/concept2cure-v2"
+    ],
+    "exitCode": 0,
+    "output": "client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx\nclient/src/concept2cure/v2/surfaces/BatchDraft.tsx\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/PUBLICATION.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/QUALIFICATION.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/README.md\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/browser-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/browser-metafile.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/browser-module.js.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/canonical-final-incoming.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/canonical-metadata-incoming.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/canonical-prepush-inspection.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/commit-contract.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/commit-implementation.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/compatibility-review.md\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-baseline-BatchDraft.tsx.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-baseline-red.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-baseline-red.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-baseline-test.tsx.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-final-green.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-final-green.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-first-lint.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-owner-proof.md\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/component-prepared-lint.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/fetch-before-implementation-push.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/fetch-before-push.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/fetch-final-source-push.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-baseline-bindings.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-baseline-finish-reason.ts.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-baseline.fixture.ts.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-baseline.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-boundary.config.mts\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-final-bindings.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-final.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-lint.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-qualified-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-review.md\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-run-boundary.mjs\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/merge-final-metadata.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/merge-latest-canonical.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/production-owner-lint-baseline.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/production-owner-lint-summary.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/production-owner-lint.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/push-contract.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/push-implementation.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/regression-before-canonical-integration-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/regression-before-canonical-integration.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/regression-final-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/regression-final.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/regression-paths.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/release-runner-lint.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/run-browser-check.mjs\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/run-regression.mjs\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/run-typecheck.mjs\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-baseline-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-baseline.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-before-canonical-integration-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-before-canonical-integration.txt\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-final-manifest.json\ndocs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/typecheck-final.txt\ndocs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/NEXT-CANDIDATES.md\ndocs/reports/repo-health-scan-latest.json\ndocs/reports/repo-health-scan-latest.md\nserver/routes/__tests__/batch-draft-termination-boundary.test.ts\nserver/services/ai-gateway/finish-reason.ts\nshared/ai/finish-reason.ts\n"
+  }
+]

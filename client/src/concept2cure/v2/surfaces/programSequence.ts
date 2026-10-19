@@ -26,6 +26,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { liveGetOrNull, unwrapList, useLiveData, useLiveRows, type DataState, type ListState } from '../dataConnect';
 import { readShellProject } from '../shellProject';
 import { SC_APPTYPES } from '../fixtures/submission';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
 
 /** GET /api/submissions scoped to one program (its uuid). */
 export const programSubmissionsPath = (programId: string): string =>
@@ -86,9 +87,13 @@ export interface GateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
-  /** The server's sentence when the gate cleared only because its check did
-   *  not run and is not required here. Not blocking, and not passed. */
+  /** The server's sentence when the gate cleared without assessing what it
+   *  guards: an external assessment that did not qualify and is not required
+   *  here, a US IND's clinical hold (P-33), a Shadow Review waived by
+   *  signature (P-34). Not blocking, and not passed. */
   notAssessed?: string;
+  assessmentStatus?: 'passed' | 'failed' | 'not_assessed' | 'invalid';
+  assessmentNote?: string;
 }
 
 export interface ReadinessSummary {
@@ -102,8 +107,16 @@ export interface ExternalValidation {
   configured: boolean;
   ran: boolean;
   errorCount: number;
+  errorCountKnown?: boolean;
   cleared: boolean;
   blockers: string[];
+  validatorKind?: 'external_engine' | 'internal_subset' | 'unavailable' | 'unknown';
+  selectedValidatorName?: string | null;
+  reportedValidatorName?: string | null;
+  qualifyingRun?: boolean;
+  assessmentStatus?: GateView['assessmentStatus'];
+  assessmentNote?: string;
+  enforced?: boolean;
 }
 
 /** The server's composed dispatch verdict. Authoritative — see `gate` below. */
@@ -182,13 +195,14 @@ interface SubmissionRow {
 
 const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
 
-/** A program type or application type in words ("IND", "510(k)", "De Novo"):
- *  the application-type label when one matches, otherwise the value as the
- *  server gave it ("CER"); null when there is none. */
+/** A program type or application type in words ("IND", "510(k)", "De Novo",
+ *  "Prior Approval Supplement"): the application-type label when one matches,
+ *  a filing document class's label when it is one (never its key, "pas"),
+ *  otherwise the value as the server gave it ("CER"); null when there is none. */
 export function programTypeLabel(t: string | null | undefined): string | null {
   const v = String(t ?? '').trim();
   if (!v) return null;
-  return SC_APPTYPES.find((a) => a.v === v.toLowerCase())?.l ?? v;
+  return SC_APPTYPES.find((a) => a.v === v.toLowerCase())?.l ?? filingDocumentClassOf(v)?.label ?? v;
 }
 
 /** A submission recorded to the program that the gate does not read, because
@@ -378,6 +392,19 @@ export function noSubmissionWords(
   d: Extract<Discovery, { state: 'no-submission' }>,
   subject: string,
 ): { title: string; hint: string } {
+  /* A filing document class has no submission of its own type to gate: it is
+     authored here and this platform builds no sequence for it, so "create its
+     submission" would be an instruction the platform refuses (review finding,
+     2026-10-18). */
+  const documentClass = filingDocumentClassOf(d.programType);
+  if (documentClass) {
+    return {
+      title: `Nothing to gate for ${subject}`,
+      hint:
+        `It is ${filingTypeInSentence(documentClass.docType, true)}, authored here. ` +
+        `${classNotSequencedReason(documentClass)} The dispatch gate reads an application's sequence, so there is none for it to read.`,
+    };
+  }
   const type = programTypeLabel(d.programType);
   const others = otherSubmissionsLine(d.otherSubmissions);
   const unanchored = unanchoredLine(d.unanchoredOfType, type, subject);

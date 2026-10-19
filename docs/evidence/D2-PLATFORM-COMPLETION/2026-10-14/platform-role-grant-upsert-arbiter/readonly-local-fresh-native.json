@@ -1,0 +1,126 @@
+{
+  "status": "read-only inspection",
+  "scope": "Local owned QA databases only; not hosted CI inspection",
+  "inspectedAt": "2026-10-14T08:14:30.022Z",
+  "databases": [
+    {
+      "expectedDatabase": "platform_ci_fresh_verify_20261014_beb73055",
+      "connection": {
+        "database": "platform_ci_fresh_verify_20261014_beb73055",
+        "inspecting_role": "postgres",
+        "read_only": "on",
+        "rolsuper": true,
+        "rolbypassrls": true
+      },
+      "table": "platform_role_grants",
+      "indexes": [
+        {
+          "name": "platform_role_grants_pkey",
+          "unique": true,
+          "valid": true,
+          "ready": true,
+          "key_count": 1,
+          "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)",
+          "predicate": null,
+          "key_columns": "{id}"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "platform_role_grants_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "platform_role_grants_user_id_users_id_fk",
+          "type": "f",
+          "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+        }
+      ],
+      "duplicates": {
+        "duplicate_groups": 0,
+        "excess_rows": 0
+      },
+      "explain": {
+        "status": "planning-refusal",
+        "code": "42P10",
+        "missingArbiter": true,
+        "message": "there is no unique or exclusion constraint matching the ON CONFLICT specification"
+      },
+      "closed": "read-only transaction rolled back"
+    },
+    {
+      "expectedDatabase": "platform_ci_native_recheck_20261013",
+      "connection": {
+        "database": "platform_ci_native_recheck_20261013",
+        "inspecting_role": "postgres",
+        "read_only": "on",
+        "rolsuper": true,
+        "rolbypassrls": true
+      },
+      "table": "platform_role_grants",
+      "indexes": [
+        {
+          "name": "platform_role_grants_pkey",
+          "unique": true,
+          "valid": true,
+          "ready": true,
+          "key_count": 1,
+          "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)",
+          "predicate": null,
+          "key_columns": "{id}"
+        },
+        {
+          "name": "platform_role_grants_user_role_idx",
+          "unique": true,
+          "valid": true,
+          "ready": true,
+          "key_count": 2,
+          "definition": "CREATE UNIQUE INDEX platform_role_grants_user_role_idx ON public.platform_role_grants USING btree (user_id, role)",
+          "predicate": null,
+          "key_columns": "{user_id,role}"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "platform_role_grants_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "platform_role_grants_user_id_users_id_fk",
+          "type": "f",
+          "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+        }
+      ],
+      "duplicates": {
+        "duplicate_groups": 0,
+        "excess_rows": 0
+      },
+      "explain": {
+        "status": "planned",
+        "rows": [
+          {
+            "QUERY PLAN": "Insert on public.platform_role_grants"
+          },
+          {
+            "QUERY PLAN": "  Output: platform_role_grants.id, platform_role_grants.user_id, platform_role_grants.role, platform_role_grants.granted_by, platform_role_grants.granted_at, platform_role_grants.reason"
+          },
+          {
+            "QUERY PLAN": "  Conflict Resolution: UPDATE"
+          },
+          {
+            "QUERY PLAN": "  Conflict Arbiter Indexes: platform_role_grants_user_role_idx"
+          },
+          {
+            "QUERY PLAN": "  ->  Result"
+          },
+          {
+            "QUERY PLAN": "        Output: nextval('platform_role_grants_id_seq'::regclass), 1, 'support'::text, 'Read-only QA diagnosis'::text, now(), NULL::timestamp without time zone, NULL::text, 'Planning only; no grant was executed.'::text"
+          }
+        ]
+      },
+      "closed": "read-only transaction rolled back"
+    }
+  ]
+}

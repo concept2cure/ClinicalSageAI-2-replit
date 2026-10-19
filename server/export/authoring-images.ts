@@ -168,9 +168,9 @@ function decodeInlineFigure(src: string): ResolvedImage | null {
 
 /** The bytes behind a governed reference's file id, under the exporting
  *  tenant, or null when the id is unknown, foreign, gone or not an image. */
-async function loadGovernedFigure(fileId: string, organizationId: number): Promise<ResolvedImage | null> {
+async function loadGovernedFigure(fileId: string, organizationId: number, actor?: { userId: unknown }): Promise<ResolvedImage | null> {
   try {
-    const file = await loadUploadedFile(fileId, organizationId);
+    const file = await loadUploadedFile(fileId, organizationId, { userId: actor?.userId });
     if (!AUTHORING_IMAGE_MIMES.has(file.mimeType)) {
       logger.warn('export image ref resolves to a non-image upload; skipped', {
         fileId,
@@ -205,6 +205,7 @@ async function loadGovernedFigure(fileId: string, organizationId: number): Promi
 export async function resolveAuthoringImages(
   contents: Array<string | null | undefined>,
   organizationId: number,
+  actor?: { userId: unknown },
 ): Promise<Map<string, ResolvedImage>> {
   const out = new Map<string, ResolvedImage>();
   const unfileable = await unfileableSrcs(contents);
@@ -212,7 +213,7 @@ export async function resolveAuthoringImages(
     if (unfileable.has(src)) continue;
     let image: ResolvedImage | null = null;
     if (isGovernedImageRef(src)) {
-      image = await loadGovernedFigure(src.slice(AUTHORING_IMAGE_URL_PREFIX.length), organizationId);
+      image = await loadGovernedFigure(src.slice(AUTHORING_IMAGE_URL_PREFIX.length), organizationId, actor);
     } else if (isInlineFigureImage(src)) {
       image = decodeInlineFigure(src);
     }

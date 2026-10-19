@@ -75,6 +75,19 @@ Return only the rewritten text.`,
   attach_selection_as_source: `You are a regulatory evidence assistant. Analyze the provided content and generate metadata suitable for attaching it as a source reference: suggested title, content type, relevant regulatory categories, key topics, and a one-line summary.`,
 };
 
+/**
+ * 2026-10-15: with no deterministic analysis (content of 50 characters or
+ * fewer, or the pipeline threw) summarize and rewrite kept the prompts above,
+ * which demand "the defensibility score and risk level" and "the structured
+ * analysis results provided" — none were provided, so a model would have to
+ * invent them. These say no analysis ran.
+ */
+const NO_ANALYSIS_NOTE =
+  'No deterministic analysis was run on this content, so there is no defensibility score, risk level, ' +
+  'claim/evidence or consistency finding to report. Do not state or estimate any.';
+const NO_ANALYSIS_SUMMARIZE_PROMPT = `You are a regulatory intelligence assistant. Summarize the provided content precisely and in a structured way. ${NO_ANALYSIS_NOTE}`;
+const NO_ANALYSIS_REWRITE_PROMPT = `You are a regulatory medical writer. Rewrite the provided content for clarity and regulatory precision, preserving its meaning. ${NO_ANALYSIS_NOTE} Return only the rewritten text.`;
+
 // ---------------------------------------------------------------------------
 // Handler implementation
 // ---------------------------------------------------------------------------
@@ -173,6 +186,7 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
             systemPrompt = constrainedPrompt;
             userPrompt = `ORIGINAL CONTENT TO REWRITE:\n\n${content}`;
           } else {
+            systemPrompt = NO_ANALYSIS_REWRITE_PROMPT;
             userPrompt = content;
           }
           break;
@@ -183,6 +197,7 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
             systemPrompt = constrainedPrompt;
             userPrompt = `CONTENT TO SUMMARIZE:\n\n${content}`;
           } else {
+            systemPrompt = NO_ANALYSIS_SUMMARIZE_PROMPT;
             userPrompt = content;
           }
           break;
@@ -269,7 +284,8 @@ export function createInlineAIHandler(actionType: InlineActionType): AIActionHan
             consistencyScore: intelligenceAnalysis.consistency.consistencyScore,
             riskClassifications: intelligenceAnalysis.riskClassifications.overallRisk,
             reviewerQuestionCount: intelligenceAnalysis.reviewerQuestions.length,
-            evaluationPassed: intelligenceAnalysis.evaluation.passed,
+            // 2026-10-15: evaluationPassed was dropped — it was the engine's
+            // self-check of its own report, true by construction.
           };
 
           // Emit RIM signals for pattern accumulation

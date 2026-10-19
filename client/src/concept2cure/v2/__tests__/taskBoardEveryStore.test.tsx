@@ -48,11 +48,11 @@ const OWN = {
 };
 const SCHEDULE = {
   ...base, taskId: 'schedule:41', title: 'Statistical analysis plan', status: 'blocked', source: 'schedule',
-  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12 }, detail: 'Waiting on the SAP template',
+  blocked: true, readOnly: true, home: { surface: 'project-home', projectId: 12, programId: '11111111-1111-4111-8111-111111111111', programTitle: 'BX-1 programme', nativeId: '41', source: 'schedule' }, detail: 'Waiting on the SAP template',
 };
 const FILING = {
   ...base, taskId: 'filing:9f1c', title: '510(k) additional information', status: 'blocked', source: 'filing',
-  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12 }, detail: '510k',
+  blocked: true, readOnly: true, home: { surface: 'submission-center', projectId: 12, programId: '11111111-1111-4111-8111-111111111111', programTitle: 'BX-1 programme', nativeId: '9f1c', source: 'filing' }, detail: '510k',
 };
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
 
@@ -109,17 +109,19 @@ describe("TaskBoard — every store's work", () => {
     expect(within(detail).queryByRole('button', { name: /Archive/ })).toBeNull();
     expect(within(detail).queryByRole('button', { name: /Advance/ })).toBeNull();
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Project home' }));
-    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: 12, title: 'BX-1 programme' }));
+    expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: SCHEDULE.home.programId, title: 'BX-1 programme' }));
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect(apiRequest.mock.calls.filter(([m]) => m !== 'GET')).toHaveLength(0);
   });
 
-  it('opens a filing in the Submission Center', async () => {
+  it('requires an authorized exact native filing read before opening Submission Center', async () => {
     mount();
     fireEvent.click(await card(FILING.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Submission Center' }));
-    expect(onNav).toHaveBeenCalledWith('submission-center');
+    expect((await within(detail).findByRole('alert')).textContent).toMatch(/exact tracked filing could not be verified/i);
+    expect(onNav).not.toHaveBeenCalled();
+    expect(shell.publishShellProject).not.toHaveBeenCalled();
   });
 
   it('names a store it could not read, and says nothing when every store was read', async () => {

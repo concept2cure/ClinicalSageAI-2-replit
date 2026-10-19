@@ -28,6 +28,7 @@
 import { pool } from '../../db/runtime.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 
 const log = createScopedLogger('template-seeds');
 
@@ -105,18 +106,34 @@ const PROTOCOL_OUTLINE_ICH_E6: SeedSection[] = [
   { sectionCode: '15', sectionTitle: 'References', ordering: 1500, required: true, criticality: 'supporting' },
 ];
 
-const IB_OUTLINE: SeedSection[] = [
-  { sectionCode: '1', sectionTitle: 'Summary', ordering: 100, required: true, criticality: 'blocking' },
-  { sectionCode: '2', sectionTitle: 'Introduction', ordering: 200, required: true, criticality: 'important' },
-  { sectionCode: '3', sectionTitle: 'Physical, chemical, and pharmaceutical properties and formulation', ordering: 300, required: true, criticality: 'blocking' },
-  { sectionCode: '4', sectionTitle: 'Nonclinical studies', ordering: 400, required: true, criticality: 'blocking', requiredElements: ['nonclinical pharmacology', 'nonclinical pharmacokinetics', 'toxicology'] },
-  { sectionCode: '5', sectionTitle: 'Effects in humans', ordering: 500, required: true, criticality: 'blocking', requiredElements: ['pharmacokinetics in humans', 'safety and efficacy', 'marketing experience'] },
-  { sectionCode: '6', sectionTitle: 'Summary of data and guidance for the investigator', ordering: 600, required: true, criticality: 'blocking', requiredElements: ['identified risks', 'precautions'] },
-];
+/**
+ * The IB seed, from the platform's one IB outline (market-specs
+ * 'investigators_brochure', ICH E6(R3) Appendix A). Codes 1–6 and orderings
+ * 100–600 are unchanged, so documents already started from this template keep
+ * their section codes; only criticality and the required elements are local.
+ */
+const IB_SEED_EXTRAS: Record<string, Pick<SeedSection, 'criticality' | 'requiredElements'>> = {
+  '1': { criticality: 'blocking' },
+  '2': { criticality: 'important' },
+  '3': { criticality: 'blocking' },
+  '4': { criticality: 'blocking', requiredElements: ['nonclinical pharmacology', 'nonclinical pharmacokinetics', 'toxicology'] },
+  '5': { criticality: 'blocking', requiredElements: ['pharmacokinetics in humans', 'safety and efficacy', 'marketing experience'] },
+  '6': { criticality: 'blocking', requiredElements: ['identified risks', 'precautions'] },
+};
+const IB_CANONICAL = getDocumentTemplate('investigators_brochure');
+if (!IB_CANONICAL) throw new Error("The Investigator's Brochure outline is unavailable.");
+const IB_OUTLINE: SeedSection[] = IB_CANONICAL.sections.map((sec) => ({
+  sectionCode: sec.number,
+  sectionTitle: sec.heading,
+  ordering: Number(sec.number) * 100,
+  required: sec.required,
+  criticality: IB_SEED_EXTRAS[sec.number]?.criticality ?? 'important',
+  ...(IB_SEED_EXTRAS[sec.number]?.requiredElements ? { requiredElements: IB_SEED_EXTRAS[sec.number].requiredElements } : {}),
+}));
 
 // ─── Templates ──────────────────────────────────────────────────────────────
 
-const SEED_TEMPLATES: SeedTemplate[] = [
+export const SEED_TEMPLATES: SeedTemplate[] = [
   // ─── Cross-agency baselines ───────────────────────────────────────────────
   {
     templateCode: 'crossagency_section_ctd',
@@ -143,7 +160,7 @@ const SEED_TEMPLATES: SeedTemplate[] = [
     agency: 'cross_agency',
     documentType: 'ib',
     submissionType: null,
-    sourceReference: 'ICH E6(R3) Appendix A',
+    sourceReference: IB_CANONICAL.regulatoryBasis,
     sections: IB_OUTLINE,
   },
 
@@ -577,6 +594,75 @@ export async function seedTemplates(): Promise<{ inserted: number; updated: numb
   return { inserted, updated, sections };
 }
 
+/** A pg-shaped executor: the pool at boot, or a test's client. */
+type SeedQuery = { query: (text: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
+
+/**
+ * How many section rows the store and the source disagree about, for the given
+ * template codes at version '1.0'.
+ *
+ * WHAT IS COMPARED, AND WHY ONLY THIS. `(section_code, section_title, ordering)`
+ * per template — the identity-bearing subset. The code is what binds a section
+ * to the filing outline (shared/regulatory/filing-section-key.ts), the title is
+ * what the author reads, and the ordering is the document's shape. Guidance
+ * prose, word counts and phrase lists are deliberately NOT compared: editing
+ * one of those should not force a DELETE+INSERT across twenty templates on
+ * every boot.
+ *
+ * Symmetric, so it catches a row the source has and the store lacks AND a row
+ * the store kept that source dropped. Parameterised through `unnest` rather
+ * than an interpolated VALUES list — this runs at boot on a shared store and
+ * `ci:sql-interpolation` is right to care.
+ *
+ * IT CANNOT FAIL THE BOOT IT RUNS IN. The intelligence bundle is absent on some
+ * deployments, so an unreadable store answers `{ rows: 0 }` with a stated
+ * reason rather than throwing: the seed's own failure mode is already a
+ * non-blocking warning, and a probe that turned that into a crash would be a
+ * worse bargain than the defect it closes.
+ */
+export async function seedSetDrift(
+  executor: SeedQuery,
+  codes: ReadonlyArray<string>,
+): Promise<{ rows: number; reason?: string }> {
+  const templateCodes: string[] = [];
+  const sectionCodes: string[] = [];
+  const titles: string[] = [];
+  const orderings: number[] = [];
+  for (const t of SEED_TEMPLATES) {
+    if (!codes.includes(t.templateCode)) continue;
+    for (const [i, sec] of t.sections.entries()) {
+      templateCodes.push(t.templateCode);
+      sectionCodes.push(sec.sectionCode);
+      titles.push(sec.sectionTitle);
+      orderings.push(Number.isFinite(sec.ordering) ? sec.ordering : i);
+    }
+  }
+  try {
+    const result = await executor.query(
+      `WITH expected AS (
+         SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::int[])
+           AS e(template_code, section_code, section_title, ordering)
+       ), stored AS (
+         SELECT t.template_code, ts.section_code, ts.section_title, ts.ordering
+           FROM intelligence.document_templates t
+           JOIN intelligence.template_sections ts ON ts.template_id = t.id
+          WHERE t.template_code = ANY($5::text[]) AND t.version = '1.0'
+       )
+       SELECT (SELECT count(*) FROM (SELECT * FROM expected EXCEPT SELECT * FROM stored) missing)
+            + (SELECT count(*) FROM (SELECT * FROM stored EXCEPT SELECT * FROM expected) extra)
+              AS drift`,
+      [templateCodes, sectionCodes, titles, orderings, [...codes]],
+    );
+    return { rows: Number(result.rows[0]?.drift ?? 0) };
+  } catch (error) {
+    return {
+      rows: 0,
+      reason: `the template store could not be compared with the seed set, so nothing was re-seeded: ${
+        error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
 /**
  * Boot-time guard: seed only when the store is missing seed templates.
  *
@@ -611,7 +697,28 @@ export async function seedTemplatesIfMissing(): Promise<
       [codes],
     );
     const n: number = present.rows[0]?.n ?? 0;
-    if (n >= codes.length) return { ran: false as const, present: n };
+    if (n >= codes.length) {
+      /* THE ROW COUNT IS NOT THE QUESTION (2026-10-18). Counting template rows
+         made this a one-shot: once twenty rows existed the seeder returned here
+         forever, and a corrected `section_code` in source was never applied —
+         not updated, not duplicated, never read. The only way to apply one was
+         an authenticated user hitting POST /templates/seed, which is not a
+         deploy path.
+         That mattered because the seeded 510(k) template's codes collide with
+         the shipped eSTAR outline's keys under different labels, so authored
+         text files under another section's regulatory heading — and
+         `filingAgreesWithEditing` can never report it, because after a
+         mis-keyed write the two stores AGREE. A self-correcting seed is the
+         prerequisite for that fix.
+         So the count only decides whether anything is there at all; what
+         decides a re-seed is whether the store still matches source. */
+      const drift = await seedSetDrift(pool, codes);
+      if (drift.rows === 0) return { ran: false as const, present: n, ...(drift.reason ? { reason: drift.reason } : {}) };
+      log.warn(
+        `Template seeds differ from source in ${drift.rows} section row(s) — re-seeding. ` +
+        'Section rows are replaced wholesale per template, inside one transaction each.',
+      );
+    }
     const result = await seedTemplates();
     return { ran: true as const, ...result };
   });

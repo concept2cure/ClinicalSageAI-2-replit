@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+·stdout | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success
+{
+  "timestamp": "2026-10-14T06:01:43.841Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:43.842Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success
+{
+  "timestamp": "2026-10-14T06:01:43.842Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success
+{
+  "timestamp": "2026-10-14T06:01:43.968Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — state machine > transitions queued -> drafting -> complete on success
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — content_hash > produces a 64-char lowercase hex SHA-256 of the content
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > reaches 100 on successful completion
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — progress > is 100 (no divide-by-zero) when the filtered work list is empty
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > getCSRSectionOutputs — cross-tenant isolation > returns only sections for the requested org
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > getCSRSectionOutputs — cross-tenant isolation > returns only sections for the requested org
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 2, organizationId: 200 }
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — regeneration upsert > produces ONE row per (jobId, sectionNumber) on re-draft, never duplicates
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+stderr | tests/unit/csr-job-runner.test.ts > runCSRBuildJob — regeneration upsert > produces ONE row per (jobId, sectionNumber) on re-draft, never duplicates
+[csr-job-runner] CSR completed; submission continuation is temporarily unavailable { jobId: 1, organizationId: 100 }
+
+········stdout | server/services/__tests__/csr-builder-completeness.test.ts
+{
+  "timestamp": "2026-10-14T06:01:44.680Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:44.681Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-completeness.test.ts
+{
+  "timestamp": "2026-10-14T06:01:44.681Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-completeness.test.ts
+[database] Database connection successful
+
+············stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-14T06:01:45.580Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:45.582Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-14T06:01:45.582Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection successful
+
+···························stdout | server/services/__tests__/csr-builder-e3-brief.test.ts
+{
+  "timestamp": "2026-10-14T06:01:46.563Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:46.564Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-e3-brief.test.ts
+{
+  "timestamp": "2026-10-14T06:01:46.565Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-e3-brief.test.ts
+[database] Database connection successful
+
+···········stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-14T06:01:47.304Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:47.305Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-e3-outline.test.ts
+{
+  "timestamp": "2026-10-14T06:01:47.305Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-e3-outline.test.ts
+[database] Database connection successful
+
+········[database] Database connection test failed { error: 'Database connection not available' }
+[database] Initial connection test failed: Database connection not available
+·stdout | server/services/__tests__/csr-builder-lazy-client.test.ts
+{
+  "timestamp": "2026-10-14T06:01:49.575Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:49.576Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-lazy-client.test.ts
+{
+  "timestamp": "2026-10-14T06:01:49.576Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-lazy-client.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/csr-builder-lazy-client.test.ts > keeps a provider refusal as an explicit template source instead of claiming AI output
+[CSR Builder] AI drafting failed for section 1, using template: Error: Synthetic provider refused drafting
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/csr-builder-lazy-client.test.ts:27:34
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+···stdout | server/services/__tests__/csr-builder-structure.test.ts
+{
+  "timestamp": "2026-10-14T06:01:50.264Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:50.265Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-structure.test.ts
+{
+  "timestamp": "2026-10-14T06:01:50.265Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-structure.test.ts
+[database] Database connection successful
+
+····
+
+ Test Files  8 passed (8)
+      Tests  75 passed (75)
+   Start at  06:01:40
+   Duration  10.28s (transform 2.63s, setup 144ms, import 5.57s, tests 3.72s, environment 1ms)
+

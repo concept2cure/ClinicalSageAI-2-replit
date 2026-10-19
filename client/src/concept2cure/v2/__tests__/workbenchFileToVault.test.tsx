@@ -81,6 +81,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete (window as any).C2C_PROJECT;
+  delete (window as any).C2C_VAULT_TARGET;
 });
 
 describe('DocumentWorkbench — File to vault', () => {
@@ -152,5 +153,33 @@ describe('DocumentWorkbench — File to vault', () => {
     expect(within(dlg).getByTestId('ftv-no-program')).toBeTruthy();
     expect((within(dlg).getByTestId('ftv-submit') as HTMLButtonElement).disabled).toBe(true);
     expect(apiRequest.mock.calls.some(c => String(c[1]).endsWith('/file-to-vault'))).toBe(false);
+  });
+
+  /* Filing-path trace, 2026-10-15: "Open in Vault" landed on the Vault's first
+     node, away from the filed record and its "Place into filing…". */
+  it('"Open in Vault" names the filed document for the Vault to open on, and says the next step', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, sealed: true, approval: { carried: true, reviewedBy: 'R', approvedBy: 'A', canonicalId: 'x' } } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    expect((await within(dlg).findByTestId('ftv-next')).textContent).toContain('Place into filing');
+    fireEvent.click(within(dlg).getByTestId('ftv-open-vault'));
+    expect((window as any).C2C_VAULT_TARGET).toEqual({ documentId: FILED.data.vaultDocumentId, programId: PID });
+  });
+
+  it('a Word copy is said to be unplaceable into a submission, not offered as the next step', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, format: 'docx' } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByLabelText(/Word/));
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const next = await within(dlg).findByTestId('ftv-next');
+    expect(next.textContent).toBe('Submissions take PDF, so this Word copy cannot be placed into one. To submit this document, file it again as PDF.');
+  });
+
+  it('an unapproved filing is told to approve first, not to place', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, approval: { carried: false, reason: 'It is not approved in Authoring (status: draft).' } } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const next = await within(dlg).findByTestId('ftv-next');
+    expect(next.textContent).toBe('Next: review and approve this version in the Vault. It can be placed into a submission before then, but the sequence is not frozen or transmitted until it is approved.');
   });
 });

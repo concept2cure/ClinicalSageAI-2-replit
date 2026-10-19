@@ -236,9 +236,13 @@ export const complaints = pgTable(
     eventLocationCountry: varchar('event_location_country', { length: 8 }),
     eventNarrative: text('event_narrative').notNull(),
 
-    // Patient impact (preliminary — refined during triage)
-    patientHarm: varchar('patient_harm', { length: 24 }).notNull().default('none'),
-    severityAssessment: varchar('severity_assessment', { length: 24 }).notNull().default('minor'),
+    // Patient impact (preliminary — refined during triage). An explicit
+    // assessment at intake: there is no default. These defaulted to 'none' and
+    // 'minor', and the intake triage computes MDR reportability from
+    // patient_harm — so a complaint nobody had assessed was stamped "No harm
+    // reported — log under 820.198, no MDR". Removed 2026-10-15.
+    patientHarm: varchar('patient_harm', { length: 24 }).notNull(),
+    severityAssessment: varchar('severity_assessment', { length: 24 }).notNull(),
 
     // Preliminary classification — populated by triageEngine on intake.
     // Shape: { fdaReportable: bool, mdrEuReportable: bool, requires806Notice: bool,

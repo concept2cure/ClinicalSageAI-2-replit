@@ -1,0 +1,44 @@
+{
+  "phase": "lightweight actual SQL-only owned fresh QA follow-up",
+  "sourcePins": [
+    {
+      "path": "migrations/20260928_platform_role_grants_platform_writes.sql",
+      "sha256": "e55d4c0ed08368020687f728837468611e34cc00cc5ddebf53998c9e51af255e"
+    },
+    {
+      "path": "docs/design/PLATFORM_ROLE_GRANT_UPSERT_ARBITER.md",
+      "sha256": "60249a474af8462dc142fa948528ea99d9ada4cd70c152cf1e57c675c4b6d1a8"
+    },
+    {
+      "path": "tests/schema-contract/platform-role-grant-upsert-arbiter.contract.test.ts",
+      "sha256": "b1fde1f7ccfcf9e4fcf5517f7e0c4521c9f8d8def55c0a19e538fdfe49fe3686"
+    }
+  ],
+  "rawFiles": [
+    {
+      "original": "/tmp/platform-role-grant-arbiter-sql-replay.json",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter-sql-replay/sql-replay-observations.json",
+      "sha256": "773b0fa20f216d4b7e8d413b1654f48d098cad23a808fe4bbb7b8ff37ca88fac"
+    },
+    {
+      "original": "/tmp/platform-role-grant-arbiter-sql-replay.txt",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/platform-role-grant-upsert-arbiter-sql-replay/sql-replay.log",
+      "sha256": "2309ca8e05ee2526c723e17fdbbea9078e7bbe2734cfcb11305028d4edf6fa4a"
+    }
+  ],
+  "results": {
+    "actualMigrationReplays": 2,
+    "malformedNameRefused": "P0001; transient wrong-key nonunique index rolled back",
+    "exactUpsertPlanner": "canonical named arbiter used after both replays",
+    "existingRoleGrantRows": 0,
+    "rowDigestSequenceConstraintsTriggersRlsPoliciesUnchanged": true,
+    "rowDmlExecuted": false,
+    "roleGrantsExecuted": false,
+    "dropExecuted": false,
+    "manufacturedDuplicateNegativeExecuted": false,
+    "nativeApiExecuted": false,
+    "installerExecuted": false,
+    "compilerExecuted": false
+  },
+  "duplicateNegativePendingReason": "No fixture-row/grant/history mutation authorized for this lightweight SQL phase"
+}

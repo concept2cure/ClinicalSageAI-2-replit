@@ -13,4 +13,3 @@
    If the row must EXIST for the action to be valid (a signature, a freeze, a
    governed transmission), use writeChainedAuditRow(client, ...) on the
    mutation's own transaction so a failure rolls it back.
-

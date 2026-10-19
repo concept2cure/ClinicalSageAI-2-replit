@@ -53,6 +53,16 @@ describe('a section against the documents it cites', () => {
     if (agreed) expect(agreed.section.quote).toBeUndefined();
   });
 
+  it('reports a source offset in the document, not in an excerpt that starts inside it (S5d)', () => {
+    const section = 'In Study DPL-301 (NCT05551234), nausea was reported in 12.0% of patients treated with dapralutide 1.5 mg.';
+    const at0 = checkSectionClaims('2.7.4', section, [excerpt(CSR_SAFETY)]).comparisons.find((x) => x.outcome === 'conflict')!;
+    const at500 = checkSectionClaims('2.7.4', section, [excerpt(CSR_SAFETY, { start: 500 })]).comparisons.find((x) => x.outcome === 'conflict')!;
+    expect(at500.source.start - at0.source.start).toBe(500);
+    expect(at500.source.end - at0.source.end).toBe(500);
+    // The section's own offsets do not move.
+    expect(at500.section.start).toBe(at0.section.start);
+  });
+
   it('never says "consistent" as a verdict, and counts what it compared', () => {
     const r = checkSectionClaims(
       '2.7.4',

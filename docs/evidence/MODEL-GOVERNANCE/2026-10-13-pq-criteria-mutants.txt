@@ -1,0 +1,24 @@
+F1  SURVIVED  (      Tests  1 passed | 67 skipped (68))
+F2  KILLED    (      Tests  1 failed | 67 skipped (68))
+F3  KILLED    (      Tests  1 failed | 67 skipped (68))
+F4  KILLED    (      Tests  1 failed | 67 skipped (68))
+F5  SURVIVED  (      Tests  68 skipped (68))
+F6  KILLED    (      Tests  1 failed | 67 skipped (68))
+E1  KILLED    (      Tests  1 failed | 30 skipped (31))
+E2  KILLED    (      Tests  1 failed | 30 skipped (31))
+E3  KILLED    (      Tests  1 failed | 30 skipped (31))
+E4  SURVIVED  (      Tests  1 passed | 30 skipped (31))
+E5  KILLED    (      Tests  1 failed | 30 skipped (31))
+
+Resolved after the first run (both were my script's fault or a real gap, not a
+passing gate):
+  F1  the floor stayed ENFORCED when dropped from RAG_CRITERIA; what broke was
+      the message ("not one this verdict measures" on a real criterion). Killed
+      by a new invariant case: no criterion the real protocol declares may be
+      reported as unmeasured.
+  F5  the -t filter named a phrase the test title does not carry, so nothing
+      ran. Re-run with the correct name: KILLED twice over (the declaration
+      case, and the nine-zeros case via INCOMPLETE).
+  E4  isUnitScore -> typeof === 'number' survived because the case used a
+      STRING. The real difference is NaN (never compares below a minimum) and
+      an out-of-range number (every mean a miss). Two cases added; KILLED.

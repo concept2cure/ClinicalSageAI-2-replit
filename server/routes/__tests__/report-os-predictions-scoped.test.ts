@@ -16,10 +16,19 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: h.scopeAccess,
+}));
 vi.mock('../../db', () => ({ db: {}, pool: {}, getPool: () => ({}), getDb: () => ({}), query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({
   authMiddleware: (req: any, _res: unknown, next: () => void) => {
-    req.user = { id: 5, role: 'manager', organizationId: 7 };
+    req.user = { id: 5, role: 'admin', organizationId: 7 };
+    req.userRole = 'member';
     next();
   },
 }));
@@ -33,6 +42,7 @@ const h = vi.hoisted(() => ({
   projects: vi.fn(),
   submission: vi.fn(),
   compute: vi.fn(),
+  scopeAccess: vi.fn(),
 }));
 vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/entitlement-map')>()),
@@ -61,6 +71,7 @@ beforeEach(() => {
   h.projects.mockReset().mockResolvedValue(new Set([11]));
   h.submission.mockReset().mockResolvedValue(true);
   h.compute.mockReset();
+  h.scopeAccess.mockReset().mockResolvedValue(true);
 });
 
 describe('the canvas render never computes a prediction', () => {
@@ -110,5 +121,36 @@ describe('POST /api/insights/predictions/run (DP-64)', () => {
     const res = await request(app).post('/api/insights/predictions/run').send({ ...PREMORTEM, projectId: 11, submissionId: 'sub-1' });
     expect(res.status).toBe(200);
     expect(h.risk).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, projectId: 11, submissionId: 'sub-1' }));
+  });
+
+  it('refuses a same-organization private project before any model or calibration IO', async () => {
+    h.scopeAccess.mockResolvedValue(false);
+    const res = await request(app).post('/api/insights/predictions/run').send({ ...PREMORTEM, projectId: 11, submissionId: 'sub-1' });
+    expect(res.status).toBe(404);
+    expect(h.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, { scopeType: 'project', scopeId: '11' });
+    expect(h.submission).not.toHaveBeenCalled();
+    expect(h.risk).not.toHaveBeenCalled();
+  });
+
+  it('uses the current membership role for an authorized prediction instead of a stale token admin role', async () => {
+    const res = await request(app).post('/api/insights/predictions/run').send({ ...PREMORTEM, projectId: 11 });
+    expect(res.status).toBe(200);
+    expect(h.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, { scopeType: 'project', scopeId: '11' });
+    expect(h.risk).toHaveBeenCalledOnce();
+  });
+
+  it('fails closed when project-sharing access cannot be read', async () => {
+    h.scopeAccess.mockRejectedValue(new Error('sharing unavailable'));
+    const res = await request(app).post('/api/insights/predictions/run').send({ ...PREMORTEM, projectId: 11 });
+    expect(res.status).toBe(500);
+    expect(h.risk).not.toHaveBeenCalled();
+  });
+
+  it('preserves an organization-only supplied draft without reading project context', async () => {
+    const res = await request(app).post('/api/insights/predictions/run').send({ ...PREMORTEM, scopeType: 'account', scopeId: '7' });
+    expect(res.status).toBe(200);
+    expect(h.scopeAccess).not.toHaveBeenCalled();
+    expect(h.projects).not.toHaveBeenCalled();
+    expect(h.risk).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, projectId: undefined }));
   });
 });

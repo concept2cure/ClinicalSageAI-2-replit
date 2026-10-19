@@ -20,8 +20,9 @@
  * ── What it is ───────────────────────────────────────────────────────────────
  * The ceremony (`signAdaptiveDecision` → `signGovernedAct`) owns the
  * transaction. `writeDecisionOnSignedTransaction` is its `write` callback and
- * takes a `PoolClient`: it CANNOT be called without one, which is the
- * structural half of the fix. By the time it runs, the signer has been
+ * receives the ceremony's scoped SQL client. The actual route supplies that
+ * client through the transaction callback; its TypeScript type alone does not
+ * establish transaction ownership. By the time it runs, the signer has been
  * re-authenticated, authority-checked and separation-of-duties checked, so
  * `approved_by` and `approved_at` written there are true statements rather
  * than a claim nobody checked.
@@ -49,7 +50,7 @@ import {
 const SERVICE_SRC = readFileSync('server/services/adaptive-trial-operations-service.ts', 'utf8');
 const ROUTE_SRC = readFileSync('server/routes/biostatPlatform.ts', 'utf8');
 
-/** A PoolClient stub: one look on the plan, then the insert. */
+/** A scoped SQL client stub: one look on the plan, then the insert. */
 function clientWith(lookRows: unknown[]) {
   const queries: Array<{ sql: string; params: unknown[] }> = [];
   return {
@@ -97,9 +98,9 @@ describe('the ungoverned write is gone', () => {
   });
 
   it('writes approved_by only on a transaction the ceremony owns', () => {
-    // The only INSERT of a decision takes a PoolClient, so there is no path
-    // that writes an approval outside the ceremony.
-    expect(SERVICE_SRC).toMatch(/writeDecisionOnSignedTransaction\(\s*\n?\s*client: PoolClient/);
+    // The only INSERT receives the ceremony's scoped SQL client; the route
+    // supplies it through that ceremony's transaction callback below.
+    expect(SERVICE_SRC).toMatch(/writeDecisionOnSignedTransaction\(\s*\n?\s*client: RequestSqlClient/);
     expect(SERVICE_SRC).toMatch(/INSERT INTO adaptation_decisions/);
     // And no Drizzle insert into that table remains.
     expect(SERVICE_SRC).not.toMatch(/\.insert\(adaptationDecisions\)/);

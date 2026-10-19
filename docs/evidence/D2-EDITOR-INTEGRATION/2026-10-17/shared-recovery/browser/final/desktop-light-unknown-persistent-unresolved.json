@@ -1,0 +1,35 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "documentWidth": 1440,
+  "bodyWidth": 1440,
+  "notice": {
+    "x": 172,
+    "y": 442.015625,
+    "width": 1096,
+    "height": 62,
+    "right": 1268,
+    "bottom": 504.015625
+  },
+  "noticeScrollWidth": 1092,
+  "noticeClientWidth": 1092,
+  "noticeText": "Could not verify the current working document and sections. The save remains unresolved; no additional write was requested.Check working documents",
+  "noticeRole": "alert",
+  "controls": [
+    {
+      "text": "Check working documents",
+      "disabled": false,
+      "rect": {
+        "x": 960.34375,
+        "y": 457.015625,
+        "width": 185.65625,
+        "height": 32,
+        "right": 1146,
+        "bottom": 489.015625
+      }
+    }
+  ],
+  "sourceRetained": true
+}

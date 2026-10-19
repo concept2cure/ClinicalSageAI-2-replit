@@ -128,7 +128,7 @@ function DecisionLog({ decisions }: { decisions: AdaptiveDecisionRow[] }) {
 function EngineJson({ read }: { read: Read<Record<string, unknown>> }) {
   if (read.kind !== 'ok') return null;
   return (
-    <pre style={{ fontSize: 11, maxHeight: 260, overflow: 'auto', background: 'var(--surface-200,#f6f5f3)', padding: 8, borderRadius: 4 }}>
+    <pre style={{ fontSize: 11, maxHeight: 260, overflow: 'auto', background: 'var(--bg-050)', padding: 8, borderRadius: 4 }}>
       {JSON.stringify(read.value, null, 2)}
     </pre>
   );

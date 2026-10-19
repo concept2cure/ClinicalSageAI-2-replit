@@ -1,0 +1,225 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:38:01.072Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:38:01.073Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:38:01.073Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 97ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
++     "atomLimit": 6,
++     "organizationId": 7,
++     "priorMessageCount": 0,
+      "projectId": 42,
+-     "projectRef": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
+-     "userId": 3,
++     "threadId": "thread-1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > an explicit program without a verified relationship is refused before context 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed access lookup refuses the turn, without source context 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > an access lookup deadline refuses the turn without starting optional readers 3005ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 2ms
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 25ms
+   → expected '## Session memory — picking up where …' to contain 'Study report'
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 4ms
+   → expected '## Session memory — picking up where …' to contain 'Study report'
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 4ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > does not read files with a missing actor, while preserving other recall and naming the gap 1ms
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > keeps an explicit refused scope unavailable and consumes safe failure without disclosing details 2ms
+   → expected "vi.fn()" to be called with arguments: [ { organizationId: 7, …(3) }, 12 ]
+
+Number of calls: 0
+
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > org-level source recall carries the actor and no fabricated project 1ms
+   → expected "vi.fn()" to be called with arguments: [ { organizationId: 7, …(3) }, 12 ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument
+AssertionError: expected '## Session memory — picking up where …' to contain 'Study report'
+
+- Expected
++ Received
+
+- Study report
++ ## Session memory — picking up where we left off
++ ### Where we left off
++ Earlier endpoint discussion
++ ### Project memory (most important)
++ - **Project fact**: Recorded project data
++ ### Client memory (most important)
++ - **Client fact**: Recorded client data
++ ### What I learned on past work here
++ - (review, success) Cite the evidence.
++
++ ## Session recall incomplete
++ Unavailable within this turn's recall budget: chat upload recall, vault file recall. This is not evidence that no records exist. Use the relevant memory or document tools before making claims about prior work or missing files.
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:71:20
+     69|     expect(Date.now() - start).toBe(200);
+     70|     for (const value of ['Earlier endpoint discussion', 'Project fact'…
+     71|       expect(text).toContain(value);
+       |                    ^
+     72|     }
+     73|     expect(sources.working).toHaveBeenCalledWith('thread-7', 7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice
+AssertionError: expected '## Session memory — picking up where …' to contain 'Study report'
+
+- Expected
++ Received
+
+- Study report
++ ## Session memory — picking up where we left off
++ ### Project memory (most important)
++ - **Project fact**: Recorded project data
++ ### Client memory (most important)
++ - **Client fact**: Recorded client data
++ ### What I learned on past work here
++ - (review, success) Cite the evidence.
++
++ ## Session recall incomplete
++ Unavailable within this turn's recall budget: chat upload recall, vault file recall, working memory. This is not evidence that no records exist. Use the relevant memory or document tools before making claims about prior work or missing files.
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:88:18
+     86|     expect(text).toBeDefined();
+     87|     expect(text).toContain('Project fact');
+     88|     expect(text).toContain('Study report');
+       |                  ^
+     89|     expect(text).toContain('Session recall incomplete');
+     90|     expect(text).toContain('working memory');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > keeps an explicit refused scope unavailable and consumes safe failure without disclosing details
+AssertionError: expected "vi.fn()" to be called with arguments: [ { organizationId: 7, …(3) }, 12 ]
+
+Number of calls: 0
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:158:27
+    156|     await vi.runAllTimersAsync();
+    157|     const text = await result;
+    158|     expect(sources.vault).toHaveBeenCalledWith(sourceScope, 12);
+       |                           ^
+    159|     expect(text).toContain('Session recall incomplete');
+    160|     expect(text).not.toContain('private sentinel');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > org-level source recall carries the actor and no fabricated project
+AssertionError: expected "vi.fn()" to be called with arguments: [ { organizationId: 7, …(3) }, 12 ]
+
+Number of calls: 0
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:168:27
+    166|     await vi.runAllTimersAsync();
+    167|     const text = await result;
+    168|     expect(sources.vault).toHaveBeenCalledWith({ organizationId: 7, us…
+       |                           ^
+    169|     expect(sources.uploads).toHaveBeenCalledWith({ organizationId: 7, …
+    170|     expect(text).toContain('accessible source scope');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
++   {
++     "atomLimit": 6,
++     "organizationId": 7,
++     "priorMessageCount": 0,
+      "projectId": 42,
+-     "projectRef": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
+-     "userId": 3,
++     "threadId": "thread-1",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:121:26
+    119|     // Enrichment keeps the UUID for the reads keyed on the program (C…
+    120|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+    121|     expect(io.bootstrap).toHaveBeenCalledWith(expect.objectContaining(…
+       |                          ^
+    122|     expect(io.logToolRun).toHaveBeenCalledWith(expect.objectContaining…
+    123|     expect(io.reflect).toHaveBeenCalledWith(expect.objectContaining({ …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 28 passed (33)
+   Start at  19:37:57
+   Duration  13.71s (transform 6.01s, setup 77ms, import 10.10s, tests 3.18s, environment 0ms)
+

@@ -1,0 +1,197 @@
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a superseded vault version is not a document of the project: one document, its current version
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source a re-upload retired is not a source of the project: one source, the current one
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a project with one document, one superseded version, one current and one retired source reports 1 and 1
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a version whose only successor was deleted is still the current version
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a soft-deleted source is not a source of the project, as the Data room does not list it
+ × server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source that is not a client document is not in the project Data room, so not counted
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > with several workspaces, the organisation's own (marked) workspace holds the record
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind
+ × server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > every program the route created is anchored in its own organisation
+ × server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > an IND created with submissionTypeId us_ind is evaluated against US_IND
+ × server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > a 510(k) created with submissionTypeId us_510k is evaluated against US_510K
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest"
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+ × server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > archives an active program and audits it in the same transaction
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > takes a row lock, so concurrent close-outs cannot both claim the change
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > scopes the pre-read to the caller org
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > DENIES a non-lead, non-manager and writes nothing
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > allows an org manager who does not lead the program
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > refuses to archive twice
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > refuses to archive a deleted program
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/archive > 404s a program outside the caller org, without revealing it exists
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/unarchive > restores an archived program to active
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > POST /:id/unarchive > refuses to unarchive something that is not archived
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > soft deletes — sets deleted_at, never a hard DELETE
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > DENIES a non-lead, non-manager
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > DELETE /:id > refuses to delete twice
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > archived programs leave the portfolio > excludes archived by default
+ × server/routes/c2c/__tests__/projects-closeout.test.ts > archived programs leave the portfolio > includes them on request, so close-out is reversible from the UI
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > warn mode ALLOWS the denied request, so the rule can soak before it rejects
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > an unrecognized mode falls back to enforce rather than opening up
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member
+ × server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > program metadata is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > team roster is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > pinned evidence is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > activity is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > workstreams is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > drafts is readable by a non-lead org member
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > reports the governed section completion, not the frozen progress_percent
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > asks only about the projects on this page, and scopes to the caller org
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > uses the same status set as the readiness trigger
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > reports the governed section share, not the frozen progress_percent
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > agrees with the list for the same program
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a program with no governed sections has no figure, as on its card
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > says when the figure was measured
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > scopes the aggregate to this program and the caller org
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses an IND whose product type nobody stated, naming the choice, before any SQL
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > refuses a device class for an IND
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records the stated class, and the spine carries the matching client type
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the product type of an IND is stated > records no indication when none was stated
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > writes the registry entry the filing type the person chose names
+ × server/routes/c2c/__tests__/projects-create-stated-facts.test.ts > POST /api/c2c/projects — the project record carries its registry context > with no registry choice sent, an unambiguous filing type and agency name the entry
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast
+ × server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs
+ × server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program
+ × server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls
+ × server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > carries a conversation-only workbook’s exact existing derivation into its adopted capture
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when an exact recorded ancestor has remove_data
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when an exact recorded ancestor has supersede
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > admits an edited descendant after keep_data and preserves its unassessed qualification
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > recorded conversation workbook adoption > refuses admission when the exact recorded derivation contradicts the child digest
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > captures verified bytes with pending extraction and its same-transaction audit, preserving the upload
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > retains the committed capture and audit when the processing seam rejects
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > repeated adoption returns the same source without another capture or audit
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: current actor and canonical identity > preserves idempotency when a valid program UUID uses uppercase letters
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: current actor and canonical identity > refuses revoked persisted membership despite a stale request manager role
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: current actor and canonical identity > refuses another member’s unbound upload before its bytes despite a manager project grant
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > rolls back capture and audit when the capture seam fails
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > rolls back capture and audit when the audit seam fails
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture bytes altered after the recorded upload digest
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture missing bytes
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > preserves the missing-checksum refusal
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > rechecks the actual SQL path after byte verification and before capture
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > rechecks the actual SQL checksum after byte verification and before capture
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture a tenant-inconsistent storage path: uploads/org-99999/foreign
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture a tenant-inconsistent storage path: uploads/unscoped/ownerless
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture a tenant-inconsistent storage path: uploads/org-ORG/../org-99999/foreign
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > does not capture a tenant-inconsistent storage path: uploads/org-ORG/
+ ✓ server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL rollback and source identity > uses the real organization-wide eligibility predicate to refuse a withdrawn upload into another project
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > refuses a private parent without persisted sharing despite a claimed admin role
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > fails closed when the authenticated request lacks its database client
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > asks for the newest 200 by default and reports a page with more after it as truncated, with the total
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > passes a search and a page through, and refuses an unreadable filter with 400
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > says which sources a re-upload retired; a row older than the column is current
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports persisted availability and a safe processing summary without private identity/error fields
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports recovered text under the same identity and drops obsolete failure presentation
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > passes the server executor and session actor for the optional unscoped library
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > loads bytes through the canonical reader, retains the original and captures pending extraction with paired audits
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses missing bytes without capture or unsafe storage details
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign organization without capture or unsafe storage details
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses withdrawn upload without capture or unsafe storage details
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > keeps checksum-less identity unknown instead of trusting recomputed bytes
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > locks the canonical program before row/write locks and reserves impact tables before identity reads
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects path changed at the final locked recheck
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum changed at the final locked recheck
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects checksum lost at the final locked recheck
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rejects eligibility withdrawn at the final locked recheck
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > duplicate adoption still verifies bytes and writes no source or audit, including a historical source
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > denies a non-lead member before bytes and refuses foreign program identity
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rechecks authorization after the advisory lock and refuses a disappeared project
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > allows an organization manager under the existing mutation policy
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > refuses a stale token manager role and another actor’s unbound bytes
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > rejects missing auth, malformed project and missing file identity before a transaction
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=false)
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > releases the capture connection before processing (duplicate=true)
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > does not process when COMMIT acknowledgement is lost and releases exactly once
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns extraction_failed
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retryable_failure
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns blocked
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns stale_source
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns busy
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_not_due
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves capture and paired audits when processing returns retry_exhausted
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > preserves committed adoption when processing unexpectedly rejects
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through completed without another capture or audit
+ ✓ server/routes/c2c/__tests__/projects-adoption.test.ts > adoption reports processing separately from committed capture > repairs or reads a duplicate through already_complete without another capture or audit
+ Test Files  12 failed | 4 passed (16)
+      Tests  104 failed | 91 passed (195)

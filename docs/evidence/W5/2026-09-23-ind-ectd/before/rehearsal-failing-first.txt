@@ -211,4 +211,3 @@ AssertionError: promise resolved "{ bundle: { …(9) }, skipped: [], …(7) }" i
       Tests  5 failed (5)
    Start at  16:44:23
    Duration  7.63s (transform 1.19s, setup 73ms, import 2.14s, tests 5.16s, environment 0ms)
-

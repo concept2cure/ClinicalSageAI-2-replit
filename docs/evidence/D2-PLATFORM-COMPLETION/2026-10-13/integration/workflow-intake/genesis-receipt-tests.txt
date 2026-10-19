@@ -1,0 +1,285 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:06:24.166Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:06:24.166Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:06:24.167Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained
+{
+  "timestamp": "2026-10-13T21:06:28.650Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 92b0f8f4-af46-471b-86ea-7b3e4ef6c1c1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > previews exact saved selection/model-knownness without creating authoring evidence 67ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained 136ms
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+CRITICAL: Failed to create audit trail: error: Injected workflow audit failure
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 157,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function workflow_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'e3b6403d-8e2a-4ce1-a273-a0287800c7be',
+    'c99e3cc5-7995-4b02-b214-8442088eec0d',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<p>Participants received study treatment. Impurity B was &lt;LOQ in all batches.</p>\n',
+    null,
+    '48fafd896c7c85cf4f7eb5275e2e34cb4044fe0554fa3d6fb8e4b28b46d00f9b',
+    'Exercise the workflow atomic rollback',
+    {
+      provenance: [Object],
+      drafted: true,
+      workflowSourceOrigin: [Object],
+      section_code: '11.1'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '10521783-b8f8-4843-a4e5-79104dffb3fc',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+{
+  "timestamp": "2026-10-13T21:06:28.927Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected workflow audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > reopens the exact actor draft without replacing edits 126ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses a source changed after preview and preserves all authoring evidence 27ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses private-source previews and a different target program before prose/create 25ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure 83ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:06:33.210Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:06:33.211Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:06:33.211Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 89ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T21:06:35.611Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f060d000-1ea0-4af3-bf48-de0da0626c03 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T21:06:35.634Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f060d000-1ea0-4af3-bf48-de0da0626c03 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 721ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 221ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > admits an explicitly assigned private-project member and refuses revoked access to their saved import 95ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > uses the current membership role rather than a previously issued member token 9ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > rechecks a sharing revocation during conversion inside the real canonical creation transaction 81ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T21:06:36.155Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "d70960a8-0ef4-4054-b957-54eaa39d56af",
+    "recorded": "3368a31170ab",
+    "actual": "9375701c5719"
+  }
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T21:06:36.309Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1e898504-256a-4d1b-9b94-e0e25d3bdb4c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T21:06:36.328Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1e898504-256a-4d1b-9b94-e0e25d3bdb4c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses source/project mismatches and foreign tenants without creating anything 24ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 20ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > requires a stated reason and an editor role 8ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file://<repo>/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file://<repo>/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'f2438fd9-4877-4372-b6ce-11c9ff1c3c9f',
+    '408f42e8-9f34-45ff-81f6-ad6f102ab9bc',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '09a23381-40a8-4577-83a8-c4f6dac6f5ab',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T21:06:36.443Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > imports a captured data-room source through the real tenant-checked upload byte reader 174ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 141ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 21ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  21:06:18
+   Duration  18.42s (transform 5.56s, setup 235ms, import 1.17s, tests 16.55s, environment 0ms)

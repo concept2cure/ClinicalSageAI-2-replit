@@ -14,15 +14,16 @@
  * delegates to the appropriate service, and returns JSON with error handling.
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { adaptiveTrialOperationsService } from '../services/adaptive-trial-operations-service';
 import biostatKnowledgeGraphService from '../services/biostat-knowledge-graph-service';
 import statisticalContinuumService from '../services/statistical-continuum-service';
+import { SapInputRefusal } from '../services/sap-generator-service';
 import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcome-optimizer-service';
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
-import { ExternalControlArmService } from '../services/external-control-arm-service';
+import { ExternalControlArmService, type SynthesisMethod } from '../services/external-control-arm-service';
 import biostatDesignStatsRouter from './biostat-design-stats';
 import {
   runJudgmentPipeline,
@@ -40,13 +41,33 @@ import { createScopedLogger } from '../utils/logger';
 
 const collaborativeSapService = new CollaborativeSapService();
 const externalControlArmService = new ExternalControlArmService();
+const SYNTHESIS_METHODS: readonly SynthesisMethod[] = ['propensity_score', 'ipw', 'bayesian_borrowing', 'naive_pooling'];
 
 const router = Router();
 
 const logger = createScopedLogger('biostat-platform');
 
-// All routes require authentication
-const authMiddleware = authenticateToken;
+/**
+ * The signed-in user's id, or null. resolveUserId answered 0 for a request
+ * with none until 2026-10-15, so what it created — a synthetic control, a SAP
+ * version, a comment — was recorded as user 0's.
+ */
+function signedInUserId(req: Request): number | null {
+  const id = Number(req.user?.userId || req.user?.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/** Every route here acts for a signed-in user; a request with none is answered 401. */
+function requireSignedInUser(req: Request, res: Response, next: NextFunction): void {
+  if (signedInUserId(req) == null) {
+    clientError(res, 401, 'A signed-in user is required.');
+    return;
+  }
+  next();
+}
+
+// All routes require authentication, and a user to act for
+const authMiddleware = [authenticateToken, requireSignedInUser];
 
 /**
  * Helper to resolve the organization ID from the authenticated request.
@@ -61,11 +82,13 @@ function resolveOrganizationId(req: Request): number {
 }
 
 /**
- * Helper to resolve the authenticated user's ID.
+ * The signed-in user's ID. authMiddleware has already answered 401 for a
+ * request without one; it is never 0.
  */
 function resolveUserId(req: Request): number {
-  const user = (req as any).user;
-  return Number(user?.userId || user?.id || user?.sub || 0);
+  const id = signedInUserId(req);
+  if (id == null) throw new Error('No signed-in user on the request');
+  return id;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -82,8 +105,22 @@ router.post('/continuum/initialize', authMiddleware, async (req: Request, res: R
     const userId = resolveUserId(req);
     const { title, indication, phase, designType, endpoints, regulatoryContext } = req.body;
 
+    /* The sample size is the protocol's or absent. It was `sampleSize || 200`
+       until 2026-10-15, so every thread opened without one carried 200 into
+       the SAPs drafted from it; a SAP for such a thread is now refused by name. */
+    const { sampleSize } = req.body ?? {};
+    if (sampleSize != null && sampleSize !== '' && !(Number.isInteger(sampleSize) && sampleSize > 0)) {
+      return clientError(res, 400, 'sampleSize must be a positive whole number of participants, or omitted.');
+    }
+
     const result = await statisticalContinuumService.initializeThread(
-      { title, indication, phase, primaryEndpoint: endpoints?.[0], sampleSize: req.body.sampleSize || 200 },
+      {
+        title,
+        indication,
+        phase,
+        primaryEndpoint: endpoints?.[0],
+        sampleSize: Number.isInteger(sampleSize) ? sampleSize : undefined,
+      },
       orgId,
       userId
     );
@@ -143,6 +180,11 @@ router.put('/continuum/:threadId/sap', authMiddleware, async (req: Request, res:
     const result = await statisticalContinuumService.generateSAP(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
+    // The thread's protocol lacks an input the SAP is built on: the caller's
+    // answer, by name — not a 500, and not a SAP drafted around a default.
+    if (error instanceof SapInputRefusal) {
+      return clientError(res, 422, error.message, { fields: error.fields });
+    }
     return serverError(res, logger, 'updating SAP', error);
   }
 });
@@ -286,16 +328,35 @@ router.post('/estimand/define', authMiddleware, async (req: Request, res: Respon
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
-    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, threadId } = req.body;
+    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, strategy, threadId } = req.body;
+
+    /* The summary measure and strategy are the sponsor's ICH E9(R1) choices. A
+       missing one was filled with 'difference_in_means' / 'treatment_policy'
+       until 2026-10-15 — before the engine's own completeness check, which
+       then judged the estimand ichE9R1Compliant on attributes nobody chose.
+       The endpoint is the variable (below), so it is required too. */
+    const unstated = (['endpoint', 'summaryMeasure', 'strategy'] as const).filter(
+      (k) => typeof req.body?.[k] !== 'string' || req.body[k].trim() === '',
+    );
+    if (unstated.length > 0) {
+      return clientError(res, 400, `Required to define an estimand: ${unstated.join(', ')}.`, { fields: unstated });
+    }
+    /* The ICH E9(R1) variable IS the endpoint. `treatment` — the treatment
+       condition, another attribute — was stored as the variable until
+       2026-10-15. An estimand here has no treatment attribute to record it
+       in, so a stated one is refused rather than stored as something else. */
+    if (treatment != null && treatment !== '') {
+      return clientError(res, 400, 'treatment is not recorded: this estimand has no treatment-condition attribute, and the variable is the endpoint.', { fields: ['treatment'] });
+    }
 
     const result = await estimandEngineService.defineEstimand({
       threadId,
       endpointName: endpoint,
       population,
-      variable: treatment || endpoint,
-      summaryMeasure: summaryMeasure || 'difference_in_means',
+      variable: endpoint,
+      summaryMeasure,
       intercurrentEvents: intercurrentEvents || [],
-      strategy: req.body.strategy || 'treatment_policy',
+      strategy,
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -621,13 +682,34 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     const userId = resolveUserId(req);
     const { sourceIds, method, matchingVariables, threadId } = req.body;
 
+    /* Each is the sponsor's to state. A missing method was built as
+       'propensity_score', and a missing indication or endpoint stored as '',
+       until 2026-10-15; an unknown method reached the service as a 500. */
+    const stated = (v: unknown): boolean => typeof v === 'string' && v.trim() !== '';
+    const inputs: Array<[string, boolean]> = [
+      ['method', SYNTHESIS_METHODS.some((m) => m === method)],
+      ['indication', stated(req.body.indication)],
+      ['endpoint', stated(req.body.endpoint)],
+      ['sourceIds', Array.isArray(sourceIds) && sourceIds.length > 0],
+    ];
+    const unstated = inputs.filter(([, ok]) => !ok).map(([field]) => field);
+    if (unstated.length > 0) {
+      return clientError(res, 400, `Required to synthesize an external control: ${unstated.join(', ')} (method is one of ${SYNTHESIS_METHODS.join(', ')}).`, { fields: unstated });
+    }
+    /* matchingVariables is the request's name for the service's covariates.
+       It was destructured and dropped until 2026-10-15. */
+    if (matchingVariables != null && !(Array.isArray(matchingVariables) && matchingVariables.every(stated))) {
+      return clientError(res, 400, 'matchingVariables must be a list of covariate names, or omitted.', { fields: ['matchingVariables'] });
+    }
+
     const result = await externalControlArmService.synthesizeControl(
       {
-        name: req.body.name || `${req.body.indication || 'External'} Control`,
-        indication: req.body.indication || '',
-        endpoint: req.body.endpoint || '',
-        method: method || 'propensity_score',
-        sourceArmIds: sourceIds || [],
+        name: req.body.name || `${req.body.indication} Control`,
+        indication: req.body.indication,
+        endpoint: req.body.endpoint,
+        method,
+        sourceArmIds: sourceIds,
+        covariates: matchingVariables ?? undefined,
       },
       orgId,
       userId

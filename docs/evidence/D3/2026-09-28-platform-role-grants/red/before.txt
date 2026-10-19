@@ -76,4 +76,3 @@ AssertionError: expected { reinstated: 1, rerolled: 1, …(1) } to deeply equal 
       Tests  2 failed | 4 passed (6)
    Start at  17:11:39
    Duration  2.62s (transform 1.03s, setup 72ms, import 1.81s, tests 459ms, environment 0ms)
-

@@ -1,0 +1,9 @@
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — an argument that is not a Buffer > resolves not scanned, and never throws, for undefined 5011ms
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — an argument that is not a Buffer > resolves not scanned, and never throws, for null 5004ms
+ × server/utils/__tests__/virusScan.test.ts > scanBuffer — an argument that is not a Buffer > resolves not scanned, and never throws, for a string 5006ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'length')
+TypeError: Cannot read properties of null (reading 'length')
+TypeError: buffer.subarray is not a function
+      Tests  3 failed | 31 skipped (34)

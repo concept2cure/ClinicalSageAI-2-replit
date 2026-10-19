@@ -15,8 +15,8 @@
  * hydration; PathwayPanes keys FilesTreePane on it so the memoized tree remounts.
  *
  * Data honesty: no program, an empty document, loading, or request failure
- * clears the pathway rather than retaining fictional evidence. Fixtures are
- * installed only when the user explicitly enables sample mode.
+ * clears the pathway rather than retaining fictional evidence. (The sample-mode
+ * path that installed the kit's example dossier was removed on 2026-10-14.)
  *
  * Scope note: the program→document association (projectId filter), document
  * selection, and the exact content/paragraph shape are verified against the
@@ -29,7 +29,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiRequestError, apiRequest } from '../../../lib/queryClient';
 import { DossierStore, type HydrateSection } from '../store/dossierStore';
 import type { PathwayKey } from '../types';
-import { useSampleMode } from '../components/DataGate';
 
 interface C2cDocument {
   id: string;
@@ -166,10 +165,10 @@ async function fetchDossier(pathway: PathwayKey, programId: string): Promise<Dos
 export interface DossierHydration {
   /** Bumps each time the store is hydrated; key FilesTreePane on it to remount. */
   version: number;
-  /** True once real backend sections were seeded (vs the fixture fallback). */
+  /** True once real backend sections were seeded. */
   live: boolean;
   documentId: string | null;
-  status: 'loading' | 'live-data' | 'empty' | 'unavailable' | 'permission-denied' | 'sample';
+  status: 'loading' | 'live-data' | 'empty' | 'unavailable' | 'permission-denied';
   /**
    * Re-run the dossier fetch. Every other live hook in this lane has exposed
    * one (`usePathwayTabsData.refresh`, `useMdxPrograms.refresh`); this one did
@@ -181,7 +180,6 @@ export interface DossierHydration {
 
 interface DossierStatusInput {
   hasSections: boolean;
-  sampleOn: boolean;
   isLoading: boolean;
   error: unknown;
 }
@@ -190,12 +188,10 @@ interface DossierStatusInput {
  * must never be presented as an empty dossier or a dependency outage. */
 export function deriveDossierStatus({
   hasSections,
-  sampleOn,
   isLoading,
   error,
 }: DossierStatusInput): DossierHydration['status'] {
   if (hasSections) return 'live-data';
-  if (sampleOn) return 'sample';
   if (isLoading) return 'loading';
   if (error instanceof ApiRequestError && (error.status === 401 || error.status === 403)) {
     return 'permission-denied';
@@ -205,7 +201,6 @@ export function deriveDossierStatus({
 }
 
 export function useDossierHydration(pathway: PathwayKey, programId?: string | null): DossierHydration {
-  const sampleOn = useSampleMode();
   const q = useQuery<DossierFetch | null>({
     queryKey: ['dossier', pathway, programId],
     queryFn: () => fetchDossier(pathway, programId as string),
@@ -220,16 +215,13 @@ export function useDossierHydration(pathway: PathwayKey, programId?: string | nu
     if (q.data && q.data.sections.length > 0) {
       DossierStore.hydratePathway(pathway, q.data.docId, q.data.sections);
       setVersion((v) => v + 1);
-    } else if (sampleOn) {
-      DossierStore.enableSampleFixtures();
-      setVersion((v) => v + 1);
     } else if (!q.isLoading) {
       DossierStore.clearPathway(pathway);
       setVersion((v) => v + 1);
     }
-  }, [q.data, q.isLoading, pathway, programId, sampleOn]);
+  }, [q.data, q.isLoading, pathway, programId]);
 
-  const status = deriveDossierStatus({ hasSections, sampleOn, isLoading: q.isLoading, error: q.error });
+  const status = deriveDossierStatus({ hasSections, isLoading: q.isLoading, error: q.error });
   const refresh = React.useCallback(() => void q.refetch(), [q]);
   return { version, live: hasSections, documentId: q.data?.docId ?? null, status, refresh };
 }

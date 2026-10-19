@@ -76,14 +76,18 @@ export const SPECIALIZATION_LABEL: Record<ArchetypeSpecialization, string> = {
 /** The slice of the effective-context payload this zone consumes. */
 export interface EffectiveSpecialization {
   specialization: ArchetypeSpecialization | null;
-  /** Where the value came from: project profile, org profile, or license default. */
-  source: 'project' | 'organization' | 'license_default' | null;
+  /**
+   * Which profile the specialization came from (the payload's
+   * `specializationSource`). 2026-10-15: this read the payload's `source`, which
+   * describes the vertical and named a 'license_default' nothing reads.
+   */
+  source: 'project' | 'organization' | null;
 }
 
 interface EffectiveContextPayload {
   data: {
     specialization?: ArchetypeSpecialization | null;
-    source?: 'project' | 'organization' | 'license_default';
+    specializationSource?: 'project' | 'organization' | null;
     [k: string]: unknown;
   };
 }
@@ -117,7 +121,7 @@ export function useEffectiveSpecialization(
   const slice: EffectiveSpecialization | null = data?.data
     ? {
         specialization: data.data.specialization ?? null,
-        source: data.data.source ?? null,
+        source: data.data.specializationSource ?? null,
       }
     : null;
 

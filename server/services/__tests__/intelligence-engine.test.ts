@@ -250,20 +250,31 @@ describe('Module 3: Defensibility Scoring Engine', () => {
     const goodConsistency = analyzeConsistency(INCONSISTENT_DOCUMENT_SECTIONS);
     const goodScore = computeDefensibility(goodCE, goodConsistency, REGULATORY_DOCUMENT);
 
-    expect(poorScore.score).toBeLessThan(goodScore.score);
+    // Both documents carry analysed claims, so both scores exist (2026-10-15: null when nothing was).
+    expect(poorScore.score).not.toBeNull();
+    expect(goodScore.score).not.toBeNull();
+    expect(poorScore.score as number).toBeLessThan(goodScore.score as number);
   });
 
-  it('breakdown components sum to total', () => {
+  // 2026-10-15: this passed one section, whose consistency the engine scored
+  // 25/25 without comparing anything (finding 8). The sum is the total when
+  // every dimension was measured; a partial score is renormalised instead.
+  it('breakdown components sum to total when every dimension was measured', () => {
     const ce = analyzeDocument(REGULATORY_DOCUMENT);
-    const cons = analyzeConsistency([{ id: 'doc', name: 'Full', content: REGULATORY_DOCUMENT }]);
+    const cons = analyzeConsistency(INCONSISTENT_DOCUMENT_SECTIONS);
+    expect(cons.comparisons).toBeGreaterThan(0);
     const score = computeDefensibility(ce, cons, REGULATORY_DOCUMENT);
 
-    const sum =
-      score.breakdown.evidencePresence +
-      score.breakdown.claimPrecision +
-      score.breakdown.consistency +
-      score.breakdown.completeness;
+    const parts = [
+      score.breakdown.evidencePresence,
+      score.breakdown.claimPrecision,
+      score.breakdown.consistency,
+      score.breakdown.completeness,
+    ];
+    expect(parts.every(p => typeof p === 'number')).toBe(true);
+    const sum = (parts as number[]).reduce((a, b) => a + b, 0);
     expect(sum).toBe(score.score);
+    expect(score.partial).toBe(false);
   });
 });
 
@@ -400,7 +411,7 @@ describe('Intelligence Pipeline', () => {
     expect(analysis).toHaveProperty('defensibility');
     expect(analysis).toHaveProperty('reviewerQuestions');
     expect(analysis).toHaveProperty('riskClassifications');
-    expect(analysis).toHaveProperty('evaluation');
+    // `evaluation` — the engine certifying its own report — was removed 2026-10-15.
     expect(analysis).toHaveProperty('timestamp');
     expect(analysis).toHaveProperty('inputHash');
 
@@ -414,7 +425,9 @@ describe('Intelligence Pipeline', () => {
     const good = runIntelligencePipeline(REGULATORY_DOCUMENT);
     const poor = runIntelligencePipeline(EVIDENCE_POOR_TEXT.repeat(3));
 
-    expect(good.defensibility.score).toBeGreaterThan(poor.defensibility.score);
+    expect(good.defensibility.score).not.toBeNull();
+    expect(poor.defensibility.score).not.toBeNull();
+    expect(good.defensibility.score as number).toBeGreaterThan(poor.defensibility.score as number);
   });
 
   it('emits RIM signals for problematic documents', () => {

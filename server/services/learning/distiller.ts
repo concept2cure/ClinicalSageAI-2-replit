@@ -7,8 +7,10 @@
  * requests strict JSON, and applies a lightweight grounding check before the
  * card is allowed to influence anything.
  *
- * Never throws. On any failure (no API key, malformed JSON, empty content) it
- * returns null and the scan simply moves on — the loop stays resilient.
+ * Never throws. A failure (no API key, unusable output, too little text) comes
+ * back as `failed` with its reason, which is distinct from the model reporting
+ * `no_change`. Until 2026-10-15 both returned null, so a scan with the model
+ * unavailable read as a week with no regulatory change.
  */
 
 import { ai } from '../../lib/unified-ai-client.js';
@@ -66,7 +68,11 @@ Rules:
 - Only set isRegulatoryChange=true when there is a substantive standard/guidance change, draft, effective date, or withdrawal.
 - Be conservative with confidence: lower it when the text is ambiguous or you inferred beyond what is written.`;
 
-/** Heuristic grounding check: do the summary's salient tokens appear in the source text? */
+/**
+ * Heuristic grounding check: do at least 40% of the summary's words of five or
+ * more characters appear somewhere in the source text? A token-overlap screen,
+ * not a check that each claim is supported.
+ */
 export function isGrounded(summary: string, sourceText: string): boolean {
   const src = sourceText.toLowerCase();
   const tokens = summary
@@ -76,7 +82,7 @@ export function isGrounded(summary: string, sourceText: string): boolean {
     .filter(w => w.length >= 5);
   if (tokens.length === 0) return false;
   const present = tokens.filter(t => src.includes(t)).length;
-  // Require a majority of substantive tokens to be traceable to the source.
+  // At least 40% of substantive tokens must be traceable to the source (not a majority).
   return present / tokens.length >= 0.4;
 }
 
@@ -100,12 +106,39 @@ function safeParse(text: string): DistilledShape | null {
   }
 }
 
+/** The model's reply, read: a change to card, no change, or why it is unusable. */
+type Reply =
+  | { kind: 'change'; shape: DistilledShape; title: string; summary: string }
+  | { kind: 'no_change' }
+  | { kind: 'unusable'; reason: string };
+
+function readReply(text: string): Reply {
+  const parsed = safeParse(text);
+  if (!parsed) return { kind: 'unusable', reason: 'model output was not parseable JSON' };
+  if (parsed.isRegulatoryChange === false) return { kind: 'no_change' };
+  if (parsed.isRegulatoryChange !== true) {
+    return { kind: 'unusable', reason: 'model output did not say whether the text reports a change' };
+  }
+  if (!parsed.summary || !parsed.title) return { kind: 'unusable', reason: 'model output lacked a title or summary' };
+  return { kind: 'change', shape: parsed, title: parsed.title, summary: parsed.summary };
+}
+
+/** What became of one harvested item. */
+export type DistillOutcome =
+  | { status: 'distilled'; card: KnowledgeCard }
+  /** The model read the item and reported no substantive regulatory change. */
+  | { status: 'no_change' }
+  /** Nothing was distilled: too little text, the model call failed, or its output was unusable. */
+  | { status: 'failed'; reason: string };
+
 /**
- * Distil one item into a card, or null if it carries no substantive change or
- * the model output is unusable. Pure I/O boundary — all failures are swallowed.
+ * Distil one item into a card. `no_change` only when the model read the item and
+ * said so; every other way of producing no card is `failed`, with the reason.
  */
-export async function distill(item: RawHarvestItem, source: HorizonSource): Promise<KnowledgeCard | null> {
-  if (!item.content || item.content.trim().length < 40) return null;
+export async function distill(item: RawHarvestItem, source: HorizonSource): Promise<DistillOutcome> {
+  if (!item.content || item.content.trim().length < 40) {
+    return { status: 'failed', reason: 'too little text to distil (under 40 characters)' };
+  }
 
   let raw: string;
   try {
@@ -120,24 +153,26 @@ export async function distill(item: RawHarvestItem, source: HorizonSource): Prom
       { taskType: 'general', maxTokens: 900, temperature: 0, jsonMode: true, callerModule: 'horizon-distiller' },
     );
   } catch (err: any) {
+    // The detail stays in the log; the digest that carries the reason is served to users.
     logger.warn(`Distil call failed for ${source.id}: ${err?.message}`);
-    return null;
+    return { status: 'failed', reason: 'model call failed' };
   }
 
-  const parsed = safeParse(raw);
-  if (!parsed || !parsed.isRegulatoryChange) return null;
-  if (!parsed.summary || !parsed.title) return null;
+  const reply = readReply(raw);
+  if (reply.kind === 'no_change') return { status: 'no_change' };
+  if (reply.kind === 'unusable') return { status: 'failed', reason: reply.reason };
+  const parsed = reply.shape;
 
-  const grounded = isGrounded(parsed.summary, item.content);
+  const grounded = isGrounded(reply.summary, item.content);
 
   const draft: CardDraft = {
     sourceId: source.id,
     body: source.body,
     jurisdictions: [source.jurisdiction],
     standardCode: parsed.standardCode || undefined,
-    title: parsed.title,
+    title: reply.title,
     changeKind: coerceChangeKind(parsed.changeKind),
-    summary: parsed.summary,
+    summary: reply.summary,
     effectiveDate: parsed.effectiveDate || undefined,
     publishedAt: item.publishedAt,
     supersedes: parsed.supersedes || undefined,
@@ -148,5 +183,5 @@ export async function distill(item: RawHarvestItem, source: HorizonSource): Prom
     grounded,
   };
 
-  return makeCard(draft);
+  return { status: 'distilled', card: makeCard(draft) };
 }

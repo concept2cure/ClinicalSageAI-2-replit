@@ -205,8 +205,8 @@ describe('critiqueDocument + critique_document tool', () => {
     expect(doc.verdict).toBe('pass');
   });
 
-  it('tool requires sections and runs live', async () => {
-    expect(CRITIQUE_DOCUMENT.input_schema.required).toEqual(['sections']);
+  it('tool accepts supplied sections as an explicit alternative to saved records', async () => {
+    expect(CRITIQUE_DOCUMENT.input_schema.properties.sections).toBeDefined();
     const handler = getToolHandler('critique_document')!;
     const out = JSON.parse(await handler({
       sections: [

@@ -86,8 +86,9 @@ export function registerCoreRoutes({
            (server/api/cmc/routes.ts);
          · change-impact-simulator → /api/cmc/change-control, and the
            deterministic POST /api/cmc/variations/classify (routes.ts,
-           supac-classifier), which no screen calls yet and which the cmc
-           surface does not claim, so production refuses it until one does
+           supac-classifier), now reached by the deferred CMC variation
+           assessment. The route explicitly refuses when launch scope is on;
+           a UI prefix claim is not permission to widen the IND composition
            (decision P-28, docs/evidence/CMC-M3-GA/2026-10-05/
            20-cmc-api-allowlist/);
          · blueprint-generator → GET /api/cmc/quality/qbd/:projectId and

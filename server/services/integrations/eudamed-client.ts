@@ -117,11 +117,11 @@ export async function searchEudamed(params: EudamedSearchParams): Promise<Eudame
       { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } },
       { timeoutMs: REQUEST_TIMEOUT_MS }
     );
+    // 2026-10-15: a 404 returned `status: 'ok'` with zero devices, on the strength
+    // of a comment ("a zero-match search returns 404 on this surface") that no
+    // documentation or live contract test supports. A moved or retired path then
+    // answered every search "none found". It is a failed read like any other.
     if (!res.ok) {
-      // A zero-match search returns 404 on this surface — treat as empty, not failure.
-      if (res.status === 404) {
-        return { source: EUDAMED_SOURCE, status: 'ok', totalCount: 0, devices: [] };
-      }
       return {
         source: EUDAMED_SOURCE,
         status: 'unavailable',
@@ -136,7 +136,17 @@ export async function searchEudamed(params: EudamedSearchParams): Promise<Eudame
       ? data.content
       : Array.isArray(data?.results)
         ? data.results
-        : [];
+        : null;
+    // 2026-10-15: a body with neither array was read as zero devices.
+    if (content === null) {
+      return {
+        source: EUDAMED_SOURCE,
+        status: 'unavailable',
+        totalCount: 0,
+        devices: [],
+        message: 'EUDAMED API response had no results array (unexpected shape)',
+      };
+    }
     const totalCount = Number(data?.totalElements ?? data?.total ?? content.length) || content.length;
     return {
       source: EUDAMED_SOURCE,

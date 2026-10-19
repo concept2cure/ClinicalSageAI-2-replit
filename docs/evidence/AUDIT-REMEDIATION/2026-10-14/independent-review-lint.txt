@@ -1,0 +1,16 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/V2App.tsx
+   264:8   warning  Function 'V2App' has too many lines (668). Maximum allowed is 100                               max-lines-per-function
+   264:8   warning  Function 'V2App' has a complexity of 47. Maximum allowed is 15                                  complexity
+   489:55  warning  Arrow function has a complexity of 37. Maximum allowed is 15                                    complexity
+   818:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   867:1   warning  File has too many lines (807). Maximum allowed is 500                                           max-lines
+   908:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1184:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+  639:1  warning  File has too many lines (557). Maximum allowed is 500  max-lines
+
+✖ 8 problems (0 errors, 8 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+

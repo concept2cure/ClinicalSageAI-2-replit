@@ -7,7 +7,7 @@
  * ── What lives here, what moved ──────────────────────────────────────────────
  * On 2026-09-21 the editing core of this surface — the section outline, the
  * canonical `RichSectionEditor` over the active section, and the side rail
- * (AnA, comments, history, sources, signatures, audit, exports, project files,
+ * (then AnA, comments, history, sources, signatures, audit, exports, project files,
  * review tasks) — moved, unchanged, to `../editor/DocumentWorkbench.tsx`
  * (docs/design/ANA_DOCUMENT_CANVAS.md). This file was 5,143 lines; it is now
  * the part that is genuinely the surface's:
@@ -28,84 +28,87 @@
  * by one editor, over one store, with one save path. There is no second
  * editor; `scripts/ci/check-canvas-path.mjs` fails the build if this file
  * stops mounting the workbench.
+ * All current AnA requests use the single ConversationThread and this same
+ * DocumentCanvas, preserving the saved version and unsaved-work decision.
  *
  * REAL WIRING (regulated GA product): the list reads the governed authoring
  * store at `/api/authoring` (server/routes/authoring.router.ts, table
  * authoring_documents). Nothing here is a fixture; nothing here writes.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { apiRequest } from '@/lib/queryClient';
 import { DocumentWorkbench, type AuthDoc } from '../editor/DocumentWorkbench';
+import { shellProgramId, useShellProject } from '../shellProject';
+import { clearEditorTarget } from '../editorTarget';
+import { clearVaultTarget } from '../vaultTarget';
 import '../styles/project-home-v2.css';
 
 /* The audit-metadata reader moved with the audit rail; its unit test and any
    other reader keep this import path. */
 export { describeAuditMetadata, describeAuditSource } from '../editor/DocumentWorkbench';
 
-export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
-  // BP-W0-7: was 'draft', so the editor opened onto a list that excluded every
-  // document already submitted, approved or frozen.
-  const [status, setStatus] = useState('all');
-
-  /* The open program, read once per render from the runtime channel. A string
-     id is a regulatory_programs UUID; absent or non-string → org-wide, so the
-     editor still works with no project open (the workbench then says so in
-     its empty states rather than naming a project it does not have). */
-  const programId = (() => {
-    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-    return p && typeof p.id === 'string' ? p.id : null;
-  })();
-
-  // Documents for the current filter.
+function useScopedDocuments(programId: string | null, status: string) {
   const [docs, setDocs] = useState<AuthDoc[]>([]);
   const [docsState, setDocsState] = useState<'loading' | 'ready' | 'error'>('loading');
-
-  /* ── Load documents for the current status ──
-     No `module` filter. Every filter on this route is optional server-side,
-     and pinning one hid the rest of the dossier behind a dropdown — the
-     outline is what selects a section now, so the document list must span
-     all modules for it to select into. A failed read is an ERROR the tree
-     renders as one; it is never an empty list. */
+  const [loadedScope, setLoadedScope] = useState<string | null>(programId);
+  const sequence = useRef(0);
+  const alive = useRef(true);
+  const context = `${programId ?? 'organization'}:${status}`;
+  const currentContext = useRef(context);
+  currentContext.current = context;
+  useEffect(() => { alive.current = true; return () => { alive.current = false; sequence.current += 1; }; }, []);
   const loadDocs = useCallback(async () => {
+    const generation = ++sequence.current;
     setDocsState('loading');
-    const url =
-      `/api/authoring/docs?status=${encodeURIComponent(status)}` +
-      (programId ? `&programId=${encodeURIComponent(programId)}` : '');
-    let ok: boolean;
     let body: { documents?: AuthDoc[] } | null = null;
+    let ok = false;
     try {
-      const res = await apiRequest('GET', url);
-      body = (await res.json().catch(() => null)) as { documents?: AuthDoc[] } | null;
+      const res = await apiRequest('GET', `/api/authoring/docs?status=${encodeURIComponent(status)}`
+        + (programId ? `&programId=${encodeURIComponent(programId)}` : ''));
+      body = await res.json().catch(() => null);
       ok = res.ok;
-    } catch {
-      ok = false;
-    }
-    if (!ok || !body) {
-      setDocsState('error');
-      setDocs([]);
-      return;
-    }
-    setDocs(Array.isArray(body.documents) ? body.documents : []);
-    setDocsState('ready');
-  }, [status, programId]);
+    } catch { /* A failed read is reported below, without stale list fallback. */ }
+    if (!alive.current || generation !== sequence.current || currentContext.current !== context) return;
+    setLoadedScope(programId);
+    setDocs(ok && body && Array.isArray(body.documents) ? body.documents : []);
+    setDocsState(ok && body ? 'ready' : 'error');
+  }, [programId, status, context]);
+  useEffect(() => { void loadDocs(); }, [loadDocs]);
+  return { docs: loadedScope === programId ? docs : [], docsState: loadedScope === programId ? docsState : 'loading' as const, loadDocs };
+}
 
-  useEffect(() => {
-    void loadDocs();
-  }, [loadDocs]);
-
-  return (
-    <DocumentWorkbench
-      onNav={onNav}
-      liveDrive={liveDrive}
-      docs={docs}
-      docsState={docsState}
-      status={status}
-      onStatusChange={setStatus}
-      reloadDocs={loadDocs}
-      programId={programId}
-      surfaceActionId="document-authoring"
-      consumeDeepLinks
-    />
-  );
+export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
+  const [status, setStatus] = useState('all');
+  const requestedProject = useShellProject();
+  const [effectiveProject, setEffectiveProject] = useState(requestedProject);
+  const programId = shellProgramId(effectiveProject);
+  const requestedId = shellProgramId(requestedProject);
+  const requestedRef = useRef(requestedId);
+  requestedRef.current = requestedId;
+  const [dismissedSwitch, setDismissedSwitch] = useState<string | null>(null);
+  const held = requestedId !== programId;
+  const targetKey = requestedId ?? 'organization';
+  const pendingProgramSwitch = useMemo(() => held && dismissedSwitch !== targetKey ? {
+    id: targetKey,
+    label: requestedProject?.title || 'the selected project',
+    onContinue: () => {
+      if (requestedRef.current !== requestedId) return;
+      setEffectiveProject(requestedProject);
+      setDismissedSwitch(null);
+    },
+    onCancel: () => { if (requestedRef.current === requestedId) setDismissedSwitch(targetKey); },
+  } : null, [held, dismissedSwitch, targetKey, requestedProject, requestedId]);
+  const { docs, docsState, loadDocs } = useScopedDocuments(programId, status);
+  const guardedNav = useCallback((id: string) => { if (held) { clearEditorTarget(); clearVaultTarget(); return; } onNav(id); }, [held, onNav]);
+  return <>
+    {held && <div className="scaf-note" role="status">
+      Still editing the previous project. Finish the unsaved-work decision before switching or navigating.
+      {dismissedSwitch === targetKey && <button className="btn ghost" onClick={() => setDismissedSwitch(null)}>Switch to selected project</button>}
+    </div>}
+    <DocumentWorkbench onNav={guardedNav} liveDrive={liveDrive} docs={docs} docsState={docsState}
+      status={status} onStatusChange={setStatus} reloadDocs={loadDocs} programId={programId}
+      pendingProgramSwitch={pendingProgramSwitch} programSwitchHeld={held}
+      surfaceActionId="document-authoring" consumeDeepLinks />
+  </>;
 }

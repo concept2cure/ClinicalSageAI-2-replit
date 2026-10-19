@@ -19,23 +19,11 @@
  *   - scheduled reports      GET/POST/PATCH /api/insights/subscriptions
  *   - report bundles         GET/POST /api/report-os/bundles (+ export.pdf)
  *
- * ── HONESTY CONSTRAINTS ENCODED HERE ────────────────────────────────────────
- * 1. A SCHEDULE DOES NOT DELIVER A FILE. `services/report-os/scheduling/
- *    worker-register.ts` says so in its own docstring: `generateAndDeliver`
- *    computes the run and applies the delivery gate, then only LOGS it —
- *    "Full immutable-run persistence and external email transport are
- *    deliberately left to the existing /runs + /deliveries paths". So
- *    {@link SCHEDULE_DELIVERY_NOTE} is the only thing a schedule screen may
- *    claim, and it must be shown wherever a schedule is created or listed.
- * 2. A SCHEDULE IS ONLY OFFERED FOR A TYPE AN ENGINE COMPUTES. The sweep calls
- *    `computeInitialRun`, which throws for a type with no engine
- *    (`report-engine.ts` reportEngineFor → null for 39 of the 61 declared
- *    types). Scheduling one would create a row that fails every sweep, for
- *    ever, silently. {@link schedulableTypes} is the filter; the caller must
- *    use it rather than the whole catalog.
- * 3. A FAILED READ IS NOT AN EMPTY LIST. Every loader returns a discriminated
- *    state so a surface renders "couldn't read" separately from "none yet"
- *    (CLAUDE.md: an error is never rendered as an empty result).
+ * ── GOVERNED CONTRACTS ────────────────────────────────────────────────────
+ * Run history filters and orders in the canonical SQL service before paging.
+ * Schedules retain their generated report and a platform inbox link in one
+ * audited transaction. They do not finalize a report or send external email.
+ * Unavailable engines and failed reads are stated explicitly.
  *
  * PURE except for the fetchers, which go through the project's one convention
  * (`apiCall` / `useLiveData` → `lib/queryClient`). No fixtures: there is no
@@ -69,6 +57,8 @@ export interface ReportRunRow {
   regionCode?: string | null;
   registryId?: string | null;
   agency?: string | null;
+  scopeLabel?: string | null;
+  computedScope?: string | null;
 }
 
 /**
@@ -114,56 +104,33 @@ export interface RunQuery {
   sortBy?: 'createdAt' | 'completedAt' | 'confidence' | 'status' | 'reportType' | 'scopeType';
   sortOrder?: 'asc' | 'desc';
   limit?: number;
+  offset?: number;
 }
 
 /**
- * The largest window `GET /runs` will serve (`listRunsSchema`: limit max 500).
+ * What a truncated bundle register must say, or null when it is complete.
  *
- * This is not a display preference, it is the honest bound on search. The
- * route applies `search` and `sortBy` IN MEMORY, AFTER the SQL `LIMIT`
- * (report-os.ts: `.limit(limit)` then `.filter(...)` then `.sort(...)`), so a
- * search only ever matches within the rows already fetched and a sort only
- * orders those rows. Asking for the maximum makes that window as wide as the
- * route allows; {@link runsSearchCaveat} is how the UI says so instead of
- * presenting a partial search as a complete one. The proper fix is server-side
- * — filter and sort in SQL before the limit — and is not a client's to make.
+ * `GET /api/report-os/bundles` scans a bounded number of
+ * `project_memory_entries` rows, and a bundle is stored once per covered
+ * project — so the scan is in rows and the register is in bundles, and an
+ * organisation past the bound lost its oldest packs with nothing saying so.
+ * The route now sends `meta.truncated` with the register's own SQL count, and
+ * only when the scan actually truncated.
+ *
+ * The sentence deliberately does NOT claim how many packs the reader may see:
+ * `registerTotal` is counted before the per-project read check, so offering it
+ * as "N of M yours" would overstate it. It says what is true — the register
+ * holds more than this page shows — and why older ones are missing.
  */
-export const RUNS_WINDOW = 500;
-
-/**
- * What a reader must be told whenever a search is in play.
- *
- * ── WHY THIS IS UNCONDITIONAL, after a first version that was not ───────────
- * The first version compared the ROWS RETURNED against the window and said
- * nothing when fewer came back, reasoning that the route had returned
- * everything it had. That is wrong for this route, and it made the caveat fire
- * only in the one case where it barely mattered.
- *
- * `GET /runs` fetches `limit` rows in SQL and THEN filters them in memory, so
- * it returns only the matches. A search that matched 3 of the newest 500 runs
- * returns 3 rows — below the window — and the old test `loaded < RUNS_WINDOW`
- * suppressed the caveat exactly then. The reader saw three results and no
- * indication that nothing older than the 500th run had been looked at.
- *
- * The row count carries no information about the window, so it cannot gate the
- * sentence. A search is bounded by the window whether it matched three rows or
- * none, so the sentence is shown whenever a search is active. `loaded` is kept
- * only to say how many matched inside it.
- */
-export function runsSearchCaveat(
-  loaded: number,
-  opts: { searching: boolean; sorted: boolean },
-): string | null {
-  if (!opts.searching && !opts.sorted) return null;
-  const what = opts.searching && opts.sorted
-    ? 'This search and ordering reach'
-    : opts.searching ? 'This search reaches' : 'This ordering reaches';
-  const found = opts.searching ? ` ${loaded} matched inside it.` : '';
-  return (
-    `${what} the ${RUNS_WINDOW} most recent runs only — the report engine filters and orders within that ` +
-    `window, so an older run that matches is not shown.${found} Narrow by status or report type to bring ` +
-    'older runs inside the window.'
-  );
+export function bundleRegisterCaveat(meta: unknown): string | null {
+  const m = (meta ?? null) as { truncated?: unknown; registerTotal?: unknown } | null;
+  if (!m || m.truncated !== true) return null;
+  const total = typeof m.registerTotal === 'number' && Number.isInteger(m.registerTotal) && m.registerTotal >= 0
+    ? m.registerTotal
+    : null;
+  const count = total == null ? 'More report packs' : `This register holds ${total} report packs, and more`;
+  return `${count} exist than are shown here — the newest are listed and older ones were not read. ` +
+    'Some packs may also sit outside the projects you can access.';
 }
 
 /**
@@ -180,6 +147,7 @@ export function runsUrl(q: RunQuery): string {
   if (q.sortBy) p.set('sortBy', q.sortBy);
   if (q.sortOrder) p.set('sortOrder', q.sortOrder);
   if (q.limit != null) p.set('limit', String(q.limit));
+  if (q.offset != null) p.set('offset', String(q.offset));
   const qs = p.toString();
   return '/api/report-os/runs' + (qs ? `?${qs}` : '');
 }
@@ -202,6 +170,7 @@ export interface ReportSchedule {
   /** 1..28, for `monthly` — clamped server-side so it is valid every month. */
   dayOfMonth?: number;
   timeZoneOffsetMinutes?: number;
+  timeZone?: string;
 }
 
 /** A row of `GET /api/insights/subscriptions`. */
@@ -234,21 +203,12 @@ export interface CreateSubscriptionBody {
   enabled?: boolean;
 }
 
-/**
- * What a schedule actually does today, in the words a client may be told.
- *
- * The sweep (`worker-register.ts`) computes the report on the cadence and
- * applies the delivery gate, and records that it ran. It does NOT persist an
- * immutable run row and does NOT send mail — its own docstring leaves both to
- * `/runs` and `/deliveries`. Any copy promising a delivered PDF or an email
- * would be a claim the platform does not keep, so this sentence is shown
- * wherever a schedule is created or listed.
- */
+/** A successful occurrence persists the report and its platform inbox delivery. */
 export const SCHEDULE_DELIVERY_NOTE =
-  'A schedule computes the report on its cadence and records that it ran. It does not email a file or ' +
-  'store a downloadable copy yet — open the report from Run history to export it.';
+  'A schedule saves a governed report and places a link in the platform inbox. Open the saved report ' +
+  'to verify its sources, export it or finalize it through the signature ceremony. External email delivery is unavailable.';
 
-/** Why a schedule needs Redis to fire, stated where a client can act on it. */
+/** The PostgreSQL sweep checks due occurrences independently of Redis. */
 export const SCHEDULE_SWEEP_NOTE =
   'Schedules fire from a background sweep that runs about every ten minutes.';
 
@@ -266,12 +226,12 @@ export const DAY_OF_WEEK_LABEL: readonly string[] = [
 /**
  * A schedule in words: "Every week on Tuesday at 08:00". PURE.
  *
- * `timeZoneOffsetMinutes` is carried but deliberately ignored by the server's
- * next-run math (`scheduling/cadence.ts` operates in UTC and says so), so the
- * time is labelled UTC rather than implying the reader's own zone.
+ * The named timezone is retained with the recurrence, including daylight-saving changes.
  */
 export function scheduleInWords(s: ReportSchedule): string {
-  const time = `${String(s.hour).padStart(2, '0')}:${String(s.minute ?? 0).padStart(2, '0')} UTC`;
+  const offset = s.timeZoneOffsetMinutes;
+  const zone = s.timeZone || (offset ? `UTC${offset < 0 ? '-' : '+'}${String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0')}:${String(Math.abs(offset) % 60).padStart(2, '0')}` : 'UTC');
+  const time = `${String(s.hour).padStart(2, '0')}:${String(s.minute ?? 0).padStart(2, '0')} ${zone}`;
   if (s.cadence === 'weekly') {
     const day = DAY_OF_WEEK_LABEL[s.dayOfWeek ?? 1] ?? DAY_OF_WEEK_LABEL[1];
     return `Every week on ${day} at ${time}`;
@@ -520,20 +480,18 @@ export const BUNDLE_NEEDS_PROJECT_NOTE =
   'A bundle is filed against the projects its reports belong to. Reports that belong to no project ' +
   'cannot be bundled.';
 
-/**
- * What a bundle's PDF actually is.
- *
- * It is a MANIFEST, not the reports: `pdf/bundle-pdf.ts` prints one line per
- * report — id, label, scope, status now, status at bundling, confidence — and
- * states in the document itself that "Each report's own PDF carries its
- * signature and seal". Offering it as "the reports as one PDF" would hand an
- * inspector an index where they expected the evidence, so the UI names it a
- * manifest and says where the sealed documents are.
- */
+/** The two retained exports accepted by the bundle PDF route. */
+export type BundlePdfContent = 'manifest' | 'reports';
+
+/** The default export remains an index; it does not include report bodies. */
 export const BUNDLE_PDF_IS_A_MANIFEST =
-  "A bundle's PDF is a manifest: one line per report with its status at export beside the status it was " +
-  "bundled at, and how many are final. It does not contain the reports themselves — each report's own " +
-  'PDF carries its document, signature and seal, and is exported from Run history.';
+  'A manifest PDF lists each report with its status at export beside its status at bundling, and how many ' +
+  'are final. It does not contain the reports themselves. Individual report PDFs can also be exported from Run history.';
+
+/** Exporting retained bodies is a copy operation, not a finalization act. */
+export const BUNDLE_REPORTS_PDF_NOTE =
+  'A reports PDF contains the retained report bodies and their recorded status, signature and seal facts. ' +
+  'Exporting a pack does not finalize its reports.';
 
 /* ══════════════════════════════════════════════════════════════════
    Writes

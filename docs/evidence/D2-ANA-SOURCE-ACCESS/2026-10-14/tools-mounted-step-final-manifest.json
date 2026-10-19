@@ -1,0 +1,18 @@
+{
+  "scope": "adjacent mounted streaming step-title fixture follow-up",
+  "testFile": "server/routes/ana-ri/__tests__/stream-step-presentation.test.ts",
+  "testSha256": "a2bcdeb524ce96bf63aa2f91f454e2ec6137a6a1c51b2fc617819dbd9c7f69cf",
+  "passed": 8,
+  "failed": 0,
+  "result": "tools-mounted-step-current.log",
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "result": "tools-mounted-step-lint.log"
+  },
+  "productionOwner": "root",
+  "productionChange": "Authenticated guardUserId forwarded at the actual resolveStepDocumentTitles stream call; actor-required title reader retained",
+  "initialResult": "tools-mounted-step-fixture-red.log",
+  "initialPassed": 7,
+  "initialFailed": 1
+}

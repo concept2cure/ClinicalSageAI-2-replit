@@ -29,6 +29,7 @@ const pool = {
 vi.mock('../../../db', () => ({ pool: { query: (sql: string, params?: unknown[]) => pool.query(sql, params) } }));
 
 import * as svc from '../changeControl.service';
+import type { RequestSqlClient } from '../../../db/requestDb';
 
 /** The GA demo seed is untyped ESM JS with no .d.ts. Import it through a
  *  string-typed specifier so tsc treats it as a runtime dynamic import rather
@@ -238,5 +239,20 @@ describe('controlled lifecycle against real SQL', () => {
     expect((await svc.listLinks(ORG, c.id))).toHaveLength(1);
     expect(await svc.removeLink(ORG, c.id, link.id)).toBe(true);
     expect((await svc.listLinks(ORG, c.id))).toHaveLength(0);
+  });
+
+  it('removes only the owned active change through an executor that supplies rows alone', async () => {
+    const client: RequestSqlClient = { query: async (sql, params) => {
+      const result = await pglite.query<Record<string, unknown>>(sql, params);
+      return { rows: result.rows };
+    } };
+    const change = await svc.createChange(ORG, { changeNumber: 'CC-TEST-104', title: 'Query-only removal proof', proposedBy: 10 }, client);
+    expect(await svc.deleteChange(ORG + 1, change.id, client)).toBe(false);
+    expect(await svc.getChange(ORG, change.id, client)).toMatchObject({ id: change.id, deleted_at: null });
+    expect(await svc.deleteChange(ORG, change.id, client)).toBe(true);
+    expect(await svc.getChange(ORG, change.id, client)).toBeNull();
+    expect(await svc.deleteChange(ORG, change.id, client)).toBe(false);
+    const retained = await pglite.query<{ deleted_at: string | null }>('SELECT deleted_at FROM qms_change_controls WHERE id = $1', [change.id]);
+    expect(retained.rows[0].deleted_at).not.toBeNull();
   });
 });

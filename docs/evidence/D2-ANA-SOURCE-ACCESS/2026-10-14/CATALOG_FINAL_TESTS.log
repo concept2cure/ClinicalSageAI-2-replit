@@ -1,0 +1,280 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses revoked private-project admission and uses the transaction client 6ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > preserves a private input snapshot while connection acquisition yields 7ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 3ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 3ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves legacy review semantics without inventing extraction or context acceptance 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > returns no catalog data for a document with conflicting recorded tenant ownership 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 0ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > default-off gate refuses before opening a connection 2ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > invalid candidates refuse before a document or authority read 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > uses current write authority and exact project on a read-only executor 7ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses revoked/private-project access and never loads the source 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: 7 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: null 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: undefined 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: absent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: wrong_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: missing_hash 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: failed_extraction 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: empty 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: unsupported 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > retained data previews preserve the original availability caveat 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > requires complete byte-bound coverage against actual text 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: quote 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: text_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: byte_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: value 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > OCR output never acquires established context approval 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > read failure is visible and releases the connection 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > a caller cannot change candidates while authority admission waits 0ms
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-14T19:44:49.850Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:44:49.851Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+{
+  "timestamp": "2026-10-14T19:44:49.851Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-read-facades.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > loads full text only within canonical allowed programs on the admitted executor 9ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-document 2ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-org 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: wrong-program 5ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: unknown-current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: invalid-bytes 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > refuses unverifiable source identity: catalog-hash-mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > same-length extraction replacement before return cannot return the old text 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > historical by-ID read is explicit and cannot earn a new current-source receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > keep_data serves retained text with original unavailable, without binary access 3ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > metadata-only reads do not claim a delivered extraction or earn a receipt 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > legacy readable text without a coherent recorded catalog cannot earn a new receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > an authenticated empty source scope remains empty 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > list queries use admitted scope before pagination and retain exact counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts > actor-aware catalog by-ID facades > returned source rows outside the admitted scope are unavailable, never post-filtered pages 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > pins exact extraction digest in the final writer handoff 6ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation during embedding cannot change checked fields or proposer 2ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation while source load waits cannot redefine the submitted candidate 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a locked-source refusal is returned without a successful catalog claim 0ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a locked value refusal preserves the exact unverified leaves 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a stale metadata undercount cannot make a partial actual-text read complete 1ms
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T19:44:52.714Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:44:52.719Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T19:44:52.719Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > checks metadata-free candidate identities before SQL count and LIMIT 9ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > additional private upload parents cannot displace the authorized page or counts 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > creator-owned unbound chat capture is available only without an open project 6ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_creator 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_capture_creator 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: not_chat 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: workspace_mismatch 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: duplicate_anchor 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_org 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: dead_parent 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: invalid_hash 5ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: changed_upload_hash 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: no_longer_current 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: withdrawn 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown access/SQL state is unavailable instead of an empty authorized list 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > final upload parent revocation refuses already loaded headers 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > revocation of an upload outside the returned page cannot leave a stale authorized count 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown extraction ledger remains unknown in an authorized result 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > keep_data discloses original unavailable and preserves eligible retained text discovery 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > true authorized emptiness remains zero and does not scan a private top-N sample 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the faithful values, written the way the document writes them 6ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the same values typed in plain ASCII, any case, either mu 3ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > REFUSES every invented value and NAMES each leaf with the value it carried 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > names only the failing leaves when faithful and invented values are mixed 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a boolean leaf even though "released" is a word in the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a null leaf and an empty string — neither transcribes anything 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a figure the document does not state, even a derived one 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > checks a leaf inside an array inside an object, and names its full path 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > quotes a key that is not a plain identifier, so the path is unambiguous 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > does not verify keys — labels are the model’s naming, not a claim about the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > has nothing to verify when there is no key_data 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a number’s decimal form must match exactly: no prefix, suffix or neighbour 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > thousands grouping may be added or removed for a number — but a group is not the number 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > an identifier fragment is not the identifier 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a hyphen separates tokens: 24 is stated by "24-month" 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a sign is part of the figure: −5 °C states -5, not 5 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a superscript exponent is not folded into the digits (NFKC alone makes 10³ read "103") 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a unit glued to a figure makes one token: 10 is not "10mg", "10mg" is 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a value the extraction wrapped across a line, or padded with spaces, still occurs 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > fails closed against a document with no text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > REFUSES invented key_data even after a complete read, carrying the named leaves 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > judges coverage first: a partial read is refused on coverage, not on values 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > allows a complete read whose key_data the text states 0ms
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path
+{
+  "timestamp": "2026-10-14T19:44:54.940Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion
+{
+  "timestamp": "2026-10-14T19:44:54.944Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the vector path 8ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path 3ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row vector completion 2ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion 1ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > the kind is the Vault vocabulary (S4) > refuses a kind outside it before reading anything 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > uses one stamped connection and current persisted viewer role, then re-admits before success 4ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: missing_actor 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: wrong_tenant 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: no_tenant 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > inactive actor refuses before protected source callback and rolls back 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > revocation after the protected read refuses the loaded result 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > role changing between the tenant stamp and canonical admission refuses before the protected read 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > unknown pool/SQL failure returns named unavailable and never empty 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > copies actor input before any await 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > composite result cannot use a newly widened or changed role scope as its old authorization 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > same pinned scope can finish a composite read 1ms
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T19:44:56.507Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:44:56.508Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T19:44:56.508Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+[database] Database connection successful
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T19:44:56.672Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > unions touching and overlapping spans into one 2ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > clamps to [0, charCount] and drops spans that vanish 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > keeps genuinely disjoint spans apart 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > reports exact gaps between reads, in order 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > is complete only at exact full coverage — 99.9% is not "reviewed" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > double-reading does not inflate coverage 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > a document with no text can never be "completely read" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a first-page-only read and names the exact unread ranges 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a middle gap even when both ends were read 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a document whose extraction produced nothing 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > allows the write only once every character has been served 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > an empty result is a FAILURE with a reason, never "extracted, 0 chars" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a file type nothing could extract says exactly that 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a thrown extraction error is carried, not swallowed 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > real text is recorded with its method, confidence and counts 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization 7 without producing headers or fabricated totals 3ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization null without producing headers or fabricated totals 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses malformed document organization undefined without producing headers or fabricated totals 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: foreign_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: deleted_parent 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > refuses a source with an invalid live program relationship: unidentified_parent 0ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > scopes recorded source and live parent before computing window totals 1ms
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts > catalog discovery and recall recorded-source scope > a verified empty query remains empty, while query failure remains visible 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > bounds a full-text selected source to authorized programs in SQL 2ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > an empty authorized program list cannot widen to all tenant sources 0ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > applies permitted programs before window totals and LIMIT 1ms
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts > server-only catalog actor query filters > runs source listing on the supplied protected executor, never the global pool 1ms
+
+ Test Files  11 passed (11)
+      Tests  157 passed (157)
+   Start at  19:44:42
+   Duration  17.33s (transform 3.28s, setup 233ms, import 15.12s, tests 245ms, environment 1ms)
+

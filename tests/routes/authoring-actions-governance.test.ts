@@ -145,6 +145,7 @@ describe('authoring-actions governed validation envelopes', () => {
       body: { projectId: 1, artifactId: 11 },
     }) as any;
     req.tenantId = 1;
+    req.userId = 7;
     const res = createMockResponse();
 
     const handler = getRouteHandler('/promote-to-review');

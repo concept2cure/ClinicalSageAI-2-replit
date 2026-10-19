@@ -54,4 +54,3 @@ AssertionError: expected { 'm1.2': 'locked', …(2) } to deeply equal { 'm1.2': 
       Tests  1 failed | 18 passed (19)
    Start at  09:12:27
    Duration  4.75s (transform 353ms, setup 146ms, import 293ms, tests 3.86s, environment 0ms)
-

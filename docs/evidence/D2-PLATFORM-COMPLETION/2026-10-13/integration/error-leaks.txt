@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:server-error-leaks
+> node scripts/ci/check-server-error-leaks.mjs
+
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.

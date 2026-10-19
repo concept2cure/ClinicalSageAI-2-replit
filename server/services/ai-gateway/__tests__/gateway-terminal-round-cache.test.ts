@@ -104,6 +104,32 @@ describe('tool_choice reaches the wire', () => {
   });
 });
 
+describe('prompt-cache TTL reaches the Anthropic wire', () => {
+  it('forwards the optional one-hour TTL on the system breakpoint', async () => {
+    const params = await call({
+      messages: [{ role: 'system', content: 'Stable instructions' }, { role: 'user', content: 'go' }],
+      promptCache: { enabled: true, type: 'ephemeral', ttl: '1h' },
+    });
+
+    expect(params.system).toEqual([
+      {
+        type: 'text',
+        text: 'Stable instructions',
+        cache_control: { type: 'ephemeral', ttl: '1h' },
+      },
+    ]);
+  });
+
+  it('keeps the default TTL shape when no TTL is configured', async () => {
+    const params = await call({
+      messages: [{ role: 'system', content: 'Stable instructions' }, { role: 'user', content: 'go' }],
+      promptCache: { enabled: true, type: 'ephemeral' },
+    });
+
+    expect(params.system[0].cache_control).toEqual({ type: 'ephemeral' });
+  });
+});
+
 describe('neither loop withdraws its tools any more', () => {
   it('the streaming route keeps the array on every round', () => {
     // The old form is the regression to guard: it reads as a tidy conditional

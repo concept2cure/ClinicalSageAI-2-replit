@@ -1,0 +1,219 @@
+{
+  "phase": "second actual native execution against corrected d6 sources, before9ba merge",
+  "executionHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+  "subsequentMerge": "9ba70078f; not executed by this proof",
+  "testFile": "tests/db/submission-required-deliverables.dbtest.ts",
+  "casesPassed": 36,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "config": "vitest.db.config.ts",
+  "heapMiB": 4096,
+  "durationSeconds": 10.79,
+  "testDurationSeconds": 5.5,
+  "namespace": "sdd_mv8li3c9_b9672b32",
+  "organizationId": 17,
+  "preflight": {
+    "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+    "role": "app_service",
+    "pid": 21816,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on",
+    "tenant": "1",
+    "user_role": "member",
+    "bypass": "",
+    "admin": ""
+  },
+  "rlsForceRelations": [
+    {
+      "relname": "c2c_document_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "ectd_sequences",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_leaves",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_regions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submissions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "httpResponses": 59,
+  "requestPostures": 57,
+  "statusDistribution": {
+    "200": 31,
+    "401": 1,
+    "403": 6,
+    "404": 6,
+    "409": 8,
+    "422": 1,
+    "500": 1,
+    "503": 5
+  },
+  "forwardedHttpReaderSql": 1379,
+  "pidTenantViolations": 0,
+  "nativeBinding": {
+    "firstPid": 21816,
+    "otherPid": 21822,
+    "attemptedReads": 0,
+    "actualSameActorDifferentExecutorsRefused": true
+  },
+  "basePrograms": {
+    "private": {
+      "id": "b2bc5ff1-0906-4984-8473-018c8692c4f3",
+      "projectId": 22,
+      "organizationId": 17,
+      "ownerId": 24,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "public": {
+      "id": "5ce94931-31d3-44b0-a91b-c8cd8f415aec",
+      "projectId": 23,
+      "organizationId": 17,
+      "ownerId": 24,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "foreign": {
+      "id": "ad2e7e40-a08c-41ef-8dc1-3ebfc8c415fa",
+      "projectId": 24,
+      "organizationId": 18,
+      "ownerId": 32,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "ind": {
+      "id": "3605bfde-5019-4fef-9a25-c10ded2a9f1d",
+      "projectId": 25,
+      "organizationId": 17,
+      "ownerId": 24,
+      "type": "IND",
+      "region": "fda",
+      "pathway": "ectd_v322"
+    },
+    "mdr": {
+      "id": "ea1100d0-5de5-46eb-8bf5-16773ed1172b",
+      "projectId": 26,
+      "organizationId": 17,
+      "ownerId": 24,
+      "type": "EU_MDR_TECHDOC",
+      "region": "eu",
+      "pathway": "mdr"
+    }
+  },
+  "baseFilings": {
+    "private": {
+      "id": 25,
+      "sequenceId": 25,
+      "leafId": 24,
+      "sectionId": 22,
+      "documentId": "sdd_mv8li3c9_b9672b32-private-911deaab-93bb-4088-a6ef-755adfb658cf",
+      "programId": "b2bc5ff1-0906-4984-8473-018c8692c4f3"
+    },
+    "public": {
+      "id": 26,
+      "sequenceId": 26,
+      "leafId": 25,
+      "sectionId": 23,
+      "documentId": "sdd_mv8li3c9_b9672b32-public-c1f77ae4-28f5-4933-ae03-7663e7c98aee",
+      "programId": "5ce94931-31d3-44b0-a91b-c8cd8f415aec"
+    },
+    "foreign": {
+      "id": 27,
+      "sequenceId": 27,
+      "leafId": 26,
+      "sectionId": 24,
+      "documentId": "sdd_mv8li3c9_b9672b32-foreign-80019d6b-c726-4f18-a90d-55dfe696cfd0",
+      "programId": "ad2e7e40-a08c-41ef-8dc1-3ebfc8c415fa"
+    },
+    "ind": {
+      "id": 28,
+      "sequenceId": 28,
+      "leafId": 27,
+      "sectionId": 25,
+      "documentId": "sdd_mv8li3c9_b9672b32-ind-984ed26c-fb5e-4bdb-83ed-2b9d6cff90bb",
+      "programId": "3605bfde-5019-4fef-9a25-c10ded2a9f1d"
+    },
+    "mdr": {
+      "id": 29,
+      "sequenceId": 29,
+      "leafId": 28,
+      "sectionId": 26,
+      "documentId": "sdd_mv8li3c9_b9672b32-mdr-d35a6afd-7443-4655-ad35-089649be1970",
+      "programId": "ea1100d0-5de5-46eb-8bf5-16773ed1172b"
+    },
+    "unanchored": {
+      "id": 30,
+      "sequenceId": 30,
+      "leafId": null,
+      "sectionId": null,
+      "documentId": null,
+      "programId": null
+    }
+  },
+  "providerEventTermCounts": {
+    "frontier_call": 0,
+    "api.openai.com": 0,
+    "api.anthropic.com": 0,
+    "openai_error": 0,
+    "connection error": 0,
+    "tokens_consumed": 0
+  },
+  "tokenShapedObservationValues": 0,
+  "qualification": "Second retained bounded native HTTP/SQL phase. Does not claim current9ba authoring/read-scope integration, production boot/browser/approval/binary or all-pathway native assurance."
+}

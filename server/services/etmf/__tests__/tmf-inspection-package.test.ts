@@ -80,7 +80,8 @@ describe('buildTmfInspectionPackage', () => {
     const zip = await JSZip.loadAsync(pkg.zip);
     const csv = await zip.file('inspection-index.csv')!.async('string');
     const lines = csv.trim().split('\n');
-    expect(lines[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref');
+    // document_evidence added 2026-10-15: the index now says whether each filing's document was verified.
+    expect(lines[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence');
     // Two data rows, deterministic order (stable across runs).
     expect(lines).toHaveLength(3);
   });

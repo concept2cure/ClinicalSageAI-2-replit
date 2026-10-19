@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T03:42:37.342Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses normal source retirement before creating or re-affirming a citation 108ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refresh of a retired source without changing its recorded checksum 57ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refreshing a legacy same-organization cross-project citation 21ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered own-project markers take no number or reference entry 284ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered other-project markers take no number or reference entry 67ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > an association elsewhere in the document cannot legitimize an earlier pasted marker 115ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > withdrawn recorded data cannot lend its name to a new bibliography 203ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > eligible registered frozen history remains resolvable after ordinary supersession 64ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > valid retained citations resolve through the supplied render executor, with no global-pool read 138ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > keeps another uploader’s unbound recorded citation unresolved without its private bibliography metadata 78ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > refuses a revoked actor before bibliography metadata and preserves the recorded citation 56ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > NULL-org global_public source metadata obeys explicit public visibility 66ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > NULL-org tenant_private source metadata obeys explicit public visibility 66ms
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T03:42:53.858Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:42:53.864Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T03:42:53.864Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"11111111-2222-4333-8444-555555555555"} before SSE 51ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path 9ms
+stderr | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > admits a direct handler with current private source membership, then refuses it after revocation
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation 24ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > preserves an organization conversation without a selected project 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a selected private source even when the open project is public and accessible 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a direct upload whose recorded source belongs to another private project 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > admits a direct handler with current private source membership, then refuses it after revocation 28ms
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+{
+  "timestamp": "2026-10-14T03:43:02.767Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01)
+{
+  "timestamp": "2026-10-14T03:43:04.153Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42P01",
+    "detail": "relation \"projects\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703)
+{
+  "timestamp": "2026-10-14T03:43:04.157Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42703",
+    "detail": "column \"owner_id\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501)
+{
+  "timestamp": "2026-10-14T03:43:04.160Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "42501",
+    "detail": "permission denied for table projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006)
+{
+  "timestamp": "2026-10-14T03:43:04.163Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "08006",
+    "detail": "connection failure"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014)
+{
+  "timestamp": "2026-10-14T03:43:04.166Z",
+  "level": "error",
+  "message": "[c2c-project-access] project access check could not complete — not answering \"no access\"",
+  "context": {
+    "projectId": "1",
+    "organizationId": 1,
+    "code": "57014",
+    "detail": "canceling statement due to statement timeout"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies on a genuine no-match, with no error 6ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > denies an unparseable project id 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the store is missing (42P01) 4ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when a column is missing (42703) 1ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when permission is refused (42501) 5ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the connection drops (08006) 2ms
+ ✓ server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > verifyProjectAccess — a check that did not run is not a denial > does NOT deny when the statement is cancelled (57014) 5ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  03:42:35
+   Duration  28.95s (transform 8.17s, setup 168ms, import 16.66s, tests 11.54s, environment 0ms)

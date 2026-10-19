@@ -1,0 +1,666 @@
+{
+  "verifiedAt": "2026-10-14T19:55:04.124Z",
+  "status": "pass",
+  "entry": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+  "backendHelper": "server/services/ana/saved-template-review.ts",
+  "backendHelperInStaticRuntimeImportGraph": false,
+  "runtimeModuleCount": 159,
+  "modules": [
+    {
+      "path": "client/src/components/ui/context-menu.tsx",
+      "sha256": "d81e20f03cfc0e4ded2db877b3f873f9cc82fe91d9df009ba1fa560fce4f6d89"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/components/EsignModal.tsx",
+      "sha256": "c1a9c69ec7f02135c03789d635d8332ea9e141b53a8e8106f854ec1ef7f13a58"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/components/GovernedTimestamp.tsx",
+      "sha256": "d13fc45f57a2565ab58eb1871b40173f5b60aba99104c1bbe61b30a833ea3115"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/esignMeanings.ts",
+      "sha256": "d1ba0321447e2519192cc151c8657766e90295101e21d51d7c88ccdc80950797"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/signatureMeaning.ts",
+      "sha256": "555a9d4c43f4186b34d130489ed6a9db528e46a357938a0ea7a51aaf32d60a04"
+    },
+    {
+      "path": "client/src/concept2cure/_shared/signingPosture.ts",
+      "sha256": "147deee5f8b958c46c31fa912a4a98e10ec025e04db7c26ee4463c5d26229d55"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/anaAnswerCheck.ts",
+      "sha256": "cebe837d61de94254eec13e445162b73439defeb5a79656a482c6f43a4782b6f"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/anaProgress.ts",
+      "sha256": "d5c3056b12f7b2ce82030e09cbe71d0ca9bec4cd4c35b366e590a5fd5fd22a81"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/AnswerCheckRows.tsx",
+      "sha256": "9e58c5ee781577e798438d2073201fc75cdeaa9d2a046ea3f887d65ba9266c17"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/icons.tsx",
+      "sha256": "b86a59d4ed0e87584b788c4c32ccfddae1df38e2d890a2cc73a4ead3bf49f161"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/renderSafeMarkdown.ts",
+      "sha256": "ce1707e77f328dd544f7c801a1791c60b6006bcfb6278601ce234112a2039fd1"
+    },
+    {
+      "path": "client/src/concept2cure/hooks/useChatUpload.ts",
+      "sha256": "b2785bef2ac1e13969e67303f12d1ea80b33e75c48fe2a5fc4627c6657a716f3"
+    },
+    {
+      "path": "client/src/concept2cure/hooks/useEsignature.ts",
+      "sha256": "34db79d52d7cef517ea2c2b802c9e91a1e7b860687aa7c5f1215261e4dac9ee4"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/dataOriginsApi.ts",
+      "sha256": "f9845c96c99a2f50b1da38d43fb4cea4c9e693fac8ad2a2e611ff763a1b7e870"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/DataOriginsMenu.tsx",
+      "sha256": "6239608af56879280aa6e7fe4e21b4145d6f79a0231ce250cbdda0d74180cf3e"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/DataOriginsPanel.tsx",
+      "sha256": "92ec49fefe7081a6ccbd7c9512aee4553a1de5b040f1731378754e77eded2a48"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/DocumentAttributionBar.tsx",
+      "sha256": "e52e9ebbc531f708e9d10f34f0c1c952d6997bdc811745930714c70449f3a166"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/index.ts",
+      "sha256": "0391346e323a886dbccc8f37fc272369300c0564cc4eabcdb545cc55b794e962"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/palette.ts",
+      "sha256": "d26c4c1ff806c9107debd7dbcc5a592f4c6fedf8cdfd0cc23e8cdcf0fb41e8d4"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/selectionOffsets.ts",
+      "sha256": "c169d3bf393745daf391959cbce44caab83a5f8d4d100b9786114551bc8ca753"
+    },
+    {
+      "path": "client/src/concept2cure/lineage/useAttributionHighlights.ts",
+      "sha256": "bb9636aadbadc294c28114fbc9e29d5005d0f7e0e285b3a6c3acd4b22b7943fc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/AnaActivity.tsx",
+      "sha256": "1149ddfd6f3c06998da2c9e22364f0cf5ee07405e92b247b2d45d0a97fcc3063"
+    },
+    {
+      "path": "client/src/concept2cure/v2/anaWorkModel.ts",
+      "sha256": "61e90a3e305f485d117c847b775353bb72dffe7d8979bbf4109c362aabfa237c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/AnaWorkSections.tsx",
+      "sha256": "2e580b0d13c04d64e4c378cb8b83b86d043e39c895da0b9d806729c68b2cd755"
+    },
+    {
+      "path": "client/src/concept2cure/v2/apiCall.ts",
+      "sha256": "d579897bcee4eab3d1757466cab9f9b8d3288dfa63359aa24c33b7f94c83b0de"
+    },
+    {
+      "path": "client/src/concept2cure/v2/assessmentState.ts",
+      "sha256": "ddadb1e40bca4923592de0d89f327b03fcefd727c9b6083e928dba283e6770d6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "555fef448b8d058e531650e46b953082e1c8f5022438dae1b5056768c4ec52e6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/C2CForm.tsx",
+      "sha256": "6d70e9b895364a167219a8fd970a6f278302bf1ea59bad27ab8b9fbee47f3721"
+    },
+    {
+      "path": "client/src/concept2cure/v2/ceremony.ts",
+      "sha256": "585c049a38377c2d850434403b225dbb66d4478ce3d266ddc5069bfa68491b7f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/clinicalRegulatoryGraphFlag.ts",
+      "sha256": "536e14980d446551f256f90a675ddd54473889411f0476501195b653038d7243"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "sha256": "257bf43ce5a2b3e025916f332c047071fd1310d8ebab94591b91f0f1171d1674"
+    },
+    {
+      "path": "client/src/concept2cure/v2/download.ts",
+      "sha256": "21503192353a07854d1935813eb9f47ae177451cf69244e0c7ce4e75829b1960"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/anaInsertGate.ts",
+      "sha256": "b76f7e05f89c9463e444484d995b00ca8aba84c2f80dce429f660ec719932090"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/askAnaToDraft.ts",
+      "sha256": "b2bef290ce9f248b3766b340eee735288d30a90b83429551d4e476bab5902b15"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AssignReviewDialog.tsx",
+      "sha256": "ed7f80870a993b65e79f38d58b33f21ce0118e13f07979aa5bcf5b3fc79ef6b9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoredHtml.tsx",
+      "sha256": "2084d48fe31ac9a292de440c3be0c17fd91e4ae8bce5215c63e77f4392ed4415"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringConversationOrigin.ts",
+      "sha256": "af89f700bb1b45c0096d7450a8eebd88a02174b17f7dc1f9497f778324faeead"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringOversight.ts",
+      "sha256": "5d2370efecd3981806b36dc25ce3fb84c9e776a005ba76d53757205114894307"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringOversightActions.tsx",
+      "sha256": "7bc0cfa1de141e1668fa645630aa1c5d382f748b8a998e77445b8a62ccf46a11"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/CanvasDocumentList.tsx",
+      "sha256": "ac5c6819f155ca5cdef4ba5e95525a109eee64a54afe88966136aaf05f1958d5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/canvasFocus.ts",
+      "sha256": "59400127bc1793e49be59eebf1885744ec6500654613ecb8275279874aa3c2bf"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/captionNumbering.ts",
+      "sha256": "c028898be6a242627b29b1602f052c4a0e9fe1d8d3f66686d9e22924119a1fdb"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/citationAdmission.ts",
+      "sha256": "58d88401f947d63a0c7c61954dda8a9076d7f3199c33d7cd8bf0992ed82200c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/citationNode.ts",
+      "sha256": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/commentAnchor.ts",
+      "sha256": "8a41464d78782ea43dbce468b1b3ed6cde9183564cf037a805dc288b9dab7c7e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/crossReferenceNode.ts",
+      "sha256": "97f753eddb65f3607e73998359042e0825bc4a662c499ccc308c1162fbe1fdd2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "sha256": "9de5a66ac7107a5edb439242253ea8f10a493ac9548c0fb0dd97ba8ed576f37e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "sha256": "8cbdc1534eceb26fb556e72dddd0a2f716fbbf287113952d5b91152275e7e192"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentPermissionsPanel.tsx",
+      "sha256": "502c1402fb42810812ac000d9cdfde0b90541fd9e8652f8e81986a921f369bc2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "e76d82aef95825210ba0467834c3a627bd19ec9feeb5be676970326e1ccd4c68"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DownloadMenu.tsx",
+      "sha256": "3b2972d32a2ad49d2552b94758824202c9b2e8c5879571f79d8d967e0a71be0a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DraftClaimsLine.tsx",
+      "sha256": "83db69cdb8d7a59b939b45578d65cf562c213e5f2c04987bcf2a9a54c6e16121"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DraftFigureLine.tsx",
+      "sha256": "76d11862567022f3804567781547eb95351641fc6397a4630371ce726d96e340"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/draftToDocument.ts",
+      "sha256": "166c0c8ddd769c98d9c201e898985016bf003020aea50ef39bb3f80cf45719d6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/editorProposalReceipt.ts",
+      "sha256": "55d0cbdb87618c4d57169f183538f9c1b6992e40f2600be132092d2570290a35"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+      "sha256": "6dd6aba49a1e6fe05f9d016671bda6b0959ac8b7cfdbff44a735a02eb158acfe"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/findReplace.ts",
+      "sha256": "34831e27626ea0b97345f275e0fa3c1c4b597bf0cba0187398b5ce32eb823052"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/imageNode.ts",
+      "sha256": "1b1646fb28435c1b817040b7252f1f49952bb73192f3c7b0b73ecafcdad73bd6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ImportSourceNotice.tsx",
+      "sha256": "5b8dd1230c745e9247e5c1d721394c90fc1f5bded369654d6591d664170678a3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx",
+      "sha256": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/outlineReadState.ts",
+      "sha256": "ad5f8c5dc060e658f1e6f1f16f601cf0bbcc34e233740e517af0046ad343a265"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/pdfBytes.ts",
+      "sha256": "7dc29da8defa4ca3c728e53213b20aa555b71a2f3b064655ea2d24d9fa9b4f0f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/programSummary.ts",
+      "sha256": "29e2cfdbd9a32a1278fe6cac649864a36eced71241d7ebb4dccdbf92ac819b29"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFileActions.tsx",
+      "sha256": "79165f65b84af6f41f691ee1eb4765741fbcbe9b912da1843ad8fdf0bac9c743"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+      "sha256": "eb8b3032e9899d6ea4f9b513b7ce925775cb0353882dfc2d8735b5947bbc6123"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/projectSourceCatalog.ts",
+      "sha256": "52ef0e87eea9f593b6fd29f77fa016261d9ef441723d5f2851ff02192f321afd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/projectVaultSearch.ts",
+      "sha256": "3441faa79909ab5a5190b6baac52f7c7b7e45bbbe83ac19d9d659c067ad95a42"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/proposalLifecycle.ts",
+      "sha256": "d804f5aaffe7a11e894d2cf0174f9a32a35734a0d566023402020691eeb9633a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/provenance.ts",
+      "sha256": "ec12f60d10ffaaa040b64003c15109cb673fe3767d12bbaf77d6f3278ec5f807"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx",
+      "sha256": "8ddd3e4e3b5e65e91eba0c9a093bbfd04f2ba696498e4de574b72589a2d12cd3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/reviewTaskState.ts",
+      "sha256": "04fdf06ff24e0fb21d1b01006e4d75b8a7be147b5f140cc001d4d1b4d72b7e35"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+      "sha256": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/roundTrip.ts",
+      "sha256": "5fadd878d2f786f178ae57506f09f98c3ae679f863082acc69f46fba35e42a95"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/savedTemplateContext.ts",
+      "sha256": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SendForReviewDialog.tsx",
+      "sha256": "61db5ad042e1a20f91900dc51e178a3e0dd912fa2a000503029dc89d41039868"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceCatalogLine.tsx",
+      "sha256": "b8d7144ae58c071300eb7aa84dc4429087e1b4176f3f966844ede3b2081bd9e0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "sha256": "bf83218732a90174d5cda7e2c5328122a18071d3a3654d8bafc39554fed7d2b1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/startOutlineSection.ts",
+      "sha256": "e8cdb15da705779efc285075a8613cf8be240b1454426bd6746cb5a7df8396bf"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/suggestions.ts",
+      "sha256": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/TaskSignOffDialog.tsx",
+      "sha256": "5b75440a086218e00c17c2e40c6089786840d2e2ca07d9bfc9a4727fdcb1d74a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/TemplateGuidance.tsx",
+      "sha256": "eb92c3867ac1de640dc96f70d676f92d473a13c294f6fde6431c55ad0ec316a7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/textDiff.ts",
+      "sha256": "1d12ec8a863950f4b27864628f174e627a004fc20665a4ab1c6fde84b31af844"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts",
+      "sha256": "d6a89cf30ad47e0bcaf1b05bb098a869b5c6b3d0cb38e923283848485f5cb807"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "sha256": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/submission.ts",
+      "sha256": "3e83adb827a1f5215b59e0c88e35c0499a86da87a9a84471a53f82539cc47328"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/vault-data.ts",
+      "sha256": "c6d8b8d4ee57c2c8fa5e7bfe2b804bf002c3d9a247f8395102a464571ba2fbcc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/gatewayLabels.ts",
+      "sha256": "19278b2a329243f20a419c531629040dde053eaea5ff9e7cef3c50f09cd3802c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/governanceNotice.ts",
+      "sha256": "200f3984ff2971ca210dc73eda4d8645ae2aea6b8d02bad0890aadded7e1ca34"
+    },
+    {
+      "path": "client/src/concept2cure/v2/icons.tsx",
+      "sha256": "5cd566cd87c07a28fe90c8d562f6b5de31ec6ee3672ce636fa6578bb2dcb9476"
+    },
+    {
+      "path": "client/src/concept2cure/v2/menuPlacement.ts",
+      "sha256": "d01affd298a94770d9aa5dd24d10d2d7504812a98a11ca6294ffa54f0be999a8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "sha256": "ed8f06b81f008e6327aab499af00d5988c97136717a212ae466a32d1ae056033"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "b8249ada81ed5474b087d87d10f53fc91df07f314ff63e96675c99078c18036d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/newDocumentAction.ts",
+      "sha256": "52a069ea721bdcf067b8d92b842efcb2587f56b42531ecdb017b50d87aff0712"
+    },
+    {
+      "path": "client/src/concept2cure/v2/RedlineText.tsx",
+      "sha256": "08b022714bff69e9f3f5393242ca73e415e4554e31fa17ff1635d53f70158b92"
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.surfaceCtx.ts",
+      "sha256": "f7daa5ef21f0c524fa844db0abd61d258a25e6cf80e0e54d1b760ae1ff4e1ae1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/registryModel.ts",
+      "sha256": "39e2c1ad0e6ee4f36cd8eac0fd1e4ca94f55efef44288f5bb64bafb06aca0f7d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/routing.ts",
+      "sha256": "43d8b054f449745d184f5cb16d9bf72804236989e4591f63669a12c219b93b00"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceActions.ts",
+      "sha256": "bd33c6c4e23b436819d5aab944c5d6f5cb04e24dce859a18cdfcc28203b78d40"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceAvailable.ts",
+      "sha256": "bef88805540c6b20722bfbafa6a86b34fd3071dc89440efb97f611748bbf6456"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaceContext.ts",
+      "sha256": "5309120d8a49b20bf7b4ecb002c486d671a198f8bce3a420e75b85ea65799140"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+      "sha256": "68fa379ad854446389fd904b0d98f0e3939e817e614709941f9a6154c2461fee"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx",
+      "sha256": "43fea4ffb1ba0859824a0280d8de9dfd440d80e4d3f1e4232d40cee0d0bf1a18"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "4ec6209d7b3a6a1f0de8e634acc5862c23f0f258233901532c63c47bf0af6941"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringExports.tsx",
+      "sha256": "bf889a155181e81229cb5ee46cfb1200b954c847890a1af6d2f9a5e187294684"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx",
+      "sha256": "1e4c45e5d008903fe5b84f65cc7d4d94bee95a3d3de7a4761f58c25306d41e88"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx",
+      "sha256": "c55b39a3adaab026e08d666e4a2e517ceb8aa6fd2d02a16c03fa89ba48bffef1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringRevisionDiff.tsx",
+      "sha256": "360bb869585c9f506665a7566894b5a0f6f2c8811936a79ff04ec3928b096895"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringSignatures.tsx",
+      "sha256": "6f72ed3699275173afda0ce88bd788aa5a975d7d0cb80ab9d48ceeff58d83238"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/filingCopyStatusLines.ts",
+      "sha256": "d6ec38d12eb56491db1f04b2b5535233d629d293c14bc18dbb64ee59405f5bfe"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/filingTarget.tsx",
+      "sha256": "e524672c7fb64d8c8406236710f691ae195ff2b9f982781e7eb4894221d01748"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/placeIntoFilingCopy.ts",
+      "sha256": "664bdef923eecf9c443e12878794ae330b6e7c71c3118db11de0cdc6b5ade2a6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage.tsx",
+      "sha256": "5bf25213a63c2bc6e21907d0676ccd515f04dc8c40f95d0316a62e687c68e8c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "sha256": "feca57d4b6615f86e3afa617fc579d5a88189c720fecca74bf2f613a9c5506c8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/toast.tsx",
+      "sha256": "10f296e1a8c9a1bcaf897a698bef1ece07cbb8b77d8b10f605fb24905c223a5c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/turnSummaryRows.ts",
+      "sha256": "f4d4a0e936cbccb1c506ae97235224bbf8c7d554f664f96a41a1758f94a863f7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useDialog.ts",
+      "sha256": "d53dfb86826cd085e5cd486cd2c97a7764306a0d3acea30b337657822f4a5cf3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+      "sha256": "cea075ca7f51b9681d2d7a1f8e99a94c44e542881863549821d3d729ea640aab"
+    },
+    {
+      "path": "client/src/concept2cure/v2/useNow.ts",
+      "sha256": "544070d46e0a2cfda47d8b0ce291a52965662e506b701299a0e1f62f25520883"
+    },
+    {
+      "path": "client/src/flags/featureFlags.ts",
+      "sha256": "6311610b2a26ea24f663230b345158b7b1d23d5fb1d703d54880f3756ac2dd22"
+    },
+    {
+      "path": "client/src/lib/deviceDraftCache.ts",
+      "sha256": "9299ca151f1dcd84472db096d2af5ebae1c2f26f3f7a7aec370a5687f7f209ce"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "sha256": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f"
+    },
+    {
+      "path": "client/src/lib/sessionChangeGuard.ts",
+      "sha256": "20f467a158cf3d673b4b50a8378aa27383ca3067e5ea2e5e6b42369290f140f3"
+    },
+    {
+      "path": "client/src/lib/utils.ts",
+      "sha256": "85fe0ece4f3a14b257a07f69eaf5f01113ac2cd0b88433cd44554585fa3b1cd9"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db"
+    },
+    {
+      "path": "client/src/services/portal/logger.ts",
+      "sha256": "5a061a052146e178a447562992432368f7b14021da0ee352ae5543470d3c8c43"
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "sha256": "58211098bdaffd63a567f35ab9e3b3e064888057e8bc8b6339d5431a2c9505a2"
+    },
+    {
+      "path": "client/src/utils/sessionEnd.ts",
+      "sha256": "7b946dd29ee01ba7bd1892f09e51f34e04248023301ecb6dd43e95d8fe4764e2"
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+      "sha256": "1e40f23ad50abe66329097deafc71829426b99bbb1a5932a58e64aedb6f1990e"
+    },
+    {
+      "path": "shared/ana/answer-check-reader.ts",
+      "sha256": "60d8609150d7d653969186759f34daeaf09f42c892cf0bab01cb13ad9493d7c8"
+    },
+    {
+      "path": "shared/ana/continuation-context.ts",
+      "sha256": "82455d2f3b87e34d83a8fa6da3ea7240e5cce354ad52d2111249d8b2a01e458b"
+    },
+    {
+      "path": "shared/ana/plan-diff.ts",
+      "sha256": "f2864c2c71f076fd1201ee26c998d4695daf7dc3dafe22ec0312fde7476c7f98"
+    },
+    {
+      "path": "shared/ana/run-control-limits.ts",
+      "sha256": "cb50b4333ecffd234e5b39792c4ce6cdf8ef42e0fe21716212cf624b90374aaf"
+    },
+    {
+      "path": "shared/ana/run-policy.ts",
+      "sha256": "37c97e6687d72b2648bf719d17aaa2285a2da947add90706327f867d67845627"
+    },
+    {
+      "path": "shared/ana/step-verbs.ts",
+      "sha256": "9363dd01c4438217ecb997c0273932ed1cec1b6d3ffff011b7333d3692c60408"
+    },
+    {
+      "path": "shared/ana/turn-timeline.ts",
+      "sha256": "9ac1b3b5b08627e0ff1bd2444793a487a01c3ea081fa6dd4b95ad41b1daad83d"
+    },
+    {
+      "path": "shared/authoring/captions.ts",
+      "sha256": "54589fea09e7e8cf514d8e29625ed695f390d4456ee6f12a58be1eede5548ac0"
+    },
+    {
+      "path": "shared/authoring/citations.ts",
+      "sha256": "e3710a27c4317b5cf747cc132e93341fd8a62a44ad20c2b9c99c52b990a764db"
+    },
+    {
+      "path": "shared/authoring/cross-references.ts",
+      "sha256": "c14cca3f1a5c7e084ec337e428267fda020580f22f0038508bdc50fbe659c91b"
+    },
+    {
+      "path": "shared/authoring/figure-refs.ts",
+      "sha256": "350078deca5cb43e05880a14e674a11245cb156b50675eb4bfb491d1b6b2b1c7"
+    },
+    {
+      "path": "shared/authoring/plain-text-html.ts",
+      "sha256": "683497ab49c9af3a97cc88b2dbb6091e88796012b1a0ab0947a1e1696feec10f"
+    },
+    {
+      "path": "shared/authoring/recorded-template-source.ts",
+      "sha256": "b60b8a69e8cac514656aac79220c4f3f06cc2110972e6617610241f6ab191912"
+    },
+    {
+      "path": "shared/authoring/source-import.ts",
+      "sha256": "dbcba928bef1b26ddd911a0c76037017a219699b0eaf9b07ea3bb8dec64e61d1"
+    },
+    {
+      "path": "shared/authoring/source-mode.ts",
+      "sha256": "3899425b52f15bde8283a7576ad5f6934b0982f0783faee5de557097163a8d9c"
+    },
+    {
+      "path": "shared/constants/document-intake-formats.ts",
+      "sha256": "b6aa9cca859bba0d41a0090fad8ad0038b749b8b99a35127366b8d0269e48ef7"
+    },
+    {
+      "path": "shared/constants/global-ri-ui.ts",
+      "sha256": "a32f4c56a41c5ebfefe213c882bdf4fe1d183a61fe8682adeccddabbdeb7692d"
+    },
+    {
+      "path": "shared/constants/governed-reason.ts",
+      "sha256": "49ab03c8f3e3de692a1e2c56e81f00ff88cc1f20cf6c9eedb9789264acef82c3"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "sha256": "e65e9e95f25caad066fc9926d047645b1637a74f71dc01a057a4522cc46310a5"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "sha256": "ab6b921d75335abbdf2b0600d2ca1ea6ec5018983feb295075c83601e4cb0c14"
+    },
+    {
+      "path": "shared/navigation/index.ts",
+      "sha256": "98683cc810d4807d7f170fd7739a279e7af9fa72d1f472a2be00281be8d624a9"
+    },
+    {
+      "path": "shared/navigation/surface-actions.ts",
+      "sha256": "797bddd74aa0e3f961835ef6e22a25fc5e957914eb2122309f989fc56fea7bae"
+    },
+    {
+      "path": "shared/part11/signature-method.ts",
+      "sha256": "a7faef4650febcbe2d55a528e776c6c41d6916e5ce107a8817454a8cbb2c6ddd"
+    },
+    {
+      "path": "shared/regulatory/canonical-document.ts",
+      "sha256": "ce9950d15b84c21ab661dc061f619825db906587d25f7eb6f5c04caae9f9863c"
+    },
+    {
+      "path": "shared/regulatory/filing-copy-status.ts",
+      "sha256": "6163af19400b927ca7b834d1f3652d2464f2f63f73e19dee346b750255f7fa1c"
+    },
+    {
+      "path": "shared/regulatory/filing-section-key.ts",
+      "sha256": "a75069ea20e4a83fef04001b7ae7b849e766b6b35e72ad43be69799183d70756"
+    },
+    {
+      "path": "shared/regulatory/placement-vocabulary.ts",
+      "sha256": "36cac141a1c96ab2a80b4fb9afeda3ad86a4ec16c9701da141d65da6dfb70567"
+    },
+    {
+      "path": "shared/regulatory/section-code.ts",
+      "sha256": "e4847c9c4258140212be071e0eadac75acd3cd8fe68557c9534225148bbff3ad"
+    },
+    {
+      "path": "shared/rule-pack-provenance.ts",
+      "sha256": "0a4c4dc588b08a58dc0e9c7eb39f5b4c6bccfdad5a8bba98088edb859c299112"
+    },
+    {
+      "path": "shared/utils/member-labels.ts",
+      "sha256": "8519e3983eb60b0c7236cd36fc4905291f5bcc6ad94b4fae5aa4cb6f9e68525f"
+    }
+  ],
+  "assets": [
+    "client/src/concept2cure/_shared/components/EsignModal.css",
+    "client/src/concept2cure/lineage/attribution-highlights.css",
+    "client/src/concept2cure/v2/styles/app-v2.css",
+    "client/src/concept2cure/v2/styles/authoring-v2.css",
+    "client/src/concept2cure/v2/styles/coverage-v2.css",
+    "client/src/concept2cure/v2/styles/journey-v2.css",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+    "client/src/concept2cure/v2/styles/project-home-v2.css",
+    "client/src/concept2cure/v2/styles/redline.css",
+    "client/src/concept2cure/v2/styles/rich-section-editor.css",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+    "design-system/colors_and_type.css",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json"
+  ],
+  "unresolvedRelativeImports": [],
+  "scope": "Static value import/export graph using existing TypeScript resolution. Type-only imports and vendor modules are excluded. This is source-graph evidence, not backend execution or dynamic-import coverage.",
+  "checkedBase": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "reconciliationUse": "Compare these runtime-module and asset pins after the backend-only amendment or base synchronization. Any runtime-module delta requires separate review and possibly recapture; preserve original capture hashes.",
+  "baseReverifiedAt": "2026-10-14T19:56:24.377Z"
+}

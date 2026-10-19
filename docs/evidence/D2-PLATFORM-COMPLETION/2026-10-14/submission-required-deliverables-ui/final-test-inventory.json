@@ -1,0 +1,1644 @@
+{
+  "runner": "Vitest 4.1.7",
+  "node": "Node 22",
+  "maxWorkers": 1,
+  "heapMiB": 4096,
+  "exitCode": 0,
+  "filesPassed": 23,
+  "casesPassed": 251,
+  "casesFailed": 0,
+  "casesSkipped": 0,
+  "durationSeconds": 79.83,
+  "newCaseCount": 68,
+  "unchangedImpactedCaseCount": 183,
+  "perFile": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "passed": 17,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx",
+      "passed": 2,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "passed": 12,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "passed": 21,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "passed": 5,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "passed": 3,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx",
+      "passed": 3,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "passed": 4,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "passed": 6,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "passed": 18,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "passed": 10,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "passed": 12,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "passed": 17,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "passed": 8,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "passed": 10,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "passed": 8,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx",
+      "passed": 3,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "passed": 7,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "passed": 50,
+      "phase": "new focused interactions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "passed": 7,
+      "phase": "new focused interactions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "passed": 11,
+      "phase": "new focused interactions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "passed": 4,
+      "phase": "unchanged impacted regressions"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "passed": 13,
+      "phase": "unchanged impacted regressions"
+    }
+  ],
+  "newSuiteRuntimeWarningHeaders": 0,
+  "existingFixtureRuntimeWarningHeaders": 16,
+  "existingFixtureWarningFiles": [
+    "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx"
+  ],
+  "cases": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty",
+      "status": "passed",
+      "durationMs": 381
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the tab cannot be closed over unsaved work > does not interfere once the work is saved",
+      "status": "passed",
+      "durationMs": 553
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the tab cannot be closed over unsaved work > does not interfere on a clean canvas",
+      "status": "passed",
+      "durationMs": 219
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > holds the switch and names what is at stake",
+      "status": "passed",
+      "durationMs": 625
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > \"Cancel\" leaves the author exactly where they were",
+      "status": "passed",
+      "durationMs": 546
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > \"Save and continue\" records the revision first, then moves",
+      "status": "passed",
+      "durationMs": 651
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit",
+      "status": "passed",
+      "durationMs": 578
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > \"Leave without saving\" writes nothing, and the work comes back on return",
+      "status": "passed",
+      "durationMs": 1411
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "switching sections over unsaved work is held, not silent > a clean section switches straight through \u2014 no guard on work that is safe",
+      "status": "passed",
+      "durationMs": 427
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own",
+      "status": "passed",
+      "durationMs": 348
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the record is only ever written by a deliberate act > says the work is on this device only, not merely \"unsaved\"",
+      "status": "passed",
+      "durationMs": 266
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision",
+      "status": "passed",
+      "durationMs": 961
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded",
+      "status": "passed",
+      "durationMs": 758
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "the guard names decisions already recorded, not just unsaved text > saving closes out the count \u2014 a LATER unrelated edit does not resurrect the old decision count",
+      "status": "passed",
+      "durationMs": 775
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope",
+      "status": "passed",
+      "durationMs": 362
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "program switches preserve the current authoring decision > ignores a prior program list that finishes after the new scoped list",
+      "status": "passed",
+      "durationMs": 142
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "case": "program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision",
+      "status": "passed",
+      "durationMs": 331
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > opens through the existing tab and one SeqPicker, reading the exact selected records once",
+      "status": "passed",
+      "durationMs": 331
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > shows all five structural states and keeps coverage separate from governed dispatch",
+      "status": "passed",
+      "durationMs": 114
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > keeps ind coverage explicitly unsupported and offers the existing Validation workspace",
+      "status": "passed",
+      "durationMs": 99
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > keeps nda coverage explicitly unsupported and offers the existing Validation workspace",
+      "status": "passed",
+      "durationMs": 85
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > keeps bla coverage explicitly unsupported and offers the existing Validation workspace",
+      "status": "passed",
+      "durationMs": 90
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > requires an explicit compatible framework when none is recorded, without selecting the first option",
+      "status": "passed",
+      "durationMs": 70
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > does not treat missing availability metadata as a supported catalogue",
+      "status": "passed",
+      "durationMs": 51
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong program identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 58
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong submission identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 62
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong sequence identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 77
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong organization identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 183
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong framework identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 65
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > refuses a success envelope with the wrong member-state identity before rendering source metadata",
+      "status": "passed",
+      "durationMs": 68
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > surfaces a backend refusal without displaying the last result as success or empty coverage",
+      "status": "passed",
+      "durationMs": 54
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 native coverage and scope > shows pin-change/content/lifecycle facts beside their source without relabeling them dispatch approval",
+      "status": "passed",
+      "durationMs": 66
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded ctis framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 96
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded mdr framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 82
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded ivdr framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 72
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded estar_510k framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 66
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded estar_de_novo framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 241
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded pmda_shonin framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 71
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded pma framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 156
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded prestar_q_sub framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 71
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded prestar_ide framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 65
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > renders a positively recorded prestar_513g framework with its actual compatible filing and regulation",
+      "status": "passed",
+      "durationMs": 76
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 status dictionary value __proto__ without admitting source metadata",
+      "status": "passed",
+      "durationMs": 72
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 status dictionary value toString without admitting source metadata",
+      "status": "passed",
+      "durationMs": 58
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 status dictionary value constructor without admitting source metadata",
+      "status": "passed",
+      "durationMs": 153
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 content dictionary value __proto__ without admitting source metadata",
+      "status": "passed",
+      "durationMs": 125
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 content dictionary value toString without admitting source metadata",
+      "status": "passed",
+      "durationMs": 123
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 content dictionary value constructor without admitting source metadata",
+      "status": "passed",
+      "durationMs": 154
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 pin dictionary value __proto__ without admitting source metadata",
+      "status": "passed",
+      "durationMs": 132
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 pin dictionary value toString without admitting source metadata",
+      "status": "passed",
+      "durationMs": 122
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 pin dictionary value constructor without admitting source metadata",
+      "status": "passed",
+      "durationMs": 139
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 lifecycle dictionary value __proto__ without admitting source metadata",
+      "status": "passed",
+      "durationMs": 117
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 lifecycle dictionary value toString without admitting source metadata",
+      "status": "passed",
+      "durationMs": 173
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > refuses a malformed 200 lifecycle dictionary value constructor without admitting source metadata",
+      "status": "passed",
+      "durationMs": 154
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > normalizes explicit CTIS state codes without rewriting the actual Greek ISO code or inferring titles",
+      "status": "passed",
+      "durationMs": 68
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 canonical frameworks and malformed envelopes > keeps an unsupported CTIS code as an input warning without issuing a new coverage read",
+      "status": "passed",
+      "durationMs": 69
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 admitted optional display labels > shows recorded program/source names before trace identifiers while preserving the exact saved target",
+      "status": "passed",
+      "durationMs": 75
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 admitted optional display labels > rejects an invalid present optional programCode type without requiring labels from an older response",
+      "status": "passed",
+      "durationMs": 65
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 admitted optional display labels > rejects an invalid present optional programTitle type without requiring labels from an older response",
+      "status": "passed",
+      "durationMs": 113
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 admitted optional display labels > rejects an invalid present optional label type without requiring labels from an older response",
+      "status": "passed",
+      "durationMs": 117
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "Builder source evidence \u2014 current admitted pointer outcomes > displays the actual undetermined result without converting it into another source verdict",
+      "status": "passed",
+      "durationMs": 59
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "Builder source evidence \u2014 current admitted pointer outcomes > displays the actual missing result without converting it into another source verdict",
+      "status": "passed",
+      "durationMs": 47
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "Builder source evidence \u2014 current admitted pointer outcomes > displays the actual content_changed result without converting it into another source verdict",
+      "status": "passed",
+      "durationMs": 39
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 exact saved sources and late reads > hands the exact authoring UUID/program and actual source section to the canonical editor once",
+      "status": "passed",
+      "durationMs": 76
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 exact saved sources and late reads > keeps unverified/unsupported stores as references instead of guessing an authoring document",
+      "status": "passed",
+      "durationMs": 58
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 exact saved sources and late reads > ignores a delayed response from the old working sequence after the new one settles",
+      "status": "passed",
+      "durationMs": 69
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "case": "required deliverables \u2014 exact saved sources and late reads > discards a delayed body after the reactive program changes, without painting old source controls",
+      "status": "passed",
+      "durationMs": 61
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask",
+      "status": "passed",
+      "durationMs": 1187
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask",
+      "status": "passed",
+      "durationMs": 570
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document",
+      "status": "passed",
+      "durationMs": 745
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes",
+      "status": "passed",
+      "durationMs": 613
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet",
+      "status": "passed",
+      "durationMs": 125
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits",
+      "status": "passed",
+      "durationMs": 224
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits",
+      "status": "passed",
+      "durationMs": 255
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "template context is scoped to the saved document currently open > bounds long handoff limits explicitly and points to complete saved-review pages",
+      "status": "passed",
+      "durationMs": 228
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "template context is scoped to the saved document currently open > does not carry late prior-document metadata into another document ask",
+      "status": "passed",
+      "durationMs": 352
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "case": "fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > consumes the target, clears the channel, and opens the named document + section",
+      "status": "passed",
+      "durationMs": 532
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > a docId target opens the EXACT document \u2014 no search, not the default",
+      "status": "passed",
+      "durationMs": 339
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > a docId not in scope lands on the default view with an honest miss \u2014 never a near-miss open",
+      "status": "passed",
+      "durationMs": 269
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > shows the honest miss notice and falls back to the default view when nothing matches",
+      "status": "passed",
+      "durationMs": 342
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > refuses a target scoped to a different program \u2014 fail closed, with the reason",
+      "status": "passed",
+      "durationMs": 135
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 editor deep-link target > a mount with no pending target behaves exactly as before \u2014 default view, no notice",
+      "status": "passed",
+      "durationMs": 252
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 navigation-directive hand-off (window.C2C_NAV_PARAMS) > a sectionCode from navigate_to opens the named section via the same bounded search",
+      "status": "passed",
+      "durationMs": 282
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 navigation-directive hand-off (window.C2C_NAV_PARAMS) > an authoringDocType from navigate_to opens the matching document by title",
+      "status": "passed",
+      "durationMs": 157
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "DocumentAuthoring \u2014 navigation-directive hand-off (window.C2C_NAV_PARAMS) > an unmatchable authoringDocType lands on the default view with an honest notice",
+      "status": "passed",
+      "durationMs": 118
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "an exact document target keeps its returned section identity > opens the returned code inside only the saved document, including a non-first section",
+      "status": "passed",
+      "durationMs": 161
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "an exact document target keeps its returned section identity > refuses a code absent from the named document even when another document holds it",
+      "status": "passed",
+      "durationMs": 142
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "case": "a saved copy with no assigned module is labelled as an unbound draft",
+      "status": "passed",
+      "durationMs": 124
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "sequence selector drives the per-sequence workspaces > Builder loads the SELECTED sequence leaves and switching the selector refetches",
+      "status": "passed",
+      "durationMs": 377
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "sequence selector drives the per-sequence workspaces > renders the honest empty state for a sequence with no leaves",
+      "status": "passed",
+      "durationMs": 121
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "placing a Co-Author document carries its reason > keeps Place disabled without a reason, then sends it with the leaf",
+      "status": "passed",
+      "durationMs": 296
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "lifecycle transitions post the real endpoint; verdict verbatim > surfaces the server refusal VERBATIM when the lifecycle refuses",
+      "status": "passed",
+      "durationMs": 79
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "lifecycle transitions post the real endpoint; verdict verbatim > announces success only from the server-confirmed row",
+      "status": "passed",
+      "durationMs": 64
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "governed freeze \u2014 the real e-sign chain, never bypassed > freeze opens the Part 11 modal; sign \u2192 freeze runs in order with the actionId",
+      "status": "passed",
+      "durationMs": 199
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "governed freeze \u2014 the real e-sign chain, never bypassed > a blocked governed freeze surfaces the server verdict and fabricates nothing",
+      "status": "passed",
+      "durationMs": 291
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "governed freeze \u2014 the real e-sign chain, never bypassed > a refused sign step stops the chain \u2014 the freeze endpoint is never called",
+      "status": "passed",
+      "durationMs": 281
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "governed freeze \u2014 the real e-sign chain, never bypassed > asks an MFA-enrolled signer for the code and forwards it with the sign request",
+      "status": "passed",
+      "durationMs": 177
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "dispatch workspace \u2014 the server gate, verbatim > renders the gate blockers verbatim and offers NO governed button while blocked",
+      "status": "passed",
+      "durationMs": 179
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "dispatch workspace \u2014 the server gate, verbatim > offers the governed freeze only when the gate is clear and the sequence is validated",
+      "status": "passed",
+      "durationMs": 202
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "dispatch workspace \u2014 the server gate, verbatim > fails closed when the readiness read fails \u2014 no gate, no governed buttons",
+      "status": "passed",
+      "durationMs": 81
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "validation workspace \u2014 findings verbatim with rule ids > renders the readiness findings with their rule codes",
+      "status": "passed",
+      "durationMs": 46
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "validation workspace \u2014 findings verbatim with rule ids > shows the honest clean state when the server reports zero findings",
+      "status": "passed",
+      "durationMs": 43
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "shadow review \u2014 real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state",
+      "status": "passed",
+      "durationMs": 40
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "shadow review \u2014 real runs and persisted findings > a failed run POST surfaces the server error and records nothing locally",
+      "status": "passed",
+      "durationMs": 122
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "no MOCK-ACTION flag survives in the surface source > client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx carries no MOCK-ACTION marker",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "case": "no MOCK-ACTION flag survives in the surface source > client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx carries no MOCK-ACTION marker",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze",
+      "status": "passed",
+      "durationMs": 482
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature",
+      "status": "passed",
+      "durationMs": 373
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence",
+      "status": "passed",
+      "durationMs": 96
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed",
+      "status": "passed",
+      "durationMs": 86
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record",
+      "status": "passed",
+      "durationMs": 48
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says \"not recorded\" and the server refusal, never a placeholder",
+      "status": "passed",
+      "durationMs": 38
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit",
+      "status": "passed",
+      "durationMs": 206
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature",
+      "status": "passed",
+      "durationMs": 139
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void",
+      "status": "passed",
+      "durationMs": 277
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the Builder says what the server knows about each leaf > an unapproved Vault version reads \"not approved\", never \"source verified\"",
+      "status": "passed",
+      "durationMs": 55
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one",
+      "status": "passed",
+      "durationMs": 147
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "case": "the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New",
+      "status": "passed",
+      "durationMs": 156
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "case": "the co-author document picker > says it shows 50 of 53, and offers the rest",
+      "status": "passed",
+      "durationMs": 1646
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "case": "the co-author document picker > searches the list by title or module number, on the server",
+      "status": "passed",
+      "durationMs": 1424
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "case": "the co-author document picker > a search that matches nothing says so and keeps the search box",
+      "status": "passed",
+      "durationMs": 405
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "case": "the co-author document picker > a list that fits on one page says all are shown and offers no more",
+      "status": "passed",
+      "durationMs": 225
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "case": "the co-author document picker > a failed next page says so and keeps what was shown",
+      "status": "passed",
+      "durationMs": 337
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "\"Add a market\" opens New submission on arrival (F9) > with the project open, the form is open on arrival with its filing preselected",
+      "status": "passed",
+      "durationMs": 144
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "\"Add a market\" opens New submission on arrival (F9) > with no project open, nothing opens on its own",
+      "status": "passed",
+      "durationMs": 247
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > an NDA \u00b7 FDA project opens on NDA \u00b7 FDA (US), with the project's client type",
+      "status": "passed",
+      "durationMs": 92
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > an MAA \u00b7 EMA project opens on MAA \u00b7 EU (EMA), not on a US IND",
+      "status": "passed",
+      "durationMs": 67
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling",
+      "status": "passed",
+      "durationMs": 68
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type",
+      "status": "passed",
+      "durationMs": 64
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in",
+      "status": "passed",
+      "durationMs": 59
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why",
+      "status": "passed",
+      "durationMs": 107
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record",
+      "status": "passed",
+      "durationMs": 58
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket",
+      "status": "passed",
+      "durationMs": 48
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit",
+      "status": "passed",
+      "durationMs": 53
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed",
+      "status": "passed",
+      "durationMs": 49
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why",
+      "status": "passed",
+      "durationMs": 54
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why",
+      "status": "passed",
+      "durationMs": 197
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type",
+      "status": "passed",
+      "durationMs": 87
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission with no project open (F20) > preselects no application type, region or client type",
+      "status": "passed",
+      "durationMs": 67
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "case": "New submission over an unreadable submissions reply (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why",
+      "status": "passed",
+      "durationMs": 47
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the per-sequence gate over an unread submission list > does not say \"No submission selected\" when the submission list failed to load",
+      "status": "passed",
+      "durationMs": 243
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the per-sequence gate over an unread submission list > still says \"No submission selected\" when the list genuinely came back empty",
+      "status": "passed",
+      "durationMs": 70
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the lead action over an unread sequence list > does not offer \"Plan the submission\" while the sequences are still loading",
+      "status": "passed",
+      "durationMs": 64
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the lead action over an unread sequence list > does not offer \"Plan the submission\" \u2014 or route to the Planner \u2014 when the sequence read failed",
+      "status": "passed",
+      "durationMs": 76
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the lead action over an unread sequence list > still offers \"Plan the submission\" and opens the Planner on a settled zero-sequence read",
+      "status": "passed",
+      "durationMs": 80
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the lead action over an unread sequence list > offers the sequences when this submission has them",
+      "status": "passed",
+      "durationMs": 69
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the Planner over a region profile > reports an unprofiled region as not codified, never as no requirements",
+      "status": "passed",
+      "durationMs": 33
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the Planner over a region profile > reports a failed profile read as unreadable, never as not codified",
+      "status": "passed",
+      "durationMs": 26
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the Planner over a region profile > does not answer from an unsettled read",
+      "status": "passed",
+      "durationMs": 26
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "case": "SubmissionCenter \u2014 the Planner over a region profile > shows the codified profile, scoped to THIS application type",
+      "status": "passed",
+      "durationMs": 31
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > discards a delayed manifest after logout",
+      "status": "passed",
+      "durationMs": 529
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > discards a delayed manifest after organization-adoption",
+      "status": "passed",
+      "durationMs": 136
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > discards a delayed manifest after replacement-account",
+      "status": "passed",
+      "durationMs": 118
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > discards a success body that resolves after organization adoption",
+      "status": "passed",
+      "durationMs": 377
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > suppresses an error body that resolves after replacement account adoption",
+      "status": "passed",
+      "durationMs": 214
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > suppresses a transport rejection after the old session ends",
+      "status": "passed",
+      "durationMs": 306
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "case": "required deliverables \u2014 actual transport session ownership > keeps a genuine same-revision refresh eligible for the saved coverage read",
+      "status": "passed",
+      "durationMs": 308
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > reacts to the canonical program store without requiring an unrelated user interaction",
+      "status": "passed",
+      "durationMs": 418
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > never commits the previous submission sequence picker under the new selected submission",
+      "status": "passed",
+      "durationMs": 110
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > refuses an old scoped portfolio result after program A\u2192B\u2192A starts a fresh read",
+      "status": "passed",
+      "durationMs": 173
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > preserves the current sequence selection across existing workspace navigation",
+      "status": "passed",
+      "durationMs": 342
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > does not promote a late source-write verdict after sequence-away-and-back",
+      "status": "passed",
+      "durationMs": 274
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selector read ownership > does not promote a late source-write verdict after replacement-account",
+      "status": "passed",
+      "durationMs": 132
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selectors \u2014 actual session revision changes > does not render a delayed old-session portfolio after logout",
+      "status": "passed",
+      "durationMs": 69
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selectors \u2014 actual session revision changes > does not render a delayed old-session portfolio after organization-adoption",
+      "status": "passed",
+      "durationMs": 122
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selectors \u2014 actual session revision changes > does not render a delayed old-session portfolio after replacement-account",
+      "status": "passed",
+      "durationMs": 24
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selectors \u2014 actual session revision changes > suppresses a delayed JSON body after the session is replaced",
+      "status": "passed",
+      "durationMs": 19
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "case": "SubmissionCenter selectors \u2014 actual session revision changes > permits a delayed body during a genuine same-revision bearer refresh",
+      "status": "passed",
+      "durationMs": 56
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with a project open > reads the project-scoped list, not the organization, and lists only its submissions",
+      "status": "passed",
+      "durationMs": 268
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with a project open > says whose submissions these are and how many others the server left out",
+      "status": "passed",
+      "durationMs": 20
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with a project open > shows every submission of the organization on request, and can go back",
+      "status": "passed",
+      "durationMs": 121
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with a project open > does not guess the count of others when the server did not send one",
+      "status": "passed",
+      "durationMs": 65
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with a project open > creates the submission in the open project: no programme picker, the project named",
+      "status": "passed",
+      "durationMs": 173
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 with no project open > reads the organization as before, with no scope line and the programme picker",
+      "status": "passed",
+      "durationMs": 106
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 the open project, as the review found it > keeps keyboard focus on the scope toggle in both directions",
+      "status": "passed",
+      "durationMs": 86
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 the open project, as the review found it > a project known only by its id is \"the open project\" once, not twice",
+      "status": "passed",
+      "durationMs": 69
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 the open project, as the review found it > a failed scoped read does not call the list the organization\u2019s",
+      "status": "passed",
+      "durationMs": 21
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "case": "Submission Center \u2014 the open project, as the review found it > AnA asking for another project\u2019s submission is told it is not listed here, not that it does not exist",
+      "status": "passed",
+      "durationMs": 45
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "a submission with no project is anchored from its header > says the submission has no project, and the project starts unstated",
+      "status": "passed",
+      "durationMs": 353
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "a submission with no project is anchored from its header > anchors with the chosen project and the reason; the server confirms it and the control goes",
+      "status": "passed",
+      "durationMs": 130
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "a submission with no project is anchored from its header > a refusal is shown in the server\u2019s words, and nothing is claimed",
+      "status": "passed",
+      "durationMs": 85
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "a submission with no project is anchored from its header > a submission that has a project offers no anchor control",
+      "status": "passed",
+      "durationMs": 38
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "only projects of the submission\u2019s filing type are offered > lists the server\u2019s candidates and none of the other projects",
+      "status": "passed",
+      "durationMs": 53
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "only projects of the submission\u2019s filing type are offered > with no project of its type, it says so and offers nothing to anchor to",
+      "status": "passed",
+      "durationMs": 60
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "case": "only projects of the submission\u2019s filing type are offered > when the candidates cannot be read, nothing is offered and it says so",
+      "status": "passed",
+      "durationMs": 42
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "case": "SubmissionCenter \u2014 create posts the live schema > an EU MAA can be OPENED: the body carries title/applicationType/clientType/primaryRegion and the programme identity",
+      "status": "passed",
+      "durationMs": 360
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "case": "SubmissionCenter \u2014 create posts the live schema > the form offers the global markets, not only the US ones",
+      "status": "passed",
+      "durationMs": 38
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "case": "SubmissionCenter \u2014 the next sequence > starts the next sequence in the submission's region, numbered after the last, of the type chosen",
+      "status": "passed",
+      "durationMs": 121
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "case": "SubmissionCenter \u2014 the next sequence > numbers after the highest sequence in the submission's own region \u2014 numbering restarts per region",
+      "status": "passed",
+      "durationMs": 76
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > after placing into sequence 7, the Submission Center opens on sequence 7 in the Builder",
+      "status": "passed",
+      "durationMs": 568
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > a sequence not in the submission is not guessed at: the sequence list, with a line saying so",
+      "status": "passed",
+      "durationMs": 57
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > on the first submission too: an unknown sequence is said, never replaced by sequence 0000",
+      "status": "passed",
+      "durationMs": 81
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > a failed sequence read is said as a failed read, not as \"not found\"",
+      "status": "passed",
+      "durationMs": 40
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > a submission not in the list is not guessed at: the submission list, with a line saying so",
+      "status": "passed",
+      "durationMs": 66
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person moves to another tab",
+      "status": "passed",
+      "durationMs": 199
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > the line about the link is cleared once the person picks another submission",
+      "status": "passed",
+      "durationMs": 40
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "case": "F10: Open in Submission Center lands on the sequence placed into > with nothing carried, the Submission Center opens on its portfolio as before",
+      "status": "passed",
+      "durationMs": 37
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "case": "Builder \u2014 source document column > a vault leaf keyed by uuid is linked, named by its store and key, and shows its verified pin",
+      "status": "passed",
+      "durationMs": 421
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "case": "Builder \u2014 source document column > a changed pin, a missing document and an unpinned leaf each say so in the server\u2019s words",
+      "status": "passed",
+      "durationMs": 100
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "case": "Builder \u2014 source document column > only a leaf with no pointer at all is \"unlinked\"",
+      "status": "passed",
+      "durationMs": 196
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "case": "Submission Center: the stored Validated stage and the current validation agree > a Validated stage stored with no verdict says so in the Sequences list and the working-sequence picker",
+      "status": "passed",
+      "durationMs": 443
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "case": "Submission Center: the stored Validated stage and the current validation agree > the Validation and Dispatch tabs carry the server's reason when the stage no longer holds",
+      "status": "passed",
+      "durationMs": 269
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "case": "Submission Center: the stored Validated stage and the current validation agree > a stage the validation supports reads plainly, with no note",
+      "status": "passed",
+      "durationMs": 98
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "case": "Dispatch readiness surface: the same answer > names a stored Validated stage the validation no longer supports",
+      "status": "passed",
+      "durationMs": 35
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 real rows render (no fixture) > renders the REAL submission in the portfolio table (not a constant)",
+      "status": "passed",
+      "durationMs": 67
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 real rows render (no fixture) > derives the AnswerLead sequence count from the REAL sequences array",
+      "status": "passed",
+      "durationMs": 24
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 real rows render (no fixture) > renders the REAL sequence rows in the Sequences workspace",
+      "status": "passed",
+      "durationMs": 112
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 honest empty state > shows an EmptyState \u2014 never a fixture \u2014 when the org has no submissions",
+      "status": "passed",
+      "durationMs": 55
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 honest error state > shows an error EmptyState \u2014 never a fixture \u2014 when the read fails",
+      "status": "passed",
+      "durationMs": 35
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 no fixture/SampleTag symbol remains in source > imports and renders no retired sample-content fixture constant",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 no fixture/SampleTag symbol remains in source > neither imports nor renders SampleTag",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "case": "SubmissionCenter \u2014 no fixture/SampleTag symbol remains in source > stays on the honest data path (useLiveRows + EmptyState)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings render from the real API > renders the tracked filings with status, tracking number and review clock",
+      "status": "passed",
+      "durationMs": 75
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings render from the real API > derives the assembly-readiness header line from the REAL assemble verdict",
+      "status": "passed",
+      "durationMs": 15
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings render from the real API > deep-links each filing row to the 510(k) surface via the surface router",
+      "status": "passed",
+      "durationMs": 34
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings render from the real API > never fabricates a status: an unknown enum value renders raw, a decision only when present",
+      "status": "passed",
+      "durationMs": 16
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings honest empty state > shows the honest empty state \u2014 no rows, no fixture",
+      "status": "passed",
+      "durationMs": 17
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "case": "SubmissionCenter \u2014 device filings honest error state > shows the error EmptyState and an unavailable readiness line \u2014 never fabricated rows",
+      "status": "passed",
+      "durationMs": 18
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx",
+      "case": "Submission Center \u2014 the Program column reads the program by its key > names the linked program from the program record",
+      "status": "passed",
+      "durationMs": 74
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx",
+      "case": "Submission Center \u2014 the Program column reads the program by its key > says a submission with no program has none, and does not borrow a program code from its product name",
+      "status": "passed",
+      "durationMs": 23
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx",
+      "case": "Submission Center \u2014 the Program column reads the program by its key > labels the product name as the product, not as a program",
+      "status": "passed",
+      "durationMs": 20
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx",
+      "case": "SubmissionCenter \u2014 510(k) device assembly caption > reports the 11 missing and 7 undetermined sections, not \"2 blockers\"",
+      "status": "passed",
+      "durationMs": 52
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx",
+      "case": "SubmissionCenter \u2014 510(k) device assembly caption > counts a template blocker beside the section counts as one more blocker",
+      "status": "passed",
+      "durationMs": 14
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx",
+      "case": "SubmissionCenter \u2014 510(k) device assembly caption > still reads \"0 blockers\" for a verdict with nothing blocking (over-correction guard)",
+      "status": "passed",
+      "durationMs": 13
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx",
+      "case": "signed-out deep link \u2192 sign-in \u2192 back > the sign-in redirect carries the program the link named",
+      "status": "passed",
+      "durationMs": 103
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx",
+      "case": "signed-out deep link \u2192 sign-in \u2192 back > a link with no query still returns to its path",
+      "status": "passed",
+      "durationMs": 16
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "set / peek / consume / clear > round-trips a target, normalizing code to a trimmed string",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "set / peek / consume / clear > peek does not clear; consume does",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "set / peek / consume / clear > clear removes a pending target",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "set / peek / consume / clear > empty/whitespace section fields normalize to null rather than empty claims",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "stale-context safety > refuses a target older than the TTL, honours one inside it",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "stale-context safety > refuses a target stamped in the future (an untrustworthy clock)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "stale-context safety > consume clears even a stale or malformed entry \u2014 nothing lingers",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > a string on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > a number on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > an empty object on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > a non-string docType on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > an empty-string docType on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > a missing setAt on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "hostile / malformed window values > a non-numeric setAt on the window is refused without throwing",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > matches by exact code, case-insensitively",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > matches numerically when formats differ (11 vs 011)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > falls back to a normalized label match",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > prefers the code match over a label match",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > a null authored code never matches \u2014 fail closed",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "matchEditorTargetSection > returns null when nothing matches",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "case": "describeEditorTarget > names what it can and claims nothing it cannot",
+      "status": "passed",
+      "durationMs": 2
+    }
+  ]
+}

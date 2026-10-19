@@ -7256,4 +7256,3 @@ stdout | server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts
       Tests  2712 passed | 3 skipped (2715)
    Start at  16:18:24
    Duration  127.45s (transform 20.86s, setup 3.08s, import 179.49s, tests 166.72s, environment 539ms)
-

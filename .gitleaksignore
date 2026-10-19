@@ -164,3 +164,256 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:49
 6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:52
 6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:56
+
+# status: not a secret
+# reason: 2026-10-14 — this source-digests entry is the SHA-256 checksum of
+#   client/src/concept2cure/lineage/dataOriginsApi.ts. Recomputed from the exact
+#   historical Git blob at 6095ed7a13a982933348a2f3eab99a00d16b8295;
+#   two independent reviewers verified equality. No credential value.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+6095ed7a13a982933348a2f3eab99a00d16b8295:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/browser-final/source-digests.json:generic-api-key:19
+
+# status: not a secret
+# reason: 2026-10-14 — the entry is a SHA-256 checksum of
+#   docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-parent-access.probe.ts.
+#   The probe was added in 83fe486112450a3508dfbf4fbe49e5bb77b9478f;
+#   its exact Git blob at that commit reproduces the checksum. Independently
+#   verified twice; only this existing fingerprint is dispositioned.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:12
+
+# status: not a secret
+# reason: 2026-10-14 — SHA-256 checksum of server/services/c2c/program-access.ts,
+#   recomputed from its exact Git blob at 83fe486112450a3508dfbf4fbe49e5bb77b9478f.
+#   Two independent comparisons match; the digest map records source identity,
+#   not an authentication key. Only this original fingerprint is exempted.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:17
+
+# status: not a secret
+# reason: 2026-10-14 — SHA-256 checksum of server/services/report-os/project-access.ts,
+#   recomputed from its exact Git blob at 83fe486112450a3508dfbf4fbe49e5bb77b9478f.
+#   Independently verified twice. API/access text in a source path does not turn
+#   its published source checksum into credential material.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:19
+
+# status: not a secret
+# reason: 2026-10-14 — SHA-256 checksum of server/services/ana/uploaded-file-access.ts,
+#   verified against the exact source bytes at 83fe486112450a3508dfbf4fbe49e5bb77b9478f
+#   by two independent reviewers. This source-digest entry supplies no access
+#   credential; only its existing commit/path/rule/line is dispositioned.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:20
+
+# status: not a secret
+# reason: 2026-10-14 — the protocol-finalization entry records the SHA-256 of
+#   server/auth.ts. Recomputed from the exact Git blob at
+#   83fe486112450a3508dfbf4fbe49e5bb77b9478f, and independently confirmed.
+#   It is a source checksum, not any secret used by that authentication module.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-source-digests.json:generic-api-key:26
+
+# status: not a secret
+# reason: 2026-10-14 — manifest checksum of
+#   server/middleware/__tests__/delegated-credential-scope.dbtest.ts, reproduced
+#   from its exact Git blob at 0e4ccf46f437af463a52f580c0775c8f4f02197f.
+#   The source changed in that manifest commit, whose pending workflow bridge
+#   is declared there; the older publishedCommit is not this checksum's source.
+#   Two reviewers verified it as source identity, not a delegated credential.
+#   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
+0e4ccf46f437af463a52f580c0775c8f4f02197f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/ci-followup-38463370149/manifest.json:generic-api-key:59
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-final-checks.json:generic-api-key:3
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-summary.json:generic-api-key:5
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-final-checks.json:generic-api-key:3
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-summary.json:generic-api-key:5
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:10167
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:28292
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:29293
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:51945
+
+# status: not a secret
+# reason: 2026-10-14 — four static regulatory prose occurrences share this exact line-1 fingerprint; same-commit decoded reference scalars match services/regulatory/ind-ectd-sections.ts:878 and server/services/ind/ctd/authoring-guidance.ts:3359; other spans match canonical guidance/checklist prose. Two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-fixture/catalogue.json:generic-api-key:1
+
+# 2026-10-14: Four exact stream-manifest source SHA-256 pins at14362ef00.
+# status: not a secret
+# reason: Exact SHA-256 source digests recomputed from the original committed file bytes.
+# Each value matches the named original committed file bytes; no credentials.
+# Review: docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/security-source-pins/.
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:97
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:118
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:120
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:121
+
+# 2026-10-14: Two exact synthetic browser API contract content digests.
+# status: not a secret
+# reason: Two independent reviews recomputed the SHA-256 of the exact
+# browser-eval-fixture/api-contract.json blob at2c299974d; both fields match.
+# The producer explicitly hashes those raw fixture bytes; no authentication key.
+# Evidence: docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/security-digest-dispositions/
+2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-summary.json:generic-api-key:11
+2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-initial-failure/browser-original-summary.json:generic-api-key:11
+
+# status: not a secret
+# reason: Two apiContractSha256 fields equal SHA-256 of the original committed API-contract JSON.
+# Review: docs/evidence/D2-QMS-TRAINING/2026-10-14/security-verification.json.
+
+# status: not a secret
+# reason: Three fixture SHA-256 pins match the exact original Git blob bytes at
+# 4c5546cec143; lead and independent reviewers recomputed all three and checked
+# the synthetic fixture producer. No rule or path suppression.
+# Evidence: docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/security/
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32
+
+# status: not a secret
+# reason: Sixteen exact regional-template evidence values are SHA-256 pins of
+# original committed synthetic api-contract.json/mock-api.mjs bytes at34389d3af.
+# Lead and independent reviewers recomputed every target from original Git blobs;
+# historical helper differences are scoped separately. No rule or path suppression.
+# Evidence: docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/security/regional-{lead,independent}.json
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-fixture-lint.json:generic-api-key:11
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:27
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:32
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:37
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:52
+
+# status: not a secret (2026-10-15)
+# reason: prose. A runtime summary's IND template guidance text reads
+#   "(drug substance/API standard, impurity/degradant standards, …)";
+#   generic-api-key reads "API" as a key name and the next words as its value.
+#   The digest lines in the same commits' evidence manifests are covered by the
+#   "file digests in evidence manifests" allowlist in .gitleaks.toml.
+a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/final-node22/summary.json:generic-api-key:38491
+a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/post-sync-node22/summary.json:generic-api-key:38491
+
+# Review 2026-10-17: exact findings already present on canonical trunk.
+# Original Git blobs and bounded checks accompany the publication evidence.
+# Only the following commit/path/rule/line fingerprints are dispositioned.
+# No scanner rules, broad paths or live-credential records are changed.
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Verification-route UI fixture with a literal placeholder signature (19 bytes; HS256 needs 32), and only a type claim. It cannot authenticate an actor or tenant.
+e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:jwt:34
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Qualification base Git commit identifier in evidence prose; Git independently confirms the exact value is a commit object.
+e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:docs/evidence/AUDIT-REMEDIATION/2026-10-14/identity-api-keys.md:generic-api-key:3
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:299
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:338
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:364
+
+# status: public by design (reviewed 2026-10-17)
+# reason: Chrome extension public identity key; DER independently parses as a public key, not private signing material.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/extension/manifest.json:generic-api-key:6
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Private-key detection regex source and explanatory comment; no private-key body.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/redact-patterns.ts:private-key:727
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Malformed JWT-shaped literal in the vendor scanner test vector table; header is not JSON and signature is not valid base64url.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/brain-sync.test.ts:jwt:380
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:97
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:101
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:192
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:201
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:204
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:207
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:287
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:626
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:curl-auth-header:296
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/telemetry.test.ts:generic-api-key:330
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Human prose in a prior finding explanation, not a credential assignment.
+64d83390267651ce637cb0f1fdcf25fa6bae2ac9:.gitleaksignore:generic-api-key:329
+
+# status: public by design (reviewed 2026-10-17)
+# reason: Public Firebase browser configuration bundled from Excalidraw; the exact value matches pinned upstream public .env.production. This does not establish provider restrictions or database-rule security.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/diagram-render/dist/diagram-render.html:gcp-api-key:3603

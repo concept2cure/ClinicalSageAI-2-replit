@@ -40,7 +40,10 @@ vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ q
 vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
 vi.mock('../../intelligence/project-intelligence-service.js', () => ({ getProjectIntelligence: h.summary }));
 vi.mock('../workflow-orchestration.js', () => ({ buildWorkflowContext: h.workflow }));
-vi.mock('../../intelligence/readiness-scoring-engine.js', () => ({ computeReadinessScore: h.readiness }));
+vi.mock('../../intelligence/readiness-scoring-engine.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../intelligence/readiness-scoring-engine.js')>()),
+  computeReadinessScore: h.readiness,
+}));
 import { enrichContextForChat } from '../context-enrichment';
 
 const PROGRAM = 'd6160c9f-33d2-4be9-b779-eb27375f6e49';
@@ -56,7 +59,7 @@ const connectionLost = () => Object.assign(new Error('terminating connection due
 /** "Nothing recorded", said of a project: only a read that completed and found no rows may say it. */
 const AFFIRMATIVE_ABSENCE = /No [\w /-]+ data found for this project yet/;
 
-const anchorReads = () => h.query.mock.calls.filter(([sql]) => /regulatory_program_id = \$1/.test(String(sql)));
+const anchorReads = () => h.query.mock.calls.filter(([sql]) => /regulatory_program_id\s*=\s*\$1/.test(String(sql)));
 const memoryReads = () => h.query.mock.calls.filter(([sql]) => String(sql).includes('project_memory_entries'));
 
 beforeEach(() => {
@@ -73,7 +76,7 @@ beforeEach(() => {
   // The live engine is unavailable unless a case says otherwise: readiness falls back to project memory.
   h.readiness.mockReset().mockImplementation(async () => { throw new Error('readiness engine unavailable'); });
   h.query.mockReset().mockImplementation(async (sql: string, params: unknown[] = []) => {
-    if (/regulatory_program_id = \$1/.test(sql)) return { rows: h.anchorRows };
+    if (/regulatory_program_id\s*=\s*\$1/.test(sql)) return { rows: h.anchorRows };
     if (sql.includes('project_memory_entries')) {
       if (typeof params[0] !== 'number') throw integerRefused(params[0]);
       return h.memory ? h.memory() : { rows: [] };
@@ -118,7 +121,7 @@ describe('a program UUID reads the project linked to it', () => {
 
   it('a database without the anchor column is no linked project, not a failure', async () => {
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) throw Object.assign(new Error('column "regulatory_program_id" does not exist'), { code: '42703' });
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) throw Object.assign(new Error('column "regulatory_program_id" does not exist'), { code: '42703' });
       return { rows: [] };
     });
     const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7 });
@@ -179,7 +182,7 @@ describe('a program UUID reads the project linked to it', () => {
 describe('a project lookup that could not tell is reported, never read as "no linked project"', () => {
   it.each(['/safety', '/cmc', '/csr', MODULE_25])('a failed lookup on %s marks the project records unavailable and asserts no absence', async message => {
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) throw connectionLost();
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) throw connectionLost();
       return { rows: [] };
     });
     const result = await enrichContextForChat({ message, projectId: PROGRAM, organizationId: 7 });
@@ -216,11 +219,16 @@ describe('a project lookup that could not tell is reported, never read as "no li
 
 describe('a request that reads several sources reports each on its own', () => {
   it('/submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD', async () => {
-    h.readiness.mockResolvedValue({ overallScore: 61, trend: { direction: 'up' }, predictions: null, dimensions: {}, gaps: [] });
+    // A recorded assessment that measured every dimension (2026-10-15: the block
+    // states readiness through describeReadiness, which needs the score's basis).
+    h.readiness.mockResolvedValue({
+      overallScore: 61, trend: { direction: 'up' }, predictions: null, dimensions: {}, gaps: [],
+      scoreBasis: { source: 'twin_assessment', measured: ['completeness', 'quality', 'consistency', 'compliance'], notMeasured: [] },
+    });
     h.memory = async () => { throw connectionLost(); };
     const result = await enrichContextForChat({ message: '/submit', projectId: 42, organizationId: 7 });
 
-    expect(result.block).toContain('Overall Score: 61/100');
+    expect(result.block).toContain('Readiness 61/100 from the recorded assessment');
     expect(result.enrichmentMeta?.unavailableSources).toEqual(['ectd']);
     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ ectd: 'error' });
     expect(result.block).not.toContain('No eCTD data found');
@@ -273,7 +281,7 @@ describe('a source that could not be read is reported, with why', () => {
   it('a project lookup that cannot finish marks the project record unavailable and reads nothing', async () => {
     vi.useFakeTimers();
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) return stalled();
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) return stalled();
       return { rows: [] };
     });
     const settled = vi.fn();

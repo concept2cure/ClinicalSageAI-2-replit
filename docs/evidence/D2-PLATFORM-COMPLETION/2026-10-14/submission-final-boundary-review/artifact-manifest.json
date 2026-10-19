@@ -1,0 +1,47 @@
+{
+  "phase": "Three independent boundary defects, actual PGlite SQL and controlled provider fixtures; pre-repair5failed40passed45, repaired45, final affected69/69. Initial structural lint warnings preserved; final0errors/0newwarnings. Final full compiler and native38 are separate phases.",
+  "records": [
+    {
+      "path": "red.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 21102,
+      "decodedHexDigest": "87431f8b02d2c88deb96ac5ecc01eaf95498b7b0fc76fea50f48fd83d7a8a415",
+      "archivedHexDigest": "c2109b9c8dd188431e5ca4b7972ac2727ccea57def5f4b6e6947b3915dd3bd8c"
+    },
+    {
+      "path": "green.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 14407,
+      "decodedHexDigest": "eb6d4e3f61fe6fb7788dce6424d8b7992128ed9b4ec409dc6726bae6f13cace2",
+      "archivedHexDigest": "1cfc8cd8965fdbd364b0cf66050cfdae764f9779d3235e01bcbe8455d156d8ae"
+    },
+    {
+      "path": "final-green.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 21192,
+      "decodedHexDigest": "8da5f684f32dbf152143bb892f2530749e88a3e6aaaf88dac2c694bed9b24491",
+      "archivedHexDigest": "5e0df7fe31b8077a1df7d384a9e332618b05b091d6f1e5b6417bfc3105b77102"
+    },
+    {
+      "path": "lint.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 846,
+      "decodedHexDigest": "57d4e2b1158586c22cf8c747ab24ec2d3cb94131477e80bc3103dad2866604ce",
+      "archivedHexDigest": "e2c750c3b7cbd6b23e8a0682672f99803b5caa7e141ad435a51af9fcb3c796bc"
+    },
+    {
+      "path": "final-lint.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 187,
+      "decodedHexDigest": "daee0e8486f609b3fdb3cc89c10c646680728848624d0e7bca41b9ea837aaf9d",
+      "archivedHexDigest": "627f8e580ec6237440ff465ea1835ad28af6fc522789c3cdee738c8a2912218e"
+    },
+    {
+      "path": "source-sha256.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 629,
+      "decodedHexDigest": "1914a4531cdd9c55f6425c69674be5eef8b64a408c03869ca194f948514475f5",
+      "archivedHexDigest": "638f1cb420cf6d8226bb9d7e2cfcd692e428fd39b0dc240556581d50078b3a8a"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "baseline": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "files": [
+    {
+      "file": "server/services/vault/vault-search.ts",
+      "sha256": "1a94bb4863e9227778ca66ca6fedcfd377769a3c7ba786d49db06ccd672c68e4"
+    },
+    {
+      "file": "server/services/vault/document-catalog-search.ts",
+      "sha256": "ca036d72c4ed6b77954b398601a45a705cccc81a40bbcc82f825f5828aa352a8"
+    },
+    {
+      "file": "server/services/vault/document-catalog-search-query.ts",
+      "sha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903"
+    },
+    {
+      "file": "server/services/vault/vault-assistant-search.ts",
+      "sha256": "7b2a1a235a0b3bc82479589e5cabcec8eeac9f796040631e9c28975b299fa71e"
+    },
+    {
+      "file": "server/services/vault/document-passage-search.ts",
+      "sha256": "c4d99b1316957a5262efb5a1e3917a0c63285f264916729352870b60efbe0657"
+    },
+    {
+      "file": "server/services/vault/retrieval-source-access.ts",
+      "sha256": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4"
+    },
+    {
+      "file": "server/services/vault/vector-index-availability.ts",
+      "sha256": "dab672b55c0f768c5781fd3287005405acef2a1dfac8edce6f1e0f4ed3bb0020"
+    },
+    {
+      "file": "server/services/advancedRAGPipeline.ts",
+      "sha256": "bb4b96392b3120285488cc89b317c035a5eff0c624597990542cebf131c6b235"
+    },
+    {
+      "file": "server/services/ragRouter.ts",
+      "sha256": "bca23e89542cf1225db5a14427c501a86bb87e5c983816b0ac70258c06dcc614"
+    },
+    {
+      "file": "server/services/rag-filters.ts",
+      "sha256": "3ea477354ae5a957f6b2be8ec303d2919f60d3e653bbe8def60c3a98d0293acb"
+    },
+    {
+      "file": "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+      "sha256": "b0cc805f43adf2a6b2933b08b55b2c20e8ed64eda148fcabf8262e4dce5f7004"
+    },
+    {
+      "file": "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+      "sha256": "4c0353d3c1b1f1327cc71ad4b13105e63f6f0b33f2c2f88de27f903491976227"
+    },
+    {
+      "file": "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+      "sha256": "2ef15f0827420497c3bff46e71ff0697ba188326f9c96aea71dd019044c70ed8"
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "sha256": "d7d49a5039311b849a9f4b0d4a2941d70e5e58451f89e2aa47a67600ebf545dc"
+    },
+    {
+      "file": "server/services/__tests__/rag-actor-programme-scope.test.ts",
+      "sha256": "5b7036044a57e50fc53bd5a028e2dd108aa2cdef3d75c3869bcb711a4ef042d2"
+    }
+  ]
+}

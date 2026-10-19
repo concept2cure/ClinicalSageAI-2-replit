@@ -20,7 +20,8 @@ export const AGENCY_DISCLOSURE_DAYS = 60;   // ~2 months from inventor disclosur
 export const ELECTION_OF_TITLE_DAYS = 730;  // 2 years from inventor disclosure
 export const PATENT_FILING_DAYS = 365;      // 1 year from election of title
 
-export type DeadlineStatus = 'on_track' | 'due_soon' | 'overdue' | 'satisfied' | 'not_applicable';
+/** 'undetermined': the fact that starts or scopes this clock is not recorded. */
+export type DeadlineStatus = 'on_track' | 'due_soon' | 'overdue' | 'satisfied' | 'not_applicable' | 'undetermined';
 
 export interface BayhDoleDeadline {
   obligation: 'agency_disclosure' | 'election_of_title' | 'patent_filing';
@@ -28,10 +29,13 @@ export interface BayhDoleDeadline {
   status: DeadlineStatus;
   daysRemaining: number | null;
   basis: string;
+  /** Present when status is 'undetermined': what is not recorded. */
+  reason?: string;
 }
 
 export interface BayhDoleComplianceInput {
-  federalFunding: boolean;
+  /** null = nobody has recorded whether the invention was federally funded. */
+  federalFunding: boolean | null;
   disclosureDate?: string | null;
   electionDate?: string | null;
   /** True once an initial patent application has been filed (status patent_filed/licensed). */
@@ -41,10 +45,11 @@ export interface BayhDoleComplianceInput {
 }
 
 export interface BayhDoleComplianceResult {
-  applicable: boolean;
+  /** 'undetermined' while federal funding is not recorded. */
+  applicable: boolean | 'undetermined';
   deadlines: BayhDoleDeadline[];
-  /** True when any applicable obligation is overdue. */
-  hasOverdue: boolean;
+  /** True when any applicable obligation is overdue; null when none is but one could not be evaluated. */
+  hasOverdue: boolean | null;
   basis: string;
 }
 
@@ -69,19 +74,35 @@ function statusFor(dueMs: number, asOfMs: number, satisfied: boolean): { status:
 
 /**
  * Compute the Bayh-Dole reporting deadlines + their status as of `asOf`. Non-federal
- * inventions are not subject (every deadline `not_applicable`). Pure. (37 CFR 401.14.)
+ * inventions are not subject (every deadline `not_applicable`); while federal funding
+ * is not recorded, applicability and every deadline are `undetermined`. Pure.
+ * (37 CFR 401.14.)
  */
 export function evaluateBayhDoleCompliance(input: BayhDoleComplianceInput): BayhDoleComplianceResult {
   const asOfMs = parse(input.asOf) ?? Date.parse('1970-01-01');
   const discMs = parse(input.disclosureDate);
   const elecMs = parse(input.electionDate);
 
+  // 2026-10-15: an unrecorded funding answer used to read as "not federally funded"
+  // (every obligation not_applicable); it is undetermined until someone records it.
+  if (input.federalFunding == null) {
+    const reason = `Whether the invention was federally funded is not recorded, so Bayh-Dole applicability (${BAYH_DOLE_BASIS}) is undetermined.`;
+    const und = (obligation: BayhDoleDeadline['obligation']): BayhDoleDeadline => ({ obligation, dueDate: null, status: 'undetermined', daysRemaining: null, basis: BAYH_DOLE_BASIS, reason });
+    return { applicable: 'undetermined', deadlines: [und('agency_disclosure'), und('election_of_title'), und('patent_filing')], hasOverdue: null, basis: BAYH_DOLE_BASIS };
+  }
   if (!input.federalFunding) {
     const na = (obligation: BayhDoleDeadline['obligation']): BayhDoleDeadline => ({ obligation, dueDate: null, status: 'not_applicable', daysRemaining: null, basis: BAYH_DOLE_BASIS });
     return { applicable: false, deadlines: [na('agency_disclosure'), na('election_of_title'), na('patent_filing')], hasOverdue: false, basis: BAYH_DOLE_BASIS };
   }
 
   const deadlines: BayhDoleDeadline[] = [];
+  // 2026-10-15: with no inventor disclosure date both clocks used to read 'on_track'
+  // (hasOverdue false) although nothing started them. Without the date they are
+  // undetermined — unless title was elected, which satisfies both (as below).
+  const noStartDate = (obligation: BayhDoleDeadline['obligation'], clock: string): BayhDoleDeadline =>
+    elecMs != null
+      ? { obligation, dueDate: null, status: 'satisfied', daysRemaining: null, basis: BAYH_DOLE_BASIS }
+      : { obligation, dueDate: null, status: 'undetermined', daysRemaining: null, basis: BAYH_DOLE_BASIS, reason: `No inventor disclosure date is recorded, so the ${clock} clock cannot be computed.` };
 
   // Agency disclosure — satisfied once title is elected (disclosure to the agency precedes/accompanies election).
   if (discMs != null) {
@@ -89,7 +110,7 @@ export function evaluateBayhDoleCompliance(input: BayhDoleComplianceInput): Bayh
     const { status, daysRemaining } = statusFor(dueMs, asOfMs, elecMs != null);
     deadlines.push({ obligation: 'agency_disclosure', dueDate: toIso(dueMs), status, daysRemaining, basis: BAYH_DOLE_BASIS });
   } else {
-    deadlines.push({ obligation: 'agency_disclosure', dueDate: null, status: 'on_track', daysRemaining: null, basis: BAYH_DOLE_BASIS });
+    deadlines.push(noStartDate('agency_disclosure', '2-month agency-disclosure'));
   }
 
   // Election of title — 2 years from inventor disclosure.
@@ -98,7 +119,7 @@ export function evaluateBayhDoleCompliance(input: BayhDoleComplianceInput): Bayh
     const { status, daysRemaining } = statusFor(dueMs, asOfMs, elecMs != null);
     deadlines.push({ obligation: 'election_of_title', dueDate: toIso(dueMs), status, daysRemaining, basis: BAYH_DOLE_BASIS });
   } else {
-    deadlines.push({ obligation: 'election_of_title', dueDate: null, status: 'on_track', daysRemaining: null, basis: BAYH_DOLE_BASIS });
+    deadlines.push(noStartDate('election_of_title', '2-year election-of-title'));
   }
 
   // Patent filing — 1 year from election (only clocks once title is elected).
@@ -110,7 +131,9 @@ export function evaluateBayhDoleCompliance(input: BayhDoleComplianceInput): Bayh
     deadlines.push({ obligation: 'patent_filing', dueDate: null, status: 'not_applicable', daysRemaining: null, basis: BAYH_DOLE_BASIS });
   }
 
-  return { applicable: true, deadlines, hasOverdue: deadlines.some((d) => d.status === 'overdue'), basis: BAYH_DOLE_BASIS };
+  const hasOverdue = deadlines.some((d) => d.status === 'overdue') ? true
+    : deadlines.some((d) => d.status === 'undetermined') ? null : false;
+  return { applicable: true, deadlines, hasOverdue, basis: BAYH_DOLE_BASIS };
 }
 
 // ─── Submission readiness ──────────────────────────────────────────────────────
@@ -119,7 +142,8 @@ export interface DisclosureReadinessInput {
   title?: string | null;
   inventors?: string | null;
   fundingSource?: string | null;
-  federalFunding?: boolean;
+  /** null/absent = not recorded whether the invention was federally funded. */
+  federalFunding?: boolean | null;
   federalAward?: string | null;
   disclosureDate?: string | null;
 }
@@ -137,7 +161,8 @@ function hasText(s: string | null | undefined): boolean { return typeof s === 's
 /**
  * Score an invention disclosure's submission readiness. Blockers: missing title,
  * inventors, funding source or disclosure date; a federally-funded disclosure
- * missing its federal award number. Pure — the deterministic gate the service
+ * missing its federal award number. An unrecorded federal-funding answer is a
+ * warning finding, not a blocker. Pure — the deterministic gate the service
  * enforces on submit.
  */
 export function evaluateDisclosureReadiness(input: DisclosureReadinessInput): DisclosureReadinessResult {
@@ -152,5 +177,8 @@ export function evaluateDisclosureReadiness(input: DisclosureReadinessInput): Di
     findings.push({ severity: 'critical', message: `Federal award number required for Bayh-Dole agency reporting (${BAYH_DOLE_BASIS}).` });
   }
   for (const b of blockers.filter((x) => !/federal award/.test(x))) findings.push({ severity: 'critical', message: b });
+  if (input.federalFunding == null) {
+    findings.push({ severity: 'warning', message: `Whether the invention was federally funded is not recorded; Bayh-Dole applicability (${BAYH_DOLE_BASIS}) cannot be determined until it is.` });
+  }
   return { readyToSubmit: blockers.length === 0, blockers, findings };
 }

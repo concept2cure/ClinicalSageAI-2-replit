@@ -1,0 +1,121 @@
+{
+  "variant": "light",
+  "rowTitle": "Preview saved output for this ICH E3 section",
+  "docId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+  "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+  "sourceJobId": 31,
+  "reused": false,
+  "themeContrast": {
+    "heading": {
+      "color": "rgb(20, 20, 19)",
+      "background": "rgb(250, 249, 245)",
+      "ratio": 17.497722780575504
+    },
+    "tableHeader": {
+      "color": "rgb(20, 20, 19)",
+      "background": "rgb(245, 244, 238)",
+      "ratio": 16.728586802902356
+    }
+  },
+  "beforeKinds": {
+    "fromSources": 0,
+    "authorAsserted": 0,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 354
+  },
+  "tableCells": [
+    [
+      "Field",
+      "Stored value"
+    ],
+    [
+      "Purpose",
+      "UI verification only"
+    ],
+    [
+      "Source",
+      "Saved CSR output"
+    ]
+  ],
+  "initialBodyWidth": 1440,
+  "figurePatchStatus": 200,
+  "figureWidth": 240,
+  "afterKinds": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "bodyWidth": 1440,
+  "docx": {
+    "bytes": 12124,
+    "sha256": "8e74ca6bb8924254ba33f3a05be96b04592a3ec1665090a1acc0e5e7e0ab7122",
+    "uncontrolledBanner": true,
+    "table": true,
+    "embeddedFigure": true
+  },
+  "conversationBodyWidth": 1440,
+  "canonicalConversation": {
+    "prefilled": true,
+    "sendOnArrival": false,
+    "savedDocId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+    "savedSectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+    "unboundFilingContext": true
+  },
+  "passed": true,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "imageRequests": [
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    }
+  ],
+  "aiTurnRequests": [],
+  "imageTransport": {
+    "requests": 7,
+    "authenticatedFetchOnly": true,
+    "nativeImageRequests": 0,
+    "liveApiImageSrcWrites": 0,
+    "inertApiReferences": 5
+  }
+}

@@ -1,0 +1,7 @@
+== diff.ts
+cases 200000 diffs 0
+== diff2.ts
+old { start: 406, end: 1406, basis: 'relevant' } new { start: 1005, end: 2005, basis: 'relevant' }
+long diffs 0
+== diff3.ts
+cases 30000 relevant 1635 diffs 0

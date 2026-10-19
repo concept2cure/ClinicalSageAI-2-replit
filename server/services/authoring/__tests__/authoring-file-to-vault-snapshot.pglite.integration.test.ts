@@ -2,6 +2,7 @@
  * PDF bytes and audit-chain persistence are explicit seams; no live lock or
  * external storage/scanner qualification is claimed. */
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDispositionHarness, type DispositionFixture, type DispositionHarness,
@@ -37,19 +38,28 @@ let pool: AuthoringPool;
 
 beforeAll(async () => {
   harness = await createDispositionHarness();
+  await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
-      ADD COLUMN content text, ADD COLUMN order_index integer;
+      ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    CREATE TABLE authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
+    CREATE TABLE IF NOT EXISTS authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
       export_type text, doc_sha256 text, exported_by text, file_name text, file_size bigint,
       metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
     CREATE TABLE test_filing_audit (id uuid DEFAULT gen_random_uuid(), tenant_id integer,
       operation text, entry jsonb);
+    /* The governed filing store, so the P-29.2 agreement check has something to
+       compare against. Without these three pieces filingAgreesWithEditing
+       answers "the governed document store is not provisioned here" and records
+       nothing — which is the correct fail-soft posture, and is also why the
+       divergence case below could not be written against this harness before. */
+    ALTER TABLE authoring_documents ADD COLUMN IF NOT EXISTS c2c_document_id text;
+    ALTER TABLE c2c_document_sections ADD COLUMN IF NOT EXISTS section_key text,
+      ADD COLUMN IF NOT EXISTS content jsonb;
   `);
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
@@ -81,6 +91,8 @@ type DocumentStatusRow = { status: string | null };
 
 async function workingDraft(): Promise<WorkingDraft> {
   const f = await harness.seed();
+  // The shared fixture already records active actor 42, current organization
+  // membership, and this programme's unique project anchor and sharing.
   const docId = randomUUID();
   const sections = [
     { id: randomUUID(), code: '12', title: 'Efficacy', content: '<p>Original endpoint result.</p>' },
@@ -144,6 +156,38 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
+    const d = await workingDraft();
+    await d.f.pg.query(`UPDATE authoring_sections SET order_index=1,
+      created_at=CASE WHEN id=$1 THEN '2026-10-14T12:00:00Z'::timestamptz ELSE '2026-10-14T11:00:00Z'::timestamptz END
+      WHERE doc_id=$2 AND tenant_id=$3`, [d.sections[0].id,d.docId,d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind:'filed' });
+    const rendered = String(h.pdf.mock.calls[0][0]);
+    expect(rendered.indexOf('Original safety result.')).toBeLessThan(rendered.indexOf('Original endpoint result.'));
+    expect((await facts(d)).history[0].doc_sha256).toBe(sectionsDigest([...d.sections].reverse()));
+  });
+  it('records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data', async () => {
+    const d = await workingDraft();
+    const origin = { kind: 'vault', id: d.f.vault, programId: d.f.program, sha256: 'a'.repeat(64),
+      title: 'Original source', fileName: 'source.pdf', mimeType: 'application/pdf', documentType: null,
+      sectionCode: '12', conversion: 'extracted-text' };
+    await d.f.pg.query('UPDATE authoring_documents SET provenance=$1 WHERE id=$2 AND tenant_id=$3',
+      [JSON.stringify({ source: 'import', moduleDefaulted: true, importSource: origin }), d.docId, d.f.org]);
+    admit(d);
+    const outcome = await file(d);
+    expect(outcome, JSON.stringify(outcome)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
+    const after = await facts(d);
+    expect(after.history[0].metadata?.importSource).toEqual(origin);
+    expect(after.vault.content_hash).not.toBe(origin.sha256);
+    const preview = await d.f.service.preview(d.f.scope);
+    expect(preview.dataWithdrawalBlockers?.join(' ')).toContain('filed editor rendition');
+    expect(preview.allowedChoices).toEqual(['keep_data']);
+    await expect(d.f.service.apply({ ...d.f.scope, choice: 'remove_data', reason: 'Withdraw the original source after filing', previewToken: preview.previewToken }))
+      .rejects.toMatchObject({ code: 'DISPOSITION_BLOCKED' });
+    expect(await d.f.records()).toEqual([]);
+  });
+
   it.each<Mutation>(['content', 'title', 'order', 'added section'])('refuses unchanged-status %s drift during ingestion and compensates admission', async mutation => {
     const d = await workingDraft();
     admit(d, () => mutate(d, mutation));
@@ -159,6 +203,45 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     expect(h.trail).not.toHaveBeenCalled();
     expect(h.pdf.mock.calls[0][0]).toContain('Original endpoint result.');
     expect(h.pdf.mock.calls[0][0]).not.toContain('Changed endpoint result.');
+  });
+
+  it('records on the filed rendition that the filing holds other text, without refusing the draft', async () => {
+    /* P-29.2. Filing to the Vault is the one exit outside the seal cone: it
+       takes working drafts BY DESIGN and stamps "WORKING DRAFT — not a sealed
+       21 CFR Part 11 record" on page one, so refusing here would dead-end a
+       draft for no gain. But a filed rendition whose source sections' filed
+       copies are not this document's text is a fact about THIS artefact, so it
+       belongs on the artefact's own record. */
+    const d = await workingDraft();
+    const filingId = 'filing_ftv_1';
+    await d.f.pg.query(`INSERT INTO c2c_documents (id, org_id) VALUES ($1, $2)`, [filingId, d.f.org]);
+    await d.f.pg.query(
+      `INSERT INTO c2c_document_sections (document_id, section_key, content)
+       VALUES ($1, $2, jsonb_build_object('text', $3::text))`,
+      [filingId, d.sections[0].code, 'Text nobody typed here.'],
+    );
+    await d.f.pg.query(`UPDATE authoring_documents SET c2c_document_id=$1 WHERE id=$2`, [filingId, d.docId]);
+
+    admit(d);
+    await file(d);
+    const [row] = (await facts(d)).history;
+    // The draft still filed: it has an export record and a live Vault row.
+    expect(row, 'a working draft must still file').toBeDefined();
+    const diverged = (row.metadata as { filingDiverged?: Array<{ key: string; filed: string }> }).filingDiverged;
+    expect(diverged, 'the filed rendition says nothing about a filing holding other text').toEqual([
+      { key: d.sections[0].code, filed: 'different', section: d.sections[0].code },
+    ]);
+  });
+
+  it('says nothing on the record when the document is bound to no filing', async () => {
+    // The control: the common case must not grow a key, and the check must not
+    // invent a divergence out of an unbound document.
+    const d = await workingDraft();
+    admit(d);
+    await file(d);
+    const after = await facts(d);
+    expect(after.history[0], 'the draft must still file').toBeDefined();
+    expect(after.history[0].metadata).not.toHaveProperty('filingDiverged');
   });
 
   it('files a stable working snapshot with its canonical digest and locks sections before the final read/history', async () => {

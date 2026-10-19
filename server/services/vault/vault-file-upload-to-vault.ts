@@ -28,6 +28,11 @@ import { createHash } from 'node:crypto';
 import { loadUploadedFile, UploadedFileError, type UploadedFile } from '../ana/uploaded-file-access.js';
 import { ingestVaultDocument, type VaultIngestResult } from './vault-ingest.service.js';
 import { vaultDocumentCodeForFile } from '../../../shared/constants/domain/vault-document-code';
+import { pool } from '../../db';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { AnaProjectScopeError } from '../ana/project-scope-admission';
+import { vaultWriteRefusal } from './vault-write-authority';
+import { assertVaultUploadSource } from './vault-upload-source-admission';
 
 export interface FileUploadIntoVaultArgs {
   organizationId: number;
@@ -67,8 +72,13 @@ const UPLOAD_REFUSAL_STATUS: Record<UploadedFileError['code'], number> = {
 /** Load the upload's bytes, turning the reader's coded errors into refusals. */
 async function loadForFiling(args: FileUploadIntoVaultArgs): Promise<UploadedFile | Refusal> {
   try {
-    return await loadUploadedFile(args.fileId, args.organizationId);
+    const access = await requireCurrentProgramAccess(pool, { organizationId: args.organizationId, userId: args.userId ?? undefined, programId: args.programId });
+    const roleRefusal = vaultWriteRefusal(access.actor.role);
+    if (roleRefusal) return roleRefusal;
+    await assertVaultUploadSource(pool, args, 'preview');
+    return await loadUploadedFile(args.fileId, args.organizationId, { userId: args.userId });
   } catch (err) {
+    if (err instanceof ProgramReadAccessError || err instanceof AnaProjectScopeError) return { ok: false, status: err.status, code: err.code, message: err.message };
     if (!(err instanceof UploadedFileError)) throw err;
     return { ok: false, status: UPLOAD_REFUSAL_STATUS[err.code], code: err.code, message: err.message };
   }
@@ -111,5 +121,6 @@ export async function fileUploadIntoVault(args: FileUploadIntoVaultArgs): Promis
     dataRoomSourceId: args.dataRoomSourceId,
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
+    assertSourceAccess: (q, phase) => assertVaultUploadSource(q, args, phase, file),
   });
 }

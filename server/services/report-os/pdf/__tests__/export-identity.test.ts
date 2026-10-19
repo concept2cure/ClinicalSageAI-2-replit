@@ -16,7 +16,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import { buildRunPdf, type RunPdfInput } from '../run-pdf';
-import { buildBundlePdf, type BundlePdfInput } from '../bundle-pdf';
+import { buildBundlePdf, buildReportPackPdf, type BundlePdfInput } from '../bundle-pdf';
 
 const EXPORTED_AT = '2026-10-01T10:00:00.000Z';
 
@@ -62,6 +62,8 @@ afterEach(() => {
 describe.each([
   ['the run PDF', () => buildRunPdf(RUN), 'exp-123'],
   ['the bundle PDF', () => buildBundlePdf(BUNDLE), 'exp-9'],
+  ['the retained report pack PDF', () => buildReportPackPdf({ ...BUNDLE,
+    items: [{ content: RUN, bundledStatus: 'partial', sourceDocument: 'retained-run-render' }] }), 'exp-9'],
 ] as const)('%s', (_label, build, exportId) => {
   it('renders the same bytes from the same recorded export, whenever it is rendered', async () => {
     const [a, b] = await twice(build);

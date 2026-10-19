@@ -1,0 +1,1129 @@
+{
+  "branch": "concept2cure-v2",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "status": "UI runtime/test source frozen; final scoped interaction/lint proof green; separate backend/native/compiler/browser/publication gates remain root-owned.",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "bytes": 94987,
+      "digestAlgorithm": "sha256",
+      "digest": "049f1f5c46e699155b98ebc48e5754274a191bc9c2276ac38e3ab92e8616f28d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx",
+      "bytes": 19097,
+      "digestAlgorithm": "sha256",
+      "digest": "068d6164fbe97c2d04def7cc14cd94a5fefa1e440f59cbff7b3fd295d20214c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts",
+      "bytes": 6491,
+      "digestAlgorithm": "sha256",
+      "digest": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "bytes": 98215,
+      "digestAlgorithm": "sha256",
+      "digest": "f99371adae1eb5fb22ccf2665b70e0c884bea30cb5649c424c37eb6e127c4db2"
+    },
+    {
+      "path": "shared/types/submission-ui.ts",
+      "bytes": 4673,
+      "digestAlgorithm": "sha256",
+      "digest": "a261c746a5ede4afacb320776b02acf2cf472b941a7c074c7efacf4e209fdd30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "bytes": 20058,
+      "digestAlgorithm": "sha256",
+      "digest": "2ccea2ff9b76bbbcb244d6865e9e3be7c6045fc4a64ccc675c4fd24155587a4f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "bytes": 6638,
+      "digestAlgorithm": "sha256",
+      "digest": "8462ef29e124268b91ae49a54c7ec03de58247df86a74759643ceffb8125146d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "bytes": 11983,
+      "digestAlgorithm": "sha256",
+      "digest": "5023517890b0bf9875d8987005a4f220861ffec8909f27e98ba44fb24da2be9e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx",
+      "bytes": 5661,
+      "digestAlgorithm": "sha256",
+      "digest": "8b9a8d44d40902ed0b944c3b65548c0879b23732f17efb0a8ea7ee3db99ad6ba"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "bytes": 25176,
+      "digestAlgorithm": "sha256",
+      "digest": "688369dc6d34bb75d929ef2fbc2e5b2a034482b7c9330941af7f626582cf30b3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/deepLinkKeepsProgram.test.tsx",
+      "bytes": 2475,
+      "digestAlgorithm": "sha256",
+      "digest": "eeea6916cf2b4664dde4d3b89c99beb319de3fc2c2482cf60fc37b227755dda9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "bytes": 12842,
+      "digestAlgorithm": "sha256",
+      "digest": "d3937aef5620c8bf272558a3179066c7f101d7d0d7f10f00c916c7f2cc89dfb3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "bytes": 6870,
+      "digestAlgorithm": "sha256",
+      "digest": "f6aee727584303788e5b31490cf46efe1a05297e13f219bb0e3737099aac03c9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx",
+      "bytes": 6648,
+      "digestAlgorithm": "sha256",
+      "digest": "0f5b4ad703364413557cd838f84c487cc1cfb95c4f99b405c96239c4ac415f8c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx",
+      "bytes": 7155,
+      "digestAlgorithm": "sha256",
+      "digest": "6d62342a0049dd4b591a75617ff42145435bd14061f4b1174c173d87f5b8430e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx",
+      "bytes": 4868,
+      "digestAlgorithm": "sha256",
+      "digest": "c4b44e9683a8998e1240fc6f79c76bcf14635a94b618225903efbe6cebb9724a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx",
+      "bytes": 8425,
+      "digestAlgorithm": "sha256",
+      "digest": "2166dfc018b417611f12966045ac92af0940795e518886f9e22882051cd633f2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "bytes": 7981,
+      "digestAlgorithm": "sha256",
+      "digest": "8d2ee60eee431de1a376c8f1c84e28d6722ddd9c59ad934aa2103b2222665551"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx",
+      "bytes": 31472,
+      "digestAlgorithm": "sha256",
+      "digest": "af519a27aebd3d9efc12349bb7b446de80191c988c8e974f2430c61531cc53b1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+      "bytes": 15799,
+      "digestAlgorithm": "sha256",
+      "digest": "dd251abbea1fa6ea22180016a941dde80ad76c565420c03efdbca135079cfc9b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "bytes": 21154,
+      "digestAlgorithm": "sha256",
+      "digest": "b51b69540954a6eabbdf29c8a2ebf6e6474b9fca2ef9d5e83f4face1be48ba51"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx",
+      "bytes": 14075,
+      "digestAlgorithm": "sha256",
+      "digest": "1ade466bdde8debdabd46b67fb5ec7e03850d09af4c45e5f2393072b6aa7d0f7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx",
+      "bytes": 8807,
+      "digestAlgorithm": "sha256",
+      "digest": "ff6b05eb03879cf52a034b0483587c69ba2148cd911ae999bba82def3de4c549"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx",
+      "bytes": 11673,
+      "digestAlgorithm": "sha256",
+      "digest": "80ad999702f0bdb2f00d0e63eddc93748299363abc0b1739c47a870230debed2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "bytes": 11226,
+      "digestAlgorithm": "sha256",
+      "digest": "4203268406654d2f9e98b1105c76eaafbe58a391571050f65a110f64605c6ecd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx",
+      "bytes": 4538,
+      "digestAlgorithm": "sha256",
+      "digest": "50f9f7c70b3b0a924164e945548825ef1af86a0e162d796bdeafde93213727ff"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx",
+      "bytes": 10147,
+      "digestAlgorithm": "sha256",
+      "digest": "85d589dc32a3d1aa7332811752a4db55ec5c7607e7e8c09757867909718bfa8f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx",
+      "bytes": 7924,
+      "digestAlgorithm": "sha256",
+      "digest": "b870c9f2ea2fcabc1cd6daaec0e1964ad5adb3ba7d0eb0897a625c410f1832be"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+      "bytes": 11674,
+      "digestAlgorithm": "sha256",
+      "digest": "257e74182176b1fc9dea82a8769a604b5b4c4dda117ccb1b74373eb30f2ac20c"
+    },
+    {
+      "path": "shared/types/submission-api.ts",
+      "bytes": 28669,
+      "digestAlgorithm": "sha256",
+      "digest": "ccfa5baaae000208342870c7bea805df37f406333d3eda2ebb1fe2dc8c7330b5"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "bytes": 55868,
+      "digestAlgorithm": "sha256",
+      "digest": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "bytes": 30506,
+      "digestAlgorithm": "sha256",
+      "digest": "257bf43ce5a2b3e025916f332c047071fd1310d8ebab94591b91f0f1171d1674"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "bytes": 13420,
+      "digestAlgorithm": "sha256",
+      "digest": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "bytes": 301233,
+      "digestAlgorithm": "sha256",
+      "digest": "e76d82aef95825210ba0467834c3a627bd19ec9feeb5be676970326e1ccd4c68"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "bytes": 6512,
+      "digestAlgorithm": "sha256",
+      "digest": "270df01bada234e24875d964058e331ce63c8b831e8235521fb5cbbd89f13782"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "bytes": 13205,
+      "digestAlgorithm": "sha256",
+      "digest": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/submission-v2.css",
+      "bytes": 3757,
+      "digestAlgorithm": "sha256",
+      "digest": "56b0880571db9dae45e956d15662189cc6a97a64b8abbb38c4a4bb5c12b3073c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "bytes": 160148,
+      "digestAlgorithm": "sha256",
+      "digest": "c179cc1537b9de169714789a3a993eaad96a2e3136e4a780af637bd2f187115b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "bytes": 51215,
+      "digestAlgorithm": "sha256",
+      "digest": "14b5fd93e0e60c8b04c825c7f7e19d509f48bdad6cf0e00f6b2632d326cb3aea"
+    },
+    {
+      "path": "docs/design/SUBMISSION_REQUIRED_DELIVERABLES_UI.md",
+      "bytes": 19817,
+      "digestAlgorithm": "sha256",
+      "digest": "93b08eb5239f4768d8409fdffaf9d145e02e2a5a1c0c83051925639b115097c6"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-integration-28-pass.log",
+      "exitCode": 0,
+      "bytes": 9639,
+      "digestAlgorithm": "sha256",
+      "digest": "68f908b048a6278151570f90df9e2080ae6ff01cd68cec6dd0442ff7fd2c4d45",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-integration-28-pass.raw.txt.gz",
+      "rawArchiveBytes": 1615,
+      "rawArchiveDigest": "27fbfcce6785497db375736c243a7a8dc9d5282b24f45fa1adda245250f75ac6",
+      "uncompressedRawBytes": 9640,
+      "uncompressedRawDigest": "7062d23113cd7471b6d16944b2494612776c632229ad302a0d92a99d3d07f7a7",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-scoped-lint-five-new-warnings.log",
+      "exitCode": 0,
+      "bytes": 1729,
+      "digestAlgorithm": "sha256",
+      "digest": "ee3779c904fa8b093e6617ef4f64fa16afb513fe354cbefc22fbe47c21eb1be2",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-scoped-lint-five-new-warnings.raw.txt.gz",
+      "rawArchiveBytes": 584,
+      "rawArchiveDigest": "c8a1b3b25aa2441812337ffb9491c894a4c7c1cf0bf1e8669f9a6b0556d36459",
+      "uncompressedRawBytes": 1730,
+      "uncompressedRawDigest": "50e17b8c88f2217b85fa3914182f1313f0843b3a003de1bb767f409cdd962de1",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/expanded-integration-55-pass.log",
+      "exitCode": 0,
+      "bytes": 16100,
+      "digestAlgorithm": "sha256",
+      "digest": "b96166d79d8cddcac268d77006eee51af0a41946f2a4a95f4a292fd3528748a8",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/expanded-integration-55-pass.raw.txt.gz",
+      "rawArchiveBytes": 2091,
+      "rawArchiveDigest": "d2ee5c2889a7817183cf21d6e6e97fb34111e7e5c4b7837eb3c60c6dcdbb4cbc",
+      "uncompressedRawBytes": 16101,
+      "uncompressedRawDigest": "24eca15a83f585b2b8d79afc87be17384862af2f500c0f046c2bc497ccba2073",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/second-scoped-lint-two-new-warnings.log",
+      "exitCode": 0,
+      "bytes": 2407,
+      "digestAlgorithm": "sha256",
+      "digest": "f5d86a3fa2e229e0b7a617731c59ddfbbfeb0ea14a251865befad47a8dc5bb00",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/second-scoped-lint-two-new-warnings.raw.txt.gz",
+      "rawArchiveBytes": 612,
+      "rawArchiveDigest": "9535f70e970419fea0362c1f102354e5fb618086a12859121ebcb98d58fcebc2",
+      "uncompressedRawBytes": 2408,
+      "uncompressedRawDigest": "ffd711db82a704bdd2db7caeff7bf4abca61b44d10234daa445d4d3a0df2c67a",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/manifest-session-integration-one-incomplete-response-double.log",
+      "exitCode": 1,
+      "bytes": 54885,
+      "digestAlgorithm": "sha256",
+      "digest": "6dea88336cab08173571d3c83169e58fff57f5b8ae39d7b4e0652cb02593c987",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/manifest-session-integration-one-incomplete-response-double.raw.txt.gz",
+      "rawArchiveBytes": 5237,
+      "rawArchiveDigest": "d948d7c531cb5e5e6f1dcda36c167501f7bbead8addefae156b0eedc529afe2b",
+      "uncompressedRawBytes": 54886,
+      "uncompressedRawDigest": "6ba91dfb97b8d4b2c5a630fc1e6ce3c05e9f2218da33d11de86d41807e1f8f59",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/third-scoped-lint-thirteen-existing.log",
+      "exitCode": 0,
+      "bytes": 1963,
+      "digestAlgorithm": "sha256",
+      "digest": "51e20026fa2b36660e057ff18f93c66898b3f2e628256f4e279e3914af46ac54",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/third-scoped-lint-thirteen-existing.raw.txt.gz",
+      "rawArchiveBytes": 545,
+      "rawArchiveDigest": "8f84d754069cff2fdbb23cc6ae36771b764685386d8037712abaca3ed66e5ff1",
+      "uncompressedRawBytes": 1964,
+      "uncompressedRawDigest": "128d19592f7599e07fe6f72116b94a15e83d10f807e7e1133f25650c951374a6",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-final-integration-one-verdict-regression.log",
+      "exitCode": 1,
+      "bytes": 143401,
+      "digestAlgorithm": "sha256",
+      "digest": "a8dc46dfea4e339c1dd02d6de858b0ec46a9eba59587e8c6221598e414197746",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-final-integration-one-verdict-regression.raw.txt.gz",
+      "rawArchiveBytes": 15006,
+      "rawArchiveDigest": "2907b16401a9212314a167e43ffe30e6cd0af650b5559e6b32a1251284178458",
+      "uncompressedRawBytes": 143402,
+      "uncompressedRawDigest": "0932f0dea324115591ef1ec811cdfbfd777ee5c49d1fce02e67db97e830fcf39",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/pre-verdict-fix-scoped-lint-thirteen-existing.log",
+      "exitCode": 0,
+      "bytes": 1963,
+      "digestAlgorithm": "sha256",
+      "digest": "51e20026fa2b36660e057ff18f93c66898b3f2e628256f4e279e3914af46ac54",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/pre-verdict-fix-scoped-lint-thirteen-existing.raw.txt.gz",
+      "rawArchiveBytes": 545,
+      "rawArchiveDigest": "8f84d754069cff2fdbb23cc6ae36771b764685386d8037712abaca3ed66e5ff1",
+      "uncompressedRawBytes": 1964,
+      "uncompressedRawDigest": "128d19592f7599e07fe6f72116b94a15e83d10f807e7e1133f25650c951374a6",
+      "rawRoundTripVerified": true,
+      "normalization": "Only trailing printer whitespace and terminal blank lines removed; nonempty readable log ends with one newline; raw exact bytes unchanged."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red.log",
+      "bytes": 866647,
+      "digestAlgorithm": "sha256",
+      "digest": "d4aba2e40029dadf039fcca562792ecb0340402e38320757ba1b43a0907f38dd",
+      "exitCode": 1,
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; nonempty readable text ends with one newline. Exact raw stdout/stderr is retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red.raw.txt.gz",
+      "rawArchiveBytes": 19363,
+      "rawArchiveDigest": "f1bf6317e6c2d495d88f6bedea5d7cd2df312808fbb46af04e9ce5337d500d4f",
+      "uncompressedRawBytes": 866648,
+      "uncompressedRawDigest": "8e6710ca9975e66a012f9d8e2a9c9b4d28f957d5ff327a480a4c22087492a90b",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/verdict-preservation-80-pass.log",
+      "bytes": 19343,
+      "digestAlgorithm": "sha256",
+      "digest": "4be87e90c402fa34e2aeb7b8ddb5f88e1095661a57c11fa74e62a0885892e4fa",
+      "exitCode": 0,
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; nonempty readable text ends with one newline. Exact raw stdout/stderr is retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/verdict-preservation-80-pass.raw.txt.gz",
+      "rawArchiveBytes": 2740,
+      "rawArchiveDigest": "9a57bd31b900fd7197b12c9145bafe5d3b44e19dac1f100874413a495ffe56c8",
+      "uncompressedRawBytes": 19344,
+      "uncompressedRawDigest": "853b47b67bfe264d6a0125b4f801d6e514c09b8960ee9aac3fe91e8704992955",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/final-scoped-lint-thirteen-existing.log",
+      "bytes": 1963,
+      "digestAlgorithm": "sha256",
+      "digest": "0b0288abfe961d8707e272f45db59990e27685f7f8fa37bb84edf719e171765b",
+      "exitCode": 0,
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; nonempty readable text ends with one newline. Exact raw stdout/stderr is retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/final-scoped-lint-thirteen-existing.raw.txt.gz",
+      "rawArchiveBytes": 545,
+      "rawArchiveDigest": "3d1e04f210fa6cd49be85d23ee4c3b8f286bd46e306c2155a363c41482973063",
+      "uncompressedRawBytes": 1964,
+      "uncompressedRawDigest": "3500bde75cc3ab993df6790353f9ed5298cb18d5c4e03f48cf1919003c3e26b4",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/final-251-pass.log",
+      "bytes": 105966,
+      "digestAlgorithm": "sha256",
+      "digest": "da6c379607e8dcd1fe068b97b6fb79c1a14ba20f48a088e3dae3df70225dfec7",
+      "exitCode": 0,
+      "normalization": "Only terminal blank lines and printer-added trailing whitespace removed; nonempty readable text ends with one newline. Exact raw stdout/stderr is retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/final-251-pass.raw.txt.gz",
+      "rawArchiveBytes": 9600,
+      "rawArchiveDigest": "b5d37759c6941c7568b8155b8b28ff5740fc4a0d3928c7920e932f39d1a961e2",
+      "uncompressedRawBytes": 105967,
+      "uncompressedRawDigest": "7ee979cca19fb7854494e46f5ccc72678328fde01701b4f75ce3f2a3f8fa7b33",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/README.md",
+      "bytes": 4815,
+      "digestAlgorithm": "sha256",
+      "digest": "61998fecf82518e96e5dd8064ed51703579e7f8f3c946f92505741fe89bc5ba8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red-_submission-deliverables-fixture.tsx.txt",
+      "bytes": 5661,
+      "digestAlgorithm": "sha256",
+      "digest": "8b9a8d44d40902ed0b944c3b65548c0879b23732f17efb0a8ea7ee3db99ad6ba"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red-result.json",
+      "bytes": 792,
+      "digestAlgorithm": "sha256",
+      "digest": "4cecd563aac58fabafd6ba298fd007f8f0a02a6a3bdfc72187e73e5d337518a8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red-source-pins.json",
+      "bytes": 2195,
+      "digestAlgorithm": "sha256",
+      "digest": "96d2e08266ff3fc53b6847281d550d01bb766bc4ef9ce62cbcdaaa159a1b4f97"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red-submissionRequiredDeliverables.test.tsx.txt",
+      "bytes": 12016,
+      "digestAlgorithm": "sha256",
+      "digest": "d94d4a43efc35127aae2166419366757cf1f7aecaf96dd3cb8320247305930fe"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/controlled-red-submissionSelectorScope.test.tsx.txt",
+      "bytes": 9635,
+      "digestAlgorithm": "sha256",
+      "digest": "9e8fb579d309673b5ef5fbfa64d988013508e962cb843ed0576afb16893ea338"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/final-test-inventory.json",
+      "bytes": 80991,
+      "digestAlgorithm": "sha256",
+      "digest": "482bd7e7bd6ad68ac487cd5ec3eba7cdab06a57e086e5362e89a2c1c5a908246"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/first-final-integration-source-pins.json",
+      "bytes": 2472,
+      "digestAlgorithm": "sha256",
+      "digest": "cc6270d40c45a3b9967637c9f83778d60bb423c42f4c7deefc1fda9bd7a32d00"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/frozen-ui-owned-source-pins.json",
+      "bytes": 2269,
+      "digestAlgorithm": "sha256",
+      "digest": "505a919ca166c8892b9c7a3163430a5e07d430d5195ff2b67a7d3bcd54dccbc8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-required-deliverables-ui/pre-final-log-artifacts.json",
+      "bytes": 7304,
+      "digestAlgorithm": "sha256",
+      "digest": "275caeacc1e8ff72e59a86f96d32693894e32658501b039397ae8dd90f0680e9"
+    }
+  ],
+  "controlledRed": {
+    "exitCode": 1,
+    "failed": 25,
+    "passed": 3,
+    "skipped": 0,
+    "files": 2,
+    "durationSeconds": 33.91,
+    "missingWorkspaceReachabilityFailures": 19,
+    "independentExistingSelectorFailures": 6
+  },
+  "meaningfulIntegratedRegression": {
+    "firstResult": "248 passed / 1 failed across 23 suites; unchanged Builder lifecycle QA lost confirmed verdict on refetch",
+    "preservationGreen": "80/80 across 4 suites",
+    "fix": "Existing parent Notice receives the existing write outcome before strict sequence refetch; exact selection/request generation, sequence/context and sameRevision guard promotion."
+  },
+  "finalVerification": {
+    "exitCode": 0,
+    "filesPassed": 23,
+    "casesPassed": 251,
+    "casesFailed": 0,
+    "casesSkipped": 0,
+    "durationSeconds": 79.83,
+    "newCaseCount": 68,
+    "unchangedImpactedCaseCount": 183,
+    "newSuiteRuntimeWarningHeaders": 0,
+    "existingFixtureRuntimeWarningHeaders": 16,
+    "existingFixtureWarningFiles": [
+      "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx"
+    ]
+  },
+  "scopedLint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 13,
+    "existingSubmissionCenterOccurrences": 5,
+    "existingSubmissionSeqWorkspacesOccurrences": 8,
+    "newOccurrences": 0,
+    "suppressionOrBaselineChanges": false
+  },
+  "historicalSealedEvidenceVerifiedWithoutRewrite": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/source-and-artifact-manifest.json",
+      "bytes": 8447,
+      "digestAlgorithm": "sha256",
+      "digest": "929159a5e7b319af9c11ae8e789f2b5b543b0d42f8592370f0ce91678bace4a8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.log",
+      "bytes": 225131,
+      "digestAlgorithm": "sha256",
+      "digest": "cc116331039528278fb0a4eeeb2a04b50608d3c2eb5d898a649923259e372878"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.raw.txt.gz",
+      "bytes": 7463,
+      "digestAlgorithm": "sha256",
+      "digest": "64070bd13451c26c5f197af0ada5b16403c4c703b4185579ea8005ecfe9553bc"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.log",
+      "bytes": 51709,
+      "digestAlgorithm": "sha256",
+      "digest": "45c70fbe099a16e8955653339c173836e05d72d15c4f70f463b83a1612db2f78"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.raw.txt.gz",
+      "bytes": 4285,
+      "digestAlgorithm": "sha256",
+      "digest": "7d919c54f789123e2c056bd353b709f036c3da8ace618f2a13468fcef83deb2a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.log",
+      "bytes": 1197,
+      "digestAlgorithm": "sha256",
+      "digest": "e159303d461c51ccb7974a6d0b1b461d8064ad86d7d27f89e3e294097e967362"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.raw.txt.gz",
+      "bytes": 407,
+      "digestAlgorithm": "sha256",
+      "digest": "53a95af9852c9c6b0f69e84067d60c783f46cc3102bcd9d06b81260c0fc55d5b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.log",
+      "bytes": 9096,
+      "digestAlgorithm": "sha256",
+      "digest": "104c6ec6f683a0b91b9801040538b4d92ab83de86943b0a983c96eed1e8585ed"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.raw.txt.gz",
+      "bytes": 1990,
+      "digestAlgorithm": "sha256",
+      "digest": "3ec59e47bfcf98bca3a43ccd0491042cbc22e80ab04274144546448516ed9f0c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "90bf1e5f5842f27f08f8d2d47a4659f6e163e60a14d270604cbf7a8c96554b94"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.raw.txt.gz",
+      "bytes": 345,
+      "digestAlgorithm": "sha256",
+      "digest": "acbb9c7296d5191524921f09180dae736ad89b32c8b3a2b641dcbad8da25e57d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red-source-pins.json",
+      "bytes": 1361,
+      "digestAlgorithm": "sha256",
+      "digest": "97a009284cc9d69bb84e1a570e35f396e7ebc492075724e176d671e57d5d2f92"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/test-inventory.json",
+      "bytes": 10800,
+      "digestAlgorithm": "sha256",
+      "digest": "711b60d75e1d5708fc33620f620ba164ecf79cff6e5f6ce63d37270cee6edb79"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/lint-warning-preservation.json",
+      "bytes": 414,
+      "digestAlgorithm": "sha256",
+      "digest": "2da5d3cde86cbce98875ff93ca7decff384883407ce24ee5acd2ff6ee1e1a356"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/source-and-artifact-manifest.json",
+      "bytes": 9456,
+      "digestAlgorithm": "sha256",
+      "digest": "c52322ffa496f9a36d17dd1274110874e52f70f8fd2296aa50ae41126c8d0900"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/prospective-9-fail-2-pass.log",
+      "bytes": 13117,
+      "digestAlgorithm": "sha256",
+      "digest": "72225e9afc12ed2552c1c2b4e3445a48d2af8b56b379741326ae79a2d72cb223"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/prospective-9-fail-2-pass.raw.txt.gz",
+      "bytes": 1807,
+      "digestAlgorithm": "sha256",
+      "digest": "cc69f31c8afa89b2bda9e29f38a33201a016f81b26ccb7361bbc610ac153ce3f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-55-pass.log",
+      "bytes": 11331,
+      "digestAlgorithm": "sha256",
+      "digest": "1ed405dfa5729fd30505bc2af12773d1ba3aba9a29e8bcd69e6e2a237cd1e3d6"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-55-pass.raw.txt.gz",
+      "bytes": 2230,
+      "digestAlgorithm": "sha256",
+      "digest": "a57cc60f00f7657a7542a383aaf269c67e734ed542736f9c84ac32c3b5634992"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "b58df9f7446811d3dfd0c52258f2700f238beaef99c2008ba98c689fa0c771a5"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-scoped-lint.raw.txt.gz",
+      "bytes": 346,
+      "digestAlgorithm": "sha256",
+      "digest": "681eacd1314b713fa4447f95fb6e3e8b2522f104440d7699b04fec983f6b7507"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/baseline-source-pins.json",
+      "bytes": 636,
+      "digestAlgorithm": "sha256",
+      "digest": "e2228458a08394992c6cc00ee7c7340b2371ccf46903a8f3097db7613cb17cfd"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/test-inventory.json",
+      "bytes": 13414,
+      "digestAlgorithm": "sha256",
+      "digest": "7b2ebdab5fb566931534afef056afeb74c9f51f745a5f59ae558790c3c0890cb"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/README.md",
+      "bytes": 5177,
+      "digestAlgorithm": "sha256",
+      "digest": "612d5c82dc277342c844e114f960e04fc93f28aaa32a4d65492e20c1bba8626f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/source-and-artifact-manifest.json",
+      "bytes": 11348,
+      "digestAlgorithm": "sha256",
+      "digest": "ab27bcec0284dcce9d307c4482f6f94a690a2889c43c70da5ffdc5e2dfe82b0a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/final-55-pass.log",
+      "bytes": 11320,
+      "digestAlgorithm": "sha256",
+      "digest": "29697d731bf8c1f79e21eb23ccaa3baf42242383c6566d1bb4d95483a2fc88b0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/final-55-pass.raw.txt.gz",
+      "bytes": 2201,
+      "digestAlgorithm": "sha256",
+      "digest": "cc7e948dbec566b8344bb4d16e63c9eb666af4654392a33c57317d6ac72e496d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/scoped-test-lint.log",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/scoped-test-lint.raw.txt.gz",
+      "bytes": 20,
+      "digestAlgorithm": "sha256",
+      "digest": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/baseline-source-pins.json",
+      "bytes": 436,
+      "digestAlgorithm": "sha256",
+      "digest": "5be58b72eb778012ff082510db2ffb72ba7f191f91382e47cb2aa8f77706b431"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/test-inventory.json",
+      "bytes": 13221,
+      "digestAlgorithm": "sha256",
+      "digest": "b45a4f122c2eb3689f6b9bceafafdb84c92a39febc958e3cba971c20fd6dfe03"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/README.md",
+      "bytes": 5055,
+      "digestAlgorithm": "sha256",
+      "digest": "44944633b0af3ff0a7325f5e7cbfc52cf018743faf92312df361e407fd7363fa"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/source-and-artifact-manifest.json",
+      "bytes": 21999,
+      "digestAlgorithm": "sha256",
+      "digest": "9460bfd2c7ec254662f80a76235d904e1795e7a646b35e76473246492fc01733"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-prospective-locator-failures.log",
+      "bytes": 131307,
+      "digestAlgorithm": "sha256",
+      "digest": "b75e7e7e4be958c62c9157c2edc23314c4d0091cbaae70108106e3cffce99f22"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-prospective-locator-failures.raw.txt.gz",
+      "bytes": 8000,
+      "digestAlgorithm": "sha256",
+      "digest": "f5141d7a548b1889014bb60764f51e196480b5011b9a5284693fe5e7fbe1094b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/second-prospective-history-locator-failure.log",
+      "bytes": 40710,
+      "digestAlgorithm": "sha256",
+      "digest": "ac1fc0515f0bf7bdd972ed6045a3dec4dda522309922542bad6da6dffdc0f40c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/second-prospective-history-locator-failure.raw.txt.gz",
+      "bytes": 3821,
+      "digestAlgorithm": "sha256",
+      "digest": "37328b3bc5af44c124181ff5c4b722368ed6d221995474ce2d2b0ab265222457"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/prospective-6-fail-3-pass.log",
+      "bytes": 11437,
+      "digestAlgorithm": "sha256",
+      "digest": "181f130a7f921a45818bfb02ea51d6294464270d14eed7a1793233cfe6728f15"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/prospective-6-fail-3-pass.raw.txt.gz",
+      "bytes": 2330,
+      "digestAlgorithm": "sha256",
+      "digest": "df809b96ae27dc38b60d1521ec2fae10a63425321925c09c162d8835663ab895"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-integration-161-pass.log",
+      "bytes": 31890,
+      "digestAlgorithm": "sha256",
+      "digest": "e0d46af4d84288778bf004965e14cf0ccea5f72e6a404797d02afed190f1812c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-integration-161-pass.raw.txt.gz",
+      "bytes": 5783,
+      "digestAlgorithm": "sha256",
+      "digest": "028c68ec1e4859d733f753690110121756aa1b62b04febbe63bdb1e01938808f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-lint-dashboard-size-warning.log",
+      "bytes": 1003,
+      "digestAlgorithm": "sha256",
+      "digest": "1bd1bc3bd66121d22d1388ff07799df244ee21d776b26df27eb3fd9e01fbda5f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/first-lint-dashboard-size-warning.raw.txt.gz",
+      "bytes": 364,
+      "digestAlgorithm": "sha256",
+      "digest": "c1a730dd8604adc058c254f49bd309673db99f72bf8d7df4c7496d788b39b697"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/final-161-pass.log",
+      "bytes": 31884,
+      "digestAlgorithm": "sha256",
+      "digest": "fb0c564b4ee4d49c1801d29bc7865fa6b34a47ee9d06f0095016114c9d7b49a7"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/final-161-pass.raw.txt.gz",
+      "bytes": 5784,
+      "digestAlgorithm": "sha256",
+      "digest": "cc5248cc4255ef22f80e99f3652f88ca6fe1ce5f716924348fc1d50038549cce"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "5d3fe6712f9be7437f25e7abc75f08fd537a056bf50f88ea88f5aecf5dae91e5"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/final-scoped-lint.raw.txt.gz",
+      "bytes": 346,
+      "digestAlgorithm": "sha256",
+      "digest": "3114bb113f74dbad4138c0066f1bf0460937680e38ef3f26d8895fe2bc24a0e0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/baseline-source-pins.json",
+      "bytes": 437,
+      "digestAlgorithm": "sha256",
+      "digest": "38cbd403348f8dde83f602d8b31dc0b03dfa2a67e3285dcb5535b382d45fa586"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/test-inventory.json",
+      "bytes": 37789,
+      "digestAlgorithm": "sha256",
+      "digest": "f9bda3c6b39be3a861dd53971edab8eb3cbd130b9bd5834c2c6b605544738986"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-type-fixtures/README.md",
+      "bytes": 2407,
+      "digestAlgorithm": "sha256",
+      "digest": "e209371427f08f62e1b59ad6996362ee6a49a5c1cee266f3a1f5186b48221648"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/source-and-artifact-manifest.json",
+      "bytes": 30004,
+      "digestAlgorithm": "sha256",
+      "digest": "6ffc19e6eacee37e49c3434683d7b10806baa39536a7536953943a9aaa56e108"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/prospective-11-fail-11-pass.log",
+      "bytes": 20912,
+      "digestAlgorithm": "sha256",
+      "digest": "2266f737b3832f2fdb322b1d9db8a419515157b74884f2609bace51f63f6eab4"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/prospective-11-fail-11-pass.raw.txt.gz",
+      "bytes": 2470,
+      "digestAlgorithm": "sha256",
+      "digest": "7af179d2393e2074fc37409cc6751007a15bbb1f8ff297b162a57fe99ec65b35"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-integration-191-pass.log",
+      "bytes": 37967,
+      "digestAlgorithm": "sha256",
+      "digest": "4b8af620ee6d18a9cf0278bbde3110efc323697985672707717cb21d68b2a54c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-integration-191-pass.raw.txt.gz",
+      "bytes": 6523,
+      "digestAlgorithm": "sha256",
+      "digest": "2bbda2421c36cab5017203013e437f28e2483dd50424156b74fe179ceb0ed3ae"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-lint-three-new-warnings.log",
+      "bytes": 1316,
+      "digestAlgorithm": "sha256",
+      "digest": "a32cac6050f8ae11a21ae996ac3b387223d7f32982b353a140d49f012f952db3"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/first-lint-three-new-warnings.raw.txt.gz",
+      "bytes": 426,
+      "digestAlgorithm": "sha256",
+      "digest": "96f7b5bcbba054f8e42b50b5d2ee3e70f932bac9cb25f33a87f1903fb0fa2c9f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-191-pass.log",
+      "bytes": 37964,
+      "digestAlgorithm": "sha256",
+      "digest": "dda49b57785d2d0fec40b0f88a0449f8cd6cc59ec9b7dfea2876f5344120f828"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-191-pass.raw.txt.gz",
+      "bytes": 6566,
+      "digestAlgorithm": "sha256",
+      "digest": "714c92ca2f0569b68bcb09f6fbbb146a504012777b042f4c4b39f0e72200b3e0"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "1973c2620e68b039ffffef9fed4ba91da1b05d3856fbb0426f15fbc91410d5c6"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/final-scoped-lint.raw.txt.gz",
+      "bytes": 345,
+      "digestAlgorithm": "sha256",
+      "digest": "b33283968f72d2a174f39fa2f523f88b4598c49e6c3787ff67e005e3935f571f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/regional-baseline-sixteen-source-pins.json",
+      "bytes": 3751,
+      "digestAlgorithm": "sha256",
+      "digest": "6752ddba8e8fd833a9351fd235ff5efdd285e6058ae342e8cbae7884f3b9149c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/test-inventory.json",
+      "bytes": 44914,
+      "digestAlgorithm": "sha256",
+      "digest": "dfbd00e9d69da251303c61b2934c323715f93f431927f405350c3fc5263260d5"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/README.md",
+      "bytes": 4521,
+      "digestAlgorithm": "sha256",
+      "digest": "fc5e06cd376b2b29b5b5a6389a9f9ec3a1d1b9dbc1ecd38677ba1b41a13e819c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/baseline-lint.json",
+      "bytes": 127868,
+      "digestAlgorithm": "sha256",
+      "digest": "5fb1dd49c9bd9dbbc724afb0db355a24cb77c28e524a260bf265855a83b32f2a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/bounded-check-results.json",
+      "bytes": 4722,
+      "digestAlgorithm": "sha256",
+      "digest": "04ac59df5fe219daa3b114a99b37c2de2ba3e991b524c2d4e761d2333f69eaad"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/current-original-red.log",
+      "bytes": 78385,
+      "digestAlgorithm": "sha256",
+      "digest": "9c9e70e0817aef6cfa7a530f8d78bf54bab1933ea3b09374af9b2a4e8bba408a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/final-qualified-source-pins.json",
+      "bytes": 3285,
+      "digestAlgorithm": "sha256",
+      "digest": "8047adef9bf1438ccd2ef5e05c1980b0e3364381d5b81542aed4bf756bf81c3d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/lint-comparison.json",
+      "bytes": 394,
+      "digestAlgorithm": "sha256",
+      "digest": "945066d659dbfa4122a566882375c629b663df4b05ded6087a332e65b32ddcb7"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/overview-original-red.log",
+      "bytes": 16709,
+      "digestAlgorithm": "sha256",
+      "digest": "bd337e3c488652b3aa5bc969bd049d2512a202a3e5eeb5f2aaf7227075d89353"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/preparation-source-pins.pre-entitlement-rebase.json",
+      "bytes": 1547,
+      "digestAlgorithm": "sha256",
+      "digest": "b0f37df41d926ba3b5b541187407ae610adc5691cce6743501ff918fbd75765e"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/regional-overview-original-22.red.test.ts.source",
+      "bytes": 13546,
+      "digestAlgorithm": "sha256",
+      "digest": "0b701c9689d77a2dd9d6434e655b990e7b0ce628fb386334e4b2ede46adfa004"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/scoped-final-green.log",
+      "bytes": 33825,
+      "digestAlgorithm": "sha256",
+      "digest": "c9cb35e35b83b96273379666ab9dc2e729d4bb41e34734c2783b32ed217655d9"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/scoped-final-lint.json",
+      "bytes": 129513,
+      "digestAlgorithm": "sha256",
+      "digest": "20e14d0c17a366d35802ba8ba73fffbd4180bb608442e0f23a43d932a5aeedb1"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/scoped-first-green.log",
+      "bytes": 33825,
+      "digestAlgorithm": "sha256",
+      "digest": "c5983ef0a14bd627007254a2631183fbe9e2cfad69de0b25ab93f0c35351ba2e"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/scoped-first-lint.json",
+      "bytes": 162538,
+      "digestAlgorithm": "sha256",
+      "digest": "79f3212590e7443a4c47ff68b4e9f1420b6737a4b438f7deb119667aa15bdf9a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/artifacts/ui-regression-first-green.log",
+      "bytes": 33725,
+      "digestAlgorithm": "sha256",
+      "digest": "d2f85816a620216deac4cadc4f8635c8b65994e5fe7c5500cd19799c63dbe8a2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-report-applicability/manifest.json",
+      "bytes": 6407,
+      "digestAlgorithm": "sha256",
+      "digest": "7403d2c733f9df4cabe18b229abb6254aeb5a8e55e0ce7647f9bec25301abf4a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-unverified-plan/README.md",
+      "bytes": 5478,
+      "digestAlgorithm": "sha256",
+      "digest": "a8aa89108394c7de259a67a13104dfa51b46a33933d9d59ce1ffc1a35572bbe2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/source-and-artifact-manifest.json",
+      "bytes": 11192,
+      "digestAlgorithm": "sha256",
+      "digest": "dab1803b3736fefa80aeff3b71905c5f2d4ff30523779a857622f440b1b134b2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/original-hosted-baff-finding-excerpt.log",
+      "bytes": 3060,
+      "digestAlgorithm": "sha256",
+      "digest": "2d1cde5240c1e576cdd23935f20decf2bf9f1f0e10f2c3c9767e41e21a1be5b8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/original-hosted-baff-finding-excerpt.raw.txt.gz",
+      "bytes": 1251,
+      "digestAlgorithm": "sha256",
+      "digest": "40ae9d2efd62c7aed6b108805ff5ea36e89618f79c56389f2f21db718af300e5"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/scoped-fixture-lint.log",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/scoped-fixture-lint.raw.txt.gz",
+      "bytes": 20,
+      "digestAlgorithm": "sha256",
+      "digest": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/baseline-source-pins.json",
+      "bytes": 655,
+      "digestAlgorithm": "sha256",
+      "digest": "2f8185ae1e3558fd8ea7c8445259091b004de74e5f9e63664ded8d7b5726ac1f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/source-review.json",
+      "bytes": 520,
+      "digestAlgorithm": "sha256",
+      "digest": "9dafb58ecd6ed769bc82577ee23fcf62345571b13873f104db66007397127333"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/prepared-test-command.txt",
+      "bytes": 718,
+      "digestAlgorithm": "sha256",
+      "digest": "11d544852e55eab3f607239b52e0511847545458fd952225233c16dece08867c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/final-55-pass.log",
+      "bytes": 11326,
+      "digestAlgorithm": "sha256",
+      "digest": "44b39984444ff498c1555dc9ad05034395354f90f409cd8b556e0bc712d47ce2"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/final-55-pass.raw.txt.gz",
+      "bytes": 2205,
+      "digestAlgorithm": "sha256",
+      "digest": "6815ec3444c6b1c1a180ef7a0bf4a2b0f320e4ac6bc7a70af4da91b834f61a38"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-fixed-fixture-selectors/test-inventory.json",
+      "bytes": 16423,
+      "digestAlgorithm": "sha256",
+      "digest": "83f1952387ae4b0be0ed669a2f2cc240c3926c6ee593b08a0a94886c844e140a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-actual-plan-ui/README.md",
+      "bytes": 5178,
+      "digestAlgorithm": "sha256",
+      "digest": "f2308de4704834b21c41443a2ebc2610c25581014da33b3fa49a6624b5a5b166"
+    }
+  ],
+  "phaseQualification": {
+    "UIProof": "Actual canonical client interactions, runtime malformed/scope guards, session/write races and exact editor handoff; not native source/privacy or browser proof.",
+    "incomingWorkbench": "Root merged incoming exact-editor/template work; unchanged current editor regressions are included, no editor source owned/changed here.",
+    "backendContract": "Reviewed shared ABI and runtime constants imported from backend/shared owner; backend request/source native qualification remains separately owned.",
+    "publication": "No index/commit/push/compiler/native/provider/browser operation by UI owner.",
+    "browserAndCompiler": "Pending root-owned actual persisted-fixture review and sole integrated compiler, not inferred from client unit tests."
+  },
+  "ownedSourceFreeze": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "bytes": 94987,
+      "digestAlgorithm": "sha256",
+      "digest": "049f1f5c46e699155b98ebc48e5754274a191bc9c2276ac38e3ab92e8616f28d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx",
+      "bytes": 19097,
+      "digestAlgorithm": "sha256",
+      "digest": "068d6164fbe97c2d04def7cc14cd94a5fefa1e440f59cbff7b3fd295d20214c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts",
+      "bytes": 6491,
+      "digestAlgorithm": "sha256",
+      "digest": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "bytes": 98215,
+      "digestAlgorithm": "sha256",
+      "digest": "f99371adae1eb5fb22ccf2665b70e0c884bea30cb5649c424c37eb6e127c4db2"
+    },
+    {
+      "path": "shared/types/submission-ui.ts",
+      "bytes": 4673,
+      "digestAlgorithm": "sha256",
+      "digest": "a261c746a5ede4afacb320776b02acf2cf472b941a7c074c7efacf4e209fdd30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "bytes": 20058,
+      "digestAlgorithm": "sha256",
+      "digest": "2ccea2ff9b76bbbcb244d6865e9e3be7c6045fc4a64ccc675c4fd24155587a4f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "bytes": 6638,
+      "digestAlgorithm": "sha256",
+      "digest": "8462ef29e124268b91ae49a54c7ec03de58247df86a74759643ceffb8125146d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "bytes": 11983,
+      "digestAlgorithm": "sha256",
+      "digest": "5023517890b0bf9875d8987005a4f220861ffec8909f27e98ba44fb24da2be9e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx",
+      "bytes": 5661,
+      "digestAlgorithm": "sha256",
+      "digest": "8b9a8d44d40902ed0b944c3b65548c0879b23732f17efb0a8ea7ee3db99ad6ba"
+    }
+  ],
+  "noStyleIconDependencyAppStoreOrTaxonomyDuplication": true
+}

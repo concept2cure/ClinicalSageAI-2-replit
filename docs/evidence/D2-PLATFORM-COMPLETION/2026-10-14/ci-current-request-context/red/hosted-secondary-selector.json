@@ -1,0 +1,14 @@
+{
+  "runId": 38522415630,
+  "jobId": 115722969088,
+  "artifactId": 11876225697,
+  "qualification": "Completed native-step artifact only; file failed in beforeAll with zero executed assertions. This is not eighteen individual assertion failures or a whole-job verdict.",
+  "file": {
+    "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+    "failedAssertions": 0,
+    "failureCodes": [],
+    "firstFailure": "Use only the existing isolated canonical native recheck DB.",
+    "triage": "CI-incompatible local QA selector",
+    "caseNames": []
+  }
+}

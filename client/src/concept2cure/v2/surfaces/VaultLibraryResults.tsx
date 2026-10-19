@@ -1,11 +1,11 @@
 /**
- * Library search: every project's Vault at once (plan critique 15, row D2).
+ * Library search: the Vaults the viewer can access (plan critique 15, row D2).
  *
  * The Vault searched one project. A reviewer looking for "the 2024 stability
  * report" had to know which project held it; Veeva's library search does not
- * ask. With "All projects" on, the Vault's search box reads
+ * ask. With "Accessible projects" on, the Vault's search box reads
  * GET /api/c2c/project-vault/search, the same query as the project search
- * over every program the organisation holds (vault-search.ts), and lists each
+ * over the programs the viewer can currently access (vault-search.ts), and lists each
  * hit with the project that holds it. A hit downloads through its own
  * project. A search that failed is said to have failed, never shown as no
  * matches.
@@ -25,10 +25,22 @@ export interface LibraryHit {
   program: { id: string; name: string | null };
 }
 
-export interface LibraryShape { query: string; total: number; limit: number; results: LibraryHit[] }
+export interface LibraryShape { scope: 'verified-accessible-programs'; query: string; total: number; limit: number; results: LibraryHit[] }
 
-const isLibraryShape: ShapeGuard<LibraryShape> = (v): v is LibraryShape =>
-  !!v && typeof v === 'object' && Array.isArray((v as LibraryShape).results) && typeof (v as LibraryShape).total === 'number';
+const nullableText = (v: unknown): v is string | null => v === null || typeof v === 'string';
+function isLibraryHit(v: unknown): v is LibraryHit {
+  if (!v || typeof v !== 'object') return false;
+  const h = v as LibraryHit;
+  return typeof h.id === 'string' && h.id.length > 0 && typeof h.title === 'string' &&
+    nullableText(h.version) && typeof h.current === 'boolean' && nullableText(h.snippet) &&
+    !!h.program && typeof h.program.id === 'string' && h.program.id.length > 0 && nullableText(h.program.name);
+}
+const isLibraryShape: ShapeGuard<LibraryShape> = (v): v is LibraryShape => {
+  if (!v || typeof v !== 'object') return false;
+  const d = v as LibraryShape;
+  return d.scope === 'verified-accessible-programs' && typeof d.query === 'string' && Number.isSafeInteger(d.total) && d.total >= 0 &&
+    Array.isArray(d.results) && d.results.every(isLibraryHit) && d.total >= d.results.length;
+};
 
 export const LIBRARY_PAGE = 50;
 
@@ -36,7 +48,7 @@ export const LIBRARY_PAGE = 50;
 export function libraryHeadline(d: LibraryShape): string {
   const n = d.total === 1 ? '1 document' : `${d.total} documents`;
   const shown = d.total > d.results.length ? ` Showing the ${d.results.length} best matches.` : '';
-  return `${n} across all projects match “${d.query}”.${shown}`;
+  return `${n} in projects you can access match “${d.query}”.${shown}`;
 }
 
 export function VaultLibraryResults({
@@ -54,12 +66,12 @@ export function VaultLibraryResults({
     : null;
   const st = useLiveData<LibraryShape>(path, [path], isLibraryShape);
   if (!path) return null;
-  if (st.loading) return <div className="vd-lib" data-testid="vault-library-results"><div className="scaf-note" role="status">Searching every project…</div></div>;
+  if (st.loading) return <div className="vd-lib" data-testid="vault-library-results"><div className="scaf-note" role="status">Searching projects you can access…</div></div>;
   if (st.error || !st.data) {
     return (
       <div className="vd-lib" data-testid="vault-library-results">
         <div className="vd-dr-err" role="alert">
-          {I.alertTriangle} The library could not be searched, so nothing was searched. This is not a result of zero matches.
+          {I.alertTriangle} The library search could not be verified. This is not a result of zero matches.
         </div>
       </div>
     );

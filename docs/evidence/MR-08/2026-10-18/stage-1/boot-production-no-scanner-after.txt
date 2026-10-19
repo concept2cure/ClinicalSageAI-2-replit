@@ -1,0 +1,12 @@
+# Changed code: node dist/index.js (server bundle built from this working tree) with ci.yml production-boot-smoke's env
+# (NODE_ENV=production, RLS_ENFORCE=on, app_service over TLS to a freshly provisioned Postgres 16 + pgvector), CLAMAV_HOST UNSET.
+# Expected: the process exits non-zero and names clamav_connectivity.
+
+pid=17727
+the server EXITED during boot, exit code 1 (last /readyz: 000)
+
+── boot log, security self-test lines ──
+390:[security-self-test] FAILED. Critical checks:
+391:  - clamav_connectivity: CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)
+392:Set SECURITY_SELF_TEST_NONBLOCKING=true to override (NOT recommended).
+393:{"level":50,"time":"2026-10-18T18:59:38.743Z","pid":17727,"hostname":"vm","context":{"overall":"failing","failures":[{"name":"clamav_connectivity","reason":"CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)"}]},"msg":"[security-self-test] Security self-test FAILED — refusing to start in production"}

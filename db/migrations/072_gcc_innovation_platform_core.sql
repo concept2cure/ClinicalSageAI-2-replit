@@ -16,6 +16,14 @@
 --   - Complete audit trails for Part 11 compliance
 --   - Performance-optimized indexing
 --   - Temporal tracking for analytics
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no fabricated figures):
+-- innovation.calculate_readiness_score returned a constant 75% overall, 80%
+-- complete, 70% quality and "15 of 20 criteria met" for any program
+-- ("-- Placeholder"), as SECURITY DEFINER. Nothing calls it. It now raises
+-- feature_not_supported and runs as its caller. Databases installed before
+-- this amendment get the same replacement from
+-- migrations/20261015g_innovation_readiness_score_refuses.sql (deploy set).
 
 BEGIN;
 
@@ -1472,16 +1480,12 @@ CREATE OR REPLACE FUNCTION innovation.calculate_readiness_score(
   criteria_met INT,
   criteria_total INT
 )
-LANGUAGE plpgsql SECURITY DEFINER
+LANGUAGE plpgsql
 AS $$
 BEGIN
-  RETURN QUERY
-  SELECT 
-    75.0::FLOAT as overall_score,  -- Placeholder - real implementation would calculate
-    80.0::FLOAT as completeness_score,
-    70.0::FLOAT as quality_score,
-    15::INT as criteria_met,
-    20::INT as criteria_total;
+  -- Amended in place 2026-10-15: see the note at the top of this file.
+  RAISE EXCEPTION 'innovation.calculate_readiness_score computes no readiness: no implementation exists'
+    USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 

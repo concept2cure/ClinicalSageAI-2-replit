@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > a source admitted in A then moved to accessible B before service load cannot write B 1104ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > body programme and expected-programme fields cannot replace the server A handoff 5ms
+ ✓ docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-program-snapshot.test.mts > independent serving-program snapshot > a move after initial source load retains A in the final writer snapshot 1ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:57:05
+   Duration  2.16s (transform 1.24s, setup 0ms, import 805ms, tests 1.11s, environment 0ms)
+

@@ -1,0 +1,249 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list
+{
+  "timestamp": "2026-10-14T04:58:26.116Z",
+  "level": "error",
+  "message": "[tenant-users] Error retrieving pending invitations",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at Module.atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:229:20
+
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > uses the session caller despite body/query targets, then reads only their inviting organization in verified scope 136ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > an empty self-only list does not look up another person’s organization 8ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a missing organization name is null, never a fabricated name 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list 5ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > requires authentication before resolving invitations or names 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept refuses another person’s invitation without disclosing or changing it 13ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses another person’s invitation without disclosing or changing it 5ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept commits membership, accepted status and one chained audit on the same client, with the authenticated actor 14ms
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim
+{
+  "timestamp": "2026-10-14T04:58:26.192Z",
+  "level": "error",
+  "message": "[tenant-users] Error declining invitation",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI-2-replit/server/services/tenant/invitation-consent.ts:26:9)
+    at atomicAcceptInvitation (/workspace/ClinicalSageAI-2-replit/server/services/atomicQuotaService.js:448:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/invitation-consent.test.ts:391:20
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim 21ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accepting an already accepted invitation is 409 without audit, role overwrite or membership insertion 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept preserves an existing lower membership role and records that no membership was created 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline commits its conditional update and one chained audit on the same client, before commit 5ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > a concurrent response makes the guarded decline 409 with no audit or success claim 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already accepted before any write 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already declined before any write 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > reports a committed chained audit and binds its actor to callerUserId even if optional context names somebody else 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > rejects a non-invitee even if called directly in the inviting organization 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > continues to enforce the existing member quota before writes or audit 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > preserves metadata/expiry/rate normalization and records the trimmed reason on the same client 460ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > legacy reason omission and body tenant/actor spoofing preserve authenticated generation and audit scope 6ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a blank supplied reason before opening a transaction 6ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a over 2000 characters supplied reason before opening a transaction 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a null supplied reason before opening a transaction 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 1 characters are accepted 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 2 characters are accepted 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 501 characters are accepted 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 2000 characters are accepted 7ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a refused chained audit rolls creation back and returns 500 without any credential or mutation claim 8ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a failed COMMIT returns no key or persisted audit claim even though the chained write was attempted 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a later list never returns the raw key from a successful committed creation 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > returns a committed auditTrail and keeps the credential and audit scoped to the authenticated tenant 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > a refused chained audit rolls revocation back, leaves the key active and returns 500 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > a failed revocation COMMIT preserves the active key and reports no persisted success 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a chained attempt audit remains 404 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a tamper-proof-only attempt audit remains 404 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a lost attempt audit remains 404 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a rejected attempt audit remains 404 3ms
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-14T04:58:29.480Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:58:29.481Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-14T04:58:29.481Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 6ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the handler records each role change, through the canonical membership writer 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the administrative changes report says how a SCIM-group role change is listed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > queries invitation consent and SCIM IP-rule events within the selected tenant and period 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > keeps the historical IP-rule audit gap and SCIM-token limitation distinct from current recorded rules 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > refuses the create at the organization ceiling, and rolls back 19ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > creates under the ceiling and records the creator on the row 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a NULL ceiling means the schema default (10), not unlimited and not 20 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > an unknown organization is ORGANIZATION_NOT_FOUND, never NO_LICENSE 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > never consults the licence tables 0ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateProject — the ceiling is organizations.max_projects > a driver failure is DATABASE_ERROR with the driver message kept out of the result 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > refuses a new member at the organization ceiling 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > creates the user and the membership under the ceiling — no licence row required 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicCreateUser — the ceiling is organizations.max_users > an unknown organization is ORGANIZATION_NOT_FOUND 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > refuses acceptance when the organization is full 1ms
+ ✓ tests/services/atomic-quota-organization-ceilings.test.ts > atomicAcceptInvitation — re-checks the same organization ceiling at accept time > accepts under the ceiling: membership + accepted status, no licence tables 1ms
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+{
+  "timestamp": "2026-10-14T04:58:31.256Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 22ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 5ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeout":120} 5ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999} 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0} 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9} 3ms
+stderr | server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the create when the chained audit write fails
+{
+  "timestamp": "2026-10-14T04:58:31.798Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Create SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the update when the chained audit write fails
+{
+  "timestamp": "2026-10-14T04:58:31.804Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Update SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the delete when the chained audit write fails
+{
+  "timestamp": "2026-10-14T04:58:31.808Z",
+  "level": "error",
+  "message": "[admin-scim-ip-allowlist] Delete SCIM IP rule failed",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant
+{
+  "timestamp": "2026-10-14T04:58:31.812Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 41,
+    "path": "/api/admin/scim-ip-allowlist/11"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > records the actual target organization, policy before/after and reason before committing a PATCH 60ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > records creation and deletion with the same atomic audit contract 9ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the create when the chained audit write fails 6ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the update when the chained audit write fails 5ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the delete when the chained audit write fails 4ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant 4ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "x" before any mutation 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "" before any mutation 4ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason 42 before any mutation 4ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" before any mutation 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > refuses creating a rule for a missing organization, without a policy or audit write 3ms
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-14T04:58:32.192Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403)
+{
+  "timestamp": "2026-10-14T04:58:32.202Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403) 30ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > creates a rule with a valid CIDR (201) 15ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > rejects an invalid CIDR (400) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > 400 when organizationId is missing 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > lists rules (never org-filtered from query) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > disables a rule via PATCH 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > deletes a rule (204), 404 when missing 7ms
+ ✓ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > records both idle minutes and the concurrent-session limit before and after on the writer client 236ms
+ ✓ server/services/tenant/__tests__/tenant-session-policy-audit.test.ts > governed session policy values in the chained settings audit > refuses a session-policy change whose chained audit cannot be written 4ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > reexports the same policy functions and platform limits from the runtime 2ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings undefined 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeout":30,"ipWhitelist":["127.0.0.1"]}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":45,"maxConcurrentSessions":3}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":0,"maxConcurrentSessions":0}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":9999,"maxConcurrentSessions":99}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":"30","maxConcurrentSessions":"2"}} 0ms
+ ✓ shared/auth/__tests__/session-policy.test.ts > one canonical session policy for runtime and UI > preserves effective policy for settings {"security":{"sessionTimeoutMinutes":12.9,"maxConcurrentSessions":2.8}} 0ms
+
+ Test Files  9 passed (9)
+      Tests  114 passed (114)
+   Start at  04:58:25
+   Duration  7.70s (transform 1.87s, setup 216ms, import 3.27s, tests 2.38s, environment 1ms)

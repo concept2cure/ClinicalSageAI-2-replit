@@ -30,6 +30,17 @@
 --
 -- Idempotent: CREATE TABLE / CREATE INDEX IF NOT EXISTS (deploy-migrate replays
 -- the whole set).
+--
+-- AMENDED IN PLACE 2026-10-15 (audit report_ind_ivd_irb, finding 15). Adds
+-- completed_signed_attested_by / completed_signed_attested_at, at the end of
+-- this file: who stated, when attaching a sponsor-completed Module 1 form
+-- (POST /api/ind-forms/:formId/official-upload), that the file IS the
+-- completed form signed by the person the form requires, and when. The IND
+-- checklist counted a form done on required_fields_missing = '{}' alone, and
+-- that check (20261008e) reads the program record, not the file: an edited,
+-- unsigned PDF counted as the signed 1571 / 1572 / 3674 and raised readiness.
+-- Amended here rather than in a new file because this file re-runs on every
+-- deploy (CLAUDE.md RULE 1); ADD COLUMN IF NOT EXISTS is a no-op on replay.
 -- ════════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS rendered_leaf_files (
@@ -63,3 +74,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS rendered_leaf_files_org_version_idx
 
 CREATE INDEX IF NOT EXISTS rendered_leaf_files_org_idx
   ON rendered_leaf_files (organization_id);
+
+-- ── 2026-10-15: the uploader's completed-and-signed attestation ─────────────
+-- Written together by the official-upload route, and only when the uploader
+-- states it: _by is the authenticated session's user (never a request field),
+-- _at the server's time. Both NULL = nobody stated it — the true state of every
+-- file attached before this change, so there is no backfill. A statement, not
+-- a Part 11 signature: the platform neither signs the form nor verifies the
+-- signature on it; it records who said the file is signed. Nothing in the set
+-- drops these columns.
+ALTER TABLE rendered_leaf_files ADD COLUMN IF NOT EXISTS completed_signed_attested_by INTEGER;
+ALTER TABLE rendered_leaf_files ADD COLUMN IF NOT EXISTS completed_signed_attested_at TIMESTAMPTZ;

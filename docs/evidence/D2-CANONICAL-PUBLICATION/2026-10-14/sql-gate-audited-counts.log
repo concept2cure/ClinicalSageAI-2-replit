@@ -1,0 +1,1 @@
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1068 baselined interpolation(s) in 228 file(s); the baseline may only shrink.

@@ -99,3 +99,99 @@ describe('completed reply transport cleanup', () => {
     }
   });
 });
+
+describe('input safety audit warnings reach the actual chat hook', () => {
+  it.each([
+    { auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'SENTINEL-private-driver-text' },
+      warning: 'The request was refused, but its audit entry could not be confirmed. Review the audit history before retrying.' },
+    { auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', unconfirmed: true },
+      warning: 'The request was refused, but its audit entry could not be confirmed. Review the audit history before retrying.' },
+    { auditTrail: { persisted: true, chained: false },
+      warning: 'The request audit entry was stored, but is unavailable in the readable audit trail.' },
+  ])('retains the enforced HTTP 400 refusal and its bounded audit warning: $warning', async ({ auditTrail, warning }) => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false, error: {
+      code: 'PROMPT_INJECTION_BLOCKED', message: 'Message was blocked by the input safety policy', details: { auditTrail },
+    } }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => { await result.current.send('A synthetic policy-blocked input'); });
+    expect(result.current.messages.at(-1)).toMatchObject({ refusalCode: 'PROMPT_INJECTION_BLOCKED', interrupted: true, streaming: false, warnings: [warning] });
+    expect(result.current.isStreaming).toBe(false);
+    expect(JSON.stringify(result.current.messages)).not.toContain('SENTINEL-private-driver-text');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a healthy enforced refusal free of invented audit warnings', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false, error: {
+      code: 'PROMPT_INJECTION_BLOCKED', details: { auditTrail: { persisted: true, chained: true } },
+    } }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => { await result.current.send('A synthetic policy-blocked input'); });
+    expect(result.current.messages.at(-1)?.refusalCode).toBe('PROMPT_INJECTION_BLOCKED');
+    expect(result.current.messages.at(-1)?.warnings ?? []).toEqual([]);
+    expect(result.current.isStreaming).toBe(false);
+  });
+
+  it.each(['SENTINEL-untyped-receipt', { persisted: false, code: 'UNRELATED_ERROR', message: 'SENTINEL-private-reason' }])(
+    'ignores an invalid audit receipt while preserving the real refusal', async auditTrail => {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false, error: {
+        code: 'PROMPT_INJECTION_BLOCKED', details: { auditTrail },
+      } }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+      const { result } = renderHook(() => useAnaChat({}));
+      await act(async () => { await result.current.send('A synthetic policy-blocked input'); });
+      expect(result.current.messages.at(-1)?.refusalCode).toBe('PROMPT_INJECTION_BLOCKED');
+      expect(result.current.messages.at(-1)?.warnings ?? []).toEqual([]);
+      expect(JSON.stringify(result.current.messages)).not.toContain('SENTINEL');
+    },
+  );
+
+  it.each([
+    { code: 'AUDIT_ROW_NOT_PERSISTED',
+      message: 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',
+      auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED',
+        message: 'The 21 CFR Part 11 audit entry for this transition could not be confirmed. The action itself completed. Review the audit history before retrying. This has been logged for follow-up.' } },
+    { code: 'AUDIT_ROW_NOT_RETRIEVABLE',
+      message: 'The input safety audit entry was stored, but is unavailable in the readable audit trail.',
+      auditTrail: { persisted: true, chained: false } },
+  ])('keeps the $code notice visible with the completed reply and accepts a healthy next turn', async ({ code, message, auditTrail }) => {
+    const first = openStream();
+    const second = openStream();
+    fetchMock.mockResolvedValueOnce({ ok: true, body: first.body }).mockResolvedValueOnce({ ok: true, body: second.body });
+    const { result } = renderHook(() => useAnaChat({}));
+    let sent!: Promise<void>;
+    await act(async () => { sent = result.current.send('Inspect these input sources.'); });
+    first.push({ type: 'warning', code, message, meta: { auditTrail } },
+      { type: 'text', content: 'The source-based reply.' }, { type: 'done', latencyMs: 27 },
+      { type: 'post_done', cleanedResponse: 'The final source-based reply.' });
+    await act(async () => { await sent; });
+    const completed = result.current.messages.at(-1);
+    expect(completed).toMatchObject({ text: 'The final source-based reply.', warnings: [message], streaming: false });
+    expect(completed?.interrupted).not.toBe(true);
+    expect(result.current.isStreaming).toBe(false);
+    expect(first.cancel).toHaveBeenCalledTimes(1);
+
+    await act(async () => { sent = result.current.send('Ask the next question.'); });
+    second.push({ type: 'text', content: 'The healthy next reply.' },
+      { type: 'post_done', cleanedResponse: 'The healthy next reply.' });
+    await act(async () => { await sent; });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.messages.at(-1)).toMatchObject({ text: 'The healthy next reply.', streaming: false });
+    expect(result.current.messages.at(-1)?.warnings ?? []).toEqual([]);
+    expect(result.current.messages.find(item => item.id === completed?.id)?.warnings).toEqual([message]);
+  });
+
+  it('renders the bounded warning message without copying receipt metadata into the conversation', async () => {
+    const stream = openStream();
+    fetchMock.mockResolvedValue({ ok: true, body: stream.body });
+    const { result } = renderHook(() => useAnaChat({}));
+    let sent!: Promise<void>;
+    await act(async () => { sent = result.current.send('Question with an observed input-safety check'); });
+    stream.push({ type: 'warning', code: 'AUDIT_ROW_NOT_PERSISTED',
+      message: 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',
+      meta: { auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' }, internal: 'SENTINEL-not-display-content' } },
+      { type: 'post_done', cleanedResponse: 'The final answer is available.' });
+    await act(async () => { await sent; });
+    expect(result.current.messages.at(-1)?.warnings).toEqual(['The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.']);
+    expect(JSON.stringify(result.current.messages)).not.toContain('SENTINEL-not-display-content');
+    expect(result.current.isStreaming).toBe(false);
+  });
+});

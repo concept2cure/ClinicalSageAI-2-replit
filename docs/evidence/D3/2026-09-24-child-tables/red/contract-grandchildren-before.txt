@@ -60,4 +60,3 @@ AssertionError: c2c_document_section_versions: tenant B can read tenant A's row:
       Tests  2 failed | 9 passed (11)
    Start at  20:10:52
    Duration  1.22s (transform 114ms, setup 77ms, import 84ms, tests 754ms, environment 0ms)
-

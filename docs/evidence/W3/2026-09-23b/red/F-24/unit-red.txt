@@ -37,4 +37,3 @@ AssertionError: expected -1 to be greater than 3754
       Tests  1 failed | 13 passed (14)
    Start at  08:15:23
    Duration  2.19s (transform 255ms, setup 182ms, import 1.48s, tests 118ms, environment 0ms)
-

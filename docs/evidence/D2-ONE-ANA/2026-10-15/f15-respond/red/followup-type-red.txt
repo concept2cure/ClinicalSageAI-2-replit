@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > offers the three steps, and names question-by-question tracking as coming later
+ ↓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > drafts from the letter chosen, pinned, and from no source whose text could not be read
+ ↓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > with no readable letter in the data room, drafting is not offered as if it could be grounded
+ ↓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > "Start a response sequence" opens that market's Sequences tab with the follow-up type response
+ ↓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Respond answers the agency (F15) > with no market yet, says so instead of offering a sequence nothing can hold
+ × client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Submission Center opened for a response (F15) > opens the market's Sequences tab with the next sequence typed response 1027ms
+   → expected 'amendment' to be 'response' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx > Submission Center opened for a response (F15) > opens the market's Sequences tab with the next sequence typed response
+AssertionError: expected 'amendment' to be 'response' // Object.is equality
+
+Expected: "response"
+Received: "amendment"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx:106:24
+    104|     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    105|     const type = (await screen.findByLabelText(/Type of sequence 0001/…
+    106|     expect(type.value).toBe('response');
+       |                        ^
+    107|   });
+    108| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  05:22:51
+   Duration  2.32s (transform 1.17s, setup 171ms, import 482ms, tests 1.03s, environment 479ms)
+

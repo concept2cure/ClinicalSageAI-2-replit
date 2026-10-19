@@ -1,0 +1,2 @@
+[{"precedingDivs":0,"sameRow":false,"gap":12},{"precedingDivs":1,"sameRow":false,"gap":0},{"precedingDivs":2,"sameRow":false,"gap":12},{"precedingDivs":3,"sameRow":false,"gap":0}]
+FAIL: 4 of 4 layouts do not pair with a 12px gap

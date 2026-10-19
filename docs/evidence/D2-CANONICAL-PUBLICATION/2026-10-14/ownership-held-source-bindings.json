@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-10-14T21:50:38.362Z",
+  "scope": "post-focused-verification selected source/test bindings; whole integrated proof remains lead-owned",
+  "counts": {
+    "server/services/c2c/program-access.ts": 1,
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": 3
+  },
+  "sourceSha256": {
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "2a559bf6cd40079997af1b5e577a1e7b3151670f9371ccf13cd14c29f79ec29e",
+    "server/services/c2c/__tests__/program-access.test.ts": "bec5ace2990f24439299b9b72602b7b20da821b16bf4518944bbd837ede119b3",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts": "c7e4c2fda1f49532d4cb1672d0ed76a45324f7a46684c18e84df37912ca5ad3c",
+    "server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts": "2c807dee2f5e7249c3c1f9e339cf7e0dea778451d38e7115e38441be6c79ec12",
+    "server/services/clinical-regulatory-evidence/__tests__/source-processing-read-model.test.ts": "3cda1af0a6fb0dcc04bc914d8fa1c8099f5edc9709f8982843e406488f71ff3a"
+  }
+}

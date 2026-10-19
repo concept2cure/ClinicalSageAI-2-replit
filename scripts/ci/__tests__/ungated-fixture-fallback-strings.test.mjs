@@ -125,7 +125,7 @@ test('control: both shapes only inside real comments, beside the same glob and U
     '/* const rows = live?.length ? live : PMA_TRIAL_METRICS; */\n' +
     'export function Panel({ live }) {\n' +
     "  const help = 'https://docs.example/sop'; // not: reg.docs ?? FIXTURE_DOCS\n" +
-    '  const rows = useSampleRows(live, PMA_TRIAL_METRICS);\n' +
+    '  const rows = live ?? [];\n' +
     '  return [GLOB, help, rows];\n' +
     '}\n' +
     '/** A panel that falls back honestly. */\n' +
@@ -133,4 +133,51 @@ test('control: both shapes only inside real comments, beside the same glob and U
   const r = run({ [SURFACE]: src });
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /ungated content fallbacks {2}: 0/);
+});
+
+/* ── Sample mode, removed 2026-10-14: none of it may come back ─────────────── */
+
+test('a fixture routed through useSampleRows is reported — there is no sample-mode boundary any more', () => {
+  const src =
+    "import { useSampleRows } from '../lib/useSampleRows';\n" +
+    "import { PMA_TRIAL_METRICS } from '../data/pma';\n" +
+    'export function Metrics({ live }) {\n' +
+    '  const rows = useSampleRows(live, PMA_TRIAL_METRICS);\n' +
+    '  return rows;\n' +
+    '}\n';
+  const r = run({ [SURFACE]: src });
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes(`${SURFACE}:${lineOf(src, 'const rows')}  sample-mode useSampleRows`), r.out);
+});
+
+test("a DataGate handed `sample={…}` is reported", () => {
+  const src =
+    'export function Panel({ state }) {\n' +
+    '  return <DataGate state={state} label="UDI records" sample={EXAMPLE_ROWS}>{(rows) => rows}</DataGate>;\n' +
+    '}\n';
+  const r = run({ [SURFACE]: src });
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes(`${SURFACE}:2  sample-mode sample={…}`), r.out);
+});
+
+test('a fixture ternary whose condition consults sample mode is no longer exempt', () => {
+  const src =
+    "import { MDX_HEALTH } from '../data/programs';\n" +
+    'export function Strip({ programs, sampleOn }) {\n' +
+    '  return programs.length > 0 || !sampleOn ? derive(programs) : MDX_HEALTH;\n' +
+    '}\n';
+  const r = run({ [SURFACE]: src });
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes(`${SURFACE}:3  ? : MDX_HEALTH`), r.out);
+});
+
+test('control: the mechanism named only in a comment, and a data-sample attribute, are quiet', () => {
+  const src =
+    '/* This read used useSampleRows and a <SampleDataBanner> until 2026-10-14. */\n' +
+    'export function Panel({ live }) {\n' +
+    '  // was: DossierStore.enableSampleFixtures()\n' +
+    '  return <div data-sample={live ? 1 : 0}>{live ?? null}</div>;\n' +
+    '}\n';
+  const r = run({ [SURFACE]: src });
+  assert.equal(r.code, 0, r.out);
 });

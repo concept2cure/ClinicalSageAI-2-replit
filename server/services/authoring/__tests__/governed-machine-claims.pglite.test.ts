@@ -264,3 +264,24 @@ describe('what the record and the saver are told', () => {
     expect(refusal.message).not.toContain('by , which');
   });
 });
+
+describe('decoded explicit remedy attribution', () => {
+  it('credits decoded remedy words from an intact qualified turn, but never unrelated or malformed JSON', async () => {
+    const replacement = 'Dose is 5 mg of "salt A".\nAt 24 weeks the response was 42%.';
+    const fix = { sectionId: 'aaaaaaaa-0000-4000-8000-000000000001', baseUpdatedAt: '2026-10-13T10:00:00Z', quote: 'The earlier wording.', replacement, reason: 'Use the source value.' };
+    const fenced = (value: unknown) => `\`\`\`authoring-remedy\n${JSON.stringify(value)}\n\`\`\``;
+    const turn = await filedTurn(fenced(fix), [OPUS]);
+    const credited = await creditMachineClaims(q, ORG, [claim(replacement, turn)]);
+    expect(credited.credited).toHaveLength(1);
+    expect(credited.refused).toEqual([]);
+    const foreign = await creditMachineClaims(q, ORG + 1, [claim(replacement, turn)]);
+    expect(foreign.credited).toEqual([]);
+    const unrelated = await creditMachineClaims(q, ORG, [claim('An invented result.', turn)]);
+    expect(unrelated.credited).toEqual([]);
+    const malformed = await filedTurn(fenced({ ...fix, baseUpdatedAt: undefined }), [OPUS]);
+    expect((await creditMachineClaims(q, ORG, [claim(replacement, malformed)])).credited).toEqual([]);
+    const refusedModel = await filedTurn(fenced(fix), [SONNET]);
+    expect((await creditMachineClaims(q, ORG, [claim(replacement, refusedModel)])).credited).toEqual([]);
+  });
+
+});

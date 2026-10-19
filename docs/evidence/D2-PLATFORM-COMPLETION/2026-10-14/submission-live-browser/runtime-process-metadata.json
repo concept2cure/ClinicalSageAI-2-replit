@@ -1,0 +1,16 @@
+{
+  "pid": 208757,
+  "mainRuntimePidPreserved": 120498,
+  "port": 5001,
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "runtimeRole": "app_service",
+  "allowedOrigin": "http://127.0.0.1:5001",
+  "composition": "/tmp/submission-deliverables-browser-prep/qa-server.mts",
+  "compositionSha256": "970b2de6a1adc7411b1979d5f1737165f5c1effd9eb5e266460b7cdcc1a2c143",
+  "output": "/tmp/submission-deliverables-browser-prep/runtime-20261014T213806Z-208753",
+  "qualification": "Isolated actual-route/auth/Vite development-auth browser composition, not full boot/MFA/agency readiness.",
+  "auth": "Existing QA owner through canonical dev-login; no password change or stored session token.",
+  "allModelKeysAndLocalEndpointsBlank": true,
+  "rlsEnforced": true,
+  "requestPosture": "No browser request instrumentation or diagnostic route. Boot role posture and separately retained native actual request-q proof only."
+}

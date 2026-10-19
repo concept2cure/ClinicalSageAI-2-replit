@@ -37,7 +37,7 @@
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
@@ -108,7 +108,7 @@ const ANA_ATTRS = { authorId: 'ana', authorName: 'AnA (AI draft)', sourceRecord:
 /** AnA's proposal, as the conversation hands it over. */
 const ask = (ed: Editor, quote: string, replacement: string, ctx: { prefix?: string; suffix?: string } = {}) =>
   proposeReplacement(ed, { quote, replacement, author: ANA, ...ctx });
-const OK = { ok: true };
+const OK = expect.objectContaining({ ok: true });
 const refused = (reason: string) => ({ ok: false, reason });
 
 /* ── 1. Insert over a selection strikes the selection ───────────────── */
@@ -612,10 +612,11 @@ describe('RichSectionEditorHandle.proposeReplacement', () => {
   };
   const PROPOSAL = { quote: '18 months', replacement: '24 months' };
 
-  it('redlines an editable rich section', () => {
+  it('redlines an editable rich section', async () => {
     const ref = React.createRef<RichSectionEditorHandle>();
     render(<RichSectionEditor {...base} ref={ref} />);
-    expect(ref.current?.proposeReplacement(PROPOSAL, ANA)).toEqual(OK);
+    await waitFor(() => expect(ref.current?.canProposeReplacement()).toBe(true));
+    act(() => { expect(ref.current?.proposeReplacement(PROPOSAL, ANA)).toEqual(OK); });
     expect(document.querySelector('.tiptap del[data-author-id="ana"]')?.textContent).toBe('18 months');
     expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe('24 months');
     expect(ref.current?.getContent()).toContain(`data-source-record="${TURN}"`);

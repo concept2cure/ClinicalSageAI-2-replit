@@ -158,39 +158,7 @@ declare module 'html2canvas' {
   ): Promise<HTMLCanvasElement>;
   export default html2canvas;
 }
-// ============================================================================
-// PDF Parse
-// ============================================================================
-declare module 'pdf-parse' {
-  interface PDFData {
-    numpages: number;
-    numrender: number;
-    info: {
-      PDFFormatVersion?: string;
-      IsAcroFormPresent?: boolean;
-      IsXFAPresent?: boolean;
-      Title?: string;
-      Author?: string;
-      Subject?: string;
-      Creator?: string;
-      Producer?: string;
-      CreationDate?: string;
-      ModDate?: string;
-    };
-    metadata: any;
-    text: string;
-    version: string;
-  }
-
-  interface PDFOptions {
-    pagerender?: (pageData: any) => string;
-    max?: number;
-    version?: string;
-  }
-
-  function pdfParse(dataBuffer: Buffer, options?: PDFOptions): Promise<PDFData>;
-  export = pdfParse;
-}
+// PDF Parse's legacy callable and v2 constructor live in pdf-parse.d.ts.
 
 // ============================================================================
 // Vitest Globals

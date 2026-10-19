@@ -51,10 +51,12 @@ describe('document template library — consistency', () => {
 });
 
 describe('document template library — canonical structures', () => {
-  it('Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine', () => {
+  it('Clinical Overview matches the ICH M4E 2.5.1–2.5.7 spine', () => {
+    // 2.5.7 Literature References added 2026-10-15: M4E lists it, and the
+    // chat drafting and medical-writing copies already carried it.
     const co = getDocumentTemplate('clinical_overview')!;
     expect(co.ctdSection).toBe('2.5');
-    expect(co.sections.map((s) => s.number)).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6']);
+    expect(co.sections.map((s) => s.number)).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.7']);
   });
 
   it('510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence', () => {

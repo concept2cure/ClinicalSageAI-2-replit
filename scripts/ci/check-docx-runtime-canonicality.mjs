@@ -114,6 +114,29 @@ function isCommentLine(content) {
   return /^\s*(\*|\/\/|\/\*|#)/.test(content);
 }
 
+/**
+ * A published artifact's own renderer is not a runtime of this product.
+ *
+ * `docs/publications/<date>/` holds a finished deliverable — the rendered
+ * PDF/DOCX under `exports/`, a manifest of them, and the portable script that
+ * produced them, committed together so the publication can be re-rendered
+ * byte-for-byte. No server route, worker or user request reaches that script;
+ * it is run by hand, once, by whoever publishes the document.
+ *
+ * Listing it in APPROVED_PYTHON instead would be the wrong answer: that list is
+ * the enumeration of DOCX runtimes the PRODUCT is allowed to generate through,
+ * and this gate's own header counts them. A one-off publication renderer added
+ * there reads as a fourth approved product runtime to everyone after us —
+ * exactly the drift that left runtime #3 in the banner for months after its
+ * file was deleted.
+ *
+ * Deliberately `docs/publications/` and not `docs/`: a DOCX runtime parked
+ * anywhere else under docs/ is still a violation, and so is one under
+ * server/, workers/ or scripts/. The boundary is that a runtime a request can
+ * reach never lives beside the document it rendered.
+ */
+const PUBLICATION_RENDERER = /^docs\/publications\//;
+
 function grepFiles(pattern) {
   try {
     // --exclude-dir keeps installed packages out of the scan: with
@@ -137,7 +160,9 @@ function grepFiles(pattern) {
         return { file, lineNo, content };
       })
       // A quoted example in a docblock is not an entry point.
-      .filter((hit) => !isCommentLine(hit.content));
+      .filter((hit) => !isCommentLine(hit.content))
+      // Nor is the script that rendered an already-published document.
+      .filter((hit) => !PUBLICATION_RENDERER.test(hit.file));
   } catch {
     // grep returns exit 1 when no matches — that's fine
     return [];

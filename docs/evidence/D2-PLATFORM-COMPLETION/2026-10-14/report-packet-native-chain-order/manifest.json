@@ -1,0 +1,37 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "d971dda5be29b131ebe13e4ffc972785d8c74190f18b69fcd91a5525f4f6046f",
+    "bytes": 1687
+  },
+  {
+    "path": "hosted-native-file-result.json",
+    "sha256": "918195c5c0f7edfb793106d9fe6eabc5e8bb80f06ce6501a79e408ff56fb308d",
+    "bytes": 5028
+  },
+  {
+    "path": "lint.json",
+    "sha256": "ba9929cea5ee7a35cc3fd8a0d469a55701d6c6d91de0567cd3696d325c137151",
+    "bytes": 251
+  },
+  {
+    "path": "native-green.txt.gz.base64",
+    "sha256": "676ebfcacd231b84b8cf7703e8c6718edc42affc612e6ee83d3e8e0a5e9c0c62",
+    "bytes": 1617
+  },
+  {
+    "path": "native-observations.json",
+    "sha256": "db2a1e3349bf7d9b7b4424bf73545a21f6fb50911a350a518ee52c10134a5232",
+    "bytes": 5867
+  },
+  {
+    "path": "results.json",
+    "sha256": "13a0be0df338291a658e0c3b2633009dd5fe42d58357a5d5eb5675f06d8dd8c4",
+    "bytes": 1157
+  },
+  {
+    "path": "source-pins.json",
+    "sha256": "9cfb85bbc42d18fab638da52fed81dc4ee79b0cc76b3faca2558cc51882f1b01",
+    "bytes": 1293
+  }
+]

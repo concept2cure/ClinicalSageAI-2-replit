@@ -1,0 +1,88 @@
+{
+  "phase": "actual full two-file creator/applier SQL fixture with final integer sweep; full strict provisioning pending",
+  "fixtureDatabase": "platform_ci_sharing_review_20261014_1f6d6c8f",
+  "sources": [
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "sha256": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0",
+      "bytes": 229714
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "sha256": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0",
+      "bytes": 5282
+    },
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "sha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+      "bytes": 6392
+    },
+    {
+      "path": "db/migrations/20260801_tenant_isolation_sweep.sql",
+      "sha256": "8bd0a6e2df8ce113d5b8aaa3201310a219702019776d09e5a509c75171aa1419",
+      "bytes": 23232
+    },
+    {
+      "path": "docs/design/DURABLE_SHARING_REVIEW_PREREQUISITES.md",
+      "sha256": "37023037414173932c8454b8282cebbde7b6dd12f2f00a2f5f095c8803da36af",
+      "bytes": 6195
+    },
+    {
+      "path": "tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts",
+      "sha256": "e612a7f15e0eb170154fb014959ba802c54d87ef9b8eb606d17ac13105128a73",
+      "bytes": 4441
+    }
+  ],
+  "proofRunnerPins": [
+    {
+      "path": "/tmp/durable-sharing-review-sql-prep/qualify.mjs",
+      "sha256": "69a3991e28bc532c03704e1a101ab807f7f5c6d1732e93860ca986f650e302ae"
+    },
+    {
+      "path": "/tmp/run-durable-sharing-review-actual-sql.py",
+      "sha256": "57679fdc98ace0387b881b4d6812bf6d3625a1d3dee9145f1515af29c22dbf52"
+    },
+    {
+      "path": "/tmp/durable-sharing-review-sql-prep/legacy-review-before.sql",
+      "sha256": "0bc9fb272c760e6621d636b98e05faee3459de49d611ffe16840529648190899"
+    },
+    {
+      "path": "/tmp/durable-sharing-review-sql-prep/legacy-sharing-before.sql",
+      "sha256": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c"
+    }
+  ],
+  "results": {
+    "exit": 0,
+    "twoActualReplays": 2,
+    "actualFullCreatorFiles": 2,
+    "actualSweepReplayed": "db/migrations/20260801_tenant_isolation_sweep.sql",
+    "historicalUpdatedAtRemainsNull": true,
+    "historicalPriorContentAndCreatedAtUnchanged": true,
+    "futureActualInsertionDefault": true,
+    "malformedColumnRefusal": "P0001",
+    "duplicateRoundRefusal": "23505",
+    "negativeRowDigestsRetainedAcrossRefusal": true,
+    "negativeFixtures": "never committed; whole fixture transactions rolled back after before/after digest comparison",
+    "targetStoresEnabledForcedRls": 4,
+    "physicalMetadataStableAcrossReplay": true,
+    "journalActualHashesMatchTwice": true,
+    "postgresOrPlatformRolesGranted": false,
+    "existingHistoryRepairedOrDeleted": false,
+    "runtimeApiClaim": false,
+    "fullApplicationProvisionClaim": false,
+    "fullInstallerExecuted": false,
+    "compilerExecuted": false
+  },
+  "rawFiles": [
+    {
+      "original": "/tmp/durable-sharing-review-actual-sql.json",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-actual-sql/actual-sql-observations.json",
+      "sha256": "f2c1a4d6f74a0164dcafcc9cf34c0a46faf190a14c687b2c86190473c1e15904"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-actual-sql.txt",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-actual-sql/actual-sql.log",
+      "sha256": "ebc55a8a07de0f5f565567ecd23c2cf72c9df0a38750f972215782bb07ed0757"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "sourceHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "runId": 38625681016,
+  "jobId": 116073085566,
+  "artifactId": 11928344023,
+  "qualification": "Derived exact reporter census and read-only fixture diagnoses for the preceding hosted source phase. Full original ZIP/raw reporter remain privately retained and hash-identified in the census. No current-source rerun or repair claim; separate native fixture fixes do not qualify these52 integration files.",
+  "records": [
+    {
+      "path": "step12-census.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 61985,
+      "decodedHexDigest": "c1eccbd563fa8c063a795493af5be49507355a546e363bc7dcf581250c5b6aa9",
+      "archivedHexDigest": "23b2d743c75152b83a07c6f3da1b9a480df0774731ccff0e0a0bc53325dcae86"
+    },
+    {
+      "path": "independent-read-only-subset.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 3414,
+      "decodedHexDigest": "510c6c2eb830a20c24952bf7d76492a9acbefd7ce76bbeed38018a8f9d105a16",
+      "archivedHexDigest": "7a6e64d204ba301dc0cf7ce9ac4aab437c9eefa0ee3a89291d8213e2f2ebca60"
+    }
+  ]
+}

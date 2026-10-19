@@ -26,4 +26,3 @@ stderr | tests/db/correspondence-work-items.dbtest.ts
       Tests  5 passed (5)
    Start at  19:28:48
    Duration  7.29s (transform 2.41s, setup 106ms, import 272ms, tests 6.53s, environment 0ms)
-

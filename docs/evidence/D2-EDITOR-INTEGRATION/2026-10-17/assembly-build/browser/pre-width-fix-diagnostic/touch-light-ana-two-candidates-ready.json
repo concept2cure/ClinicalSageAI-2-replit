@@ -1,0 +1,157 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": 390,
+  "bodyWidth": 390,
+  "assembly": {
+    "x": 0,
+    "y": 216,
+    "width": 390,
+    "height": 627.90625,
+    "right": 390,
+    "bottom": 843.90625,
+    "scrollWidth": 698,
+    "clientWidth": 390
+  },
+  "ai": null,
+  "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnADraft requirements (optional) Reason for build Preview buildBuild document2 candidates retained for individual review. Review and accept each section separately in the existing editor.Section candidatesCompleted candidates stay here while you review another section. Each acceptance uses the existing draft review and source-lineage controls.3.2.P.8.2 Post-approval stability protocol · readyReview 3.2.P.8.23.2.P.8.3 Stability data · readyReview 3.2.P.8.3",
+  "editorCount": 1,
+  "noticeOutsideToolbar": true,
+  "controls": [
+    {
+      "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+      "rect": {
+        "x": 12,
+        "y": 377.375,
+        "width": 686,
+        "height": 20,
+        "right": 698,
+        "bottom": 397.375,
+        "scrollWidth": 686,
+        "clientWidth": 686
+      },
+      "disabled": false
+    },
+    {
+      "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+      "rect": {
+        "x": 87.203125,
+        "y": 405.375,
+        "width": 263,
+        "height": 20,
+        "right": 350.203125,
+        "bottom": 425.375,
+        "scrollWidth": 263,
+        "clientWidth": 263
+      },
+      "disabled": false
+    },
+    {
+      "label": "checkbox",
+      "rect": {
+        "x": 16,
+        "y": 436.375,
+        "width": 13,
+        "height": 13,
+        "right": 29,
+        "bottom": 449.375,
+        "scrollWidth": 13,
+        "clientWidth": 13
+      },
+      "disabled": false
+    },
+    {
+      "label": "text",
+      "rect": {
+        "x": 194.15625,
+        "y": 461.375,
+        "width": 200,
+        "height": 20,
+        "right": 394.15625,
+        "bottom": 481.375,
+        "scrollWidth": 325,
+        "clientWidth": 200
+      },
+      "disabled": false
+    },
+    {
+      "label": "Why sections are being assembled",
+      "rect": {
+        "x": 115.421875,
+        "y": 489.375,
+        "width": 200,
+        "height": 20,
+        "right": 315.421875,
+        "bottom": 509.375,
+        "scrollWidth": 305,
+        "clientWidth": 200
+      },
+      "disabled": false
+    },
+    {
+      "label": "Preview build",
+      "rect": {
+        "x": 12,
+        "y": 525.375,
+        "width": 108.28125,
+        "height": 32,
+        "right": 120.28125,
+        "bottom": 557.375,
+        "scrollWidth": 106,
+        "clientWidth": 106
+      },
+      "disabled": false
+    },
+    {
+      "label": "Build document",
+      "rect": {
+        "x": 128.28125,
+        "y": 524.375,
+        "width": 121.203125,
+        "height": 32,
+        "right": 249.484375,
+        "bottom": 556.375,
+        "scrollWidth": 121,
+        "clientWidth": 121
+      },
+      "disabled": true
+    },
+    {
+      "label": "Review 3.2.P.8.2",
+      "rect": {
+        "x": 354.6875,
+        "y": 754.90625,
+        "width": 121.984375,
+        "height": 32,
+        "right": 476.671875,
+        "bottom": 786.90625,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    },
+    {
+      "label": "Review 3.2.P.8.3",
+      "rect": {
+        "x": 237.828125,
+        "y": 786.90625,
+        "width": 121.984375,
+        "height": 32,
+        "right": 359.8125,
+        "bottom": 818.90625,
+        "scrollWidth": 120,
+        "clientWidth": 120
+      },
+      "disabled": false
+    }
+  ],
+  "editorBody": "Existing saved stability evidence.",
+  "navigation": [],
+  "bridge": {
+    "docId": "dddddddd-0000-4000-8000-000000000181",
+    "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+    "editable": true
+  }
+}

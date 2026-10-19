@@ -44,6 +44,8 @@
  * (`pathway-engines/estar/estar-catalog.ts`) for the MDUFA V review-goal days,
  * and the regulatory currency registry
  * (`regulatory-currency/currency-registry.ts`) for the dated eSTAR mandates.
+ * ComputationRefusal (`ana-biostats/computation-engine.ts`) is thrown when a
+ * decision step is reached with no answer to it, so that AnA asks for it.
  *
  * @module server/services/medical-device/medical-device-knowledge
  */
@@ -52,7 +54,6 @@
 
 import {
   CFR,
-  CLASSIFY_CITATIONS,
   CLINICAL_CITATIONS,
   GSPR_CITATIONS,
   PATHWAY_CITATIONS,
@@ -80,6 +81,7 @@ import {
 } from '../regulatory-currency/currency-registry.js';
 import type { IvdrClass, MdrDeclaredClass } from '../../../shared/regulatory/device-class.js';
 import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
 
 export type { Citation } from './medical-device-knowledge-data.js';
 
@@ -120,35 +122,6 @@ export type EUConformityRoute =
   | 'notified body — type examination'
   | 'undetermined';
 
-/** Invasiveness category — drives MDR Annex VIII rules. */
-export type Invasiveness =
-  | 'non-invasive'
-  | 'invasive-body-orifice'
-  | 'surgically-invasive'
-  | 'implantable'
-  | 'active'
-  | 'active-implantable';
-
-/** Duration of continuous contact/use per MDR Annex VIII §1.1. */
-export type ContactDuration = 'transient' | 'short-term' | 'long-term';
-
-/** Device contact site for biocompatibility / classification. */
-export type ContactSite =
-  | 'skin-intact'
-  | 'mucosal'
-  | 'breached-skin'
-  | 'blood-indirect'
-  | 'circulatory-cns'
-  | 'none';
-
-/** A classification rule applied (MDR/IVDR Annex VIII or 21 CFR product code). */
-export interface ClassificationRule {
-  jurisdiction: 'US' | 'EU-MDR' | 'EU-IVDR';
-  ruleId: string;
-  ruleText: string;
-  citation: Citation;
-}
-
 /** A determinate finding with severity for gap/requirement reporting. */
 export interface Finding {
   id: string;
@@ -158,468 +131,26 @@ export interface Finding {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// FUNCTION 1: classifyDevice
+// DEVICE CLASSIFICATION — not in this module
 // ════════════════════════════════════════════════════════════════════════════
 
-export interface ClassifyDeviceParams {
-  /** Plain-language device name. */
-  deviceName?: string;
-  /** Intended use / indications for use statement. */
-  intendedUse: string;
-  /** Whether the device is an in-vitro diagnostic (IVD). */
-  isIVD?: boolean;
-  /** Whether the device incorporates software / is Software as a Medical Device. */
-  isSoftware?: boolean;
-  /** Level of patient harm if the device fails or is misused. */
-  riskLevel: 'low' | 'moderate' | 'high';
-  /** Invasiveness category (drives MDR Annex VIII). */
-  invasiveness?: Invasiveness;
-  /** Duration of continuous body contact / use. */
-  contactDuration?: ContactDuration;
-  /** Body contact site. */
-  contactSite?: ContactSite;
-  /** Whether the device is intended to be implanted. */
-  implantable?: boolean;
-  /** Whether the device is life-supporting or life-sustaining. */
-  lifeSustaining?: boolean;
-  /** Whether device delivers/exchanges energy or substances to/from the body (active). */
-  active?: boolean;
-  /** Whether device administers or removes a medicinal product (MDR Rule 12/22). */
-  administersMedicine?: boolean;
-  /** Whether device incorporates a medicinal substance with ancillary action (MDR Rule 14). */
-  incorporatesMedicinalSubstance?: boolean;
-  /** Whether device is composed of substances absorbed by the body (MDR Rule 21). */
-  absorbedSubstance?: boolean;
-  /** Whether device uses non-viable tissues/cells of human or animal origin (MDR Rule 18). */
-  animalOrHumanTissue?: boolean;
-  // ── IVDR-specific signals ────────────────────────────────────────────────
-  /** IVD detects a transmissible agent posing high risk of propagation (IVDR Rule 1 → D). */
-  ivdHighRiskTransmissible?: boolean;
-  /** IVD used for blood/organ donor screening or transmissible-agent compatibility (IVDR Rule 1 → D). */
-  ivdDonorScreening?: boolean;
-  /** IVD detects transmissible agent — moderate public-health risk (IVDR Rule 2 → C). */
-  ivdTransmissibleModerate?: boolean;
-  /** IVD is a companion diagnostic (IVDR Rule 3(c) → C). */
-  ivdCompanionDiagnostic?: boolean;
-  /** IVD for disease staging / screening / management decisions (IVDR Rule 3 → C). */
-  ivdManagementCritical?: boolean;
-  /** IVD is for self-testing (IVDR Rule 4 → C, except those with low risk → B). */
-  ivdSelfTesting?: boolean;
-  /** IVD is a general reagent/instrument/buffer with no specific characteristics (IVDR Rule 5 → A). */
-  ivdGeneralReagent?: boolean;
-}
-
-export interface ClassifyDeviceResult {
-  deviceName: string;
-  intendedUse: string;
-  isIVD: boolean;
-  usClass: USDeviceClass;
-  usClassRationale: string;
-  euMdrClass?: EUMDRClass;
-  euIvdrClass?: EUIVDRClass;
-  euClassRationale: string;
-  appliedRules: ClassificationRule[];
-  generalControlsApply: boolean;
-  specialControlsLikely: boolean;
-  premarketApprovalLikely: boolean;
-  findings: Finding[];
-  citations: Citation[];
-}
-
-function classifyIVDR(p: ClassifyDeviceParams, rules: ClassificationRule[]): EUIVDRClass {
-  // IVDR Annex VIII, Rules 1-7. Highest applicable rule governs (Annex VIII §1.1).
-  if (p.ivdHighRiskTransmissible || p.ivdDonorScreening) {
-    rules.push({
-      jurisdiction: 'EU-IVDR',
-      ruleId: 'IVDR Rule 1',
-      ruleText:
-        'Devices intended to detect the presence of, or exposure to, a transmissible agent ' +
-        'in blood/components/organs/tissues to assess suitability for transfusion/transplantation, ' +
-        'or to detect a transmissible agent that causes a life-threatening disease with high risk ' +
-        'of propagation, are Class D.',
-      citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 1', note: 'Highest-risk IVDs — Class D.' },
-    });
-    return 'D';
-  }
-  if (p.ivdTransmissibleModerate) {
-    rules.push({
-      jurisdiction: 'EU-IVDR',
-      ruleId: 'IVDR Rule 2/3',
-      ruleText:
-        'Devices to detect a transmissible agent without high propagation risk, or other Rule 3 ' +
-        'categories (companion diagnostics, disease staging, screening, management), are Class C.',
-      citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 2/3', note: 'Moderate public-health risk — Class C.' },
-    });
-    return 'C';
-  }
-  if (p.ivdCompanionDiagnostic || p.ivdManagementCritical) {
-    rules.push({
-      jurisdiction: 'EU-IVDR',
-      ruleId: 'IVDR Rule 3',
-      ruleText:
-        'Companion diagnostics; devices for disease staging, screening, diagnosis, or to assess ' +
-        'patient management/treatment decisions, are Class C.',
-      citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 3', note: 'Companion diagnostics / management-critical — Class C.' },
-    });
-    return 'C';
-  }
-  if (p.ivdSelfTesting) {
-    rules.push({
-      jurisdiction: 'EU-IVDR',
-      ruleId: 'IVDR Rule 4',
-      ruleText:
-        'Devices intended for self-testing are Class C, except those whose result is not determining ' +
-        'a medically critical status, or is preliminary and requires confirmatory testing, which are Class B.',
-      citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 4', note: 'Self-testing IVDs — generally Class C.' },
-    });
-    return 'C';
-  }
-  if (p.ivdGeneralReagent) {
-    rules.push({
-      jurisdiction: 'EU-IVDR',
-      ruleId: 'IVDR Rule 5',
-      ruleText:
-        'Products without a specific intended purpose (general lab reagents, buffers, washing solutions, ' +
-        'general instruments, specimen receptacles) are Class A.',
-      citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 5', note: 'General reagents / instruments — Class A.' },
-    });
-    return 'A';
-  }
-  // Rule 6 — catch-all: devices not covered by Rules 1-5 are Class B.
-  rules.push({
-    jurisdiction: 'EU-IVDR',
-    ruleId: 'IVDR Rule 6',
-    ruleText:
-      'Devices not covered by Rules 1-5 (and not Rule 7 controls/calibrators) default to Class B.',
-    citation: { source: 'EU IVDR 2017/746 Annex VIII Rule 6', note: 'Default IVD class — Class B.' },
-  });
-  return 'B';
-}
-
-function classifyMDR(p: ClassifyDeviceParams, rules: ClassificationRule[]): EUMDRClass {
-  // EU MDR Annex VIII. Highest class wins (Annex VIII §3.1). We evaluate the
-  // dominant rule for the supplied signals; supporting rules are recorded.
-  const inv: Invasiveness = p.invasiveness ?? (p.implantable ? 'implantable' : p.active ? 'active' : 'non-invasive');
-  const duration: ContactDuration = p.contactDuration ?? 'transient';
-
-  // Rule 14 — device incorporating a medicinal substance with ancillary action → Class III.
-  if (p.incorporatesMedicinalSubstance) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 14',
-      ruleText:
-        'Devices incorporating, as an integral part, a substance which, if used separately, would be ' +
-        'a medicinal product (including human blood derivative) with action ancillary to the device, ' +
-        'are Class III.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 14', note: 'Drug-device combination — Class III.' },
-    });
-    return 'III';
-  }
-
-  // Rule 21 — substances introduced and absorbed by the body → Class III (systemic) / IIa-IIb.
-  if (p.absorbedSubstance) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 21',
-      ruleText:
-        'Devices composed of substances/combinations absorbed by or locally dispersed in the body are ' +
-        'Class III if systemically absorbed to achieve their purpose; IIb if applied in a body cavity ' +
-        'and absorbed; otherwise IIa.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 21', note: 'Absorbable substance devices.' },
-    });
-    return p.riskLevel === 'high' ? 'III' : 'IIb';
-  }
-
-  // Rule 18 — devices using non-viable animal/human tissue → Class III (with contact exceptions).
-  if (p.animalOrHumanTissue) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 18',
-      ruleText:
-        'Devices manufactured utilising non-viable tissues or cells of human/animal origin, or their ' +
-        'derivatives, are Class III, unless intended to contact intact skin only (then Class I).',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 18', note: 'Animal/human tissue devices — Class III.' },
-    });
-    return p.contactSite === 'skin-intact' ? 'I' : 'III';
-  }
-
-  // Active implantable / implantable surgically-invasive long-term → Class III/IIb (Rules 6/8).
-  if (inv === 'active-implantable' || (p.implantable && p.lifeSustaining)) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 8 / AIMD',
-      ruleText:
-        'Active implantable devices and their accessories are Class III. Implantable and long-term ' +
-        'surgically invasive devices are generally Class IIb, escalating to Class III where life-supporting, ' +
-        'in direct contact with heart/CNS/central circulatory system, or with a biological effect/full absorption.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 8', note: 'Implantable devices — Class IIb/III.' },
-    });
-    return 'III';
-  }
-
-  if (inv === 'implantable' || (inv === 'surgically-invasive' && duration === 'long-term')) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 8',
-      ruleText:
-        'All implantable devices and long-term surgically invasive devices are Class IIb, unless they ' +
-        'are intended to be in direct contact with the heart, central circulatory system or CNS (Class III), ' +
-        'or have a biological effect / are absorbed (Class III).',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 8', note: 'Implantable / long-term invasive — Class IIb (III if heart/CNS).' },
-    });
-    return p.contactSite === 'circulatory-cns' || p.riskLevel === 'high' ? 'III' : 'IIb';
-  }
-
-  // Rule 22 — active therapeutic devices with an integrated/incorporated diagnostic function → III.
-  if (p.administersMedicine && inv === 'active') {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 12',
-      ruleText:
-        'Active devices intended to administer and/or remove medicinal products, body liquids or other ' +
-        'substances to/from the body are Class IIa, unless this is done in a manner potentially hazardous ' +
-        'taking account of the substance, body part and mode of application, in which case Class IIb.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 12', note: 'Active substance administration — IIa/IIb.' },
-    });
-    return p.riskLevel === 'high' ? 'IIb' : 'IIa';
-  }
-
-  // Active devices — Rules 9/10/11 (therapeutic energy, diagnostic, software).
-  if (inv === 'active' || p.active || p.isSoftware) {
-    if (p.isSoftware) {
-      rules.push({
-        jurisdiction: 'EU-MDR',
-        ruleId: 'MDR Rule 11',
-        ruleText:
-          'Software intended to provide information used to take decisions with diagnosis/therapeutic ' +
-          'purposes is Class IIa, escalating to IIb (serious deterioration / surgical intervention) or III ' +
-          '(death / irreversible deterioration). Software intended to monitor physiological processes is IIa ' +
-          '(IIb where vital parameters and variation could result in immediate danger). Otherwise Class I.',
-        citation: { source: 'EU MDR 2017/745 Annex VIII Rule 11', note: 'Software/SaMD classification.' },
-      });
-      if (p.lifeSustaining || p.riskLevel === 'high') return 'III';
-      if (p.riskLevel === 'moderate') return 'IIb';
-      return 'IIa';
-    }
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 9/10',
-      ruleText:
-        'Active therapeutic devices administering/exchanging energy are Class IIa, or IIb where this may ' +
-        'be done in a potentially hazardous way. Active devices for diagnosis/monitoring are Class IIa, ' +
-        'escalating to IIb for monitoring of vital physiological parameters.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 9/10', note: 'Active therapeutic / diagnostic devices.' },
-    });
-    if (p.lifeSustaining || p.riskLevel === 'high') return 'IIb';
-    return p.riskLevel === 'moderate' ? 'IIb' : 'IIa';
-  }
-
-  // Invasive in body orifices — Rule 5.
-  if (inv === 'invasive-body-orifice') {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 5',
-      ruleText:
-        'Invasive devices with respect to body orifices (other than surgically invasive) are Class I if ' +
-        'transient, Class IIa if short-term, Class IIb if long-term (Class I if used in the oral cavity/ear ' +
-        'canal/nasal cavity and not liable to be absorbed by the mucous membrane).',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 5', note: 'Body-orifice invasive devices.' },
-    });
-    if (duration === 'long-term') return 'IIb';
-    if (duration === 'short-term') return 'IIa';
-    return 'I';
-  }
-
-  // Surgically invasive, transient/short-term — Rules 6/7.
-  if (inv === 'surgically-invasive') {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 6/7',
-      ruleText:
-        'Surgically invasive devices for transient use are Class IIa (Class III if in direct contact with ' +
-        'heart/CNS/central circulatory system, or with a biological effect, or absorbable). Short-term ' +
-        'surgically invasive devices are Class IIa, escalating to IIb/III on the same criteria.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 6/7', note: 'Surgically invasive (transient/short-term).' },
-    });
-    if (p.contactSite === 'circulatory-cns') return 'III';
-    return duration === 'short-term' && p.riskLevel === 'high' ? 'IIb' : 'IIa';
-  }
-
-  // Rule 4 — non-invasive devices in contact with injured skin/mucous membrane.
-  if (inv === 'non-invasive' && (p.contactSite === 'breached-skin' || p.contactSite === 'mucosal')) {
-    rules.push({
-      jurisdiction: 'EU-MDR',
-      ruleId: 'MDR Rule 4',
-      ruleText:
-        'Non-invasive devices in contact with injured skin or mucous membrane are Class I (mechanical ' +
-        'barrier/absorption of exudates), IIb (principally managing wound micro-environment), or IIa otherwise.',
-      citation: { source: 'EU MDR 2017/745 Annex VIII Rule 4', note: 'Non-invasive injured-skin/mucosa contact.' },
-    });
-    return p.riskLevel === 'high' ? 'IIb' : 'IIa';
-  }
-
-  // Rules 1-3 — non-invasive default to Class I.
-  rules.push({
-    jurisdiction: 'EU-MDR',
-    ruleId: 'MDR Rule 1',
-    ruleText:
-      'All non-invasive devices are Class I, unless one of the higher rules (2 channeling/storing blood, ' +
-      '3 modifying biological/chemical composition) applies. Class I subtypes: Is (sterile), Im (measuring ' +
-      'function), Ir (reusable surgical instrument).',
-    citation: { source: 'EU MDR 2017/745 Annex VIII Rule 1', note: 'Non-invasive devices — Class I.' },
-  });
-  return 'I';
-}
-
-/**
- * Determine US device class (I/II/III) and EU MDR/IVDR class from intended use,
- * risk, invasiveness, and duration, recording the applicable classification rule.
- *
- * Deterministic: no LLM, no network, no I/O.
+/*
+ * 2026-10-15: FUNCTION 1 here was classifyDevice, a second classification
+ * engine beside the fail-closed one in market-specs/device-classification.ts.
+ * Every branch fell through to the lowest class, so with no device facts at
+ * all it stated US Class I ("general controls ... are sufficient") and EU MDR
+ * Class I ("no notified body"). It is deleted. The AnA tool that ran it,
+ * classify_medical_device, now runs classify_device's handler, i.e.
+ * classifyMdr / classifyIvdr / recommendFdaPathway in that module. The classes
+ * the functions below read come from that engine or from the product code.
  */
-export function classifyDevice(params: ClassifyDeviceParams): ClassifyDeviceResult {
-  const isIVD = params.isIVD === true;
-  const findings: Finding[] = [];
-  const appliedRules: ClassificationRule[] = [];
-
-  // ── US classification (21 CFR 860.3) ─────────────────────────────────────
-  let usClass: USDeviceClass = 'I';
-  let usClassRationale: string;
-
-  const lifeSustaining = params.lifeSustaining === true;
-  const implantable = params.implantable === true || params.invasiveness === 'implantable' || params.invasiveness === 'active-implantable';
-  const highRisk = params.riskLevel === 'high';
-
-  if (lifeSustaining || (implantable && highRisk) || params.invasiveness === 'active-implantable') {
-    usClass = 'III';
-    usClassRationale =
-      'Class III — device is life-supporting/life-sustaining, of substantial importance in preventing ' +
-      'impairment of human health, or presents a potential unreasonable risk of illness or injury, and ' +
-      'general/special controls are insufficient to provide reasonable assurance of safety and effectiveness ' +
-      '(21 CFR 860.3(c)(3)). Premarket approval (PMA) is the default pathway unless a predicate enables 510(k) ' +
-      'or De Novo applies.';
-    appliedRules.push({
-      jurisdiction: 'US',
-      ruleId: '21 CFR 860.3(c)(3)',
-      ruleText:
-        'Class III devices are those for which general and special controls are insufficient to provide ' +
-        'reasonable assurance of safety and effectiveness, and which are life-supporting/life-sustaining, ' +
-        'of substantial importance, or present a potential unreasonable risk of illness or injury.',
-      citation: { source: CFR['860.3'].key, note: CFR['860.3'].title },
-    });
-  } else if (highRisk || params.riskLevel === 'moderate' || params.isSoftware || implantable) {
-    usClass = 'II';
-    usClassRationale =
-      'Class II — general controls alone are insufficient to provide reasonable assurance of safety and ' +
-      'effectiveness; the device can be adequately controlled through special controls (performance standards, ' +
-      'post-market surveillance, patient registries, special labeling, guidance) per 21 CFR 860.3(c)(2). ' +
-      'The 510(k) premarket notification pathway typically applies (or De Novo if no predicate exists).';
-    appliedRules.push({
-      jurisdiction: 'US',
-      ruleId: '21 CFR 860.3(c)(2)',
-      ruleText:
-        'Class II devices require special controls in addition to general controls to provide reasonable ' +
-        'assurance of safety and effectiveness.',
-      citation: { source: CFR['860.3'].key, note: CFR['860.3'].title },
-    });
-  } else {
-    usClass = 'I';
-    usClassRationale =
-      'Class I — general controls (registration & listing, GMP/QSR, labeling, MDR reporting) are sufficient ' +
-      'to provide reasonable assurance of safety and effectiveness per 21 CFR 860.3(c)(1). Many Class I devices ' +
-      'are 510(k)-exempt under 21 CFR Part 862-892 limitations.';
-    appliedRules.push({
-      jurisdiction: 'US',
-      ruleId: '21 CFR 860.3(c)(1)',
-      ruleText:
-        'Class I devices are subject only to general controls, which are sufficient to provide reasonable ' +
-        'assurance of safety and effectiveness.',
-      citation: { source: CFR['860.3'].key, note: CFR['860.3'].title },
-    });
-  }
-
-  // ── EU classification ────────────────────────────────────────────────────
-  let euMdrClass: EUMDRClass | undefined;
-  let euIvdrClass: EUIVDRClass | undefined;
-  let euClassRationale: string;
-
-  if (isIVD) {
-    euIvdrClass = classifyIVDR(params, appliedRules);
-    const ivdrConformity: Record<EUIVDRClass, string> = {
-      A: 'Class A — lowest risk; self-declaration of conformity (notified body only if sterile/measuring).',
-      B: 'Class B — notified body assessment of technical documentation on a sampling basis.',
-      C: 'Class C — notified body assessment of technical documentation and QMS.',
-      D: 'Class D — highest risk; notified body + EU reference laboratory verification + scrutiny.',
-    };
-    euClassRationale = ivdrConformity[euIvdrClass];
-  } else {
-    euMdrClass = classifyMDR(params, appliedRules);
-    const mdrConformity: Record<EUMDRClass, string> = {
-      I: 'Class I — self-certification; manufacturer issues the EU Declaration of Conformity (no notified body).',
-      Is: 'Class Is (sterile) — notified body involvement limited to aspects of sterility.',
-      Im: 'Class Im (measuring) — notified body involvement limited to metrological aspects.',
-      Ir: 'Class Ir (reusable surgical instrument) — notified body involvement limited to reprocessing aspects.',
-      IIa: 'Class IIa — notified body conformity assessment (Annex IX QMS or Annex XI).',
-      IIb: 'Class IIb — notified body conformity assessment with technical-documentation review.',
-      III: 'Class III — notified body full QMS + technical documentation assessment; clinical evaluation scrutiny.',
-    };
-    euClassRationale = mdrConformity[euMdrClass];
-  }
-
-  // ── Cross-cutting findings ───────────────────────────────────────────────
-  if (params.isSoftware) {
-    findings.push({
-      id: 'SW-LIFECYCLE',
-      severity: 'requirement',
-      statement:
-        'Software/SaMD: apply IEC 62304 software life-cycle processes and an IEC 62304 safety class (A/B/C). ' +
-        'For FDA, follow the Software Functions / Premarket Submissions guidance and cybersecurity guidance.',
-      citation: { source: 'IEC 62304:2006+A1:2015', note: 'Medical device software life-cycle processes.' },
-    });
-  }
-  if (params.contactSite && params.contactSite !== 'none') {
-    findings.push({
-      id: 'BIOCOMPAT',
-      severity: 'requirement',
-      statement:
-        'Patient-contacting device: a biological evaluation per ISO 10993-1 is required, scoped by nature ' +
-        'and duration of contact (' + (params.contactSite) + ' / ' + (params.contactDuration ?? 'transient') + ').',
-      citation: { source: 'ISO 10993-1:2018', note: 'Biological evaluation within a risk-management process.' },
-    });
-  }
-  findings.push({
-    id: 'RISK-MGMT',
-    severity: 'requirement',
-    statement:
-      'A risk management process per ISO 14971 must be established; the overall residual risk must be judged ' +
-      'acceptable against benefits, and is foundational to both FDA benefit-risk and MDR/IVDR GSPR conformity.',
-    citation: { source: 'ISO 14971:2019', note: 'Application of risk management to medical devices.' },
-  });
-
-  return {
-    deviceName: params.deviceName ?? 'unnamed device',
-    intendedUse: params.intendedUse,
-    isIVD,
-    usClass,
-    usClassRationale,
-    euMdrClass,
-    euIvdrClass,
-    euClassRationale,
-    appliedRules,
-    generalControlsApply: true,
-    specialControlsLikely: usClass === 'II',
-    premarketApprovalLikely: usClass === 'III',
-    findings,
-    citations: CLASSIFY_CITATIONS,
-  };
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // FUNCTION 2: selectDevicePathway
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface SelectDevicePathwayParams {
-  /** US device class (I/II/III) — from classifyDevice or known product code. */
+  /** US device class (I/II/III), from the product code's classification regulation. */
   usClass: USDeviceClass;
   /** Whether a legally marketed predicate device exists. */
   predicateExists: boolean;
@@ -657,6 +188,13 @@ export interface SelectDevicePathwayResult {
   findings: Finding[];
   citations: Citation[];
 }
+
+/** The aspect a notified body assesses for a declared Class Is, Im or Ir device. */
+const MDR_CLASS_I_ASPECT: Readonly<Record<'Is' | 'Im' | 'Ir', string>> = {
+  Is: 'sterility (establishing, securing and maintaining sterile conditions)',
+  Im: 'metrology (conformity with the metrological requirements)',
+  Ir: 'reprocessing (cleaning, disinfection, sterilisation, maintenance and functional testing for reuse)',
+};
 
 /** HUD population ceiling, FD&C Act §520(m) as amended by the 21st Century Cures Act: "not more than 8,000 individuals". */
 const HUD_MAX_ANNUAL_US_POPULATION = 8000;
@@ -851,7 +389,14 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
 
   if (params.isIVD && params.euIvdrClass) {
     const c = params.euIvdrClass;
-    if (c === 'A' && params.sterile !== true && params.measuringFunction !== true) {
+    if (c === 'A' && typeof params.sterile !== 'boolean') {
+      // 2026-10-15: an unstated sterility was read as non-sterile, i.e. "no notified body".
+      euConformityRoute = 'undetermined';
+      euConformityRationale =
+        'IVDR Class A: a device placed on the market sterile needs notified body involvement for the sterility ' +
+        'aspects (IVDR Article 48); otherwise the manufacturer self-declares. Whether it is supplied sterile was ' +
+        'not stated (sterile).';
+    } else if (c === 'A' && params.sterile !== true && params.measuringFunction !== true) {
       euConformityRoute = 'self-certification (no NB)';
       euConformityRationale =
         'IVDR Class A (non-sterile, non-measuring): manufacturer self-declares conformity; technical ' +
@@ -884,6 +429,12 @@ export function selectDevicePathway(params: SelectDevicePathwayParams): SelectDe
           'MDR Class I: manufacturer self-certifies, draws up the EU Declaration of Conformity and technical ' +
           'documentation (Annex II/III), and registers in EUDAMED. No notified body required.';
       }
+    } else if (c === 'Is' || c === 'Im' || c === 'Ir') {
+      // 2026-10-15: these fell to the last branch and were described as MDR Class III.
+      euConformityRoute = 'notified body involvement';
+      euConformityRationale =
+        'MDR Class ' + c + ': notified body involvement limited to the ' + MDR_CLASS_I_ASPECT[c] + ' aspects; the ' +
+        'rest is self-certified, with the EU Declaration of Conformity and technical documentation (Annex II/III).';
     } else if (c === 'IIa' || c === 'IIb') {
       euConformityRoute = 'notified body — full QMS + technical documentation';
       euConformityRationale =
@@ -970,9 +521,32 @@ export interface SEDecisionStep {
   step: string;
   question: string;
   answer: string;
-  outcome: 'continue' | 'SE' | 'NSE';
+  /** 'indeterminate' when the answer to the step was not stated. */
+  outcome: 'continue' | 'SE' | 'NSE' | 'indeterminate';
   citation: Citation;
 }
+
+/**
+ * The yes/no a 510(k) decision step reads. 2026-10-15: an unstated answer was read
+ * as "no" (no predicate, a different intended use, different technology); a step
+ * the flow reaches without its answer is now refused, naming it.
+ */
+function seStepAnswer(field: keyof AssessSubstantialEquivalenceParams, value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  throw new ComputationRefusal(
+    value === undefined || value === null ? 'missing_input' : 'invalid_input',
+    `assessSubstantialEquivalence: ${field} is required (true or false); the 510(k) decision flow reaches that step and does not answer it for you.`,
+    field,
+  );
+}
+
+/** What the open steps 4 and 5 ask, for a rationale that names them. */
+const SE_OPEN_STEP: Readonly<Record<string, string>> = {
+  differentQuestionsOfSafetyEffectiveness:
+    'whether the different technological characteristics raise different questions of safety and effectiveness',
+  performanceDataDemonstratesEquivalence:
+    'whether the performance data show the device is as safe and effective as the predicate',
+};
 
 export interface AssessSubstantialEquivalenceResult {
   determination: 'SE' | 'NSE' | 'indeterminate';
@@ -1004,21 +578,22 @@ export function assessSubstantialEquivalence(
   let determinationRationale = '';
 
   // Step 1 — Is there a valid predicate?
+  const predicateIdentified = seStepAnswer('predicateIdentified', params.predicateIdentified);
   decisionPath.push({
     step: '1',
     question: 'Is the predicate device legally marketed and a valid predicate (not removed for safety/effectiveness reasons)?',
-    answer: params.predicateIdentified
+    answer: predicateIdentified
       ? params.predicateRecalledForSafety
         ? 'A predicate was identified but it was recalled/withdrawn for design-related safety reasons.'
         : 'Yes — a legally marketed predicate has been identified.'
       : 'No predicate identified.',
-    outcome: params.predicateIdentified && !params.predicateRecalledForSafety ? 'continue' : 'NSE',
+    outcome: predicateIdentified && !params.predicateRecalledForSafety ? 'continue' : 'NSE',
     citation: { source: 'FDA 510(k) Program Guidance (2014) — Decision 1', note: 'Predicate validity.' },
   });
 
-  if (!params.predicateIdentified || params.predicateRecalledForSafety) {
+  if (!predicateIdentified || params.predicateRecalledForSafety) {
     determination = 'NSE';
-    determinationRationale = !params.predicateIdentified
+    determinationRationale = !predicateIdentified
       ? 'No valid predicate device was identified, so substantial equivalence cannot be established. Consider a ' +
         'De Novo classification request (if low/moderate risk) or a PMA (if high risk).'
       : 'The proposed predicate was removed from the market for design-related safety or effectiveness reasons ' +
@@ -1036,15 +611,16 @@ export function assessSubstantialEquivalence(
   }
 
   // Step 2 — Same intended use?
+  const sameIntendedUse = seStepAnswer('sameIntendedUse', params.sameIntendedUse);
   decisionPath.push({
     step: '2',
     question: 'Does the device have the same intended use as the predicate?',
-    answer: params.sameIntendedUse ? 'Yes — same intended use.' : 'No — different intended use.',
-    outcome: params.sameIntendedUse ? 'continue' : 'NSE',
+    answer: sameIntendedUse ? 'Yes — same intended use.' : 'No — different intended use.',
+    outcome: sameIntendedUse ? 'continue' : 'NSE',
     citation: { source: '21 CFR 807.100(b)(1)', note: 'Same intended use requirement.' },
   });
 
-  if (!params.sameIntendedUse) {
+  if (!sameIntendedUse) {
     determination = 'NSE';
     determinationRationale =
       'The device does not have the same intended use as the predicate. A different intended use precludes a ' +
@@ -1063,26 +639,33 @@ export function assessSubstantialEquivalence(
   }
 
   // Step 3 — Same technological characteristics?
+  const sameTech = seStepAnswer('sameTechnologicalCharacteristics', params.sameTechnologicalCharacteristics);
+  const openSteps: string[] = [];
   decisionPath.push({
     step: '3',
     question: 'Does the device have the same technological characteristics as the predicate?',
-    answer: params.sameTechnologicalCharacteristics
+    answer: sameTech
       ? 'Yes — same technological characteristics (materials, design, energy source, principle of operation).'
       : 'No — different technological characteristics.',
     outcome: 'continue',
     citation: { source: '21 CFR 807.100(b)(2)', note: 'Technological characteristics comparison.' },
   });
 
-  if (!params.sameTechnologicalCharacteristics) {
+  if (!sameTech) {
     // Step 4 — Do the different characteristics raise different questions of safety/effectiveness?
+    // 2026-10-15: unstated was read as "no — the differences do not raise different questions".
     const raisesNew = params.differentQuestionsOfSafetyEffectiveness === true;
+    const step4Open = typeof params.differentQuestionsOfSafetyEffectiveness !== 'boolean';
+    if (step4Open) openSteps.push('differentQuestionsOfSafetyEffectiveness');
     decisionPath.push({
       step: '4',
       question: 'Do the different technological characteristics raise DIFFERENT questions of safety and effectiveness?',
       answer: raisesNew
         ? 'Yes — the differences raise new/different questions of safety or effectiveness.'
-        : 'No — the differences do not raise different questions of safety or effectiveness.',
-      outcome: raisesNew ? 'NSE' : 'continue',
+        : step4Open
+          ? 'Not stated (differentQuestionsOfSafetyEffectiveness).'
+          : 'No — the differences do not raise different questions of safety or effectiveness.',
+      outcome: raisesNew ? 'NSE' : step4Open ? 'indeterminate' : 'continue',
       citation: { source: 'FDA 510(k) Program Guidance (2014) — Decision 4', note: 'Different questions of safety/effectiveness.' },
     });
 
@@ -1117,14 +700,19 @@ export function assessSubstantialEquivalence(
   }
 
   // Step 5/6 — Performance data demonstrate equivalent safety and effectiveness?
-  const dataAdequate = params.performanceDataDemonstratesEquivalence !== false;
+  // 2026-10-15: unstated was read as "yes", so the answer was SE "supported by performance data
+  // demonstrating it is as safe and effective as the predicate" when no data were described.
+  const dataAdequate = params.performanceDataDemonstratesEquivalence;
+  if (typeof dataAdequate !== 'boolean') openSteps.push('performanceDataDemonstratesEquivalence');
   decisionPath.push({
-    step: params.sameTechnologicalCharacteristics ? '4' : '5',
+    step: sameTech ? '4' : '5',
     question: 'Do the available performance data demonstrate that the device is as safe and effective as the predicate?',
-    answer: dataAdequate
-      ? 'Yes (or expected once the identified performance testing is completed).'
-      : 'No — performance data do not yet demonstrate equivalence; additional testing is required.',
-    outcome: dataAdequate ? 'SE' : 'continue',
+    answer: dataAdequate === true
+      ? 'Yes — the performance data demonstrate it.'
+      : dataAdequate === false
+        ? 'No — performance data do not yet demonstrate equivalence; additional testing is required.'
+        : 'Not stated (performanceDataDemonstratesEquivalence).',
+    outcome: dataAdequate === true ? 'SE' : dataAdequate === false ? 'continue' : 'indeterminate',
     citation: { source: 'FDA 510(k) Program Guidance (2014) — Decisions 5/6', note: 'Performance data adequacy.' },
   });
 
@@ -1174,7 +762,13 @@ export function assessSubstantialEquivalence(
     });
   }
 
-  if (!dataAdequate) {
+  if (openSteps.length > 0) {
+    determination = 'indeterminate';
+    determinationRationale =
+      'Not determined: substantial equivalence (21 CFR 807.100(b)) turns on ' +
+      openSteps.map((k) => SE_OPEN_STEP[k] + ' (' + k + ')').join(' and ') +
+      (openSteps.length > 1 ? ', which were' : ', which was') + ' not stated.';
+  } else if (!dataAdequate) {
     determination = 'indeterminate';
     determinationRationale =
       'A valid predicate, same intended use, and (where applicable) no new questions of safety/effectiveness ' +
@@ -1192,7 +786,7 @@ export function assessSubstantialEquivalence(
   // Recommended submission type.
   let recommendedSubmissionType: AssessSubstantialEquivalenceResult['recommendedSubmissionType'] =
     '510(k)-Traditional';
-  if (params.sameTechnologicalCharacteristics && !params.hasSoftware && !params.isIVD) {
+  if (sameTech && !params.hasSoftware && !params.isIVD) {
     recommendedSubmissionType = '510(k)-Abbreviated';
   }
 
@@ -1256,14 +850,30 @@ export interface ClinicalStudyRecommendation {
 }
 
 export interface DesignDeviceClinicalEvidenceResult {
-  clinicalDataRequired: boolean;
+  /** null when a fact that decides it was not stated (see missingFacts). */
+  clinicalDataRequired: boolean | null;
   clinicalDataRationale: string;
   recommendedStudies: ClinicalStudyRecommendation[];
-  usIDERequired: boolean;
+  /** null while clinicalDataRequired is null, or while the significant-risk question is unstated. */
+  usIDERequired: boolean | null;
   euClinicalEvaluationPlan: string;
   evidenceHierarchy: string[];
+  /** The facts to state before clinicalDataRequired / usIDERequired can be given. */
+  missingFacts: string[];
   findings: Finding[];
   citations: Citation[];
+}
+
+const unstated = (v: unknown): boolean => v === undefined || v === null;
+
+/** The facts besides class and pathway that each make clinical data required when true. */
+const CLINICAL_DATA_TRIGGERS = ['novelTechnology', 'clinicalDataNeededForSE', 'implantable', 'lifeSustaining'] as const;
+
+/** What a "clinical data not required" answer reads and was not told: unstated is not false. */
+function notRequiredMissingFacts(p: DesignDeviceClinicalEvidenceParams): string[] {
+  const missing: string[] = unstated(p.usClass) ? ['usClass (I, II, III or unclassified)'] : [];
+  for (const k of CLINICAL_DATA_TRIGGERS) if (unstated(p[k])) missing.push(k + ' (true or false)');
+  return missing;
 }
 
 /**
@@ -1283,9 +893,14 @@ export function designDeviceClinicalEvidence(
   const pathway = params.usPathway;
   const isPMA = pathway === 'PMA' || pathway === 'IDE-then-PMA' || pathway === 'HDE';
   const high = params.usClass === 'III' || params.lifeSustaining === true || params.implantable === true;
+  const clinicalQuestions = params.clinicalDataNeededForSE === true || params.novelTechnology === true;
+  // 2026-10-15: this started at false and stayed false unless a stated fact turned it on, so no
+  // facts at all read "clinical data are generally NOT required" (and no IDE). "Not required" now
+  // needs every fact that would require them stated; until then it is null and missingFacts says which.
+  const missingFacts: string[] = isPMA || high || clinicalQuestions ? [] : notRequiredMissingFacts(params);
 
-  let clinicalDataRequired = false;
-  let clinicalDataRationale = '';
+  let clinicalDataRequired: boolean | null;
+  let clinicalDataRationale: string;
 
   if (isPMA || high) {
     clinicalDataRequired = true;
@@ -1293,12 +908,18 @@ export function designDeviceClinicalEvidence(
       'Clinical data are required. Class III / PMA (or HDE) devices must be supported by valid scientific ' +
       'evidence — typically a pivotal clinical investigation — to provide a reasonable assurance of safety and ' +
       'effectiveness (21 CFR 814.20(b)(6); 21 CFR 860.7).';
-  } else if (params.clinicalDataNeededForSE === true || params.novelTechnology === true) {
+  } else if (clinicalQuestions) {
     clinicalDataRequired = true;
     clinicalDataRationale =
       'Clinical data are required because the device raises questions of safety/effectiveness (novel technology ' +
       'or new indication) that bench/animal data cannot answer. A focused clinical study or robust clinical ' +
       'evaluation is needed to support the marketing claim.';
+  } else if (missingFacts.length > 0) {
+    clinicalDataRequired = null;
+    clinicalDataRationale =
+      'Not determined. Clinical data are required for class III, PMA and HDE devices, implants, life-supporting ' +
+      'devices, novel technology, and where the 510(k) comparison raises questions only clinical data can answer. ' +
+      'Without ' + missingFacts.join(', ') + ' none of these is ruled out, so neither answer is given.';
   } else {
     clinicalDataRequired = false;
     clinicalDataRationale =
@@ -1308,7 +929,7 @@ export function designDeviceClinicalEvidence(
   }
 
   // ── Recommended studies ──────────────────────────────────────────────────
-  if (clinicalDataRequired) {
+  if (clinicalDataRequired === true) {
     if (params.novelTechnology || high) {
       recommendedStudies.push({
         studyType: 'feasibility (first-in-human)',
@@ -1346,7 +967,7 @@ export function designDeviceClinicalEvidence(
         citation: { source: '21 CFR 814.20(b)(6) / 21 CFR 812', note: 'Pivotal clinical evidence under IDE.' },
       });
     }
-  } else {
+  } else if (clinicalDataRequired === false) {
     recommendedStudies.push({
       studyType: 'none (non-clinical sufficient)',
       rationale:
@@ -1386,9 +1007,13 @@ export function designDeviceClinicalEvidence(
   }
 
   // ── US IDE determination ─────────────────────────────────────────────────
-  const usIDERequired =
-    clinicalDataRequired &&
-    (params.significantRisk === true || high || params.usClass === 'III');
+  // 2026-10-15: a required study was told it needed no IDE whenever significantRisk was not stated true.
+  let usIDERequired: boolean | null = clinicalDataRequired === true ? null : clinicalDataRequired;
+  if (clinicalDataRequired === true) {
+    if (params.significantRisk === true || high) usIDERequired = true;
+    else if (params.significantRisk === false) usIDERequired = false;
+    else missingFacts.push('significantRisk (true or false): whether the US investigation is a significant-risk study (21 CFR 812.3(m))');
+  }
 
   if (usIDERequired) {
     findings.push({
@@ -1449,6 +1074,7 @@ export function designDeviceClinicalEvidence(
     usIDERequired,
     euClinicalEvaluationPlan,
     evidenceHierarchy,
+    missingFacts,
     findings,
     citations: CLINICAL_CITATIONS,
   };
@@ -1490,11 +1116,16 @@ export interface AssessEssentialPrinciplesParams {
 export interface GSPRRow {
   gsprRef: string;
   requirement: string;
-  applicable: boolean;
+  /** null when the device property that decides it was not stated. */
+  applicable: boolean | null;
   evidenceStandard: string;
-  status: 'addressed' | 'gap' | 'not-applicable';
+  /** 'addressed' only by a stated input; 'not-assessed' when applicability was not stated. */
+  status: 'addressed' | 'gap' | 'not-applicable' | 'not-assessed';
   citation: Citation;
 }
+
+/** A stated device property, or null: unstated is neither applicable nor not. */
+const statedProperty = (v: boolean | undefined): boolean | null => (typeof v === 'boolean' ? v : null);
 
 export interface AssessEssentialPrinciplesResult {
   framework: 'EU MDR Annex I (GSPR)' | 'EU IVDR Annex I (GSPR)';
@@ -1531,10 +1162,16 @@ export function assessEssentialPrinciples(
     return false;
   };
 
+  // 2026-10-15: GSPR 9, 14, 15, 19/20 and 23 (and the IVD analytical row) were 'addressed' whatever was
+  // given, GSPR 5 too unless lay use was stated, and an unstated device property made its row
+  // 'not-applicable': { qmsInPlace, riskManagementFile } alone was 'conforming'. A row is now addressed
+  // only by a stated input (a claimed standard, the QMS, the risk file), and a row whose applicability
+  // turns on an unstated property is 'not-assessed'. No input here evidences GSPR 9, 14 or 23, so this
+  // matrix never reports 'conforming'; those are confirmed from the technical documentation.
   const addRow = (
     gsprRef: string,
     requirement: string,
-    applicable: boolean,
+    applicable: boolean | null,
     evidenceStandard: string,
     addressed: boolean,
   ): void => {
@@ -1543,7 +1180,7 @@ export function assessEssentialPrinciples(
       requirement,
       applicable,
       evidenceStandard,
-      status: !applicable ? 'not-applicable' : addressed ? 'addressed' : 'gap',
+      status: applicable === null ? 'not-assessed' : !applicable ? 'not-applicable' : addressed ? 'addressed' : 'gap',
       citation: { source: annex + ' ' + gsprRef, note: requirement },
     });
   };
@@ -1582,14 +1219,14 @@ export function assessEssentialPrinciples(
     'Eliminate or reduce risks related to use error (usability / human factors).',
     true,
     'IEC 62366-1 usability engineering; FDA HFE/usability for lay use.',
-    claims('IEC 62366') || params.layUse !== true,
+    claims('IEC 62366'),
   );
   addRow(
     'GSPR 9',
     'Devices without a medical purpose (Annex XVI) and general performance/safety over the lifetime and storage/transport.',
     true,
     'Shelf-life, transport, and stability testing.',
-    true,
+    false,
   );
 
   // GSPR Chapter II — Design & manufacture.
@@ -1598,77 +1235,80 @@ export function assessEssentialPrinciples(
     isIVD
       ? 'Analytical and clinical performance characteristics (trueness, precision, sensitivity, specificity, traceability of calibrators).'
       : 'Chemical, physical and biological properties; biocompatibility of patient-contacting materials.',
-    isIVD ? true : params.patientContacting === true,
+    isIVD ? true : statedProperty(params.patientContacting),
     isIVD ? 'CLSI EP-series; metrological traceability (ISO 17511).' : 'ISO 10993 series biological evaluation.',
-    isIVD ? true : claims('ISO 10993') || params.patientContacting !== true,
+    isIVD ? false : claims('ISO 10993'),
   );
   addRow(
     'GSPR 11',
     'Infection and microbial contamination; devices supplied sterile shall be manufactured and sterilized by validated methods.',
-    params.sterile === true,
+    statedProperty(params.sterile),
     'ISO 11135 / ISO 11137 sterilization validation; ISO 11607 sterile barrier.',
-    !params.sterile || claims('ISO 11135') || claims('ISO 11137') || claims('ISO 11607'),
+    claims('ISO 11135') || claims('ISO 11137') || claims('ISO 11607'),
   );
   addRow(
     'GSPR 12',
     'Devices incorporating a medicinal substance: safety, quality, and usefulness of the substance verified by analogy with medicinal-product methods.',
-    params.incorporatesMedicinalSubstance === true,
+    statedProperty(params.incorporatesMedicinalSubstance),
     'Medicinal-substance consultation with a competent authority/EMA.',
-    params.incorporatesMedicinalSubstance !== true,
+    false,
   );
   addRow(
     isIVD ? 'IVDR GSPR 13' : 'GSPR 14',
     'Construction and environmental interaction; minimize risks from interaction with the environment and reasonably foreseeable conditions of use.',
     true,
     'Environmental/EMC testing; transport/storage validation.',
-    true,
+    false,
   );
   addRow(
     isIVD ? 'IVDR GSPR 16' : 'GSPR 15',
     'Devices with a diagnostic or measuring function: accuracy, precision, and stability within stated limits.',
-    params.measuringFunction === true || isIVD,
+    isIVD ? true : statedProperty(params.measuringFunction),
     isIVD ? 'CLSI EP05/EP06/EP09 precision/linearity/method comparison.' : 'Metrological verification of the measuring function.',
-    true,
+    false,
   );
   addRow(
     'GSPR 16',
     'Protection against radiation; devices emitting radiation shall be designed/manufactured to reduce exposure consistent with the intended purpose.',
-    params.emitsRadiation === true,
+    statedProperty(params.emitsRadiation),
     'IEC 60601-1-3 / IEC 60601-2-xx radiation safety; ALARA.',
-    params.emitsRadiation !== true,
+    false,
   );
   addRow(
     isIVD ? 'IVDR GSPR 16.2 (software)' : 'GSPR 17',
     'Electronic programmable systems and software: developed and manufactured per state of the art (development life cycle, risk management, verification, validation).',
-    params.hasSoftware === true,
+    statedProperty(params.hasSoftware),
     'IEC 62304 life cycle; IEC 82304-1 health software; cybersecurity per IEC 81001-5-1.',
-    params.hasSoftware !== true || claims('IEC 62304'),
+    claims('IEC 62304'),
   );
   addRow(
     isIVD ? 'IVDR GSPR 16.4' : 'GSPR 18',
     'Active devices and devices connected to them: electrical safety, basic safety and essential performance.',
-    params.active === true,
+    statedProperty(params.active),
     'IEC 60601-1 (+ collateral/particular standards) basic safety & essential performance.',
-    params.active !== true || claims('IEC 60601'),
+    claims('IEC 60601'),
   );
   addRow(
     'GSPR 19/20',
     'Devices incorporating energy/substances and active implantable considerations: protection against hazards (energy, heat, fluids).',
-    params.implantable === true || params.active === true,
+    params.implantable === true || params.active === true
+      ? true
+      : params.implantable === false && params.active === false ? false : null,
     'Implant-specific testing; ISO 14708 (active implants) where applicable.',
-    true,
+    false,
   );
   addRow(
     isIVD ? 'IVDR GSPR 20' : 'GSPR 23',
     'Information supplied with the device: label and instructions for use (IFU), including symbols and residual-risk information.',
     true,
     'ISO 15223-1 symbols; MDR/IVDR labeling requirements; UDI.',
-    true,
+    false,
   );
 
   // ── Tally and gaps ───────────────────────────────────────────────────────
-  const applicableRows = rows.filter((r: GSPRRow) => r.applicable);
+  const applicableRows = rows.filter((r: GSPRRow) => r.applicable === true);
   const gapRows = rows.filter((r: GSPRRow) => r.status === 'gap');
+  const notAssessedRows = rows.filter((r: GSPRRow) => r.status === 'not-assessed');
   const gaps: Finding[] = gapRows.map((r: GSPRRow) => ({
     id: 'GAP-' + r.gsprRef.replace(/\s+/g, '-'),
     severity: 'requirement',
@@ -1698,11 +1338,24 @@ export function assessEssentialPrinciples(
     });
   }
 
+  if (notAssessedRows.length > 0) {
+    findings.push({
+      id: 'APPLICABILITY-NOT-STATED',
+      severity: 'requirement',
+      statement:
+        'Not assessed: ' + notAssessedRows.map((r: GSPRRow) => r.gsprRef).join(', ') + '. Whether each applies ' +
+        'depends on a device property that was not stated (patient contact, sterile, medicinal substance, ' +
+        'measuring function, radiation, software, active, implantable); state it true or false.',
+    });
+  }
+
   let overallConformity: AssessEssentialPrinciplesResult['overallConformity'];
   if (!params.qmsInPlace || !params.riskManagementFile) {
     overallConformity = 'insufficient-information';
   } else if (gapRows.length > 0) {
     overallConformity = 'gaps-present';
+  } else if (notAssessedRows.length > 0) {
+    overallConformity = 'insufficient-information';
   } else {
     overallConformity = 'conforming';
   }
@@ -1933,34 +1586,47 @@ function nonEstarUSSections(params: PlanDeviceSubmissionParams): SubmissionSecti
       'conformity to standards as applicable.',
     citation: { source: '21 CFR 807.87(g)', note: 'Performance data.' },
   });
-  if (params.patientContacting) {
-    sections.push({
+  const conditional: Array<[boolean | undefined, string, SubmissionSection]> = [
+    [params.patientContacting, 'the device contacts the patient', {
       sectionId: 'biocompat',
       title: 'Biocompatibility',
       contents: 'ISO 10993-1 biological evaluation plan/report scoped to contact type and duration.',
       citation: { source: 'ISO 10993-1:2018', note: 'Biological evaluation.' },
-    });
-  }
-  if (params.sterile) {
-    sections.push({
+    }],
+    [params.sterile, 'the device is supplied sterile', {
       sectionId: 'sterile',
       title: 'Sterilization, Shelf Life & Packaging',
       contents: 'Sterilization method and validation (ISO 11135/11137), sterile barrier (ISO 11607), shelf-life/aging.',
       citation: { source: 'ISO 11135 / ISO 11137 / ISO 11607', note: 'Sterility and packaging.' },
-    });
-  }
-  if (params.hasSoftware) {
-    sections.push({
+    }],
+    [params.hasSoftware, 'the device contains software', {
       sectionId: 'software',
       title: 'Software & Cybersecurity',
       contents:
         'Software documentation per FDA Premarket Software guidance (documentation level), IEC 62304 life-cycle ' +
         'artifacts, V&V, and cybersecurity (threat model, SBOM, IEC 81001-5-1).',
       citation: { source: 'FDA Premarket Software / Cybersecurity Guidance', note: 'Software documentation.' },
-    });
+    }],
+    [params.isIVD, 'the device is an IVD', IVD_PERFORMANCE_SECTION],
+  ];
+  for (const [answer, condition, section] of conditional) {
+    const planned = conditionalSection(answer, condition, section);
+    if (planned) sections.push(planned);
   }
-  if (params.isIVD) sections.push(IVD_PERFORMANCE_SECTION);
   return sections;
+}
+
+/**
+ * A section required when the device answer is yes. 2026-10-15: an unstated answer dropped the
+ * section from an HDE / BLA / undetermined plan; as on the eSTAR plan, it now stays, marked undetermined.
+ */
+function conditionalSection(answer: boolean | undefined, condition: string, section: SubmissionSection): SubmissionSection | null {
+  if (answer === true) return section;
+  if (answer === false) return null;
+  return {
+    ...section,
+    contents: 'Undetermined: required if ' + condition + ', which this plan was not told. ' + section.contents,
+  };
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -2220,9 +1886,16 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
       description: 'Align with FDA on predicate/classification, test plan, endpoints, and acceptance criteria.',
     });
   }
+  // 2026-10-15: an unstated clinicalDataIncluded gave the non-clinical estimate and an "optional" Q-Sub.
+  const testingDuration =
+    params.clinicalDataIncluded === true
+      ? '12-36+ months (incl. clinical study)'
+      : params.clinicalDataIncluded === false
+        ? '3-9 months (non-clinical)'
+        : 'Not estimated: whether clinical data are part of the submission was not stated (3-9 months non-clinical; 12-36+ months with a clinical study)';
   timeline.push({
     phase: 'Testing & Evidence Generation',
-    durationEstimate: params.clinicalDataIncluded ? '12-36+ months (incl. clinical study)' : '3-9 months (non-clinical)',
+    durationEstimate: testingDuration,
     description: 'Execute bench, biocompatibility, sterility, software, and (if applicable) clinical studies.',
   });
   timeline.push({
@@ -2253,7 +1926,7 @@ export function planDeviceSubmission(params: PlanDeviceSubmissionParams): PlanDe
     qSubStrategy =
       'A Pre-Submission has already occurred; incorporate FDA feedback into the submission, document how each ' +
       'comment was addressed, and consider a follow-up Q-Sub only if the test plan materially changed.';
-  } else if (pathway === '510(k)' && !params.clinicalDataIncluded) {
+  } else if (pathway === '510(k)' && params.clinicalDataIncluded === false) {
     qSubStrategy =
       'A Pre-Submission is optional but useful for a non-clinical 510(k) when the predicate choice or a recognized ' +
       'standard interpretation is uncertain. Many Traditional 510(k)s proceed without one.';

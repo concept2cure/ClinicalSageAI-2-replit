@@ -52,10 +52,14 @@ import { randomUUID } from 'node:crypto';
 
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
+import { adaptUsageRow } from './source-usage-projection';
 import type { Queryable } from './span-lineage.service';
 import { citesAcrossProjects, readCitationEnds } from './citation-ends';
 import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
-import type { CitationSource } from '@shared/authoring/citations';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 
 /** The `authoring_citations.source` discriminator for a canonical-source citation. */
 export const CRE_SOURCE_CITATION = 'cre_evidence_source';
@@ -171,7 +175,7 @@ export interface ChangedSourceUsage {
 }
 
 /** Positive-integer source ids only; anything else is dropped rather than cast. */
-function numericIds(ids: Array<number | string>): number[] {
+export function numericIds(ids: Array<number | string>): number[] {
   const out: number[] = [];
   for (const raw of Array.isArray(ids) ? ids : []) {
     const n = Number(raw);
@@ -180,28 +184,13 @@ function numericIds(ids: Array<number | string>): number[] {
   return out;
 }
 
-function usageState(
-  citedChecksum: string | null,
-  currentChecksum: string | null,
-  resolved: boolean,
-  sourceIsCurrent: boolean | null,
-): UsageState {
-  if (!resolved) return 'unresolved';
-  // SUPERSEDED OUTRANKS THE CHECKSUM COMPARISON, and has to.
-  //
-  // A source's checksum is never rewritten: a revised document is ingested as a
-  // NEW row and the old row keeps its bytes and its hash forever. So the cited
-  // and current checksums still MATCH on a source that has been replaced, and
-  // this would report 'current' — "content unchanged since cited" — for exactly
-  // the citation a reviewer most needs to look at.
-  //
-  // `is_current = FALSE` is the fact that says otherwise, recorded by the ingest
-  // path when it links a successor. NULL means the column was not read, or no
-  // successor is known; neither is evidence of supersession, so both fall
-  // through rather than being treated as one.
-  if (sourceIsCurrent === false) return 'superseded';
-  if (!citedChecksum || !currentChecksum) return 'unverified';
-  return citedChecksum === currentChecksum ? 'current' : 'changed';
+/** Current requester identity; historical citation attribution cannot supply it. */
+function citationRequester(raw: string | number): number {
+  const userId = typeof raw === 'number' ? raw : /^[1-9]\d*$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new SourceUsageError('A current positive integer requester identity is required.');
+  }
+  return userId;
 }
 
 /**
@@ -238,6 +227,9 @@ export async function citeSource(
   const [sourceId] = numericIds([p.sourceId]);
   if (!sourceId) throw new SourceUsageError('sourceId must be a positive integer');
   if (!p.sectionId) throw new SourceUsageError('sectionId is required');
+  const userId = citationRequester(p.createdBy);
+  // Admit only source identity/recorded parents before reading its checksum.
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
 
   /* Both ends, each with its project (PF-11): citation-ends.ts. Checked
      before the existing citation is read, so a legacy cross-project citation
@@ -251,13 +243,18 @@ export async function citeSource(
       'CROSS_PROJECT',
     );
   }
+  if (ends.source.programId) await lockDocumentDispositionProgram(executor, orgId, ends.source.programId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
   // Retained extractions remain citable. Withdrawal and supersession forbid
   // new grounding; historical readers retain the original recorded citation.
   const visibility = visibleOrgClause(orgId, 2);
-  const eligible = await executor.query(`SELECT src.id FROM cre_evidence_sources src WHERE src.id=$1 AND ${visibility.sql}
-    AND src.deleted_at IS NULL AND ${capturedDataEligibleSql('src')} LIMIT 1`, [sourceId, visibility.param]);
+  const eligible = await executor.query<{ checksum: string | null }>(`SELECT src.checksum FROM cre_evidence_sources src WHERE src.id=$1 AND ${visibility.sql}
+    AND src.deleted_at IS NULL AND src.is_current IS NOT FALSE AND ${capturedDataEligibleSql('src')}
+    AND EXISTS (SELECT 1 FROM authoring_sections sec JOIN authoring_documents doc ON doc.id=sec.doc_id AND doc.tenant_id=sec.tenant_id
+      WHERE sec.id=$3 AND sec.tenant_id=$2 AND (doc.client_program_id IS NULL OR src.client_program_id IS NULL OR doc.client_program_id=src.client_program_id))
+    LIMIT 1 FOR SHARE`, [sourceId, visibility.param, p.sectionId]);
   if (!eligible.rows.length) throw new SourceUsageError('This source data has been withdrawn or superseded and cannot ground a new citation. Nothing was saved.', 'SOURCE_WITHDRAWN');
-  const checksum = ends.source.checksum;
+  const checksum = eligible.rows[0].checksum;
 
   // Locked for the same reason as the re-read below: it is the before-image.
   const existing = await executor.query<CitationImage & { frozen_at: string | null }>(
@@ -360,9 +357,15 @@ export async function removeSourceCitation(
  * Forward direction — the sources this section is written from, with each
  * citation's standing against the source's content today.
  */
-export async function listSectionSources(orgId: number, sectionId: string): Promise<SectionSourceUsage[]> {
+export async function listSectionSources(orgId: number, sectionId: string,
+  access?: { executor: RequestSqlClient; userId: number | undefined },
+): Promise<SectionSourceUsage[]> {
   if (!sectionId) return [];
-  const { rows } = await pool.query(
+  // Live section reads admit source identities before metadata. The retained
+  // internal/fixture adapter keeps its declared tenant-only correspondence.
+  const q = access?.executor ?? pool;
+  const readable = access ? await getCurrentReadableSourceScope(q, { organizationId: orgId, userId: access.userId }) : null;
+  const { rows } = await q.query(
     `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256,
             src.id AS source_id, src.title, src.checksum, src.source_type,
             src.ingestion_status, src.extraction_status, src.updated_at AS source_updated_at,
@@ -379,12 +382,14 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
        FROM authoring_citations c
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $2)
+             AND (src.organization_id = $2 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
+             AND ($4::int[] IS NULL OR src.id=ANY($4::int[]))
       WHERE c.section_id = $1 AND c.tenant_id = $2 AND c.source = $3
       ORDER BY c.created_at ASC`,
-    [sectionId, orgId, CRE_SOURCE_CITATION],
+    [sectionId, orgId, CRE_SOURCE_CITATION, readable?.sourceIds ?? null],
   );
+  if (access && readable) await requireSourceReadScopeStillCurrent(q, { organizationId: orgId, userId: access.userId }, readable);
 
   return (rows as Array<Record<string, unknown>>).map(adaptUsageRow);
 }
@@ -411,60 +416,30 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
  *  default string form does not start with the year — and the reference entry
  *  prints only a year, read off the front. Anything unparseable yields null
  *  rather than a guess. */
-function isoDay(value: unknown): string | null {
-  if (value == null) return null;
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
-  }
-  const s = String(value).trim();
-  return s || null;
-}
-
-export async function listCitationSources(
-  orgId: number,
-  sourceIds: Array<number | string>,
-): Promise<CitationSource[]> {
-  const ids = numericIds(sourceIds);
-  if (ids.length === 0) return [];
-  const c = visibleOrgClause(orgId, 2);
-  const { rows } = await pool.query(
-    `SELECT id, title, sponsor, source_type, document_date,
-            COALESCE(NULLIF(source_record_identifier, ''),
-                     NULLIF(trial_registry_identifier, ''),
-                     NULLIF(application_number, '')) AS identifier
-       FROM cre_evidence_sources
-      WHERE id = ANY($1::int[]) AND ${c.sql} AND deleted_at IS NULL`,
-    [ids, c.param],
-  );
-  return (rows as Array<Record<string, unknown>>).map((r) => ({
-    id: String(r.id),
-    title: (r.title as string) ?? null,
-    sponsor: (r.sponsor as string) ?? null,
-    sourceType: (r.source_type as string) ?? null,
-    date: isoDay(r.document_date),
-    identifier: (r.identifier as string) ?? null,
-  }));
-}
+export { listCitationSources } from './citation-source-read';
 
 /**
  * Backward direction — for each requested source, how many sections and documents
  * cite it, and how many of those citations are against superseded content.
  *
- * Sources with no usage are simply ABSENT from the map. The caller reports that as
- * "not cited yet", which is a real and useful state: an uploaded document nothing
- * was written from is exactly what a reviewer wants to notice.
+ * Sources with no accessible usage are absent from the map. This is the current
+ * actor's permitted view, not a claim that no private document cites the source.
  *
  * One query for a whole page of sources rather than one per row.
  */
 export async function summarizeSourceUsage(
+  q: RequestSqlClient,
   orgId: number,
   sourceIds: Array<number | string>,
+  opts: {userId:number | undefined},
 ): Promise<Map<number, SourceUsageSummary>> {
   const ids = numericIds(sourceIds);
   const out = new Map<number, SourceUsageSummary>();
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,sourceIds:ids});
   if (ids.length === 0) return out;
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT src.id AS source_id,
             COUNT(DISTINCT c.section_id)                        AS sections,
             COUNT(DISTINCT sec.doc_id)                          AS documents,
@@ -478,13 +453,16 @@ export async function summarizeSourceUsage(
               ON c.reference_id = src.id::text
              AND c.tenant_id = $2
              AND c.source = $3
-       LEFT JOIN authoring_sections sec
+       JOIN authoring_sections sec
               ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
+       JOIN authoring_documents doc ON doc.id=sec.doc_id AND doc.tenant_id=c.tenant_id
       WHERE src.id = ANY($1::int[])
-        AND (src.organization_id IS NULL OR src.organization_id = $2)
+        AND sec.id=ANY($4::uuid[])
+        AND doc.id=ANY($5::uuid[])
+        AND (src.organization_id = $2 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
         AND src.deleted_at IS NULL
       GROUP BY src.id`,
-    [ids, orgId, CRE_SOURCE_CITATION],
+    [sources.sourceIds, orgId, CRE_SOURCE_CITATION, access.sectionIds, access.sectionDocumentIds],
   );
 
   for (const r of rows as Array<Record<string, unknown>>) {
@@ -495,6 +473,8 @@ export async function summarizeSourceUsage(
       changedSections: Number(r.changed_sections) || 0,
     });
   }
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return out;
 }
 
@@ -511,10 +491,15 @@ export async function summarizeSourceUsage(
  * Scope to a project with `programId` to answer "what in this project is stale?".
  */
 export async function listChangedSourceUsages(
+  q: RequestSqlClient,
   orgId: number,
-  opts: { programId?: string | null; sourceId?: number | string | null; limit?: number } = {},
+  opts: { userId:number | undefined; programId?: string | null; sourceId?: number | string | null; limit?: number },
 ): Promise<ChangedSourceUsage[]> {
-  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  const [requestedSource]=numericIds(opts.sourceId==null ? [] : [opts.sourceId]);
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,
+    ...(requestedSource ? {sourceIds:[requestedSource]} : {})});
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION, access.sectionIds, sources.sourceIds];
   let scope = '';
   /* Scoped by the CITING document's project (PF-11): this answers "which of the
      project's documents cite a source that changed". It was scoped by the
@@ -532,7 +517,7 @@ export async function listChangedSourceUsages(
   }
   args.push(Math.min(Math.max(opts.limit ?? 100, 1), 500));
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT c.id, c.section_id, c.payload_sha256, c.created_at,
             sec.code AS section_code, sec.title AS section_title, sec.doc_id,
             doc.title AS document_title,
@@ -541,14 +526,15 @@ export async function listChangedSourceUsages(
        FROM authoring_citations c
        JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND (src.organization_id = $1 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
-       LEFT JOIN authoring_sections sec
+       JOIN authoring_sections sec
               ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
-       LEFT JOIN authoring_documents doc
+       JOIN authoring_documents doc
               ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
       WHERE c.tenant_id = $1
         AND c.source = $2
+        AND sec.id=ANY($3::uuid[]) AND src.id=ANY($4::int[])
         AND c.payload_sha256 IS NOT NULL
         AND src.checksum IS NOT NULL
         AND src.checksum <> c.payload_sha256
@@ -558,6 +544,8 @@ export async function listChangedSourceUsages(
     args,
   );
 
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return (rows as Array<Record<string, unknown>>).map((r) => ({
     citationId: String(r.id),
     sectionId: String(r.section_id),
@@ -598,9 +586,51 @@ export async function listChangedSourceUsages(
  * `change` carries the prior checksum for the caller's audit row; null when the
  * content had not moved and nothing was written.
  */
+type RefreshRefusalReason = 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'source_withdrawn' | 'cross_project' | 'frozen';
+
+async function prepareRefreshTarget(orgId: number, target: { sectionId: string; citationId: string; userId: number }, executor: Queryable): Promise<
+  { ok: true; row: CitationImage & { frozen_at: string | null }; sourceId: number } | { ok: false; reason: RefreshRefusalReason }
+> {
+  if (![target.sectionId, target.citationId].every(Boolean)) return { ok: false, reason: 'not_found' };
+  // Acquire the shared program lock before citation write locks, as withdrawal
+  // does. The later locked read supplies the audit before-image.
+  const cite = await executor.query<CitationImage & { frozen_at: string | null }>(
+    `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at
+       FROM authoring_citations
+      WHERE id = $1 AND section_id = $2 AND tenant_id = $3
+      LIMIT 1`,
+    [target.citationId, target.sectionId, orgId],
+  );
+  if (cite.rows.length === 0) return { ok: false, reason: 'not_found' };
+  let row = cite.rows[0];
+  if (row.frozen_at) return { ok: false, reason: 'frozen' };
+  if (row.source !== CRE_SOURCE_CITATION) return { ok: false, reason: 'not_a_source_citation' };
+
+  const [sourceId] = numericIds([row.reference_id ?? '']);
+  if (!sourceId) return { ok: false, reason: 'unresolved_source' };
+  const userId = citationRequester(target.userId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
+  const ends = await readCitationEnds(executor, orgId, target.sectionId, sourceId);
+  if (!ends.section) return { ok: false, reason: 'not_found' };
+  if (!ends.source) return { ok: false, reason: 'unresolved_source' };
+  if (citesAcrossProjects(ends)) return { ok: false, reason: 'cross_project' };
+  if (ends.source.programId) await lockDocumentDispositionProgram(executor, orgId, ends.source.programId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
+  const locked = await executor.query<CitationImage & { frozen_at: string | null }>(
+    `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at FROM authoring_citations
+      WHERE id=$1 AND section_id=$2 AND tenant_id=$3 LIMIT 1 FOR UPDATE`,
+    [target.citationId, target.sectionId, orgId],
+  );
+  if (!locked.rows[0] || locked.rows[0].source !== row.source || locked.rows[0].reference_id !== row.reference_id) return { ok: false, reason: 'not_found' };
+  row = locked.rows[0];
+  if (row.frozen_at) return { ok: false, reason: 'frozen' };
+
+  return { ok: true, row, sourceId };
+}
+
 export async function refreshSourceCitation(
   orgId: number,
-  target: { sectionId: string; citationId: string },
+  target: { sectionId: string; citationId: string; userId: number },
   executor: Queryable = onPool(),
 ): Promise<
   | {
@@ -611,32 +641,20 @@ export async function refreshSourceCitation(
       sourceId: number;
       change: CitationChange | null;
     }
-  | { ok: false; reason: 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'source_withdrawn' | 'frozen' }
+  | { ok: false; reason: RefreshRefusalReason }
 > {
-  if (!target.sectionId || !target.citationId) return { ok: false, reason: 'not_found' };
-  // FOR UPDATE: the checksum read here is the before-image the caller records;
-  // the row lock stops a concurrent re-read replacing it between read and write.
-  const cite = await executor.query<CitationImage & { frozen_at: string | null }>(
-    `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at
-       FROM authoring_citations
-      WHERE id = $1 AND section_id = $2 AND tenant_id = $3
-      LIMIT 1
-      FOR UPDATE`,
-    [target.citationId, target.sectionId, orgId],
-  );
-  if (cite.rows.length === 0) return { ok: false, reason: 'not_found' };
-  const row = cite.rows[0];
-  if (row.frozen_at) return { ok: false, reason: 'frozen' };
-  if (row.source !== CRE_SOURCE_CITATION) return { ok: false, reason: 'not_a_source_citation' };
-
-  const [sourceId] = numericIds([row.reference_id ?? '']);
-  if (!sourceId) return { ok: false, reason: 'unresolved_source' };
+  const prepared = await prepareRefreshTarget(orgId, target, executor);
+  if (!prepared.ok) return prepared;
+  const { row, sourceId } = prepared;
 
   const c = visibleOrgClause(orgId, 2);
   const src = await executor.query<{ checksum: string | null; data_eligible: boolean }>(
-    `SELECT src.checksum, ${capturedDataEligibleSql('src')} AS data_eligible FROM cre_evidence_sources src
-      WHERE src.id = $1 AND ${c.sql} AND src.deleted_at IS NULL LIMIT 1`,
-    [sourceId, c.param],
+    `SELECT src.checksum, (src.is_current IS NOT FALSE AND ${capturedDataEligibleSql('src')}) AS data_eligible FROM cre_evidence_sources src
+      WHERE src.id = $1 AND ${c.sql} AND src.deleted_at IS NULL
+        AND EXISTS (SELECT 1 FROM authoring_sections sec JOIN authoring_documents doc ON doc.id=sec.doc_id AND doc.tenant_id=sec.tenant_id
+          WHERE sec.id=$3 AND sec.tenant_id=$2 AND (doc.client_program_id IS NULL OR src.client_program_id IS NULL OR doc.client_program_id=src.client_program_id))
+      LIMIT 1 FOR SHARE`,
+    [sourceId, c.param, target.sectionId],
   );
   if (src.rows.length === 0) return { ok: false, reason: 'unresolved_source' };
   if (!src.rows[0].data_eligible) return { ok: false, reason: 'source_withdrawn' };
@@ -687,10 +705,13 @@ export interface CitedSection {
  * as its contract rather than padding the list.
  */
 export async function listCitedSections(
+  q: RequestSqlClient,
   orgId: number,
-  opts: { documentId?: string | null; limit?: number } = {},
+  opts: { userId:number | undefined; documentId?: string | null; limit?: number },
 ): Promise<CitedSection[]> {
-  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId,documentId:opts.documentId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION, access.sectionIds, sources.sourceIds];
   let scope = '';
   if (opts.documentId) {
     args.push(opts.documentId);
@@ -698,7 +719,7 @@ export async function listCitedSections(
   }
   args.push(Math.min(Math.max(opts.limit ?? 500, 1), 2000));
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256,
             sec.code AS section_code, sec.title AS section_title,
             doc.id AS document_id, doc.title AS document_title,
@@ -712,9 +733,10 @@ export async function listCitedSections(
        JOIN authoring_documents doc ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND (src.organization_id = $1 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
-      WHERE c.tenant_id = $1 AND c.source = $2${scope}
+             AND src.id=ANY($4::int[])
+      WHERE c.tenant_id = $1 AND c.source = $2 AND sec.id=ANY($3::uuid[])${scope}
       ORDER BY doc.title ASC NULLS LAST, sec.code ASC NULLS LAST, c.created_at ASC
       LIMIT $${args.length}`,
     args,
@@ -739,39 +761,7 @@ export async function listCitedSections(
     }
     entry.sources.push(adaptUsageRow(r));
   }
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,documentId:opts.documentId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return [...bySection.values()];
-}
-
-/** The joined source, or null when the reference did not resolve for this caller. */
-function adaptUsageSource(r: Record<string, unknown>): SectionSourceUsage['source'] {
-  if (r.source_id == null) return null;
-  return {
-    id: Number(r.source_id),
-    title: (r.title as string) ?? null,
-    checksum: (r.checksum as string) ?? null,
-    sourceType: (r.source_type as string) ?? null,
-    ingestionStatus: (r.ingestion_status as string) ?? null,
-    extractionStatus: (r.extraction_status as string) ?? null,
-    mimeType: (r.mime_type as string) ?? null,
-    fileUploadId: (r.file_upload_id as string) ?? null,
-    updatedAt: r.source_updated_at ? new Date(r.source_updated_at as string).toISOString() : null,
-  };
-}
-
-function adaptUsageRow(r: Record<string, unknown>): SectionSourceUsage {
-  return {
-    citationId: String(r.id),
-    sectionId: String(r.section_id),
-    citedAt: r.created_at ? new Date(r.created_at as string).toISOString() : null,
-    citedBy: (r.created_by as string) ?? null,
-    citationText: (r.citation_text as string) ?? null,
-    citedChecksum: (r.payload_sha256 as string) ?? null,
-    state: usageState(
-      (r.payload_sha256 as string) ?? null,
-      (r.checksum as string) ?? null,
-      r.source_id != null,
-      r.source_is_current == null ? null : Boolean(r.source_is_current),
-    ),
-    source: adaptUsageSource(r),
-  };
 }

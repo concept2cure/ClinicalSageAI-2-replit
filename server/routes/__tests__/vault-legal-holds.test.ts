@@ -22,6 +22,7 @@ const recorder = vi.hoisted(() => {
       r.statements.push('AUDIT');
     }),
     targetExists: true,
+    targetReadThrows: false,
     liftReturns: true,
     auditThrows: false,
     // The request's own client (req.dbClient, what requestPgClient returns):
@@ -32,7 +33,10 @@ const recorder = vi.hoisted(() => {
     client: {
       query: vi.fn(async (sql: string) => {
         const s = String(sql);
-        if (/FROM regulatory_programs|FROM vault\.documents/i.test(s)) return r.targetExists ? { rows: [{ id: 'x' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+        if (/FROM regulatory_programs|FROM vault\.documents/i.test(s)) {
+          if (r.targetReadThrows) throw new Error('target database unavailable');
+          return r.targetExists ? { rows: [{ id: 'x' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+        }
         if (/^\s*SELECT[\s\S]*FROM vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
         r.statements.push(s.trim().split(/\s+/).slice(0, 3).join(' '));
         if (/INSERT INTO vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
@@ -76,6 +80,7 @@ beforeEach(() => {
   recorder.statements.length = 0;
   recorder.audit.mockClear();
   recorder.targetExists = true;
+  recorder.targetReadThrows = false;
   recorder.liftReturns = true;
   recorder.auditThrows = false;
 });
@@ -107,6 +112,15 @@ describe('placing a hold', () => {
     const r = await place('admin');
     expect(r.status).toBe(404);
     expect(recorder.statements).toEqual([]);
+  });
+
+  it('fails closed with an honest response when ownership cannot be read, without opening a transaction', async () => {
+    recorder.targetReadThrows = true;
+    const r = await place('admin');
+    expect(r.status).toBe(500);
+    expect(r.body).toEqual({ error: 'HOLD_WRITE_FAILED', message: 'The hold could not be recorded. Nothing was changed.' });
+    expect(recorder.statements).toEqual([]);
+    expect(recorder.audit).not.toHaveBeenCalled();
   });
 
   it('refuses a body that names no target or no reason (400)', async () => {

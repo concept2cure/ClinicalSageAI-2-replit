@@ -142,4 +142,3 @@ AssertionError: expected 'eCTD Co-Author ValidateeCTD backboneM…' not to match
       Tests  2 failed | 2 passed (4)
    Start at  21:20:32
    Duration  7.27s (transform 2.01s, setup 282ms, import 3.02s, tests 164ms, environment 3.52s)
-

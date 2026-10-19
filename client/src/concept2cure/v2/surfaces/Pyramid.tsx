@@ -34,6 +34,8 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { shellProgramId } from '../shellProject';
+import { setEditorTarget } from '../editorTarget';
 import {
   PY_ROLES, PY_STATUS, PY_RISK,
   pyProgress, pyNextTasks, pyRiskProfile,
@@ -205,10 +207,28 @@ function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
 
 // ── Task detail sheet ─────────────────────────────────────────────────────
 
-function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
+function PyramidDeliverables({ task, onWorkDocument, projectOpen }: {
+  task: PyTask; onWorkDocument?: (title: string) => void; projectOpen?: boolean;
+}) {
+  if (!task.deliverables?.length) return null;
+  return <div className="py-sheet-sec">
+    <div className="py-sheet-sec-l">Deliverables</div>
+    <div className="py-deliv">{task.deliverables.map((title, i) => <div key={i} className="py-deliv-item" data-done={task.status === 'done' || undefined}>
+      {task.status === 'done' ? I.check : I.fileText}{title}
+      {onWorkDocument && <button className="btn ghost" disabled={!projectOpen} onClick={() => onWorkDocument(title)}
+        aria-label={`Work on ${title} with AnA`}>{I.sparkles} Work with AnA</button>}
+    </div>)}</div>
+    {onWorkDocument && <p>{projectOpen ? 'Uses this project’s sources and working documents in the existing editor. Task status changes separately.' : 'Open a project to work on these documents.'}</p>}
+  </div>;
+}
+
+function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen }: {
   pyr: PyPyramid; task: PyTask; tasks: PyTask[];
   onClose: () => void; onTask: (id: string) => void;
   onStatus: (id: string, status: string) => void;
+  onWorkDocument?: (title: string) => void;
+  onOpenSection?: (code: string, title: string) => void;
+  projectOpen?: boolean;
 }) {
   const dlgRef = useDialog(onClose);
   const ph = pyr.phases.find(p => p.id === task.phase);
@@ -268,7 +288,9 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
               {Object.keys(byMod).sort().map(m => (
                 <div key={m} className="py-sheet-mod">
                   <span className="mod">Module {m}</span>
-                  {byMod[m].map(c => <span key={c} className="py-ctd mono">{c}</span>)}
+                  {byMod[m].map(c => onOpenSection ? <button key={c} className="py-ctd mono" disabled={!projectOpen}
+                    onClick={() => onOpenSection(c, task.name)} aria-label={`Open ${c} in document editor`}>{c} {I.penLine}</button>
+                    : <span key={c} className="py-ctd mono">{c}</span>)}
                 </div>
               ))}
             </div>
@@ -296,13 +318,7 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
             </div>
           )}
 
-          {task.deliverables && task.deliverables.length > 0 && (
-            <div className="py-sheet-sec">
-              <div className="py-sheet-sec-l">Deliverables</div>
-              <div className="py-deliv">{task.deliverables.map((d, i) => (
-                <span key={i} className="py-deliv-item" data-done={task.status === 'done' || undefined}>{task.status === 'done' ? I.check : I.fileText}{d}</span>))}</div>
-            </div>
-          )}
+          <PyramidDeliverables task={task} onWorkDocument={onWorkDocument} projectOpen={projectOpen} />
         </div>
       </aside>
     </div>
@@ -339,6 +355,7 @@ export function PyramidShell(_props: SurfaceViewProps) {
   const [tab, setTab] = useState('dashboard');
   const [focusPhase, setFocusPhase] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
+  const programId = shellProgramId();
   /* ── Task status is the ORG'S RECORDED progress, not a local override ──────
      This was `statusOverrides` in component state. A user marked a submission
      task "Done" or "Blocked", the completion ring and the phase bars updated,
@@ -697,7 +714,20 @@ export function PyramidShell(_props: SurfaceViewProps) {
       {/* The guard moved out of PyTaskSheet: useDialog cannot sit behind an
           early `if (!task) return null`, and hoisting it here is what lets the
           sheet mount only when there is a task to show. */}
-      {pyr && openObj && <PyTaskSheet pyr={pyr} task={openObj} tasks={tasks} onClose={() => setOpenTask(null)} onTask={goTask} onStatus={setStatus} />}
+      {pyr && openObj && <PyTaskSheet pyr={pyr} task={openObj} tasks={tasks} onClose={() => setOpenTask(null)} onTask={goTask} onStatus={setStatus}
+        projectOpen={Boolean(programId)}
+        onOpenSection={type === 'IND' ? (code, title) => {
+          if (!programId) return;
+          setEditorTarget({ docType: null, code, label: title, programId });
+          setOpenTask(null);
+          _props.onNav('document-authoring');
+        } : undefined}
+        onWorkDocument={type === 'IND' ? title => {
+          if (!programId) return;
+          const task = openObj;
+          setOpenTask(null);
+          _props.onAsk(`Work on the IND deliverable “${title}” for the task “${task.name}” in this project. First inspect existing authoring documents and current data-room/catalogue/Vault sources, following all relevant pages. Open the existing working document if present. For an official form, dataset or signature deliverable, use the supplied original and prepare a completion checklist; do not invent a completed form, data file or signature. For narrative documents, prepare a source-grounded draft with draft_authoring_document in the existing editor. Preserve source references and state missing evidence. Do not mark the task or document complete or approved.`);
+        } : undefined} />}
     </div>
   );
 }

@@ -21,7 +21,6 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
@@ -254,20 +253,6 @@ export interface ValidationRecord {
     resolved: boolean;
   }>;
   attachmentIds: string[];
-}
-
-export interface SOC2Evidence {
-  id: string;
-  controlId: string; // e.g. CC6.1, CC7.1
-  controlCategory: SOC2Category;
-  evidenceType: 'policy' | 'procedure' | 'screenshot' | 'log' | 'configuration' | 'report';
-  title: string;
-  description: string;
-  collectedAt: Date;
-  collectedBy: string;
-  status: 'collected' | 'reviewed' | 'approved' | 'expired';
-  expiresAt?: Date;
-  attachmentId?: string;
 }
 
 export type SOC2Category =
@@ -1082,153 +1067,24 @@ router.get('/validation', (_req: Request, res: Response) => {
 // SOC 2 EVIDENCE COLLECTION
 // ============================
 
-/**
- * GET /soc2/controls
- * Get SOC 2 Type II control mapping and evidence status
- */
-router.get('/soc2/controls', (_req: Request, res: Response) => {
-  // SOC 2 Trust Services Criteria control framework (reference). Evidence
-  // collection and audit readiness are owned by the organization's GRC/audit
-  // program and are not tracked in-app, so evidence is reported honestly as
-  // not-collected and no readiness score is synthesized. (Previously every
-  // control was hardcoded as "collected" with invented evidence counts and a
-  // fabricated readiness score.)
-  const framework: {
-    controlId: string;
-    category: string;
-    title: string;
-    description: string;
-    part11Mapping?: string;
-  }[] = [
-    { controlId: 'CC1.1', category: 'security', title: 'Control Environment — COSO Entity-Level Controls', description: 'Management demonstrates commitment to integrity and ethical values' },
-    { controlId: 'CC5.1', category: 'security', title: 'Control Activities — Logical Access', description: 'Logical access controls restrict access to information assets', part11Mapping: '§11.10(d) — Authority checks limiting system access' },
-    { controlId: 'CC6.1', category: 'security', title: 'Logical and Physical Access — Authentication', description: 'Multi-factor authentication for system access', part11Mapping: '§11.100 — Unique identification codes and passwords' },
-    { controlId: 'CC7.1', category: 'security', title: 'System Operations — Change Management', description: 'Changes to infrastructure and software follow change management process' },
-    { controlId: 'CC7.2', category: 'security', title: 'System Operations — Monitoring', description: 'System components monitored for anomalies and security events', part11Mapping: '§11.10(e) — Audit trail monitoring' },
-    { controlId: 'CC8.1', category: 'security', title: 'Change Management — Authorization', description: 'Changes authorized, designed, tested before implementation' },
-    { controlId: 'A1.1', category: 'availability', title: 'Availability — System Availability', description: 'System availability maintained per SLA commitments' },
-    { controlId: 'PI1.1', category: 'processing_integrity', title: 'Processing Integrity — Data Accuracy', description: 'Data processing is complete, valid, accurate, and timely', part11Mapping: '§11.10(a) — Validation of systems for accuracy and reliability' },
-    { controlId: 'C1.1', category: 'confidentiality', title: 'Confidentiality — Data Classification', description: 'Confidential information identified and protected' },
-    { controlId: 'P1.1', category: 'privacy', title: 'Privacy — Notice', description: 'Privacy notices provide clear information about data practices' },
-  ];
+// GET /soc2/controls was removed 2026-10-17 (settings/integrity audit, finding 1).
+// It answered a fixed list of Trust Services criteria with every control
+// hardcoded to evidence status not_collected — constants dressed as an
+// assessment. The platform does not collect SOC 2 evidence, so it serves no
+// table about it. Pinned by __tests__/part11-static-tables-removed.test.ts.
 
-  const controls = framework.map((c) => ({ ...c, evidenceStatus: 'not_collected', evidenceCount: 0 }));
+// POST /soc2/evidence was removed 2026-10-17 (settings/integrity audit
+// follow-up). It answered every submission with status 'collected' and a fresh
+// id while storing nothing, and nothing in the product called it. Evidence
+// collection belongs to the organisation's GRC program, as the removed
+// /soc2/controls said of itself.
 
-  res.json({
-    success: true,
-    data: {
-      controls,
-      summary: {
-        totalControls: controls.length,
-        evidenceCollected: 0,
-        totalEvidence: 0,
-        part11MappedControls: framework.filter((c) => c.part11Mapping).length,
-        readinessScore: null,
-        certificationTarget: 'SOC 2 Type II',
-        note: 'Control framework reference. Evidence collection and readiness are determined by your organization’s GRC/audit program; the platform does not track or attest SOC 2 evidence.',
-      },
-    },
-  });
-});
-
-/**
- * POST /soc2/evidence
- * Submit SOC 2 evidence for a control
- */
-router.post(
-  '/soc2/evidence',
-  createPolicyGuard({
-    action: 'part11.soc2.evidence.create',
-    module: 'part11-compliance',
-    resourceType: 'soc2_evidence',
-  }),
-  (req: Request, res: Response) => {
-  const { controlId, controlCategory, evidenceType, title, description, collectedBy } = req.body;
-  if (!controlId || !title || !collectedBy) {
-    return res.status(400).json({ error: 'controlId, title, collectedBy required' });
-  }
-
-  const evidence: SOC2Evidence = {
-    id: uuidv4(),
-    controlId,
-    controlCategory: controlCategory || 'security',
-    evidenceType: evidenceType || 'log',
-    title,
-    description: description || '',
-    collectedAt: new Date(),
-    collectedBy,
-    status: 'collected',
-  };
-
-  res.json({ success: true, data: evidence });
-}
-);
-
-// ============================
-// COMPLIANCE DASHBOARD
-// ============================
-
-/**
- * GET /compliance-status
- * Comprehensive 21 CFR Part 11 + SOC 2 compliance dashboard
- */
-router.get('/compliance-status', (_req: Request, res: Response) => {
-  // 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the technical
-  // controls the platform provides. Compliance and audit readiness are
-  // organizational determinations made by your QA/validation and audit
-  // activities — the platform does not self-certify them, so section status is
-  // reported honestly as "not_assessed" and no readiness scores are synthesized.
-  // (Previously this returned every section as "compliant" with a fabricated
-  // 0.92 SOC 2 readiness score.)
-  const part11Controls: { code: string; title: string; platformControl: string }[] = [
-    { code: '§11.10(a)', title: 'System Validation', platformControl: 'Application engineered for validation; qualification (IQ/OQ/PQ) is performed and recorded by your QA organization' },
-    { code: '§11.10(b)', title: 'Legible Copies', platformControl: 'PDF export with rendered e-signatures' },
-    { code: '§11.10(c)', title: 'Record Protection', platformControl: 'Encrypted storage and backup policy' },
-    { code: '§11.10(d)', title: 'Authority Checks', platformControl: 'Role-based access control with audit logging' },
-    { code: '§11.10(e)', title: 'Audit Trail', platformControl: 'Hash-chained, tamper-evident audit trail' },
-    { code: '§11.10(f)', title: 'Operational Checks', platformControl: 'Version sequencing enforced' },
-    { code: '§11.10(g)', title: 'Authority Checks', platformControl: 'Role-based access with MFA' },
-    { code: '§11.10(h)', title: 'Device Checks', platformControl: 'Session management and IP logging' },
-    { code: '§11.10(i)', title: 'Training', platformControl: 'Training records tracked by your organization' },
-    { code: '§11.10(j)', title: 'Documentation Controls', platformControl: 'SOP distribution tracking' },
-    { code: '§11.10(k)', title: 'Controls for Open Systems', platformControl: 'TLS in transit, encryption at rest' },
-    { code: '§11.50', title: 'Signature Manifestation', platformControl: 'Name, date/time, and meaning displayed on signature' },
-    { code: '§11.70', title: 'Signature/Record Linking', platformControl: 'SHA-256 cryptographic binding of signature to record' },
-    { code: '§11.100', title: 'General Requirements for E-Signatures', platformControl: 'Unique identity plus password verification' },
-    { code: '§11.200', title: 'E-Signature Components', platformControl: 'Two distinct components (ID + password)' },
-    { code: '§11.300', title: 'Controls for ID Codes/Passwords', platformControl: 'Uniqueness, periodic revision, recall procedures' },
-  ];
-  const sections: Record<string, { title: string; status: string; platformControl: string }> = {};
-  for (const c of part11Controls) {
-    sections[c.code] = { title: c.title, status: 'not_assessed', platformControl: c.platformControl };
-  }
-
-  res.json({
-    success: true,
-    data: {
-      disclaimer:
-        'This is the 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the controls the platform provides. Compliance and audit readiness are determined by your organization; the platform does not self-certify them and does not synthesize readiness scores.',
-      part11: { overallStatus: 'not_assessed', sections },
-      soc2: {
-        certificationTarget: 'SOC 2 Type II',
-        readinessScore: null,
-        trustServiceCategories: {
-          security: 'not_assessed',
-          availability: 'not_assessed',
-          processingIntegrity: 'not_assessed',
-          confidentiality: 'not_assessed',
-          privacy: 'not_assessed',
-        },
-      },
-      gamp5: {
-        systemCategory: 'Category 5 — Custom Application',
-        validationApproach: 'Risk-based (GAMP 5)',
-        riskAssessment: 'not_recorded',
-        expectedDocumentation: ['URS', 'FS', 'DS', 'IQ', 'OQ', 'PQ', 'RTM'],
-      },
-    },
-  });
-});
+// GET /compliance-status was removed 2026-10-17 (settings/integrity audit,
+// finding 1). Every §11.10 section and every SOC 2 category in it was a
+// hardcoded `not_assessed`; nothing was ever assessed. The verdicts this router
+// actually computes — GET /audit-trail/chain-integrity and
+// GET /audit-trail/seal-integrity — are what the Part 11 console shows.
+// Pinned by __tests__/part11-static-tables-removed.test.ts.
 
 /**
  * GET /health

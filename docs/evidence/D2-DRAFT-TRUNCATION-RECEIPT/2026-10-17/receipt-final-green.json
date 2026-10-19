@@ -1,0 +1,36 @@
+{
+  "checkpointCommit": "70cb689712a9517359fc82dacf4f0d61b6084fd2",
+  "cwd": "/workspace/Concept2Cure",
+  "nodeVersion": "v22.23.3",
+  "command": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node node_modules/vitest/vitest.mjs run --config vitest.config.ts server/services/ana/__tests__/batch-draft-termination-receipt.test.ts",
+  "explicitEnvironment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin"
+  },
+  "startedUtc": "2026-10-17T23:28:24.923017+00:00",
+  "finishedUtc": "2026-10-17T23:28:26.109398+00:00",
+  "exitCode": 0,
+  "sourceHashesBefore": {
+    "server/services/ana/batch-draft-result.ts": "981daafd2b37d93cd0a1a323a9de645d428e6d2903dff63cf103b83a24650401",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts": "53a41143cb64c05ab95d08184b9f0f43dbddaf78f100c5e9e9c6046b6a8561da",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "sourceHashesAfter": {
+    "server/services/ana/batch-draft-result.ts": "981daafd2b37d93cd0a1a323a9de645d428e6d2903dff63cf103b83a24650401",
+    "server/services/ana/AnaToolExecutor.ts": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts": "53a41143cb64c05ab95d08184b9f0f43dbddaf78f100c5e9e9c6046b6a8561da",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "testIdenticalToBaselineRed": true,
+  "testsPassed": 30,
+  "scope": "Pure canonical batch receipt regression with actual V2 identity factory; no model/provider/database calls. Overlaps the root integrated regression; counts are not additive.",
+  "earlierGreen": "receipt-first-green preserves the earlier production source checkpoint before the owner completed lint qualification."
+}

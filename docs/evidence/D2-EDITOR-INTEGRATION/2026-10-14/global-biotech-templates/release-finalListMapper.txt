@@ -1,0 +1,10 @@
+Source log: global-biotech-final-list-mapper.log
+SHA-256: f4a3f84c5412a6eacbac0e9d96ab052e620d7f56929ce381b278390d30a8aa06
+Selected verification output; request bodies and repetitive runtime logs omitted.
+
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > lists exact registry and component identities with explicit regional scope, without writes 115ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > fails listing explicitly when mandatory builtin sources are unavailable, without returning an empty catalogue 19ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 18 skipped (20)
+   Start at  21:01:39
+   Duration  9.34s (transform 3.91s, setup 91ms, import 3.14s, tests 5.78s, environment 0ms)

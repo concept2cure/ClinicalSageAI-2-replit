@@ -33,7 +33,9 @@ import {
   getProjectSignals,
   enrichChangeImpact,
   analyzeCrossArtifactIntelligence,
+  type ReadinessScore,
 } from '../services/intelligence/index.js';
+import { readinessFigure } from '../services/intelligence/readiness-scoring-engine.js';
 
 const router = Router();
 
@@ -56,6 +58,17 @@ function getOrgId(req: Request, res: Response): number | null {
 function getUserId(req: Request): number {
   const user = (req as unknown as Record<string, Record<string, unknown>>).user;
   return Number(user?.id ?? user?.userId ?? 0);
+}
+
+/**
+ * 2026-10-15: overallScore went out as the readiness score; with no assessment
+ * on record it is document completeness alone (still in dimensions.completeness,
+ * and scoreBasis says what was measured). Null unless an assessment measured more.
+ */
+function withReadinessFigure(score: ReadinessScore): Omit<ReadinessScore, 'overallScore'> & {
+  overallScore: number | null;
+} {
+  return { ...score, overallScore: readinessFigure(score) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -119,7 +132,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
       targetAgency: req.query.targetAgency as string | undefined,
     });
 
-    return res.json(result);
+    return res.json(withReadinessFigure(result));
   } catch (error) {
     logger.error('Readiness scoring failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to compute readiness score' });
@@ -422,7 +435,7 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
       ]);
 
     return res.json({
-      readiness: readiness.status === 'fulfilled' ? readiness.value : null,
+      readiness: readiness.status === 'fulfilled' ? withReadinessFigure(readiness.value) : null,
       recommendations: recommendations.status === 'fulfilled' ? recommendations.value : null,
       nextActions: nextActions.status === 'fulfilled' ? nextActions.value : null,
       crossModule: crossModule.status === 'fulfilled' ? crossModule.value : null,

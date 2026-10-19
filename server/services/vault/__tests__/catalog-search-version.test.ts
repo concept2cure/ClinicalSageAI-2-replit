@@ -1,19 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn() }));
+const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn(), scope: vi.fn(), current: vi.fn(), factory: vi.fn() }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query } }));
-vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: h.embed }) }));
+vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: h.factory }));
+vi.mock('../../c2c/current-program-access.js', async (original) => ({
+  ...await original<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: h.scope,
+  // This fixture proves SQL predicates; current-access mutation is separately
+  // exercised by canonical real-SQL admission suites.
+  requireProgramScopeStillCurrent: h.current,
+}));
 import { searchCatalog, CatalogSearchUnavailableError } from '../document-catalog-search';
 import { supersededSql } from '../vault-version-family';
 beforeEach(() => {
   vi.clearAllMocks();
+  h.current.mockResolvedValue(undefined);
   h.embed.mockResolvedValue({ embedding: [1, 2, 3] });
+  h.factory.mockReturnValue({ embed: h.embed });
+  h.scope.mockImplementation(async (_db, input) => ({ scope: 'verified-accessible-programs',
+    actor: { userId: input.userId, role: 'member' }, programIds: input.programId ? [input.programId] : ['10000000-0000-4000-8000-000000000001'], reconciliationRequired: false }));
   h.query.mockResolvedValueOnce({ rows: [{ searchable: '0', unsearchable: '1' }] });
   h.query.mockResolvedValueOnce({ rows: [] });
 });
 describe('semantic catalog source-version query contract', () => {
   it('binds both counts and hits to the current version and project tenant', async () => {
     const programId = '10000000-0000-4000-8000-000000000001';
-    expect(await searchCatalog(7, 'study endpoint', { programId })).toEqual({ hits: [], searchedCount: 0, unsearchableCount: 1 });
+    const db = { query: h.query };
+    expect(await searchCatalog(db, 7, 'study endpoint', { userId: 3, programId })).toEqual({ hits: [], searchedCount: 0, unsearchableCount: 1 });
+    expect(h.factory).toHaveBeenCalledWith(db);
     const [countSql, countArgs] = h.query.mock.calls[0];
     const [hitSql, hitArgs] = h.query.mock.calls[1];
     for (const sql of [countSql, hitSql]) {
@@ -23,19 +36,20 @@ describe('semantic catalog source-version query contract', () => {
       expect(sql).toContain(`AND NOT ${supersededSql('d')}`);
     }
     expect(countSql).toContain('LEFT JOIN vault.document_catalog');
-    expect(countArgs).toEqual([7, programId]);
-    expect(hitArgs).toEqual([7, '[1,2,3]', 0.15, 8, programId]);
+    expect(countArgs).toEqual([7, programId, [programId]]);
+    expect(hitArgs).toEqual([7, '[1,2,3]', 0.15, 8, programId, [programId]]);
+    expect(h.current).toHaveBeenCalledWith(db, expect.objectContaining({ organizationId: 7, userId: 3, programId }), expect.objectContaining({ programIds: [programId] }));
   });
 
   it('keeps provider failure unavailable rather than an empty current corpus', async () => {
     h.embed.mockRejectedValueOnce(new Error('Embedding unavailable'));
-    await expect(searchCatalog(7, 'study endpoint')).rejects.toBeInstanceOf(CatalogSearchUnavailableError);
+    await expect(searchCatalog({ query: h.query }, 7, 'study endpoint', { userId: 3 })).rejects.toBeInstanceOf(CatalogSearchUnavailableError);
     expect(h.query).not.toHaveBeenCalled();
   });
 
   it('does not turn a database failure into no current matches', async () => {
     h.query.mockReset().mockRejectedValueOnce(new Error('Database unavailable'));
-    await expect(searchCatalog(7, 'study endpoint')).rejects.toThrow('Database unavailable');
+    await expect(searchCatalog({ query: h.query }, 7, 'study endpoint', { userId: 3 })).rejects.toThrow('Database unavailable');
     expect(h.query).toHaveBeenCalledTimes(1);
   });
 });

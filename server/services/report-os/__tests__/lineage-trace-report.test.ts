@@ -42,12 +42,15 @@ function ledger(): ArtifactLedger {
     project: { projectId: 5, name: 'IND-123' },
     citations: null,
     authoringPlan: null,
+    authoringPlanUnavailable: null,
     auditLog: [],
     auditLogUnavailable: null,
     signatures: [],
     signaturesUnavailable: null,
     proposals: [],
+    proposalsUnavailable: null,
     runs: { totalRuns: 0, latestRunId: null, latestRunAt: null, modelsUsed: [] },
+    runsUnavailable: null,
   };
 }
 
@@ -218,6 +221,22 @@ describe('the data-lineage table names what its figure is', () => {
     const d = richDossier();
     const t = lineageTable({ ...d, dataLineage: [{ ...d.dataLineage[0], confidenceBasis: null }] });
     expect(t.rows[0][t.columns.indexOf('Confidence basis')]).toBe('not recorded');
+  });
+});
+
+describe('the provenance table names who acted, or says it was not recorded', () => {
+  const provenanceTable = (d: DocumentLineageDossier) =>
+    dossierToRenderedReport(d, META).sections.find((x) => x.id === 'provenance')!.blocks[0] as { columns: string[]; rows: unknown[][] };
+
+  it('prints the recorded actor', () => {
+    const t = provenanceTable(richDossier());
+    expect(t.rows[0][t.columns.indexOf('Actor')]).toBe('AnA');
+  });
+
+  it('does not name "system" for an event that recorded no actor', () => {
+    const d = richDossier();
+    const t = provenanceTable({ ...d, provenanceEvents: [{ ...d.provenanceEvents[0], actorName: null }] });
+    expect(t.rows[0][t.columns.indexOf('Actor')]).toBe('not recorded');
   });
 });
 

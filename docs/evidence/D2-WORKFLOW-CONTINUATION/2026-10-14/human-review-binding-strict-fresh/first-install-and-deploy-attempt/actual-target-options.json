@@ -1,0 +1,18 @@
+{
+  "DATABASE_URL": {
+    "authorityIsReviewedLoopback": true,
+    "overrideParameterPresent": false,
+    "onlySslmodeQuery": true,
+    "queryParameterNames": [
+      "sslmode"
+    ]
+  },
+  "APP_DATABASE_URL": {
+    "authorityIsReviewedLoopback": true,
+    "overrideParameterPresent": false,
+    "onlySslmodeQuery": true,
+    "queryParameterNames": [
+      "sslmode"
+    ]
+  }
+}

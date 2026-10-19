@@ -32,7 +32,8 @@
  * The section lists capture the document headings; sponsor SOPs and the
  * current agency templates remain authoritative for edge cases (this is a
  * readiness aid, honest-by-construction). Every PMDA item carries a
- * RegulatoryBasis; items not seen in the regulator's text are `recall`.
+ * RegulatoryBasis, and every one is `recall`: the notices were seen only in
+ * search extracts, and a basis resting on one says so in its note.
  * Facts relied on: docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-jp-package-insert-format-facts.md.
  *
@@ -69,29 +70,28 @@ export interface LabelingSection {
 
 // ── Japanese package insert: bases ──────────────────────────────────────────
 
-const JP_CHECKED = '2026-10-05';
+// 2026-10-15: the three notices below were `regulator-text` over a note saying the
+// heading was seen in a search extract; the PDFs were never read, so they are recall.
 const JP_REREAD_NOTE =
-  'heading and number seen in a search extract of the regulator-hosted PDF; verbatim re-read owed (mhlw.go.jp / pmda.go.jp egress-blocked)';
+  'heading and number seen in a search extract of the regulator-hosted PDF on 2026-10-05; the PDF itself was not read (mhlw.go.jp / pmda.go.jp egress-blocked). Verbatim re-read owed.';
 
 /** 薬生発0611第1号 (2021-06-11): the operative electronic package-insert drafting rules. */
 const JP_0611: RegulatoryBasis = {
   ref: '薬生発0611第1号 (2021-06-11) 医療用医薬品の電子化された添付文書の記載要領について',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.mhlw.go.jp/content/11120000/000805981.pdf',
-  checked: JP_CHECKED,
   note: JP_REREAD_NOTE,
 };
 
 /** 薬生発0608第1号 (2017-06-08): the origin of the numbered structure. */
 const JP_0608: RegulatoryBasis = {
   ref: '薬生発0608第1号 (2017-06-08) 医療用医薬品の添付文書等の記載要領について',
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: 'https://www.pmda.go.jp/files/000218446.pdf',
-  checked: JP_CHECKED,
   note: JP_REREAD_NOTE,
 };
 
-/** Headings seen in the regulator's text (search extract). */
+/** Headings seen in a search extract of the regulator's text (not the text itself). */
 const JP_SEEN: RegulatoryBasis[] = [JP_0611, JP_0608];
 
 /** Headings known only from recall until 000805981.pdf / 000218446.pdf is read. */
@@ -117,8 +117,9 @@ const jpConditional = (code: string, number: string, title: string, basis: Regul
 /**
  * The Japanese prescription-drug package insert, numbered new format
  * (薬生発0608第1号; 薬生発0611第1号). Items 1–14 with 9.1–9.4 and 11.1/11.2 were
- * seen in the regulator's text; 9.5–9.8, 10.1/10.2, 15–26 and the header are
- * recall. Only the always-present items are 'required' — that set is recall.
+ * seen in a search extract of the regulator's text; 9.5–9.8, 10.1/10.2, 15–26
+ * and the header were not seen. Only the always-present items are 'required' —
+ * that set is recall.
  */
 const JP_PACKAGE_INSERT: LabelingSection[] = [
   jpRequired('jp_header', undefined, 'Header items (販売名, 一般名, 日本標準商品分類番号, 承認番号, 販売開始年月, 貯法, 有効期間, 規制区分 等)', JP_RECALL),
@@ -184,10 +185,9 @@ export const OBSOLETE_LABELING_SECTIONS: Partial<Record<LabelMarket, ObsoleteLab
       basis: [
         {
           ref: '医薬安全対策課 (2019-03-22) 添付文書記載要領の改正に伴う原則禁忌の取扱いについて',
-          confidence: 'regulator-text',
+          confidence: 'recall',
           url: 'https://www.pmda.go.jp/files/000228953.pdf',
-          checked: JP_CHECKED,
-          note: 'title and the abolition of 原則禁忌 seen in a search extract of the regulator-hosted PDF; verbatim re-read owed',
+          note: 'title and the abolition of 原則禁忌 seen in a search extract of the regulator-hosted PDF on 2026-10-05; the PDF itself was not read. Verbatim re-read owed.',
         },
         JP_0608,
       ],

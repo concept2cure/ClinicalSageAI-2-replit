@@ -44,10 +44,15 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   sendError,
   sendSuccess,
 } from './shared';
 import { createNotification } from './notifications';
+import { projectAdmissionMiddleware } from './project-access';
+import { requestPgClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { closeLetter, registerAgencyResponseRoutes } from './agency-responses';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -106,6 +111,17 @@ export function parseProjectParam(projectParam: string | string[] | undefined): 
   return numericId;
 }
 
+/** Resolve a v2 program only through current actor and private-parent admission. */
+export async function resolveCommunicationProject(req: Request): Promise<number> {
+  const raw = String(req.params.projectId ?? '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
+    return parseProjectParam(raw);
+  }
+  const access = await requireCurrentProgramAccess(requestPgClient(req), {
+    programId:raw.toLowerCase(), organizationId:getOrganizationId(req), userId:getUserId(req),
+  });
+  return access.projectId;
+}
 export function canViewVisibilityTier(
   visibilityTier: CommunicationVisibilityTier,
   userRole?: string
@@ -189,12 +205,29 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+const admitNumericCommunicationProject = projectAdmissionMiddleware();
+router.param('projectId', (req, res, next, value:string) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    return admitNumericCommunicationProject(req, res, next);
+  }
+  // A v2 URL names a program. Admit that exact private parent on the current
+  // request connection before passing its verified integer anchor to the
+  // existing project read/write policy and record handlers.
+  void resolveCommunicationProject(req).then(projectId => {
+    req.params.projectId = String(projectId);
+    return admitNumericCommunicationProject(req, res, next);
+  }).catch(error => {
+    const refusal = error instanceof ProgramReadAccessError ? error
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+  });
+});
 
 router.get('/projects/:projectId/submission-center/items', async (req: Request, res: Response) => {
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT item_id, title, authority, submission_type, sequence_number, gateway_profile,
               status, ectd_path, dispatch_ready, metadata, created_by, created_at, updated_at
@@ -230,7 +263,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     validateSubmissionCenterInput(input);
     const now = new Date().toISOString();
@@ -286,7 +319,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
       metadata: { submissionCenterItemId: item.id, status: item.status, authority: item.authority },
     });
 
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       submissionCenterItemId: item.id,
       generatedTaskId: task?.id,
       status: item.status,
@@ -322,7 +355,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
       canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
     }
 
-    return sendSuccess(res, { ...item, generatedTaskId: task?.id, canonicalGovernedState });
+    return sendSuccess(res, { ...item, generatedTaskId: task?.id, canonicalGovernedState }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -343,7 +376,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
 
     const result = await pool.query(
@@ -400,7 +433,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
       });
     }
 
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
 
     // Governed Document Decision Fabric evaluation for dispatch readiness
     let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
@@ -442,7 +475,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
       canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
     }
 
-    return sendSuccess(res, { ...updated, canonicalGovernedState });
+    return sendSuccess(res, { ...updated, canonicalGovernedState }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -458,7 +491,7 @@ router.get('/projects/:projectId/authority-profiles', async (req: Request, res: 
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT profile_id, authority, center_or_division, channel_type, submission_transport,
               accepted_formats, validation_requirements, package_constraints, acknowledgment_model,
@@ -519,7 +552,7 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     const now = new Date().toISOString();
     const profile: AuthorityProfileRecord = {
@@ -557,11 +590,11 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
         profile.updatedAt,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       authorityProfileId: profile.id,
       authority: profile.authority,
     });
-    return sendSuccess(res, profile);
+    return sendSuccess(res, profile, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -575,7 +608,7 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
               linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
@@ -622,6 +655,52 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
   }
 });
 
+/**
+ * A communication's letter is linked by its data-room source, `cre_source:<id>`
+ * in linkedArtifactIds (2026-10-17). The id arrives from the client, so it is
+ * checked here: the source must exist, not be deleted, belong to this
+ * organisation, and be scoped to this project's program (the program the
+ * project row anchors: projects.regulatory_program_id = client_program_id).
+ * Another tenant's or another project's document is refused, never linked.
+ * Other linkedArtifactIds entries are not data-room references and pass as before.
+ * Returns the refusal message, or null when every reference is this project's.
+ */
+const LETTER_SOURCE_REF = /^cre_source:(.*)$/;
+export async function refuseForeignLetterSources(
+  organizationId: number,
+  projectId: number,
+  linkedArtifactIds: string[]
+): Promise<string | null> {
+  const wanted = new Map<number, string>();
+  for (const ref of linkedArtifactIds) {
+    const m = LETTER_SOURCE_REF.exec(ref);
+    if (!m) continue;
+    const id = /^\d+$/.test(m[1]) ? Number(m[1]) : NaN;
+    if (!Number.isSafeInteger(id) || id <= 0 || id > 2147483647) {
+      return `Linked document ${ref} is not a data-room source reference`;
+    }
+    wanted.set(id, ref);
+  }
+  if (wanted.size === 0) return null;
+  const result = await pool.query(
+    `SELECT s.id
+       FROM cre_evidence_sources s
+       JOIN projects p
+         ON p.regulatory_program_id = s.client_program_id
+        AND p.organization_id = s.organization_id
+      WHERE s.organization_id = $1
+        AND p.id = $2
+        AND s.id = ANY($3::int[])
+        AND s.deleted_at IS NULL`,
+    [organizationId, projectId, [...wanted.keys()]]
+  );
+  const found = new Set(result.rows.map((r: any) => Number(r.id)));
+  const foreign = [...wanted].filter(([id]) => !found.has(id)).map(([, ref]) => ref);
+  return foreign.length
+    ? `Linked document ${foreign.join(', ')} is not a source in this project's data room`
+    : null;
+}
+
 router.post('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
   const schema = z.object({
     sourceType: z.enum([
@@ -653,11 +732,18 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
       return sendError(res, 403, 'Visibility tier not permitted for current role');
     }
+    // A letter that asks for a response is not logged as already answered
+    // (2026-10-18): it closes once its responses are signed, through Advance.
+    if (input.responseRequired && (input.closureStatus === 'closed' || input.humanReviewStatus === 'actioned')) {
+      return sendError(res, 400, 'A letter that requires a response cannot be logged as closed. Log it open; it closes once every response is signed.', undefined, 'RESPONSE_REQUIRED_NOT_CLOSED');
+    }
+    const foreignLetter = await refuseForeignLetterSources(organizationId, projectId, input.linkedArtifactIds);
+    if (foreignLetter) return sendError(res, 400, foreignLetter);
     const now = new Date().toISOString();
     const event: AgencyCommunicationEventRecord = {
       id: `ace_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
@@ -712,12 +798,12 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
         now,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       agencyCommunicationEventId: event.id,
       sourceType: event.sourceType,
       visibilityTier: event.auditMetadata.visibilityTier,
     });
-    return sendSuccess(res, event);
+    return sendSuccess(res, event, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -761,7 +847,7 @@ router.patch(
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = await resolveCommunicationProject(req);
       const eventId = String(req.params.eventId || '').trim();
       if (!eventId) {
         return sendError(res, 400, 'An event id is required.');
@@ -770,12 +856,15 @@ router.patch(
       // Read the current state inside the same request so the transition is
       // computed from what is stored, not from what the client last rendered.
       const current = await pool.query(
-        `SELECT human_review_status
+        `SELECT human_review_status, audit_metadata
            FROM concept2cure_agency_communications
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3`,
         [organizationId, projectId, eventId]
       );
       if (current.rowCount === 0) {
+        return sendError(res, 404, 'That communication was not found in this project.');
+      }
+      if (!canViewVisibilityTier(current.rows[0].audit_metadata?.visibilityTier, req.userRole)) {
         return sendError(res, 404, 'That communication was not found in this project.');
       }
 
@@ -787,27 +876,44 @@ router.patch(
         return sendError(res, 409, 'That communication has already been actioned.');
       }
 
-      const updated = await pool.query(
-        `UPDATE concept2cure_agency_communications
-            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
-          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
-          RETURNING event_id, human_review_status, closure_status`,
-        [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
-      );
+      // Closing a letter says it has been answered (2026-10-18). Until then
+      // this closed a letter whether or not anyone had answered it. Now the
+      // close is one transaction (agency-responses.ts closeLetter): the letter
+      // is locked, then a letter that requires a response closes only with its
+      // questions recorded and every response approved by signature as it
+      // stands, and the check cannot be overtaken by a save in between. A
+      // letter that requires no response, with nothing recorded, closes as
+      // before: an acknowledgement asks nothing.
+      let row: { event_id: string; human_review_status: string; closure_status: string };
+      if (next.closureStatus === 'closed') {
+        const closed = await closeLetter(req, { orgId: organizationId, projectId }, eventId, next);
+        if (!closed.ok) return sendError(res, 409, closed.message, undefined, 'RESPONSES_NOT_APPROVED');
+        row = closed.row;
+      } else {
+        // The table has no updated_at column (20260331_communication_center_scaffold.sql);
+        // when the transition happened is the audit entry's.
+        const updated = await pool.query(
+          `UPDATE concept2cure_agency_communications
+              SET human_review_status = $4, closure_status = $5
+            WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
+            RETURNING event_id, human_review_status, closure_status`,
+          [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
+        );
+        row = updated.rows[0];
+      }
 
-      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
+      const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
         agencyCommunicationEventId: eventId,
         humanReviewStatusFrom: from,
         humanReviewStatusTo: next.humanReviewStatus,
         closureStatusTo: next.closureStatus,
       });
 
-      const row = updated.rows[0];
       return sendSuccess(res, {
         id: row.event_id,
         humanReviewStatus: row.human_review_status,
         closureStatus: row.closure_status,
-      });
+      }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       return sendError(
         res,
@@ -818,11 +924,15 @@ router.patch(
   }
 );
 
+/* The questions on an inbox letter, their signed responses, the commitments
+   made in them and the response package (2026-10-18): agency-responses.ts. */
+registerAgencyResponseRoutes(router, canViewVisibilityTier);
+
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
               operator_assignee, blocked_reason, created_at, updated_at
@@ -881,7 +991,7 @@ router.post('/projects/:projectId/publishops/services', async (req: Request, res
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     const now = new Date().toISOString();
     const service: PublishOpsServiceRecord = {
@@ -918,12 +1028,12 @@ router.post('/projects/:projectId/publishops/services', async (req: Request, res
         service.updatedAt,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       publishOpsServiceId: service.id,
       status: service.status,
       entitlementLevel: service.entitlementLevel,
     });
-    return sendSuccess(res, service);
+    return sendSuccess(res, service, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -944,7 +1054,7 @@ router.patch(
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = await resolveCommunicationProject(req);
       const input = schema.parse(req.body || {});
       const priorRes = await pool.query(
         `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
@@ -996,8 +1106,8 @@ router.patch(
           updated.id,
         ]
       );
-      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
-      return sendSuccess(res, updated);
+      const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+      return sendSuccess(res, updated, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       return sendError(
         res,

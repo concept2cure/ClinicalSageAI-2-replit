@@ -15,6 +15,7 @@
  * is preserved in notes (GAP RULE — surfaced, not faked). See
  * docs/design/UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md.
  */
+import { deferredSurfaceDescription } from './deferred-capability-inventory';
 import type { ComplianceRail, UiSurface } from './ui-surface-registry';
 
 // Shorthand for the two near-universal rails (mirrors the main file).
@@ -40,7 +41,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'AnA on top of everything across the portfolio: continuity briefing (what changed / newly ready / needs attention / trajectory), ranked dispatchable recommendations, runnable multi-step workflow templates (submission_readiness_review · draft_validate_route · project_blocker_scan), and the unified pre-submission go/no-go gate (readiness + CMC + CRL + RTF + ICH), audited to Part 11.',
+    notes: deferredSurfaceDescription('ana-command'),
   },
   {
     id: 'cro-portfolio',
@@ -89,7 +90,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER). The count is computed from the registry and shown on the page.',
+    notes: deferredSurfaceDescription('filings-catalog'),
   },
   {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
@@ -134,7 +135,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers.',
+    notes: deferredSurfaceDescription('program-journey'),
   },
   {
     id: 'dispatch-readiness',
@@ -195,7 +196,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'workspace',
     icon: 'microscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects'],
+    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness'],
     anaToolFamilies: ['assess_filing_readiness', 'draft_section'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -234,7 +235,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'End-to-end document suite for the whole CTD pyramid, raw data to final draft. An AI system per document type (no hallucinations, every required element), multi-modal (text/tables/figures/graphs), template-learning, and GxP automations whose non-AI validation logic runs as intended 100% of the time.',
+    notes: deferredSurfaceDescription('authoring-engine'),
   },
   {
     id: 'inconsistency',
@@ -250,7 +251,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved and locked sections are flagged for re-approval with a task, on the audit trail.',
+    notes: deferredSurfaceDescription('inconsistency'),
     engineering: 'Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts.',
   },
   {
@@ -328,13 +329,19 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/haq-manager', '/api/regulatory-correspondence', '/api/precedent-engine'],
+    // 2026-10-18: the /api/haq-manager store is retired. This screen is a view of the
+    // project's agency inbox (AgencyInbox/AgencyResponses, the record Communication and
+    // Respond work), and claims no prefix: the paths it calls belong to those launch
+    // surfaces, and a locked surface claiming them would lock them for everyone.
+    // Still outside the launch catalog: the capability ships in Communication and
+    // Respond, and a second home for it is the founder's call, not a session's (P-32, P-36).
+    apiPrefixes: [],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.',
+    notes: 'The agency letters on this project that ask for a response: each question as the agency worded it, a response to each approved by Part 11 signature, and the response package assembled from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
@@ -815,7 +822,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.',
+    notes: deferredSurfaceDescription('orchestration'),
   },
   {
     id: 'reg-change',
@@ -1208,7 +1215,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'safety-pv',
     icon: 'shieldAlert',
     uiKit: 'biopharma',
-    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives'],
+    // P-32 (2026-10-15): the IND safety-reporting routes (312.32 report, E2B(R3) ICSR, tracked reports, ICSR
+    // transmit/ack) are claimed HERE, outside the launch catalog, on purpose, so production refuses them 403
+    // LAUNCH_SCOPE even where unattributed paths are only reported. Remove only by a launch decision on IND safety.
+    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives',
+      '/api/ind-lifecycle/safety-report', '/api/ind-lifecycle/safety-reports', '/api/ind-lifecycle/icsr-transmissions'],
     anaToolFamilies: ['assess_pv_causality'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1336,7 +1347,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'planned',
     compliance: [A11Y, TONE],
-    notes: 'Guided tours, learning paths, certifications, and AnA tutor.',
+    notes: deferredSurfaceDescription('training'),
   },
   {
     id: 'coverage',
@@ -1368,7 +1379,26 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // admin console's. Admin → Settings reads and changes the connector for Claude there
     // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
     // settings writer (server/services/tenant/tenant-settings-writer.ts).
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
+    // 2026-10-18 (ci:launch-scope-api): the Company documents panel, same rule — company
+    // identity, letterhead and the legal-document library ARE organisation settings, and
+    // CompanyDocumentSettings.tsx is rendered from here (AdminAccess.tsx, AdminSurfaces.tsx).
+    // Both prefixes were refused in production: company-documents was claimed by no surface
+    // at all, and templates/extract resolved to template-library + authoring-engine, neither
+    // of which is a launch surface — so the letterhead import was a button that answered
+    // "Import failed" every time it was pressed, in a release that ships the panel.
+    // Narrow on purpose, and the narrowness is the point: '/api/client-branding' also serves
+    // /upload-logo and /upload-letterhead, and '/api/c2c/templates' is the template library's
+    // whole namespace. Claiming either parent would make every route under it answer as
+    // launch — the same mistake '/api/mdx' made before it was narrowed to /api/mdx/gateways.
+    // Noted, not introduced, and not fixed here: 'admin-console' is a SHELL surface and no
+    // row in available_modules, so moduleEntitlementGate resolves every prefix claimed only
+    // by it through canAccessModule, which answers "Module 'admin-console' does not exist".
+    // That is inert today because MODULE_ENFORCEMENT defaults to 'off' (enforcement-mode.ts),
+    // which is why /api/tenant-config, /api/api-keys, /api/tenant-users, /api/mdx/admin and
+    // /api/admin/scim-tenants all serve. Turning enforcement on would refuse all of them plus
+    // these two together — one condition across six prefixes, a packaging decision to make
+    // deliberately rather than a line to widen here.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/client-branding/company-documents', '/api/c2c/templates/extract'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

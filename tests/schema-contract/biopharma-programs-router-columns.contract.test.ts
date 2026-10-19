@@ -65,6 +65,10 @@ const REGULATORY_PROGRAMS_DDL = `
     program_type text NOT NULL,
     product_type text NOT NULL,
     device_class text,
+    -- The recorded jurisdiction-specific device classes (deployed by
+    -- migrations/20261012b_regulatory_programs_eu_device_classes.sql).
+    eu_mdr_class text,
+    eu_ivdr_class text,
     regulatory_path text,
     primary_agency text NOT NULL,
     target_agencies json,

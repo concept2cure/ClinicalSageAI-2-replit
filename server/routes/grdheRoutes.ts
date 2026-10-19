@@ -19,12 +19,19 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { grdheService, AuditScopeError, ExportJobNotFoundError } from '../services/grdhe/grdheService';
+import {
+  grdheService,
+  AuditScopeError,
+  ExportJobNotFoundError,
+  AdverseEventNotFoundError,
+  ExportJobRefusedError,
+} from '../services/grdhe/grdheService';
 import {
   DataRegion,
   TerminologySystem,
   RegulatoryFormat,
   ExportStatus,
+  ExportJob,
   CreateExportJobRequest,
   CreateAdverseEventRequest
 } from '../services/grdhe/types';
@@ -38,6 +45,7 @@ import {
 } from '../services/grdhe/exportGenerators';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { authedActor } from '../utils/authedActor';
 
 const router = Router();
 const log = createScopedLogger('grdhe-routes');
@@ -133,6 +141,76 @@ const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+/**
+ * The verified principal a GRDHE write is recorded against, or null after
+ * answering 401. 2026-10-15: the service took the actor from
+ * process.env.CURRENT_USER_ID, which nothing sets, so every write was recorded
+ * as 'system', including for a token that identified no one.
+ */
+const requireWriteActor = (req: Request, res: Response): string | null => {
+  const actor = authedActor(req);
+  if (!actor) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: 'ACTOR_REQUIRED',
+        message: 'A GRDHE write is recorded against the signed-in user, and this request identifies none',
+      },
+    });
+    return null;
+  }
+  return actor;
+};
+
+/**
+ * Why an export job may not be executed, or null. Completed and cancelled jobs
+ * answer as before. 2026-10-15: a job listing several cases generated every
+ * one, returned and recorded only the first, and was marked completed; it is
+ * refused instead, one case per job.
+ */
+const executionRefusal = (job: ExportJob): { status: number; code: string; message: string } | null => {
+  if (job.status === 'completed') {
+    return { status: 400, code: 'JOB_ALREADY_COMPLETED', message: 'This export job has already been completed' };
+  }
+  if (job.status === 'cancelled') {
+    return { status: 400, code: 'JOB_CANCELLED', message: 'This export job has been cancelled' };
+  }
+  if (job.sourceEntityIds.length !== 1) {
+    return {
+      status: 422,
+      code: 'ONE_CASE_PER_EXPORT',
+      message: `This export writes one case per job, and job ${job.id} lists ${job.sourceEntityIds.length}. Create one job per case.`,
+    };
+  }
+  return null;
+};
+
+/** case_type and report_type as the canonical_adverse_events CHECK constraints accept them. */
+const CASE_TYPES: readonly string[] = ['spontaneous', 'clinical_trial', 'literature', 'solicited', 'other'];
+const REPORT_TYPES: readonly string[] = ['initial', 'followup', 'amendment', 'nullification'];
+
+/** A calendar date as the ::date casts take it (YYYY-MM-DD, a day that exists). */
+const isIsoDate = (value: unknown): boolean =>
+  typeof value === 'string' &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&
+  new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+
+/** The SQLSTATE of a database error, under drizzle's "Failed query" wrapper. */
+const sqlstate = (err: unknown): unknown =>
+  (err as { cause?: { code?: unknown } } | null)?.cause?.code ?? (err as { code?: unknown } | null)?.code;
+
+/*
+ * 2026-10-15: the catches below answered 400 or 404 with error.message. Under
+ * drizzle that is "Failed query: <SQL>\nparams: <values>" — the statement, its
+ * relation names and the case's own field values — and a lost connection on a
+ * read was a 404. A deliberate refusal keeps its answer in its own words;
+ * anything else is the server's failure, logged against the request id
+ * (serverError), never in the body.
+ */
+const notFound = (res: Response, code: string, message: string) =>
+  res.status(404).json({ success: false, error: { code, message } });
+
 router.use(auditMiddleware);
 
 // =============================================================================
@@ -172,14 +250,19 @@ router.post('/data-residency', asyncHandler(async (req: Request, res: Response) 
   // security-allow: tenantId is cross-checked against the JWT organizationUuid by assertTenantMatchesAuth below (grdhe keys on org UUID, not the numeric orgId requireAuthedOrgId returns).
   const { tenantId, primaryRegion, allowedProcessingRegions, ...rest } = req.body;
 
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
   if (!assertTenantMatchesAuth(req, res, String(tenantId ?? ''))) return;
 
-  const config = await grdheService.setDataResidencyConfig({
-    tenantId,
-    primaryRegion,
-    allowedProcessingRegions,
-    ...rest
-  });
+  const config = await grdheService.setDataResidencyConfig(
+    {
+      tenantId,
+      primaryRegion,
+      allowedProcessingRegions,
+      ...rest
+    },
+    actor
+  );
   
   res.status(201).json({
     success: true,
@@ -352,7 +435,9 @@ router.post('/terminology/map', asyncHandler(async (req: Request, res: Response)
  */
 router.post('/terminology/mappings', asyncHandler(async (req: Request, res: Response) => {
   const mappingData = req.body;
-  
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
+
   // Validate required fields
   const requiredFields = ['sourceSystem', 'sourceCode', 'targetSystem', 'targetCode', 'mappingType'];
   const missingFields = requiredFields.filter(f => !mappingData[f]);
@@ -367,7 +452,7 @@ router.post('/terminology/mappings', asyncHandler(async (req: Request, res: Resp
     });
   }
   
-  const mappingId = await grdheService.addTerminologyMapping(mappingData);
+  const mappingId = await grdheService.addTerminologyMapping(mappingData, actor);
   
   res.status(201).json({
     success: true,
@@ -474,7 +559,11 @@ router.get('/exports/formats', asyncHandler(async (req: Request, res: Response) 
  */
 router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
   const request: CreateExportJobRequest = req.body;
-  
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
+  // 2026-10-15: the body's tenantId reached the service unchecked.
+  if (!assertTenantMatchesAuth(req, res, String(request.tenantId ?? ''))) return;
+
   // Validate required fields
   const requiredFields = ['tenantId', 'sourceEntityType', 'sourceEntityIds', 'targetFormat', 'targetJurisdiction'];
   const missingFields = requiredFields.filter(f => !(request as any)[f]);
@@ -499,15 +588,27 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
       }
     });
   }
-  
+
+  // Case ids are UUIDs; anything else reached the ::uuid[] cast as a database error.
+  const ids: unknown = request.sourceEntityIds;
+  if (!Array.isArray(ids) || !ids.every(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'INVALID_SOURCE_ENTITY_IDS', message: 'sourceEntityIds must be a list of case ids (UUIDs)' },
+    });
+  }
+
   try {
-    const job = await grdheService.createExportJob(request);
-    
+    const job = await grdheService.createExportJob(request, actor);
+
     res.status(201).json({
       success: true,
       data: job
     });
   } catch (error: any) {
+    if (!(error instanceof ExportJobRefusedError)) {
+      return serverError(res, log, 'creating the export job', error);
+    }
     res.status(400).json({
       success: false,
       error: {
@@ -527,19 +628,16 @@ router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) =
   
   try {
     const job = await grdheService.getExportJob(jobId);
-    
+
     res.json({
       success: true,
       data: job
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'JOB_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof ExportJobNotFoundError)) {
+      return serverError(res, log, 'reading the export job', error, { jobId });
+    }
+    notFound(res, 'JOB_NOT_FOUND', 'Export job not found');
   }
 }));
 
@@ -571,36 +669,23 @@ router.get('/exports/tenant/:tenantId', validateTenantId, asyncHandler(async (re
  */
 router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Response) => {
   const jobId = String(req.params.jobId);
-  
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
+
   try {
     // Get job details
     const job = await grdheService.getExportJob(jobId);
-    
-    if (job.status === 'completed') {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'JOB_ALREADY_COMPLETED',
-          message: 'This export job has already been completed'
-        }
-      });
+
+    const refusal = executionRefusal(job);
+    if (refusal) {
+      return res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
     }
-    
-    if (job.status === 'cancelled') {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'JOB_CANCELLED',
-          message: 'This export job has been cancelled'
-        }
-      });
-    }
-    
+
     // Update status to processing
     await grdheService.updateExportJobStatus(jobId, 'transforming', {
       progressPercent: 10,
       currentStep: 'Loading source data'
-    });
+    }, actor);
     
     // Get source entities
     // For adverse events
@@ -612,7 +697,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         await grdheService.updateExportJobStatus(jobId, 'transforming', {
           progressPercent: 30,
           currentStep: `Processing entity ${entityId}`
-        });
+        }, actor);
         
         // Get adverse event
         const event = await grdheService.getCanonicalAdverseEventById(entityId);
@@ -644,7 +729,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
           await grdheService.updateExportJobStatus(jobId, 'failed', {
             errorMessage: 'Validation failed',
             errorDetails: { errors: exportResult.errors }
-          });
+          }, actor);
           
           return res.status(400).json({
             success: false,
@@ -659,13 +744,16 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         results.push(exportResult);
       }
       
-      // Complete the job
+      // Complete the job. The XML is returned in this response and stored
+      // nowhere, so the job records no output path (2026-10-15: it recorded
+      // `/exports/<tenant>/<file>`, a file nothing wrote).
       if (results.length > 0 && results[0].content) {
-        const outputFileName = results[0].fileName || `export_${jobId}.xml`;
-        const outputPath = `/exports/${job.tenantId}/${outputFileName}`;
-        
-        await grdheService.completeExportJob(jobId, outputPath, results[0].content);
-        
+        await grdheService.completeExportJob(jobId, {
+          fileName: results[0].fileName || `export_${jobId}.xml`,
+          content: results[0].content,
+          mimeType: results[0].contentType
+        }, actor);
+
         // Get updated job
         const completedJob = await grdheService.getExportJob(jobId);
         
@@ -692,7 +780,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
       await grdheService.updateExportJobStatus(jobId, 'failed', {
         errorMessage: error.message,
         errorDetails: { stack: error.stack }
-      });
+      }, actor);
     } catch { /* non-blocking: best-effort status update */ }
 
     // The thrown text (driver or generator detail) goes to the log against the
@@ -708,11 +796,13 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
 router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Response) => {
   const jobId = String(req.params.jobId);
   const { reason } = req.body;
-  
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
+
   try {
     await grdheService.updateExportJobStatus(jobId, 'cancelled', {
       errorMessage: reason || 'Cancelled by user'
-    });
+    }, actor);
     
     const job = await grdheService.getExportJob(jobId);
     
@@ -724,15 +814,9 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
     // Not this tenant's job: say so, rather than a success with no job in it
     // (ledger L203).
     if (error instanceof ExportJobNotFoundError) {
-      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Export job not found' } });
+      return notFound(res, 'NOT_FOUND', 'Export job not found');
     }
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'CANCEL_FAILED',
-        message: error.message
-      }
-    });
+    serverError(res, log, 'cancelling the export job', error, { jobId });
   }
 }));
 
@@ -746,9 +830,14 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
  */
 router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) => {
   const request: CreateAdverseEventRequest = req.body;
-  
-  // Validate required fields
-  const requiredFields = ['tenantId', 'caseNumber', 'receiveDate', 'patient', 'reactions', 'suspectProducts', 'reporter'];
+  const actor = requireWriteActor(req, res);
+  if (!actor) return;
+  // 2026-10-15: the body's tenantId reached the service unchecked.
+  if (!assertTenantMatchesAuth(req, res, String(request.tenantId ?? ''))) return;
+
+  // Validate required fields (eventDate is NOT NULL in the table; a case
+  // without one reached the database and came back as its error text).
+  const requiredFields = ['tenantId', 'caseNumber', 'eventDate', 'receiveDate', 'patient', 'reactions', 'suspectProducts', 'reporter'];
   const missingFields = requiredFields.filter(f => !(request as any)[f]);
   
   if (missingFields.length > 0) {
@@ -760,22 +849,43 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
       }
     });
   }
-  
+
+  // 2026-10-15: intake stored `isSerious ?? false`, 'spontaneous' and
+  // 'initial' when the caller said nothing, and the exports filed those as the
+  // case's seriousness, report type and initial/follow-up status.
+  const unstated = [
+    typeof request.isSerious !== 'boolean' ? 'isSerious (true or false)' : null,
+    !CASE_TYPES.includes(request.caseType) ? `caseType (one of ${CASE_TYPES.join(', ')})` : null,
+    !REPORT_TYPES.includes(request.reportType) ? `reportType (one of ${REPORT_TYPES.join(', ')})` : null,
+    !isIsoDate(request.eventDate) ? 'eventDate (YYYY-MM-DD)' : null,
+    !isIsoDate(request.receiveDate) ? 'receiveDate (YYYY-MM-DD)' : null,
+  ].filter((field): field is string => field !== null);
+  if (unstated.length > 0) {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'CASE_FACTS_NOT_STATED',
+        message: `A case states these; they are not assumed: ${unstated.join('; ')}`
+      }
+    });
+  }
+
   try {
-    const event = await grdheService.createCanonicalAdverseEvent(request);
-    
+    const event = await grdheService.createCanonicalAdverseEvent(request, actor);
+
     res.status(201).json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'CREATE_FAILED',
-        message: error.message
-      }
-    });
+    // unique (tenant_id, case_number, case_version): the case is already recorded.
+    if (sqlstate(error) === '23505') {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'CASE_EXISTS', message: `Case ${request.caseNumber} is already recorded for this tenant` },
+      });
+    }
+    serverError(res, log, 'recording the adverse event', error);
   }
 }));
 
@@ -788,19 +898,16 @@ router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Re
   
   try {
     const event = await grdheService.getCanonicalAdverseEventById(eventId);
-    
+
     res.json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'reading the adverse event', error, { eventId });
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -819,19 +926,16 @@ router.get('/adverse-events/tenant/:tenantId/case/:caseNumber', validateTenantId
       caseNumber,
       version ? parseInt(version as string) : undefined
     );
-    
+
     res.json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'reading the adverse event', error);
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -905,13 +1009,10 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
       }
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'validating the adverse event', error, { eventId });
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -1082,7 +1183,9 @@ router.get('/health', asyncHandler(async (req: Request, res: Response) => {
         mappingRules: true,
         exportJobs: true,
         adverseEvents: true,
-        electronicSignatures: true,
+        // 2026-10-15: this said true while both signature routes answer 410
+        // (retired 2026-09-10); signatures are made through /api/esignature/sign.
+        electronicSignatures: false,
         auditTrail: true
       },
       supportedFormats: Object.keys(SUPPORTED_FORMATS)

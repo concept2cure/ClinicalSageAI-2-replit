@@ -14,10 +14,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { VAULT_DOC_KINDS, vaultDocKindLabel } from '@shared/constants/domain/vault-taxonomy';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import type { LegacyCatalogVerificationScope } from '@shared/ana/catalog-facts';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 
 interface CatalogRecordView {
   contentHash: string;
+  /** Exact extraction shown, when available; returned to the server with a decision. */
+  extractedTextSha256?: string | null;
+  checkScope?: LegacyCatalogVerificationScope;
+  /** Current source use is separate from the retained human decision. */
+  currentUse?: { eligible: boolean; reasonCode: string | null; originalFileAvailable: boolean };
   /** Sent back with a decision: the server refuses one made on a record that changed since it was shown. */
   revision: string | null;
   /** Whether this person's role may confirm or correct; the server checks again. */
@@ -53,6 +59,8 @@ const url = (projectId: string, documentId: string, tail = '') =>
 const when = (iso: string | null) =>
   iso ? `${new Date(iso).toISOString().slice(0, 16).replace('T', ' ')} UTC` : 'an unrecorded time';
 
+class CatalogDecisionUnconfirmedError extends Error {}
+
 /**
  * One request; a refusal or a dropped connection becomes an Error with the
  * sentence to show. A write whose connection dropped may have landed, so it
@@ -64,11 +72,13 @@ async function call<T>(method: 'GET' | 'POST', path: string, body: unknown, fail
     res = await apiRequest(method, path, body);
   } catch (e) {
     const detail = e instanceof ApiRequestError ? serverMessage(e.payload) : null;
-    if (!detail && unknown) throw new Error(unknown, { cause: e });
+    if (!detail && unknown) throw new CatalogDecisionUnconfirmedError(unknown, { cause: e });
     throw new Error(`${failed} ${redactInternals(detail ?? (e instanceof Error ? e.message : ''), 'The connection dropped.')}`, { cause: e });
   }
   const json = (await res.json().catch(() => null)) as ({ data?: T } & Record<string, unknown>) | null;
-  if (!res.ok) throw new Error(`${failed} ${redactInternals(serverMessage(json), `The Vault refused it (HTTP ${res.status}).`)}`);
+  if (!res.ok || json?.success === false) {
+    throw new Error(`${failed} ${redactInternals(serverMessage(json), `The Vault refused it (HTTP ${res.status}).`)}`);
+  }
   return (json?.data ?? (json as unknown as T));
 }
 
@@ -91,16 +101,46 @@ function keyDataLines(keyData: unknown): Array<[string, string]> {
   ]);
 }
 
+const nullableText = (value: unknown) => value === null || typeof value === 'string';
+const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+function catalogCurrentUse(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.eligible === 'boolean' && typeof row.originalFileAvailable === 'boolean' && nullableText(row.reasonCode);
+}
+function catalogReviewer(value: unknown): boolean {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.id === 'number' && Number.isSafeInteger(row.id) && row.id > 0 && nullableText(row.name);
+}
+/** A malformed successful read cannot discharge an uncertain decision. */
+function isCatalogRecordRead(value: unknown): value is CatalogRecordView {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return digest(row.contentHash) && nullableText(row.revision) && typeof row.canWrite === 'boolean'
+    && [null, 'suggested', 'confirmed', 'corrected'].includes(row.state as string | null)
+    && ['documentKind', 'purpose', 'summary', 'proposedBy', 'proposedModel', 'correctionReason', 'extractionStatus'].every(key => nullableText(row[key]))
+    && ['proposedAt', 'confirmedAt'].every(key => row[key] === null || (typeof row[key] === 'string' && Number.isFinite(Date.parse(row[key]))))
+    && (row.extractedTextSha256 == null || digest(row.extractedTextSha256))
+    && catalogReviewer(row.confirmedBy) && catalogCurrentUse(row.currentUse);
+}
+
 function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
   const [record, setRecord] = useState<CatalogRecordView | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const load = useCallback(async () => {
     setReadError(null);
     try {
-      setRecord(await call<CatalogRecordView>('GET', url(projectId, documentId), undefined,
-        'The catalog record could not be read; nothing is shown rather than a record that may be wrong.'));
+      const next = await call<unknown>('GET', url(projectId, documentId), undefined,
+        'The catalog record could not be read; nothing is shown rather than a record that may be wrong.');
+      if (!isCatalogRecordRead(next)) throw new Error('The catalog record could not be verified. Reload before deciding on this source.');
+      setRecord(next);
+      setUnconfirmed(false);
     } catch (e) {
       setRecord(null);
       setReadError(e instanceof Error ? e.message : String(e));
@@ -109,28 +149,71 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
   useEffect(() => { void load(); }, [load]);
 
   const decide = async (action: 'confirm' | 'correct', body: Record<string, string>, done: string) => {
-    if (!record || busy) return false;
+    if (!record || busy || unconfirmed) return false;
     setBusy(true);
     setNote(null);
     const outcome = action === 'confirm' ? 'confirmed' : 'corrected';
     try {
-      await call('POST', url(projectId, documentId, `/${action}`),
-        { contentHash: record.contentHash, revision: record.revision, ...body },
+      const receipt = await call<{ state?: string }>('POST', url(projectId, documentId, `/${action}`),
+        {
+          contentHash: record.contentHash, revision: record.revision,
+          ...(record.extractedTextSha256 ? { expectedExtractedTextSha256: record.extractedTextSha256 } : {}),
+          ...body,
+        },
         `The record was not ${outcome}.`,
         `The connection dropped, so it is not known whether the record was ${outcome}. ` +
           "Reload the Vault and check this document's history before trying again.");
+      if (receipt?.state !== outcome) {
+        throw new CatalogDecisionUnconfirmedError(`The server did not return a matching decision receipt, so it is not known whether the record was ${outcome}. ` +
+          "Reload the Vault and check this document's history before trying again.");
+      }
       setNote({ tone: 'ok', text: done });
       await load();
       onSaved();
       return true;
     } catch (e) {
+      if (e instanceof CatalogDecisionUnconfirmedError) setUnconfirmed(true);
       setNote({ tone: 'error', text: e instanceof Error ? e.message : String(e) });
       return false;
     } finally {
       setBusy(false);
     }
   };
-  return { record, readError, busy, note, decide, load };
+  return { record, readError, busy, unconfirmed, note, decide, load };
+}
+
+/** Describe the legacy check's coverage without inventing an earlier result. */
+function CheckScopeNotice() {
+  return (
+    <div className="vd-d-idx" data-testid="vault-catalog-check-scope">
+      Legacy key data checks cover value presence in extracted text. Label and context verification is not recorded.
+      {' '}Scientific qualification is unassessed. Confirmation covers this catalog record as shown.
+    </div>
+  );
+}
+
+function sourceUnavailable(r: CatalogRecordView): boolean {
+  return !!r.currentUse && (!r.currentUse.eligible || !r.currentUse.originalFileAvailable);
+}
+
+/** Only server-derived eligibility reasons are translated into product language. */
+function CurrentUseNotice({ r }: { r: CatalogRecordView }) {
+  if (!sourceUnavailable(r)) return null;
+  const reasons: Record<string, string> = {
+    SOURCE_DATA_WITHDRAWN: 'This source has been withdrawn from data use.',
+    SOURCE_SUPERSEDED: 'This document version has been superseded.',
+    SOURCE_ORIGINAL_UNAVAILABLE: 'The original file is unavailable.',
+    SOURCE_VERSION_CHANGED: 'The source version has changed. Reload the Vault before deciding on its catalog record.',
+    EXTRACTION_UNAVAILABLE: 'Readable extracted text is unavailable for this source.',
+    SOURCE_IDENTITY_UNVERIFIED: 'The source identity could not be verified for current use.',
+  };
+  const reason = reasons[r.currentUse?.reasonCode ?? ''] ?? (!r.currentUse?.originalFileAvailable
+    ? 'The original file is unavailable.' : 'This source is unavailable for current data use.');
+  return (
+    <div className="vd-d-idx" data-testid="vault-catalog-current-use">
+      {reason}{r.state ? ' Its catalog history is retained.' : ''}
+    </div>
+  );
 }
 
 function RecordView({ r }: { r: CatalogRecordView }) {
@@ -149,9 +232,8 @@ function RecordView({ r }: { r: CatalogRecordView }) {
         <span className="k">Summary</span>
         <span className="v">{r.summary || '—'}</span>
       </div>
-      {lines.length > 0 && (
-        <div className="vd-d-idx">Key data is checked against the document&apos;s text when AnA records it, and is not edited here.</div>
-      )}
+      <CheckScopeNotice />
+      {lines.length > 0 && <div className="vd-d-idx">Key data is not edited here.</div>}
       {lines.map(([k, v]) => (
         <div className="vd-d-filing-row" key={k}>
           <span className="k">{k}</span>
@@ -187,6 +269,7 @@ function CorrectForm({ r, busy, onSave, onCancel }: {
   const canSave = !busy && correctionReady(draft, r);
   return (
     <div className="vd-d-filing" data-testid="vault-catalog-correct-form">
+      <CheckScopeNotice />
       <label className="vd-d-filing-row">
         <span className="k">Kind</span>
         <select className="vd-d-move-sel" value={draft.documentKind} disabled={busy}
@@ -235,6 +318,7 @@ function correctionBody(d: Draft, r: CatalogRecordView): Record<string, string> 
 
 /** What the panel says when there is no description to decide on. */
 function emptyText(r: CatalogRecordView): string {
+  if (sourceUnavailable(r)) return 'No description is recorded for this version.';
   if (r.extractionStatus === 'extraction_failed') {
     return 'No description is recorded: the text of this version could not be read. Upload a readable copy to have it described.';
   }
@@ -244,6 +328,7 @@ function emptyText(r: CatalogRecordView): string {
 function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
   const [correcting, setCorrecting] = useState(false);
   const r = cat.record;
+  const mutationBusy = cat.busy || cat.unconfirmed;
   if (cat.readError) {
     return (
       <div className="vd-dr-err" role="alert" data-testid="vault-catalog-error">
@@ -253,10 +338,15 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
     );
   }
   if (!r) return <div className="vd-d-idx" role="status">Reading the catalog record…</div>;
-  if (!r.state) return <div className="vd-d-idx" data-testid="vault-catalog-empty">{emptyText(r)}</div>;
-  if (correcting) {
+  if (!r.state) return (
+    <>
+      <CurrentUseNotice r={r} />
+      <div className="vd-d-idx" data-testid="vault-catalog-empty">{emptyText(r)}</div>
+    </>
+  );
+  if (correcting && r.canWrite && !sourceUnavailable(r)) {
     return (
-      <CorrectForm r={r} busy={cat.busy} onCancel={() => setCorrecting(false)}
+      <CorrectForm r={r} busy={mutationBusy} onCancel={() => setCorrecting(false)}
         onSave={(d) => void cat.decide('correct', correctionBody(d, r),
           "Corrected. Your changes and reason are recorded in this document's history.").then((ok) => ok && setCorrecting(false))} />
     );
@@ -266,39 +356,43 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
       <div className="vd-d-idx" data-testid="vault-catalog-provenance">
         {provenanceLines(r).map((line) => <div key={line}>{line}</div>)}
       </div>
+      <CurrentUseNotice r={r} />
       <RecordView r={r} />
-      {r.canWrite ? (
+      {r.canWrite && !sourceUnavailable(r) ? (
         <>
           {r.state === 'suggested' && (
             <div className="vd-d-idx">Confirming records your name and the time in this document&apos;s history. AnA will not replace a confirmed record.</div>
           )}
           <div className="vd-d-filing-acts">
             {r.state === 'suggested' && (
-              <button className="sp-primary" disabled={cat.busy} data-testid="vault-catalog-confirm"
+              <button className="sp-primary" disabled={mutationBusy} data-testid="vault-catalog-confirm"
                 onClick={() => void cat.decide('confirm', {}, "Confirmed. Your confirmation is recorded in this document's history.")}>
                 {cat.busy ? 'Confirming…' : 'Confirm as written'}
               </button>
             )}
-            <button className="sp-ask" disabled={cat.busy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
+            <button className="sp-ask" disabled={mutationBusy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
               Correct record
             </button>
           </div>
         </>
       ) : (
         <div className="vd-d-idx" data-testid="vault-catalog-readonly">
-          Your role can read this record but not confirm or correct it. A member or administrator can.
+          {sourceUnavailable(r)
+            ? 'Confirmation and correction are unavailable for this source.'
+            : 'Your role can read this record but not confirm or correct it. A member or administrator can.'}
         </div>
       )}
     </div>
   );
 }
 
-export function VaultCatalogRecord(props: Props) {
+function ScopedVaultCatalogRecord(props: Props) {
   const cat = useCatalogRecord(props);
   return (
     <div data-testid="vault-catalog-record">
       <div className="vd-d-seclbl">Catalog record</div>
       <Body cat={cat} />
+      {cat.unconfirmed && <button className="sp-ask" disabled={cat.busy} onClick={() => void cat.load()}>Reload catalog record</button>}
       {cat.note && (
         <div className={cat.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
           role={cat.note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-catalog-note">
@@ -307,4 +401,9 @@ export function VaultCatalogRecord(props: Props) {
       )}
     </div>
   );
+}
+
+/** Local decisions and recovery state belong to this exact source scope. */
+export function VaultCatalogRecord(props: Props) {
+  return <ScopedVaultCatalogRecord key={`${props.projectId}:${props.documentId}`} {...props} />;
 }

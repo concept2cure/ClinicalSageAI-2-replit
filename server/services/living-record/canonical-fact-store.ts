@@ -95,7 +95,8 @@ export interface UpsertFactInput {
   valueType?: string;
   establishedByClaimId?: number | null;
   establishedBySourceId?: number | null;
-  confidence?: number;
+  /** The score someone stated; null or omitted = unscored. */
+  confidence?: number | null;
   createdBy?: number | null;
 }
 
@@ -164,7 +165,8 @@ function factColumns(input: UpsertFactInput) {
     valueType: input.valueType ?? 'text',
     establishedByClaimId: input.establishedByClaimId ?? null,
     establishedBySourceId: input.establishedBySourceId ?? null,
-    confidence: input.confidence !== undefined ? String(input.confidence) : '0.5000',
+    // 2026-10-15: was '0.5000' when no score was given — one nobody assigned. NULL = unscored.
+    confidence: typeof input.confidence === 'number' ? String(input.confidence) : null,
     createdBy: input.createdBy ?? null,
   };
 }
@@ -311,7 +313,8 @@ export interface WriteDriftInput {
   expectedValue: string;
   observedValue: string;
   driftType: DriftType;
-  severity: Severity;
+  /** 'unrated' when the writer assessed no severity (the citation binder). */
+  severity: Severity | 'unrated';
   cascadeActionId?: string | null;
   /** Which mechanism found the drift: the sentinel sweep, a governed fact
    *  change, or a document citation scan. */

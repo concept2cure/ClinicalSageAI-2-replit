@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /** Fail closed when an active runtime contract drifts away from Node 22 LTS. */
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const NODE_MAJOR = '22';
 const NODE_ENGINE = '>=22.0.0 <23.0.0';
 const readText = (path) => readFileSync(path, 'utf8');
-const trackedWorkflows = () => execFileSync(
-  'git',
-  ['ls-files', '.github/workflows/*.yml', '.github/workflows/*.yaml'],
-  { encoding: 'utf8' },
-).trim().split('\n').filter(Boolean);
+// Check the active tree, including newly added workflows. git ls-files also
+// returns workflows deleted by an uncommitted remediation, then read() crashes.
+export const activeWorkflows = (directory = '.github/workflows') => readdirSync(directory, { withFileTypes: true })
+  .filter((entry) => entry.isFile() && /\.ya?ml$/.test(entry.name))
+  .map((entry) => join(directory, entry.name));
 
 const exactTextContracts = new Map([
   ['.nvmrc', '22'],
@@ -21,7 +22,6 @@ const patternContracts = new Map([
   ['.npmrc', [/^engine-strict=true$/m, 'engine-strict=true']],
   ['.replit', [/^modules = \[[^\n]*"nodejs-22"[^\n]*\]$/m, 'nodejs-22 module']],
   ['.devcontainer/devcontainer.json', [/typescript-node:1-22-bookworm/, 'Node 22 devcontainer image']],
-  ['.claude/skills/gstack/.github/docker/Dockerfile.ci', [/nodesource\.com\/setup_22\.x/, 'NodeSource 22 LTS installer']],
   ['app.yaml', [/^runtime:\s*nodejs22\s*$/m, 'nodejs22 runtime']],
   ['docs/validation/IQ-CORTEX-001-INSTALLATION_QUALIFICATION.md', [/Node\.js Runtime \| 22\.x LTS/, 'Node.js 22.x LTS IQ requirement']],
   ['docs/validation/IQ_OQ_EVIDENCE_PACK.md', [/declared `>=22\.0\.0 <23\.0\.0`/, 'Node.js 22-only declared runtime']],
@@ -31,7 +31,7 @@ const patternContracts = new Map([
   ['docs/guides/README_VAULT.md', [/Node\.js 22 LTS/, 'Node.js 22 LTS Vault prerequisite']],
 ]);
 
-export function checkRuntimeContracts({ read = readText, workflows = trackedWorkflows() } = {}) {
+export function checkRuntimeContracts({ read = readText, workflows = activeWorkflows() } = {}) {
   const errors = [];
   const packageJson = JSON.parse(read('package.json'));
   const lockJson = JSON.parse(read('package-lock.json'));
@@ -100,6 +100,27 @@ export function checkRuntimeContracts({ read = readText, workflows = trackedWork
 }
 
 function runSelfTest() {
+  const directory = mkdtempSync(join(tmpdir(), 'node-runtime-workflows-'));
+  try {
+    const newWorkflow = join(directory, 'new.yml');
+    const yamlWorkflow = join(directory, 'active.yaml');
+    const deletedWorkflow = join(directory, 'removed.yml');
+    writeFileSync(newWorkflow, "jobs:\n  test:\n    steps:\n      - uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n");
+    writeFileSync(yamlWorkflow, "name: Active YAML workflow\n");
+    writeFileSync(deletedWorkflow, "name: Retired workflow\n");
+    writeFileSync(join(directory, 'notes.txt'), 'Not a workflow\n');
+    unlinkSync(deletedWorkflow);
+    const workflows = activeWorkflows(directory);
+    if (workflows.length !== 2 || !workflows.includes(newWorkflow) || !workflows.includes(yamlWorkflow)) {
+      throw new Error('self-test missed new workflows or retained a deleted workflow');
+    }
+    const errors = checkRuntimeContracts({ workflows });
+    if (!errors.some((error) => error.includes(newWorkflow) && error.includes('20'))) {
+      throw new Error('self-test did not reject a runtime downgrade in an untracked active workflow');
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
   const originals = new Map();
   const read = (path) => originals.get(path) ?? readText(path);
   // Each case below only asserts errors exist AFTER a mutation, so a repo that
@@ -130,7 +151,7 @@ function runSelfTest() {
   if (checkRuntimeContracts({ read, workflows: [workflow] }).length === 0) {
     throw new Error('self-test missed workflow downgrade below Node 20');
   }
-  console.log(`Node runtime guard self-test passed: ${cases.length + 1} simulated drifts were rejected.`);
+  console.log(`Node runtime guard self-test passed: ${cases.length + 2} simulated drifts were rejected; new and deleted workflow inventory was verified.`);
 }
 
 if (process.argv.includes('--self-test')) {

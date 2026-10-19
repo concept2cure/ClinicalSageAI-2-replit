@@ -1,0 +1,113 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 321ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 102ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 86ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 78ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 88ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 32ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 31ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 112ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > retains a replacement link until dismissed and copies only when requested 256ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 96ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > keeps the private handover visible while the roster reload is pending and after it completes 90ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > unconfirmed replacement links > does not claim a delivered replacement from a refused outcome 56ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > unconfirmed replacement links > does not claim a delivered replacement from a missing response outcome 55ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > unconfirmed replacement links > does not claim a delivered replacement from a malformed response outcome 55ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > unconfirmed replacement links > does not claim a delivered replacement from a unconfirmed delivery outcome 52ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > unconfirmed replacement links > does not claim a delivered replacement from a unsafe link outcome 49ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 65ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 32ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 450ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 173ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 105ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 255ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 367ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 382ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 327ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 323ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 318ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 314ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 310ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 248ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 125ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > confirms a decline calmly and allows cancellation before the server mutation 89ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > shows quota or authorization refusals without claiming the invitation was accepted 66ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > keeps an inbox read error distinct from no pending invitations and retries it 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > refuses malformed pending rows instead of offering a mutation against a guessed organization 35ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > does not accept an invitation until the inviting organization is identified by name 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > retains a pending named invitation when the server does not confirm acceptance 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 28ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 7ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 6ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps every selectable archetype into the PATCH /api/mdx/industry-profile enum 3ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > maps the specific archetype semantics 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > archetypeToPrimaryIndustry > falls back to biotech_pharma for unknown archetypes 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > preserves every canonical assignable organization role, including signers 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > maps every wizard-selectable platform role into the POST /api/tenant-users enum 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > down-scopes business-tier roles to org admin and support to member 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteRoleToOrgRole > fails closed to least-privilege member for unknown roles 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > uses the email local part as the provisional display name 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > inviteNameFromEmail > always satisfies the endpoint min-length of 2 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes DTC paid tiers to POST /api/billing/dtc-checkout with a schema-valid body 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > routes per-user (b2b) paid tiers to POST /api/billing/checkout with seats 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > clamps seats to a positive integer (schema requires min 1) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > normalizes any non-annual cycle to monthly (schema enum) 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > reports enterprise as unavailable — custom pricing has no self-service checkout 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > sends the DTC free tier to checkout like any other self-service tier 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts > checkoutRequestFor > still refuses enterprise on the DTC path — custom pricing has no checkout 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > reads runtime-backed keys and ignores obsolete sessionTimeout and unsupported flags 277ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > sends only the two enforced keys and an audited reason to the JWT organization 139ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > requires a reason and valid integers before making a governed change 151ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > does not display platform defaults as loaded organization policy after a failed read 42ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > retains unsaved edits on audit-write refusal and never claims save success 103ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > keeps changes unconfirmed when the returned policy does not match the requested values 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx > administrative invitations use the canonical private outcome handover > keeps a setup link visible during roster reload and copies only on explicit request 466ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx > administrative invitations use the canonical private outcome handover > reports pending consent without claiming email delivery or immediate membership 141ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx > administrative invitations use the canonical private outcome handover > treats a malformed success as unconfirmed, rather than inventing an invitation email 113ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx > administrative invitations use the canonical private outcome handover > reports network uncertainty without claiming that nothing was created 82ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx > administrative invitations use the canonical private outcome handover > keeps a server refusal visible with its actual reason and no setup link 159ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires explicit confirmation to disable a rule and names the unrestricted consequence 461ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > deletes only the selected rule after confirmation and re-reads the real list 157ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > keeps refused changes pending and preserves platform-administrator authorization 162ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > does not claim a successful rule change from an unrelated or malformed response 142ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires a governed reason before sending a rule change 128ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > keeps an individually shareable setup link when no invitation email went out 4ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > counts a created account with failed activation as recorded but not usable 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > does not claim that a 202 consent request added membership or sent an email 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > identifies delivered email without granting immediate access to a new account 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > retains the stored role for a replacement invitation and explains invalidation 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > confirms immediate access only when an existing account was actually added 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > never invents delivery from a missing or inconsistent success payload 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link javascript:alert(1) 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link data:text/html,secret 1ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://c2c.test/wrong?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > rejects unsafe setup link https://admin:secret@c2c.test/concept2cure/password-reset?token=secret 0ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > renders the server refusal while stripping infrastructure details 2ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts > onboarding invitation outcomes > handles network uncertainty honestly without exposing raw exceptions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 578ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > any other failure keeps "Try again" 266ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 253ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 33ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 91ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 39ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > makes the discovery wizard reachable from every client-family welcome 3ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > adapts the greeting + starters to each client family 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > matches the client type case-insensitively 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > falls back to a neutral welcome for an unknown segment (never empty) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > uses a neutral name when none is supplied 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > always offers the upload starter (the bridge to P2/P3) with a live prompt 1ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > routes the upload starter to the real ingest flow, not a conversation about it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts > welcomeFor — client-type-aware first-run welcome > every starter carries a label and a non-empty live prompt 0ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > distinguishes emailed, private-link, failed-delivery and existing-user invitations 27ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > copies the chosen link only on request and provides a manual fallback 310ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > keeps each private link visible and copies only the selected person 217ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > renders consent, activation failure and refusal without a fabricated link 8ms
+
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+   Start at  04:58:33
+   Duration  24.24s (transform 1.32s, setup 1.09s, import 3.32s, tests 10.52s, environment 6.94s)

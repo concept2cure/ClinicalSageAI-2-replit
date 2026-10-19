@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — a failed question read is not "none overdue" > publishes no overdue count when the question store cannot be read
+{
+  "timestamp": "2026-10-14T03:20:33.767Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_questions read failed",
+  "context": {
+    "err": "connection terminated"
+  }
+}
+
+stderr | server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — a failed question read is not "none overdue" > keeps the overdue count unknown when the real correspondence store is absent
+{
+  "timestamp": "2026-10-14T03:20:33.770Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] reg_questions read failed",
+  "context": {
+    "err": "relation \"reg_questions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — overdue IR count > counts overdue questions from the store, not from the capped page 19ms
+ ✓ server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — overdue IR count > is not truncated when the page holds everything the store has 3ms
+ ✓ server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — overdue IR count > falls back to the page when the totals query returns nothing, rather than reporting zero 3ms
+ ✓ server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — a failed question read is not "none overdue" > publishes no overdue count when the question store cannot be read 3ms
+ ✓ server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts > GET /api/cmc/module3-board — a failed question read is not "none overdue" > keeps the overdue count unknown when the real correspondence store is absent 3ms
+stderr | server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails
+{
+  "timestamp": "2026-10-14T03:20:35.920Z",
+  "level": "warn",
+  "message": "[cmc-module3-board] submissions spine read failed",
+  "context": {
+    "err": "connection failed"
+  }
+}
+
+ ✓ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > returns a real anchored filing and actual Module 3 placement counts without querying an absent legacy registry 29ms
+ ✓ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > reads only the current tenant and respects a selected canonical program 11ms
+ ✓ server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts > canonical CMC board with no legacy reg_submissions registry > publishes no established submission count when its canonical portfolio read fails 5ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  03:20:33
+   Duration  2.72s (transform 153ms, setup 90ms, import 401ms, tests 1.90s, environment 0ms)
+

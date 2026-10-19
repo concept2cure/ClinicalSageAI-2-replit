@@ -42,6 +42,16 @@ function getUserId(req: Request): number | undefined {
   return (req as any).user?.id ?? (req as any).userId;
 }
 
+/* Every write here names who made it. A request with no user was recorded as
+   'system' (performedBy on transitions; created_by / decided_by through the
+   services) until 2026-10-15. Thrown inside each handler's try, so it answers
+   400 like the handler's other refusals. */
+function requireUserId(req: Request): number {
+  const userId = getUserId(req);
+  if (!userId) throw new Error('Authenticated user required: a governed record names who made it.');
+  return userId;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSUMPTION REGISTRY ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -53,7 +63,7 @@ function getUserId(req: Request): number | undefined {
 router.post('/assumptions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = AssumptionRegistryService.getInstance() as any;
 
     const record = await service.createAssumption({
@@ -126,7 +136,8 @@ router.get('/assumptions/:id', async (req: Request, res: Response) => {
 router.patch('/assumptions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    // Without a user this wrote reviewed_by = NULL over the recorded reviewer.
+    const userId = requireUserId(req);
     const service = AssumptionRegistryService.getInstance() as any;
 
     const status = req.body.status;
@@ -138,7 +149,7 @@ router.patch('/assumptions/:id', async (req: Request, res: Response) => {
       String(req.params.id),
       orgId,
       status,
-      userId ? String(userId) : undefined
+      String(userId)
     );
 
     res.json({ success: true, data: record });
@@ -217,7 +228,7 @@ router.post('/assumptions/:id/reject', async (req: Request, res: Response) => {
 router.post('/assumptions/:id/supersede', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = AssumptionRegistryService.getInstance() as any;
 
     const { replacement, reason } = req.body;
@@ -236,7 +247,7 @@ router.post('/assumptions/:id/supersede', async (req: Request, res: Response) =>
       organizationId: orgId,
       replacementId: replacementRecord.id,
       reason,
-      performedBy: userId ? String(userId) : 'system',
+      performedBy: String(userId),
     });
 
     res.json({ success: true, data: { superseded: result, replacement: replacementRecord } });
@@ -300,7 +311,7 @@ router.post('/assumptions/:id/link-artifact', async (req: Request, res: Response
 router.post('/decisions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = DecisionRecordService.getInstance() as any;
 
     const record = await service.createDecision({
@@ -371,7 +382,7 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
 router.patch('/decisions/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = DecisionRecordService.getInstance() as any;
 
     const actionState = req.body.actionState;
@@ -382,7 +393,7 @@ router.patch('/decisions/:id', async (req: Request, res: Response) => {
     const record = await service.transition(String(req.params.id), {
       organizationId: orgId,
       actionState,
-      performedBy: userId ? String(userId) : 'system',
+      performedBy: String(userId),
       reason: req.body.reason,
     });
 
@@ -399,7 +410,7 @@ router.patch('/decisions/:id', async (req: Request, res: Response) => {
 router.post('/decisions/:id/supersede', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = DecisionRecordService.getInstance() as any;
 
     const { replacement, reason } = req.body;
@@ -417,7 +428,7 @@ router.post('/decisions/:id/supersede', async (req: Request, res: Response) => {
     const result = await service.transition(String(req.params.id), {
       organizationId: orgId,
       actionState: 'superseded',
-      performedBy: userId ? String(userId) : 'system',
+      performedBy: String(userId),
       reason,
     });
 
@@ -434,7 +445,7 @@ router.post('/decisions/:id/supersede', async (req: Request, res: Response) => {
 router.post('/decisions/:id/execute', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = DecisionRecordService.getInstance() as any;
 
     const { executedArtifactId, executedArtifactVersionId, actionDescription } = req.body;
@@ -445,7 +456,7 @@ router.post('/decisions/:id/execute', async (req: Request, res: Response) => {
     const record = await service.transition(String(req.params.id), {
       organizationId: orgId,
       actionState: 'executed',
-      performedBy: userId ? String(userId) : 'system',
+      performedBy: String(userId),
       reason: actionDescription,
       executedArtifactId,
       executedArtifactVersion: executedArtifactVersionId,
@@ -495,12 +506,17 @@ router.post('/decisions/:id/reject', async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(400).json({ success: false, error: 'Authenticated user required' });
     }
+    // It recorded 'No reason provided' as the rejection reason (2026-10-15).
+    const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+    if (!reason) {
+      return res.status(400).json({ success: false, error: 'reason is required' });
+    }
 
     const record = await service.transition(String(req.params.id), {
       organizationId: orgId,
       actionState: 'rejected',
       performedBy: String(userId),
-      reason: req.body.reason ?? 'No reason provided',
+      reason,
     });
     res.json({ success: true, data: record });
   } catch (error: any) {
@@ -515,7 +531,7 @@ router.post('/decisions/:id/reject', async (req: Request, res: Response) => {
 router.post('/decisions/:id/escalate', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const userId = getUserId(req);
+    const userId = requireUserId(req);
     const service = DecisionRecordService.getInstance() as any;
 
     const { reason } = req.body;
@@ -526,7 +542,7 @@ router.post('/decisions/:id/escalate', async (req: Request, res: Response) => {
     const record = await service.transition(String(req.params.id), {
       organizationId: orgId,
       actionState: 'escalated',
-      performedBy: userId ? String(userId) : 'system',
+      performedBy: String(userId),
       reason,
     });
     res.json({ success: true, data: record });

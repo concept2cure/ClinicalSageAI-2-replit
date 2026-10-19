@@ -266,8 +266,11 @@ export function analyzeDocument(content: string): ClaimEvidenceReport {
   const total = alignments.length || 1;
   const problemRatio = (overstatedCount + unsupportedCount) / total;
 
-  let overallRisk: 'low' | 'moderate' | 'high';
-  if (unsupportedCount >= 3 || problemRatio > 0.4) {
+  // 2026-10-15: with no claim analysed this fell through to 'low'.
+  let overallRisk: ClaimEvidenceReport['overallRisk'];
+  if (alignments.length === 0) {
+    overallRisk = 'not_assessed';
+  } else if (unsupportedCount >= 3 || problemRatio > 0.4) {
     overallRisk = 'high';
   } else if (overstatedCount >= 2 || problemRatio > 0.2) {
     overallRisk = 'moderate';

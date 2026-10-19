@@ -1,6 +1,10 @@
 /**
  * @fileoverview EMA European Public Assessment Reports Connector
- * Uses EMA's public medicines API.
+ *
+ * Cross-connector federated-search adapter over the governed EMA EPAR client
+ * (`integrations/ema-epar-client.ts`), as the EUDAMED and EU CTIS connectors
+ * are. 2026-10-15: it fetched the EMA medicines API itself and answered a 404
+ * or a body without a results array with [] — "no matches" for a failed read.
  */
 
 import {
@@ -11,6 +15,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { searchEmaEpar, EMA_EPAR_SOURCE } from '../integrations/ema-epar-client.js';
 
 export class EMAEPARConnector implements DataConnector {
   id = 'ema_epar';
@@ -19,43 +24,31 @@ export class EMAEPARConnector implements DataConnector {
   requiresCredentials = false;
   requiredTier = 'standard';
 
-  private baseUrl = 'https://medicines.health.europa.eu/api';
-
   async status(): Promise<ConnectorHealth> {
-    try {
-      const start = Date.now();
-      const res = await fetch(`${this.baseUrl}/human-medicines?pageSize=1`);
-      return { status: res.ok ? 'healthy' : 'degraded', latencyMs: Date.now() - start, lastChecked: new Date() };
-    } catch {
-      return { status: 'unavailable', lastChecked: new Date() };
-    }
+    const start = Date.now();
+    const result = await searchEmaEpar({ pageSize: 1 });
+    return {
+      status: result.status === 'ok' ? 'healthy' : 'unavailable',
+      latencyMs: Date.now() - start,
+      lastChecked: new Date(),
+      message: result.message,
+    };
   }
 
   async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
-    const params = new URLSearchParams();
-    if (query.indication || query.keywords?.length) {
-      params.set('searchTerm', query.indication || query.keywords?.join(' ') || '');
-    }
-    params.set('pageSize', String(query.limit || 20));
-    params.set('page', '1');
-
-    const res = await fetch(`${this.baseUrl}/human-medicines?${params}`);
-    if (!res.ok) {
-      if (res.status === 404) return [];
-      throw new Error(`EMA API error: ${res.status}`);
-    }
-
-    const data = await res.json();
-    const medicines = data.content || data.results || [];
-
-    return medicines.map((med: any, i: number) => ({
-      id: `ema:${med.productNumber || med.id || i}`,
+    const result = await searchEmaEpar({
+      query: query.indication || query.keywords?.join(' '),
+      pageSize: query.limit || 20,
+    });
+    if (result.status !== 'ok') throw new Error(result.message ?? 'EMA EPAR search failed');
+    return result.medicines.map((med, i) => ({
+      id: `ema:${med.productNumber || i}`,
       sourceConnector: this.id,
-      title: med.medicineName || med.name || 'Unknown Medicine',
-      summary: `${med.medicineName || ''} | Active: ${med.activeSubstance || ''} | Status: ${med.authorisationStatus || ''} | Therapeutic Area: ${med.therapeuticArea || ''}`,
+      title: med.medicineName || 'Unknown Medicine',
+      summary: `${med.medicineName} | Active: ${med.activeSubstance} | Status: ${med.authorisationStatus} | Therapeutic Area: ${med.therapeuticArea}`,
       relevanceScore: 1 - i * 0.04,
-      metadata: med,
-      url: med.url || `https://www.ema.europa.eu/en/medicines/human/EPAR/${(med.medicineName || '').toLowerCase().replace(/\s+/g, '-')}`,
+      metadata: { ...med, source: EMA_EPAR_SOURCE },
+      url: med.url,
     }));
   }
 

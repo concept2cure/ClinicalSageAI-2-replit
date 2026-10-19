@@ -1,0 +1,10 @@
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 275
+  using requestDb(req)        : 51
+  still on the shared pool    : 228 (migration backlog)
+    JWT boundary auto-scoped  : 226
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+  server/routes/c2c/project-route-access.ts

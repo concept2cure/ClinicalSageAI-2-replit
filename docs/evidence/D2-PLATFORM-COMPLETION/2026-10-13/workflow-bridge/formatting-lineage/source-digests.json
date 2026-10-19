@@ -1,0 +1,9 @@
+{
+  "server/routes/authoring.router.ts": "7e350e5bf189a5ce24984302496259b02a4f8b8446efde160d86368a25e57f50",
+  "server/services/clinical-regulatory-evidence/lineage-gate.ts": "ab61ef7f5df67c92e7139588bc93c51b22d8c8136d521952152ebbed60d0c35f",
+  "server/services/clinical-regulatory-evidence/span-lineage.service.ts": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863",
+  "server/services/clinical-regulatory-evidence/machine-attribution.ts": "56b7f478492f58654e839f44b326c945fbbd84dc1c39f20ed524a07fed54dd06",
+  "server/services/clinical-regulatory-evidence/machine-attribution-formatting.ts": "b3099173584425f612e4a9dc8548699bfa00d9aacc5cd61b2e259a6fd48c744c",
+  "server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.test.ts": "588bc90b1b3eeae8a57f7c2dd44a763a85b2da083ad59909a23c0ef1b6dcdd7f",
+  "server/services/clinical-regulatory-evidence/__tests__/formatting-carry-forward.pglite.integration.test.ts": "286a013ea13e50931137fe3cb05492234dea35dbbd988d656fb05145239b655d"
+}

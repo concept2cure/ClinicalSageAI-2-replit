@@ -139,8 +139,11 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * its name says (the board alone opens on everyone's).
  */
 export const RAIL_CORE = [
-  { id: 'new-conversation', label: 'New conversation', icon: 'plus', target: 'home' },
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
+  { id: 'tasking', label: 'Tasking', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
+  { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck' },

@@ -88,4 +88,3 @@ AssertionError: no group of tenant B may hold tenant A's project: expected 1 to 
       Tests  1 failed | 36 passed (37)
    Start at  16:56:27
    Duration  9.34s (transform 1.85s, setup 85ms, import 3.07s, tests 5.84s, environment 0ms)
-

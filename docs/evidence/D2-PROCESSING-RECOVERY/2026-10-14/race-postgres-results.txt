@@ -1,0 +1,45 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 01: two claimants wait on one real advisory barrier; one claim/extraction and one busy result 118ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-success 109ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-extraction-failure 102ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 02: expired A cannot overwrite B completion: late-profile-catch 97ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 03: lease acceptance uses actual time after a real lock wait 590ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 04: supersession commits on an independent source lock before stale completion reads 139ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 05: project deletion commits on an independent project lock before stale completion 88ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: same-program 148ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: cross-program 152ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 06: actual withdrawal SHARE reservation blocks completion and refuses it afterward: null-program 160ms
+ × race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 07: recovery-first order has a fresh impact or named stale preview, without deadlock: same-program 160ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 07: recovery-first order has a fresh impact or named stale preview, without deadlock: cross-program 195ms
+ ✓ race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 08: local NOSUPERUSER/NOBYPASSRLS role under canonical policy can process own source and cannot read another tenant 72ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  race-postgres.test.mts > D2 actual independent PostgreSQL sessions > 07: recovery-first order has a fresh impact or named stale preview, without deadlock: same-program
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ race-postgres.test.mts:323:47
+    321|         observations.push({case:'reverse impact freshness',scope,previ…
+    322|           expectedExtractedTexts:expectedTexts,recoveryStatus:(await r…
+    323|         expect(receipt.counts.extractedTexts).toBe(expectedTexts);
+       |                                               ^
+    324|       }
+    325|       expect((await row(c)).extracted_text).toBe(BODY);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  04:21:09
+   Duration  3.00s (transform 328ms, setup 0ms, import 396ms, tests 2.20s, environment 0ms)
+

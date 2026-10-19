@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 265ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 128ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 83ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 69ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 93ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 34ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 29ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 44ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 34ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 44ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits 434ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open 141ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > gives AnA the exact loadable template identity and asks for every source-requirement page 100ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID 120ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending 133ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it 163ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it 148ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > recovers an uncertain create through the existing scoped document list before offering another POST 207ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create 184ms
+stderr | client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project
+An update to ScopedIndDocumentLibrary inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project 194ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > module outlines stay in the same IND library > offers the module template through the same creation action 227ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name 605ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module M1 instead of the current M4 tree selection 283ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module null instead of the current M4 tree selection 126ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > reads runtime-backed keys and ignores obsolete sessionTimeout and unsupported flags 204ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > sends only the two enforced keys and an audited reason to the JWT organization 109ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > requires a reason and valid integers before making a governed change 101ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > does not display platform defaults as loaded organization policy after a failed read 26ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > retains unsaved edits on audit-write refusal and never claims save success 68ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > governed session security policy > keeps changes unconfirmed when the returned policy does not match the requested values 63ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > session policy remains bound to the original workspace > refuses PATCH after the current organization changes 45ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > session policy remains bound to the original workspace > discards a read completed after the current organization changes 7ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > session policy remains bound to the original workspace > does not confirm a save response received after the organization changes 52ms
+ ✓ client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx > session policy remains bound to the original workspace > does not read or write policy without an organization identity 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > reads the exact saved section and shows the existing source disclosure 63ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > reports a refused read and retries without showing a false empty guide 162ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > refuses malformed requirement lists without presenting partial guidance 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx > template guidance remains separate from authored evidence > never mixes a late earlier section response into the current section 12ms
+
+ Test Files  4 passed (4)
+      Tests  53 passed (53)
+   Start at  06:00:56
+   Duration  12.13s (transform 949ms, setup 567ms, import 1.73s, tests 5.51s, environment 3.16s)

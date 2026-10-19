@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
-import { apiCall, apiErrorText } from '../apiCall';
-import { C2CToast, useToast } from '../toast';
-import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
@@ -28,10 +25,19 @@ const USAGE_RATE_LIMITS: Record<string, RateLimit> = {
   enterprise: { requestsPerMinute: 500, requestsPerDay: 100000, tokensPerMinute: 2000000, tokensPerDay: 20000000 },
 };
 
+/* ── Credits are NOT shown (settings/integrity audit 2026-10-17, finding 4).
+   The credit ledger (server/services/credit-ledger.ts) is never spent:
+   `debitCredits` has no caller, so no use of the product draws a balance down,
+   and auto-reload can never fire. This surface used to render the balance,
+   a "Buy more" button, an auto-reload switch and a per-category credit card —
+   an unmetered number presented as metering. They are gone until something
+   actually debits the ledger. Paying and invoices go through Stripe: the
+   portal is "Manage billing" on Plans & licensing (LicensingSurface), and the
+   invoice list stays below. ── */
+
 /* ── Live response shapes — aligned to the real /api/billing payloads.
    GET /usage/limits → UsageLimitsSnapshot (services/usage-windows.ts)
    GET /invoices     → { invoices: Stripe projection[] } (billing-dashboard.ts)
-   GET /credits      → { balanceCents, ledger, autoReload } (credit-ledger.ts)
    Each panel renders REAL persisted data, an honest EMPTY state, or an
    honest ERROR state via useLiveData — never a fabricated stand-in. ── */
 
@@ -72,15 +78,6 @@ interface LiveInvoices {
   invoices: LiveInvoice[];
 }
 
-/* Loosely shaped on the wire for the same reason as the usage snapshot: a
-   skewed payload can carry a null balance, or no autoReload block at all.
-   Both panels guard their own slice and render an honest empty state rather
-   than dividing `undefined` by 100 and printing "$NaN". */
-interface LiveCredits {
-  balanceCents: number | null;
-  autoReload: { enabled: boolean; thresholdCents: number; topupCents: number } | null;
-}
-
 /* ── Shape guards — a 200 is not proof of a shape ──
    All three panels crashed on a response that was merely plausible. A route
    answering `{ data: [] }` unwraps to a bare `[]`, and `[]` is TRUTHY: it
@@ -92,7 +89,7 @@ interface LiveCredits {
 
    Guarding the fetch routes those into each panel's existing error state.
    The guards check key PRESENCE, not truthiness: a present-but-null field is
-   real data ("auto-reload isn't configured yet") and belongs in the panel's
+   real data (a snapshot with no session yet) and belongs in the panel's
    empty state, so the member-level checks below handle it instead. ── */
 
 /** `{ plan, weekly, … }` — the usage snapshot. Deliberately only the two keys
@@ -101,9 +98,6 @@ interface LiveCredits {
     as its own honest empty, and must not be inflated into a whole-surface
     error. */
 const isUsageSnapshot: ShapeGuard<LiveUsageSnapshot> = hasKeys<LiveUsageSnapshot>('plan', 'weekly');
-
-/** `{ balanceCents, autoReload }` — the credit read. */
-const isCredits: ShapeGuard<LiveCredits> = hasKeys<LiveCredits>('balanceCents', 'autoReload');
 
 /** `{ invoices: [...] }` — presence isn't enough here: the panel maps over
     `invoices` immediately, so the array itself is the contract. A non-array
@@ -118,14 +112,6 @@ const isInvoices: ShapeGuard<LiveInvoices> = (value: unknown): value is LiveInvo
 
 /* ── Helpers ── */
 
-/** A cents field from the wire → a real number, or null when the payload
-    didn't carry one. `null / 100` is 0, so a missing balance would otherwise
-    render as a confident "$0.00". */
-function cents(v: unknown): number | null {
-  const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
-  return Number.isFinite(n) ? n : null;
-}
-
 function _fmt(n: number): string {
   if (n >= 1000000) return n / 1000000 + 'M';
   if (n >= 1000) return n / 1000 + 'K';
@@ -137,11 +123,6 @@ const INVOICE_TONE: Record<string, string> = { paid: 'ok', open: 'warn', past_du
 
 function _cap(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-/** Dollar figure without trailing .00 noise ("25", "25.50"). */
-function _usd(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
 
 /** ISO → "Jul 1, 2026" (invoice-date display shape); "—" when absent. */
@@ -253,7 +234,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
     surface && surface.id === 'billing' ? 'billing' : 'usage';
   const [tab, setTab] = useState(initTab);
 
-  // Three org-scoped GETs behind /api/billing (billing-dashboard.ts), each a
+  // Two org-scoped GETs behind /api/billing (billing-dashboard.ts), each a
   // real DB / Stripe read. No fixtures: every panel renders live data, an
   // honest empty, or an honest error.
   const usageState = useLiveData<LiveUsageSnapshot>(
@@ -266,73 +247,6 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
     ['/api/billing/invoices'],
     isInvoices,
   );
-  /* Re-read nonce. `useLiveData` re-fetches when its dependency array changes,
-     which is how a surface refreshes after a governed write — the same idiom
-     MasterLicensing uses. Bumping it is the only honest way to learn the
-     resulting auto-reload rule: the server owns it, and this surface must not
-     display a rule it inferred rather than received. */
-  const [reload, setReload] = useState(0);
-  const refreshCredits = () => setReload((n) => n + 1);
-  const creditsState = useLiveData<LiveCredits>(
-    '/api/billing/credits',
-    ['/api/billing/credits', reload],
-    isCredits,
-  );
-  const [toast, fireToast] = useToast();
-  /** The auto-reload change awaiting its reason-for-change, or null. The server
-   *  requires a reason on this endpoint and audits it verbatim, so the dialog is
-   *  not decoration — a PATCH without one can only 400. */
-  const [reloadEdit, setReloadEdit] = useState<{ enabled: boolean } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  /* Credit top-up goes through Stripe's own portal rather than a bespoke
-     purchase screen, because ledger credits move money-equivalent value:
-     POST /api/billing/credits/adjust is platform-admin only precisely so a
-     tenant cannot self-issue them. The portal is the one place a customer can
-     actually put money in. Opened in a new tab so the workspace is not lost. */
-  const buyMore = async () => {
-    setBusy(true);
-    const res = await apiCall<{ portalUrl?: string }>('POST', '/api/billing/portal', {
-      returnUrl: window.location.href,
-    });
-    setBusy(false);
-    const url = res.ok ? res.body?.portalUrl : null;
-    if (url) {
-      window.open(url, '_blank', 'noopener');
-      return;
-    }
-    // No URL back means no portal session was created. Never report one that
-    // was not — this button used to do nothing at all, and silently doing
-    // nothing while looking successful would be the same defect wearing a
-    // handler.
-    fireToast(
-      res.ok
-        ? 'Billing portal did not return a link. Try again shortly.'
-        : apiErrorText(res, 'Could not open the billing portal.'),
-      'error',
-    );
-  };
-
-  const saveAutoReload = async ({ reason }: { reason: string }) => {
-    const edit = reloadEdit;
-    if (!edit) return;
-    setReloadEdit(null);
-    setBusy(true);
-    const res = await apiCall('PUT', '/api/billing/credits/auto-reload', {
-      enabled: edit.enabled,
-      reason,
-    });
-    setBusy(false);
-    if (!res.ok) {
-      // 403 here is the real and common case: the endpoint is admin/owner only.
-      fireToast(apiErrorText(res, 'Auto-reload was not changed.'), 'error');
-      return;
-    }
-    fireToast(edit.enabled ? 'Auto-reload is on.' : 'Auto-reload is off.');
-    // Only the server knows the resulting rule; re-read rather than assume it.
-    refreshCredits();
-  };
-
   const snap = usageState.data;
 
   // Real org tier drives the plan label + the rate-limit table highlight;
@@ -354,9 +268,9 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
 
      `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id.
 
-     Each of the three reads fails independently, and each publishes its own
-     state: a balance or an invoice list invented from a failed read would be a
-     financial claim about the customer's account. */
+     Each read fails independently, and each publishes its own state: an
+     invoice list invented from a failed read would be a financial claim about
+     the customer's account. */
   const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
 
   /* AnA can open any of the three on-screen tabs — the same click a person
@@ -378,7 +292,6 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
 
   const anaContext = useMemo(() => {
     const inv = invoicesState.data;
-    const cr = creditsState.data;
     return {
       summary:
         `Usage and billing, "${tab}" tab. ` +
@@ -389,13 +302,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
             : `Plan "${snap.planLabel}"` +
               (snap.session ? `, session window ${snap.session.pctUsed}% used over ${snap.session.windowHours}h` : '') +
               `, ${(snap.weekly ?? []).length} weekly cap bucket(s).`) +
-        ' ' +
-        (creditsState.loading
-          ? 'Credits are still loading.'
-          : creditsState.error || !cr || cr.balanceCents == null
-            ? 'The credit balance is unavailable.'
-            : `Credit balance ${(cr.balanceCents / 100).toFixed(2)}.`) +
-        ' ' +
+        ' Usage credits are not metered, so no credit balance is shown. ' +
         (invoicesState.loading
           ? 'Invoices are still loading.'
           : invoicesState.error || !inv
@@ -407,10 +314,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         planUnavailable: usageState.error ? 'the usage snapshot read failed' : null,
         sessionWindow: snap?.session ?? null,
         weeklyCaps: snap?.weekly ?? null,
-        credits: cr && cr.balanceCents != null
-          ? { balanceCents: cr.balanceCents, autoReload: cr.autoReload }
-          : null,
-        creditsUnavailable: creditsState.error ? 'the credits read failed' : null,
+        credits: 'not metered — nothing draws down the credit ledger, so no balance is shown',
         invoices: inv
           ? inv.invoices.slice(0, 10).map((iv) => ({
               number: iv.number, date: iv.date, amount: iv.amount,
@@ -422,12 +326,11 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
       availableActions: [
         'Switch between the usage and billing tabs',
         'Read plan usage limits, the session window and the weekly caps',
-        'Read the credit balance and its auto-reload settings',
         'Open an invoice (hosted page or PDF) from the invoice list',
         'View all plans on the licensing surface',
       ],
     };
-  }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data, creditsState.loading, creditsState.error, creditsState.data]);
+  }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data]);
   usePublishSurfaceContext('usage', activeId === 'usage' ? anaContext : null);
   usePublishSurfaceContext('billing', activeId === 'billing' ? anaContext : null);
 
@@ -440,8 +343,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           </div>
           <h1 className="sp-title">Usage &amp; billing</h1>
           <p className="sp-state">
-            Plan usage limits, weekly caps, usage credits, rate limits,
-            balance, auto-reload and invoices — the metering behind your plan.
+            Plan usage limits, weekly caps, rate limits and invoices.
           </p>
         </div>
         <button className="sp-primary" onClick={() => nav('licensing')}>
@@ -554,106 +456,15 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
               </Panel>
             </div>
           </div>
-          {/* Per-category credit pools (used-of-quota) have NO backend concept
-              — the credit ledger is one flat pooled balance (see the Billing
-              tab), never broken out per category (server credit-ledger.ts). An
-              honest empty beats a fabricated used-of-quota panel. */}
-          <div className="pj-card">
-            <div className="pj-card-h">
-              <span className="t">Usage credits</span>
-              <span className="s">per category</span>
-            </div>
-            <div className="pj-card-b">
-              <EmptyState
-                icon={I.info}
-                title="Per-category usage credits aren't available yet"
-                hint="Credits are tracked as one pooled balance (see the Billing tab). The backend does not yet break credits out into per-category pools."
-              />
-            </div>
-          </div>
         </div>
       )}
 
       {tab === 'billing' && (
         <div>
-          <div className="pj-card" style={{ marginBottom: 14 }}>
-            <div className="pj-card-b ub-balance">
-              <Panel
-                state={creditsState}
-                errorTitle="Couldn't load your balance"
-                errorHint="The credit balance didn't respond. Sign in and retry, or check the service is reachable."
-                emptyTitle="No balance yet"
-                // A balance the payload never carried is not a balance of zero.
-                isEmpty={(c) => cents(c.balanceCents) === null}
-              >
-                {(c) => (
-                  <>
-                    <div>
-                      <div className="ub-bal-n">${(cents(c.balanceCents)! / 100).toFixed(2)}</div>
-                      <div className="ub-bal-l">Current balance</div>
-                    </div>
-                    <button className="ub-buy" onClick={buyMore} disabled={busy}>
-                      Buy more{' '}
-                      {/* The discount claim is gone. Nothing in the product
-                          computes or applies it: no volume tier, no coupon, no
-                          promotion code reaches Stripe from here. It was a
-                          number on a button, and a price claim a customer
-                          cannot get is worse than no claim. */}
-                    </button>
-                  </>
-                )}
-              </Panel>
-            </div>
-          </div>
-          <div className="pj-card" style={{ marginBottom: 14 }}>
-            <div className="pj-card-b ub-reload">
-              <Panel
-                state={creditsState}
-                errorTitle="Couldn't load auto-reload"
-                errorHint="The auto-reload settings didn't respond. Sign in and retry, or check the service is reachable."
-                emptyTitle="No auto-reload settings yet"
-                // This is where the surface died: the shape guard above proves
-                // the KEY is there, not that it holds an object — and an org
-                // with no auto-reload row is a real state, not an error. So
-                // the block is checked here, and a missing one shows the
-                // panel's own empty rather than throwing on `.topupCents`.
-                isEmpty={(c) =>
-                  !c.autoReload ||
-                  cents(c.autoReload.topupCents) === null ||
-                  cents(c.autoReload.thresholdCents) === null
-                }
-              >
-                {(c) => {
-                  const reload = c.autoReload!;
-                  const reloadTo = cents(reload.topupCents)! / 100;
-                  const reloadAt = cents(reload.thresholdCents)! / 100;
-                  const reloadOff = !reload.enabled;
-                  return (
-                    <>
-                      <div>
-                        <div className="ub-row-t">Auto-reload</div>
-                        <div className="ub-row-s">
-                          {reloadOff ? 'Off — when enabled, tops off' : 'Top off'} to $
-                          {_usd(reloadTo)} when your balance is ${_usd(reloadAt)}
-                        </div>
-                      </div>
-                      <button
-                        className="sp-ask"
-                        disabled={busy}
-                        onClick={() => setReloadEdit({ enabled: reloadOff })}
-                      >
-                        {reloadOff ? 'Turn on' : 'Turn off'}
-                      </button>
-                    </>
-                  );
-                }}
-              </Panel>
-            </div>
-          </div>
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Invoices</span>
-              <span className="s">Stripe</span>
+              <button className="sp-ask" onClick={() => nav('licensing')}>Manage billing</button>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               <Panel
@@ -793,27 +604,6 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         </div>
       )}
 
-      {reloadEdit && (
-        /* The server requires a reason on this endpoint and writes it verbatim
-           into the audit trail, so the prompt is the contract, not a courtesy.
-           minReason 3 matches the server's floor exactly: stricter would refuse
-           writes the platform allows, looser would produce a round trip that
-           can only fail. */
-        <GovernedConfirmDialog
-          open
-          action={reloadEdit.enabled ? 'Turn auto-reload on' : 'Turn auto-reload off'}
-          target={
-            reloadEdit.enabled
-              ? 'Credit balance will top up automatically at the configured threshold'
-              : 'Credit balance will no longer top up automatically'
-          }
-          resource="credit auto-reload"
-          minReason={3}
-          onCancel={() => setReloadEdit(null)}
-          onConfirm={saveAutoReload}
-        />
-      )}
-      <C2CToast msg={toast} />
     </div>
   );
 }

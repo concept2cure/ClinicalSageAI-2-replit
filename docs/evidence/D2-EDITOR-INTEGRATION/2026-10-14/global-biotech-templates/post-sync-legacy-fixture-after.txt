@@ -1,0 +1,14 @@
+Focused corrected existing DB-store fixture only. No production changes. Strict ESLint: zero errors, zero warnings.
+Full raw log: /workspace/scratch/global-biotech-post-sync-start-from-after.log
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written 87ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content 39ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses an id that resolves nothing in either store — and writes NO document 30ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses a malformed template_id with a clean 400 before any query can throw 29ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > merges global reference templates after the org rows, dropping sectionless globals 70ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > drops sectionless ORG rows too — the picker must not offer what POST /docs refuses 64ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates 80ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true 46ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  21:00:32
+   Duration  9.23s (transform 5.74s, setup 125ms, import 8.24s, tests 450ms, environment 0ms)

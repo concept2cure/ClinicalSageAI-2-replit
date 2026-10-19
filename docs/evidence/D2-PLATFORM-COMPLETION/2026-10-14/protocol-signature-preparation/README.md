@@ -1,0 +1,13 @@
+# Protocol signature preparation — route and neighbour regressions
+
+The protocol finalization route now reserves its authoritative parent on the signing transaction after `BEGIN` and tenant setup, before authorship or separation-of-duties checks. The route fixture explicitly models this lock-only preparation and asserts the same client, organization 2 and document 5. Existing meaning, password/TOTP, signing-authority, historical binding and review-disposition assertions retain their behavior.
+
+Three new route cases cover refusal before signature writes. One begins with an independent signer, then changes the authorship decision while preparation completes: approval returns **403**, rolls back, releases the client and never finalizes or writes a ledger/signature. Moving independence ahead of preparation makes this case fail. The other two target reservation refusals preserve **404 NOT_FOUND** and **409 INVALID_STATE**, aborting before authorship, finalization, ledger or signature work. Review dispositions explicitly retain their existing path without finalization's preparation callback.
+
+The four exact route/PGlite/manifestation/export suites pass **85/85** in **11.28 seconds**, with no skips. The route suite now has 26 cases; the initial old fixture failed 8 of its 23 cases because it did not yet mock the new real parent lock reader. That raw initial run is preserved as fixture integration evidence, not a reproduction of the concurrency defect. Scoped route-fixture ESLint and `git diff --check` pass.
+
+This route test is an ordered mock seam. The existing PGlite signing helpers omit `prepare`, so their passing finalization, digest, historical manifestation and export cases qualify neighbours rather than the new preparation ordering. Independent-connection waits and restricted-runtime concurrency are owned by the separate native workstream. No native pass count, storage/provider performance, scientific validity or regulatory acceptance is claimed here.
+
+Exact source records and normalized/raw log records use explicit path, bytes, algorithm and digest fields in `source-manifest.json`. Raw logs remain unchanged in `/tmp`; only these new published copies normalize trailing whitespace and extra EOF lines. Earlier sealed 166-test server evidence and all older folders are unchanged.
+
+The lead agent reran the same four suites after extracting the final ceremony helper: **85/85**, no skips, **28.62 seconds**. Final ceremony scoped ESLint also passes. Current source pins correspond to that run; `priorVerification` preserves the first 85-test source snapshot and raw log records. Earlier logs remain unchanged.

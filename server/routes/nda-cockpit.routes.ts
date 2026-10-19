@@ -3,9 +3,12 @@
  *
  * GET /api/nda-cockpit/modules → the org's per-module (M1–M5) completeness
  * roll-up, shaped to exactly the keys the v2 NdaCockpit "CTD readiness" panel
- * renders ({ m, label, pct, docs, open, gate }). The panel derives the overall
- * "% ready" from these rows. This read is CONVERGED onto the REAL, org-scoped
- * eCTD submission core (submissions where application_type IN ('nda','bla') +
+ * renders (NdaModuleRow: { m, label, pct, required, complete, open, docs, gate,
+ * basis, notAssessed }). Each module is measured against its sections in the
+ * canonical required-section profile, and the panel's overall is required
+ * sections complete / required sections across the rows (2026-10-15: it was the
+ * mean of percentages over authored sections). This read is CONVERGED onto the
+ * REAL, org-scoped eCTD submission core (submissions where application_type IN ('nda','bla') +
  * ectd_sequences + submission_leaves + coauthor_documents) — the same store the
  * IND checklist converged onto — assembled by nda-modules-view-assembler. There
  * is no seed-only blob and no fallback: an org with no NDA/BLA submission returns

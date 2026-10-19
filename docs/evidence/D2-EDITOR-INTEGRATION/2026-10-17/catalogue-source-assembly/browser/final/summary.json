@@ -1,0 +1,99 @@
+{
+  "testedHead": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+  "completedAt": "2026-10-17T23:58:46.544Z",
+  "productionSourceSha256": {
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "0f74f256e689c2852d3289a0ee8bfbf741877a768a689ce40dff97019e96da3e",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "feb25846b1b6f12944bc0a78c8a86ccf37ec08d937ba39941f14db557e18e922",
+    "client/src/concept2cure/v2/editor/projectSourceCatalog.ts": "d6327d96c7505835687c9e42888c947de6753827c88d7fb6568b89f337d02197",
+    "client/src/concept2cure/v2/editor/SourceCatalogLine.tsx": "b8d7144ae58c071300eb7aa84dc4429087e1b4176f3f966844ede3b2081bd9e0",
+    "shared/data-room-processing-status.ts": "014860adb77c6f342255552e77b0de901045d9d1feaec9ba1fec2f760a21f906",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/v2/editor/assemblySourceSelection.ts": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+    "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "afb63c9217e2837885c7da620385fb341b5f5dd16c21c3b074451a689b5bacba",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "b35611630a95a33621e6a708eea8c200b21f72cbf03822ceb54b26fd40d68590",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "92dec2b97f3b9cc3708b340138dadd9aeab85ef5c338258a563be8e1dd1e1e71",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "c064d37bea5dc2f37bcc95d466b3bc5e39763445c4196782bcb711d9b2375ce4",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/savedTemplateContext.ts": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/lib/queryClient.ts": "6318c21606fa70314ab80680175b1aca7ea978e264dc10a7436b6cc7f069403f",
+    "shared/authoring/assembly.ts": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+    "client/src/concept2cure/v2/styles/app-v2.css": "382da1e5c23e1ba5d5439fc6a019a1749a2bde766e57c806a8803c8c1a0f733b",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78"
+  },
+  "fixtureSourceSha256": {
+    "probe.tsx": "c18ab63dd8f9125ca67a37c74a30ad4f424be3ed91e20016bda0e14a4d1f0970",
+    "server.mjs": "decb3de9b08c70d3e4ebee711c2c6b31f025ba56fc07a51329b4cdbb23ec2c66",
+    "browser.mjs": "f263a4bee39ee3241514a3e6c7bfaef27fb72846d6f61243220225388d07e195",
+    "mock-api.mjs": "192fe8edf471279716ce955cfa006d2034e6826cd6f4ca7bf27c02d4bd24f0de",
+    "height-probe.mjs": "b34d998e16e770ff6bba6cefbd716582a9a73c5584c8c50e707ce629adfbf53b",
+    "baseline-entry.mjs": "62c6cd253e9b69af7e634aa5c007abf9c56c86f24dafc7255da4e409d41f83d3",
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+  },
+  "productionFrozenDuringCapture": true,
+  "browserVersion": "154.0.8037.57",
+  "caseCount": 10,
+  "passed": 10,
+  "stages": 34,
+  "status": "pass",
+  "cases": [
+    {
+      "key": "desktop-light-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-light-ana",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-dark-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-dark-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-read-only",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-pending-context",
+      "status": "pass"
+    }
+  ],
+  "qualification": "Actual ProjectHome/Data Room, shared source target dialog, canonical editorTarget channel, DocumentWorkbench/build controller/AI review and product styles; synthetic HTTP/auth only. Fixture host switches to the actual editor at the onNav boundary, without mounting the full shell or conversation thread. Exact source request receipts do not prove backend admission, source-window verification, provider consumption or lineage. No deployment, human-review or accessibility-compliance claim."
+}

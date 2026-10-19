@@ -55,7 +55,12 @@ import { precedentEngine } from '../precedent-engine.js';
 import { submissionTwinService } from '../submission-twin-service.js';
 import { contradictionEngineService } from '../contradiction-engine-service.js';
 import { crossJurisdictionalEngine } from '../cross-jurisdictional-intelligence.js';
-import { getEndpointRecommenderService } from '../endpoint-recommender-service.js';
+import {
+  EndpointCorpusUnavailableError,
+  describeEndpointEvaluation,
+  getEndpointRecommenderService,
+  summarizeEndpointRecommendations,
+} from '../endpoint-recommender-service.js';
 import { runRIMAssessment, type RIMContext } from '../intelligence/rim.js';
 import // buildEvidenceChain, computeConfidence, EvidenceSource — reserved for evidence chain wiring
 '../intelligence/evidence-confidence-model.js';
@@ -3785,23 +3790,46 @@ export async function searchPrecedents(
   }
 }
 
-/** Analyze CRL (Complete Response Letter) trigger risks */
+/**
+ * The submission type a precedent checklist is for. Both commands defaulted
+ * it to 'NDA', so a question about a 510(k) was answered with the NDA list.
+ */
+function checklistSubmissionType(action: string, params: Record<string, unknown>): string | CommandResult {
+  const type = typeof params.submissionType === 'string' ? params.submissionType.trim() : '';
+  if (type) return type;
+  return {
+    success: false,
+    action,
+    message: 'Which submission type? The trigger categories differ by application type (NDA, BLA, ANDA, 505(b)(2), 510(k), PMA, De Novo).',
+    error: 'submissionType is required',
+  };
+}
+
+/** The curated CRL (Complete Response Letter) trigger checklist for a submission type */
 export async function analyzeCRLTriggers(
   ctx: CommandContext,
   params: Record<string, unknown>
 ): Promise<CommandResult> {
+  const submissionType = checklistSubmissionType('analyze_crl_triggers', params);
+  if (typeof submissionType !== 'string') return submissionType;
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
-      submissionType: String(params.submissionType || 'NDA'),
+      submissionType,
       indication: params.indication as string | undefined,
       therapeuticArea: params.therapeuticArea as string | undefined,
       query: params.query as string | undefined,
     });
+    /* It said "Identified risk factors based on regulatory precedents" over
+       uncited rates and an overall risk set by the submission type alone
+       (precedent-engine.ts, 2026-10-15). */
     return {
       success: true,
       action: 'analyze_crl_triggers',
       data: { analysis: result },
-      message: `CRL trigger analysis complete. Identified risk factors based on regulatory precedents.`,
+      message:
+        `Curated CRL trigger checklist for ${result.submissionType}: ${result.totalPatterns} categories, ` +
+        `${result.criticalCount} curated as critical. This is a checklist, not an assessment of this ` +
+        `submission: no historical rate or overall CRL risk is given, because none has a cited source.`,
     };
   } catch (err: unknown) {
     return {
@@ -3813,14 +3841,16 @@ export async function analyzeCRLTriggers(
   }
 }
 
-/** Analyze RTF (Refuse to File) trigger risks */
+/** The curated RTF (Refuse to File) checklist and trigger categories for a submission type */
 export async function analyzeRTFTriggers(
   ctx: CommandContext,
   params: Record<string, unknown>
 ): Promise<CommandResult> {
+  const submissionType = checklistSubmissionType('analyze_rtf_triggers', params);
+  if (typeof submissionType !== 'string') return submissionType;
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
-      submissionType: String(params.submissionType || 'NDA'),
+      submissionType,
       indication: params.indication as string | undefined,
       therapeuticArea: params.therapeuticArea as string | undefined,
       query: params.query as string | undefined,
@@ -3829,7 +3859,10 @@ export async function analyzeRTFTriggers(
       success: true,
       action: 'analyze_rtf_triggers',
       data: { analysis: result },
-      message: `RTF trigger analysis complete. Identified filing risk factors.`,
+      message:
+        `Curated RTF checklist for ${result.submissionType}: ${result.totalChecklistItems} items ` +
+        `(${result.requiredItems} required) and ${result.triggers.length} trigger categories. ` +
+        `This is a checklist, not an assessment of this dossier: no frequency is given, because none has a cited source.`,
     };
   } catch (err: unknown) {
     return {
@@ -3857,7 +3890,10 @@ export async function recommendStrategy(
       success: true,
       action: 'recommend_strategy',
       data: { strategy: result },
-      message: `Strategy recommendation generated based on regulatory precedent analysis.`,
+      message:
+        result.basis === 'no-precedents'
+          ? 'No approved precedent that records a strategy matched, so no strategy is recommended.'
+          : `Recommended "${result.recommendedStrategy}", the strategy most used by the ${result.supportingPrecedents.length} approved precedent(s) matched.`,
     };
   } catch (err: unknown) {
     return {
@@ -4200,25 +4236,36 @@ export async function recommendEndpoints(
     if (!params.indication)
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
-    const recommendations = await service.getComprehensiveEndpointRecommendations(
+    const result = await service.getComprehensiveEndpointRecommendations(
       String(params.indication),
       params.phase as string | undefined,
       (params.count as number) || 10,
       params.therapeuticArea as string | undefined
     );
+    // 2026-10-15: said "Generated N endpoint recommendation(s)" whatever was read, so a
+    // corpus outage read as N model endpoints. It now says each one's basis and source.
     return {
       success: true,
       action: 'recommend_endpoints',
-      data: { recommendations, count: recommendations.length },
-      message: `Generated ${recommendations.length} endpoint recommendation(s) for ${
-        params.indication
-      }${params.phase ? ` (Phase ${params.phase})` : ''}.`,
+      data: {
+        recommendations: result.recommendations,
+        count: result.recommendations.length,
+        sources: result.sources,
+      },
+      message: summarizeEndpointRecommendations(
+        result,
+        `${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}`
+      ),
     };
   } catch (err: unknown) {
     return {
       success: false,
       action: 'recommend_endpoints',
-      message: 'Endpoint recommendation failed.',
+      message:
+        err instanceof EndpointCorpusUnavailableError
+          ? `Could not read the CSR endpoint corpus for ${params.indication}; ` +
+            'no endpoint recommendations were produced.'
+          : 'Endpoint recommendation failed.',
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -4243,14 +4290,15 @@ export async function evaluateEndpoint(
       String(params.indication),
       params.phase as string | undefined
     );
+    // 2026-10-15: reported the model's own 0-100 number as "scored N/100"; see evaluateEndpoint.
     return {
       success: true,
       action: 'evaluate_endpoint',
       data: { evaluation },
-      message:
-        evaluation.score != null
-          ? `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`
-          : `Endpoint "${params.endpoint}" could not be scored automatically for ${params.indication}. ${evaluation.feedback}`,
+      message: `Endpoint "${params.endpoint}" for ${params.indication}. ${describeEndpointEvaluation(
+        evaluation,
+        String(params.indication)
+      )}`,
     };
   } catch (err: unknown) {
     return {
@@ -4299,9 +4347,11 @@ export async function runRIMScan(
         runStatus: assessment.run.status,
         verdict: assessment.rimVerdict,
       },
-      message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${
-        assessment.rimVerdict
-      }. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${
+      // 2026-10-15: a null score printed "Score: N/A/100"; the verdict names
+      // what was not assessed.
+      message: `RIM assessment complete. ${
+        assessment.rimScore === null ? 'No RIM score' : `Score: ${assessment.rimScore}/100`
+      } — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${
         assessment.topActions?.length || 0
       } recommended action(s).`,
     };
@@ -4319,7 +4369,7 @@ export async function runRIMScan(
 // 25. INTELLIGENT REPORT ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Generate a regulatory report (sealed, audited, 21 CFR Part 11 compliant) */
+/** Generate a regulatory report as a draft. Sealing is a separate step after review. */
 export async function generateReport(
   ctx: CommandContext,
   params: Record<string, unknown>
@@ -4350,7 +4400,9 @@ export async function generateReport(
         verificationCode: report?.verificationCode,
         title: params.title,
       },
-      message: `Report "${params.title}" generated (domain: ${params.domain}). Cryptographically sealed with verification code.`,
+      // Generated as a draft: sealing is a separate, later step. This said
+      // "Cryptographically sealed" (2026-10-15).
+      message: `Report "${params.title}" generated as a draft (domain: ${params.domain}). It is not sealed.`,
     };
   } catch (err: unknown) {
     return {
@@ -5002,14 +5054,14 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   {
     name: 'analyze_crl_triggers',
     description:
-      'Analyze Complete Response Letter (CRL) trigger risks based on regulatory precedents',
-    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+      'The curated checklist of Complete Response Letter (CRL) trigger categories for a submission type, with objections the precedent search found. Not an assessment of the submission: no rate or overall risk.',
+    parameters: 'submissionType, indication?, therapeuticArea?, query?',
     example: '"What CRL risks does our NDA face?"',
   },
   {
     name: 'analyze_rtf_triggers',
-    description: 'Analyze Refuse to File (RTF) trigger risks',
-    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+    description: 'The curated Refuse to File (RTF) checklist and trigger categories for a submission type. Not an assessment of the dossier: no frequency.',
+    parameters: 'submissionType, indication?, therapeuticArea?, query?',
     example: '"Check RTF risks for our submission"',
   },
   {
@@ -5115,18 +5167,21 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
 
   // ── Endpoint Recommender ──────────────────────────────────────────────────
+  // 2026-10-15: these promised "regulatory guidance" (no guidance source is loaded) and
+  // "regulatory defensibility" (no score or verdict is given; see evaluateEndpoint).
   {
     name: 'recommend_endpoints',
     description:
-      'Recommend clinical trial endpoints for a given indication with evidence and regulatory guidance',
+      'Recommend clinical trial endpoints for an indication from the CSR corpus, literature and language-model suggestions, each labelled with its basis, saying which sources were read',
     parameters: 'indication, phase?, therapeuticArea?, count?',
     example: '"What endpoints should we use for a Phase 3 NSCLC trial?"',
   },
   {
     name: 'evaluate_endpoint',
-    description: 'Evaluate a specific endpoint for regulatory defensibility and precedent support',
+    description:
+      'Comment on a specific endpoint (language-model commentary, no score) and list similar primary endpoints recorded in CSRs',
     parameters: 'endpoint, indication, phase?',
-    example: '"How defensible is PFS as our primary endpoint for breast cancer?"',
+    example: '"What do our CSRs record that is similar to PFS as a primary endpoint for breast cancer?"',
   },
 
   // ── RIM Intelligence ──────────────────────────────────────────────────────
@@ -5142,7 +5197,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   {
     name: 'generate_report',
     description:
-      'Generate a sealed regulatory report (21 CFR Part 11 compliant, cryptographically sealed). Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics',
+      'Generate a draft regulatory report, hashed at generation and sealed separately after review. Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics',
     parameters: 'domain, title, projectId?, targetRegulatory?, parameters?',
     example: '"Generate a clinical study report for our Phase 2 trial"',
   },

@@ -309,4 +309,3 @@ stderr | server/routes/__tests__/vault-tree-bounded.test.ts > Vault coverage and
       Tests  31 passed (31)
    Start at  21:07:39
    Duration  2.41s (transform 1.60s, setup 252ms, import 3.80s, tests 398ms, environment 0ms)
-

@@ -26,7 +26,8 @@ describe('chembl-client', () => {
       expect(maxPhaseLabel(4)).toMatch(/Approved/);
       expect(maxPhaseLabel(1)).toBe('Phase 1');
       expect(maxPhaseLabel(0)).toMatch(/Preclinical/);
-      expect(maxPhaseLabel(null)).toMatch(/Preclinical/);
+      // 2026-10-15: an absent phase is not recorded, not "preclinical".
+      expect(maxPhaseLabel(null)).toMatch(/not recorded/);
     });
   });
 
@@ -88,7 +89,7 @@ describe('chembl-client', () => {
       const m = normalizeMolecule({ molecule_chembl_id: 'CHEMBL999' });
       expect(m.smiles).toBeNull();
       expect(m.properties.molecularWeight).toBeNull();
-      expect(m.maxPhaseLabel).toMatch(/Preclinical/);
+      expect(m.maxPhaseLabel).toMatch(/not recorded/);
     });
   });
 

@@ -165,14 +165,14 @@ describe('fillEstarSubmission', () => {
 
   it('fails closed when the field map is not populated/verified', async () => {
     const templateBytes = await makeSyntheticEstar();
-    // Every marketing descriptor now carries a verified map; the PreSTAR2
-    // descriptors are the ones that legitimately have none.
+    // An explicitly unavailable map must still fail closed even though the
+    // registered descriptor now supports a bounded administrative prefill.
     const r = await fillEstarSubmission({
       type: 'q_sub',
       variant: 'prestar',
       data: { deviceName: 'Acme Assay' },
       templateBytes,
-      // no injected fieldMap → falls back to the (empty) registered map
+      fieldMap: {},
     });
     expect(r.templateAvailable).toBe(true);
     expect(r.fieldMapPopulated).toBe(false);
@@ -206,7 +206,7 @@ describe('fillEstarSubmission', () => {
 const NIVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eSTAR-510k-non-ivd.pdf');
 
 describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
-  'fillEstarSubmission against the official nIVD eSTAR v7.0',
+  'fillEstarSubmission against the official nIVD eSTAR v7.1',
   () => {
     useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
 
@@ -252,10 +252,12 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       }
     });
 
-    it('fails closed for a descriptor with no verified field map', async () => {
+    it('PreSTAR produces only the verified shared administrative prefill', async () => {
       const r = await fillEstarSubmission({ type: 'q_sub', variant: 'prestar', data: DATA });
-      expect(r.filled).toBe(false);
-      expect(r.blockers.join(' ')).toMatch(/field map for "q_sub-prestar" is not populated/);
+      expect(r.filled).toBe(true);
+      expect(r.fieldMapCapability).toMatchObject({ scope: 'administrative-prefill', requestSpecificAutomation: 'not-qualified', applicantCompletionRequired: true });
+      expect(r.warnings.join(' ')).toMatch(/complete its questions and declarations/);
+      expect(r.filledFields).not.toContain('productCodes');
     });
 
     it('De Novo and PMA are ready on this template: vendored AND mapped (the readiness route\'s gate)', async () => {
@@ -378,7 +380,7 @@ describe('De Novo / PMA field maps are the pathway-neutral subset (no template n
 });
 
 describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
-  'De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k))',
+  'De Novo and PMA on the official nIVD eSTAR v7.1 (same vendored file as 510(k))',
   () => {
     useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
 
@@ -421,7 +423,7 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
 );
 
 describe.skipIf(!fsSync.existsSync(IVD_TEMPLATE))(
-  'De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k))',
+  'De Novo and PMA on the official IVD eSTAR v7.1 (same vendored file as 510(k))',
   () => {
     useVendoredTemplateDir(path.dirname(IVD_TEMPLATE));
 
@@ -552,7 +554,7 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
 // REFUSES to hand back.
 
 describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
-  'fillEstarSubmission with attachments — the official nIVD eSTAR v7.0',
+  'fillEstarSubmission with attachments — the official nIVD eSTAR v7.1',
   () => {
     useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
 
@@ -784,7 +786,7 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       });
 
       expect(already.filled).toBe(false);
-      expect(already.blockers.join(' ')).toMatch(/not the "\*\*\*Start\*\*\*"/);
+      expect(already.blockers.join(' ')).toMatch(/not a pristine seed/);
       expect(already.attachmentReport).toEqual({
         requested: 1,
         attached: [],

@@ -1,0 +1,42 @@
+{
+  "automated": true,
+  "scope": "stored evidence copies only; runtime, source and test outcomes unchanged; operation receipts retain their original captured-log hashes",
+  "files": [
+    {
+      "path": "install-fresh.txt",
+      "onlyChange": "removed extra final LF bytes so the stored copy ends with exactly one LF",
+      "beforeBytes": 8119,
+      "afterBytes": 8118,
+      "removedFinalLfBytes": 1,
+      "originalCapturedLogSha256": "abc9a7d0d3f8794ae59949fb7eb616e3f4cb8c67d5123cf6bed96c09d99eaa7a",
+      "normalizedStoredCopySha256": "78bba4e6ed6aaf44584566c01055c3a1752813cebd72294c4e0f7d112724d73f",
+      "operationReceiptPath": null
+    },
+    {
+      "path": "final-node22/install-fresh.txt",
+      "onlyChange": "removed extra final LF bytes so the stored copy ends with exactly one LF",
+      "beforeBytes": 8104,
+      "afterBytes": 8103,
+      "removedFinalLfBytes": 1,
+      "originalCapturedLogSha256": "af1b81b2ce57dbb3ba037b2fc209b99eee5f2d79ff1e0c18c0ace2a805f5e8d4",
+      "normalizedStoredCopySha256": "fd05ca4cbf5bcc09e21f7def13af32abdd1289cafc5c5b0730f8124e32507bcb",
+      "operationReceiptPath": "final-node22/summary.json",
+      "originalOperationReceiptLogSha256": "af1b81b2ce57dbb3ba037b2fc209b99eee5f2d79ff1e0c18c0ace2a805f5e8d4",
+      "originalReceiptMatchedBeforeNormalization": true,
+      "operationReceiptLeftUnchanged": true
+    },
+    {
+      "path": "post-sync-node22/install-fresh.txt",
+      "onlyChange": "removed extra final LF bytes so the stored copy ends with exactly one LF",
+      "beforeBytes": 8106,
+      "afterBytes": 8105,
+      "removedFinalLfBytes": 1,
+      "originalCapturedLogSha256": "ed896fa3fecab1687f634e26fbdc864462ee75ca3a720e078510d39cad264c7c",
+      "normalizedStoredCopySha256": "866923002ab04faa702e591979a95e96d465d40a883812590a9445d039d67eeb",
+      "operationReceiptPath": "post-sync-node22/summary.json",
+      "originalOperationReceiptLogSha256": "ed896fa3fecab1687f634e26fbdc864462ee75ca3a720e078510d39cad264c7c",
+      "originalReceiptMatchedBeforeNormalization": true,
+      "operationReceiptLeftUnchanged": true
+    }
+  ]
+}

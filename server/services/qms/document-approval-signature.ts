@@ -72,6 +72,11 @@ import {
   type SignatureDbClient,
 } from '../part11/signature-persistence';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
+import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
+import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
+import { filingAgreesWithEditing } from '../c2c/filing-section-target';
+import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
+import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 
 /**
  * The §11.50(a)(3) meaning an approval carries. Taken from the platform's
@@ -159,7 +164,7 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
   return computeQmsDocumentContentDigest({ ...row, metadata });
 }
 
-export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL';
+export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {
@@ -167,6 +172,44 @@ export class QmsApprovalRefusedError extends Error {
     super(message);
     this.name = 'QmsApprovalRefusedError';
   }
+}
+
+/**
+ * P-29.2: a seal may not be applied over a filing that no longer holds this
+ * document's text.
+ *
+ * The approval below stamps `authoring_documents.status = 'APPROVED'`, a
+ * sealing status, and binds a §11.50 signature to the content. So the filed
+ * copy must have been proven equal FIRST — this is the fourth seal, found by
+ * `ci:filing-exit-agreement` on its own first run rather than by any list.
+ *
+ * Only the `different` subset refuses, exactly as `filingBlocksSeal` in
+ * authoring.router.ts decides it: `empty` is a section the filing has no row
+ * for, which the authoring seal reports and seals anyway. Two answers to one
+ * question is the divergence the D2 consolidation removed.
+ *
+ * Called before any write, so nothing has been signed or stamped when it
+ * throws — the contract QmsApprovalRefusedError already states.
+ */
+async function refuseIfFilingDiverged(
+  client: SignatureDbClient, authoringDocId: string, orgId: number,
+): Promise<void> {
+  const agreement = await filingAgreesWithEditing(client, { authoringDocId, tenantId: orgId });
+  const rewritten = agreement.diverged.filter((d) => d.filed === 'different');
+  if (rewritten.length === 0) return;
+  /* Name what the approver can OPEN, not only the filing node: for an
+     assembled node the key is `2.5` and no authoring section carries that
+     code, so a refusal naming only the key sends them looking for a section
+     that does not exist. Same rule, same reason, as the authoring refusal. */
+  const named = rewritten.map((d) => (d.section.code === d.key ? d.key : `${d.section.code} (filed at ${d.key})`));
+  const one = named.length === 1;
+  throw new QmsApprovalRefusedError(
+    'FILING_DIVERGED',
+    `Not approved — the filed copy of ${one ? 'section' : 'sections'} ${named.join(', ')} ${one ? 'is' : 'are'} `
+    + 'not the text this document holds. Approving seals the text for filing, so the signature would attest to '
+    + `text the submission does not contain. Re-file it from the editor: open ${one ? 'that section' : 'those sections'}, `
+    + 'make any edit and save, which rewrites the filed copy. Then approve again. Nothing was signed.',
+  );
 }
 
 export interface ApproveQmsDocumentSignedParams {
@@ -243,11 +286,15 @@ async function lockApprovableDocument(
         : `Document is ${row.status}; only a document under review can be approved. Nothing was signed.`,
     );
   }
-  // §11.10(d) two-person rule, the same rule the RBM approvals in this family
-  // and the governed sign action apply: the author may not approve their own
-  // controlled document. A row with no recorded author cannot be checked, and
-  // the signed record says so (twoPersonRule) rather than staying silent.
-  if (row.author_id != null && row.author_id === userId) {
+  // The original creator and every recorded controlled-text contributor remain
+  // authors; changing the procedure never lets its writer sign their own work.
+  let contributors: number[];
+  try { contributors = qmsControlledTextAuthorIds(row.metadata); }
+  catch (error) {
+    if (error instanceof QmsControlledTextAuthorshipInvalid) throw new QmsApprovalRefusedError('INVALID_AUTHORSHIP', error.message);
+    throw error;
+  }
+  if (row.author_id === userId || contributors.includes(userId)) {
     throw new QmsApprovalRefusedError(
       'SELF_APPROVAL',
       'You authored this document, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 §11.10(d)).',
@@ -260,17 +307,16 @@ async function lockApprovableDocument(
 async function applyApproval(
   client: SignatureDbClient,
   params: ApproveQmsDocumentSignedParams,
-  contentDigest: string,
-  occurredAt: Date,
-  twoPersonRule: string,
+  signedContent: { contentDigest: string; occurredAt: Date; twoPersonRule: string; authoredContent: QmsAuthoringSnapshot | null },
 ): Promise<QmsDocumentRow> {
+  const { contentDigest, occurredAt, twoPersonRule, authoredContent } = signedContent;
   const updated = await client.query(
     `UPDATE qms_documents
         SET status = 'effective',
             approver_id = $3,
             approved_at = $6::timestamptz,
             effective_date = COALESCE($4::date, effective_date, $6::date),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+            metadata = COALESCE(metadata, '{}'::jsonb) || CASE WHEN $11::jsonb IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('authoringContent', $11::jsonb) END || jsonb_build_object(
               'approval',
               jsonb_build_object(
                 'reason', $5::text,
@@ -298,6 +344,7 @@ async function applyApproval(
       contentDigest,
       QMS_DOCUMENT_BINDING_BASIS,
       twoPersonRule,
+      authoredContent ? JSON.stringify(authoredContent) : null,
     ],
   );
   const document = updated.rows[0] as QmsDocumentRow | undefined;
@@ -318,13 +365,21 @@ export async function approveQmsDocumentSigned(
   params: ApproveQmsDocumentSignedParams,
 ): Promise<ApproveQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
-  const row = await lockApprovableDocument(client, orgId, userId, documentId);
-  const twoPersonRule = row.author_id != null ? 'enforced' : 'not_applicable_no_author_recorded';
+  const current = await lockApprovableDocument(client, orgId, userId, documentId);
+  await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
+  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current) : null;
+  if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
+    throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
+  if (authoredContent) await authorizeQmsAuthoredSignature(client, orgId, userId, authoredContent);
+  if (authoredContent) await refuseIfFilingDiverged(client, authoredContent.documentId, orgId);
+  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
+  const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
+  const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
   const contentDigest = computeQmsDocumentContentDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
 
-  const document = await applyApproval(client, params, contentDigest, occurredAt, twoPersonRule);
+  const document = await applyApproval(client, params, { contentDigest, occurredAt, twoPersonRule, authoredContent });
 
   // §11.10(e): the chained ledger pair, same transaction.
   const gov = await recordGovernedAction(client, {
@@ -341,6 +396,8 @@ export async function approveQmsDocumentSigned(
       version: row.version,
       fromStatus: row.status,
       toStatus: 'effective',
+      originalAuthorId: row.author_id,
+      controlledTextAuthorUserIds,
     },
     domain: 'qms',
     surface: 'api',
@@ -368,10 +425,16 @@ export async function approveQmsDocumentSigned(
       note:
         'sha256 over the canonical qms_documents version content (id, organization, doc number, version, title, type, category, artifact pointer, next review date, metadata minus metadata.approval) read under FOR UPDATE at approval time — the same digest stored on metadata.approval.contentDigest.',
     },
-    extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule },
+    extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds },
     complianceStatement:
       'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
+
+  if (authoredContent) {
+    await persistQmsSignedVersion(client, document, authoredContent, contentDigest, signed.id);
+    await client.query(`UPDATE authoring_documents SET status = 'APPROVED', approved_at = NOW(), updated_at = NOW()
+      WHERE id = $1 AND tenant_id = $2`, [authoredContent.documentId, orgId]);
+  }
 
   return {
     document,
@@ -481,6 +544,8 @@ export async function retireQmsDocumentSigned(
 ): Promise<RetireQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
   const row = await lockRetirableDocument(client, orgId, documentId);
+  if (row.authoring_document_id) await authorizeQmsAuthoredSignature(client,orgId,userId,await captureQmsAuthoringContent(client,row,false));
+  await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
   const contentDigest = computeQmsDocumentRetirementDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();

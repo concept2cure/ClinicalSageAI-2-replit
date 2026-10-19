@@ -277,12 +277,6 @@ export interface LifecycleStage {
   laterDevice?: string;
 }
 
-export interface StageTool {
-  id: string;
-  label: string;
-  desc: string;
-  icon: string;
-}
 
 /* ── PROJH ── */
 
@@ -313,17 +307,16 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
-    later: 'Question-by-question tracking of agency letters, agency meetings and precedent responses.',
+    // Question-by-question tracking left this list on 2026-10-18: each inbox
+    // letter now holds its questions and a signed response to each
+    // (AgencyResponses.tsx).
+    later: 'Agency meetings and precedent responses.',
   },
 ];
 
-/* A tool a stage offers is a door that opens. Tools outside this release are
-   not listed here as cards; they are named on the stage's coming-later line. */
-export const PJ_STAGE_TOOLS: Record<string, StageTool[]> = {
-  respond: [
-    { id: 'document-authoring', label: 'Response authoring', desc: 'Draft governed responses with AnA', icon: 'penLine' },
-  ],
-};
+/* PJ_STAGE_TOOLS (each stage's tool cards) was deleted 2026-10-15: its one
+   entry, Respond's "Response authoring", opened the editor with no letter, and
+   ProjectRespond.tsx (FILING_SPINE F15) replaces it. */
 
 /* ── Portfolio ── */
 

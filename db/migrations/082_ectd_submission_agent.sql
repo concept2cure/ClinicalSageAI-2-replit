@@ -6,6 +6,15 @@
 -- IDEMPOTENT: Safe to run multiple times
 -- Reference: ICH M8 v4.0, FDA ESG Technical Conformance Guide
 -- ============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented facts): the agency seed carried
+-- gateway URLs ('https://esg.fda.gov/as2', '.../gateway', '.../ectd') that cite
+-- no source; nothing transmits to them, and the rows are read only as the
+-- agency FK of ectd_submissions. The seed records no URL, and a conditional
+-- UPDATE after it withdraws the URLs it wrote on earlier deploys where they are
+-- still the seeded text (this file is in the deploy set and re-runs; a replay
+-- matches nothing). gateway_protocol and auth_type are left as seeded: they are
+-- NOT NULL here, and nulling them is a schema decision of its own.
+-- ============================================================================
 
 BEGIN;
 
@@ -18,7 +27,7 @@ CREATE TABLE IF NOT EXISTS ectd_agency_configs (
     id                      SERIAL PRIMARY KEY,
     agency_code             TEXT NOT NULL UNIQUE,           -- 'FDA', 'EMA', 'PMDA', 'HC'
     agency_name             TEXT NOT NULL,                  -- 'U.S. Food and Drug Administration'
-    gateway_url             TEXT,                           -- e.g. 'https://esg.fda.gov/as2'
+    gateway_url             TEXT,                           -- from a verified source; NULL = not recorded
     gateway_protocol        TEXT NOT NULL DEFAULT 'AS2',    -- 'AS2', 'HTTP', 'SFTP', 'MANUAL'
     auth_type               TEXT NOT NULL DEFAULT 'certificate', -- 'certificate', 'oauth2', 'api_key', 'manual'
     regional_xml_template   TEXT,                           -- XML template for regional backbone
@@ -38,18 +47,30 @@ CREATE TABLE IF NOT EXISTS ectd_agency_configs (
 COMMENT ON TABLE ectd_agency_configs IS
   'Gateway configuration for each regulatory agency that accepts eCTD submissions';
 
--- Seed agency configurations
-INSERT INTO ectd_agency_configs (agency_code, agency_name, gateway_url, gateway_protocol, auth_type, regional_xml_root, module1_specifics)
+-- Seed agency configurations (no gateway_url: see the 2026-10-15 note above)
+INSERT INTO ectd_agency_configs (agency_code, agency_name, gateway_protocol, auth_type, regional_xml_root, module1_specifics)
 VALUES
-  ('FDA', 'U.S. Food and Drug Administration', 'https://esg.fda.gov/as2', 'AS2', 'certificate',
+  ('FDA', 'U.S. Food and Drug Administration', 'AS2', 'certificate',
    'us-regional', '{"forms": ["356h", "1571", "1572"], "centers": ["CDER", "CBER"], "cover_letter_required": true}'::jsonb),
-  ('EMA', 'European Medicines Agency', 'https://esubmission.ema.europa.eu/gateway', 'HTTP', 'oauth2',
+  ('EMA', 'European Medicines Agency', 'HTTP', 'oauth2',
    'eu-regional', '{"smpc_template": true, "eu_module1_sections": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9"], "rapporteur_required": true}'::jsonb),
-  ('PMDA', 'Pharmaceuticals and Medical Devices Agency', 'https://gateway.pmda.go.jp/ectd', 'SFTP', 'certificate',
+  ('PMDA', 'Pharmaceuticals and Medical Devices Agency', 'SFTP', 'certificate',
    'jp-regional', '{"jp_module1_required": true, "ctd_q_specifics": true, "language": "ja"}'::jsonb),
-  ('HC', 'Health Canada', 'https://cesg.hc-sc.gc.ca/gateway', 'HTTP', 'api_key',
+  ('HC', 'Health Canada', 'HTTP', 'api_key',
    'ca-regional', '{"din_required": true, "bilingual": true, "languages": ["en", "fr"]}'::jsonb)
 ON CONFLICT (agency_code) DO NOTHING;
+
+-- The URLs the seed wrote before 2026-10-15, where they are still the seeded text.
+UPDATE ectd_agency_configs c
+   SET gateway_url = NULL, updated_at = NOW()
+  FROM (VALUES
+    ('FDA', 'https://esg.fda.gov/as2'),
+    ('EMA', 'https://esubmission.ema.europa.eu/gateway'),
+    ('PMDA', 'https://gateway.pmda.go.jp/ectd'),
+    ('HC', 'https://cesg.hc-sc.gc.ca/gateway')
+  ) AS s(agency_code, seeded_url)
+ WHERE c.agency_code = s.agency_code
+   AND c.gateway_url = s.seeded_url;
 
 
 -- =============================================================================

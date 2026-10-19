@@ -1,0 +1,444 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an unentitled org but stamps the warning header
+{
+  "timestamp": "2026-10-14T06:36:09.525Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "tier": "free",
+    "reason": null
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an UNKNOWN tier (org not found) with the warning header
+{
+  "timestamp": "2026-10-14T06:36:09.530Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "tier": null,
+    "reason": "organization not found"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows a missing org context with the warning header (auth owns that failure)
+{
+  "timestamp": "2026-10-14T06:36:09.534Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": null,
+    "tier": null,
+    "reason": "organization context missing"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks an UNKNOWN tier with the reason (fail closed, never a fabricated tier)
+{
+  "timestamp": "2026-10-14T06:36:09.558Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "unrecognized tier \"platinum\""
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks when the tier lookup itself fails — the body carries NO driver text
+{
+  "timestamp": "2026-10-14T06:36:09.561Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "tier lookup failed: relation \"organizations\" does not exist"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > forwards only the evaluator's fixed sentences (org not found) into the 403 message
+{
+  "timestamp": "2026-10-14T06:36:09.565Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "reason": "organization not found"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks a missing org context (cannot verify an entitlement for nobody)
+{
+  "timestamp": "2026-10-14T06:36:09.567Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": null,
+    "reason": "organization context missing"
+  }
+}
+
+stderr | server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > a key outside the matrix is unverifiable — blocked, never guessed
+{
+  "timestamp": "2026-10-14T06:36:09.575Z",
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'not_a_real_feature' could not be verified; refused (mode=on).",
+  "context": {
+    "feature": "not_a_real_feature",
+    "requiredTier": null,
+    "organizationId": 7,
+    "reason": "unknown capability key 'not_a_real_feature'"
+  }
+}
+
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > resolveEntitlementsEnforceMode > defaults to 'off' — enforcement is an explicit operator decision 2ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > resolveEntitlementsEnforceMode > accepts the three modes, trimmed and case-insensitive 1ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > off mode (today's default) > allows without touching the database 27ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an unentitled org but stamps the warning header 6ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows an UNKNOWN tier (org not found) with the warning header 4ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > allows a missing org context with the warning header (auth owns that failure) 4ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > warn mode > entitled org passes with NO warning header 4ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > 403s an unentitled org with the exact NOT_ENTITLED shape 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > allows at the minimum tier and every tier above it 12ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks an UNKNOWN tier with the reason (fail closed, never a fabricated tier) 4ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks when the tier lookup itself fails — the body carries NO driver text 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > forwards only the evaluator's fixed sentences (org not found) into the 403 message 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > blocks a missing org context (cannot verify an entitlement for nobody) 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > honors a feature_toggles pilot grant below tier (resolver source=toggle) 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > does not let an unrelated toggle open the gate 2ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > on mode > a key outside the matrix is unverifiable — blocked, never guessed 3ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > lookupOrgTier > returns the real tier when recognized 1ms
+ ✓ server/services/entitlements/__tests__/require-entitlement.test.ts > lookupOrgTier > never invents a tier: missing row / bad value / query failure → null + reason 0ms
+stdout | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T06:36:11.267Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:36:11.269Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T06:36:11.269Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/usage-alignment.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T06:36:11.457Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.508Z",
+  "level": "error",
+  "message": "[entitlements-resolver] tier lookup failed; defaulting to standard",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.508Z",
+  "level": "error",
+  "message": "[entitlements-resolver] feature_toggles lookup failed; continuing without flags",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.509Z",
+  "level": "error",
+  "message": "[entitlements-resolver] module_subscriptions lookup failed; continuing without modules",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.510Z",
+  "level": "error",
+  "message": "[entitlements-resolver] tier lookup failed; defaulting to standard",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.511Z",
+  "level": "error",
+  "message": "[entitlements-resolver] feature_toggles lookup failed; continuing without flags",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault
+{
+  "timestamp": "2026-10-14T06:36:11.511Z",
+  "level": "error",
+  "message": "[entitlements-resolver] module_subscriptions lookup failed; continuing without modules",
+  "context": {
+    "organizationId": 7,
+    "err": "tier store unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses a base report on an owned-client tier fault despite a pilot feature grant
+{
+  "timestamp": "2026-10-14T06:36:11.520Z",
+  "level": "error",
+  "message": "[entitlements-resolver] tier lookup failed; defaulting to standard",
+  "context": {
+    "organizationId": 7,
+    "err": "recorded tier query failed"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses a base report on an owned-client tier fault despite a pilot feature grant
+{
+  "timestamp": "2026-10-14T06:36:11.520Z",
+  "level": "error",
+  "message": "[entitlements-resolver] tier lookup failed; defaulting to standard",
+  "context": {
+    "organizationId": 7,
+    "err": "recorded tier query failed"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > preserves a verified tier when only the independent flag and module layers fail
+{
+  "timestamp": "2026-10-14T06:36:11.521Z",
+  "level": "error",
+  "message": "[entitlements-resolver] feature_toggles lookup failed; continuing without flags",
+  "context": {
+    "organizationId": 7,
+    "err": "optional capability layer unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > preserves a verified tier when only the independent flag and module layers fail
+{
+  "timestamp": "2026-10-14T06:36:11.521Z",
+  "level": "error",
+  "message": "[entitlements-resolver] module_subscriptions lookup failed; continuing without modules",
+  "context": {
+    "organizationId": 7,
+    "err": "optional capability layer unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > preserves a verified tier when only the independent flag and module layers fail
+{
+  "timestamp": "2026-10-14T06:36:11.521Z",
+  "level": "error",
+  "message": "[entitlements-resolver] feature_toggles lookup failed; continuing without flags",
+  "context": {
+    "organizationId": 7,
+    "err": "optional capability layer unavailable"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > preserves a verified tier when only the independent flag and module layers fail
+{
+  "timestamp": "2026-10-14T06:36:11.522Z",
+  "level": "error",
+  "message": "[entitlements-resolver] module_subscriptions lookup failed; continuing without modules",
+  "context": {
+    "organizationId": 7,
+    "err": "optional capability layer unavailable"
+  }
+}
+
+ ✓ server/services/__tests__/usage-alignment.test.ts > usdToCents > rounds to integer cents 2ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > usdToCents > returns 0 for non-finite or non-positive input 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > drops entries without a finite positive organizationId 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > defaults module to ai_assistance and clamps negatives to 0 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > preserves an explicit requestCount of 0 (failed calls do not consume quota) 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > preserves attribution fields 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > is idle with no events, and after the last session expires 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > anchors on the session first call and resets exactly 5h after it 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > does NOT slide the anchor: an event during an earlier session belongs to it, and a later event starts a NEW session 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > reports idle when the chained session has expired even with steady earlier usage 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > ignores future timestamps 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > percentUsed > reads 0 with no usage and rounds to integer percent 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > percentUsed > does not clamp overage and treats zero budget with usage as 100 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > PLAN_USAGE_BUDGETS > covers all four real tiers, ascending in every budget 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > PLAN_USAGE_BUDGETS > keeps the premium bucket within the all-models budget 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > shouldAutoReload > fires at or below the threshold, not above 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > shouldAutoReload > never fires when disabled, unset, or balance is not finite 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > validateAutoReload > accepts the platform defaults 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > validateAutoReload > rejects non-boolean enabled, negative threshold, non-positive topup 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > normalizes debit amounts to negative 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > rejects negative credit-type amounts and zero/non-integer amounts 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > passes signed adjustments through 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > toggleAppliesToOrg > applies when globally enabled regardless of allowlist 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > toggleAppliesToOrg > applies when the org is allowlisted even if not globally enabled 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > mirrors the tier matrix with no toggles 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > lets a toggle grant a feature below tier, attributed to the toggle 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > does not let a toggle disable a tier entitlement (grant-only) 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > refuses a base report when the real resolver catches a pool query fault 5ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > actual capability resolver reporting refusal > uses the owned SQL client for tier, toggle and subscription reads without pooled reads 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > resolves exactly one recorded free tier and preserves its reporting entitlement 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > resolves exactly one recorded standard tier and preserves its reporting entitlement 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > resolves exactly one recorded professional tier and preserves its reporting entitlement 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > resolves exactly one recorded enterprise tier and preserves its reporting entitlement 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'missing organization' without inventing a plan 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'null tier' without inventing a plan 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'missing tier field' without inventing a plan 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'unknown tier' without inventing a plan 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'unrecorded capitalization' without inventing a plan 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'malformed tier' without inventing a plan 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses all reporting families for 'multiple tier rows' without inventing a plan 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > refuses a base report on an owned-client tier fault despite a pilot feature grant 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > recorded tier resolution > preserves a verified tier when only the independent flag and module layers fail 1ms
+stderr | server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > still fails closed on an enterprise feature
+{
+  "timestamp": "2026-10-14T06:36:11.714Z",
+  "level": "error",
+  "message": "[report-entitlement] capability lookup failed; reporting entitlement refused",
+  "context": {
+    "organizationId": 1,
+    "typeId": "portfolio.board_pack",
+    "err": "capability store unreachable"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > marks the tier as unresolved rather than passing the assumption on as a plan
+{
+  "timestamp": "2026-10-14T06:36:11.717Z",
+  "level": "error",
+  "message": "[report-entitlement] capability lookup failed; reporting entitlement refused",
+  "context": {
+    "organizationId": 1,
+    "typeId": "portfolio.board_pack",
+    "err": "capability store unreachable"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > also refuses a base report when resolution itself throws
+{
+  "timestamp": "2026-10-14T06:36:11.720Z",
+  "level": "error",
+  "message": "[report-entitlement] capability lookup failed; reporting entitlement refused",
+  "context": {
+    "organizationId": 1,
+    "typeId": "readiness.executive_digest",
+    "err": "capability store unreachable"
+  }
+}
+
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > still fails closed on an enterprise feature 3ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > marks the tier as unresolved rather than passing the assumption on as a plan 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > control: a tier that was read is marked resolved, and entitles what it should 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > a read that returns standard is resolved — a real plan, not an assumption 0ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > refuses the base reporting family when the resolver returned an unread compatibility tier 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > requireReportEntitlement when the capability lookup throws > also refuses a base report when resolution itself throws 1ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > decideReportEntitlement carries the flag through a whole catalog > defaults to resolved, because the caller handed us a tier 0ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > decideReportEntitlement carries the flag through a whole catalog > propagates an unresolved tier to each per-type decision 0ms
+ ✓ server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts > decideReportEntitlement carries the flag through a whole catalog > does not let even an unresolved enterprise fallback unlock a report 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > tier fidelity > exposes exactly the four real tiers in ascending order 2ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > tier fidelity > isTier recognises every real tier and rejects fabricated ones 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > featureTier > maps every known feature to a real tier 2ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > featureTier > uses the documented minimum tiers 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > featureTier > returns null for an unknown feature 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > isEntitled > entitles a tier exactly at and above the feature minimum 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > isEntitled > is monotonic across tiers: once entitled, never revoked at a higher tier 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > isEntitled > enterprise is entitled to every feature 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > isEntitled > free is not entitled to any of the new paid capabilities 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > isEntitled > returns false (never throws) for unknown feature or tier 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > entitlementsForTier > returns the correct entitled set per tier 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > entitlementsForTier > is consistent with isEntitled for every feature/tier pair 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > entitlementsForTier > grows monotonically with tier rank (each tier is a superset of the prior) 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > entitlementsForTier > returns an empty array for an unknown tier 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > matrix + introspection > entitlementMatrix covers every feature exactly once with a real tier 1ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > matrix + introspection > entitlementMatrix returns a defensive copy (mutation does not leak) 0ms
+ ✓ server/services/entitlements/__tests__/mdx-entitlements.test.ts > matrix + introspection > isFeatureKey recognises known features and rejects others 0ms
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-14T06:36:12.744Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:36:12.745Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-14T06:36:12.745Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+[database] Database connection successful
+
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps prediction forecast types to prediction_forecast_report 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps CRL/RTF pre-mortem types to crl_rtf_premortem 1ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps portfolio/board-pack types to portfolio_rollup 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > defaults every governed report family to report_families 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > assigns a feature key to every seeded report type (no orphans) 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > free tier is locked out of every paid report family 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > standard unlocks report_families but not prediction/portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > professional unlocks prediction + premortem but not enterprise portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > enterprise unlocks everything, including portfolio_rollup 0ms
+
+ Test Files  5 passed (5)
+      Tests  95 passed (95)
+   Start at  06:36:08
+   Duration  3.89s (transform 1.15s, setup 174ms, import 2.82s, tests 161ms, environment 0ms)
+

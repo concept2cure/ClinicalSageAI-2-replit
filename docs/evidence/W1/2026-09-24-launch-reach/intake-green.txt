@@ -63,4 +63,3 @@ stderr | tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could 
       Tests  13 passed (13)
    Start at  00:43:59
    Duration  3.58s (transform 1.65s, setup 69ms, import 172ms, tests 3.07s, environment 0ms)
-

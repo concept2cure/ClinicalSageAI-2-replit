@@ -67,11 +67,12 @@ describe('document disposition impact preview', () => {
   it('denies source and project reads across both organization and program boundaries', async () => {
     const f = await setup();
     const other = await setup();
-    await expect(f.service.preview({ ...f.scope, organizationId: other.org })).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
-    await expect(f.service.preview({ ...f.scope, programId: other.program })).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
+    await expect(f.service.preview({ ...f.scope, organizationId: other.org })).rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
+    await expect(f.service.preview({ ...f.scope, programId: other.program })).rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
     await expect(f.service.preview({ ...f.scope, targetId: String(other.capture) })).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
     const secondProgram = randomUUID();
     await pg.query('INSERT INTO regulatory_programs VALUES ($1,$2,42,NULL)', [secondProgram, f.org]);
+    await pg.query('INSERT INTO projects (organization_id,regulatory_program_id,owner_id) VALUES ($1,$2,42)',[f.org,secondProgram]);
     await expect(f.service.preview({ ...f.scope, programId: secondProgram })).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
   });
 

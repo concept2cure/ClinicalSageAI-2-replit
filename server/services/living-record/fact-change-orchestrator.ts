@@ -30,8 +30,9 @@ import { inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import type { CanonicalFact, FactDrift } from '../../../shared/schema/living-record-spine';
-import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { combineAuditRowOutcomes, recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { propagateRegulatoryChange } from '../living-file/change-router.service';
+import type { PacketAuditReceipt } from '../regulatory-graph/defense-packet-staleness.service';
 import { createResolutionPlan } from '../resolution/resolution-planner';
 import type { AffectedObject } from '../../../shared/schema/resolution';
 import {
@@ -50,7 +51,9 @@ import {
   classifyBindingImpact,
   factChangeFailure as fail,
   hasProposedValue,
+  isIdentifiedUser,
   isNoopChange,
+  livingRecordAuditActor,
   proposedFactView,
   summarizeImpacts,
   type BindingImpact,
@@ -139,6 +142,7 @@ export interface ApplyFactChangeResult {
   driftCreated: number;
   claimsMarkedDrifted: number;
   cascadedClaims: number;
+  cascadePacketAuditReceipts: PacketAuditReceipt[];
   resolutionPlanId: string | null;
   resolutionPlanSkippedReason: string | null;
   /**
@@ -164,6 +168,11 @@ export async function applyFactChange(
   if (!hasProposedValue(params.newValue)) {
     return fail('invalid', 'newValue must carry a numeric or text value');
   }
+  // 2026-10-15: a change with no actor was applied and audited as 'system' while
+  // its fact version said createdBy null. A governed value changes for a person.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to change a governed value');
+  }
 
   const fact = await getFact(params.factId);
   if (!fact || fact.organizationId !== params.organizationId) {
@@ -188,8 +197,9 @@ export async function applyFactChange(
     valueText: nextView.valueText,
     unit: nextView.unit,
     valueType: nextView.valueType,
-    confidence: 1.0, // operator-asserted value
-    createdBy: params.actor ?? null,
+    // 2026-10-15: was 1.0 — an operator's edit is not a confidence score. Unscored.
+    confidence: null,
+    createdBy: params.actor,
   });
 
   const bindings = await listBindingsForFact(newFact.id);
@@ -204,13 +214,14 @@ export async function applyFactChange(
   const driftCreated = await flagDivergentCitations(newFact, drifting);
   const claimsMarkedDrifted = await markClaimsDrifted(summary.affectedClaimIds);
   const legacyProgramId = await resolveLegacyProgram(newFact.programId, newFact.organizationId);
-  const cascadedClaims = await cascadeDriftedClaims(
+  const cascade = await cascadeDriftedClaims(
     newFact,
     summary.affectedClaimIds,
     legacyProgramId,
     reason,
     params.actor
   );
+  const { cascadedClaims, packetAuditReceipts: cascadePacketAuditReceipts } = cascade;
   const { resolutionPlanId, resolutionPlanSkippedReason } = await openResolutionPlan({
     newFact,
     drifting,
@@ -220,9 +231,9 @@ export async function applyFactChange(
     actor: params.actor,
   });
 
-  const auditTrail = await recordAuditRow({
+  const changeAuditTrail = await recordAuditRow({
     tenantId: newFact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.governed_change',
     resourceType: 'canonical_fact',
     resourceId: newFact.id,
@@ -256,9 +267,10 @@ export async function applyFactChange(
     driftCreated,
     claimsMarkedDrifted,
     cascadedClaims,
+    cascadePacketAuditReceipts,
     resolutionPlanId,
     resolutionPlanSkippedReason,
-    auditTrail,
+    auditTrail: combineAuditRowOutcomes(changeAuditTrail, ...cascadePacketAuditReceipts.map(receipt => receipt.auditTrail)),
   };
 }
 
@@ -307,8 +319,8 @@ async function cascadeDriftedClaims(
   legacyProgramId: number | null,
   reason: string,
   actor: number | null
-): Promise<number> {
-  if (claimIds.length === 0) return 0;
+): Promise<{ cascadedClaims: number; packetAuditReceipts: PacketAuditReceipt[] }> {
+  if (claimIds.length === 0) return { cascadedClaims: 0, packetAuditReceipts: [] };
   const claimPrograms = await db
     .select({ id: evidenceClaims.id, programId: evidenceClaims.programId })
     .from(evidenceClaims)
@@ -316,9 +328,10 @@ async function cascadeDriftedClaims(
   const claimProgramById = new Map(claimPrograms.map(c => [c.id, c.programId]));
 
   let cascaded = 0;
+  const packetAuditReceipts: PacketAuditReceipt[] = [];
   for (const claimId of claimIds) {
     try {
-      await propagateRegulatoryChange({
+      const result = await propagateRegulatoryChange({
         organizationId: newFact.organizationId,
         programId: newFact.programId,
         legacyProgramId: claimProgramById.get(claimId) ?? legacyProgramId ?? undefined,
@@ -328,12 +341,13 @@ async function cascadeDriftedClaims(
         reason: `governed value changed: ${reason}`,
         userId: actor !== null ? String(actor) : undefined,
       });
+      packetAuditReceipts.push(...(result?.packetAuditReceipts ?? []));
       cascaded += 1;
     } catch {
       // Cascade is best-effort; drift rows are the durable record.
     }
   }
-  return cascaded;
+  return { cascadedClaims: cascaded, packetAuditReceipts };
 }
 
 /** Open the governed resolution plan over the affected objects. */
@@ -423,6 +437,10 @@ export async function establishGovernedFact(
   if (!hasProposedValue(params.value)) {
     return fail('invalid', 'value must carry a numeric or text value');
   }
+  // 2026-10-15: as applyFactChange — a value declared by no one was audited as 'system'.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to establish a governed value');
+  }
 
   const existing = await resolveActiveFact(params.programId, entity, field);
   if (existing) {
@@ -444,13 +462,14 @@ export async function establishGovernedFact(
     unit: params.value.unit ?? null,
     comparator: params.comparator,
     valueType: params.value.valueType,
-    confidence: params.confidence ?? 1.0,
+    // 2026-10-15: was `?? 1.0` — a value nobody scored was stored as certain.
+    confidence: params.confidence ?? null,
     createdBy: params.actor,
   });
 
   const auditTrail = await recordAuditRow({
     tenantId: params.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.established',
     resourceType: 'canonical_fact',
     resourceId: fact.id,

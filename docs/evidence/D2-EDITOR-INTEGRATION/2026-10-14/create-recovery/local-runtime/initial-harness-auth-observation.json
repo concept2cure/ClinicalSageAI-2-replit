@@ -1,0 +1,50 @@
+{
+  "automated": true,
+  "syntheticHttpResponses": false,
+  "records": [
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "response": {
+        "ok": true,
+        "ts": 1792015016034
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/readyz",
+      "status": 503,
+      "response": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/dev-login",
+      "status": 401,
+      "response": {
+        "success": false,
+        "error": {
+          "code": "AUTH_001",
+          "message": "User not found. Please sign up first."
+        }
+      }
+    }
+  ]
+}

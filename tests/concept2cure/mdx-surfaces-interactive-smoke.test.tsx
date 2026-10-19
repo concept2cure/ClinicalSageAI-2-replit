@@ -11,18 +11,16 @@
  * Plus a focused check on the FilesTreePane's five filesystem roots, the
  * specific regression that started the 2026-06-02 reconciliation round.
  *
- * Like the sibling suite, everything runs against in-memory fixture data.
- *
- * Surfaces no longer fall back to fixtures when a fetch fails — a silent
- * fixture is indistinguishable from real regulated data, so the fallback
- * was removed. Example content is now reachable only through sample mode,
- * which this suite enables explicitly in beforeEach. That is the supported
- * way to ask for populated surfaces, and it keeps the test measuring what
- * it was written to measure: that every handler survives a click on a rich
+ * Surfaces render only what their reads return: a silent fixture is
+ * indistinguishable from real regulated data, so the fallback was removed and
+ * then the sample mode that replaced it (2026-10-14). This suite therefore
+ * serves live-shaped payloads through the mocked fetch (LIVE below — test
+ * input, never imported by the product), which keeps it measuring what it was
+ * written to measure: that every handler survives a click on a populated
  * surface, rather than that a 404 happens to render one.
  */
 
-import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
@@ -32,8 +30,6 @@ import { PostmarketSurface }  from '../../client/src/concept2cure/mdx/surfaces/P
 import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/EngineeringSurface';
 import { UdiSurface }         from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
 import { PathwayPanes }       from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
-
-import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 
 import type { Program } from '../../client/src/concept2cure/mdx/data/programs';
 
@@ -62,22 +58,67 @@ beforeEach(() => {
   cleanup();
   askAna.mockClear();
   openEditor.mockClear();
-  globalThis.fetch = vi.fn().mockResolvedValue({
-    ok: false,
-    status: 404,
-    text: async () => 'Not Found',
-    json: async () => ({ data: null }),
+  globalThis.fetch = vi.fn((input: Parameters<typeof fetch>[0]) => {
+    const url = String(input);
+    const hit = Object.keys(LIVE).find((prefix) => url.includes(prefix));
+    const body = hit ? LIVE[hit] : null;
+    return Promise.resolve({
+      ok: body !== null,
+      status: body !== null ? 200 : 404,
+      text: async () => (body !== null ? JSON.stringify(body) : 'Not Found'),
+      json: async () => body ?? { data: null },
+    } as Response);
   }) as unknown as typeof fetch;
   try { window.localStorage.clear(); } catch { /* ignore */ }
-  /* Opt in to the canonical example content. Must come *after* the
-     localStorage clear above, which would otherwise wipe the flag —
-     surfaces would then render their empty states with nothing to click. */
-  setSampleMode(true);
 });
 
-/* Sample mode is global state; leaving it on would silently populate any
-   suite that runs after this one in the same worker. */
-afterEach(() => setSampleMode(false));
+/* Live-shaped read results, keyed by request path. Test input only. */
+const LIVE: Record<string, unknown> = {
+  '/api/mdx/analytics': {
+    data: {
+      kpis: [{ label: 'Active programs', metric: '2', meta: 'test' }],
+      phases: [{ phase: 'Intake', k510: { org: 10, peer: 12, units: 'd' }, pma: { org: 20, peer: 25, units: 'd' } }],
+      blockers: [{ cause: 'Test cause', count: 1, median: 3, owner: 'T', pathway: 'k510', trend: 'flat' }],
+      reviewers: [{ code: 'TST', name: 'Test division', n: 2, median: 90, fastest: 80, slowest: 100, firstCycle: 1, orgMedian: 95, pathway: 'k510' }],
+      anaUsage: [{ tool: 'test_tool', calls: 3, accepted: 2, drafts: 1, pathway: 'k510' }],
+      pace24m: [1, 2, 3],
+    },
+  },
+  '/api/mdx/engineering/p-test': {
+    data: {
+      summary: { dhfCompletion: 50, openEcrs: 1, openRisks: 2, openIssues: 1, riskLastUpdated: null },
+      dhf: [{ id: 'd1', num: '1', label: 'Design plan', ver: '1', owner: 'T', updated: '2026-10-01', status: 'draft', meta: '' }],
+      trace: [{ id: 't1', need: 'N1', input: 'I1', output: 'O1', verif: 'V1', valid: 'Va1', risk: 'R1', state: 'open' }],
+      risks: [
+        { id: 'r1', hazard: 'H1', situation: 'S1', harm: 'Hm1', severity: 'S3', probBefore: 'P3', controlClass: 'design', control: 'C1', verif: 'V1', probAfter: 'P2', residual: 'S3P2', state: 'open', owner: 'T' },
+        { id: 'r2', hazard: 'H2', situation: 'S2', harm: 'Hm2', severity: 'S2', probBefore: 'P2', controlClass: 'labeling', control: 'C2', verif: 'V2', probAfter: 'P1', residual: 'S2P1', state: 'open', owner: 'T' },
+      ],
+      ecrs: [{ id: 'e1', title: 'ECR one', impact: 'low', opened: '2026-10-01', state: 'open', owner: 'T', riskChange: 'none', linked: '' }],
+      issues: [{ id: 'i1', title: 'Issue one', severity: 'minor', age: '1d', owner: 'T', state: 'open', linked: '' }],
+      documents: [],
+    },
+  },
+  '/api/mdx/udi/summary': {
+    data: {
+      devices: [{ id: 'dev1', code: 'TST-1', name: 'Test device', class: 'II', fda: { di: '0', gmdn: '0', agency: 'GS1', status: 'draft', submitted: '', acked: '' }, eu: { di: '0', risk: 'IIa', agency: 'GS1', status: 'draft', submitted: '', acked: '' }, mri: 'safe', rx: 'Rx', sterile: false, singleUse: false, labels: 1, translations: 0, open: 0 }],
+      labels: [
+        { id: 'lbl1', device: 'TST-1', kind: 'IFU', region: 'US', lang: 'en', ver: '1', size: 'A4', status: 'draft', updated: '2026-10-01' },
+        { id: 'lbl2', device: 'TST-1', kind: 'Carton', region: 'EU', lang: 'en', ver: '1', size: 'A5', status: 'approved', updated: '2026-10-01' },
+      ],
+      symbols: [{ iso: '5.1.1', name: 'Manufacturer', glyph: 'M', required: 'yes', present: true }],
+      issues: [{ id: 'u1', label: 'lbl1', kind: 'content', severity: 'minor', msg: 'Test issue', since: '2026-10-01' }],
+      mri: [{ device: 'TST-1', mode: 'Normal', field: '1.5T', sar: '2', gradient: '40', tested: true, notes: '' }],
+    },
+  },
+  '/api/c2c/documents/doc-1/sections/': {
+    id: 'x', document_id: 'doc-1', section_key: 's1', label: 'Test section', content: { paragraphs: [{ text: 'Test body.' }] }, owner_id: 'T', version: 1,
+  },
+  '/api/c2c/documents/doc-1/outline': {
+    document: { id: 'doc-1', title: '510(k)' },
+    outline: [{ key: 's1', parent_key: null, label: 'Test section', path_order: 1, status: 'draft', version: 1, owner_id: 'T', accepted_at: null, has_content: true }],
+  },
+  '/api/c2c/documents': { documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: '510k', agency: 'FDA', title: '510(k)' }] },
+};
 
 function wrap(node: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -134,8 +175,9 @@ function clickEveryButton(container: HTMLElement, maxRounds = 8): { clicked: num
 }
 
 describe('MDX rich-surface interactive smoke', () => {
-  it('Analytics: every button click is handler-safe', () => {
-    const { container } = wrap(<AnalyticsSurface onAskAna={askAna} />);
+  it('Analytics: every button click is handler-safe', async () => {
+    const { container, findAllByText } = wrap(<AnalyticsSurface onAskAna={askAna} />);
+    await findAllByText(/Test cause/);
     const { clicked } = clickEveryButton(container);
     expect(clicked).toBeGreaterThan(5);
   });
@@ -148,16 +190,18 @@ describe('MDX rich-surface interactive smoke', () => {
 
   // No MemorySurface case: the kit's AnA Memory surface was retired — v2 `ana-memory` reads the same /api/mdx/ana/memory endpoint and is write-capable, so two of them was one duplicate too many.
 
-  it('Engineering: every risk-matrix cell click is handler-safe', () => {
-    const { container } = wrap(
+  it('Engineering: every risk-matrix cell click is handler-safe', async () => {
+    const { container, findAllByText } = wrap(
       <EngineeringSurface program={MOCK_PROGRAM} onAskAna={askAna} />,
     );
+    await findAllByText(/Design plan|ECR one|Issue one/);
     const { clicked } = clickEveryButton(container);
     expect(clicked).toBeGreaterThan(5);
   });
 
-  it('UDI: every label-preview / format-picker click is handler-safe', () => {
-    const { container } = wrap(<UdiSurface onAskAna={askAna} />);
+  it('UDI: every label-preview / format-picker click is handler-safe', async () => {
+    const { container, findAllByText } = wrap(<UdiSurface onAskAna={askAna} />);
+    await findAllByText(/TST-1/);
     /* The controls this case is named for are per-document: the row-open button
        and the Ask-AnA chip inside "documents in flight". The panel frame draws
        its framework chips whether or not a single row reached it, so the button
@@ -172,18 +216,19 @@ describe('MDX rich-surface interactive smoke', () => {
 });
 
 describe('MDX Files tab — root structure', () => {
-  it('renders all five filesystem roots on PathwayPanes(k510)', () => {
-    const { container, getByRole } = wrap(
+  it('renders all five filesystem roots on PathwayPanes(k510)', async () => {
+    const { container, getByRole, findByText } = wrap(
       <PathwayPanes
         pathway="k510"
         workspace={<div data-testid="ws">workspace</div>}
         onAskAna={askAna}
         onOpenEditor={openEditor}
-        programId={null}
+        programId="proj-1"
       />,
     );
-    // Click into the Files tab.
+    // Click into the Files tab; the tree mounts once the program's dossier is read.
     fireEvent.click(getByRole('tab', { name: /Files/i }));
+    await findByText(/Test section/);
     // Each of the five roots must appear (path strings or label text).
     for (const root of ['Dossier', 'Correspondence', 'Approvals', 'Audit', 'Sources']) {
       expect(container.textContent || '').toContain(root);

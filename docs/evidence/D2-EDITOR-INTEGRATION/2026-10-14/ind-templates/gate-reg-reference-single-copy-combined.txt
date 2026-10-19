@@ -1,0 +1,8 @@
+
+> concept2cure-riai@1.0.0 ci:reg-reference-single-copy
+> node scripts/ci/check-regulatory-reference-data-single-copy.mjs
+
+[ci:reg-reference-single-copy] regulatory reference data, one copy each
+
+  ✓ fallbackTemplates — 1 declaring module(s)
+      server/services/templates/ectd-fallback-templates.ts

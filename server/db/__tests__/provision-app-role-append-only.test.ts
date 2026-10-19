@@ -88,6 +88,7 @@ describe('APPEND_ONLY_TABLES', () => {
       'public.electronic_signatures',
       'public.ana_turn_records',
       'public.ana_record_blobs',
+      'public.ana_source_read_receipts',
       'public.authoring_audit_trail',
       'public.doc_revisions',
       'public.concept2cure_signatures',

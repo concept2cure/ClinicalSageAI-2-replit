@@ -1,0 +1,10 @@
+Scope: 7 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/submission-ai/submission-ai-service.ts: 0 target diagnostics
+server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts: 0 target diagnostics
+server/services/ectd/validation-rule-corpus.ts: 0 target diagnostics
+server/services/submission-gateways/pre-transmit-check.ts: 0 target diagnostics
+server/services/submission-gateways/__tests__/pre-transmit-check.test.ts: 0 target diagnostics
+server/mcp/tools/validation.ts: 0 target diagnostics
+server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4717
+Total selected-scope diagnostics: 0

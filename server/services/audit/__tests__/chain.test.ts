@@ -360,20 +360,34 @@ describe('computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.7
   it('verifies a correctly-sealed chain and tolerates interleaved unsealed rows', async () => {
     process.env.AUDIT_HMAC_KEY = KEY;
     const rows = sealed(chainRows(baseRows.concat({ ...baseRows[0], occurred_at: at(3), chain_seq: 4 })), [1]);
-    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({ valid: true, brokenAt: null });
+    // Tolerated — no tamper alarm — and STATED: the unsealed row was written
+    // after sealing began, so its seal could not be verified. The walk used to
+    // skip it silently and the result read as a full pass.
+    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({
+      valid: true,
+      brokenAt: null,
+      verified: rows.length - 1,
+      unsealed: 1,
+      unsealedAfterSealed: 1,
+      firstUnsealedAfterSealed: String(rows[1].id),
+    });
   });
 
   it('detects a tampered seal', async () => {
     process.env.AUDIT_HMAC_KEY = KEY;
     const rows = sealed(chainRows(baseRows));
     rows[0].hmac_seal = 'd'.repeat(64); // tamper the first seal
-    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({ valid: false, brokenAt: 0 });
+    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({
+      valid: false, brokenAt: 0, verified: 0, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
   });
 
   it('fails closed on a sealed row the chain walk cannot link', async () => {
     process.env.AUDIT_HMAC_KEY = KEY;
     const rows = sealed(chainRows(baseRows));
     rows[1].payload_hash = 'TAMPERED'; // chain breaks at row 2; its seal cannot be checked
-    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({ valid: false, brokenAt: 1 });
+    expect(await verifyAuditChainSeals(fakeClient(rows))).toEqual({
+      valid: false, brokenAt: 1, verified: 1, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
   });
 });

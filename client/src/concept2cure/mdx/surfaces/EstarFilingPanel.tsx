@@ -41,6 +41,7 @@ import {
 import { describeSaveFailure, type SaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 import { IntakeTextField } from './DeviceProfilePanel';
+import { OfficialEstarPanel } from './OfficialEstarPanel';
 
 /** Allowed next statuses (mirrors the server lifecycle) for the advance buttons. */
 const NEXT_STATUS: Record<string, string[]> = {
@@ -606,6 +607,8 @@ export function EstarFilingPanel({ programId }: { programId: string | null }) {
   /** Why an assessment did not run — shown instead of a verdict nobody computed. */
   const [assessRefusal, setAssessRefusal] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const selectedProgramType = catalog?.find(entry => entry.key === selectedKey)?.programType;
+  const prestarType = selectedProgramType === 'q_sub' || selectedProgramType === 'ide' || selectedProgramType === '513g' ? selectedProgramType : null;
 
   const satisfied = registration?.clientRegistration?.satisfied;
   const rows = prerequisiteRows(satisfied);
@@ -757,6 +760,13 @@ export function EstarFilingPanel({ programId }: { programId: string | null }) {
           <ReadinessCard r={readiness} />
         </div>
       )}
+
+      {prestarType && <OfficialEstarPanel
+        key={`${programId}:${prestarType}:${variant}`}
+        program={programId ? { id: programId } : null}
+        type={prestarType}
+        variant={variant}
+      />}
 
       {/* TRACK */}
       <div className="section-hdr">

@@ -1,0 +1,384 @@
+{
+  "recordedAtUtc": "2026-10-17T23:05:06.651391+00:00",
+  "version": "8.28.0",
+  "head": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "historyComplete": true,
+  "scanExit": 1,
+  "findingCount": 20,
+  "upstreamExistingFindingCount": 18,
+  "outgoingFindingCount": 2,
+  "rawValuesIncluded": false,
+  "configIgnoreHistoryModified": "Only .gitleaksignore appended with these20 exact canonical-history findings; no rules or history changes.",
+  "historicalLiveCredentialRecordsRetained": 3,
+  "externalRevocationStatus": "Three declared live historical credentials remain external revocation items; no rotation is claimed.",
+  "verification": {
+    "version": "8.28.0",
+    "source": "https://github.com/gitleaks/gitleaks/releases/tag/v8.28.0",
+    "archiveSha256": "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb",
+    "checksumsSha256": "4ea55cd2e433edbe3151e0ff49b044df310e29967a38f38b68b1434a3660dcb8",
+    "binarySha256": "5fd1b3b0073269484d40078662e921d07427340ab9e6ed526ccd215a565b3298",
+    "releaseApiDigestsVerified": true,
+    "publishedChecksumVerified": true
+  },
+  "canonicalCommit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "historicalScanBeforeFindings": 20,
+  "historicalScanBeforeExit": 1,
+  "ignoreBeforeSha256": "a6f5abf6d9e13379d02b495ba7a5ef960c5dd62407b8234f3a0315e5f48ddc07",
+  "ignoreAfterSha256": "0eb7d9068384a1e39ae324a5b25bcae61ba72729d1cdde9b70416c2377722771",
+  "existingIgnoreBytesPreservedAsPrefix": true,
+  "sourceBlobHashesReverifiedAtActualFindingCommits": true,
+  "newCanonicalFindingCount": 2,
+  "unpublishedLocalFingerprintsAdded": false,
+  "findings": [
+    {
+      "Fingerprint": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:jwt:34",
+      "RuleID": "jwt",
+      "File": "client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx",
+      "StartLine": 34,
+      "Commit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+      "sourceSha256": "60e8e454428b3c48b8fc54e06e5774bd453a77d7b2a7d1d83273e41bf44ee1de",
+      "sourceBlob": "604ba56ae98017a291eb85ec0657df1cdb392810",
+      "lineSha256": "a5c6e4b0ad009d64b456b34acc5b9fdecf8784016fc57ae2d438eb44328b4dda",
+      "classification": "Verification-route UI fixture with a literal placeholder signature (19 bytes; HS256 needs 32), and only a type claim. It cannot authenticate an actor or tenant.",
+      "checks": {
+        "literalPlaceholderSignature": true,
+        "signatureByteLength": 19,
+        "payloadHasOnlyType": true,
+        "noActorOrOrganizationClaims": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:docs/evidence/AUDIT-REMEDIATION/2026-10-14/identity-api-keys.md:generic-api-key:3",
+      "RuleID": "generic-api-key",
+      "File": "docs/evidence/AUDIT-REMEDIATION/2026-10-14/identity-api-keys.md",
+      "StartLine": 3,
+      "Commit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+      "sourceSha256": "13b784611e3500cd828924d21147a1cbf6bcc5060662dd9f5de4cd3dc22965ed",
+      "sourceBlob": "d2043a007a85af4b8aadd1fba8b2c575c8dc2e55",
+      "lineSha256": "477aac0dbd4faf803b262c4710f6764312d8f6e33bd983cda8bc9eb8d7e50469",
+      "classification": "Qualification base Git commit identifier in evidence prose; Git independently confirms the exact value is a commit object.",
+      "checks": {
+        "qualificationBaseIsExistingGitCommit": true,
+        "usedAsBaseMetadata": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:299",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/browse/test/terminal-agent-integration.test.ts",
+      "StartLine": 299,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "073f7156650e6e68a2686f229b3b6851ed76d32a6736bfdc6eeedffcd1fdcc89",
+      "sourceBlob": "5b80cd0578827c0e289819e7be9f7ad5b71917a6",
+      "lineSha256": "ae7f9be3e72c13c6b6dd789e957f0ee290cf1723340a6d74b404aaa5c52e9f15",
+      "classification": "Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.",
+      "checks": {
+        "rfc6455PublicSampleNoncePresent": true,
+        "websocketHandshakeHeaderInSource": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:338",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/browse/test/terminal-agent-integration.test.ts",
+      "StartLine": 338,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "073f7156650e6e68a2686f229b3b6851ed76d32a6736bfdc6eeedffcd1fdcc89",
+      "sourceBlob": "5b80cd0578827c0e289819e7be9f7ad5b71917a6",
+      "lineSha256": "8d2f67a9f1eada0a3c786d10434073ea8b72b0aac950a9d707f2d08f32e617bb",
+      "classification": "Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.",
+      "checks": {
+        "rfc6455PublicSampleNoncePresent": true,
+        "websocketHandshakeHeaderInSource": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:364",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/browse/test/terminal-agent-integration.test.ts",
+      "StartLine": 364,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "073f7156650e6e68a2686f229b3b6851ed76d32a6736bfdc6eeedffcd1fdcc89",
+      "sourceBlob": "5b80cd0578827c0e289819e7be9f7ad5b71917a6",
+      "lineSha256": "ca108678c5f995cc0faaf151118c90403c214910f583536c6ee569adeb011f2f",
+      "classification": "Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.",
+      "checks": {
+        "rfc6455PublicSampleNoncePresent": true,
+        "websocketHandshakeHeaderInSource": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/extension/manifest.json:generic-api-key:6",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/extension/manifest.json",
+      "StartLine": 6,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "d550674810a6f77c09223cce57d117fd01a5544a5008124cef9143c19bc0aed1",
+      "sourceBlob": "c8194cac7fa410ed7e1061947cf6a73e240f8e4d",
+      "lineSha256": "3cb4fe9d96a3c293f0a29d5bdea8adfd82ea9845286fac8879917c7463307dea",
+      "classification": "Chrome extension public identity key; DER independently parses as a public key, not private signing material.",
+      "checks": {
+        "extensionManifestPublicIdentityField": true,
+        "validDerPublicKey": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/redact-patterns.ts:private-key:727",
+      "RuleID": "private-key",
+      "File": ".claude/skills/gstack/lib/redact-patterns.ts",
+      "StartLine": 727,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "b167621ee67dc4d27359fb45bd1680b1c863d15cc34eaca7cde8e63694c09d28",
+      "sourceBlob": "0ff3b10f6e6031bb009f264a2949346d99dee288",
+      "lineSha256": "f341fd0683c1d90089a128dcb751ffad281796d3a8e2f26a865d4973a2582c4c",
+      "classification": "Private-key detection regex source and explanatory comment; no private-key body.",
+      "checks": {
+        "privateHeaderInRegexSource": true,
+        "regexMetacharactersPresent": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/brain-sync.test.ts:jwt:380",
+      "RuleID": "jwt",
+      "File": ".claude/skills/gstack/test/brain-sync.test.ts",
+      "StartLine": 380,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "032bd38e54677c9f52101c2090261b3b3eef0288e473013c58ac921c1983039b",
+      "sourceBlob": "51c62ed5c118579987e7e54b150b31fec2945a4f",
+      "lineSha256": "cb340480c3331a64505f0c970fe585f932b17edc5535dcc9a31d263bfcbd206a",
+      "classification": "Malformed JWT-shaped literal in the vendor scanner test vector table; header is not JSON and signature is not valid base64url.",
+      "checks": {
+        "invalidJsonHeader": true,
+        "invalidBase64urlSignature": true,
+        "literalScannerVectorTable": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:97",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-context-exemptions.test.ts",
+      "StartLine": 97,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "eaf8c708430c537a3d676f95c8239f8d5808fb8a63e7b1e4d46189fcac63ef86",
+      "sourceBlob": "5215943d92ed284ce75778ef3b08b872f47bbd59",
+      "lineSha256": "f61e237ec734e68a4641ec342d535da0bbc088e31ee730dd20cebb326b0a9ef0",
+      "classification": "Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.",
+      "checks": {
+        "literalFixtureTable": true,
+        "localRedactionAssertions": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:101",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-context-exemptions.test.ts",
+      "StartLine": 101,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "eaf8c708430c537a3d676f95c8239f8d5808fb8a63e7b1e4d46189fcac63ef86",
+      "sourceBlob": "5215943d92ed284ce75778ef3b08b872f47bbd59",
+      "lineSha256": "e56196d447a7490477ef4fb271b75d378f00c08c220a9a315e7d78330fd0cffb",
+      "classification": "Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.",
+      "checks": {
+        "literalFixtureTable": true,
+        "localRedactionAssertions": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:192",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 192,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "a5e919d6a3691b520560ea7fda365eb132fee4c9c07fc281e2950014a8d0be89",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:201",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 201,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "6c01321ac435d5b970eb1707cd7d0ae381075430c5450ec633fd1dd74f4a62f7",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:204",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 204,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "66a8c8ac2808f4640c672d9cf082599aa0004ede8be17352c6bd0ef7f9962006",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:207",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 207,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "108e5826313feefa57a3b92437efa6e973c613f4c219145f0ee4b4a1628602f7",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:287",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 287,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "e06ed8ade388912eff8b32f5d2f20581cb1c8c77eda66be5f8f828c203cb35a3",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:626",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 626,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "2d90cc86181a3cdd2f07a1715c7d94ace3448b0821aee00b020d9d69e25fafc6",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:curl-auth-header:296",
+      "RuleID": "curl-auth-header",
+      "File": ".claude/skills/gstack/test/redact-engine.test.ts",
+      "StartLine": 296,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+      "sourceBlob": "f147a79263c3f64f6cabf6e03b5fbd4630a121af",
+      "lineSha256": "f788bd63aafacb2ea6b1516dbc3c260263ee73d71c1235fb8ebb1c6241a49de3",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/telemetry.test.ts:generic-api-key:330",
+      "RuleID": "generic-api-key",
+      "File": ".claude/skills/gstack/test/telemetry.test.ts",
+      "StartLine": 330,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "667f001ef641cb549671f52a95448c04af13d2c60dfefb21404a1b9971ca315e",
+      "sourceBlob": "b384287ed2b72ffabcfd88772ea90f4ab201c21d",
+      "lineSha256": "56ec5b50b47e7fb8c7e1275dc77b386d10c0efb54edc8bf255ee300bdc5a39aa",
+      "classification": "Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.",
+      "checks": {
+        "literalRedactionFixture": true,
+        "redactionAssertionPresent": true,
+        "nonProductionVendorTest": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "64d83390267651ce637cb0f1fdcf25fa6bae2ac9:.gitleaksignore:generic-api-key:329",
+      "RuleID": "generic-api-key",
+      "File": ".gitleaksignore",
+      "StartLine": 329,
+      "Commit": "64d83390267651ce637cb0f1fdcf25fa6bae2ac9",
+      "sourceSha256": "a6f5abf6d9e13379d02b495ba7a5ef960c5dd62407b8234f3a0315e5f48ddc07",
+      "sourceBlob": "58f1e2137919b070f5d0703e63e32265f8adf01f",
+      "lineSha256": "805ad31ec9502e5fbe178e932913ae703d0aea986c341d1b35f648794f08b0bd",
+      "classification": "Human prose in a prior finding explanation, not a credential assignment.",
+      "checks": {
+        "commentOnly": true,
+        "explicitProseExplanationInContext": true
+      },
+      "dispositionApplied": true
+    },
+    {
+      "Fingerprint": "f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/diagram-render/dist/diagram-render.html:gcp-api-key:3603",
+      "RuleID": "gcp-api-key",
+      "File": ".claude/skills/gstack/lib/diagram-render/dist/diagram-render.html",
+      "StartLine": 3603,
+      "Commit": "f304c87d96edc16e2e44d1c58be20483bde800c2",
+      "sourceSha256": "ec759ca41239ff888acdd0654c3f6ef505e3314b87c6e5de11903f804fc8a859",
+      "sourceBlob": "c3757c8f30c2e5f92ed4d5565d01ed735fbb280e",
+      "lineSha256": "3fb70a50306abcff822b7d597344d5525aa04de0117bad7535f9cd6a047ac4e6",
+      "classification": "Public Firebase browser configuration bundled from Excalidraw; the exact value matches pinned upstream public .env.production. This does not establish provider restrictions or database-rule security.",
+      "checks": {
+        "sourceUrl": "https://raw.githubusercontent.com/excalidraw/excalidraw/14d512f32136b376707ed2a3f5af90d6c262d461/.env.production",
+        "upstreamFileSha256": "f2218f25c0665613ead6f75735141ac4068119fa678f4d1d3a7de369be6bd558",
+        "bundledKeyMatchesPublicExcalidrawConfig": true,
+        "publicSourceFetched": true,
+        "providerRestrictionsOrDatabaseRulesVerified": false,
+        "upstreamCommit": "14d512f32136b376707ed2a3f5af90d6c262d461"
+      },
+      "dispositionApplied": true
+    }
+  ],
+  "verifiedAfterAtUtc": "2026-10-17T23:06:06.021629+00:00",
+  "sameCanonicalHistoryAfterFindings": 0,
+  "sameCanonicalHistoryAfterExit": 0,
+  "dispositionFollowupCommitPending": true,
+  "sourceHistoryScanned": "Explicit canonical e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0, excluding unpublished local aa5 history",
+  "afterScanMetadata": "/workspace/audit/oct17-gitleaks-canonical-after-disposition-metadata.json",
+  "contractTests": {
+    "artifact": "/workspace/audit/oct17-gitleaks-disposition-contract-tests.json",
+    "files": 1,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  }
+}

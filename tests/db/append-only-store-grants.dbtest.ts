@@ -82,6 +82,8 @@ const STORES = [
   'public.regulatory_audit_logs',
   'public.c2c_ana_actions',
   'public.authoring_signatures',
+  // 2026-10-18: the texts an agency response has had; a signature binds one by digest.
+  'public.agency_question_response_revisions',
 ] as const;
 const WITHHELD = ['UPDATE', 'DELETE', 'TRUNCATE'] as const;
 /**

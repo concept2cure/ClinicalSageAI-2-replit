@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T23:44:38.768Z","pid":72023,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T23:44:38.770Z","pid":72023,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T23:44:38.770Z","pid":72023,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts
+[database] Database connection successful { timestamp: '2026-10-13T23:44:39.084Z', poolSize: 1 }
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts
+[database] Database connection successful
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > control: a clean canonical protocol finalizes with a matching real content signature
+[database] Database connection successful { timestamp: '2026-10-13T23:44:43.149Z', poolSize: 2 }
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > control: a clean canonical protocol finalizes with a matching real content signature
+[protocol-native-probe:clean-control] {"documentId":7,"signatureId":10,"status":"finalized","version":"1.0","signatures":1,"versions":1,"bindingBasis":"protocol-document-content-sha256","digestMatches":true}
+
+ ✓ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > control: a clean canonical protocol finalizes with a matching real content signature 231ms
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a required section made draft on the signing client instead of checking the pool old state
+[protocol-native-probe:same-client-structural-regression] {"documentId":8,"sectionId":92,"sectionKey":"synopsis","signingPid":3349,"independentPoolPid":3355,"refusalCode":null,"finalized":true,"status":"finalized","returnedCompleteness":{"requiredCompletionPct":100,"requiredTotal":11,"requiredComplete":11,"findings":[],"readyToFinalize":true},"currentReadyToFinalize":false,"snapshotSectionStatus":"draft","signatures":1,"versions":1}
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a content writer queued behind finalization and preserves the signed digest
+[database] Database connection successful { timestamp: '2026-10-13T23:44:43.714Z', poolSize: 3 }
+
+stdout | docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a content writer queued behind finalization and preserves the signed digest
+[protocol-native-probe:finalizer-first-content-writer] {"documentId":9,"sectionId":105,"holderPid":3356,"finalizerPid":3349,"writerPid":3355,"finalizedStatus":201,"finalizedError":null,"writerStatus":201,"writerError":null,"status":"finalized","signatures":1,"versions":1,"queuedContentCommitted":true,"signedDigest":"7658064e001bd837d393fda041093a819007fb0dd34f33450a1b25911162ea7b","currentDigest":"a3722c871b26a88f2bd42ea2034c68c8f56445d346db10af40c68510a30eafeb","digestMatches":false}
+
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a required section made draft on the signing client instead of checking the pool old state 174ms
+   → An incomplete same-client input must stop finalization before release effects.: expected null to be 'INVALID_STATE' // Object.is equality
+ × docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a content writer queued behind finalization and preserves the signed digest 406ms
+   → An edit checked before but committed after finalization must be refused.: expected 201 to be 409 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a required section made draft on the signing client instead of checking the pool old state
+AssertionError: An incomplete same-client input must stop finalization before release effects.: expected null to be 'INVALID_STATE' // Object.is equality
+
+- Expected:
+"INVALID_STATE"
+
++ Received:
+null
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts:183:107
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts > original protocol finalization — native baseline > refuses a content writer queued behind finalization and preserves the signed digest
+AssertionError: An edit checked before but committed after finalization must be refused.: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-baseline.probe.ts:209:105
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  23:44:35
+   Duration  8.65s (transform 3.44s, setup 158ms, import 5.07s, tests 2.81s, environment 0ms)

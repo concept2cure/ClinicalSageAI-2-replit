@@ -38,7 +38,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { openTurnRecorder, writeTurnRecordSafely } from '../../services/ana/turn-record';
 import { createDocumentFromDraft } from '../../services/authoring/authoring-from-draft';
 
@@ -61,7 +61,7 @@ const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5' };
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',

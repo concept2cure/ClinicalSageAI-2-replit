@@ -112,11 +112,37 @@ describe('checkJwtSecretStrength', () => {
 
 describe('checkClamavConnectivity', () => {
   it('skips when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'test';
     delete process.env.CLAMAV_HOST;
     const { __testing } = await import('../securityHealth');
     const r = await __testing.checkClamavConnectivity();
     expect(r.status).toBe('skipped');
     expect(r.critical).toBe(false);
+  });
+
+  it('skips in development when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.CLAMAV_HOST;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkClamavConnectivity();
+    expect(r.status).toBe('skipped');
+    expect(r.critical).toBe(false);
+  });
+
+  // MR-08 stage 1. Production refuses every upload it cannot scan
+  // (middleware/uploadSafety.ts), so a production process with no scanner
+  // configured booted green and then refused every file. It now refuses to boot
+  // (startup/security-self-test.ts exits on a critical failure in production).
+  it('fails (critical) in production when CLAMAV_HOST is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.CLAMAV_HOST;
+    const { __testing } = await import('../securityHealth');
+    const r = await __testing.checkClamavConnectivity();
+    expect(r.status).toBe('fail');
+    expect(r.critical).toBe(true);
+    expect(r.reason).toBe(
+      'CLAMAV_HOST not set: production refuses every upload (server/middleware/uploadSafety.ts)',
+    );
   });
 
   it('fails when daemon is unreachable', async () => {
@@ -266,8 +292,37 @@ describe('runSecurityHealthChecks — overall rollup', () => {
 
     // JWT and ClamAV-skipped pass. Audit checks warn. No critical fail.
     expect(report.overall).not.toBe('failing');
-    // Audit checks should be in the warn state.
+    // Inactive development audit checks are skipped rather than probed.
     const chain = report.checks.find(c => c.name === 'audit_chain_integrity');
-    expect(chain?.status === 'warn' || chain?.status === 'pass').toBe(true);
+    expect(chain?.status === 'warn' || chain?.status === 'pass' || chain?.status === 'skipped').toBe(true);
+  });
+});
+
+describe('inactive development audit trail', () => {
+  it('skips audit-only checks without querying an inactive trail', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    delete process.env.ENABLE_AUDIT_CHAIN_CHECK;
+    const pool = { query: vi.fn() } as any;
+    const { __testing } = await import('../securityHealth');
+
+    await expect(__testing.checkAuditChainIntegrity(pool)).resolves.toMatchObject({
+      status: 'skipped',
+      critical: false,
+    });
+    await expect(__testing.checkAuditEventCoverage(pool)).resolves.toMatchObject({
+      status: 'skipped',
+      critical: false,
+    });
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  it('keeps audit integrity checking active in production', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    delete process.env.ENABLE_AUDIT_CHAIN_CHECK;
+    const { __testing } = await import('../securityHealth');
+
+    expect(__testing.isAuditIntegrityCheckEnabled()).toBe(true);
   });
 });

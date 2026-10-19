@@ -24,4 +24,3 @@ Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
       Tests  no tests
    Start at  03:39:15
    Duration  372ms (transform 132ms, setup 109ms, import 0ms, tests 0ms, environment 0ms)
-

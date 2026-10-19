@@ -18,6 +18,11 @@
 --
 -- Notes:
 --   - Row D3, 2026-09-29. Evidence: docs/evidence/D3/2026-09-29-actor-names/.
+--   - Amended in place 2026-10-05: PostgreSQL accepts SET LOCAL for the
+--     request-scoped app.current_user_role setting but rejects that custom GUC
+--     in a CREATE FUNCTION SET clause on this deployment. The function now
+--     scopes and restores the setting in its body, preserving the RLS contract
+--     without leaving the caller elevated for the rest of its transaction.
 -- =============================================================================
 --
 -- AMENDED IN PLACE 2026-10-04 (Rule 1; D3, the pre-auth narrowing; evidence
@@ -87,35 +92,46 @@ BEGIN
   EXECUTE $fn$
     CREATE OR REPLACE FUNCTION public.actor_name(p_user_id integer)
     RETURNS TABLE (name text, email text)
-    LANGUAGE sql
-    STABLE
+    LANGUAGE plpgsql
+    VOLATILE
     SECURITY DEFINER
     SET search_path = pg_catalog, public
-    SET app.current_user_role = 'app_super_admin'
     AS $body$
-      SELECT u.name, u.email
-        FROM public.users u
-       WHERE u.id = p_user_id
-         AND (
-           NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on'
-           OR (
-             -- Tenant 0 is no organization: sign-in events are written to it,
-             -- so its "actors" are everyone who ever tried to sign in.
-             NULLIF(current_setting('app.current_tenant_id', true), '') IS DISTINCT FROM '0'
+    DECLARE
+      previous_role text := current_setting('app.current_user_role', true);
+    BEGIN
+      PERFORM set_config('app.current_user_role', 'app_super_admin', true);
+      BEGIN
+        RETURN QUERY
+          SELECT u.name, u.email
+            FROM public.users u
+           WHERE u.id = p_user_id
              AND (
-               EXISTS (
-                 SELECT 1 FROM public.organization_users ou
-                  WHERE ou.user_id = p_user_id
-                    AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
-               )
-               OR EXISTS (
-                 SELECT 1 FROM public.audit_logs a
-                  WHERE a.actor_id = p_user_id
-                    AND a.tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
-               )
+               NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on'
+               OR (
+                 -- Tenant 0 is no organization: sign-in events are written to it,
+                 -- so its "actors" are everyone who ever tried to sign in.
+                 NULLIF(current_setting('app.current_tenant_id', true), '') IS DISTINCT FROM '0'
+                 AND (
+                   EXISTS (
+                     SELECT 1 FROM public.organization_users ou
+                      WHERE ou.user_id = p_user_id
+                        AND ou.organization_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+                   )
+                   OR EXISTS (
+                     SELECT 1 FROM public.audit_logs a
+                      WHERE a.actor_id = p_user_id
+                        AND a.tenant_id = (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer
+                   )
+                 )
              )
-           )
-         )
+           );
+      EXCEPTION WHEN others THEN
+        PERFORM set_config('app.current_user_role', coalesce(previous_role, ''), true);
+        RAISE;
+      END;
+      PERFORM set_config('app.current_user_role', coalesce(previous_role, ''), true);
+    END;
     $body$
   $fn$;
 

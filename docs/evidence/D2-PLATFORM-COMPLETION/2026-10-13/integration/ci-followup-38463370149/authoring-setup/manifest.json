@@ -1,0 +1,24 @@
+{
+  "ciRun": 38463370149,
+  "result": {
+    "filesPassed": 5,
+    "testsPassed": 41,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "exitCode": 0,
+    "durationSeconds": 29.63
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0
+  },
+  "productionFilesChanged": false,
+  "sha256": {
+    "server/routes/__tests__/authoring-section-figure-refs.test.ts": "e388056ae0d5a0724a7a28e02d6a2e7787156d4dcc6b2aa773665fb533534a1f",
+    "server/routes/__tests__/authoringApprovalNoWorkflow.test.ts": "c78184b7e40fdf85aba4d914be6cccd790866b17f0b772a6ea8837b1e4a589d1",
+    "server/routes/__tests__/authoringApprovalSealBinding.test.ts": "07b94c4a46c0bf4a5c34682add12133a0c8e95910aca7b490a7d9e0db925b24a",
+    "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts": "2c8b7769611aecfd6ffeb86ddb30ee0b74a6c2ab8b8b2d4db1c61508f3e6ed55",
+    "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts": "65eeac7a86d6a80fe91ef978da8efe0b1944d1e769b58c50b228aecd7084017c"
+  }
+}

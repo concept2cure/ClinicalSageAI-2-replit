@@ -1,34 +1,19 @@
 /**
- * CAPA / complaint / MDR / vigilance service.
+ * Canonical CAPA / complaint / MDR / vigilance service.
  *
- * All reads and writes are tenant-scoped: every operation joins
- * regulatoryPrograms.organization_id and refuses access if the program does
- * not belong to the caller's organization. Mirrors the q-sub / post-market
- * isolation pattern.
- *
- * Public surface:
- *   - createComplaint               — single intake, runs preliminary classification
- *   - getComplaint                  — full detail (with linked MDR + CAPA)
- *   - listComplaints                — filtered list for the triage queue
- *   - transitionComplaint           — state-machine-checked move + audit event
- *   - createMdrEvent                — open an MDR (with reportability clock)
- *   - listMdrEvents                 — filtered list (with aging fields)
- *   - getMdrEvent                   — full detail
- *   - transitionMdrEvent            — state-machine-checked move
- *   - markMdrFiled                  — convenience: filed + confirmation code
- *   - createCapaRecord              — open a CAPA (with optional source refs)
- *   - listCapaRecords               — filtered list
- *   - getCapaRecord                 — full detail (with actions)
- *   - transitionCapa                — state-machine-checked move
- *   - addCapaAction / completeAction — action-item ops
- *   - listVigilanceEvents           — append-only timeline scoped to a program
- *   - getTriageQueue                — unified queue across complaints/MDR/CAPA
+ * Public reads and writes require trusted caller identity and current canonical
+ * programme/project access. Each mutation commits its state, vigilance event and
+ * chained audit together on one connection. Transitions lock and re-read current
+ * state; generated display codes retry within savepoints. The caller receives a
+ * success audit receipt only after confirmed COMMIT, or an explicit readback
+ * receipt when commit completion is unknown. No patient narrative is fabricated.
  */
 
-import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
 
-import { db, pool } from '../../db';
-import auditService from '../auditService';
+import { writeChainedAuditRow } from '../auditService';
+import { capaContext, authorizeCapaProgram, visibleCapaPrograms, mutateCapa, readCapa, CapaPersistenceError, type CapaCaller } from './governed-context';
+export { CapaAccessError, CapaPersistenceError } from './governed-context';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
   complaints,
@@ -36,6 +21,8 @@ import {
   capaRecords,
   capaActions,
   vigilanceEvents,
+  HARM_LEVELS,
+  SEVERITY_LEVELS,
 } from '../../../shared/schema/capa-mdr';
 import type {
   Complaint,
@@ -69,7 +56,7 @@ import {
   assertMdrTransition,
   assertActionTransition,
 } from './stateMachine';
-import { programInOrganization } from '../c2c/program-access';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Errors
@@ -89,16 +76,27 @@ export class NotFoundError extends Error {
   }
 }
 
+/**
+ * A complaint was offered without an assessment the intake needs.
+ *
+ * Patient harm drives the preliminary MDR reportability classification, so it
+ * cannot be assumed. Both fields used to default ('none', 'minor'), and a
+ * complaint nobody had assessed was classified "no MDR".
+ */
+export class ComplaintAssessmentRequired extends Error {
+  constructor(readonly field: 'patientHarm' | 'severityAssessment', allowed: readonly string[]) {
+    super(`${field} is required at intake and must be one of: ${allowed.join(', ')}`);
+    this.name = 'ComplaintAssessmentRequired';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tenant guard — one DB roundtrip to confirm the program belongs to the org.
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assertProgramAccess(organizationId: number, programId: string): Promise<void> {
-    if (!(await programInOrganization(pool, programId, organizationId))) {
-    throw new TenantAccessError(
-      `Program ${programId} not accessible by organization ${organizationId}`
-    );
-  }
+  if (capaContext().organizationId !== organizationId) throw new TenantAccessError('Programme access denied.');
+  await authorizeCapaProgram(programId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,7 +152,7 @@ async function nextCode(
 
   // Read the trailing sequence off this program's codes for this year only. The
   // cast is safe because the LIKE pins the shape to <prefix>-<year>-<digits>.
-  const [row] = await db
+  const [row] = await capaContext().db
     .select({
       maxSeq: sql<number | null>`max(
         nullif(regexp_replace(${codeColumn}, '^.*-', ''), '')::int
@@ -169,7 +167,12 @@ async function nextCode(
 
 /** Postgres unique-violation. */
 function isDuplicateCode(e: unknown): boolean {
-  return typeof e === 'object' && e !== null && (e as { code?: string }).code === '23505';
+  for (let depth = 0; depth < 4 && e && typeof e === 'object'; depth++) {
+    const candidate = e as { code?: string; cause?: unknown };
+    if (candidate.code === '23505') return true;
+    e = candidate.cause;
+  }
+  return false;
 }
 
 /**
@@ -197,10 +200,14 @@ async function insertWithCode<T>(
   const ATTEMPTS = 4;
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
     const code = await nextCode(prefix, programId, table);
+    await capaContext().q.query('SAVEPOINT capa_code_attempt');
     try {
       const [row] = await insert(code);
+      await capaContext().q.query('RELEASE SAVEPOINT capa_code_attempt');
       return { row, code };
     } catch (e) {
+      await capaContext().q.query('ROLLBACK TO SAVEPOINT capa_code_attempt');
+      await capaContext().q.query('RELEASE SAVEPOINT capa_code_attempt');
       if (!isDuplicateCode(e) || attempt === ATTEMPTS) throw e;
     }
   }
@@ -226,31 +233,35 @@ async function recordVigilance(opts: {
   reason?: string | null;
 }): Promise<VigilanceEvent> {
   const occurredAt = opts.occurredAt ?? new Date();
+  const active = capaContext();
 
-  const [row] = await db
+  const [row] = await capaContext().db
     .insert(vigilanceEvents)
     .values({
       programId: opts.programId,
       kind: opts.kind,
       entityType: opts.entityType,
       entityId: opts.entityId,
-      actor: opts.actor ?? null,
-      actorRole: opts.actorRole ?? null,
+      actor: String(active.caller.userId),
+      actorRole: active.role,
       occurredAt,
       payload: opts.payload ?? null,
       reason: opts.reason ?? null,
     })
     .returning();
 
-  // Mirror to the platform-wide audit_logs table.
-  await auditService.logAction({
-    tenantId: opts.organizationId,
-    userId: opts.actor ?? undefined,
-    action: opts.kind,
-    resourceType: opts.entityType,
-    resourceId: opts.entityId,
-    details: { programId: opts.programId, payload: opts.payload, reason: opts.reason },
-  });
+  // Critical governance is enlisted with state and timeline, never mirrored
+  // after the business transaction has already committed.
+  try {
+    await writeChainedAuditRow(active.q, { organizationId: active.organizationId,
+      userId: active.caller.userId, action: opts.kind, resourceType: opts.entityType,
+      resourceId: opts.entityId, reason: opts.reason ?? undefined,
+      details: { programId: opts.programId, payload: opts.payload, reason: opts.reason } });
+  } catch { throw new CapaPersistenceError('CAPA_AUDIT_UNAVAILABLE'); }
+  active.auditWrites++;
+  const collection = { complaint: 'complaints', mdr_event: 'mdr-events', capa_record: 'capa', capa_action: 'capa' }[opts.entityType];
+  const recoveryId = opts.entityType === 'capa_action' ? String(opts.payload?.capaId) : opts.entityId;
+  active.recovery = { recordId: opts.entityId, recoveryUrl: `/api/capa-mdr/${collection}/${encodeURIComponent(recoveryId)}` };
 
   return row;
 }
@@ -272,22 +283,33 @@ export interface CreateComplaintInput {
   eventDate?: Date | null;
   eventLocationCountry?: string | null;
   eventNarrative: string;
-  patientHarm?: HarmLevel;
-  severityAssessment?: SeverityLevel;
+  /** Required: the intake classification is computed from it. */
+  patientHarm: HarmLevel;
+  severityAssessment: SeverityLevel;
   isMalfunction?: boolean;
   anticipatesCorrection?: boolean;
   trendThresholdCrossed?: boolean;
   createdBy?: string | null;
 }
 
-export async function createComplaint(
+/** Intake assessments are required before a database transaction is acquired. */
+function requireComplaintAssessments(input: CreateComplaintInput): void {
+  if (!(HARM_LEVELS as readonly string[]).includes(input.patientHarm)) {
+    throw new ComplaintAssessmentRequired('patientHarm', HARM_LEVELS);
+  }
+  if (!(SEVERITY_LEVELS as readonly string[]).includes(input.severityAssessment)) {
+    throw new ComplaintAssessmentRequired('severityAssessment', SEVERITY_LEVELS);
+  }
+}
+
+async function createComplaintTx(
   organizationId: number,
   input: CreateComplaintInput
 ): Promise<Complaint> {
   await assertProgramAccess(organizationId, input.programId);
 
   const triageInput: TriageInput = {
-    patientHarm: input.patientHarm ?? 'none',
+    patientHarm: input.patientHarm,
     isMalfunction: input.isMalfunction ?? false,
     eventLocationCountry: input.eventLocationCountry ?? null,
     anticipatesCorrection: input.anticipatesCorrection ?? false,
@@ -297,7 +319,7 @@ export async function createComplaint(
   const classification = classify(triageInput);
 
   const { row, code } = await insertWithCode('CMP', input.programId, 'complaint', generated =>
-    db
+    capaContext().db
       .insert(complaints)
       .values({
         programId: input.programId,
@@ -313,8 +335,8 @@ export async function createComplaint(
         eventDate: input.eventDate ?? null,
         eventLocationCountry: input.eventLocationCountry ?? null,
         eventNarrative: input.eventNarrative,
-        patientHarm: input.patientHarm ?? 'none',
-        severityAssessment: input.severityAssessment ?? 'minor',
+        patientHarm: input.patientHarm,
+        severityAssessment: input.severityAssessment,
         preliminaryClassification: classification,
         triageState: 'new',
         createdBy: input.createdBy ?? null,
@@ -346,13 +368,14 @@ export interface ListComplaintsFilters {
   limit?: number;
 }
 
-export async function listComplaints(
+async function listComplaintsTx(
   organizationId: number,
   filters: ListComplaintsFilters = {}
 ): Promise<Complaint[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
-  const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
-  if (filters.programId) conds.push(eq(complaints.programId, filters.programId));
+  const programs = await visibleCapaPrograms(filters.programId);
+  if (!programs.length) return [];
+  const conds = [eq(regulatoryPrograms.organizationId, organizationId), inArray(complaints.programId, programs)];
   if (filters.state) conds.push(eq(complaints.triageState, filters.state));
   if (filters.source) conds.push(eq(complaints.source, filters.source));
   if (filters.severity) conds.push(eq(complaints.severityAssessment, filters.severity));
@@ -360,7 +383,7 @@ export async function listComplaints(
     conds.push(sql`${complaints.triageState} <> 'closed'`);
   }
 
-  const rows = await db
+  const rows = await capaContext().db
     .select({ row: complaints })
     .from(complaints)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`))
@@ -371,14 +394,19 @@ export async function listComplaints(
   return rows.map(r => r.row);
 }
 
-export async function getComplaint(organizationId: number, id: string): Promise<Complaint | null> {
-  const [row] = await db
+async function getComplaintTx(organizationId: number, id: string): Promise<Complaint | null> {
+  const [row] = await capaContext().db
     .select({ row: complaints })
     .from(complaints)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`))
     .where(and(eq(complaints.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
-  return row?.row ?? null;
+  if (!row) return null;
+  await assertProgramAccess(organizationId, row.row.programId);
+  if (!capaContext().write) return row.row;
+  const [current] = await capaContext().db.select().from(complaints)
+    .where(and(eq(complaints.id, id), eq(complaints.programId, row.row.programId))).for('update');
+  return current ?? null;
 }
 
 export interface TransitionComplaintInput {
@@ -390,18 +418,19 @@ export interface TransitionComplaintInput {
   actorRole?: string | null;
 }
 
-export async function transitionComplaint(
+async function transitionComplaintTx(
   organizationId: number,
   id: string,
   input: TransitionComplaintInput
 ): Promise<Complaint> {
-  const current = await getComplaint(organizationId, id);
+  const current = await getComplaintTx(organizationId, id);
   if (!current) throw new NotFoundError(`Complaint ${id} not found`);
   assertComplaintTransition(current.triageState as ComplaintState, input.to);
 
   const now = new Date();
   const update: Partial<Complaint> = {
     triageState: input.to,
+    updatedAt: now,
     updatedBy: input.actor ?? null,
   };
   if (input.to === 'triaged') {
@@ -415,7 +444,7 @@ export async function transitionComplaint(
     update.closureReason = input.closureReason ?? null;
   }
 
-  const [row] = await db.update(complaints).set(update).where(eq(complaints.id, id)).returning();
+  const [row] = await capaContext().db.update(complaints).set(update).where(eq(complaints.id, id)).returning();
 
   await recordVigilance({
     organizationId,
@@ -458,17 +487,20 @@ export interface CreateMdrEventInput {
   createdBy?: string | null;
 }
 
-export async function createMdrEvent(
+async function createMdrEventTx(
   organizationId: number,
   input: CreateMdrEventInput
 ): Promise<MdrEvent> {
   await assertProgramAccess(organizationId, input.programId);
   // The complaint this event is sourced from must be one this org can see.
-  // The link below writes to `complaints`, which has no organization column and
-  // no RLS policy, so a foreign id would have re-pointed another tenant's
-  // complaint at this event with nothing under the app to stop it (ledger L195).
-  if (input.sourceComplaintId && !(await getComplaint(organizationId, input.sourceComplaintId))) {
-    throw new NotFoundError('Source complaint not found');
+  // The actual source must be in this programme. Canonical child RLS also
+  // scopes complaints through its parent; neither substitutes for this link check.
+  if (input.sourceComplaintId) {
+    const [bound] = await capaContext().db.select({ id: complaints.id }).from(complaints)
+      .where(and(eq(complaints.id, input.sourceComplaintId), eq(complaints.programId, input.programId))).limit(1);
+    if (!bound) throw new NotFoundError('Source complaint not found in this programme.');
+    const source = await getComplaintTx(organizationId, input.sourceComplaintId);
+    if (!source || source.programId !== input.programId) throw new NotFoundError('Source complaint not found in this programme.');
   }
 
   const clock = computeReportDue({
@@ -481,7 +513,7 @@ export async function createMdrEvent(
   const days = daysToDue(clock.reportDueAt);
 
   const { row, code } = await insertWithCode('MDR', input.programId, 'mdr', generated =>
-    db
+    capaContext().db
       .insert(mdrEvents)
       .values({
         programId: input.programId,
@@ -519,9 +551,9 @@ export async function createMdrEvent(
 
   // If sourced from a complaint, flip the complaint's linkedMdrEventId.
   if (input.sourceComplaintId) {
-    await db
+    await capaContext().db
       .update(complaints)
-      .set({ linkedMdrEventId: row.id })
+      .set({ linkedMdrEventId: row.id, updatedAt: new Date(), updatedBy: String(capaContext().caller.userId) })
       .where(eq(complaints.id, input.sourceComplaintId));
   }
 
@@ -536,13 +568,14 @@ export interface ListMdrFilters {
   limit?: number;
 }
 
-export async function listMdrEvents(
+async function listMdrEventsTx(
   organizationId: number,
   filters: ListMdrFilters = {}
 ): Promise<MdrEvent[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
-  const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
-  if (filters.programId) conds.push(eq(mdrEvents.programId, filters.programId));
+  const programs = await visibleCapaPrograms(filters.programId);
+  if (!programs.length) return [];
+  const conds = [eq(regulatoryPrograms.organizationId, organizationId), inArray(mdrEvents.programId, programs)];
   if (filters.state) conds.push(eq(mdrEvents.state, filters.state));
   if (filters.jurisdiction) conds.push(eq(mdrEvents.jurisdiction, filters.jurisdiction));
   if (filters.overdueOnly) {
@@ -551,7 +584,7 @@ export async function listMdrEvents(
     );
   }
 
-  const rows = await db
+  const rows = await capaContext().db
     .select({ row: mdrEvents })
     .from(mdrEvents)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`))
@@ -563,15 +596,19 @@ export async function listMdrEvents(
   return rows.map(r => ({ ...r.row, daysToDue: daysToDue(r.row.reportDueAt) }));
 }
 
-export async function getMdrEvent(organizationId: number, id: string): Promise<MdrEvent | null> {
-  const [row] = await db
+async function getMdrEventTx(organizationId: number, id: string): Promise<MdrEvent | null> {
+  const [row] = await capaContext().db
     .select({ row: mdrEvents })
     .from(mdrEvents)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`))
     .where(and(eq(mdrEvents.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   if (!row) return null;
-  return { ...row.row, daysToDue: daysToDue(row.row.reportDueAt) };
+  await assertProgramAccess(organizationId, row.row.programId);
+  if (!capaContext().write) return { ...row.row, daysToDue: daysToDue(row.row.reportDueAt) };
+  const [current] = await capaContext().db.select().from(mdrEvents)
+    .where(and(eq(mdrEvents.id, id), eq(mdrEvents.programId, row.row.programId))).for('update');
+  return current ? { ...current, daysToDue: daysToDue(current.reportDueAt) } : null;
 }
 
 export interface TransitionMdrInput {
@@ -584,18 +621,19 @@ export interface TransitionMdrInput {
   reportConfirmationCode?: string | null;
 }
 
-export async function transitionMdrEvent(
+async function transitionMdrEventTx(
   organizationId: number,
   id: string,
   input: TransitionMdrInput
 ): Promise<MdrEvent> {
-  const current = await getMdrEvent(organizationId, id);
+  const current = await getMdrEventTx(organizationId, id);
   if (!current) throw new NotFoundError(`MDR event ${id} not found`);
   assertMdrTransition(current.state as MdrState, input.to);
 
   const now = new Date();
   const update: Partial<MdrEvent> = {
     state: input.to,
+    updatedAt: now,
     updatedBy: input.actor ?? null,
   };
   if (input.to === 'filed') {
@@ -607,7 +645,7 @@ export async function transitionMdrEvent(
     }
   }
 
-  const [row] = await db.update(mdrEvents).set(update).where(eq(mdrEvents.id, id)).returning();
+  const [row] = await capaContext().db.update(mdrEvents).set(update).where(eq(mdrEvents.id, id)).returning();
 
   const kind: VigilanceEventKind =
     input.to === 'filed'
@@ -650,13 +688,13 @@ export interface CreateCapaInput {
   createdBy?: string | null;
 }
 
-export async function createCapaRecord(
+async function createCapaRecordTx(
   organizationId: number,
   input: CreateCapaInput
 ): Promise<CapaRecord> {
   await assertProgramAccess(organizationId, input.programId);
   const { row, code } = await insertWithCode('CAPA', input.programId, 'capa', generated =>
-    db
+    capaContext().db
       .insert(capaRecords)
       .values({
         programId: input.programId,
@@ -699,13 +737,14 @@ export interface ListCapaFilters {
   limit?: number;
 }
 
-export async function listCapaRecords(
+async function listCapaRecordsTx(
   organizationId: number,
   filters: ListCapaFilters = {}
 ): Promise<CapaRecord[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
-  const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
-  if (filters.programId) conds.push(eq(capaRecords.programId, filters.programId));
+  const programs = await visibleCapaPrograms(filters.programId);
+  if (!programs.length) return [];
+  const conds = [eq(regulatoryPrograms.organizationId, organizationId), inArray(capaRecords.programId, programs)];
   if (filters.state) conds.push(eq(capaRecords.state, filters.state));
   if (filters.source) conds.push(eq(capaRecords.source, filters.source));
   if (filters.riskLevel) conds.push(eq(capaRecords.riskLevel, filters.riskLevel));
@@ -713,7 +752,7 @@ export async function listCapaRecords(
     conds.push(sql`${capaRecords.state} NOT IN ('closed_effective','closed_not_effective')`);
   }
 
-  const rows = await db
+  const rows = await capaContext().db
     .select({ row: capaRecords })
     .from(capaRecords)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
@@ -728,25 +767,33 @@ export interface CapaDetail extends CapaRecord {
   actions: CapaAction[];
 }
 
-export async function getCapaRecord(
+async function getCapaRecordTx(
   organizationId: number,
   id: string
 ): Promise<CapaDetail | null> {
-  const [row] = await db
+  const [row] = await capaContext().db
     .select({ row: capaRecords })
     .from(capaRecords)
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
     .where(and(eq(capaRecords.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   if (!row) return null;
+  await assertProgramAccess(organizationId, row.row.programId);
+  let current = row.row;
+  if (capaContext().write) {
+    const locked = await capaContext().db.select().from(capaRecords)
+      .where(and(eq(capaRecords.id, id), eq(capaRecords.programId, row.row.programId))).for('update');
+    if (!locked[0]) return null;
+    current = locked[0];
+  }
 
-  const actions = await db
+  const actions = await capaContext().db
     .select()
     .from(capaActions)
     .where(eq(capaActions.capaId, id))
     .orderBy(asc(capaActions.n));
 
-  return { ...row.row, actions };
+  return { ...current, actions };
 }
 
 export interface TransitionCapaInput {
@@ -757,18 +804,19 @@ export interface TransitionCapaInput {
   effectivenessCheckResult?: Record<string, unknown> | null;
 }
 
-export async function transitionCapa(
+async function transitionCapaTx(
   organizationId: number,
   id: string,
   input: TransitionCapaInput
 ): Promise<CapaRecord> {
-  const current = await getCapaRecord(organizationId, id);
+  const current = await getCapaRecordTx(organizationId, id);
   if (!current) throw new NotFoundError(`CAPA ${id} not found`);
   assertCapaTransition(current.state as CapaState, input.to);
 
   const now = new Date();
   const update: Partial<CapaRecord> = {
     state: input.to,
+    updatedAt: now,
     updatedBy: input.actor ?? null,
   };
   if (input.to === 'closed_effective' || input.to === 'closed_not_effective') {
@@ -779,7 +827,7 @@ export async function transitionCapa(
     }
   }
 
-  const [row] = await db.update(capaRecords).set(update).where(eq(capaRecords.id, id)).returning();
+  const [row] = await capaContext().db.update(capaRecords).set(update).where(eq(capaRecords.id, id)).returning();
 
   const kind: VigilanceEventKind =
     input.to === 'closed_effective' || input.to === 'closed_not_effective'
@@ -821,20 +869,20 @@ export interface AddCapaActionInput {
   actor?: string | null;
 }
 
-export async function addCapaAction(
+async function addCapaActionTx(
   organizationId: number,
   input: AddCapaActionInput
 ): Promise<CapaAction> {
   // Verify the parent CAPA belongs to the org.
-  const parent = await getCapaRecord(organizationId, input.capaId);
+  const parent = await getCapaRecordTx(organizationId, input.capaId);
   if (!parent) throw new NotFoundError(`CAPA ${input.capaId} not found`);
 
-  const [{ next }] = await db
+  const [{ next }] = await capaContext().db
     .select({ next: sql<number>`coalesce(max(${capaActions.n}), 0) + 1` })
     .from(capaActions)
     .where(eq(capaActions.capaId, input.capaId));
 
-  const [row] = await db
+  const [row] = await capaContext().db
     .insert(capaActions)
     .values({
       capaId: input.capaId,
@@ -867,13 +915,13 @@ export interface UpdateCapaActionInput {
   reason?: string | null;
 }
 
-export async function transitionCapaAction(
+async function transitionCapaActionTx(
   organizationId: number,
   actionId: string,
   input: UpdateCapaActionInput
 ): Promise<CapaAction> {
   // Tenant guard via a join.
-  const rows = await db
+  const rows = await capaContext().db
     .select({ action: capaActions, programId: capaRecords.programId })
     .from(capaActions)
     .innerJoin(capaRecords, eq(capaRecords.id, capaActions.capaId))
@@ -882,12 +930,18 @@ export async function transitionCapaAction(
     .limit(1);
   const ctx = rows[0];
   if (!ctx) throw new NotFoundError(`Action ${actionId} not found`);
+  await assertProgramAccess(organizationId, ctx.programId);
+  const [currentAction] = await capaContext().db.select().from(capaActions)
+    .where(and(eq(capaActions.id, actionId), eq(capaActions.capaId, ctx.action.capaId))).for('update');
+  if (!currentAction) throw new NotFoundError('Action not found.');
+  ctx.action = currentAction;
 
   assertActionTransition(ctx.action.state as ActionState, input.to);
 
   const now = new Date();
   const update: Partial<CapaAction> = {
     state: input.to,
+    updatedAt: now,
   };
   if (input.to === 'done') {
     update.completedAt = now;
@@ -895,7 +949,7 @@ export async function transitionCapaAction(
     if (input.evidenceRefs !== undefined) update.evidenceRefs = input.evidenceRefs as unknown;
   }
 
-  const [row] = await db
+  const [row] = await capaContext().db
     .update(capaActions)
     .set(update)
     .where(eq(capaActions.id, actionId))
@@ -909,7 +963,7 @@ export async function transitionCapaAction(
     entityId: actionId,
     actor: input.actor ?? null,
     occurredAt: now,
-    payload: { from: ctx.action.state, to: input.to, evidenceRefs: input.evidenceRefs ?? null },
+    payload: { capaId: ctx.action.capaId, from: ctx.action.state, to: input.to, evidenceRefs: input.evidenceRefs ?? null },
     reason: input.reason ?? null,
   });
 
@@ -928,7 +982,7 @@ export interface ListVigilanceFilters {
   limit?: number;
 }
 
-export async function listVigilanceEvents(
+async function listVigilanceEventsTx(
   organizationId: number,
   filters: ListVigilanceFilters
 ): Promise<VigilanceEvent[]> {
@@ -938,7 +992,7 @@ export async function listVigilanceEvents(
   if (filters.entityType) conds.push(eq(vigilanceEvents.entityType, filters.entityType));
   if (filters.entityId) conds.push(eq(vigilanceEvents.entityId, filters.entityId));
   if (filters.kind) conds.push(eq(vigilanceEvents.kind, filters.kind));
-  return db
+  return capaContext().db
     .select()
     .from(vigilanceEvents)
     .where(and(...conds))
@@ -970,7 +1024,7 @@ export interface TriageQueueFilters {
   limit?: number;
 }
 
-export async function getTriageQueue(
+async function getTriageQueueTx(
   organizationId: number,
   filters: TriageQueueFilters = {}
 ): Promise<TriageQueueItem[]> {
@@ -978,16 +1032,16 @@ export async function getTriageQueue(
   const now = Date.now();
 
   const [openComplaints, openMdrs, openCapas] = await Promise.all([
-    listComplaints(organizationId, {
+    listComplaintsTx(organizationId, {
       programId: filters.programId,
       openOnly: filters.openOnly ?? true,
       limit,
     }),
-    listMdrEvents(organizationId, {
+    listMdrEventsTx(organizationId, {
       programId: filters.programId,
       limit,
     }),
-    listCapaRecords(organizationId, {
+    listCapaRecordsTx(organizationId, {
       programId: filters.programId,
       openOnly: filters.openOnly ?? true,
       limit,
@@ -1061,4 +1115,56 @@ export async function getTriageQueue(
   });
 
   return items.slice(0, limit);
+}
+
+// Public entrypoints require trusted caller identity for API and AnA alike.
+// Display actor fields never determine service authority.
+export async function createComplaint(org: number, input: CreateComplaintInput, caller: CapaCaller) {
+  requireComplaintAssessments(input);
+  return mutateCapa(org, caller, () => createComplaintTx(org, { ...input, createdBy: String(caller.userId) }));
+}
+export function transitionComplaint(org: number, id: string, input: TransitionComplaintInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => transitionComplaintTx(org, id, { ...input, actor: String(caller.userId) }));
+}
+export function createMdrEvent(org: number, input: CreateMdrEventInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => createMdrEventTx(org, { ...input, createdBy: String(caller.userId) }));
+}
+export function transitionMdrEvent(org: number, id: string, input: TransitionMdrInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => transitionMdrEventTx(org, id, { ...input, actor: String(caller.userId) }));
+}
+export function createCapaRecord(org: number, input: CreateCapaInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => createCapaRecordTx(org, { ...input, createdBy: String(caller.userId) }));
+}
+export function transitionCapa(org: number, id: string, input: TransitionCapaInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => transitionCapaTx(org, id, { ...input, actor: String(caller.userId) }));
+}
+export function addCapaAction(org: number, input: AddCapaActionInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => addCapaActionTx(org, { ...input, actor: String(caller.userId) }));
+}
+export function transitionCapaAction(org: number, id: string, input: UpdateCapaActionInput, caller: CapaCaller) {
+  return mutateCapa(org, caller, () => transitionCapaActionTx(org, id, { ...input, actor: String(caller.userId) }));
+}
+export function getComplaint(org: number, id: string, caller: CapaCaller) {
+  return readCapa(org, caller, () => getComplaintTx(org, id));
+}
+export function listComplaints(org: number, filters: ListComplaintsFilters, caller: CapaCaller) {
+  return readCapa(org, caller, () => listComplaintsTx(org, filters));
+}
+export function getMdrEvent(org: number, id: string, caller: CapaCaller) {
+  return readCapa(org, caller, () => getMdrEventTx(org, id));
+}
+export function listMdrEvents(org: number, filters: ListMdrFilters, caller: CapaCaller) {
+  return readCapa(org, caller, () => listMdrEventsTx(org, filters));
+}
+export function getCapaRecord(org: number, id: string, caller: CapaCaller) {
+  return readCapa(org, caller, () => getCapaRecordTx(org, id));
+}
+export function listCapaRecords(org: number, filters: ListCapaFilters, caller: CapaCaller) {
+  return readCapa(org, caller, () => listCapaRecordsTx(org, filters));
+}
+export function listVigilanceEvents(org: number, filters: ListVigilanceFilters, caller: CapaCaller) {
+  return readCapa(org, caller, () => listVigilanceEventsTx(org, filters));
+}
+export function getTriageQueue(org: number, filters: TriageQueueFilters, caller: CapaCaller) {
+  return readCapa(org, caller, () => getTriageQueueTx(org, filters));
 }

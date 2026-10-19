@@ -20,14 +20,13 @@ import type { AnaTool } from '../ai-gateway/types';
 export const ASSESS_ANALYTICAL_SIMILARITY: AnaTool = {
   name: 'assess_analytical_similarity',
   description:
-    "Run the DETERMINISTIC analytical-similarity engine for a BLA 351(a)/biosimilar 351(k) program. Compares a proposed biologic to a reference product across critical quality attributes using the FDA tiered framework: Tier 1 equivalence test (EAC = ±1.5·σ_R, 90% CI), Tier 2 quality range (mean_R ± k·σ_R, % of test lots within), Tier 3 min–max. Use when the user asks to run a Tier 1 similarity check, compare to a reference product, or assess analytical similarity. Returns per-attribute verdicts with the underlying statistics and an overall conclusion. Report the verdicts and numbers verbatim.",
+    "Run the DETERMINISTIC analytical-similarity engine for a BLA 351(a)/biosimilar 351(k) program. Compares a proposed biologic to a reference product across critical quality attributes using the FDA tiered framework: Tier 1 equivalence test (EAC = ±1.5·σ_R, 90% CI), Tier 2 quality range (mean_R ± k·σ_R, % of test lots within), Tier 3 min–max. Use when the user asks to run a Tier 1 similarity check, compare to a reference product, or assess analytical similarity. Returns per-attribute verdicts with the underlying statistics and an overall conclusion. Report the verdicts and numbers verbatim. Computes only; it does not save or sign an assessment. Use the governed NDA/BLA assessment controls for saving and signing.",
   input_schema: {
     type: 'object',
     properties: {
       referenceProduct: { type: 'string', description: 'Reference product name (e.g. the originator/RP).' },
       modality: { type: 'string', description: 'Product modality, e.g. monoclonal_antibody, fusion_protein, adc.' },
       targetAgency: { type: 'string', description: 'Target agency (FDA, EMA, PMDA).' },
-      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist the assessment against.' },
       attributes: {
         type: 'array',
         description: 'Critical quality attributes with reference and test lot measurements.',
@@ -56,7 +55,7 @@ export const ASSESS_ANALYTICAL_SIMILARITY: AnaTool = {
 export const ASSESS_COMPARABILITY: AnaTool = {
   name: 'assess_comparability',
   description:
-    "Run the DETERMINISTIC ICH Q5E comparability engine: assess whether a biologic produced after a manufacturing change (process/site/scale/formulation) is comparable to the pre-change material. Per attribute it tests post-change lots against the pre-change quality range, the standardized mean shift, and (for high-criticality attributes) equivalence; then derives the overall conclusion and whether analytical data alone is sufficient or non-clinical/clinical bridging is indicated. Use for manufacturing change comparability questions. Report the verdicts, the bridging recommendation, and numbers verbatim.",
+    "Run the DETERMINISTIC ICH Q5E comparability engine: assess whether a biologic produced after a manufacturing change (process/site/scale/formulation) is comparable to the pre-change material. Per attribute it tests post-change lots against the pre-change quality range, the standardized mean shift, and (for high-criticality attributes) equivalence; then derives the overall conclusion and whether analytical data alone is sufficient or non-clinical/clinical bridging is indicated. Use for manufacturing change comparability questions. Report the verdicts, the bridging recommendation, and numbers verbatim. Computes only; it does not save or sign an assessment. Use the governed NDA/BLA assessment controls for saving and signing.",
   input_schema: {
     type: 'object',
     properties: {
@@ -64,7 +63,6 @@ export const ASSESS_COMPARABILITY: AnaTool = {
       changeType: { type: 'string', description: 'process | site | scale | formulation | cell_bank.' },
       modality: { type: 'string' },
       targetAgency: { type: 'string' },
-      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
       attributes: {
         type: 'array',
         description: 'Quality attributes with pre- and post-change lot measurements.',
@@ -91,14 +89,13 @@ export const ASSESS_COMPARABILITY: AnaTool = {
 export const ASSESS_IMMUNOGENICITY: AnaTool = {
   name: 'assess_immunogenicity',
   description:
-    "Run the DETERMINISTIC immunogenicity engine: compute ADA and neutralizing-antibody (NAb) incidence with 95% Wilson CIs per arm, the comparative between-arm difference (Newcombe), and an overall immunogenicity risk classification (low/moderate/high) using the FDA risk-based framework (likelihood × clinical consequence). Use for immunogenicity incidence, comparative immunogenicity, and risk-assessment questions. Report the incidences, comparison, and risk tier verbatim.",
+    "Run the DETERMINISTIC immunogenicity engine: compute ADA and neutralizing-antibody (NAb) incidence with 95% Wilson CIs per arm, the comparative between-arm difference (Newcombe), and an overall immunogenicity risk classification (low/moderate/high) using the FDA risk-based framework (likelihood × clinical consequence). Use for immunogenicity incidence, comparative immunogenicity, and risk-assessment questions. Report the incidences, comparison, and risk tier verbatim. Computes only; it does not save or sign an assessment. Use the governed NDA/BLA assessment controls for saving and signing.",
   input_schema: {
     type: 'object',
     properties: {
       productType: { type: 'string', enum: ['biologic', 'biosimilar'] },
       modality: { type: 'string' },
       targetAgency: { type: 'string' },
-      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
       riskFactors: {
         type: 'object',
         description: 'Product/patient factors that modulate immunogenicity risk.',
@@ -139,13 +136,12 @@ export const ASSESS_IMMUNOGENICITY: AnaTool = {
 export const ASSESS_BLA_FILING_RISK: AnaTool = {
   name: 'assess_bla_filing_risk',
   description:
-    "Run the DETERMINISTIC BLA 351(a) filing-risk engine. Maps a biologics program's CMC/clinical readiness signals — and the conclusions of the analytical-similarity, comparability, and immunogenicity engines — onto Refuse-to-File (RTF) and Complete Response Letter (CRL) failure modes (21 CFR 601.2; ICH Q5A/Q5E/Q6B/Q1A; FDA immunogenicity & process-validation guidance). Use when the user asks about BLA filing readiness, RTF/CRL risk, or what would block a biologics filing. Returns cited per-finding triggers with mitigations and overall RTF/CRL risk bands. Report the triggers and bands verbatim.",
+    "Run the DETERMINISTIC BLA 351(a) filing-risk engine. Maps a biologics program's CMC/clinical readiness signals — and the conclusions of the analytical-similarity, comparability, and immunogenicity engines — onto Refuse-to-File (RTF) and Complete Response Letter (CRL) failure modes (21 CFR 601.2; ICH Q5A/Q5E/Q6B/Q1A; FDA immunogenicity & process-validation guidance). Use when the user asks about BLA filing readiness, RTF/CRL risk, or what would block a biologics filing. Returns cited per-finding triggers with mitigations and overall RTF/CRL risk bands. Report the triggers and bands verbatim. Computes only; it does not save or sign an assessment. Use the governed NDA/BLA assessment controls for saving and signing.",
   input_schema: {
     type: 'object',
     properties: {
       productType: { type: 'string', enum: ['biologic', 'biosimilar'] },
       modality: { type: 'string' },
-      programId: { type: 'string', description: 'Optional regulatory_programs UUID to persist against.' },
       manufacturingChange: { type: 'boolean', description: 'True if a manufacturing change requiring comparability is in scope.' },
       analyticalSimilarity: {
         type: 'string',

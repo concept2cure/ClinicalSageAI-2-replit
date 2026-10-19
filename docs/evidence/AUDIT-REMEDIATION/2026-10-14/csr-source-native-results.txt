@@ -1,0 +1,15 @@
+Native PostgreSQL/TLS/app_service source integration, 2026-10-14
+Source: /workspace/audit/continuation-csr-native-final.log
+Actual authenticated source/tabulation persistence and guards; synthetic data. The fixture package correctly fails validation without approved CMC/agency inputs. This is not live agency or clinical qualification.
+
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > uses actual auth tenant binding and verified original bytes for aggregate preview 944ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt through the shipped run endpoint 471ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > reports a completed preview with failed audit truthfully, then recovers on an actual retry 68ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > permits an authorized read-only share and refuses private/foreign source probes and writes 174ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > allows an honest draft preview but refuses its inclusion before any run record is created 84ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > serializes check-in and withdrawal writers against the source guard until commit, then refuses the old version 293ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > honors explicit remove_data while keeping authorized historical data after keep_data 136ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  19:50:19
+   Duration  9.16s (transform 4.86s, setup 67ms, import 2.15s, tests 6.65s, environment 0ms)

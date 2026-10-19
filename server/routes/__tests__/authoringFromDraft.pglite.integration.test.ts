@@ -12,13 +12,15 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
+import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import {
-  PREREQ, AUTHOR, TENANTLESS, PROGRAM, PROGRAM_B, OTHER_PROGRAM, FILING_B, ORG,
+  PREREQ, AUTHORING_ACCESS_DDL, VAULT_DDL, AUTHOR, TENANTLESS, PROGRAM, PROGRAM_B, OTHER_PROGRAM, FILING_B, ORG,
   mint, makeApp, asToken, M25_SECTIONS,
 } from './_authoring-canvas-fixture';
 import { recordDocumentAlias, DocumentAliasConflictError, type AliasExecutor } from '../../services/c2c/document-alias-map';
+import { draftSourceIdentityForText } from '../../services/ana/draft-source-identity';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({
@@ -37,7 +39,7 @@ let tenantless: (r: request.Test) => request.Test;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -58,6 +60,9 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       // The column under test.
       'migrations/20260921_authoring_document_provenance.sql',
+      'migrations/20260905_document_catalog.sql',
+      'migrations/20261008e_document_catalog_attribution.sql',
+      'migrations/20261006_document_data_dispositions.sql',
     ],
   });
   h.db = jdb.db;
@@ -80,6 +85,103 @@ const draftBody = (over: Record<string, unknown> = {}) => ({
   sections: M25_SECTIONS,
   provenance: { source: 'ana', conversationId: 'thread_abc', turnId: 'turn_7', note: 'drafted in the test' },
   ...over,
+});
+
+describe('direct from-draft private project boundary', () => {
+  it('refuses direct private-program source references before reading source text or creating evidence', async () => {
+    const source = randomUUID();
+    const text = 'Private source clinical data: 18.0% of participants experienced nausea.';
+    const hash = createHash('sha256').update(text).digest('hex');
+    await jdb.pool.query(`INSERT INTO vault.documents(id,program_id,organization_id,document_code,document_title,document_type,content_hash,extracted_text)
+      VALUES($1,$2,$3,'PRIVATE-DRAFT-SOURCE','Private clinical source','csr',$4,$5)`, [source, PROGRAM, ORG, hash, text]);
+    await jdb.pool.query(`INSERT INTO vault.document_catalog(document_id,content_hash,catalog_status,extraction_method,char_count)
+      VALUES($1,$2,'extracted','plain-text',$3)`, [source, hash, text.length]);
+    await jdb.pool.query("UPDATE projects SET owner_id=7,created_by_id=7 WHERE id=42");
+    await jdb.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+    const counts = async () => (await jdb.pool.query(`SELECT
+      (SELECT count(*) FROM authoring_documents)::int AS docs,(SELECT count(*) FROM authoring_sections)::int AS sections,
+      (SELECT count(*) FROM doc_revisions)::int AS revisions,(SELECT count(*) FROM authoring_audit_trail)::int AS audits`)).rows[0];
+    const before = await counts();
+    const reads = vi.spyOn(jdb.pglite, 'query');
+    try {
+      const response = await author(request(app).post('/api/authoring/docs/from-draft')).send(draftBody({ sections: [{ code: '2.7.4', title: 'Safety',
+        content: '<p>The investigator will review this source.</p>', sourceReferences: [{ documentId: source, contentHash: hash,
+          span: { start: 0, end: text.length, totalChars: text.length },
+          ...draftSourceIdentityForText(text, { start: 0, end: text.length, totalChars: text.length }) }] }] }));
+      expect(response.status, JSON.stringify(response.body)).toBe(403);
+      expect(response.body.data).toBeUndefined();
+      expect(reads.mock.calls.some(([sql]) => typeof sql === 'string' && /FROM vault.documents d/.test(sql))).toBe(false);
+      expect(await counts()).toEqual(before);
+    } finally {
+      reads.mockRestore();
+      await jdb.pool.query('UPDATE projects SET owner_id=$1,created_by_id=$1 WHERE id=42', [Number(AUTHOR.id)]);
+      await jdb.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
+    }
+  });
+
+});
+
+describe('POST /docs/from-draft exact extraction identity', () => {
+  const text = 'Study introduction. Observed result 💊 awaits clinical review. Appendix conclusion.';
+  const span = { start: text.indexOf('Observed'), end: text.indexOf(' Appendix'), totalChars: text.length };
+
+  async function seedSource() {
+    const documentId = randomUUID();
+    const contentHash = createHash('sha256').update(documentId).digest('hex');
+    await jdb.pool.query(`INSERT INTO vault.documents
+      (id,program_id,organization_id,document_code,document_title,document_type,content_hash,extracted_text)
+      VALUES($1::uuid,$2,$3,$1::text,'Current source','csr',$4,$5)`, [documentId, PROGRAM, ORG, contentHash, text]);
+    await jdb.pool.query(`INSERT INTO vault.document_catalog
+      (document_id,content_hash,catalog_status,extraction_method,char_count)
+      VALUES($1,$2,'extracted','plain-text',$3)`, [documentId, contentHash, text.length]);
+    return { documentId, contentHash, span: { ...span }, ...draftSourceIdentityForText(text, span) };
+  }
+
+  const body = (reference: unknown) => draftBody({ sections: [{ code: '2.5', title: 'Clinical review',
+    content: '<p>The investigator should review the observed result.</p>', sourceReferences: [reference] }] });
+  const counts = async () => (await jdb.pool.query(`SELECT
+    (SELECT count(*) FROM authoring_documents)::int AS docs,(SELECT count(*) FROM authoring_sections)::int AS sections,
+    (SELECT count(*) FROM doc_revisions)::int AS revisions,(SELECT count(*) FROM authoring_audit_trail)::int AS audits`)).rows[0];
+
+  it('saves complete V2 identities in document and CREATE audit source receipts without a source prose copy', async () => {
+    const reference = await seedSource();
+    const response = await author(request(app).post('/api/authoring/docs/from-draft')).send(body(reference));
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    const doc = response.body.data.doc;
+    const group = doc.provenance.projectSourceReferences[0];
+    expect(group).toMatchObject({ sourceReferenceVersion: 2, verification: 'current_at_save', qualification: 'unassessed',
+      sources: [{ ...reference, identityVerification: 'exact_extraction_and_span', completeText: false }] });
+    expect(group.sources[0]).not.toHaveProperty('text');
+    expect(JSON.stringify(group.sources)).not.toContain(text.slice(span.start, span.end));
+    const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [doc.id, ORG]);
+    expect((saved.rows[0] as { provenance: unknown }).provenance).toEqual(doc.provenance);
+    const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [doc.id, ORG]);
+    expect((audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } }).metadata.provenance.projectSourceReferences)
+      .toEqual(doc.provenance.projectSourceReferences);
+  });
+
+  it.each(['inside', 'outside'])('refuses a same-length correction %s the excerpt before any durable authoring write', async location => {
+    const reference = await seedSource();
+    const index = location === 'inside' ? span.start : 0;
+    const changed = text.slice(0, index) + 'X' + text.slice(index + 1);
+    expect(changed.length).toBe(text.length);
+    await jdb.pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [changed, reference.documentId]);
+    const before = await counts();
+    const response = await author(request(app).post('/api/authoring/docs/from-draft')).send(body(reference));
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.data).toBeUndefined();
+    expect(await counts()).toEqual(before);
+  });
+
+  it.each(['version', 'extractedTextSha256', 'spanSha256'])('refuses a new HTTP reference stripped of %s', async key => {
+    const reference: Record<string, unknown> = await seedSource();
+    delete reference[key];
+    const before = await counts();
+    const response = await author(request(app).post('/api/authoring/docs/from-draft')).send(body(reference));
+    expect(response.status, JSON.stringify(response.body)).toBe(400);
+    expect(response.body.data).toBeUndefined();
+    expect(await counts()).toEqual(before);
+  });
 });
 
 describe('POST /docs/from-draft', () => {
@@ -175,6 +277,7 @@ describe('POST /docs/from-draft', () => {
     const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
+
 
   it('refuses 400 on a provenance source it does not know', async () => {
     const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(

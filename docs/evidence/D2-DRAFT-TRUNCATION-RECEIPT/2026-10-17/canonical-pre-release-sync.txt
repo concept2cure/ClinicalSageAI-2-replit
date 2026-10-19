@@ -1,0 +1,700 @@
+Updating 70cb68971..ad372567d
+Fast-forward
+ .../v2/__tests__/authoringAiDraft.test.tsx         |    2 +
+ .../v2/__tests__/authoringAiDraftAssembly.test.tsx |  223 +
+ .../v2/__tests__/authoringAnaPane.test.tsx         |    3 +-
+ .../__tests__/documentAuthoringDeepLink.test.tsx   |    3 +-
+ .../notificationAuthoringUnsaved.test.tsx          |    2 +-
+ .../v2/editor/AuthoringAssemblyBuild.tsx           |   78 +
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |   52 +-
+ .../__tests__/authoringAssemblyBuild.test.tsx      |  210 +
+ .../__tests__/workbenchAssemblyBuild.test.tsx      |  347 ++
+ .../concept2cure/v2/editor/assemblyBuildState.ts   |   52 +
+ .../v2/editor/assemblyBuildTransport.ts            |  102 +
+ .../concept2cure/v2/editor/assemblyDraftQueue.ts   |   76 +
+ .../v2/editor/authoringDraftTransport.ts           |  144 +
+ .../v2/editor/useAuthoringAssemblyBuild.ts         |  203 +
+ .../v2/editor/useAuthoringDraftReview.ts           |  144 +
+ .../concept2cure/v2/surfaces/AuthoringAiDraft.tsx  |  312 +-
+ docs/design/AUTHORING_ASSEMBLY_BUILD_2026-10-17.md |  133 +
+ .../2026-10-17/assembly-build/README.md            |  121 +
+ .../2026-10-17/assembly-build/ana-core/README.md   |   64 +
+ .../assembly-build/ana-core/first-green-31.txt     |   39 +
+ .../assembly-build/ana-core/green-40.txt           |   48 +
+ .../assembly-build/ana-core/green-41.txt           |   49 +
+ .../ana-core/integration-in-progress.txt           |   47 +
+ .../ana-core/intermediate-notice-timing.txt        |   47 +
+ .../assembly-build/ana-core/receipt-storage.json   |   50 +
+ .../2026-10-17/assembly-build/ana-core/red.txt     |  780 ++++
+ .../assembly-build/ana-core/strict-lint.txt        |    0
+ .../assembly-build/ana-core/summary.json           |   43 +
+ .../ana-core/warning-comparison.json               |   47 +
+ .../2026-10-17/assembly-build/ana-server/README.md |   55 +
+ .../assembly-build/ana-server/final-green.txt      |  581 +++
+ .../ana-server/fixture-regression-red.txt          |  899 ++++
+ .../assembly-build/ana-server/initial-red.txt      |  248 +
+ .../assembly-build/ana-server/legacy-base-red.txt  |   86 +
+ .../2026-10-17/assembly-build/ana-server/lint.json |  220 +
+ .../assembly-build/ana-server/proof.json           |   90 +
+ .../backend/54-case-source-pins.json               |   20 +
+ .../2026-10-17/assembly-build/backend/README.md    |  114 +
+ .../backend/combined-candidate-46.json             |    6 +
+ .../backend/header-snapshot-red.json               |    6 +
+ .../backend/http-and-related-52.json               |    6 +
+ .../backend/initial-single-create-red.json         |    6 +
+ .../assembly-build/backend/large-outline-red.json  |    6 +
+ .../assembly-build/backend/pinned-final-54.json    |    6 +
+ .../backend/scoped-eslint-final.json               |    6 +
+ .../assembly-build/backend/source-pins.json        |   20 +
+ .../backend/typed-http-eslint-final.json           |    6 +
+ .../backend/typed-http-final-30.json               |    6 +
+ .../assembly-build/backend/universal-plans-2.json  |    6 +
+ .../assembly-build/backend/verification.json       |   51 +
+ .../2026-10-17/assembly-build/browser/README.md    |  154 +
+ .../2026-10-17/assembly-build/browser/browser.mjs  |  203 +
+ .../2026-10-17/assembly-build/browser/cleanup.json |    9 +
+ .../desktop-dark-ana-first-review-edited.json      |  167 +
+ .../final/desktop-dark-ana-first-review-edited.png |  Bin 0 -> 134931 bytes
+ ...p-dark-ana-one-section-explicitly-accepted.json |  143 +
+ ...op-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 162819 bytes
+ .../browser/final/desktop-dark-ana-results.json    | 1118 +++++
+ .../desktop-dark-ana-two-candidates-ready.json     |  157 +
+ .../desktop-dark-ana-two-candidates-ready.png      |  Bin 0 -> 150982 bytes
+ ...top-dark-deterministic-deterministic-built.json |  115 +
+ ...ktop-dark-deterministic-deterministic-built.png |  Bin 0 -> 135948 bytes
+ .../final/desktop-dark-deterministic-results.json  |  667 +++
+ ...-dark-deterministic-single-section-preview.json |  115 +
+ ...p-dark-deterministic-single-section-preview.png |  Bin 0 -> 146551 bytes
+ ...-dark-deterministic-whole-document-preview.json |  115 +
+ .../desktop-light-ana-first-review-edited.json     |  167 +
+ .../desktop-light-ana-first-review-edited.png      |  Bin 0 -> 134933 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  143 +
+ ...p-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 160886 bytes
+ .../browser/final/desktop-light-ana-results.json   | 1118 +++++
+ .../desktop-light-ana-two-candidates-ready.json    |  157 +
+ .../desktop-light-ana-two-candidates-ready.png     |  Bin 0 -> 150793 bytes
+ ...op-light-deterministic-deterministic-built.json |  115 +
+ ...top-light-deterministic-deterministic-built.png |  Bin 0 -> 135921 bytes
+ .../final/desktop-light-deterministic-results.json |  667 +++
+ ...light-deterministic-single-section-preview.json |  115 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 146409 bytes
+ ...light-deterministic-whole-document-preview.json |  115 +
+ .../assembly-build/browser/final/summary.json      |   77 +
+ .../final/touch-dark-ana-first-review-edited.json  |  167 +
+ .../final/touch-dark-ana-first-review-edited.png   |  Bin 0 -> 48127 bytes
+ ...h-dark-ana-one-section-explicitly-accepted.json |  143 +
+ ...ch-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 65923 bytes
+ .../browser/final/touch-dark-ana-results.json      | 1118 +++++
+ .../final/touch-dark-ana-two-candidates-ready.json |  157 +
+ .../final/touch-dark-ana-two-candidates-ready.png  |  Bin 0 -> 56064 bytes
+ ...uch-dark-deterministic-deterministic-built.json |  115 +
+ ...ouch-dark-deterministic-deterministic-built.png |  Bin 0 -> 53243 bytes
+ .../final/touch-dark-deterministic-results.json    |  667 +++
+ ...-dark-deterministic-single-section-preview.json |  115 +
+ ...h-dark-deterministic-single-section-preview.png |  Bin 0 -> 57153 bytes
+ ...-dark-deterministic-whole-document-preview.json |  115 +
+ ...h-dark-deterministic-whole-document-preview.png |  Bin 0 -> 55581 bytes
+ .../final/touch-light-ana-first-review-edited.json |  167 +
+ .../final/touch-light-ana-first-review-edited.png  |  Bin 0 -> 48176 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  143 +
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 70099 bytes
+ .../browser/final/touch-light-ana-results.json     | 1118 +++++
+ .../touch-light-ana-two-candidates-ready.json      |  157 +
+ .../final/touch-light-ana-two-candidates-ready.png |  Bin 0 -> 55837 bytes
+ ...ch-light-deterministic-deterministic-built.json |  115 +
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 52874 bytes
+ .../final/touch-light-deterministic-results.json   |  667 +++
+ ...light-deterministic-single-section-preview.json |  115 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 56591 bytes
+ ...light-deterministic-whole-document-preview.json |  115 +
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 55049 bytes
+ .../assembly-build/browser/fixture-validation.json |   66 +
+ .../assembly-build/browser/height-probe.mjs        |   95 +
+ .../2026-10-17/assembly-build/browser/index.html   |    2 +
+ .../initial-live-source-fixture/summary.json       |   55 +
+ .../touch-light-ana-failure.png                    |  Bin 0 -> 50028 bytes
+ .../touch-light-ana-results.json                   |  236 +
+ .../touch-light-deterministic-failure.png          |  Bin 0 -> 50028 bytes
+ .../touch-light-deterministic-results.json         |  330 ++
+ .../mobile-height-diagnostic/after-wheel.png       |  Bin 0 -> 55991 bytes
+ .../mobile-height-diagnostic/before-wheel.png      |  Bin 0 -> 55991 bytes
+ .../mobile-height-diagnostic/measurement.json      |  420 ++
+ .../browser/mobile-height-final/after-wheel.png    |  Bin 0 -> 60305 bytes
+ .../browser/mobile-height-final/before-wheel.png   |  Bin 0 -> 52922 bytes
+ .../browser/mobile-height-final/measurement.json   | 4802 ++++++++++++++++++++
+ .../native-editor-after-wheel.png                  |  Bin 0 -> 48317 bytes
+ .../review-heading-after-explicit-open.png         |  Bin 0 -> 54639 bytes
+ .../review-heading-after-wheel.png                 |  Bin 0 -> 53550 bytes
+ .../browser/mobile-intrinsic-red/measurement.json  |  113 +
+ .../mobile-long-roster-label.png                   |  Bin 0 -> 57285 bytes
+ .../2026-10-17/assembly-build/browser/mock-api.mjs |  141 +
+ .../post-scroll-focus-assumption/after-wheel.png   |  Bin 0 -> 60305 bytes
+ .../post-scroll-focus-assumption/before-wheel.png  |  Bin 0 -> 52922 bytes
+ .../post-scroll-focus-assumption/measurement.json  | 4534 ++++++++++++++++++
+ .../native-editor-after-wheel.png                  |  Bin 0 -> 48317 bytes
+ .../review-heading-after-explicit-open.png         |  Bin 0 -> 54639 bytes
+ .../post-width-history-fixture/summary.json        |   54 +
+ .../touch-light-ana-failure.png                    |  Bin 0 -> 70973 bytes
+ .../touch-light-ana-first-review-edited.json       |  167 +
+ .../touch-light-ana-first-review-edited.png        |  Bin 0 -> 50323 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  143 +
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 70973 bytes
+ .../touch-light-ana-results.json                   | 1122 +++++
+ .../touch-light-ana-two-candidates-ready.json      |  157 +
+ .../touch-light-ana-two-candidates-ready.png       |  Bin 0 -> 60586 bytes
+ ...ch-light-deterministic-deterministic-built.json |  115 +
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 53364 bytes
+ .../touch-light-deterministic-results.json         |  667 +++
+ ...light-deterministic-single-section-preview.json |  115 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 59344 bytes
+ ...light-deterministic-whole-document-preview.json |  115 +
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 65602 bytes
+ .../pre-reference-context-positive/rollup.json     |   27 +
+ .../pre-reference-context-positive/summary.json    |   77 +
+ .../browser/pre-width-fix-diagnostic/summary.json  |   55 +
+ .../touch-light-ana-failure.png                    |  Bin 0 -> 67153 bytes
+ .../touch-light-ana-results.json                   |  370 ++
+ .../touch-light-ana-two-candidates-ready.json      |  157 +
+ .../touch-light-ana-two-candidates-ready.png       |  Bin 0 -> 67153 bytes
+ .../touch-light-deterministic-failure.png          |  Bin 0 -> 62023 bytes
+ .../touch-light-deterministic-results.json         |  216 +
+ .../2026-10-17/assembly-build/browser/probe.tsx    |   52 +
+ .../2026-10-17/assembly-build/browser/rollup.json  |   34 +
+ .../browser/second-label-fixture/summary.json      |   55 +
+ .../touch-light-ana-failure.png                    |  Bin 0 -> 57297 bytes
+ .../touch-light-ana-results.json                   |  168 +
+ .../touch-light-deterministic-failure.png          |  Bin 0 -> 57297 bytes
+ .../touch-light-deterministic-results.json         |  168 +
+ .../2026-10-17/assembly-build/browser/server.mjs   |   13 +
+ .../assembly-build/canonical-integration/README.md |   67 +
+ .../canonical-integration/ana-server/README.md     |   38 +
+ .../ana-server/final-green.txt                     |  667 +++
+ .../ana-server/initial-integration.txt             |  233 +
+ .../canonical-integration/ana-server/lint.json     |  226 +
+ .../canonical-integration/ana-server/proof.json    |   78 +
+ .../canonical-integration/backend/README.md        |   68 +
+ .../backend/combined-pre-final-127.json            |    6 +
+ .../backend/commit-disposal-red.json               |    6 +
+ .../backend/focused-outcome-green.json             |    6 +
+ .../backend/outcome-and-access-red.json            |    6 +
+ .../backend/scoped-final-eslint.json               |    6 +
+ .../backend/single-slot-final-33.json              |    6 +
+ .../canonical-integration/backend/source-pins.json |   34 +
+ .../backend/verification.json                      |   43 +
+ .../canonical-integration/browser/README.md        |  124 +
+ .../canonical-integration/browser/browser.mjs      |  242 +
+ .../canonical-integration/browser/cleanup.json     |    9 +
+ .../desktop-dark-ana-first-review-edited.json      |  167 +
+ .../final/desktop-dark-ana-first-review-edited.png |  Bin 0 -> 134931 bytes
+ ...p-dark-ana-one-section-explicitly-accepted.json |  143 +
+ ...op-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 159521 bytes
+ .../browser/final/desktop-dark-ana-results.json    | 1118 +++++
+ .../desktop-dark-ana-two-candidates-ready.json     |  157 +
+ .../desktop-dark-ana-two-candidates-ready.png      |  Bin 0 -> 150982 bytes
+ ...top-dark-deterministic-deterministic-built.json |  115 +
+ ...ktop-dark-deterministic-deterministic-built.png |  Bin 0 -> 135951 bytes
+ .../final/desktop-dark-deterministic-results.json  |  667 +++
+ ...-dark-deterministic-single-section-preview.json |  115 +
+ ...p-dark-deterministic-single-section-preview.png |  Bin 0 -> 146547 bytes
+ ...-dark-deterministic-whole-document-preview.json |  115 +
+ .../desktop-light-ana-first-review-edited.json     |  167 +
+ .../desktop-light-ana-first-review-edited.png      |  Bin 0 -> 134933 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  143 +
+ ...p-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 155281 bytes
+ .../browser/final/desktop-light-ana-results.json   | 1118 +++++
+ .../desktop-light-ana-two-candidates-ready.json    |  157 +
+ .../desktop-light-ana-two-candidates-ready.png     |  Bin 0 -> 150793 bytes
+ ...op-light-deterministic-deterministic-built.json |  115 +
+ ...top-light-deterministic-deterministic-built.png |  Bin 0 -> 135918 bytes
+ .../final/desktop-light-deterministic-results.json |  667 +++
+ ...light-deterministic-single-section-preview.json |  115 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 146418 bytes
+ ...light-deterministic-whole-document-preview.json |  115 +
+ .../browser/final/summary.json                     |   81 +
+ .../final/touch-dark-ana-first-review-edited.json  |  167 +
+ .../final/touch-dark-ana-first-review-edited.png   |  Bin 0 -> 48127 bytes
+ ...h-dark-ana-one-section-explicitly-accepted.json |  143 +
+ ...ch-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 65923 bytes
+ .../browser/final/touch-dark-ana-results.json      | 1118 +++++
+ .../final/touch-dark-ana-two-candidates-ready.json |  157 +
+ .../final/touch-dark-ana-two-candidates-ready.png  |  Bin 0 -> 56064 bytes
+ ...uch-dark-deterministic-deterministic-built.json |  115 +
+ ...ouch-dark-deterministic-deterministic-built.png |  Bin 0 -> 53236 bytes
+ .../final/touch-dark-deterministic-results.json    |  667 +++
+ ...-dark-deterministic-single-section-preview.json |  115 +
+ ...h-dark-deterministic-single-section-preview.png |  Bin 0 -> 57105 bytes
+ ...-dark-deterministic-whole-document-preview.json |  115 +
+ ...h-dark-deterministic-whole-document-preview.png |  Bin 0 -> 55578 bytes
+ .../final/touch-light-ana-first-review-edited.json |  167 +
+ .../final/touch-light-ana-first-review-edited.png  |  Bin 0 -> 48176 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  143 +
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 64659 bytes
+ .../browser/final/touch-light-ana-results.json     | 1118 +++++
+ .../touch-light-ana-two-candidates-ready.json      |  157 +
+ .../final/touch-light-ana-two-candidates-ready.png |  Bin 0 -> 55837 bytes
+ ...ch-light-deterministic-deterministic-built.json |  115 +
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 52837 bytes
+ .../final/touch-light-deterministic-results.json   |  667 +++
+ ...light-deterministic-single-section-preview.json |  115 +
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 56608 bytes
+ ...light-deterministic-whole-document-preview.json |  115 +
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 55038 bytes
+ ...h-light-read-only-read-only-build-disabled.json |  115 +
+ ...ch-light-read-only-read-only-build-disabled.png |  Bin 0 -> 57777 bytes
+ .../final/touch-light-read-only-results.json       |  262 ++
+ .../browser/fixture-validation.json                |   66 +
+ .../canonical-integration/browser/height-probe.mjs |   95 +
+ .../canonical-integration/browser/index.html       |    2 +
+ .../browser/mobile-height-final/after-wheel.png    |  Bin 0 -> 60305 bytes
+ .../browser/mobile-height-final/before-wheel.png   |  Bin 0 -> 52922 bytes
+ .../browser/mobile-height-final/measurement.json   | 4802 ++++++++++++++++++++
+ .../native-editor-after-wheel.png                  |  Bin 0 -> 48317 bytes
+ .../review-heading-after-explicit-open.png         |  Bin 0 -> 54639 bytes
+ .../review-heading-after-wheel.png                 |  Bin 0 -> 53550 bytes
+ .../canonical-integration/browser/mock-api.mjs     |  143 +
+ .../browser/pre-nav-refactor-positive/rollup.json  |   33 +
+ .../browser/pre-nav-refactor-positive/summary.json |   81 +
+ .../canonical-integration/browser/probe.tsx        |   52 +
+ .../canonical-integration/browser/rollup.json      |   36 +
+ .../canonical-integration/browser/server.mjs       |   13 +
+ .../canonical-integration/frontend/README.md       |   38 +
+ .../frontend/edit-permission-red.json              |   14 +
+ .../frontend/strict-lint-final.json                |   13 +
+ .../canonical-integration/frontend/summary.json    |   55 +
+ .../frontend/targeted-final.json                   |   22 +
+ .../canonical-integration/release/build-final.json |    8 +
+ .../release/build-pre-nav-refactor.json            |    8 +
+ .../release/build-pre-sql-gate.json                |    8 +
+ .../canonical-integration/release/canvas-path.json |    7 +
+ .../release/check-editor-integrity.json            |    7 +
+ .../release/check-phantom-tokens.json              |    7 +
+ .../canonical-integration/release/checks.json      |  125 +
+ .../release/design-system.json                     |    7 +
+ .../release/focused-final.json                     |   10 +
+ .../release/gateway-bypass.json                    |    7 +
+ .../release/pre-final-source-pins.json             |  182 +
+ .../release/pre-nav-refactor-source-pins.json      |  183 +
+ .../release/pre-sql-gate-source-pins.json          |  183 +
+ .../release/related-regression.json                |   10 +
+ .../release/single-native-canvas.json              |    7 +
+ .../release/source-pin-verification.json           |   50 +
+ .../canonical-integration/release/source-pins.json |  184 +
+ .../release/token-cascade.json                     |    7 +
+ .../release/token-contrast.json                    |    7 +
+ .../release/typecheck-final.json                   |    9 +
+ .../release/typecheck-pre-final.json               |    9 +
+ .../release/typecheck-pre-sql-gate.json            |    9 +
+ .../release/warning-ratchet-pre-nav-refactor.json  |    7 +
+ .../release/warning-ratchet.json                   |   10 +
+ .../canonical-integration/sql-gate/README.md       |   31 +
+ .../canonical-integration/sql-gate/final-127.json  |    6 +
+ .../sql-gate/normal-pre-push-red.json              |    6 +
+ .../sql-gate/scoped-final-eslint.json              |    6 +
+ .../sql-gate/source-pins.json                      |   98 +
+ .../sql-gate/sql-gate-green.json                   |    6 +
+ .../sql-gate/verification.json                     |   42 +
+ .../assembly-build/independent/README.md           |   65 +
+ .../independent/baseline-missing-build.json        |    7 +
+ .../independent/candidate-first.json               |    5 +
+ .../independent/candidate-interim-green.json       |    5 +
+ .../independent/candidate-queued-review-red.json   |    5 +
+ .../assembly-build/independent/eslint-final.json   |   11 +
+ .../independent/final-source-pins.json             |   51 +
+ .../independent/pre-layout-green.json              |   76 +
+ .../independent/pre-refreeze-interim.json          |   76 +
+ .../independent/pre-typing-correction-green.json   |   76 +
+ .../independent/workbench-final.json               |   12 +
+ .../assembly-build/orchestration/README.md         |   82 +
+ .../controller-green-before-reference-context.json |    5 +
+ ...oller-green-before-selection-normalization.json |    5 +
+ .../orchestration/controller-green.json            |    5 +
+ .../orchestration/first-fixture-roster-red.json    |    5 +
+ .../orchestration/initial-absence-red.json         |    5 +
+ .../assembly-build/orchestration/lint-green.json   |    5 +
+ .../orchestration/normalized-selection-red.json    |    5 +
+ .../orchestration/receipt-fixture-red.json         |    5 +
+ .../source-pins-before-reference-context.json      |   10 +
+ ...source-pins-before-selection-normalization.json |   10 +
+ .../assembly-build/orchestration/source-pins.json  |   10 +
+ .../orchestration/template-reference-red.json      |    5 +
+ .../assembly-build/release/ana-pane-fixture.json   |    6 +
+ .../assembly-build/release/build-final.json        |    8 +
+ .../assembly-build/release/canvas-path.json        |    7 +
+ .../release/check-editor-integrity.json            |    7 +
+ .../release/check-phantom-tokens.json              |    7 +
+ .../2026-10-17/assembly-build/release/checks.json  |   72 +
+ .../assembly-build/release/design-system.json      |    7 +
+ .../assembly-build/release/final-integration.json  |    9 +
+ .../assembly-build/release/gateway-bypass.json     |    7 +
+ .../release/related-regression-final.json          |   10 +
+ .../release/related-regression-initial.json        |    6 +
+ .../release/single-native-canvas.json              |    7 +
+ .../assembly-build/release/source-pins.json        |  163 +
+ .../assembly-build/release/token-cascade.json      |    7 +
+ .../assembly-build/release/token-contrast.json     |    7 +
+ .../assembly-build/release/typecheck-final.json    |    7 +
+ .../assembly-build/release/typecheck-initial.json  |    6 +
+ .../assembly-build/release/warning-ratchet.json    |    7 +
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    8 +-
+ .../authoring-ai-draft-record.pglite.test.ts       |    4 +-
+ .../__tests__/authoring-assembly.pglite.test.ts    |  341 ++
+ .../authoring-draft-accept-record.pglite.test.ts   |    8 +-
+ .../authoring-draft-program-sources.test.ts        |   11 +-
+ .../__tests__/authoringAiDraftAccept.test.ts       |    3 +-
+ .../__tests__/authoringAiDraftStructured.test.ts   |    9 +-
+ .../authoringAssemblyDraftSafety.pglite.test.ts    |  220 +
+ server/routes/authoring-assembly.ts                |   28 +
+ server/routes/authoring.router.ts                  |   42 +-
+ .../authoring/__tests__/assembly-plan.test.ts      |   41 +
+ .../assembly-section-transaction.pglite.test.ts    |   55 +
+ .../__tests__/assembly-template-guidance.test.ts   |   42 +
+ .../services/authoring/authoring-assembly-plan.ts  |  104 +
+ .../authoring/authoring-assembly-source.ts         |  101 +
+ server/services/authoring/authoring-assembly.ts    |  165 +
+ server/services/authoring/authoring-documents.ts   |   99 +-
+ .../services/authoring/authoring-section-seed.ts   |   37 +
+ .../authoring/authoring-template-guidance.ts       |   31 +-
+ .../authoring/authoring-template-sections.ts       |   79 +-
+ .../draft-candidate-store.ts                       |  113 +-
+ shared/authoring/assembly.ts                       |   66 +
+ 357 files changed, 53039 insertions(+), 423 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/assemblyBuildState.ts
+ create mode 100644 client/src/concept2cure/v2/editor/assemblyBuildTransport.ts
+ create mode 100644 client/src/concept2cure/v2/editor/assemblyDraftQueue.ts
+ create mode 100644 client/src/concept2cure/v2/editor/authoringDraftTransport.ts
+ create mode 100644 client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts
+ create mode 100644 client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts
+ create mode 100644 docs/design/AUTHORING_ASSEMBLY_BUILD_2026-10-17.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/first-green-31.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/green-40.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/green-41.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/integration-in-progress.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/intermediate-notice-timing.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/receipt-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/strict-lint.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-core/warning-comparison.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/final-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/fixture-regression-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/initial-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/legacy-base-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/ana-server/proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/54-case-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/combined-candidate-46.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/header-snapshot-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/http-and-related-52.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/initial-single-create-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/large-outline-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/pinned-final-54.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/scoped-eslint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/typed-http-eslint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/typed-http-final-30.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/universal-plans-2.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/backend/verification.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/cleanup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/desktop-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-dark-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/final/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/fixture-validation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/height-probe.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/index.html
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/initial-live-source-fixture/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/initial-live-source-fixture/touch-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/initial-live-source-fixture/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/initial-live-source-fixture/touch-light-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/initial-live-source-fixture/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-diagnostic/after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-diagnostic/before-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-diagnostic/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/before-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/native-editor-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/review-heading-after-explicit-open.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-height-final/review-heading-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-intrinsic-red/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mobile-intrinsic-red/mobile-long-roster-label.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mock-api.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-scroll-focus-assumption/after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-scroll-focus-assumption/before-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-scroll-focus-assumption/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-scroll-focus-assumption/native-editor-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-scroll-focus-assumption/review-heading-after-explicit-open.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/post-width-history-fixture/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-reference-context-positive/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-reference-context-positive/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/pre-width-fix-diagnostic/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/second-label-fixture/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/second-label-fixture/touch-light-ana-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/second-label-fixture/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/second-label-fixture/touch-light-deterministic-failure.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/second-label-fixture/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/server.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/ana-server/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/ana-server/final-green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/ana-server/initial-integration.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/ana-server/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/ana-server/proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/combined-pre-final-127.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/commit-disposal-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/focused-outcome-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/outcome-and-access-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/scoped-final-eslint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/single-slot-final-33.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/backend/verification.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/browser.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/cleanup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/desktop-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-dark-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-read-only-read-only-build-disabled.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-read-only-read-only-build-disabled.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/final/touch-light-read-only-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/fixture-validation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/height-probe.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/index.html
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/before-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/measurement.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/native-editor-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/review-heading-after-explicit-open.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mobile-height-final/review-heading-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/mock-api.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/pre-nav-refactor-positive/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/pre-nav-refactor-positive/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/server.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/frontend/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/frontend/edit-permission-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/frontend/strict-lint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/frontend/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/frontend/targeted-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/build-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/build-pre-nav-refactor.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/build-pre-sql-gate.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/canvas-path.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/checks.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/design-system.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/focused-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/gateway-bypass.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/pre-final-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/pre-nav-refactor-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/pre-sql-gate-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/related-regression.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/single-native-canvas.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/source-pin-verification.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/token-cascade.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/token-contrast.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/typecheck-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/typecheck-pre-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/typecheck-pre-sql-gate.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/warning-ratchet-pre-nav-refactor.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/release/warning-ratchet.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/final-127.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/normal-pre-push-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/scoped-final-eslint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/sql-gate-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/sql-gate/verification.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/baseline-missing-build.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/candidate-first.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/candidate-interim-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/candidate-queued-review-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/eslint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/final-source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/pre-layout-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/pre-refreeze-interim.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/pre-typing-correction-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/independent/workbench-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/controller-green-before-reference-context.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/controller-green-before-selection-normalization.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/controller-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/first-fixture-roster-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/initial-absence-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/lint-green.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/normalized-selection-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/receipt-fixture-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/source-pins-before-reference-context.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/source-pins-before-selection-normalization.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/orchestration/template-reference-red.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/ana-pane-fixture.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/build-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/canvas-path.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/checks.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/design-system.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/final-integration.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/gateway-bypass.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/related-regression-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/related-regression-initial.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/single-native-canvas.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/token-cascade.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/token-contrast.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/typecheck-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/typecheck-initial.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/release/warning-ratchet.json
+ create mode 100644 server/routes/__tests__/authoring-assembly.pglite.test.ts
+ create mode 100644 server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+ create mode 100644 server/routes/authoring-assembly.ts
+ create mode 100644 server/services/authoring/__tests__/assembly-plan.test.ts
+ create mode 100644 server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts
+ create mode 100644 server/services/authoring/__tests__/assembly-template-guidance.test.ts
+ create mode 100644 server/services/authoring/authoring-assembly-plan.ts
+ create mode 100644 server/services/authoring/authoring-assembly-source.ts
+ create mode 100644 server/services/authoring/authoring-assembly.ts
+ create mode 100644 server/services/authoring/authoring-section-seed.ts
+ create mode 100644 shared/authoring/assembly.ts

@@ -11,6 +11,7 @@ import {
 } from '../risk-model-backtest';
 
 let pglite: PGlite;
+const MODEL_VERSION = '11111111-1111-4111-8111-111111111111';
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
     const r = await pglite.query(sql, params as unknown[]);
@@ -76,6 +77,7 @@ describe('backtestRiskModel (reads intelligence.risk_predictions via PGlite)', (
       CREATE TABLE intelligence.risk_predictions (
         id serial PRIMARY KEY, organization_id bigint NOT NULL, target text NOT NULL,
         predicted_prob double precision, observed_outcome boolean, observed_at timestamptz,
+        model_version_id uuid, network_prior_prob double precision,
         created_at timestamptz NOT NULL DEFAULT now()
       );
     `);
@@ -85,19 +87,21 @@ describe('backtestRiskModel (reads intelligence.risk_predictions via PGlite)', (
 
   it('backtests only landed outcomes, scoped by target', async () => {
     // 40 landed 'crl' rows (separable) + 5 still-pending (observed_outcome NULL) + noise on another target.
+    // Every row names the model version that produced it: a row with neither a model
+    // nor a network prior is a pre-2026-10-15 cold-start 0.5, which the backtest leaves out.
     for (const r of separableRows()) {
       await pglite.query(
-        `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome, observed_at)
-         VALUES ($1,$2,$3,$4, now())`, [7, 'crl', r.p, r.y === 1]);
+        `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome, observed_at, model_version_id)
+         VALUES ($1,$2,$3,$4, now(), $5)`, [7, 'crl', r.p, r.y === 1, MODEL_VERSION]);
     }
     for (let i = 0; i < 5; i++) {
       await pglite.query(
-        `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome)
-         VALUES ($1,$2,$3, NULL)`, [7, 'crl', 0.5]);
+        `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome, model_version_id)
+         VALUES ($1,$2,$3, NULL, $4)`, [7, 'crl', 0.5, MODEL_VERSION]);
     }
     await pglite.query(
-      `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome, observed_at)
-       VALUES ($1,$2,$3,$4, now())`, [7, 'rtf', 0.9, true]);
+      `INSERT INTO intelligence.risk_predictions (organization_id, target, predicted_prob, observed_outcome, observed_at, model_version_id)
+       VALUES ($1,$2,$3,$4, now(), $5)`, [7, 'rtf', 0.9, true, MODEL_VERSION]);
 
     const m = await backtestRiskModel({ target: 'crl' });
     expect(m.sampleSize).toBe(40);        // pending rows + other-target row excluded

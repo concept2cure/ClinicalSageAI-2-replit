@@ -62,4 +62,3 @@ stderr | server/services/qms/__tests__/document-approval-signature.test.ts
       Tests  8 passed (8)
    Start at  12:58:57
    Duration  2.30s (transform 1.08s, setup 88ms, import 1.86s, tests 11ms, environment 0ms)
-

@@ -1,0 +1,15 @@
+Core project regression run
+ ❯ server/routes/__tests__/o01-core-project-audits.pglite.test.ts (11 tests | 10 failed) 1963ms
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  19:29:04
+   Duration  3.98s (transform 692ms, setup 58ms, import 1.75s, tests 1.96s, environment 0ms)
+
+Collaboration regression run
+ ❯ server/routes/__tests__/o01-collaboration-audits.pglite.test.ts (12 tests | 9 failed) 2026ms
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed (12)
+   Start at  19:30:13
+   Duration  3.94s (transform 997ms, setup 61ms, import 1.66s, tests 2.03s, environment 0ms)
+
+The initial core positive-control run also exposed a fixture serial-sequence collision, corrected by resetting the fixture project sequence before each test. Its aggregate failed count is preserved, not presented as ten independent product defects. Missing audit warnings, private-project bypasses, revoked/write-role bypasses and copied ownership each have separate failing assertions in the original local log. Final mounted tests use the production /api/concept2cure prefix; the initial fixture used an arbitrary /api/c2c mount. No product route aliases changed.

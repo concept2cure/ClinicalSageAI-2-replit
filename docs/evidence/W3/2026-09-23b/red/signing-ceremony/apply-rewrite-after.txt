@@ -42,4 +42,3 @@ stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a sig
       Tests  6 passed (6)
    Start at  14:57:14
    Duration  2.61s (transform 1.34s, setup 128ms, import 189ms, tests 2.11s, environment 0ms)
-

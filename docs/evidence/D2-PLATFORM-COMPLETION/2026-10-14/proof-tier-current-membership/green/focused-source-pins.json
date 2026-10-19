@@ -1,0 +1,97 @@
+{
+  "qualification": "Focused two-journey green after real membership/sharing fixture adoption and request-client helper change. These are the observed inputs; final full Proof tier proof is pending source freeze.",
+  "sources": [
+    {
+      "path": "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "bytes": 77981,
+      "digestAlgorithm": "sha256",
+      "digest": "633c5b881155917739efea09e41dcdb60fd0881fe18bbfd5139043dbeae533eb"
+    },
+    {
+      "path": "tests/golden-journeys/cer-eu-mdr.journey.test.ts",
+      "bytes": 40639,
+      "digestAlgorithm": "sha256",
+      "digest": "d1f6416838357ad0767db813be99f0ca0f69414823208a22aed011a6bbb311d1"
+    },
+    {
+      "path": "tests/golden-journeys/harness.ts",
+      "bytes": 23475,
+      "digestAlgorithm": "sha256",
+      "digest": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6385,
+      "digestAlgorithm": "sha256",
+      "digest": "c13ede00095922ea1f960f47ac1ad6c49f86b929650d38be87130e5c6589b4b3"
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "bytes": 5959,
+      "digestAlgorithm": "sha256",
+      "digest": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "bytes": 6784,
+      "digestAlgorithm": "sha256",
+      "digest": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58"
+    },
+    {
+      "path": "server/services/project-sharing-access.ts",
+      "bytes": 6485,
+      "digestAlgorithm": "sha256",
+      "digest": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815"
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "bytes": 9891,
+      "digestAlgorithm": "sha256",
+      "digest": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049"
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "bytes": 2653,
+      "digestAlgorithm": "sha256",
+      "digest": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c"
+    },
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "bytes": 3130,
+      "digestAlgorithm": "sha256",
+      "digest": "0bc9fb272c760e6621d636b98e05faee3459de49d611ffe16840529648190899"
+    }
+  ],
+  "packets": [
+    {
+      "path": "/tmp/project-vault-proof-tier-two-golden-packets/device-510k-estar.manifest.json",
+      "bytes": 17901,
+      "digestAlgorithm": "sha256",
+      "digest": "b353897a80cb098f770f3ef5307ffe55ea3e21056caa23566eca06db09c3b231"
+    },
+    {
+      "path": "/tmp/project-vault-proof-tier-two-golden-packets/device-510k-estar.report.md",
+      "bytes": 11314,
+      "digestAlgorithm": "sha256",
+      "digest": "d1457be2c08f9664cbcfc8efd59cdeceacccad02f26701eb204c8bc6c7c2c54d"
+    },
+    {
+      "path": "/tmp/project-vault-proof-tier-two-golden-packets/cer-eu-mdr.manifest.json",
+      "bytes": 11551,
+      "digestAlgorithm": "sha256",
+      "digest": "9ecb4a6199bdca5c5699e26a7b2db6eea5e2b71f9c4808980ae9e8bf8a66c933"
+    },
+    {
+      "path": "/tmp/project-vault-proof-tier-two-golden-packets/cer-eu-mdr.report.md",
+      "bytes": 7462,
+      "digestAlgorithm": "sha256",
+      "digest": "42507a02ef4aac463a68ef05aec02943af1debb7ac0743ce4975a425fa9d60c8"
+    }
+  ]
+}

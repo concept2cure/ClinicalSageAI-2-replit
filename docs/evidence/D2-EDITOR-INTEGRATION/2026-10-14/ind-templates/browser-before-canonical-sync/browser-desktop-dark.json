@@ -1,0 +1,2222 @@
+{
+  "label": "desktop-dark",
+  "width": 1440,
+  "theme": "dark",
+  "modules": [
+    {
+      "module": "M1",
+      "canonicalCode": "m1.1.1",
+      "ref": {
+        "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+        "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
+        "module": "M1",
+        "sectionCount": 11,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "form",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "sectionCount": 11,
+      "post": {
+        "input": {
+          "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
+          "module": "M1",
+          "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+          "client_program_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "receipt": {
+          "success": true,
+          "document": {
+            "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+            "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
+            "module": "M1",
+            "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+            "client_program_id": "11111111-1111-4111-8111-111111111111",
+            "status": "DRAFT",
+            "c2c_document_id": null,
+            "section_count": 11,
+            "updated_at": "2026-10-14T05:00:00.000Z",
+            "product_code": null,
+            "created_by": 1,
+            "provenance": {
+              "source": "template",
+              "template": {
+                "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+                "version": 1,
+                "kind": "preparation",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                  "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                  "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "heldCallbackNoDuplicate": true,
+      "initialBridge": {
+        "docId": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+        "sectionId": "57f08623-7f6d-492b-a919-2706ede4913c",
+        "sectionCode": "1.1.1",
+        "editable": true
+      },
+      "selectedSection": {
+        "id": "ec960e61-10c7-43b6-857f-fc37831c6057",
+        "code": "1.1.1:work:1",
+        "title": "Name, address, and telephone of sponsor",
+        "bridge": {
+          "docId": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+          "sectionId": "ec960e61-10c7-43b6-857f-fc37831c6057",
+          "sectionCode": "1.1.1:work:1",
+          "editable": true
+        }
+      },
+      "guidance": {
+        "text": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nName, address, and telephone of sponsor Working preparation heading, not an additional CTD node. Use the verified source or authentic form and retain the original.\n\nSource and completion checks\nName, address, and telephone of sponsor\n\nReference basis: 21 CFR 312.23(a)(1)",
+        "regulatoryReferences": [
+          "21 CFR 312.23(a)(1)"
+        ],
+        "sourceChecks": [
+          "Name, address, and telephone of sponsor"
+        ],
+        "authoredBodyEmpty": true
+      },
+      "guidanceAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 24
+      },
+      "guidanceMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 715.671875,
+          "width": 1104,
+          "height": 267.328125
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 715.671875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 946
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 330.171875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 329,
+          "scrollHeight": 329
+        },
+        "editorCount": 1
+      },
+      "emptyEditorMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 731
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 114.796875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 114,
+          "scrollHeight": 114
+        },
+        "editorCount": 1
+      },
+      "emptyEditorAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".rse-foot-sep"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 21
+      },
+      "unsavedSectionGuardCancel": true,
+      "reopenNoDuplicate": true
+    },
+    {
+      "module": "M2",
+      "canonicalCode": "m2.5",
+      "ref": {
+        "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+        "title": "2.5 · Clinical Overview",
+        "module": "M2",
+        "sectionCount": 7,
+        "kind": "narrative",
+        "aiDraftable": true,
+        "authoringMode": "ai_draft",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+        ]
+      },
+      "sectionCount": 7,
+      "post": {
+        "input": {
+          "title": "2.5 · Clinical Overview",
+          "module": "M2",
+          "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+          "client_program_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "receipt": {
+          "success": true,
+          "document": {
+            "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+            "title": "2.5 · Clinical Overview",
+            "module": "M2",
+            "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+            "client_program_id": "11111111-1111-4111-8111-111111111111",
+            "status": "DRAFT",
+            "c2c_document_id": null,
+            "section_count": 7,
+            "updated_at": "2026-10-14T05:00:00.000Z",
+            "product_code": null,
+            "created_by": 1,
+            "provenance": {
+              "source": "template",
+              "template": {
+                "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+                "version": 1,
+                "kind": "narrative",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                  "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "initialBridge": {
+        "docId": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+        "sectionId": "3b0a1529-135a-4b4a-8a50-affb95ff5866",
+        "sectionCode": "2.5",
+        "editable": true
+      },
+      "selectedSection": {
+        "id": "df0ecfe4-793a-4fcc-9834-07e153cb5196",
+        "code": "2.5.1",
+        "title": "Product Development Rationale",
+        "bridge": {
+          "docId": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+          "sectionId": "df0ecfe4-793a-4fcc-9834-07e153cb5196",
+          "sectionCode": "2.5.1",
+          "editable": true
+        }
+      },
+      "guidance": {
+        "text": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nPlatform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness. Concisely present the disease/condition and current therapy landscape, the unmet need, the product's mechanism of action and scientific rationale, and the overall structure and logic of the clinical development program. Reference pivotal regulatory interactions and their outcomes (pre-IND, End-of-Phase-2, SPA, Breakthrough/Fast Track/Orphan designations) that shaped the program, and note reliance on any FDA disease-specific or endpoint guidance. Explain how phase-to-phase decisions (dose selection, endpoint choice, population) followed from emerging data. Keep it interpretive and brief; detailed results belong in 2.5.3–2.5.5 and 2.7. Ensure consistency with the Introduction (2.2) and Nonclinical Overview (2.4).\n\nSource and completion checks\nDisease/condition background, epidemiology, and current treatment landscape\nStatement of unmet medical need the product addresses\nMechanism of action and scientific rationale for the therapeutic approach\nOverall clinical development strategy and the logic linking phases and studies\nKey regulatory interactions and agreements (pre-IND, EOP2, SPA) and special designations\nReliance on relevant FDA/ICH disease- or endpoint-specific guidance\nRationale for dose selection, endpoint choice, and target population\nConsistency statement with proposed indication and labeling\nReview points\nFailing to connect the mechanism of action and unmet need to the specific program design\nOmitting key FDA agreements (EOP2, SPA) that justify endpoint or trial-design choices\nNot citing the applicable disease-specific guidance the program was designed against\nRationale inconsistent with the proposed indication or with 2.2/2.4\nDrifting into detailed efficacy/safety results that belong in later subsections\n\nReference basis: ICH M4E(R2); Subsection 2.5.1 explains why and how the product was developed — the scientific rationale connecting the disease, unmet medical need, mechanism of action, and the strategy of the clinical program. It orients the reviewer to the logic of the development plan before the efficacy and safety cases are made. Acceptability depends on a coherent narrative that ties the MOA and target population to the specific studies conducted and to key regulatory milestones and agreements.",
+        "regulatoryReferences": [
+          "ICH M4E(R2)",
+          "Subsection 2.5.1 explains why and how the product was developed — the scientific rationale connecting the disease, unmet medical need, mechanism of action, and the strategy of the clinical program. It orients the reviewer to the logic of the development plan before the efficacy and safety cases are made. Acceptability depends on a coherent narrative that ties the MOA and target population to the specific studies conducted and to key regulatory milestones and agreements."
+        ],
+        "sourceChecks": [
+          "Disease/condition background, epidemiology, and current treatment landscape",
+          "Statement of unmet medical need the product addresses",
+          "Mechanism of action and scientific rationale for the therapeutic approach",
+          "Overall clinical development strategy and the logic linking phases and studies",
+          "Key regulatory interactions and agreements (pre-IND, EOP2, SPA) and special designations",
+          "Reliance on relevant FDA/ICH disease- or endpoint-specific guidance",
+          "Rationale for dose selection, endpoint choice, and target population",
+          "Consistency statement with proposed indication and labeling"
+        ],
+        "authoredBodyEmpty": true
+      },
+      "guidanceAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          }
+        ],
+        "passes": 23
+      },
+      "guidanceMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 1066.546875,
+          "width": 1104,
+          "height": 0
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 1066.546875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 1297
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 681.046875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 680,
+          "scrollHeight": 680
+        },
+        "editorCount": 1
+      },
+      "emptyEditorMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 731
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 114.796875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 114,
+          "scrollHeight": 114
+        },
+        "editorCount": 1
+      },
+      "emptyEditorAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".rse-foot-sep"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 21
+      },
+      "reopenNoDuplicate": true
+    },
+    {
+      "module": "M3",
+      "canonicalCode": "m3.2.S.1",
+      "ref": {
+        "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+        "title": "3.2.S.1 · General Information",
+        "module": "M3",
+        "sectionCount": 4,
+        "kind": "narrative",
+        "aiDraftable": true,
+        "authoringMode": "ai_draft",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+        ]
+      },
+      "sectionCount": 4,
+      "post": {
+        "input": {
+          "title": "3.2.S.1 · General Information",
+          "module": "M3",
+          "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+          "client_program_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "receipt": {
+          "success": true,
+          "document": {
+            "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+            "title": "3.2.S.1 · General Information",
+            "module": "M3",
+            "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+            "client_program_id": "11111111-1111-4111-8111-111111111111",
+            "status": "DRAFT",
+            "c2c_document_id": null,
+            "section_count": 4,
+            "updated_at": "2026-10-14T05:00:00.000Z",
+            "product_code": null,
+            "created_by": 1,
+            "provenance": {
+              "source": "template",
+              "template": {
+                "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+                "version": 1,
+                "kind": "narrative",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                  "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "initialBridge": {
+        "docId": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+        "sectionId": "5106a4ef-676b-4f50-8cd2-15681f64aa3c",
+        "sectionCode": "3.2.S.1",
+        "editable": true
+      },
+      "selectedSection": {
+        "id": "697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+        "code": "3.2.S.1.1",
+        "title": "Nomenclature",
+        "bridge": {
+          "docId": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+          "sectionId": "697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+          "sectionCode": "3.2.S.1.1",
+          "editable": true
+        }
+      },
+      "guidance": {
+        "text": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nPlatform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness. Scale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Reconcile the actual drug substance identity across sponsor-controlled records. Record established and provisional names separately, including the sponsor code and available registry identifiers. Distinguish the active moiety from the supplied salt, hydrate or other form, and identify each substance separately for a multi-substance product. An unavailable INN, USAN or CAS number is a gap, never a guessed identifier.\n\nSource and completion checks\nEstablished/provisional substance names and sponsor or laboratory code\nAvailable compendial, chemical and nonproprietary names with their status\nSupplied substance form and available registry identifier, traced to the source\nReconciliation of identity with characterization and specification records\nSource-bound identity reconciliation table, including unavailable identifiers\nReview points\nGuessing a registry identifier or presenting a proposed name as established\nConfusing the active moiety with the supplied substance form\n\nReference basis: ICH Q6A/Q6B; ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.S.1.1; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification.",
+        "regulatoryReferences": [
+          "ICH Q6A/Q6B",
+          "ICH M4Q: CTD Quality (FDA final, August 2001), 3.2.S.1.1; section structure checked 2026-10-09. IND detail is phase-dependent under 21 CFR 312.23(a)(7). This advisory template does not establish product applicability or scientific qualification."
+        ],
+        "sourceChecks": [
+          "Established/provisional substance names and sponsor or laboratory code",
+          "Available compendial, chemical and nonproprietary names with their status",
+          "Supplied substance form and available registry identifier, traced to the source",
+          "Reconciliation of identity with characterization and specification records",
+          "Source-bound identity reconciliation table, including unavailable identifiers"
+        ],
+        "authoredBodyEmpty": true
+      },
+      "guidanceAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 24
+      },
+      "guidanceMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 955.421875,
+          "width": 1104,
+          "height": 27.578125
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 955.421875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 1186
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 569.921875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 569,
+          "scrollHeight": 569
+        },
+        "editorCount": 1
+      },
+      "emptyEditorMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 731
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 114.796875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 114,
+          "scrollHeight": 114
+        },
+        "editorCount": 1
+      },
+      "emptyEditorAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".rse-foot-sep"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 21
+      },
+      "reopenNoDuplicate": true
+    },
+    {
+      "module": "M4",
+      "canonicalCode": "m4.2.3.1",
+      "ref": {
+        "id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+        "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
+        "module": "M4",
+        "sectionCount": 8,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "data_import",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "sectionCount": 8,
+      "post": {
+        "input": {
+          "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
+          "module": "M4",
+          "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+          "client_program_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "receipt": {
+          "success": true,
+          "document": {
+            "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+            "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
+            "module": "M4",
+            "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+            "client_program_id": "11111111-1111-4111-8111-111111111111",
+            "status": "DRAFT",
+            "c2c_document_id": null,
+            "section_count": 8,
+            "updated_at": "2026-10-14T05:00:00.000Z",
+            "product_code": null,
+            "created_by": 1,
+            "provenance": {
+              "source": "template",
+              "template": {
+                "id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+                "version": 1,
+                "kind": "preparation",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                  "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                  "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "initialBridge": {
+        "docId": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+        "sectionId": "6108d60a-ecc6-4f84-b67e-b2d771fb5755",
+        "sectionCode": "4.2.3.1",
+        "editable": true
+      },
+      "selectedSection": {
+        "id": "fbad699c-fa09-4d34-8aa8-55a9854d257d",
+        "code": "m4.2.3.1:work:1",
+        "title": "Title Page",
+        "bridge": {
+          "docId": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+          "sectionId": "fbad699c-fa09-4d34-8aa8-55a9854d257d",
+          "sectionCode": "m4.2.3.1:work:1",
+          "editable": true
+        }
+      },
+      "guidance": {
+        "text": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nThe platform's recorded nonclinical study-report structure calls for: Study title, report number, study type, testing facility, GLP statement, dates. Apply this to Single-Dose Toxicity only where supported by the original study. Populate from verified sponsor source records. Do not invent study findings, identifiers, signatures or GLP/GCP compliance. Retain original reports and datasets. This is a document-local working heading, not a CTD filing node or a completeness verdict.\n\nSource and completion checks\nVerify the recorded study title against the original study report.\nReview points\nTreating a missing result or unverified GLP statement as established.\nReplacing signed original study reports or raw datasets with this working outline.\n\nReference basis: ICH M3(R2); ICH M4S; confirm current study-specific guidance",
+        "regulatoryReferences": [
+          "ICH M3(R2)",
+          "ICH M4S; confirm current study-specific guidance"
+        ],
+        "sourceChecks": [
+          "Verify the recorded study title against the original study report."
+        ],
+        "authoredBodyEmpty": true
+      },
+      "guidanceAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 24
+      },
+      "guidanceMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 825.921875,
+          "width": 1104,
+          "height": 157.078125
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 825.921875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 1056
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 440.421875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 439,
+          "scrollHeight": 439
+        },
+        "editorCount": 1
+      },
+      "emptyEditorMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 731
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 114.796875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 114,
+          "scrollHeight": 114
+        },
+        "editorCount": 1
+      },
+      "emptyEditorAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".rse-foot-sep"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 21
+      },
+      "reopenNoDuplicate": true
+    },
+    {
+      "module": "M5",
+      "canonicalCode": "m5.3.5.1",
+      "ref": {
+        "id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+        "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
+        "module": "M5",
+        "sectionCount": 120,
+        "kind": "narrative",
+        "aiDraftable": true,
+        "authoringMode": "data_import",
+        "originalFormat": "pdf",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+        ]
+      },
+      "sectionCount": 120,
+      "post": {
+        "input": {
+          "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
+          "module": "M5",
+          "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+          "client_program_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "receipt": {
+          "success": true,
+          "document": {
+            "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+            "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
+            "module": "M5",
+            "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+            "client_program_id": "11111111-1111-4111-8111-111111111111",
+            "status": "DRAFT",
+            "c2c_document_id": null,
+            "section_count": 120,
+            "updated_at": "2026-10-14T05:00:00.000Z",
+            "product_code": null,
+            "created_by": 1,
+            "provenance": {
+              "source": "template",
+              "template": {
+                "id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+                "version": 1,
+                "kind": "narrative",
+                "limitations": [
+                  "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                  "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                  "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "initialBridge": {
+        "docId": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+        "sectionId": "d54338af-40e7-48ef-ac97-6768b6c7c4d5",
+        "sectionCode": "5.3.5.1",
+        "editable": true
+      },
+      "selectedSection": {
+        "id": "d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+        "code": "m5.3.5.1:work:1",
+        "title": "1 Title Page",
+        "bridge": {
+          "docId": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+          "sectionId": "d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+          "sectionCode": "m5.3.5.1:work:1",
+          "editable": true
+        }
+      },
+      "guidance": {
+        "text": "Template guidance and source requirements\n\nReference guidance for the saved section. Confirm current requirements and applicability; it is separate from authored evidence.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nIdentifies the study and the report so a reviewer can place it in the application and match it to the protocol, the synopsis and the datasets. Applicability: always; verify the study-specific requirement before finalisation. Populate from verified sponsor source records. Do not invent study findings, identifiers, signatures or GLP/GCP compliance. Retain original reports and datasets. This is a document-local working heading, not a CTD filing node or a completeness verdict.\n\nSource and completion checks\nStudy title\nName of the test drug / investigational product\nIndication studied\nIf not apparent from the title, one or two sentences on design (parallel, crossover, blinding, randomisation), comparison, duration, dose and population\nName of the sponsor\nProtocol identification (code or number)\nDevelopment phase\nStudy initiation date (first patient enrolled, or another verifiable definition)\nDate of early termination, if any\nStudy completion date (last patient completed)\nName and affiliation of the principal or coordinating investigator(s) or the sponsor’s responsible medical officer\nName of the company / sponsor signatory\nStatement that the study was performed in compliance with GCP, including the archiving of essential documents\nDate of the report, and the title and date of any earlier report from the same study\nVerify source records (platform practice): Final protocol and amendments\nVerify source records (platform practice): Clinical trial management system milestones (first patient enrolled, last patient completed)\nVerify source records (platform practice): ADSL / DM reference dates\nReview points\nStudy dates that disagree with the synopsis, the TS dataset and the 2.7.6 synopsis\nA GCP statement missing, or qualified without saying why\nReporting planned analyses as observed results, or drawing conclusions unsupported by the source records.\n\nReference basis: ICH E3; ICH E3 §1 (recall); CDISC SDTM / ADaM practice (the SAP and define.xml decide) (platform-convention)",
+        "regulatoryReferences": [
+          "ICH E3",
+          "ICH E3 §1 (recall)",
+          "CDISC SDTM / ADaM practice (the SAP and define.xml decide) (platform-convention)"
+        ],
+        "sourceChecks": [
+          "Study title",
+          "Name of the test drug / investigational product",
+          "Indication studied",
+          "If not apparent from the title, one or two sentences on design (parallel, crossover, blinding, randomisation), comparison, duration, dose and population",
+          "Name of the sponsor",
+          "Protocol identification (code or number)",
+          "Development phase",
+          "Study initiation date (first patient enrolled, or another verifiable definition)",
+          "Date of early termination, if any",
+          "Study completion date (last patient completed)",
+          "Name and affiliation of the principal or coordinating investigator(s) or the sponsor’s responsible medical officer",
+          "Name of the company / sponsor signatory",
+          "Statement that the study was performed in compliance with GCP, including the archiving of essential documents",
+          "Date of the report, and the title and date of any earlier report from the same study",
+          "Verify source records (platform practice): Final protocol and amendments",
+          "Verify source records (platform practice): Clinical trial management system milestones (first patient enrolled, last patient completed)",
+          "Verify source records (platform practice): ADSL / DM reference dates"
+        ],
+        "authoredBodyEmpty": true
+      },
+      "guidanceAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".ed-tree-row:nth-child(24) > .ed-num"
+              ],
+              [
+                ".ed-tree-row:nth-child(24) > .ed-lbl"
+              ]
+            ]
+          }
+        ],
+        "passes": 23
+      },
+      "guidanceMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 1065.921875,
+          "width": 1104,
+          "height": 0
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 1065.921875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 1296
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 680.421875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 679,
+          "scrollHeight": 679
+        },
+        "editorCount": 1
+      },
+      "emptyEditorMetrics": {
+        "visibleEditableViewport": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320
+        },
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "page": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440
+        },
+        "canvas": {
+          "x": 12,
+          "y": 12,
+          "width": 1416,
+          "height": 972,
+          "clientWidth": 1414,
+          "scrollWidth": 1414,
+          "clientHeight": 970,
+          "scrollHeight": 970
+        },
+        "editor": {
+          "x": 278,
+          "y": 500.296875,
+          "width": 1104,
+          "height": 320,
+          "clientWidth": 1104,
+          "scrollWidth": 1104,
+          "clientHeight": 320,
+          "scrollHeight": 320
+        },
+        "documentScroll": {
+          "x": 233,
+          "y": 259.5,
+          "width": 1194,
+          "height": 723.5,
+          "clientWidth": 1194,
+          "scrollWidth": 1194,
+          "clientHeight": 724,
+          "scrollHeight": 731
+        },
+        "editorScroll": null,
+        "sectionHeading": {
+          "x": 277,
+          "y": 295.5,
+          "width": 1106,
+          "height": 114.796875,
+          "clientWidth": 1106,
+          "scrollWidth": 1106,
+          "clientHeight": 114,
+          "scrollHeight": 114
+        },
+        "editorCount": 1
+      },
+      "emptyEditorAxe": {
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "impact": "serious",
+            "targets": [
+              [
+                "div[data-state=\"closed\"] > div"
+              ]
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "targets": [
+              [
+                ".ed-tree-row:nth-child(24) > .ed-num"
+              ],
+              [
+                ".ed-tree-row:nth-child(24) > .ed-lbl"
+              ],
+              [
+                ".rse-foot-sep"
+              ]
+            ]
+          },
+          {
+            "id": "label-content-name-mismatch",
+            "impact": "serious",
+            "targets": [
+              [
+                "button[title=\"Bold (⌘B)\"]"
+              ],
+              [
+                "button[title=\"Italic (⌘I)\"]"
+              ],
+              [
+                "button[title=\"Underline (⌘U)\"]"
+              ]
+            ]
+          }
+        ],
+        "passes": 22
+      },
+      "reopenNoDuplicate": true
+    }
+  ],
+  "outlines": [
+    {
+      "ref": {
+        "id": "ab30716f-4675-54e0-beab-e9c07b7a8e26",
+        "title": "M1 · Module 1: Regional Administrative Information — preparation worksheet",
+        "module": "M1",
+        "sectionCount": 21,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "text": "M1 · M1 · Module 1: Regional Administrative Information — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n21 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "createEnabled": true
+    },
+    {
+      "ref": {
+        "id": "d45b7d5c-ef41-5c66-a4b9-71f64da49966",
+        "title": "M2 · Module 2: CTD Summaries — preparation worksheet",
+        "module": "M2",
+        "sectionCount": 58,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "text": "M2 · M2 · Module 2: CTD Summaries — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n58 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "createEnabled": true
+    },
+    {
+      "ref": {
+        "id": "05b65c39-4f70-548b-b935-3f3c153f1621",
+        "title": "M3 · Module 3: Quality — preparation worksheet",
+        "module": "M3",
+        "sectionCount": 56,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "text": "M3 · M3 · Module 3: Quality — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n56 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "createEnabled": true
+    },
+    {
+      "ref": {
+        "id": "6df6b17d-ed72-51bf-91b4-05d5e0d0b012",
+        "title": "M4 · Module 4: Nonclinical Study Reports — preparation worksheet",
+        "module": "M4",
+        "sectionCount": 140,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "text": "M4 · M4 · Module 4: Nonclinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n140 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "createEnabled": true
+    },
+    {
+      "ref": {
+        "id": "43360f52-402b-5d28-819f-3397e06467b0",
+        "title": "M5 · Module 5: Clinical Study Reports — preparation worksheet",
+        "module": "M5",
+        "sectionCount": 295,
+        "kind": "preparation",
+        "aiDraftable": false,
+        "authoringMode": "manual",
+        "originalFormat": "mixed",
+        "limitations": [
+          "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+          "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+          "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+          "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+        ]
+      },
+      "text": "M5 · M5 · Module 5: Clinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n295 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "createEnabled": true
+    }
+  ],
+  "assertions": [
+    "Full 93-deliverable initial catalogue rendered",
+    "All five module representatives created in one existing editor with exact identity and unbound DRAFT receipts",
+    "Held native-create callback and working-copy reopens produced no duplicate POST",
+    "Existing section unsaved-work guard cancel kept local text and section",
+    "All five module-outline refs expose section counts, original format and limits",
+    "All selected authored bodies started empty and source guidance remained separate"
+  ],
+  "violations": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/authoring/ind-document-catalog",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/57f08623-7f6d-492b-a919-2706ede4913c",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=57f08623-7f6d-492b-a919-2706ede4913c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/57f08623-7f6d-492b-a919-2706ede4913c/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/ec960e61-10c7-43b6-857f-fc37831c6057",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=ec960e61-10c7-43b6-857f-fc37831c6057"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/ec960e61-10c7-43b6-857f-fc37831c6057/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/db97912a-9721-45a8-94fa-f600f56a9f0a",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=db97912a-9721-45a8-94fa-f600f56a9f0a"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/db97912a-9721-45a8-94fa-f600f56a9f0a/sources",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/3b0a1529-135a-4b4a-8a50-affb95ff5866",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=3b0a1529-135a-4b4a-8a50-affb95ff5866"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/3b0a1529-135a-4b4a-8a50-affb95ff5866/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/df0ecfe4-793a-4fcc-9834-07e153cb5196",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=df0ecfe4-793a-4fcc-9834-07e153cb5196"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/df0ecfe4-793a-4fcc-9834-07e153cb5196/sources",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/5106a4ef-676b-4f50-8cd2-15681f64aa3c",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=5106a4ef-676b-4f50-8cd2-15681f64aa3c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/5106a4ef-676b-4f50-8cd2-15681f64aa3c/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=697bfd8c-0db7-4e8d-90ab-464e22928ef3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/697bfd8c-0db7-4e8d-90ab-464e22928ef3/sources",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/6108d60a-ecc6-4f84-b67e-b2d771fb5755",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=6108d60a-ecc6-4f84-b67e-b2d771fb5755"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/6108d60a-ecc6-4f84-b67e-b2d771fb5755/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/fbad699c-fa09-4d34-8aa8-55a9854d257d",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=fbad699c-fa09-4d34-8aa8-55a9854d257d"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/fbad699c-fa09-4d34-8aa8-55a9854d257d/sources",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/11111111-1111-4111-8111-111111111111/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/d54338af-40e7-48ef-ac97-6768b6c7c4d5",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=d54338af-40e7-48ef-ac97-6768b6c7c4d5"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/d54338af-40e7-48ef-ac97-6768b6c7c4d5/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=d3eeca54-5262-4778-8626-0f6d8f1f4b14"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/d3eeca54-5262-4778-8626-0f6d8f1f4b14/sources",
+      "query": ""
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "additionalPreparation": {
+    "title": "GLP compliance statements",
+    "text": "GLP compliance statements\n\nUse the original form or data file. Review extracted text against the original.\n\n1 sections · Preparation worksheet · Original format: SOURCE-DEPENDENT.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA"
+  },
+  "libraryAxe": {
+    "violations": [],
+    "incomplete": [],
+    "passes": 20
+  },
+  "libraryMetrics": {
+    "visibleEditableViewport": null,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": null,
+    "editor": null,
+    "documentScroll": null,
+    "editorScroll": null,
+    "sectionHeading": null,
+    "editorCount": 0
+  },
+  "openEvents": [
+    {
+      "kind": "open",
+      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "held": true
+    },
+    {
+      "kind": "open",
+      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "held": false
+    },
+    {
+      "kind": "open",
+      "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "held": false
+    }
+  ],
+  "posts": [
+    {
+      "input": {
+        "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
+        "module": "M1",
+        "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+        "client_program_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "receipt": {
+        "success": true,
+        "document": {
+          "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+          "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
+          "module": "M1",
+          "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+          "client_program_id": "11111111-1111-4111-8111-111111111111",
+          "status": "DRAFT",
+          "c2c_document_id": null,
+          "section_count": 11,
+          "updated_at": "2026-10-14T05:00:00.000Z",
+          "product_code": null,
+          "created_by": 1,
+          "provenance": {
+            "source": "template",
+            "template": {
+              "id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
+              "version": 1,
+              "kind": "preparation",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "input": {
+        "title": "2.5 · Clinical Overview",
+        "module": "M2",
+        "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+        "client_program_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "receipt": {
+        "success": true,
+        "document": {
+          "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+          "title": "2.5 · Clinical Overview",
+          "module": "M2",
+          "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+          "client_program_id": "11111111-1111-4111-8111-111111111111",
+          "status": "DRAFT",
+          "c2c_document_id": null,
+          "section_count": 7,
+          "updated_at": "2026-10-14T05:00:00.000Z",
+          "product_code": null,
+          "created_by": 1,
+          "provenance": {
+            "source": "template",
+            "template": {
+              "id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
+              "version": 1,
+              "kind": "narrative",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "input": {
+        "title": "3.2.S.1 · General Information",
+        "module": "M3",
+        "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+        "client_program_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "receipt": {
+        "success": true,
+        "document": {
+          "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+          "title": "3.2.S.1 · General Information",
+          "module": "M3",
+          "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+          "client_program_id": "11111111-1111-4111-8111-111111111111",
+          "status": "DRAFT",
+          "c2c_document_id": null,
+          "section_count": 4,
+          "updated_at": "2026-10-14T05:00:00.000Z",
+          "product_code": null,
+          "created_by": 1,
+          "provenance": {
+            "source": "template",
+            "template": {
+              "id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
+              "version": 1,
+              "kind": "narrative",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "input": {
+        "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
+        "module": "M4",
+        "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+        "client_program_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "receipt": {
+        "success": true,
+        "document": {
+          "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+          "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
+          "module": "M4",
+          "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+          "client_program_id": "11111111-1111-4111-8111-111111111111",
+          "status": "DRAFT",
+          "c2c_document_id": null,
+          "section_count": 8,
+          "updated_at": "2026-10-14T05:00:00.000Z",
+          "product_code": null,
+          "created_by": 1,
+          "provenance": {
+            "source": "template",
+            "template": {
+              "id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
+              "version": 1,
+              "kind": "preparation",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+                "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "input": {
+        "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
+        "module": "M5",
+        "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+        "client_program_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "receipt": {
+        "success": true,
+        "document": {
+          "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+          "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
+          "module": "M5",
+          "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+          "client_program_id": "11111111-1111-4111-8111-111111111111",
+          "status": "DRAFT",
+          "c2c_document_id": null,
+          "section_count": 120,
+          "updated_at": "2026-10-14T05:00:00.000Z",
+          "product_code": null,
+          "created_by": 1,
+          "provenance": {
+            "source": "template",
+            "template": {
+              "id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
+              "version": 1,
+              "kind": "narrative",
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+                "Additional working headings organize preparation; confirm actual filing placement through the governed workflow."
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unexpected": [],
+  "status": "pass"
+}

@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 65ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 20ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass 33ms
+   → expected 'AnA · dispatch gate · proven, not gen…' not to contain 'external validator clean'
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass 24ms
+   → expected 'AnA · dispatch gate · proven, not gen…' not to contain 'external validator clean'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' not to contain 'external validator clean'
+
+Expected: "external validator clean"
+Received: "AnA · dispatch gate · proven, not generatedCleared to dispatch?BX-512 IND · Sequence 0000 (id 12) · region FDA · 6 leaves · status validatedCleared to dispatchYour sequence is cleared to dispatch. Every hard gate is proven clear.0 open validation errors, 0 unacknowledged Shadow Review criticals, external validator clean. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.No open error-severity findingSatisfied.STRUCTURAL_GATE_CLEAR · eThe agency-grade validator’s report for this package carries no errorsExternal validation failed. The external validator found 1 error. Dispatch policy is advisory. EXTERNAL_VALIDATION_CLEAN · eAt least one Shadow Review has completedSatisfied.SHADOW_REVIEW_COMPLETED · eA valid release signatureSatisfied.RELEASE_SIGNATURE_VALID · eStructural validation0 errors0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature. Prepare governed transmit"
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx:103:43
+    101|     expect(card.className).toContain('warn');
+    102|     expect(document.body.textContent).toContain('Cleared to dispatch');
+    103|     expect(document.body.textContent).not.toContain('external validato…
+       |                                           ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' not to contain 'external validator clean'
+
+Expected: "external validator clean"
+Received: "AnA · dispatch gate · proven, not generatedCleared to dispatch?BX-512 IND · Sequence 0000 (id 12) · region FDA · 6 leaves · status validatedCleared to dispatchYour sequence is cleared to dispatch. Every hard gate is proven clear.0 open validation errors, 0 unacknowledged Shadow Review criticals, external validator clean. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.No open error-severity findingSatisfied.STRUCTURAL_GATE_CLEAR · eThe agency-grade validator’s report for this package carries no errorsExternal validation report invalid. The supplied report names a different engine. Dispatch policy is advisory. EXTERNAL_VALIDATION_CLEAN · eAt least one Shadow Review has completedSatisfied.SHADOW_REVIEW_COMPLETED · eA valid release signatureSatisfied.RELEASE_SIGNATURE_VALID · eStructural validation0 errors0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature. Prepare governed transmit"
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx:103:43
+    101|     expect(card.className).toContain('warn');
+    102|     expect(document.body.textContent).toContain('Cleared to dispatch');
+    103|     expect(document.body.textContent).not.toContain('external validato…
+       |                                           ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  03:32:55
+   Duration  1.26s (transform 388ms, setup 103ms, import 494ms, tests 162ms, environment 371ms)
+

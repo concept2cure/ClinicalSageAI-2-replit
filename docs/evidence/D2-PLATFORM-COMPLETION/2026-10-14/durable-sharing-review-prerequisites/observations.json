@@ -1,0 +1,137 @@
+{
+  "workstream": "W1/D2-D3",
+  "status": "approved source frozen; actual SQL replay/historical NULL/fresh strict proof pending",
+  "staticOriginalRed": {
+    "failed": 4,
+    "passed": 1
+  },
+  "staticFinalGreen": {
+    "passed": 9,
+    "files": 2,
+    "skipped": 0,
+    "durationSeconds": 1.77
+  },
+  "forcedLint": {
+    "errorsBefore": 0,
+    "errorsAfter": 0,
+    "warningsBefore": 4,
+    "warningsAfter": 4,
+    "warningClasses": {
+      "complexity": 1,
+      "max-depth": 2,
+      "max-lines": 1
+    },
+    "warningGrowth": 0,
+    "testErrors": 0,
+    "testWarnings": 0,
+    "ignoredFirstLintNotUsedAsQualification": true
+  },
+  "guards": {
+    "journeyReachability": 0,
+    "setOrder": 0,
+    "dropSafety": 0,
+    "duplicateCreator": 0,
+    "modelAgreement": 0,
+    "guardOrder": 0,
+    "baselineChanged": false,
+    "scannerChanged": false
+  },
+  "nativeExecuted": false,
+  "sqlExecutedForThisScope": false,
+  "historyModified": false,
+  "compilerExecuted": false,
+  "schemaChanged": false,
+  "rawFiles": [
+    {
+      "original": "/tmp/durable-sharing-review-static-red.txt",
+      "originalSHA256": "62a5db538a1bbace49e89cb25c6be04aa64ce67741aa6798e564931e6f6a0532",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/static-original-red.log",
+      "copySHA256": "62a5db538a1bbace49e89cb25c6be04aa64ce67741aa6798e564931e6f6a0532",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-static-green.txt",
+      "originalSHA256": "6c4a279043f718f52a85eac44ec8ead21a185548faefdf6eac085ec4f230dbc6",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/static-final-green.log",
+      "copySHA256": "6c4a279043f718f52a85eac44ec8ead21a185548faefdf6eac085ec4f230dbc6",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-scoped-lint.txt",
+      "originalSHA256": "0429afc0ec7272648ed942854a8460d2458de7e7ce0c123ce7fc92f234b3beaa",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/scoped-first-lint-ignored-source.log",
+      "copySHA256": "0429afc0ec7272648ed942854a8460d2458de7e7ce0c123ce7fc92f234b3beaa",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-forced-lint-before.json",
+      "originalSHA256": "8de9c14276117f3f671b804e937eda3ee3c3790287b28bf56ac10996819af011",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/forced-lint-before.json",
+      "copySHA256": "8de9c14276117f3f671b804e937eda3ee3c3790287b28bf56ac10996819af011",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-forced-lint-after.json",
+      "originalSHA256": "c5ab7c78c85aa429d3813252f45591cffd20aea6e2a1844c99274b2fd8b23101",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/forced-lint-after.json",
+      "copySHA256": "c5ab7c78c85aa429d3813252f45591cffd20aea6e2a1844c99274b2fd8b23101",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-lint-comparison.json",
+      "originalSHA256": "2d049794416d8bc662f1837ba06682ae1dae68205658888eacd5da37f41c5d05",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/lint-comparison.json",
+      "copySHA256": "2d049794416d8bc662f1837ba06682ae1dae68205658888eacd5da37f41c5d05",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-journey-reachability.txt",
+      "originalSHA256": "98c01a785878a8b74186c12143c327ed2b0f9906f8f8f5781e407b0b8a5ffc9a",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/journey-reachability.log",
+      "copySHA256": "98c01a785878a8b74186c12143c327ed2b0f9906f8f8f5781e407b0b8a5ffc9a",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-set-order.txt",
+      "originalSHA256": "bdabdb3a8317fc78dcf030fdd4373eba54449fa4ca73583fdd877dd234724ed0",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/set-order.log",
+      "copySHA256": "bdabdb3a8317fc78dcf030fdd4373eba54449fa4ca73583fdd877dd234724ed0",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-drop-safety.txt",
+      "originalSHA256": "24955977c70e923966b33d5fe8e57e1bab53ef314605878d1864ea03deaa5ba2",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/drop-safety.log",
+      "copySHA256": "24955977c70e923966b33d5fe8e57e1bab53ef314605878d1864ea03deaa5ba2",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-duplicate-creator-guard.txt",
+      "originalSHA256": "a0a950fd7927ee9ed3c57a53b0fefcbe14938a68f377ee04a4919958732d26c7",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/duplicate-creator-guard.log",
+      "copySHA256": "a0a950fd7927ee9ed3c57a53b0fefcbe14938a68f377ee04a4919958732d26c7",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-model-agreement.txt",
+      "originalSHA256": "1ab802ddb3e4d5f66f42d256a384739d7d7220093d79cf783a2d8d4e93258f4f",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/model-agreement.log",
+      "copySHA256": "1ab802ddb3e4d5f66f42d256a384739d7d7220093d79cf783a2d8d4e93258f4f",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/durable-sharing-review-guard-order.txt",
+      "originalSHA256": "67271c383a245938df307c006e9226743e1c03f64676633662e96ff3b4540183",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/guard-order.log",
+      "copySHA256": "67271c383a245938df307c006e9226743e1c03f64676633662e96ff3b4540183",
+      "normalization": "trailing whitespace only; original preserved"
+    },
+    {
+      "original": "/tmp/platform-sharing-review-durability-prep/source-pins.json",
+      "originalSHA256": "e827e9af5c4bd6a316e1b628f0ed5acb16d5cf863834f6381bc9d193b2b4dfbe",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/durable-sharing-review-prerequisites/before-source-pins.json",
+      "copySHA256": "e827e9af5c4bd6a316e1b628f0ed5acb16d5cf863834f6381bc9d193b2b4dfbe",
+      "normalization": "trailing whitespace only; original preserved"
+    }
+  ]
+}

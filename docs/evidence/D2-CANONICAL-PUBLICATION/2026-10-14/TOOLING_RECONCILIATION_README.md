@@ -1,0 +1,13 @@
+# Evidence-tooling preservation and lint reconciliation
+
+The publication warning gate identified 29 warnings in 16 historical runner/probe files. Their exact original bytes were copied into each file's own `pre-publication-tooling/<filename>.txt` before any edit. `TOOLING_RECONCILIATION.json` maps every repo-relative active and archived path and records old/new SHA-256 hashes, byte counts and the permitted substitutions.
+
+Only three changes were made: `console.log` to `console.info` with unchanged arguments and stdout formatting; a never-reassigned `identity` binding from `let` to `const`; and an ANSI color-stripping literal to the equivalent constructed regular expression. No application/test source, historical result log or historical manifest was changed in this tooling work. Historical runners were not executed. Historical manifests continue to identify their original bytes, now preserved at the explicit archive paths.
+
+The same minimal changes were made to two active canonical runners after saving their originals. The independently owned active `run-independent.mjs` changed only its ANSI expression. Its owner restored the original after editing and verified those restored bytes against the hash captured before the edit; the manifest records this distinction, the original archive and that verification snapshot. This archive is not represented as having been copied before editing.
+
+The active canonical `run-final-regression.mjs` was then released to the lead for a separate publication-baseline source-binding correction. Its `newSha256` here is the completed lint-only checkpoint, explicitly marked in the record. The lead's later functional change requires its own current-source proof.
+
+Run `node docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/check-tooling-reconciliation.mjs` to verify all 19 original/checkpoint hashes and parse the current scripts without executing them. The check compares archived native regex behavior against the replacement across 12 input cases for 11 affected runners, verifies four native stdout-formatting cases, and demonstrates refusal of an incorrect archive hash and a changed regex grammar. It verifies current bytes for files still owned by this workstream; the released lead-owned runner is reported separately. Results are in `TOOLING_RECONCILIATION_CHECKS.json` and `tooling-reconciliation-checks.txt`.
+
+`TOOLING_ESLINT.json` records lint for the 19 reconciled scripts plus the checker. This tooling proof concerns preserved bytes, syntax, minimal transformations and output equivalence. Application regressions, native PostgreSQL cases, whole typechecking and publication gates remain separate evidence.

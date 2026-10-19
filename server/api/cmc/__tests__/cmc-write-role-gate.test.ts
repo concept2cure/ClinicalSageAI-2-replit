@@ -34,6 +34,7 @@ const WRITES: Array<[string, string]> = [
   ['post', '/api/cmc/module3-os/contradictions/p1'],
   ['post', '/api/cmc/module3-os/sections/p1/3.2.S.1/refresh'],
   ['post', '/api/cmc/module3-os/build-section/p1/3.2.S.1'],
+  ['post', '/api/cmc/module3-os/register-links/p1/analytical-methods/31/retry'],
   ['patch', '/api/cmc/agency-questions/3'],
   ['post', '/api/cmc/stability-studies'],
   // No DELETE route remains under /api/cmc — the last ones went with

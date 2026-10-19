@@ -32,6 +32,7 @@ import { SubmissionError } from '../../services/submission-service/submission-se
 const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
+  Object.defineProperty(req, 'ip', { value:'192.0.2.17' });
   // The token says admin; the membership row decides.
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'admin', roles: expandRoleClaims('admin', undefined) };
   next();
@@ -69,7 +70,7 @@ describe('the anchor route', () => {
     expect(svc.role).toHaveBeenCalledWith(3, 7);
     expect(svc.anchor).toHaveBeenCalledWith(
       { submissionId: 12, programId: PROGRAM, reason: REASON },
-      { organizationId: 7, userId: 3, orgRole: 'member' },
+      { organizationId: 7, userId: 3, orgRole: 'member', ipAddress:'192.0.2.17' },
     );
   });
 
@@ -90,7 +91,7 @@ describe('the anchor candidates route', () => {
     const res = await request(app).get('/api/submissions/12/program-anchor');
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toEqual({ applicationType: 'nda', candidates: [{ id: PROGRAM, code: 'N-1', title: 'Program N-1' }], otherTypes: 20 });
-    expect(svc.candidates).toHaveBeenCalledWith(12, { organizationId: 7, userId: 3 });
+    expect(svc.candidates).toHaveBeenCalledWith(12, { organizationId: 7, userId: 3, ipAddress:'192.0.2.17' });
   });
 
   it('answers a refusal with its status', async () => {

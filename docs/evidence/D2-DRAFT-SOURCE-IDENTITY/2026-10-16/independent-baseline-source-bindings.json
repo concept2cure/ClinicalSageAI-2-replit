@@ -1,0 +1,25 @@
+{
+  "head": "dbb3de5355e074a79c2e3fe6606ceaf5f4041d31",
+  "startedAt": "2026-10-16T21:29:46.105Z",
+  "finishedAt": "2026-10-16T21:29:48.946Z",
+  "exitCode": 1,
+  "before": {
+    "server/services/authoring/draft-source-references.ts": "9972d440b343093f82e592ff8bb26121516041aa6e388b54797b0bc012a42938",
+    "server/services/ana/draft-project-sources.ts": "ee1c180aa384b057731cd75222b691a502362071d80ddf4d1a87e06e8ee62f78",
+    "server/services/authoring/authoring-from-draft.ts": "f8fc5128856618b5f299cbaedaadda5ff825f8a22544cbea3974498468f70787",
+    "server/services/ana/document-surface-tool-defs.ts": "698887a155fd495471d34b407daa5db50f8350887d99758da7c5c0af9cca8807",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "afc335d9d7b2ce8e17879ac2a9bc1abfb39c50d2ee25583ebf3df21d579ee670",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "2dc961ddaa8a4550bd748c838ae2334b63b211682653fd02bb039e54a6d1fcee",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5"
+  },
+  "after": {
+    "server/services/authoring/draft-source-references.ts": "9972d440b343093f82e592ff8bb26121516041aa6e388b54797b0bc012a42938",
+    "server/services/ana/draft-project-sources.ts": "ee1c180aa384b057731cd75222b691a502362071d80ddf4d1a87e06e8ee62f78",
+    "server/services/authoring/authoring-from-draft.ts": "f8fc5128856618b5f299cbaedaadda5ff825f8a22544cbea3974498468f70787",
+    "server/services/ana/document-surface-tool-defs.ts": "698887a155fd495471d34b407daa5db50f8350887d99758da7c5c0af9cca8807",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "afc335d9d7b2ce8e17879ac2a9bc1abfb39c50d2ee25583ebf3df21d579ee670",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "2dc961ddaa8a4550bd748c838ae2334b63b211682653fd02bb039e54a6d1fcee",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5"
+  },
+  "sourcesUnchanged": true
+}

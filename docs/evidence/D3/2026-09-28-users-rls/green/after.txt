@@ -35,4 +35,3 @@ stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users
       Tests  11 passed (11)
    Start at  16:59:54
    Duration  2.86s (transform 1.07s, setup 73ms, import 1.84s, tests 674ms, environment 0ms)
-

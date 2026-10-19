@@ -1,0 +1,44 @@
+{
+  "documentTable": "authoring_sections",
+  "documentId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+  "contentLength": 706,
+  "attributedChars": 705,
+  "unattributedChars": 1,
+  "byKind": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "staleChars": 0,
+  "spans": [
+    {
+      "charStart": 0,
+      "charEnd": 119,
+      "provenanceKind": "machine_draft",
+      "usage": "asserted",
+      "sourceTitle": null,
+      "machineAuthorId": "workflow_import",
+      "stale": false
+    },
+    {
+      "charStart": 120,
+      "charEnd": 615,
+      "provenanceKind": "machine_draft",
+      "usage": "asserted",
+      "sourceTitle": null,
+      "machineAuthorId": "workflow_import",
+      "stale": false
+    },
+    {
+      "charStart": 615,
+      "charEnd": 706,
+      "provenanceKind": "author_assertion",
+      "usage": "asserted",
+      "sourceTitle": null,
+      "machineAuthorId": null,
+      "stale": false
+    }
+  ],
+  "generatedAt": "2026-10-13T23:58:17.328Z"
+}

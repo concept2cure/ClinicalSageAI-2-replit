@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { lookupRecognizedStandards } from '../../../../../../server/services/fda-recognized-standards/recognized-standards.service';
 import {
   DeviceProfilePanel,
   classificationAutofill,
@@ -293,10 +294,9 @@ describe('classificationAutofill — openFDA hit → intake fields, offered not 
 });
 
 /**
- * The recognized-standards half. The dataset is a vendored FDA export that is
- * not in this repository, so the state these tests care most about is the one
- * this deployment is actually in: the list is not held, and the panel says so
- * instead of showing a plausible set of standards.
+ * Fixture states keep unavailable and explicit-code matches distinguishable.
+ * Separate real-asset cases below exercise the complete official acquisition
+ * through the canonical disk loader and mounted panel, without FDA network calls.
  */
 const STANDARD = {
   recognitionNumber: '99-001',
@@ -317,13 +317,13 @@ const PROVENANCE = {
   retrievedBy: 'fixture',
 };
 
-async function openStandards(standardsBody: unknown) {
+async function openStandards(standardsBody: unknown, profile = PROFILE) {
   mockFetch((url) => {
     if (url.includes('/device/standards')) return okJson(standardsBody);
-    return okJson({ profile: PROFILE });
+    return okJson({ profile });
   });
-  render(<DeviceProfilePanel ident={PROFILE.id} />);
-  await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+  render(<DeviceProfilePanel ident={profile.id} />);
+  await waitFor(() => expect(screen.getByText(new RegExp(`code ${profile.productCode}`))).toBeTruthy());
   fireEvent.click(screen.getByText('Edit'));
   fireEvent.click(screen.getByText('Recognized standards'));
 }
@@ -343,7 +343,7 @@ describe('standardsStatusLine — the three states stay three', () => {
     ).toBe('Recognized standards unavailable — the dataset has not been vendored');
   });
 
-  it("calls a loaded-but-empty answer the list's answer, not a gap", () => {
+  it('labels zero explicit associations and keeps broader recognition scope open for review', () => {
     const line = standardsStatusLine({
       productCode: 'MDS',
       available: true,
@@ -352,8 +352,9 @@ describe('standardsStatusLine — the three states stay three', () => {
       matched: 0,
       source: 'fda-recognized-consensus-standards',
     });
-    expect(line).toMatch(/holds no consensus standard against product code MDS/);
-    expect(line).toMatch(/not a gap in the lookup/);
+    expect(line).toMatch(/No explicit FDA product-code associations found for product code MDS/);
+    expect(line).toMatch(/Review broader published recognition scope separately/);
+    expect(line).not.toMatch(/no consensus standard/);
   });
 
   it('counts real hits and cites the recognition list they came from', () => {
@@ -367,7 +368,7 @@ describe('standardsStatusLine — the three states stay three', () => {
         provenance: PROVENANCE,
         source: 'fda-recognized-consensus-standards',
       }),
-    ).toBe('1 recognized standard for product code MDS · FDA Recognition List TEST-FIXTURE-000');
+    ).toBe('1 recognized standard explicitly associated with product code MDS · FDA Recognition List TEST-FIXTURE-000');
   });
 
   it('distinguishes a failed request from the server saying "unavailable"', () => {
@@ -376,6 +377,33 @@ describe('standardsStatusLine — the three states stay three', () => {
 });
 
 describe('DeviceProfilePanel — recognized standards', () => {
+  it('renders actual acquired FDA associations through the canonical loader with their limited scope', async () => {
+    const result = await lookupRecognizedStandards('MUE', {
+      env: { FDA_RECOGNIZED_STANDARDS_DIR: 'assets/fda-recognized-standards' },
+    });
+    expect(result.available).toBe(true);
+    expect(result.datasetLoaded).toBe(true);
+    expect(result.matched).toBe(6);
+    expect(result.standards.some(standard => standard.recognitionNumber === '12-165')).toBe(true);
+    await openStandards(result, { ...PROFILE, productCode: 'MUE' });
+    await waitFor(() => expect(screen.getByText(/6 recognized standards explicitly associated with product code MUE/)).toBeTruthy());
+    expect(screen.getByText(/recognition 12-165/)).toBeTruthy();
+    expect(screen.getByText(/broader published scope statements require separate regulatory review/)).toBeTruthy();
+  });
+
+  it('renders an actual zero-code match without ruling out broader FDA recognition scope', async () => {
+    const result = await lookupRecognizedStandards('ZZZ', {
+      env: { FDA_RECOGNIZED_STANDARDS_DIR: 'assets/fda-recognized-standards' },
+    });
+    expect(result.available).toBe(true);
+    expect(result.datasetLoaded).toBe(true);
+    expect(result.matched).toBe(0);
+    await openStandards(result, { ...PROFILE, productCode: 'ZZZ' });
+    await waitFor(() => expect(screen.getByText(/No explicit FDA product-code associations found for product code ZZZ/)).toBeTruthy());
+    expect(screen.getByText(/Review broader published recognition scope separately/)).toBeTruthy();
+    expect(screen.queryByText(/holds no consensus standard/)).toBeNull();
+  });
+
   it('shows nothing about standards until asked', async () => {
     mockFetch(() => okJson({ profile: PROFILE }));
     render(<DeviceProfilePanel ident={PROFILE.id} />);
@@ -420,9 +448,10 @@ describe('DeviceProfilePanel — recognized standards', () => {
     expect(screen.getByText('Extent of recognition: Clauses 1 to 4 only.')).toBeTruthy();
     expect(screen.getByText(/Transition ends 2027-01-01/)).toBeTruthy();
     expect(screen.getByText(/Recognition is FDA's/)).toBeTruthy();
+    expect(screen.getByText(/broader published scope statements require separate regulatory review/)).toBeTruthy();
   });
 
-  it('reports a loaded list that holds nothing for this code as exactly that', async () => {
+  it('reports zero explicit code associations without asserting no broader recognized standard applies', async () => {
     await openStandards({
       productCode: 'MDS',
       available: true,
@@ -434,8 +463,10 @@ describe('DeviceProfilePanel — recognized standards', () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByText(/holds no consensus standard against product code MDS/)).toBeTruthy(),
+      expect(screen.getByText(/No explicit FDA product-code associations found for product code MDS/)).toBeTruthy(),
     );
+    expect(screen.getByText(/Review broader published recognition scope separately/)).toBeTruthy();
+    expect(screen.getByText(/broader published scope statements require separate regulatory review/)).toBeTruthy();
   });
 });
 

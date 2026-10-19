@@ -12,7 +12,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
-import { overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
+import { DISCOVERY_NOT_A_GENERAL_SETTING, DiscoverySettingRefusedError, COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING, CompanyDocumentsSettingRefusedError, namesCompanyDocuments, generalSettingsView, asSettings, namesOnboardingDiscovery, overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
 
 const router = Router();
 
@@ -104,10 +104,18 @@ async function requireOrgAdmin(req: any, res: any, next: any) {
  */
 router.get('/', async (req, res) => {
   try {
+    // The account workspace switcher needs actual memberships, including for
+    // platform staff whose ordinary directory contains every organization.
+    // Keep the existing directory behavior unless this validated filter opts in.
+    const filters = z.object({ membershipOnly: z.enum(['true', 'false']).optional() }).safeParse(req.query);
+    if (!filters.success) {
+      return res.status(400).json({ success: false, error: 'membershipOnly must be true or false' });
+    }
+    const membershipOnly = filters.data.membershipOnly === 'true';
     const userId = req.user?.id ? parseInt(String(req.user.id)) : null;
     // Only platform staff may list ALL organizations; a tenant 'admin' sees
     // just their own memberships like any other user (no tenant enumeration).
-    const isAdmin = await isPlatformStaff(req);
+    const isAdmin = membershipOnly ? false : await isPlatformStaff(req);
 
     let orgRows;
 
@@ -464,7 +472,7 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       ? { ...defaultSettings, ...organization.settings }
       : defaultSettings;
 
-    res.json({ success: true, settings });
+    res.json({ success: true, settings: generalSettingsView(settings) });
   } catch (error) {
     console.error('Error fetching organization settings:', error);
     res.status(500).json({
@@ -478,6 +486,31 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
  * Update organization settings
  * API: PATCH /api/organizations/:id/settings
  */
+function isGovernedSettingsBody(body: unknown): boolean {
+  const record = asSettings(body);
+  return typeof body === 'object' && body !== null && !Array.isArray(body)
+    && typeof record.settings === 'object' && record.settings !== null
+    && Object.keys(record).every(key => key === 'settings' || key === 'reason');
+}
+
+function settingsMutationRefusal(error: unknown): string | null {
+  if (error instanceof CompanyDocumentsSettingRefusedError) return COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING;
+  if (error instanceof ConnectorSettingRefusedError) return CONNECTOR_NOT_A_GENERAL_SETTING;
+  if (error instanceof DiscoverySettingRefusedError) return DISCOVERY_NOT_A_GENERAL_SETTING;
+  return null;
+}
+
+function namedManagedSettingsRefusal(value: unknown): string | null {
+  if (namesClaudeConnector(value)) return CONNECTOR_NOT_A_GENERAL_SETTING;
+  if (namesOnboardingDiscovery(value)) return DISCOVERY_NOT_A_GENERAL_SETTING;
+  if (namesCompanyDocuments(value)) return COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING;
+  return null;
+}
+
+function isNonEmptySettings(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
+}
+
 router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcrossOrgs, async (req, res) => {
   try {
     const { id } = req.params;
@@ -487,12 +520,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // the contract predates this hardening); a governed call must carry a
     // reason of at least 3 chars. Both forms audit the changed section keys.
     const body = req.body ?? {};
-    const isGoverned =
-      typeof body === 'object' &&
-      !Array.isArray(body) &&
-      typeof body.settings === 'object' &&
-      body.settings !== null &&
-      Object.keys(body).every(k => k === 'settings' || k === 'reason');
+    const isGoverned = isGovernedSettingsBody(body);
     const settingsUpdate = isGoverned ? body.settings : body;
     const reason = isGoverned && typeof body.reason === 'string' ? body.reason.trim() : null;
 
@@ -502,12 +530,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
         error: 'A reason (min 3 chars) is required for this action',
       });
     }
-    if (
-      typeof settingsUpdate !== 'object' ||
-      settingsUpdate === null ||
-      Array.isArray(settingsUpdate) ||
-      Object.keys(settingsUpdate).length === 0
-    ) {
+    if (!isNonEmptySettings(settingsUpdate)) {
       return res.status(400).json({
         success: false,
         error: 'Settings update must be a non-empty object',
@@ -518,9 +541,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // requireOrgAdmin admits an administrator, so a body naming it is refused
     // whole, before anything is read (P1-49 fix round); the writer below
     // refuses any change to it from this door as well.
-    if (namesClaudeConnector(settingsUpdate)) {
-      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
-    }
+    const managedRefusal = namedManagedSettingsRefusal(settingsUpdate);
+    if (managedRefusal) return res.status(403).json({ success: false, error: managedRefusal });
 
     // DP-73 (2026-10-01): through the one settings writer. The stored
     // settings are read under a row lock, the update laid over them (a
@@ -547,9 +569,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
       auditTrail: { persisted: true, chained: true },
     });
   } catch (error) {
-    if (error instanceof ConnectorSettingRefusedError) {
-      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
-    }
+    const refusal = settingsMutationRefusal(error);
+    if (refusal) return res.status(403).json({ success: false, error: refusal });
     console.error('Error updating organization settings:', (error as Error)?.message);
     res.status(500).json({
       success: false,

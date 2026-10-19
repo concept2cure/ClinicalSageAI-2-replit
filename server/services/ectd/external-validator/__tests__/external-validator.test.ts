@@ -11,17 +11,30 @@ import {
 } from '..';
 
 function report(over: Partial<ExternalValidationReport> = {}): ExternalValidationReport {
+  const errorCount = over.errorCount ?? 0;
+  const warningCount = over.warningCount ?? 0;
+  const ran = over.ran ?? true;
   return {
-    validator: 'stub',
+    validator: 'lorenz-evalidator',
     profile: 'FDA eCTD 3.2.2',
     ranAt: new Date(),
-    ran: true,
-    findings: [],
-    errorCount: 0,
-    warningCount: 0,
-    passed: true,
+    ran,
+    findings: [
+      ...Array.from({ length: errorCount }, (_, i) => ({ ruleId: `E${i}`, severity: 'error' as const, message: 'Synthetic error.' })),
+      ...Array.from({ length: warningCount }, (_, i) => ({ ruleId: `W${i}`, severity: 'warning' as const, message: 'Synthetic warning.' })),
+    ],
+    errorCount,
+    warningCount,
+    passed: ran && errorCount === 0,
     ...over,
   };
+}
+
+function externalGate(input: Parameters<typeof evaluateExternalValidationGate>[0]) {
+  return evaluateExternalValidationGate({
+    selectedValidator: { name: 'lorenz-evalidator', kind: 'external_engine' },
+    ...input,
+  });
 }
 
 describe('tallyFindings', () => {
@@ -80,19 +93,20 @@ describe('resolveExternalValidator', () => {
 
 describe('evaluateExternalValidationGate', () => {
   it('staging is advisory: surfaces error count but adds no blocker', () => {
-    const r = evaluateExternalValidationGate({
-      report: report({ errorCount: 3, findings: [{ ruleId: 'F', severity: 'error', message: 'm' }] }),
+    const r = externalGate({
+      report: report({ errorCount: 3 }),
       configured: true,
       requireEvalidator: true,
       environment: 'staging',
     });
     expect(r.externalErrorCount).toBe(3);
+    expect(r.assessmentStatus).toBe('failed');
     expect(r.cleared).toBe(true);
     expect(r.blockers).toHaveLength(0);
   });
 
   it('production + required + not configured ⇒ fail closed (could not run)', () => {
-    const r = evaluateExternalValidationGate({
+    const r = externalGate({
       report: null,
       configured: false,
       requireEvalidator: true,
@@ -104,7 +118,7 @@ describe('evaluateExternalValidationGate', () => {
   });
 
   it('production + required + ran with errors ⇒ blocks on the agency errors', () => {
-    const r = evaluateExternalValidationGate({
+    const r = externalGate({
       report: report({ ran: true, errorCount: 2, passed: false }),
       configured: true,
       requireEvalidator: true,
@@ -116,7 +130,7 @@ describe('evaluateExternalValidationGate', () => {
   });
 
   it('production + required + ran clean ⇒ cleared', () => {
-    const r = evaluateExternalValidationGate({
+    const r = externalGate({
       report: report({ ran: true, errorCount: 0, passed: true }),
       configured: true,
       requireEvalidator: true,
@@ -127,7 +141,7 @@ describe('evaluateExternalValidationGate', () => {
   });
 
   it('not required ⇒ never blocks even in production with no engine', () => {
-    const r = evaluateExternalValidationGate({
+    const r = externalGate({
       report: null,
       configured: false,
       requireEvalidator: false,

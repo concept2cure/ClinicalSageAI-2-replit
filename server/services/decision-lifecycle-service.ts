@@ -19,6 +19,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { LedgerInputRefusal } from './assumption-registry-service';
 import type { ActionState } from './decision-record-service.js';
 import type {
   FormalDecisionRecord,
@@ -60,6 +61,23 @@ function indexDecision(decision: FormalDecisionRecord): void {
 
 function indexReceipt(receipt: DecisionReceipt): void {
   receiptStore.set(receipt.id, receipt);
+}
+
+/**
+ * The user named as acting — text, or a user id as the routes pass it — or
+ * null. With none, decided_by was the creator TYPE ('human' / 'ana' /
+ * 'system') and then 'system', and a transition was performed by 'system'
+ * (until 2026-10-15).
+ */
+function actorOf(id: unknown): string | null {
+  if (typeof id === 'string' && id.trim() !== '') return id;
+  return typeof id === 'number' && Number.isInteger(id) && id > 0 ? String(id) : null;
+}
+
+function requireDecider(createdById: unknown, flow: string): string {
+  const decider = actorOf(createdById);
+  if (decider != null) return decider;
+  throw new LedgerInputRefusal('createdById', `${flow}: no user was named, so nothing was recorded. A decision names who made it.`);
 }
 
 // ─── Persistence Bridge ──────────────────────────────────────────────────────
@@ -106,7 +124,8 @@ const DECISION_STATUS_TO_ACTION_STATE: Partial<Record<DecisionStatus, ActionStat
 async function persistTransition(
   decision: FormalDecisionRecord,
   newStatus: DecisionStatus,
-  actorId: string | undefined,
+  actorId: string,
+  detail: { reason?: string; escalatedToRole?: string } = {},
 ): Promise<boolean> {
   if (decision.organizationId == null) return false;
   const actionState = DECISION_STATUS_TO_ACTION_STATE[newStatus];
@@ -125,11 +144,21 @@ async function persistTransition(
       });
       return false;
     }
-    await decisionRecordService.transition(row.id, {
+    /* transition() answers null when its UPDATE matched no row; that was
+       ignored and the transition reported durable. The escalation target and
+       reason were not passed, so the ledger's escalated_to named the person who
+       escalated rather than the role escalated to (2026-10-15). */
+    const updated = await decisionRecordService.transition(row.id, {
       organizationId: decision.organizationId,
       actionState,
-      performedBy: actorId || 'system',
+      performedBy: actorId,
+      ...(detail.reason ? { reason: detail.reason } : {}),
+      ...(detail.escalatedToRole ? { escalatedTo: detail.escalatedToRole } : {}),
     });
+    if (!updated) {
+      log.warn('Decision transition matched no durable row', { id: decision.id, newStatus });
+      return false;
+    }
     return true;
   } catch (err) {
     log.warn('Decision transition could not be persisted', {
@@ -141,7 +170,7 @@ async function persistTransition(
   }
 }
 
-async function persistDecision(decision: FormalDecisionRecord): Promise<boolean> {
+async function persistDecision(decision: FormalDecisionRecord, decidedBy: string): Promise<boolean> {
   // Never fabricate tenant attribution. The in-memory store remains the source
   // of truth for the session; this DB bridge is best-effort and tenant-scoped.
   if (decision.organizationId == null) {
@@ -165,8 +194,11 @@ async function persistDecision(decision: FormalDecisionRecord): Promise<boolean>
       recommendationType: 'regulatory_strategy',
       recommendationSummary: decision.summary,
       recommendationRationale: decision.rationale,
-      confidenceLevel: decision.sourceSignals.length > 2 ? 'high' : 'moderate',
-      decidedBy: decision.createdById || decision.createdByType || 'system',
+      // A formal decision records no confidence. This wrote 'high' for more
+      // than two source signals and 'moderate' otherwise — a count, recorded
+      // as a confidence (2026-10-15).
+      confidenceLevel: null,
+      decidedBy,
       notes: JSON.stringify({
         kind: decision.kind,
         status: decision.status,
@@ -206,7 +238,7 @@ export class DecisionLifecycleService {
   /**
    * Record a preflight judgment as a formal decision.
    */
-  recordPreflightDecision(opts: {
+  async recordPreflightDecision(opts: {
     projectId: string;
     organizationId?: number;
     kind: 'section-preflight-judgment' | 'module-preflight-judgment' | 'dossier-preflight-judgment';
@@ -223,18 +255,26 @@ export class DecisionLifecycleService {
     sourceSignals: DecisionSourceSignal[];
     recommendedActionIds?: string[];
     createdById?: string;
-  }): FormalDecisionRecord {
+  }): Promise<FormalDecisionRecord> {
+    // Refused before anything is built or written: it was decided by 'system'.
+    const decidedBy = requireDecider(opts.createdById, 'recordPreflightDecision');
     const decision = buildPreflightDecision({
       ...opts,
       createdByType: 'system',
     });
 
+    /* AWAITED, and indexed only once it is durable (2026-10-15). This fired
+       unawaited and returned the id regardless — "persisted to memory only"
+       at log.warn — so the section preflight's verdict, the judgment a
+       promotion rests on, was reported recorded when it lived only in this
+       process's heap. The same rule as recordGovernedActionDecision. */
+    const persisted = await persistDecision(decision, decidedBy);
+    if (!persisted) {
+      throw new Error(
+        `Preflight decision ${decision.id} could not be recorded durably; refusing to report it as recorded.`,
+      );
+    }
     indexDecision(decision);
-    persistDecision(decision).then(ok => {
-      if (!ok) {
-        log.warn('Preflight decision persisted to memory only', { id: decision.id });
-      }
-    });
 
     log.info('Preflight decision recorded', {
       id: decision.id,
@@ -270,6 +310,8 @@ export class DecisionLifecycleService {
     linkedContradictionIds?: string[];
     linkedAssumptionIds?: string[];
   }): Promise<FormalDecisionRecord> {
+    // Refused before it is indexed or written: it was decided by its creator type.
+    const decidedBy = requireDecider(opts.createdById, 'recordGovernedActionDecision');
     const decision = buildGovernedActionDecision(opts);
 
     indexDecision(decision);
@@ -278,7 +320,7 @@ export class DecisionLifecycleService {
        decision that existed only in this process's heap — gone at the next
        restart, invisible to every other worker, and unrecoverable for an audit.
        A governed decision that was not recorded did not happen. */
-    const persisted = await persistDecision(decision);
+    const persisted = await persistDecision(decision, decidedBy);
     if (!persisted) {
       throw new Error(
         `Governed action decision ${decision.id} could not be recorded durably; ` +
@@ -315,6 +357,11 @@ export class DecisionLifecycleService {
     if (!decision) {
       return { success: false, error: `Decision ${decisionId} not found` };
     }
+    // A transition nobody is named as making is refused; it was written as performed by 'system' (until 2026-10-15).
+    const actorId = actorOf(opts.actorId);
+    if (actorId == null) {
+      return { success: false, error: `Decision ${decisionId} was not transitioned: no user was named as making the transition.`, decision };
+    }
 
     if (!isValidTransition(decision.status, newStatus)) {
       return {
@@ -331,6 +378,33 @@ export class DecisionLifecycleService {
       }
     }
 
+    /* The confirmed / executed / approved / rejected stamps touched NO database:
+       they mutated `decisionStore`, a module-level Map, and every route reported
+       success. So the moment an action was confirmed — the fact a Part 11
+       reviewer would ask about — was lost at the next restart and invisible to
+       every other worker. The durable row is addressed by decision_code, not by
+       this id: `create` lets the database mint the primary key, the same
+       mismatch the governed-fabric writer had.
+
+       The ledger is written FIRST (2026-10-15). The in-memory record used to be
+       advanced before the write was attempted, so after a refusal that said
+       "the in-memory record was not advanced" the decision read the new status
+       anyway. persistTransition needs only the decision's id, kind and tenant. */
+    const durable = await persistTransition(decision, newStatus, actorId, {
+      reason: opts.reason,
+      escalatedToRole: opts.escalatedToRole,
+    });
+    if (!durable) {
+      return {
+        success: false,
+        error:
+          `Decision ${decisionId} could not be transitioned to ${newStatus} durably. ` +
+          'The in-memory record was not advanced; retry once the store is reachable.',
+        decision,
+      };
+    }
+
+    const from = decision.status;
     const now = new Date().toISOString();
     decision.status = newStatus;
     decision.updatedAt = now;
@@ -357,27 +431,9 @@ export class DecisionLifecycleService {
         break;
     }
 
-    /* The confirmed / executed / approved / rejected stamps touched NO database:
-       they mutated `decisionStore`, a module-level Map, and every route reported
-       success. So the moment an action was confirmed — the fact a Part 11
-       reviewer would ask about — was lost at the next restart and invisible to
-       every other worker. The durable row is addressed by decision_code, not by
-       this id: `create` lets the database mint the primary key, the same
-       mismatch the governed-fabric writer had. */
-    const durable = await persistTransition(decision, newStatus, opts.actorId);
-    if (!durable) {
-      return {
-        success: false,
-        error:
-          `Decision ${decisionId} could not be transitioned to ${newStatus} durably. ` +
-          'The in-memory record was not advanced; retry once the store is reachable.',
-        decision,
-      };
-    }
-
     log.info('Decision transitioned', {
       id: decisionId,
-      from: decision.status,
+      from,
       to: newStatus,
       actor: opts.actorId,
     });
@@ -836,7 +892,14 @@ export class DecisionLifecycleService {
    */
   async computeContradictionAwareStatus(
     projectId: string,
-    scope: { moduleCode?: string; dossierId?: string; regulatorBody?: string; submissionType?: string }
+    scope: {
+      /** The caller's tenant. Required: both reads below are scoped by it. */
+      organizationId: number;
+      moduleCode?: string;
+      dossierId?: string;
+      regulatorBody?: string;
+      submissionType?: string;
+    }
   ): Promise<{
     hasUnresolvedContradictions: boolean;
     hasProvisionalDecisions: boolean;
@@ -850,31 +913,35 @@ export class DecisionLifecycleService {
     overlayActiveCount: number;
     summary: string;
   }> {
-    // Base decision-aware status
-    const baseStatus = this.computeDecisionAwareStatus(projectId, scope);
-
-    // Enrich with contradiction context
-    let contradictionCount = 0;
-    let contradictionBlockingCount = 0;
-    let overlayActiveCount = 0;
-
-    try {
-      const { contradictionEngineService } = await import('./contradiction-engine-service.js');
-      const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        1, // Default org — real multi-tenant uses req context
-        Number(projectId),
-        {
-          moduleCode: scope.moduleCode,
-          regulatorBody: scope.regulatorBody,
-          submissionType: scope.submissionType,
-        }
-      );
-      contradictionCount = contradictionContext.unresolvedCount;
-      contradictionBlockingCount = contradictionContext.blockingCount;
-      overlayActiveCount = contradictionContext.overlayActiveCount;
-    } catch {
-      // Contradiction engine unavailable
+    /* Both reads are the caller's tenant's (2026-10-15). The contradiction read
+       was hard-coded to organization 1 ("Default org — real multi-tenant uses
+       req context"), so every other tenant was told its project had no
+       contradictions — while organization 1's counts were served to anyone
+       naming the same project id — and the decisions were read unscoped. A
+       failed read left the counts at 0 and the summary at "No pending
+       decisions or contradictions"; it now fails, rather than reporting none. */
+    if (!Number.isInteger(scope.organizationId) || scope.organizationId <= 0) {
+      throw new Error('computeContradictionAwareStatus: an organization is required');
     }
+    const baseStatus = this.computeDecisionAwareStatus(projectId, {
+      moduleCode: scope.moduleCode,
+      dossierId: scope.dossierId,
+      organizationId: scope.organizationId,
+    });
+
+    const { contradictionEngineService } = await import('./contradiction-engine-service.js');
+    const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+      scope.organizationId,
+      Number(projectId),
+      {
+        moduleCode: scope.moduleCode,
+        regulatorBody: scope.regulatorBody,
+        submissionType: scope.submissionType,
+      }
+    );
+    const contradictionCount = contradictionContext.unresolvedCount;
+    const contradictionBlockingCount = contradictionContext.blockingCount;
+    const overlayActiveCount = contradictionContext.overlayActiveCount;
 
     const parts: string[] = [];
     if (baseStatus.summary !== 'No pending decisions') {

@@ -27,6 +27,7 @@ function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    (req as Request & { dbClient: unknown }).dbClient = { query: (...args: unknown[]) => query(...args) };
     next();
   });
   app.use('/api/mdx', qmsRouter);

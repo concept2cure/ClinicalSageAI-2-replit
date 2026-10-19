@@ -23,10 +23,26 @@ function tree(files) {
 }
 
 const WRITE = "await client.query(`UPDATE vault.documents SET folder_id = $1 WHERE id = $2`, [f, id]);\n";
+const UPSERT = "await client.query(`INSERT INTO vault.documents (id) VALUES ($1) ON CONFLICT (id) DO UPDATE SET processing_status = 'PENDING'`, [id]);\n";
 const named = Object.fromEntries([...ALLOWED_WRITERS.keys()].map((f) => [f, WRITE]));
 
 const cases = [
   { name: 'every named writer, nothing else', files: named, expect: 0 },
+  {
+    name: 'a named ingestion writer uses an upsert without a direct UPDATE statement',
+    files: { ...named, 'server/services/vault/vault-ingest.service.ts': UPSERT },
+    expect: 0,
+  },
+  {
+    name: 'an unnamed upsert mutates a recorded version',
+    files: { ...named, 'server/services/vault/sneaky.ts': UPSERT },
+    expect: 1,
+  },
+  {
+    name: 'an insert that does nothing on conflict is not an update writer',
+    files: { ...named, 'server/services/vault/insert.ts': UPSERT.replace("DO UPDATE SET processing_status = 'PENDING'", 'DO NOTHING') },
+    expect: 0,
+  },
   {
     name: 'an unnamed service file writes vault.documents',
     files: { ...named, 'server/services/vault/sneaky.ts': "await pool.query(`UPDATE vault.documents SET classification = 'PUBLIC'`);\n" },

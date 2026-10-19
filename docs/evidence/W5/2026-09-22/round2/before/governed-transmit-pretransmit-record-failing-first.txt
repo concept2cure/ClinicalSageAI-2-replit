@@ -175,4 +175,3 @@ TypeError: preTransmitFindings is not a function
       Tests  5 failed | 12 passed (17)
    Start at  04:59:59
    Duration  2.78s (transform 3.23s, setup 236ms, import 5.05s, tests 1.39s, environment 0ms)
-

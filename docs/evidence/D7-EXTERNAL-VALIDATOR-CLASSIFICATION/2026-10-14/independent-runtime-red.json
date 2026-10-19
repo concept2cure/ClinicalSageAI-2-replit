@@ -1,0 +1,117 @@
+{
+  "scope": "Independent runtime contract assertions, no binary/provider/database/package/transmission.",
+  "passed": 0,
+  "failed": 22,
+  "results": [
+    {
+      "id": "configured-string-false",
+      "outcome": "fail",
+      "error": "configured-string-false: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "configured-string-true",
+      "outcome": "fail",
+      "error": "configured-string-true: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "selected-null",
+      "outcome": "fail",
+      "error": "selected-null: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "selected-empty-name",
+      "outcome": "fail",
+      "error": "selected-empty-name: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "selected-whitespace-name",
+      "outcome": "fail",
+      "error": "selected-whitespace-name: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "selected-kind-uppercase",
+      "outcome": "fail",
+      "error": "selected-kind-uppercase: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "report-identity-leading-space",
+      "outcome": "fail",
+      "error": "report-identity-leading-space: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "report-identity-case-change",
+      "outcome": "fail",
+      "error": "report-identity-case-change: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "profile-whitespace",
+      "outcome": "fail",
+      "error": "profile-whitespace: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "date-iso-string",
+      "outcome": "fail",
+      "error": "date-iso-string: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "date-invalid-object",
+      "outcome": "fail",
+      "error": "date-invalid-object: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "date-epoch-number",
+      "outcome": "fail",
+      "error": "date-epoch-number: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "findings-null",
+      "outcome": "fail",
+      "error": "findings-null: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "findings-object",
+      "outcome": "fail",
+      "error": "findings-object: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "finding-null",
+      "outcome": "fail",
+      "error": "finding-null: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "finding-string",
+      "outcome": "fail",
+      "error": "finding-string: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "finding-severity-upper-case",
+      "outcome": "fail",
+      "error": "finding-severity-upper-case: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "warning-count-string",
+      "outcome": "fail",
+      "error": "warning-count-string: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "warning-count-negative",
+      "outcome": "fail",
+      "error": "warning-count-negative: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "warning-count-unsafe",
+      "outcome": "fail",
+      "error": "warning-count-unsafe: required malformed input cleared\n\ntrue !== false\n"
+    },
+    {
+      "id": "advisory-error-production",
+      "outcome": "fail",
+      "error": "advisory-error-production: executed coherent failure mislabeled unassessed\n+ actual - expected\n\n+ undefined\n- true\n"
+    },
+    {
+      "id": "advisory-error-staging",
+      "outcome": "fail",
+      "error": "advisory-error-staging: executed coherent failure mislabeled unassessed\n+ actual - expected\n\n+ undefined\n- true\n"
+    }
+  ]
+}

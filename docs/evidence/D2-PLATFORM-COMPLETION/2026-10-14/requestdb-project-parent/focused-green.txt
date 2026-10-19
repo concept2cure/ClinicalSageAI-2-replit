@@ -1,0 +1,177 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:58:18.905Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:58:19.043Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:58:19.043Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:58:19.043Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 57ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 38ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project
+{
+  "timestamp": "2026-10-14T06:58:24.037Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private project metadata for an unassigned same-organization member 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private Vault content search before any count, snippet, or document identity 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > applies sharing before the portfolio page so private newest rows cannot consume public slots 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > bounds library search count and page by accessible programs before ranking/pagination 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses project detail after organization membership is revoked even with a stale request role 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit program-to-project reconciliation for a missing anchor 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project  before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /workstreams before child content queries 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /drafts before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /team before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /evidence before child content queries 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /activity before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /records before child content queries 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /conversation-files before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /vault-structure before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /sources before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /source-changes before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /document-dispositions/preview?targetType=vault_document&targetId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /versions before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /compare before child content or bytes 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /history before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /download before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /catalog before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /relationships before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /annotations before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /text before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps an unrelated missing private anchor out of the evaluated public page 18ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > requires reconciliation for a deleted anchor while retaining an archived readable anchor 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive user despite a stale request role 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive organization despite a stale request role 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > reports failed verification as unavailable instead of an empty portfolio 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps public viewer reads while denying a now-viewer lead mutation 32ms
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-14T06:58:25.194Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:58:25.195Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-14T06:58:25.195Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-route-access-requestdb.test.ts
+{
+  "timestamp": "2026-10-14T06:58:25.284Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > reads current actor, exact anchor and sharing through the pinned client 6ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > retains an explicitly supplied transaction executor instead of substituting the request client 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project parent admission uses the actual request SQL executor > refuses missing request context before any parent SQL without a pool fallback 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 200 for recorded document organization 7 19ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 409 for recorded document organization null 5ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > answers 404 for recorded document organization 8 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > Vault identity follows current parent admission on the same request client > returns honest unavailability and no document when request context is absent 4ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > opens one transaction, locks current membership, writes and audits before commit without releasing the request client 3ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > rolls back instead of committing when the actual chained audit writer fails 2ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a current viewer despite a stale member principal before operation or audit 1ms
+ ✓ server/routes/c2c/__tests__/project-route-access-requestdb.test.ts > project writer owns its transaction on the request-pinned connection > refuses a writer with no pinned request context before BEGIN or callback 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > returns a Drizzle wrapper bound to req.dbClient when one is set 33ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed with a typed error when dbClient is missing 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed when dbClient does not implement query 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > caches the wrapper on the request to avoid rebuilding per call 7ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > hands back the request-scoped client itself 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > fails closed with the same typed error when context is missing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 1ms
+
+ Test Files  4 passed (4)
+      Tests  80 passed (80)
+   Start at  06:58:16
+   Duration  9.69s (transform 2.87s, setup 146ms, import 6.06s, tests 2.72s, environment 0ms)
+

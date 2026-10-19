@@ -28,11 +28,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { connect, query, logAction, assembleOrgSaeCases } = vi.hoisted(() => ({
-  connect: vi.fn(), query: vi.fn(), logAction: vi.fn(), assembleOrgSaeCases: vi.fn(),
+const { connect, query, writeChainedAuditRow, assembleOrgSaeCases } = vi.hoisted(() => ({
+  connect: vi.fn(), query: vi.fn(), writeChainedAuditRow: vi.fn(), assembleOrgSaeCases: vi.fn(),
 }));
 vi.mock('../../db', () => ({ pool: { connect, query } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction } }));
+vi.mock('../../services/auditService', () => ({ writeChainedAuditRow,
+  default: { logAction: vi.fn(async () => ({ persisted: false, chained: false, tamperProof: false })) },
+}));
+vi.mock('../c2c/project-access', () => ({
+  requireCurrentProjectActor: vi.fn(async () => ({ userId: 5, role: 'member' })),
+  requireProjectAdmission: vi.fn(), ProjectAdmissionRefusal: class extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } },
+}));
 vi.mock('../../services/pv/sae-cases-view-assembler', () => ({ assembleOrgSaeCases }));
 vi.mock('../../services/safety-narrative-service', () => ({ safetyNarrativeService: {} }));
 
@@ -62,7 +68,7 @@ beforeEach(() => {
     report_date: '2026-05-04', suspect_product: 'BX-204', suspect_product_dose: '50 mg',
     seriousness_criteria: ['hospitalization'], narrative: 'The previous narrative text.',
   };
-  logAction.mockReset();
+  writeChainedAuditRow.mockReset();
   assembleOrgSaeCases.mockReset();
   assembleOrgSaeCases.mockResolvedValue([{ id: '42', clock: '7-day expedited report', due: '2026-05-11' }]);
   connect.mockImplementation(async () => ({
@@ -83,6 +89,23 @@ const body = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('PATCH /cases/:id', () => {
+  it('TX_HISTORY: rolls back the current narrative when its only prior-content history cannot be recorded', async () => {
+    writeChainedAuditRow.mockRejectedValueOnce(new Error('Synthetic history store failure'));
+    const res = await request(app()).patch('/api/safety-narratives/cases/42').send(body());
+    expect(res.status).toBe(503);
+    expect(res.body.saved).toBe(false);
+    expect(res.body.error.code).toBe('SAE_CASE_HISTORY_UNAVAILABLE');
+    expect(sql.some((q) => q.text === 'COMMIT')).toBe(false);
+    expect(sql.some((q) => q.text === 'ROLLBACK')).toBe(true);
+  });
+
+  it('encodes seriousness criteria as JSON for the actual TEXT column', async () => {
+    const criteria = ['hospitalization', 'medically important'];
+    const res = await request(app()).patch('/api/safety-narratives/cases/42').send(body({ fields: { seriousnessCriteria: criteria } }));
+    expect(res.status).toBe(200);
+    expect(sql.find((q) => q.text.trim().startsWith('UPDATE adverse_events'))?.values?.[2]).toBe(JSON.stringify(criteria));
+    expect(writeChainedAuditRow.mock.calls[0][1].details.changed.seriousnessCriteria.to).toEqual(criteria);
+  });
   it('403 without org context', async () => {
     const res = await request(app(null)).patch('/api/safety-narratives/cases/42').send(body());
     expect(res.status).toBe(403);
@@ -94,7 +117,7 @@ describe('PATCH /cases/:id', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('REASON_REQUIRED');
     expect(connect).not.toHaveBeenCalled();
-    expect(logAction).not.toHaveBeenCalled();
+    expect(writeChainedAuditRow).not.toHaveBeenCalled();
   });
 
   it('refuses a field that is not writable from this surface', async () => {
@@ -116,7 +139,7 @@ describe('PATCH /cases/:id', () => {
     const res = await request(app()).patch('/api/safety-narratives/cases/42').send(body());
     expect(res.status).toBe(404);
     expect(sql.some((q) => /ROLLBACK/.test(q.text))).toBe(true);
-    expect(logAction).not.toHaveBeenCalled();
+    expect(writeChainedAuditRow).not.toHaveBeenCalled();
   });
 
   it('locks the row inside the transaction before writing', async () => {
@@ -131,7 +154,7 @@ describe('PATCH /cases/:id', () => {
   it('writes both sides of every changed field, plus the reason, to the audit trail', async () => {
     const res = await request(app()).patch('/api/safety-narratives/cases/42').send(body());
     expect(res.status).toBe(200);
-    const entry = logAction.mock.calls[0][0];
+    const entry = writeChainedAuditRow.mock.calls[0][1];
     expect(entry.action).toBe('SAE_CASE_NARRATIVE_SAVED');
     expect(entry.details.reasonForChange).toBe('Investigator upgraded causality after the site query');
     expect(entry.details.changed).toEqual({
@@ -142,7 +165,7 @@ describe('PATCH /cases/:id', () => {
 
   it('returns the case as the store now holds it, with the clock recomputed', async () => {
     const res = await request(app()).patch('/api/safety-narratives/cases/42').send(body());
-    expect(assembleOrgSaeCases).toHaveBeenCalledWith(7);
+    expect(assembleOrgSaeCases).toHaveBeenCalledWith(7, expect.any(Date), expect.objectContaining({ caseId: '42', canReadProject: expect.any(Function) }));
     expect(res.body.data).toMatchObject({ id: '42', clock: '7-day expedited report' });
     expect(res.body.meta.changedFields).toEqual(['causality', 'narrative']);
   });
@@ -152,6 +175,6 @@ describe('PATCH /cases/:id', () => {
       .send(body({ fields: { seriousnessCriteria: 'hospitalization' } }));
     expect(res.status).toBe(400);
     expect(res.body.error.message).toMatch(/array of strings/);
-    expect(logAction).not.toHaveBeenCalled();
+    expect(writeChainedAuditRow).not.toHaveBeenCalled();
   });
 });

@@ -21,6 +21,7 @@ import {
 import {
   generateRecommendations,
   type Recommendation,
+  type RecommendationSet,
 } from './recommendation-engine.js';
 
 import {
@@ -114,7 +115,7 @@ export interface RIMAssessment {
   readonly feedbackSummary: FeedbackSummary | null;
   readonly priorSectionSignals: number;
   readonly recurringPatterns: readonly { patternId: string; occurrences: number }[];
-  readonly rimScore: number; // 0-100 unified RIM score
+  readonly rimScore: number | null; // 0-100 unified RIM score; null when the judgment is not assessed
   readonly rimVerdict: string;
   readonly topActions: readonly string[];
   readonly assessedAt: string;
@@ -170,9 +171,8 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
   ]);
 
   const readinessResult = readiness.status === 'fulfilled' ? readiness.value : null;
-  const recsResult = recommendations.status === 'fulfilled'
-    ? recommendations.value.recommendations
-    : [];
+  const recsSet = recommendations.status === 'fulfilled' ? recommendations.value : null;
+  const recsResult = recsSet ? recsSet.recommendations : [];
   const crossModuleResult = crossModule.status === 'fulfilled' ? crossModule.value : null;
   const feedbackResult = feedbackSummary.status === 'fulfilled' ? feedbackSummary.value : null;
 
@@ -184,20 +184,16 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
   // the failed sources; the run is marked 'partial' (the already-defined status
   // this path never used) below so consumers treat the verdict as not-a-clean-
   // bill rather than an authoritative ready.
-  const failedInputs: string[] = [];
-  for (const [name, settled] of [
-    ['readiness', readiness],
-    ['recommendations', recommendations],
-    ['cross-module', crossModule],
-  ] as const) {
-    if (settled.status === 'rejected') {
-      failedInputs.push(name);
-      console.warn(
-        `[RIM] Run ${runId} ${name} input read failed:`,
-        settled.reason instanceof Error ? settled.reason.message : String(settled.reason),
-      );
-    }
-  }
+  const failedInputs = collectFailedInputs(
+    runId,
+    [
+      ['readiness', readiness],
+      ['recommendations', recommendations],
+      ['cross-module', crossModule],
+      ['feedback', feedbackSummary],
+    ],
+    recsSet,
+  );
 
   // ── Step 2: Build evidence chains from recommendations ──
   const evidenceChains: EvidenceChain[] = recsResult
@@ -239,8 +235,10 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
 
   const judgmentInput: JudgmentInput = {
     readiness: readinessResult,
-    gaps: readinessResult?.gaps ?? [],
+    // A failed readiness read leaves the gaps unread, not empty (was []).
+    gaps: readinessResult ? readinessResult.gaps : null,
     recommendations: recsResult,
+    assessedRecommendationTypes: recsSet ? recsSet.assessedTypes : [],
     evidenceChains,
     // Close the learning loop: feed historical signal reliability into the
     // judgment models so confidence reflects how accurate our prior readings
@@ -343,7 +341,7 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
     priorSectionSignals,
     recurringPatterns,
     rimScore,
-    rimVerdict: rimScoreToVerdict(rimScore),
+    rimVerdict: rimScoreToVerdict(rimScore, judgment),
     topActions,
     assessedAt: new Date().toISOString(),
   };
@@ -371,15 +369,45 @@ export function getProjectSignals(
   return getSignalSummary(organizationId, projectId);
 }
 
+/**
+ * The inputs a run could not use. generateRecommendations never rejects — it
+ * names a failed generator in its set. 2026-10-15: such runs, and a run whose
+ * feedback read failed, reported 'complete'.
+ */
+function collectFailedInputs(
+  runId: string,
+  inputs: ReadonlyArray<readonly [string, PromiseSettledResult<unknown>]>,
+  recsSet: RecommendationSet | null,
+): string[] {
+  const failed: string[] = [];
+  for (const [name, settled] of inputs) {
+    if (settled.status === 'rejected') {
+      failed.push(name);
+      console.warn(
+        `[RIM] Run ${runId} ${name} input read failed:`,
+        settled.reason instanceof Error ? settled.reason.message : String(settled.reason),
+      );
+    }
+  }
+  if (recsSet && recsSet.failedGenerators.length > 0) {
+    failed.push(`recommendations (${recsSet.failedGenerators.join(', ')})`);
+  }
+  return failed;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTERNAL SCORING
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function computeRIMScore(
+/** Exported for its test. */
+export function computeRIMScore(
   judgment: JudgmentReport,
   patternMatches: readonly PatternMatch[],
   feedback: FeedbackSummary | null,
-): number {
+): number | null {
+  // Pattern penalties and the feedback adjustment modify a judgment score;
+  // they do not make one. No judgment score, no RIM score (2026-10-15).
+  if (judgment.overallRisk === null) return null;
   let score = judgment.overallRisk;
 
   const criticalPatterns = patternMatches.filter(m => m.pattern.severity === 'critical');
@@ -387,15 +415,22 @@ function computeRIMScore(
   score -= criticalPatterns.length * 8;
   score -= highPatterns.length * 4;
 
+  // The rates are whole percentages. 2026-10-15: they were compared with 0.7
+  // and 0.5, so a single acceptance among five items earned the +8.
   if (feedback && feedback.totalFeedback >= 5) {
-    if (feedback.acceptanceRate > 0.7) score += 5;
-    if (feedback.resolutionRate > 0.5) score += 3;
+    if (feedback.acceptanceRate > 70) score += 5;
+    if (feedback.resolutionRate > 50) score += 3;
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function rimScoreToVerdict(score: number): string {
+function rimScoreToVerdict(score: number | null, judgment: JudgmentReport): string {
+  if (score === null) {
+    const composite = judgment.scores.find(s => s.model === 'submission_risk');
+    const missing = (composite?.notAssessed ?? []).map(n => n.split(':')[0]).join(', ');
+    return `Not assessed — too little of the judgment rests on measured input${missing ? ` (not assessed: ${missing})` : ''}`;
+  }
   if (score >= 85) return 'Submission Ready — low regulatory risk';
   if (score >= 70) return 'Acceptable — minor issues to address before submission';
   if (score >= 50) return 'Needs Attention — moderate regulatory risk, address findings before submission';

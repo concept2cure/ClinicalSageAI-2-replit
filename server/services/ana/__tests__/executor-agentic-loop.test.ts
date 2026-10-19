@@ -240,8 +240,6 @@ describe('the tool context carries the tenant uuid its request scope holds', () 
     expect(seen.organizationUuid ?? null).toBeNull();
   });
 });
-
-
 /* Work-orders item 23 (2026-10-05): a tool's output reached the model as
    plain user-role prose, so a fetched page or record that said "ignore your
    instructions" read as the person's own words, and a "</…>" in it could close

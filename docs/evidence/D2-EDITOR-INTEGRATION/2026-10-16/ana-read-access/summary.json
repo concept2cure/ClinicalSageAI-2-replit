@@ -1,0 +1,182 @@
+{
+  "workstream": "W1 / D2 existing editor AnA saved-document reads",
+  "baseCommit": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "branch": "concept2cure-v2",
+  "runtime": {
+    "node": "22.23.3",
+    "providersCalled": false,
+    "database": "isolated in-memory PGlite; no native database or deployment exercised"
+  },
+  "contract": "Each of the three existing authoring read tool invocations rechecks the identified actor current organization membership and private-project access through canonical admitAnaProjectScope before any authoring-table query. Request-scoped executor takes precedence; no result or paging changes.",
+  "checks": [
+    {
+      "receipt": "red.txt",
+      "result": "RED",
+      "files": 1,
+      "passed": 3,
+      "failed": 18,
+      "qualification": "Original 21-case version; 18 real access cases failed because data was returned despite denial conditions."
+    },
+    {
+      "receipt": "green-focused.txt",
+      "result": "GREEN",
+      "files": 1,
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "receipt": "regression-first.txt",
+      "result": "GREEN",
+      "files": 5,
+      "passed": 184,
+      "failed": 0,
+      "qualification": "Includes original 21 focused cases, read-service and read-tool paging/budget cases, tool registration and canonical project admission."
+    },
+    {
+      "receipt": "green-final.txt",
+      "result": "GREEN",
+      "files": 1,
+      "passed": 27,
+      "failed": 0,
+      "qualification": "Original 21 plus six executor-routing cases added after initial RED/GREEN. This is not a claim of one 190-test invocation."
+    },
+    {
+      "receipt": "lint-first.txt",
+      "result": "warning corrected",
+      "errors": 0,
+      "warnings": 1,
+      "qualification": "Unused type import removed."
+    },
+    {
+      "receipt": "lint-final.txt",
+      "result": "GREEN",
+      "errors": 0,
+      "warnings": 0,
+      "command": "eslint --max-warnings=0 on four changed source/test files"
+    },
+    {
+      "receipt": "green-type-fixture.txt",
+      "result": "GREEN",
+      "files": 1,
+      "passed": 27,
+      "failed": 0,
+      "qualification": "Re-run after explicit identity-key fixture typing correction; no assertion or production change."
+    },
+    {
+      "receipt": "lint-type-fixture.txt",
+      "result": "GREEN",
+      "errors": 0,
+      "warnings": 0,
+      "command": "eslint --max-warnings=0 on four changed source/test files after fixture type correction"
+    }
+  ],
+  "limits": [
+    "No model/provider call, browser run, native RLS or deployment qualification in this increment.",
+    "Per-document/section view-policy expansion is deferred: legacy HTTP content reads are tenant-visible; complete saved critique separately requires a whole-document view grant. This change does not redefine either policy.",
+    "Checks happen on each tool invocation, not on a frozen whole-turn authorization snapshot.",
+    "Root publication session owns compiler/build and normal commit/push hooks."
+  ],
+  "receipts": [
+    {
+      "path": "red.txt",
+      "rawOperationLogSha256": "25b27ba0960a14c393e31258f993caa8feeee0af9fecbccfc80ea52f0154eabe",
+      "storedCopySha256": "83af85f534a6ee0d4b9aac94b377384703eaac207a712abf2cd7deac773f2e9c",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "green-focused.txt",
+      "rawOperationLogSha256": "a4b5f16609a49509604f5b9c5c4604b2df039368e56a8c965c0e442470acd9f8",
+      "storedCopySha256": "08cddf0583baf05cd490f0be7278468227596cb67771dcee4ec035ac62d3578e",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "regression-first.txt",
+      "rawOperationLogSha256": "93a8a0d821a93aa4790db8eaee5337d5c29d7e2fa127375484d124ad210f6dba",
+      "storedCopySha256": "858e485005e369534185c1f032758d17aa684f0a2d832295c01b55244a3f2ea1",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "lint-first.txt",
+      "rawOperationLogSha256": "2d096f2062c71ec8ec0c7276af07fd608723e62e95b784b26252e512ab0b5715",
+      "storedCopySha256": "d1a79a8721ef4cccd0ea4238cab1b95569142c5742aa0aa173b731d1b87b2774",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "lint-final.txt",
+      "rawOperationLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedCopySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalization": "none"
+    },
+    {
+      "path": "green-final.txt",
+      "rawOperationLogSha256": "0294ef446bc5765fd442e3f9238026b7b9fcf1ab3dd5aca1fc53829644f40624",
+      "storedCopySha256": "bc6b6c613ac1afe8c3a074b3354d5118010d2e753625d76ba202aecf5a717cb2",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "green-type-fixture.txt",
+      "rawOperationLogSha256": "4adfca88ff91217f429c52598f0de8346bfe0b9e9145ec8be31ac6b1dfdce593",
+      "storedCopySha256": "fe6ce9881610c7eacf969c1ebc65943b63e01c787f5a6dfa90281095ddf42f2b",
+      "normalization": "Removed extra LF bytes at end of file only"
+    },
+    {
+      "path": "lint-type-fixture.txt",
+      "rawOperationLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedCopySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalization": "none"
+    }
+  ],
+  "sourcePins": [
+    {
+      "path": "server/services/ana/authoring-read-tools.ts",
+      "sha256": "12e10be429e735161d7473cc6136c4c18b99b9a6f1245914f286ec205112e808"
+    },
+    {
+      "path": "server/services/ana/__tests__/authoring-read-tools.test.ts",
+      "sha256": "fd82c227e12dcc8256ff214d756d1209f48fec786e00def0e77957487e67e0cd"
+    },
+    {
+      "path": "server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts",
+      "sha256": "3288b8e1a159ad3cd71ac0a6fafc01bd904593fa541b4b6c4b5eb6b32da0a559"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-read-fixture.ts",
+      "sha256": "5d9aaa888b0e6302213009f284989095a50a710e8ac2e5ef240db8c1281c5361"
+    },
+    {
+      "path": "server/services/ana/project-scope-admission.ts",
+      "sha256": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "aa0204260f27fe974c81404934bfe5e4ace81cd08c33e2156d57a17f7b1a4689"
+    },
+    {
+      "path": "server/services/c2c/program-project-anchor.ts",
+      "sha256": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "sha256": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58"
+    },
+    {
+      "path": "server/services/project-sharing-access.ts",
+      "sha256": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815"
+    },
+    {
+      "path": "server/db/withTenantConnection.ts",
+      "sha256": "01d4d1b220e691bf5509fbe0224092293d122d04b2791400ee0997bb69d06233"
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "sha256": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+    }
+  ],
+  "fixtureTypeCorrection": {
+    "issue": "Full compiler found one fixture-only type error: ToolContext has optional identity fields, while AnaProjectScopeInput requires those keys explicitly.",
+    "correction": "Pass explicit organizationId, userId, projectId and projectRef keys; no casts, test assertions or production changes.",
+    "previouslyTestedFixtureSha256": "24c061754b5aed88460ef139e1abfd990ba691c841107ee09de56d7ea77e0ad4",
+    "correctedFixtureSha256": "3288b8e1a159ad3cd71ac0a6fafc01bd904593fa541b4b6c4b5eb6b32da0a559",
+    "rootPreservesCompilerFailureReceipt": true
+  }
+}

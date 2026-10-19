@@ -1,0 +1,95 @@
+{
+  "automated": true,
+  "realHttp": true,
+  "realPostgres": true,
+  "scope": "local manual editor API smoke; not a human browser or live AnA qualification",
+  "programId": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320",
+  "templateCount": 325,
+  "results": [
+    {
+      "entryId": "registry:US_NDA",
+      "templateId": "015b44f2-b717-5f95-99fb-aa94073909a0",
+      "documentId": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+      "sectionId": "e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+      "sections": 80,
+      "filingContext": {
+        "registryId": "US_NDA",
+        "region": "US",
+        "agency": "FDA"
+      },
+      "exactParagraphSha256": "cb96e724f98ac10ff07531bad45c9d14b839fd65508efaddb5e4c3ee9d887d01",
+      "sourceSha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505"
+    },
+    {
+      "entryId": "registry:CA_CTA",
+      "templateId": "12324311-296a-5058-a968-2f733c69ab62",
+      "documentId": "677390bb-0409-4c64-b97e-14e043742a6b",
+      "sectionId": "4d2e62bc-4697-48ba-8b96-c305437e1897",
+      "sections": 20,
+      "filingContext": {
+        "registryId": "CA_CTA",
+        "region": "CA",
+        "agency": "Health_Canada"
+      },
+      "exactParagraphSha256": "5d5c0902093302278095acacbd145f4ae36372da385ef990776ba5beb7edc818",
+      "sourceSha256": "ed9f03ab488434dfc98847d31f4ce0f6785097fd3c548685f4659b842775a121"
+    },
+    {
+      "entryId": "registry:EU_CTA",
+      "templateId": "23c087be-812a-5d17-8c4c-958556d3719e",
+      "documentId": "e2cc578b-ec58-42cc-8c2f-88cf99f50da9",
+      "sectionId": "2e7368ec-e688-4687-9f74-df04f8489e5f",
+      "sections": 28,
+      "filingContext": {
+        "registryId": "EU_CTA",
+        "region": "EU",
+        "agency": "EMA"
+      },
+      "exactParagraphSha256": "0313fcabbe35445a2a88f31cd2be8c0ccbd396cbc77f7264f4c94a34f126432e",
+      "sourceSha256": "af2e9177385e616c4c4f130b7d7846f34191dc7ffb71a957501c713692035653"
+    },
+    {
+      "entryId": "registry:JP_CTN",
+      "templateId": "0174d081-a2b9-5433-81e8-88eea92f3be3",
+      "documentId": "e6dff0e7-0de8-48d5-bac9-f2a2a9e543df",
+      "sectionId": "43acbb18-0f7a-4014-b2be-98abadb789ed",
+      "sections": 10,
+      "filingContext": {
+        "registryId": "JP_CTN",
+        "region": "JP",
+        "agency": "PMDA"
+      },
+      "exactParagraphSha256": "15ca22c4d66f6d083b609c6cf58ae88a71a70aa8e2fefb81369920b7f76d020a",
+      "sourceSha256": "c5cbc3612d5b355a6a1ab3dceca665adcd2b3a88a2ef2097e02e4371005a317e"
+    },
+    {
+      "entryId": "component:quality_overall_summary",
+      "templateId": "1c02194a-901d-51c2-86e1-2ae5f9ecafc4",
+      "documentId": "5ad7ce71-8fab-44dd-8016-b3cb759f26fb",
+      "sectionId": "292fea9e-840d-4e49-9bcd-3f396ccb66ab",
+      "sections": 5,
+      "filingContext": {
+        "registryId": null,
+        "region": "GLOBAL",
+        "agency": "ICH"
+      },
+      "exactParagraphSha256": "6ffe26913ea54786c7f8546d44852c2f808fd73bca107035e89c4578438fbb6b",
+      "sourceSha256": "0f045841e0ef8e632d0e60de734a1066e138e22e9051bb8d360dae3b5299513b"
+    },
+    {
+      "entryId": "component:pil",
+      "templateId": "754a4337-3279-58cd-acbd-48ce0285b654",
+      "documentId": "8b2a52e8-5d85-45f7-90a5-ecdb7a2bb8d1",
+      "sectionId": "3f7a9099-e764-4f59-816f-e9c2cfef81e1",
+      "sections": 1,
+      "filingContext": {
+        "registryId": null,
+        "region": "EU",
+        "agency": "EMA"
+      },
+      "exactParagraphSha256": "406f91de5936577a861d963dcb14af66868690cf73c848fa432501e83effeb92",
+      "sourceSha256": "895c363153817d2f15e7ad91ee5abd9311793ebc0c49f94d181d6feacda4731c"
+    }
+  ],
+  "requestCount": 61
+}

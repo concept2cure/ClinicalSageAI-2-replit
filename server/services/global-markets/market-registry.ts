@@ -9,19 +9,26 @@
  * descriptor per market that spans BOTH devices and IVDs with honest platform
  * capability flags. This registry is that single comparable view.
  *
- * HONEST BY CONSTRUCTION: `canTransmit` is true for the 11 markets that have a live
- * gateway; false for JP (no device e-application path; the PMDA gateway's
- * protocol is unsourced and refuses before the wire), TW/SA/ZA and the
- * cross-market MDSAP entry. `canAssemble`
+ * CAPABILITY FLAGS: `canTransmit` is not set by hand. Each market reads it from
+ * what regulatory/market-support.ts states for its device and IVD filings
+ * (`platformTransmitsTo`, below), the statement the market rows and project
+ * creation show for the same filing, so there is one answer. It is false for
+ * every market today. `canAssemble`
  * is true only where the platform already produces the artifact (eCTD backbone,
  * FDA eSTAR mapper, EU CE technical documentation / CER packager).
  *
- * PURE + DETERMINISTIC: static data + pure lookups. No DB, no network, no LLM.
+ * PURE + DETERMINISTIC: static data + pure lookups (market-support.ts's
+ * statement is pure). No DB, no network, no LLM.
  *
  * @module server/services/global-markets/market-registry
  */
 
 import type { MarketDescriptor, MarketId } from './types';
+import {
+  marketSupport,
+  type ActiveRulePacks,
+  type ChannelState,
+} from '../regulatory/market-support';
 
 /**
  * Cross-market QMS audit elements shared by MDSAP-participating markets, kept
@@ -34,6 +41,47 @@ const MDSAP_QMS_ELEMENTS = [
   'capa_process',
   'production_service_controls',
 ];
+
+/**
+ * Whether the platform transmits through a channel, by market-support.ts's
+ * ChannelState. Only a channel something has been accepted through would
+ * count, and no state names one yet: 'unproven' is a wired gateway nothing has
+ * been accepted through (FDA ESG: FDA would reject what it sends,
+ * FDA_ESG_NOT_PROVEN), and every other state is one the platform cannot send
+ * through (NO_CHANNEL_STATES). Keyed by ChannelState, so a state that names a
+ * proven channel does not compile until it is decided here.
+ */
+const CHANNEL_TRANSMITS: Readonly<Record<ChannelState, boolean>> = {
+  unproven: false,
+  applicant_uploads: false,
+  portal: false,
+  refused: false,
+  none: false,
+};
+
+/** No rule pack is read: a statement's channel never depends on the outline. */
+const NO_RULE_PACKS: ActiveRulePacks = { find: () => null };
+
+/**
+ * `canTransmit` for one market: true only when market-support.ts states, for
+ * each of the market's device and IVD application types, a channel the
+ * platform transmits through. Only the statement's channel is read. Today it
+ * says "the platform transmits no device filing yet" for every agency it
+ * knows and maps no channel for the others, so every market reads false.
+ *
+ * 2026-10-15: `canTransmit` was a hand-set `true` for eleven markets, on the
+ * header's word that each had a working gateway. None had one the platform
+ * sends through: channelSupportFor judges FDA ESG unproven and the other
+ * adapters unsourced, so those markets showed as transmit-capable without the
+ * cannot-transmit blocker. The IVD statement is read only when the device one
+ * transmits: either one not transmitting decides false.
+ */
+function platformTransmitsTo(market: string, applicationTypes: readonly string[] = ['device', 'ivd']): boolean {
+  return applicationTypes.every(
+    (applicationType) =>
+      CHANNEL_TRANSMITS[marketSupport({ applicationType, market }, NO_RULE_PACKS).channel.state] === true,
+  );
+}
 
 export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
   // ── United States — FDA ─────────────────────────────────────────────────────
@@ -72,7 +120,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform assembles FDA eSTAR (device 510(k)/De Novo) and eCTD (drug-led) packages; this descriptor is assembly-aware.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('FDA'),
     gatewayRegion: 'fda',
     citations: [
       '21 CFR 807 (510(k)); 21 CFR 814 (PMA); 21 CFR 860 (classification)',
@@ -124,8 +172,13 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform assembles EU MDR/IVDR technical documentation and CER/PER packages (technical-file packager); this descriptor is assembly-aware.',
-    canTransmit: true,
-    gatewayRegion: 'ema',
+    // An MDR/IVDR technical file goes to a Notified Body, as market-support
+    // names it, not to EMA.
+    canTransmit: platformTransmitsTo('Notified_Body', ['mdr', 'ivdr']),
+    // 2026-10-15: gatewayRegion was 'ema', the key of EMA's gateways (CESP for
+    // medicines dossiers; EUDAMED). This market's technical documentation goes
+    // to a Notified Body, which assesses it (market-support.ts says the same),
+    // and the platform has no adapter for any Notified Body.
     citations: [
       'Regulation (EU) 2017/745 (MDR) Annex I/II/III',
       'Regulation (EU) 2017/746 (IVDR) Annex I/II/III',
@@ -169,7 +222,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform reuses the EU CE technical-documentation/CER assembler for the UKCA file; UK Module 1 + registration layered separately.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('MHRA'),
     gatewayRegion: 'uk',
     citations: [
       'UK Medical Devices Regulations 2002 (as amended); MHRA guidance',
@@ -222,7 +275,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     // statement about this platform: PMDA's own device channel is DWAP
     // (www.dwap.pmda.go.jp), whose output goes online via the gateway system
     // (g-pmda-transmit-unverified-facts.md, facts 5 and 7).
-    canTransmit: false,
+    canTransmit: platformTransmitsTo('PMDA'),
     citations: [
       'Pharmaceuticals and Medical Devices Act (PMD Act)',
       'MHLW Ordinance No. 169 (QMS, ISO 13485-aligned); MDSAP acceptance in Japan',
@@ -264,7 +317,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No NMPA dossier assembler; in-country type testing/clinical data are out of platform scope. Descriptive + readiness only.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('NMPA'),
     gatewayRegion: 'cn',
     citations: [
       'RSAMD (State Council Decree No. 739)',
@@ -306,7 +359,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No Health Canada MDL/IMDRF-ToC assembler; descriptive + readiness only. MDSAP certificate is a prerequisite.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('Health_Canada'),
     gatewayRegion: 'ca',
     citations: [
       'Medical Devices Regulations (SOR/98-282)',
@@ -348,7 +401,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No TGA ARTG assembler; conformity-assessment evidence reused from EU/MDSAP work. Descriptive + readiness only.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('TGA'),
     gatewayRegion: 'au',
     citations: [
       'Therapeutic Goods Act 1989 + IVD framework (2010)',
@@ -390,7 +443,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No ANVISA Cadastro/Registro assembler; descriptive + readiness only. MDSAP leveraged for B-GMP.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('ANVISA'),
     gatewayRegion: 'br',
     citations: [
       'ANVISA RDC resolutions (IVD classification/registration)',
@@ -433,7 +486,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No MFDS dossier assembler; descriptive + readiness only.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('MFDS'),
     gatewayRegion: 'kr',
     citations: [
       'Korea In Vitro Diagnostic Medical Devices Act; MFDS guidance',
@@ -477,7 +530,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform reuses the EU CE technical-documentation/CER assembler (EU-equivalent file); CH-REP + registration layered separately.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('Swissmedic'),
     gatewayRegion: 'ch',
     citations: [
       'Swiss Ordinance on IVD Medical Devices (IvDO) / MepV; Swissmedic guidance',
@@ -520,7 +573,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No CDSCO MD-14/MD-15 assembler; descriptive + readiness only.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('CDSCO'),
     gatewayRegion: 'in',
     citations: [
       'India Medical Devices Rules 2017; CDSCO guidance',
@@ -556,7 +609,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'MDSAP is a third-party QMS audit, not a platform-assembled artifact; descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: platformTransmitsTo('MDSAP'),
     citations: [
       'MDSAP program (IMDRF/regulators)',
       'MDSAP Audit Model companion document',
@@ -598,7 +651,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'Platform does not assemble the HSA CSDT/IMDRF ToC submission; descriptor is advisory + readiness only.',
-    canTransmit: true,
+    canTransmit: platformTransmitsTo('HSA'),
     gatewayRegion: 'sg',
     citations: [
       'Health Products Act (Medical Devices) and HSA GN-15/GN-16 guidance',
@@ -641,7 +694,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'Platform does not assemble the TFDA national dossier/QSD; descriptor is advisory + readiness only.',
-    canTransmit: false,
+    canTransmit: platformTransmitsTo('TFDA'),
     citations: [
       'Medical Devices Act (Taiwan) and TFDA registration regulations',
       'TFDA QMS Documentation (QSD) requirements',
@@ -683,7 +736,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'Platform does not assemble the SFDA MDMA dossier; descriptor is advisory + readiness only.',
-    canTransmit: false,
+    canTransmit: platformTransmitsTo('SFDA'),
     citations: [
       'SFDA Medical Devices Interim Regulation; MDS-G5/G6 guidance',
       'SFDA Authorised Representative & MDEL requirements',
@@ -725,7 +778,7 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'Platform does not assemble the SAHPRA licence application; descriptor is advisory + readiness only.',
-    canTransmit: false,
+    canTransmit: platformTransmitsTo('SAHPRA'),
     citations: [
       'Medicines and Related Substances Act (South Africa); SAHPRA medical device & IVD licensing guidance',
     ],
@@ -776,7 +829,7 @@ export interface MarketRegistrySummary {
   total: number;
   byRegion: Record<MarketDescriptor['region'], number>;
   assembleCapable: MarketId[];
-  /** Markets with a live gateway (canTransmit: true). */
+  /** Markets the platform transmits to (canTransmit), as market-support.ts states it: none today. */
   transmitCapable: MarketId[];
 }
 

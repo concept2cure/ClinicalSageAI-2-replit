@@ -23,6 +23,8 @@ beforeAll(async () => {
     ALTER TABLE authoring_citations ADD COLUMN created_by text;
     ALTER TABLE authoring_citations ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE authoring_citations ADD COLUMN frozen_at timestamptz;
+    ALTER TABLE cre_evidence_sources ADD COLUMN visibility_class text NOT NULL DEFAULT 'tenant_private',
+      ADD COLUMN client_workspace_id integer;
   `);
 });
 afterAll(async () => { await harness.close(); });
@@ -46,7 +48,7 @@ describe('canonical citation write eligibility', () => {
     await f.apply('keep_data');
     const cited = await citeSource(f.org, { sectionId, sourceId: f.capture, citationText: 'Retained source values', createdBy: '42' }, executor());
     expect(cited).toMatchObject({ created: true, citedChecksum: 'a'.repeat(64) });
-    const refreshed = await refreshSourceCitation(f.org, { sectionId, citationId: cited.citationId }, executor());
+    const refreshed = await refreshSourceCitation(f.org, { sectionId, citationId: cited.citationId, userId: 42 }, executor());
     expect(refreshed).toMatchObject({ ok: true, changed: false, currentChecksum: 'a'.repeat(64) });
     expect(await citationRows(f,sectionId)).toHaveLength(1);
   });
@@ -68,7 +70,7 @@ describe('canonical citation write eligibility', () => {
     await f.apply('remove_data');
     await expect(citeSource(f.org, { sectionId, sourceId: f.capture, citationText: 'Re-affirmed source grounding', createdBy: '42' }, executor()))
       .rejects.toMatchObject({ code: 'SOURCE_WITHDRAWN' });
-    expect(await refreshSourceCitation(f.org, { sectionId, citationId: cited.citationId }, executor()))
+    expect(await refreshSourceCitation(f.org, { sectionId, citationId: cited.citationId, userId: 42 }, executor()))
       .toEqual({ ok: false, reason: 'source_withdrawn' });
     expect(await citationRows(f,sectionId)).toEqual(before);
     const history = await listSectionSources(f.org,sectionId);

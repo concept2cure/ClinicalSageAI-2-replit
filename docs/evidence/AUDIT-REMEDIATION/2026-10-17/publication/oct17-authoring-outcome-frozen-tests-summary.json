@@ -1,0 +1,38 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-authoring-outcome-frozen-tests.json",
+    "sha256": "1d52d319f82834b6272b4ab22c80a7f71c7e7e364fa8bdc86911576d726e219f",
+    "bytes": 9739
+  },
+  "success": true,
+  "passedCases": 23,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 2,
+  "rows": [
+    {
+      "file": "server/services/ana/__tests__/tool-trace-document-ids.test.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

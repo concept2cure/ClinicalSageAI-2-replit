@@ -6,7 +6,7 @@
 728:      [NOTICE] [platform-role-grants-writes] reads open; grants written by the platform scope only
 808:✅ c2c_d3w provisioned — 1238 base tables
 
-       relname        | relrowsecurity | relforcerowsecurity |                                                                  policies                                                                   
+       relname        | relrowsecurity | relforcerowsecurity |                                                                  policies
 ----------------------+----------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------------------
  drafting_tasks       | t              | t                   | tenant_isolation_policy
  platform_role_grants | t              | t                   | platform_role_grants_platform_delete, platform_role_grants_platform_insert, platform_role_grants_platform_update, platform_role_grants_read

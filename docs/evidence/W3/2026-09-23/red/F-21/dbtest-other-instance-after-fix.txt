@@ -47,4 +47,3 @@ stdout | tests/db/sign-in-audit-trail.dbtest.ts
       Tests  1 passed | 19 skipped (20)
    Start at  04:03:27
    Duration  3.95s (transform 1.48s, setup 74ms, import 222ms, tests 3.37s, environment 0ms)
-

@@ -87,7 +87,8 @@ describe(`planCombinationCGMP on a drug-cGMP base, as of ${AFTER}`, () => {
     for (const p of drugBase(AFTER).calledOutProvisions) {
       expect(p.basis, p.citation).toBeDefined();
       expect(basisProblems(p.basis), p.citation).toEqual([]);
-      expect(p.basis.confidence).toBe('regulator-text');
+      // A search extract of the eCFR page is recall (pinned as regulator-text until 2026-10-15).
+      expect(p.basis.confidence).toBe('recall');
       expect(p.basis.url).toBe(ECFR_4_4);
       expect(p.basis.note).toMatch(/search extract/);
     }

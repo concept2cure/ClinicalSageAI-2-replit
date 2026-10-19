@@ -1,0 +1,18 @@
+{
+  "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "0f74f256e689c2852d3289a0ee8bfbf741877a768a689ce40dff97019e96da3e",
+  "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "afb63c9217e2837885c7da620385fb341b5f5dd16c21c3b074451a689b5bacba",
+  "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+  "client/src/concept2cure/v2/editor/assemblySourceSelection.ts": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+  "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+  "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts": "698febefbfaaa683ee8cd41f877a1c846f7b538890f70377a44af9ede4161d1e",
+  "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "b35611630a95a33621e6a708eea8c200b21f72cbf03822ceb54b26fd40d68590",
+  "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "92dec2b97f3b9cc3708b340138dadd9aeab85ef5c338258a563be8e1dd1e1e71",
+  "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "c064d37bea5dc2f37bcc95d466b3bc5e39763445c4196782bcb711d9b2375ce4",
+  "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+  "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+  "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx": "c77d70f34be7268a22fc57455f967b2bf55f561cebd2d3b1ef3db61f3495275f",
+  "shared/authoring/assembly.ts": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+  "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+  "client/src/concept2cure/v2/editorTarget.ts": "b72ac4cb56a1eb8603e8674529c8f01ed927d6906d039f96631ecb5fccdf072b"
+}

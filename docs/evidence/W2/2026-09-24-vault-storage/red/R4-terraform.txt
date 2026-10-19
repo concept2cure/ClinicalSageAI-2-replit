@@ -2,7 +2,7 @@ tests/boot_contract.tftest.hcl... in progress
   run "renders_the_boot_contract"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 120, in run "renders_the_boot_contract":
 │  120:     condition = length(setsubtract(
 │  121:       toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
@@ -14,13 +14,13 @@ tests/boot_contract.tftest.hcl... in progress
 │     ├────────────────
 │     │ module.ecs.api_container.environment is tuple with 11 elements
 │     │ module.ecs.api_container.secrets is tuple with 10 elements
-│ 
+│
 │ The API container is missing a variable the deploy preflight requires (and
 │ the app refuses to boot without).
 ╵
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 132, in run "renders_the_boot_contract":
 │  132:     condition = length(setsubtract(
 │  133:       toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
@@ -32,14 +32,14 @@ tests/boot_contract.tftest.hcl... in progress
 │     ├────────────────
 │     │ module.ecs.worker_container.environment is tuple with 9 elements
 │     │ module.ecs.worker_container.secrets is tuple with 9 elements
-│ 
+│
 │ The worker container is missing part of the boot contract.
 ╵
   run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
   run "staging_carries_every_name_the_deploy_preflight_requires"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 292, in run "staging_carries_every_name_the_deploy_preflight_requires":
 │  292:     condition = alltrue([
 │  293:       for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
@@ -47,7 +47,7 @@ tests/boot_contract.tftest.hcl... in progress
 │  295:     ])
 │     ├────────────────
 │     │ output.api_task_boot_contract.names is list of string with 21 elements
-│ 
+│
 │ The staging API task definition lacks a name the deploy preflight requires.
 ╵
   run "staging_is_distinct_from_production"... pass

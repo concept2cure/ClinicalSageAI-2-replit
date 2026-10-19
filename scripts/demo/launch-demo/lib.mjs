@@ -46,11 +46,20 @@ export async function connect({ baseUrl, email, token, onRecord } = {}) {
   return { api, baseUrl: base, identity: identityOf(me.json, auth.identity) };
 }
 
-/** A bearer token: the one given (DEMO_SEED_TOKEN) or a local dev-login. */
+/** A bearer token: the one given (DEMO_SEED_TOKEN) or a local dev-login as the account the operator names. */
 async function bearerFor(base, { email, token }) {
   const given = token || process.env.DEMO_SEED_TOKEN || null;
   if (given) return { accessToken: given, identity: {} };
-  const who = email || process.env.DEMO_SEED_EMAIL || 'jonmichaelpsmith@gmail.com';
+  // 2026-10-15: no built-in identity. With none given it signed in as a real
+  // person's personal address, and every demo record was created as, and
+  // audited to, them.
+  const who = email || process.env.DEMO_SEED_EMAIL;
+  if (!who) {
+    throw new Error(
+      'demo seed: name the account the records are created as — --email <address> or DEMO_SEED_EMAIL ' +
+        '(dev-login, local server), or DEMO_SEED_TOKEN. No identity is built in.',
+    );
+  }
   const auth = await devLogin(base, who);
   return { accessToken: auth.accessToken, identity: { email: who } };
 }

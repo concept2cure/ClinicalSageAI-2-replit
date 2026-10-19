@@ -1,0 +1,319 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:15:28.646Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:15:28.648Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T21:15:28.648Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-13T21:15:34.104Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "43075ff9-bff8-4904-a1e9-7a899d357846",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-13T21:15:34.141Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "9b6dbf0d-ca62-4cf4-8e4d-8693cb998ca5",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data 452ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission 86ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-13T21:15:34.176Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "c0d0f70f-5dc0-4ed9-9cd2-fe0b01adea1b",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-13T21:15:34.208Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "145b8f9f-941f-4bcf-adfc-cf1ff68e5faa",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission 33ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission 34ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission 31ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > files a stable working snapshot with its canonical digest and locks sections before the final read/history 109ms
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-13T21:15:36.535Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:15:36.537Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-13T21:15:36.537Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:15:38.776Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction
+{
+  "timestamp": "2026-10-13T21:15:38.792Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "S1",
+    "tenantId": 7,
+    "err": "injected mid-transaction failure"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:15:38.803Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+Error freezing document: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:5172:20
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 73ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 9ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 11ms
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:15:38.840Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+Sign error: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:7444:20
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+{
+  "timestamp": "2026-10-13T21:15:38.846Z",
+  "level": "error",
+  "message": "[authoring-router] signing docs failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it
+{
+  "timestamp": "2026-10-13T21:15:38.852Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:701:9)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2641:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+Error reverting section: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:701:9)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2641:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+{
+  "timestamp": "2026-10-13T21:15:38.858Z",
+  "level": "error",
+  "message": "[authoring-router] saving revert failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 28ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 9ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 5ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 5ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 6ms
+stdout | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+{
+  "timestamp": "2026-10-13T21:15:40.555Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:15:40.557Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+{
+  "timestamp": "2026-10-13T21:15:40.557Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the static x-admin-token authorises nothing: a member holding it is refused and nothing is deleted 46ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > an organisation manager deletes its own document: tenant-scoped, one transaction, chained row naming the actor 13ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > an approver may delete what a manager may (P-18); a reviewer may not 10ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document outside the caller's organisation answers 404 and deletes nothing 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a delete with no stated reason is refused before anything is read 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a sealed (FROZEN) document is not deleted 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document with revision history answers 409 before any DELETE — the ledger is append-only 5ms
+stdout | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > the signed freeze writes the signature bound to the snapshot it seals, in the freeze transaction
+{
+  "timestamp": "2026-10-13T21:15:41.976Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 3f6c1b52-4a8e-4d55-9a0b-1d2e3f405162 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a file whose name says GIF but whose bytes and declared type are PNG is refused (the name binds the type)
+{
+  "timestamp": "2026-10-13T21:15:42.010Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "figure.gif",
+    "declaredMime": "image/png",
+    "reason": "a .gif file must be declared as image/gif"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > in production a figure the scanner could not scan is refused (503), not admitted
+{
+  "timestamp": "2026-10-13T21:15:42.016Z",
+  "level": "error",
+  "message": "[upload-safety] Upload rejected: virus scanner unavailable in production",
+  "context": {
+    "filename": "figure.png",
+    "declaredMime": "image/png",
+    "reason": "no CLAMAV_HOST"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a .docx whose bytes are not a Word container is refused before it is parsed
+{
+  "timestamp": "2026-10-13T21:15:42.022Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "notes.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "reason": "expected ZIP container for application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a Word container that the scanner flags is refused before it is parsed
+{
+  "timestamp": "2026-10-13T21:15:42.028Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "notes.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "signature": "Eicar-Test"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a draft that carries a signature answers 409 — the signature is never left naming a record that is gone 9ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the router no longer reads x-admin-token or ADMIN_TOKEN 7ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a member without signing authority cannot freeze (403) and nothing is sealed 7ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without the password is refused by the ceremony and nothing is sealed 8ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a wrong password is refused (401) and nothing is sealed 4ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without a §11.50 meaning is refused 4ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > an approval is not a freeze meaning — approval is E-sign, which approves and freezes in one act 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > the signed freeze writes the signature bound to the snapshot it seals, in the freeze transaction 8ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a PNG named and declared as a PNG is stored 27ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a file whose name says GIF but whose bytes and declared type are PNG is refused (the name binds the type) 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > in production a figure the scanner could not scan is refused (503), not admitted 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a .docx whose bytes are not a Word container is refused before it is parsed 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a Word container that the scanner flags is refused before it is parsed 6ms
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  21:15:26
+   Duration  15.25s (transform 3.84s, setup 108ms, import 10.12s, tests 4.23s, environment 0ms)

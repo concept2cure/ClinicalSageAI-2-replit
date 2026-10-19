@@ -1,0 +1,19 @@
+# The rotation suite run against the ORIGINAL verifier (payload-signer.ts and
+# signer-mode.ts as they were at HEAD 155783880):
+      Tests  1 failed | 7 passed (8)
+
+ × after rotation, with the previous key retained for Verify: the 2026 release still verifies
+
+# The original verify path, verbatim:
+#     // Verify against the key the POSTURE names, not the key the envelope
+#     // names: ... The envelope's keyId is recorded for inspection only.
+#     const result = await kms.verify({ keyId: posture.kms.keyId, ... });
+#
+# SOP §5, verbatim, before correction:
+#   "Every stored envelope carries the key ARN it was signed under
+#    (payloadSignature.keyId), so old signatures verify against the old key."
+#
+# The deployed key id is an alias carrying the year:
+#   terraform/stack/release_signing.tf -> CONCEPT2CURE_SIGNER_KMS_KEY_ID = local.release_signing_key_alias
+#   .env.example                       -> alias/fda-signing-key-2026
+# and the envelope records the ARN KMS returns from Sign (kms-signer.ts: out.KeyId).

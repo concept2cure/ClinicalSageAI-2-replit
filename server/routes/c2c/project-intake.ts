@@ -19,6 +19,12 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
+import {
+  filingDocumentClassOf,
+  filingDocumentClassTypes,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '../../../shared/regulatory/filing-document-classes.js';
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE in projects.ts; product types match the store's
@@ -39,6 +45,12 @@ export const VALID_PROGRAM_TYPES = new Set([
   // authorization; scaffolds against the harmonised Module 3 pack (mod3:ich)
   // through PROGRAM_TO_DOC_TYPE. Before this the wizard filed a DMF as an IND.
   'dmf',
+  // Filings that are a document, not an application: supplements, annual
+  // reports, IND amendments and safety reports, meeting packages, designation
+  // requests, the CSR and the other harmonised documents. Each scaffolds its own
+  // pack and creates no submission spine (it is in no DRUG_APPLICATION_TYPES
+  // row). shared/regulatory/filing-document-classes.ts is the list.
+  ...filingDocumentClassTypes(),
 ]);
 export const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 
@@ -133,6 +145,8 @@ export async function ensureSubmissionSpine(params: {
   applicationType: string;
   productType: string;
   primaryAgency: string;
+  /** The client type the person chose (Add a market, F22); else the product type's. */
+  clientType?: string;
 }): Promise<{ id: number; created: boolean }> {
   const { client, orgId, userId, programId, name, productName, applicationType } = params;
   const existing = await client.query(
@@ -156,7 +170,7 @@ export async function ensureSubmissionSpine(params: {
       title: name,
       productName,
       applicationType,
-      clientType: CLIENT_TYPE_BY_PRODUCT[params.productType],
+      clientType: params.clientType ?? CLIENT_TYPE_BY_PRODUCT[params.productType],
       primaryRegion: region,
     },
     { organizationId: orgId, userId },
@@ -180,13 +194,20 @@ export async function ensureSubmissionSpine(params: {
 export function productTypeForIntake(
   programType: string,
   stated: string,
+  submissionTypeId?: string | null,
 ): { productType: string } | { refusal: string } {
-  const implied = productTypeForFilingType(programType);
+  // A filing document class fixes no class, unless the filing names it: an
+  // sBLA is a biologics licence supplement (filing-document-classes.ts).
+  const byFiling = filingDocumentClassOf(programType) ? productTypeFixedByFiling(submissionTypeId) : null;
+  if (byFiling && stated && stated !== byFiling) {
+    return { refusal: `This filing is for a ${byFiling}, not "${stated}": the class is fixed by the filing chosen.` };
+  }
+  const implied = productTypeForFilingType(programType) ?? byFiling;
   const productType = stated || implied || '';
   if (!productType) {
     return {
       refusal:
-        `State whether the product is a drug or a biologic: a ${programType.toUpperCase()} filing ` +
+        `State whether the product is a drug or a biologic: ${filingTypeInSentence(programType).replace(/^A/, 'a')} filing ` +
         'covers both, and the class is recorded on the program.',
     };
   }

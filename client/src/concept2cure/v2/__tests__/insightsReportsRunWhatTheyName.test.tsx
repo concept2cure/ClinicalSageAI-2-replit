@@ -123,7 +123,7 @@ describe('1 — a type no engine computes', () => {
     await ready();
     const list = await screen.findByTestId('ro-not-computed');
     expect(list.textContent).toMatch(/Not computed in this release/);
-    const notComputed = catalogForSegment('biotech').filter((t) => !t.runnable).map((t) => t.label);
+    const notComputed = catalogForSegment('biotech').filter((t) => !t.runnable && !t.computedScopes.length).map((t) => t.label);
     expect(notComputed.length).toBeGreaterThan(0);
     for (const label of notComputed) {
       expect(list.textContent, label).toContain(label);
@@ -132,6 +132,7 @@ describe('1 — a type no engine computes', () => {
     }
     // A computed type is not in the list.
     expect(list.textContent).not.toContain('Executive Readiness Digest');
+    expect(list.textContent).not.toContain('Evidence & Provenance Trace Report'); // Computed over a document, not this project.
   });
 
   it('is said to be not computed when asked for, and nothing is run under its name', async () => {

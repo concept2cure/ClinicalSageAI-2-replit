@@ -7,11 +7,13 @@
  * read-and-understood training, change control (revise / retire), and the
  * Quality system template gallery.
  *
- * AnA-first: actions are conversational prompts handed to the host's AnA
- * surface via `onAsk` — the same pattern as the MDX Quality kit and the
- * Intelligence cluster.
+ * Create, template, open, review and revision controls use the governed QMS
+ * API. The bound editing copy opens in the canonical Authoring workbench.
+ * AnA remains available for inspection guidance and document questions.
  *
- * Approval and retirement are the exceptions, because each is an electronic
+ * Personal acknowledgements belong to the signed-in reader in the native
+ * controlled-text dialog. AnA can explain a procedure but cannot attest.
+ * Approval and retirement also use native controls, because each is an electronic
  * signature and AnA cannot sign: a chat turn cannot collect a password. The
  * row's Approve button opens the shared EsignModal, which posts to the signed
  * route (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3). Until 2026-09-24
@@ -30,14 +32,10 @@
  *
  * @module client/src/concept2cure/quality/SopRegister
  */
-
 import * as React from 'react';
 import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import {
-  SOP_TEMPLATES,
-  FIXTURE_DOCS,
-  FIXTURE_TRAINING,
   deriveReviewDue,
   DOC_TYPE_LABEL,
   STATUS_LABEL,
@@ -50,13 +48,17 @@ import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsDoc } from './data';
-/* The canonical sample-mode guard and its marker, shared with the MDX lane —
-   one definition of "may a fixture reach the screen", so two lanes cannot
-   answer it differently. */
-import { useSampleRows, useShowingSample } from '../mdx/lib/useSampleRows';
-import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { ErrorState } from '../v2/dataConnect';
+import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
+import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
+import { reviseQmsDocument } from './qmsDocuments';
+import type { SopTemplate } from './data';
+import { ControlledDocumentHistory } from './ControlledDocumentHistory';
+import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './ControlledDocumentTarget';
 
+import { PersonalTrainingReader } from './PersonalTrainingReader';
+import { personalTrainingScope } from './qmsPersonalTraining';
+import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -64,10 +66,13 @@ export interface SopRegisterProps {
   filter: StatusFilter;
   /** Apply a status chip — the same setter the chips and AnA share. */
   onFilterChange: (f: StatusFilter) => void;
+  onNavigate?: (target: string) => void;
+  /** The shell holds its other tabs while the canonical editor is open. */
+  onEditorOpenChange?: (open: boolean) => void;
+  qmsDocumentId?:string;
+  qmsTargetRequest?:number;
 }
-
 export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
-
 /** The register's status chips — exported so QualityApp can belt-validate a
     driven filter against the same set the pane renders. */
 export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
@@ -76,12 +81,10 @@ export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'in_review', label: 'Under review' },
   { id: 'draft', label: 'Draft' },
 ];
-
 const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
 /* Derived, never hand-kept — see registerGrid.ts. Below this the title track
    resolves to 0px and the row's last columns are clipped away. */
 const ROW_MIN = registerRowMinWidth(GRID);
-
 function Kpi({
   label,
   val,
@@ -106,12 +109,19 @@ function Kpi({
     </div>
   );
 }
+/* Stable identities for an unread read, so memo deps do not churn. */
+const NO_DOCS: QmsDoc[] = [];
+const NO_TEMPLATES: NonNullable<ReturnType<typeof useSopTemplates>['templates']> = [];
+const NO_TRAINING: NonNullable<ReturnType<typeof useTrainingCompliance>['rows']> = [];
 
-export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps) {
+export function SopRegister(props: SopRegisterProps) {
+  const user = useAuthUser();
+  return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
+}
+function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsTargetRequest }: SopRegisterProps) {
   const reg = useSopRegister();
   const tpl = useSopTemplates();
   const rev = useReviewDue();
-
   /* Four raw `?? FIXTURE` fallbacks on a GxP document register, none of them
      gated by sample mode and none of them marked. They fired on an empty
      tenant, an expired token, a 500, or a fetch that had not started — and
@@ -123,17 +133,22 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
      `deriveReviewDue(docs)` stays a derivation rather than a fixture: it is
      computed from whatever `docs` resolved to, so it inherits that decision
      instead of making a second one. */
-  const docs = useSampleRows(reg.docs, FIXTURE_DOCS);
-  const templates = useSampleRows(tpl.templates, SOP_TEMPLATES);
+  /* The tenant's rows or none. The fallbacks above were first gated behind
+     sample mode (2026-09-25) and then removed with it (2026-10-14), along with
+     FIXTURE_DOCS, FIXTURE_TRAINING and SOP_TEMPLATES. */
+  const docs = reg.docs ?? NO_DOCS;
+  const templates = tpl.templates ?? NO_TEMPLATES;
   const reviewDue = rev.rows ?? deriveReviewDue(docs);
   /* Live read-and-understood compliance (numerator = distinct current
      acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
-  const training = useSampleRows(trainComp.rows, FIXTURE_TRAINING);
-  /* One predicate for the whole surface: the document register is what the
-     rest is derived from, so if that is sample then so is the view. */
-  const showingSample = useShowingSample(reg.docs);
-  const user = useAuthUser(); // display only; the server resolves the signer
+  const training = trainComp.rows ?? NO_TRAINING;
+  const user = useAuthUser(); // server resolves every signer and acknowledging actor
+  const readerScope = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
+  const [reading, setReading] = React.useState<{ documentId: number; scope: string } | null>(null);
+  React.useEffect(() => { setReading(null); }, [readerScope]);
+  const openReader = (documentId: number) => setReading({ documentId, scope: readerScope });
+  const canOpen = (documentId: number) => personalTrainingScope(user, documentId) !== null;
   /** The document being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<QmsDoc | null>(null);
   /** The document being retired, while its signature dialog is open. Retirement
@@ -145,37 +160,59 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const [routing, setRouting] = React.useState<number | null>(null);
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
-  const sendForReview = async (d: QmsDoc) => {
+  const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
+  const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
+  const [revising, setRevising] = React.useState<QmsDoc | null>(null);
+  const [editingId, setEditingId] = React.useState<number | null>(null);
+  const [history, setHistory] = React.useState<QmsDoc | null>(null);
+  const target=useControlledDocumentTarget(qmsDocumentId,qmsTargetRequest);
+  React.useEffect(()=>{
+    const d=target.document;
+    if(!d)return;
+    if(editingId===d.id){target.clear();return;}
+    if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
+    if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
+    else if(d.status==='draft'){target.clear();setSetup({document:d});}
+  },[target.document,target.clear,editingId]);
+  const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
+  React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
+  const openDocument = (d: QmsDoc) => {
+    if (d.status === 'draft' && !d.authoringDocumentId) setSetup({ document: d });
+    else setEditingId(d.id);
+  };
+  const openCreated = (id: number) => {
+    setSetup(null);
+    reg.refresh?.();
+    setEditingId(id);
+  };
+  const sendForReview = async (d: QmsDoc, reason: string) => {
     setRouting(d.id);
     setNotice(null);
     try {
-      await sendQmsDocumentForReview(d.id);
+      await sendQmsDocumentForReview(d.id, reason);
       setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review. A second person with signing authority can now approve it.` });
+      setReviewing(null);
       reg.refresh?.();
-    } catch (err) {
-      setNotice({ tone: 'err', text: err instanceof Error ? err.message : String(err) });
     } finally {
       setRouting(null);
     }
   };
-
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
   const overdueCount = reviewDue.filter((r) => r.overdue).length;
-  const trainedRows = training.filter((t) => t.of > 0);
+  const trainedRows = training.filter((t) => t.of > 0 && t.eligible !== false);
   const trainingPct = trainedRows.length
     ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
     : 0;
-
-  /* A read that has not answered is not an empty register. Outside sample mode
-     `useSampleRows(null, …)` is `[]`, so until 2026-09-25 a 401, a 500 or a
+  /* A read that has not answered is not an empty register. An unread register
+     resolves to `[]` above, so until 2026-09-25 a 401, a 500 or a
      dropped connection rendered "Effective documents 0" and "Review overdue 0 —
      All current" in the ok tone, over "No documents due for review." The hooks
      computed the error; nothing here read it (HS-1,
      docs/evidence/reviews/2026-09-24/lenses.md). "Unread" is in flight or failed;
      neither may render a count. A resolved list that is non-empty came from
-     live rows or from explicit sample mode, which the banner above marks. */
+     live rows. */
   const regUnread = reg.docs == null && docs.length === 0;
   const regFailed = regUnread && reg.error != null;
   /* Review dates come from their own read, or are derived from the register;
@@ -194,11 +231,13 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
 
+  if (editingId !== null) return <>{targetStatus}<ControlledDocumentWorkbench documentId={editingId}
+    onBack={() => { setEditingId(null); reg.refresh?.(); rev.refresh?.(); trainComp.refresh?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} /></>;
+
   return (
     <>
-      {/* This register showed effective SOPs and training-completion counts
-          with no marker of any kind. */}
-      <SampleDataBanner show={showingSample} loading={reg.loading} label="SOPs and training records" />
+      {targetStatus}
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -212,6 +251,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
         <div className="qms-actions">
           <button
             className="qms-btn ghost"
+            title="Sends this request to AnA; nothing in the register changes"
             onClick={() =>
               onAsk(
                 'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
@@ -219,17 +259,13 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
               )
             }
           >
-            {I.shieldCheck} Pre-inspection check
+            {I.sparkles} Ask AnA for a pre-inspection check
           </button>
           <button
             className="qms-btn primary"
-            onClick={() =>
-              onAsk(
-                'Help me create a new controlled document. Ask me which type from the Quality system library ' +
-                  '(quality manual, policy, SOP, work instruction, form, validation protocol, training curriculum), ' +
-                  'assign the next document number, then open it with the standard Purpose to Approval section structure.',
-              )
-            }
+            disabled={templates.length === 0}
+            title={templates.length === 0 ? (tpl.error ? 'The Quality system library could not be read' : 'Loading the Quality system library…') : undefined}
+            onClick={() => setSetup({})}
           >
             {I.plus} New controlled document
           </button>
@@ -268,16 +304,16 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
         {/* No trained rows is nothing assessed, not 0% compliance. */}
         {trainUnread || trainedRows.length === 0 ? (
           <Kpi
-            label="Training compliance"
+            label="Acknowledgement coverage"
             val="—"
-            sub={trainUnread ? unreadSub(trainFailed) : 'No training-controlled documents yet'}
+            sub={trainUnread ? unreadSub(trainFailed) : training.length === 0 ? 'No training-controlled documents yet' : training.every((t) => t.eligible === false) ? 'Verified released text is unavailable' : 'No active roster members to assess'}
           />
         ) : (
           <Kpi
-            label="Training compliance"
+            label="Acknowledgement coverage"
             val={String(trainingPct)}
             unit="%"
-            sub="Read-and-understood, current cycle"
+            sub="Average verified-release coverage of active roster"
             tone={trainingPct >= 95 ? 'ok' : trainingPct >= 80 ? 'warn' : 'err'}
           />
         )}
@@ -294,12 +330,10 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <button
               key={t.key}
               className="qms-tpl-card"
-              onClick={() =>
-                onAsk(
-                  `Create a new ${t.label} from the Quality system library. Assign the next ${t.numberPrefix} number, ` +
-                    `then open it with the standard sections: ${t.sections.map((s) => s.label).join(', ')}.`,
-                )
-              }
+              title={Array.isArray(t.sections) && t.sections.length > 0
+                ? `Create a new ${t.label} as a draft with its standard sections: ${t.sections.map((s) => s.label).join(', ')}`
+                : `Create a new ${t.label} as a draft`}
+              onClick={() => setSetup({ template: t })}
             >
               <div className="qms-tpl-top">
                 <span className="qms-tpl-ico">{I.template}</span>
@@ -380,18 +414,12 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
               <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
-                  onClick={() =>
-                    onAsk(
-                      `Open ${d.docNumber} ${d.title} (v${d.version}, ${STATUS_LABEL[d.status]}). Walk me through its ` +
-                        'sections, current status, training status and review history.',
-                    )
-                  }
+                  title="Open the controlled document"
+                  onClick={() => openDocument(d)}
                 >
                   {d.docNumber}
                 </button>
-                <div className="qms-cell qms-title" title={d.title}>
-                  {d.title}
-                </div>
+                <div className="qms-cell qms-title" title={d.title}>{d.title}</div>
                 <div className="qms-cell">
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>
@@ -413,16 +441,13 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   )}
                 </div>
                 <div className="qms-cell qms-rowacts">
+                  <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
                   {d.status === 'draft' && (
                     <button
                       className="qms-chip"
-                      disabled={showingSample || routing === d.id}
-                      title={
-                        showingSample
-                          ? 'Sample rows cannot be sent for review'
-                          : 'Send this draft for review. Only a document under review can be approved.'
-                      }
-                      onClick={() => void sendForReview(d)}
+                      disabled={routing === d.id}
+                      title="Send this draft for review. Only a document under review can be approved."
+                      onClick={() => setReviewing(d)}
                     >
                       {I.arrowRight} {routing === d.id ? 'Sending…' : 'Send for review'}
                     </button>
@@ -430,40 +455,37 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   {d.status === 'in_review' && (
                     <button
                       className="qms-chip"
-                      disabled={showingSample}
-                      title={
-                        showingSample
-                          ? 'Sample rows cannot be approved'
-                          : 'Approve with your electronic signature (password and second factor). The author cannot approve their own document.'
-                      }
+                      title="Approve with your electronic signature (password and second factor). The author cannot approve their own document."
                       onClick={() => setApproving(d)}
                     >
                       {I.check} Approve
                     </button>
                   )}
-                  {d.status === 'effective' && (
+                  {['effective','in_review','superseded','retired'].includes(d.status) && (
                     <>
                       <button
                         className="qms-chip"
-                        title="Open a controlled revision"
-                        onClick={() =>
-                          onAsk(
-                            `Open a controlled revision of ${d.docNumber} ${d.title} (currently v${d.version}). Ask me for ` +
-                              'the reason for change, bump to the next version, return it to draft, and route it for review.',
-                          )
-                        }
+                        title="Open a controlled revision with a reason for change: a new draft needs independent review and approval"
+                        onClick={() => d.authoringDocumentId ? setRevising(d) : setSetup({ document: d, revision: true })}
                       >
                         {I.history} Revise
                       </button>
-                      <button
+                      {d.status === 'effective' && <button
                         className="qms-chip"
                         title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
                         onClick={() => setRetiring(d)}
                       >
                         {I.archive} Retire
-                      </button>
+                      </button>}
                     </>
                   )}
+                  <button
+                    className="qms-chip ghost"
+                    aria-label={`View version history of ${d.docNumber}`}
+                    title="Read retained document versions" onClick={() => setHistory(d)}
+                  >
+                    {I.history} History
+                  </button>
                   <button
                     className="qms-chip ghost"
                     title="Ask AnA about this document" aria-label="Ask AnA about this document"
@@ -508,17 +530,18 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
               <div className="qms-empty">No documents due for review.</div>
             )}
             {reviewDue.map((r) => (
+              /* Opens the document for its periodic review. It used to ask AnA to
+                 "schedule" the review, and no route schedules one: the next-review
+                 date of an effective document is part of what was signed, so it
+                 changes through a revision (Revise, in the register above). */
               <button
                 key={r.id}
                 className="qms-review-row"
                 data-overdue={r.overdue || undefined}
-                onClick={() =>
-                  onAsk(
-                    `Schedule the periodic review of ${r.docNumber} ${r.title} (next review ${formatDate(r.nextReviewDate)}` +
-                      `${r.overdue ? ', overdue' : ''}). Confirm the reviewer and due date, open a revision if changes are ` +
-                      'needed, and log it.',
-                  )
-                }
+                aria-label={`Open ${r.docNumber} ${r.title} for its periodic review (${r.overdue ? 'overdue' : `due ${formatDate(r.nextReviewDate)}`})`}
+                title="Open the document to review it. An effective document changes through Revise in the register."
+                disabled={!canOpen(r.id)}
+                onClick={() => openReader(r.id)}
               >
                 <span className="qms-review-num mono">{r.docNumber}</span>
                 <span className="qms-review-title" title={r.title}>
@@ -536,60 +559,25 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
           </div>
         </section>
 
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>Read-and-understood training</h2>
-            <span className="meta">Per controlled procedure</span>
-            <span className="spacer" />
-            <button
-              className="qms-link"
-              onClick={() =>
-                onAsk(
-                  'Record read-and-understood training. Ask me which controlled document and which team members, ' +
-                    'capture the acknowledgment method (e-signature, attestation, or trainer-verified), then set the ' +
-                    'next refresh date.',
-                )
-              }
-            >
-              {I.bookOpen} Record training
-            </button>
-          </div>
-          <div className="qms-train">
-            {trainFailed && (
-              <ErrorState
-                title="Training records could not be read"
-                message={trainComp.error}
-                retry={trainComp.refresh}
-                testId="sop-training-failed"
-              />
-            )}
-            {trainUnread && !trainFailed && (
-              <div className="qms-empty" role="status">Loading training records…</div>
-            )}
-            {!trainUnread && training.length === 0 && (
-              <div className="qms-empty">No training-controlled documents yet.</div>
-            )}
-            {training.map((t) => {
-              const pct = t.of > 0 ? Math.round((t.current / t.of) * 100) : 0;
-              const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
-              return (
-                <div key={t.doc} className="qms-train-row">
-                  <span className="qms-train-doc" title={t.doc}>
-                    {t.doc}
-                  </span>
-                  <span className="qms-train-bar">
-                    <span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="qms-train-pct mono">
-                    {t.current}/{t.of}
-                  </span>
-                  <span className="qms-train-when">{t.lastCycle}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
+          refresh={trainComp.refresh}
+          canOpen={canOpen} onOpen={openReader} />
       </div>
+      {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
+      {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
+        onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
+      {reviewing && <ControlledDocumentReason title="Send controlled document for review" action="Send for review"
+        description={`Send ${reviewing.docNumber} ${reviewing.title} v${reviewing.version} for independent review. Save the authored sections before continuing.`}
+        onClose={() => setReviewing(null)} onSubmit={reason => sendForReview(reviewing, reason)} />}
+      {revising && <ControlledDocumentReason title="Create controlled revision" action="Create revision"
+        description={`Create a new draft of ${revising.docNumber} ${revising.title} v${revising.version}. The previous controlled editing copy stays read-only and recorded signed versions remain in the history.`}
+        onClose={() => setRevising(null)} onSubmit={async reason => {
+          const row = await reviseQmsDocument(revising.id, reason);
+          setRevising(null); reg.refresh?.(); setEditingId(row.id);
+        }} />}
+      {reading && reading.scope === readerScope && (
+        <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
+      )}
       {approving && (
         <EsignModal
           open

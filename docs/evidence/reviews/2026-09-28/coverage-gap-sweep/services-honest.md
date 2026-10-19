@@ -145,4 +145,3 @@ Severity is lower than claimed. No client calls /api/qms/summary: a grep of clie
 **What I did not do:** I did not re-run the reporter's Postgres reproduction. The SQL is simple enough that the outcome follows directly from reading it.
 
 **Coverage:** qms.service.ts:251-295, the qms.ts route and its header, the route mount, client-side callers (none found), the commit that introduced the function, and prior review folders. I did not review the other /api/qms endpoints.
-

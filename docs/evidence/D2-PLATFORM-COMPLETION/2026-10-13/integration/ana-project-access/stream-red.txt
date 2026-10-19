@@ -1,0 +1,23 @@
+Sanitized local Vitest evidence: test names and final results only.
+Application output, fixture identities and SQL metadata omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"[TEST_UUID]"} before SSE 51ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE 8ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"[TEST_UUID]"}} before SSE 5ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"[TEST_UUID]"}} before SSE 5ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path 8ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation 11ms
+ × server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > preserves an organization conversation without a selected project 6ms
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"[TEST_UUID]"} before SSE
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"[TEST_UUID]"}} before SSE
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"[TEST_UUID]"}} before SSE
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  20:40:34
+   Duration  24.56s (transform 13.13s, setup 155ms, import 19.07s, tests 4.87s, environment 0ms)

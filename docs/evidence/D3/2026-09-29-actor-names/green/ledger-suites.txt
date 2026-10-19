@@ -123,4 +123,3 @@ stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts > docu
       Tests  24 passed (24)
    Start at  01:14:13
    Duration  7.36s (transform 3.10s, setup 328ms, import 6.75s, tests 8.73s, environment 593ms)
-

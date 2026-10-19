@@ -1,0 +1,12 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "ci:canvas-path"
+  ],
+  "executionBase": "61a14c5d9",
+  "exitCode": 0,
+  "rawSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+  "output": "\u2705 ci:canvas-path \u2014 thread \u2192 canvas \u2192 workbench, surface \u2192 workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project \u2192 agency within its baseline\n"
+}

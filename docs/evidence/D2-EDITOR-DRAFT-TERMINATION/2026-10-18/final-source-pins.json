@@ -1,0 +1,32 @@
+{
+  "production": {
+    "server/routes/authoring.router.ts": "8f2778f3d6ee62309432fbde7c7075bd976d4a643dcf322ed9a434cbb335b38a",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "c6609bb3a5ef8de40b69e656ff147820fc9a229a03064282b7742f2cd56ccad8",
+    "server/services/authoring/authoring-draft-termination.ts": "e924661f0ce3e40970a3b2bb8c5c4ef373c36a0924c486bad5dcbce22c654b2b"
+  },
+  "testInputs": {
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts": "8df82fe0ad2e1c52923393d988af9da17c1c74dac41531a57ae70123eaa72122",
+    "server/routes/__tests__/authoringDraftTerminationAccept.pglite.test.ts": "056f89d9ca96754f027f07aa9da833efb4bf5ecb945a4536ea6071563b745b16",
+    "client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx": "83eca25661c4075671ca1b328edc5f12dacfaec3a3333d7ddefdac6c75064e9a",
+    "server/routes/__tests__/authoringAiDraftStructured.test.ts": "5e057325c444ba7cdbd4fc136f2dd2b67e9dd38823bdb0faaac34325633989ae",
+    "server/routes/__tests__/authoringSelectedSources.pglite.test.ts": "01fdfded891ad72d3e1a70f01cbcd287cae547c69f43d6e641626107ce7951af",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts": "88388e539c71a63513edc7c65c977ea6cdf22f7828eb8ca7cd07195f6f36da5a",
+    "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts": "8a0c7c8b249e48ff30485281fa6e54e7742dad3bc5e50d575738fdca45e87685",
+    "server/routes/__tests__/authoringAiDraftAccept.test.ts": "0d28e1ef7667772947a0d5b041c52337adb509bede8eff5920361f276e027280",
+    "client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx": "32f7ada068a8e3a5d694c47ca42bd964a7200f0eb1c4a80f2972ba60b89b2178",
+    "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx": "7b7b30933a81f1a412ecb78cfde3d49833c97d5b6f7750344a5e1326b7ba03c9",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx": "3ee33e3459d1765d3d5638f0eb2155339824ea43e0551fd148ff61f86d61ea14",
+    "server/services/ai-gateway/__tests__/finish-reason.test.ts": "0d7242a244790cc04a9ccaa413e1303928dd9a597f1f627c9e013d2e4c72b2cd",
+    "server/services/ana/__tests__/turn-record-draft.pglite.test.ts": "bc36996a4264ffdfea1a14f0f0f448d5072d11ef723b6b03870057cfae72659f",
+    "server/routes/__tests__/authoring-draft-envelope.test.ts": "ad3181feb8ecb4da03d4c309e562c24250db7866efba0633391fe1d7d3371357",
+    "server/routes/__tests__/authoring-draft-program-sources.test.ts": "d24e01912213c3338f184b93bc919377ee858acaa3ff21dad31c83a0c19cfd47",
+    "server/routes/authoring.router.ts": "8f2778f3d6ee62309432fbde7c7075bd976d4a643dcf322ed9a434cbb335b38a",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "c6609bb3a5ef8de40b69e656ff147820fc9a229a03064282b7742f2cd56ccad8",
+    "server/services/authoring/authoring-draft-termination.ts": "e924661f0ce3e40970a3b2bb8c5c4ef373c36a0924c486bad5dcbce22c654b2b",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

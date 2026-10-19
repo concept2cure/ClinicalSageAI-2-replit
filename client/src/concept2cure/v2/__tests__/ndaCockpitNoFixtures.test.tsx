@@ -252,7 +252,7 @@ describe('NdaCockpit — the KPI strip reports no figure it does not have', () =
     const release = heldReads();
     try {
       render(<NdaCockpit {...props()} />);
-      const readiness = kpiValues().find((k) => k.label.includes('Application readiness'))!;
+      const readiness = kpiValues().find((k) => k.label.includes('Required CTD sections complete'))!;
       expect(readiness.value).not.toContain('0%');
       expect(readiness.value).toBe('—');
     } finally {
@@ -279,17 +279,39 @@ describe('NdaCockpit — the KPI strip reports no figure it does not have', () =
     }) as Response);
     render(<NdaCockpit {...props()} />);
     await screen.findByText(/Filing readiness could not be read/);
-    for (const label of ['Application readiness', 'Module 1 admin open', 'High RTF risk']) {
+    for (const label of ['Required CTD sections complete', 'Module 1 admin open', 'High RTF risk']) {
       expect(kpiValues().find((k) => k.label.includes(label))!.value).toBe('—');
     }
   });
 
+  /* 2026-10-15: this asserted "0%" under "Application readiness" for an org with
+     NO NDA/BLA submission — a completeness figure, labelled readiness, for an
+     application that does not exist. A real figure needs real rows. */
   it('does render the real figures once every read has settled', async () => {
+    const row = (m: string, required: number, complete: number) => ({
+      m, label: `Module ${m}`, required, complete, open: required - complete, docs: complete,
+      pct: Math.round((complete / required) * 100), gate: complete < required ? `${m}.x not started` : null,
+      basis: '21 CFR 314.50', notAssessed: null,
+    });
+    const rows = [row('1', 8, 2), row('2', 6, 0), row('3', 4, 1), row('4', 3, 0), row('5', 2, 0)];
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      const body =
+        url === '/api/nda-cockpit/modules' ? { data: rows, meta: { count: rows.length } }
+          : url === '/api/biopharma/bla/assessments' ? { assessments: [] }
+            : { data: [], meta: { count: 0 } };
+      return { ok: true, status: 200, json: async () => body } as Response;
+    });
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText(/No Refuse-to-File assessment has been run/);
+    // 3 of 23 required sections.
+    expect(kpiValues().find((k) => k.label.includes('Required CTD sections complete'))!.value).toBe('13%');
+  });
+
+  it('shows no figure for an org with no NDA/BLA submission — there is nothing to measure', async () => {
     mockApi({ ok: true, status: 200, body: { assessments: [] } });
     render(<NdaCockpit {...props()} />);
     await screen.findByText(/Nothing has been assessed for this application yet/);
-    const readiness = kpiValues().find((k) => k.label.includes('Application readiness'))!;
-    expect(readiness.value).toBe('0%');
+    expect(kpiValues().find((k) => k.label.includes('Required CTD sections complete'))!.value).toBe('—');
   });
 });
 

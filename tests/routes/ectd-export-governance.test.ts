@@ -125,7 +125,8 @@ describe('eCTD export governance gate', () => {
 
     expect(mockGenerate).toHaveBeenCalledTimes(1);
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
+    // 2026-10-15: was Human-Review-Approved — a caller assertion stamped as an approval.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Export-Authorization', 'none');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
     expect(res.send).toHaveBeenCalled();
   });
@@ -156,8 +157,9 @@ describe('eCTD export governance gate', () => {
     await handler(req, res);
 
     expect(mockGenerate).toHaveBeenCalledTimes(1);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Reviewer', 'Reg%20QA');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Timestamp', '2026-03-25T00:00:00.000Z');
+    // 2026-10-15: were Reviewer / Review-Timestamp — request text named as the reviewer of record.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Reviewer', 'Reg%20QA');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Review-Timestamp', '2026-03-25T00:00:00.000Z');
     expect(res.send).toHaveBeenCalled();
   });
 });

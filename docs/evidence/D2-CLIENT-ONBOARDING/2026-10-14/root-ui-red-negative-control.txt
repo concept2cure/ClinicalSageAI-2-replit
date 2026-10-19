@@ -1,0 +1,32 @@
+Negative control: replace real API delivery value email with sent. Expected failing contract assertion.
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > distinguishes emailed, private-link, failed-delivery and existing-user invitations 10ms
+   → expected 'created' to be 'email_sent' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > copies the chosen link only on request and provides a manual fallback 203ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  03:14:48
+   Duration  1.13s (transform 115ms, setup 178ms, import 54ms, tests 217ms, environment 500ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx > onboarding invitation handover > distinguishes emailed, private-link, failed-delivery and existing-user invitations
+AssertionError: expected 'created' to be 'email_sent' // Object.is equality
+
+Expected: "email_sent"
+Received: "created"
+
+ ❯ client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx:10:94
+      8| describe('onboarding invitation handover', () => {
+      9|   it('distinguishes emailed, private-link, failed-delivery and existin…
+     10|     expect(invitationOutcome('a@b.test', 201, { invitation: { delivery…
+       |                                                                                              ^
+     11|     expect(invitationOutcome('a@b.test', 201, { invitation: { delivery…
+     12|     expect(invitationOutcome('a@b.test', 202, {}).status).toBe('pendin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

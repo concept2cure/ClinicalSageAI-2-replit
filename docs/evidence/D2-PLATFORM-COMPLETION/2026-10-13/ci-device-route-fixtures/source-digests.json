@@ -1,0 +1,26 @@
+{
+  "recorded_at_utc": "2026-10-13T23:00:15.375477+00:00",
+  "before": {
+    "tests": 67,
+    "failed": 15,
+    "passed": 52
+  },
+  "after": {
+    "tests": 90,
+    "failed": 0,
+    "passed": 90,
+    "skipped": 0
+  },
+  "eslint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "source_sha256": {
+    "tests/routes/510k-device-routes.test.ts": "4278912618d09c3976c932bd3c0e29006cf184a540f7d883b63806cf329a2947",
+    "tests/routes/device-projects-patch-validation.test.ts": "1fce61507c0ce409692386e7b37dd29a1e7efd209b91b5dc9f7b89b5303e9fe6",
+    "server/routes/510k-device-routes.ts": "2eedb1f05048f767c46e547ca252e32fb98cc33ecd695b72b456ba7ed5e7cc8e",
+    "server/routes/device-projects.ts": "d3fe7a3b42f854c4604fea5090a5a03e9cb1412b5682abbf0923960fbf91ef1c",
+    "server/services/c2c/programme-profile-write.ts": "95c043607832e1df9292ff3f291dd7540f4fd59e26c436253d22b9d5ac529782",
+    "shared/regulatory/device-class.ts": "ecd46f03488ca2474519d703f5ee1b4a601323274bf07ca297a36b6daaefda54"
+  }
+}

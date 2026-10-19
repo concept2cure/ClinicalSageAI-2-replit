@@ -51,9 +51,9 @@
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal } from './vault-filing.service.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
+import { requireCurrentVaultProgramWrite } from './vault-write-authority.js';
+import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
-import { programInOrganization } from '../c2c/program-access';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -207,8 +207,6 @@ function placementRationale(
 export async function placeVaultDocument(
   args: PlaceVaultDocumentArgs,
 ): Promise<PlaceVaultDocumentResult> {
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   const { programId, documentId, organizationId } = args;
   if (!UUID_RE.test(programId)) {
     return invalid('NOT_FOUND', 'No such project.', 404);
@@ -229,16 +227,12 @@ export async function placeVaultDocument(
     );
   }
 
-  // Program ownership — the same guard as the read path. A program in another
-  // organization is reported as absent, not as forbidden.
-  if (!(await programInOrganization(pool, programId, organizationId))) {
-    return invalid('NOT_FOUND', 'No such project.', 404);
-  }
-  const view = await resolveVaultView(programId, organizationId);
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const identity = { organizationId, userId: args.userId ?? undefined, programId };
+    await requireCurrentVaultProgramWrite(client, identity);
+    const view = await resolveVaultView(programId, organizationId, client);
     const docRes = await client.query(
       `SELECT id, document_title, folder_id, evidence_kind, ctd_section,
               placement_status, placement_rationale
@@ -278,10 +272,12 @@ export async function placeVaultDocument(
       return target.refusal;
     }
     const result = await writePlacement(client, args, view, before, target.folderId);
+    await requireCurrentVaultProgramWrite(client, identity);
     await client.query('COMMIT');
     return result;
   } catch (txErr) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (txErr instanceof ProgramReadAccessError) return invalid(txErr.code, txErr.message, txErr.status);
     throw txErr;
   } finally {
     client.release();

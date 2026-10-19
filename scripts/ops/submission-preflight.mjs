@@ -58,8 +58,6 @@ const ESTAR_TEMPLATES = [
   'eSTAR-510k-non-ivd.pdf',
   'eSTAR-510k-ivd.pdf',
   'PreSTAR-q-sub.pdf',
-  'PreSTAR-ide.pdf',
-  'PreSTAR-513g.pdf',
 ];
 const VALIDATORS = [
   { id: 'fda_evalidator', label: 'FDA eValidator', urlEnv: 'FDA_VALIDATOR_URL' },

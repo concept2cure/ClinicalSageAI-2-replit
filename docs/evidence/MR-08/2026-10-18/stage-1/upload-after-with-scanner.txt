@@ -1,0 +1,25 @@
+# GREEN — this change (bundle dist/index.js from the working tree), same production env, plus
+# CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3310 → the pinned clamd (clamav/clamav:1.4.6@sha256:57deb108…, container c2c-clamav).
+# The script is scripts/ci/image-boot-signin.mjs as extended here, pointed at the local server and database
+# (BASE_URL, DATABASE_URL), as ci.yml production-image-boot runs it inside the image.
+
+$ boot dist/index.js with CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3310
+pid=19567
+/readyz=200 after 7s
+{"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+boot log: clamav_connectivity=pass (boot self-test scanned EICAR through clamd)
+
+$ DATABASE_URL=… BASE_URL=http://127.0.0.1:5199 SIGNIN_ORIGIN=https://image-boot.invalid MFA_ENCRYPTION_KEY=… node scripts/ci/image-boot-signin.mjs
+enrolled user 1 in organisation 5, authenticator on
+POST /api/auth/login → 200, second factor required (authenticator)
+POST /api/auth/mfa/verify with a wrong code → 401, refused
+POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+image sign-in: OK
+POST /api/c2c/projects → 201, project 69781f76-8bf2-4473-ab47-0159b6db8539
+POST /api/vault/ingest eicar.txt → 400 FILE_SCAN_REJECTED, refused by the scanner
+POST /api/vault/ingest image-boot.pdf → 201, scanned clean and filed (document 2298cd43-52e8-431e-9f49-fd070b1f5169)
+image upload through the scanner: OK
+exit=0
+server log: "msg":"[upload-safety] Upload rejected by virus scanner"
+server log: "signature":"Eicar-Test-Signature"

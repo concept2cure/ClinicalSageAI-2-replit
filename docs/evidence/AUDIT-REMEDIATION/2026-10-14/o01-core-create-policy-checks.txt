@@ -1,0 +1,27 @@
+Core creator policy correction: exact established canCreateProgram predicate, current active membership; no fixture role changes.
+
+Red author/custom-role controls:
+ ❯ server/routes/__tests__/o01-core-project-audits.pglite.test.ts (24 tests | 2 failed | 22 skipped) 2732ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  20:01:22
+   Duration  5.41s (transform 1.10s, setup 78ms, import 2.36s, tests 2.73s, environment 0ms)
+The red response was HTTP403 with code PROJECT_WRITE_PERMISSION_DENIED for the current persisted author and custom tenant role.
+
+Final focused green run:
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts (24 tests) 2555ms
+ ✓ tests/routes/concept2cure.test.ts (10 tests) 624ms
+ ✓ tests/routes/concept2cure-project-collaborators.test.ts (2 tests) 9ms
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  20:01:49
+   Duration  9.20s (transform 2.54s, setup 90ms, import 5.48s, tests 3.19s, environment 0ms)
+
+Positive: current persisted author/custom role creates and privately copies despite a stale viewer token claim.
+Negative: current viewer/readonly/read_only/guest cannot create/copy despite a stale admin claim.
+Negative: pending_deletion/suspended/purged/inactive tenants cannot create/copy during read recovery.
+Existing actual-SQL audit, rollback, private-source, read-vs-write, revoked-membership, duplicate-ownership and exact operations still pass.
+
+Scoped lint:
+✖ 13 problems (0 errors, 13 warnings)
+Whitespace diff check clean. Full current typecheck/build/release/browser qualification remains control-tower owned.

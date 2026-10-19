@@ -22,7 +22,7 @@
  * @module server/services/part11/signing-authority-gate
  * @compliance 21 CFR Part 11 §11.10(d), §11.10(g)
  */
-import { resolveSignerOrgRole } from './resolve-signer-role';
+import { resolveSignerOrgRole, type SignerRoleExec } from './resolve-signer-role';
 import { isSigningAuthorized } from './signing-authority';
 
 /** The sentence every signing route gives a role without signing authority. */
@@ -42,10 +42,12 @@ export type SigningAuthorityRefusal =
  * otherwise the refusal to answer, before the password is asked for and before
  * anything is written. A lookup that cannot run refuses (fail closed).
  */
-export async function checkSigningAuthority(userId: number, orgId: number): Promise<SigningAuthorityRefusal | null> {
+export async function checkSigningAuthority(userId: number, orgId: number, executor?: SignerRoleExec): Promise<SigningAuthorityRefusal | null> {
   let role: string | null;
   try {
-    role = await resolveSignerOrgRole(userId, orgId);
+    role = executor
+      ? await resolveSignerOrgRole(userId, orgId, executor)
+      : await resolveSignerOrgRole(userId, orgId);
   } catch (err) {
     console.error('[signing-authority] signer role lookup failed:', err instanceof Error ? err.message : err);
     return { status: 503, code: 'SIGNING_AUTHORITY_UNVERIFIED', message: SIGNING_AUTHORITY_UNVERIFIED_MESSAGE };

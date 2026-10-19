@@ -268,15 +268,15 @@ F2 removes both tabs:
 | FDA | IND, NDA, BLA, ANDA. Device outlines exist (510(k), De Novo, PMA), but device programs get no submission (`projects.ts:818-821`, by reading) | Built to FDA headings (`server/services/ectd/regional-backbone-readiness.ts:45`) | Yes | ESG AS2 envelope is not PKCS#7, so FDA would reject it (`server/services/submission-gateways/fda-esg.ts:18-30`). No ESG account, no DTDs (D7) | "Transmit not proven: \<server reason\>" |
 | EMA | CTA (CTR 536), MAA, MDR, IVDR | Flat under `<m1-eu>` | Yes (`eu`) | Centralised MAA: CESP refuses and the channel is unconnected. CTA goes through the CTIS portal only | "Applicant uploads" / "CTIS portal only" |
 | PMDA | J-NDA | Flat. A new application needs eCTD v4.0 and is blocked (`server/services/ectd/dispatch-readiness.ts:214-241`) | Yes (`jp`) | The adapter refuses (`pmda-gateway.ts`) | "New applications blocked: eCTD v4.0 required from 2026-04-01" (the dated fact's date, named since 2026-10-08) |
-| Health Canada | None (`NO_RULE_PACK`) | Flat | No | The adapter posts to an endpoint written from no agency source (`health-canada-gateway.ts:7-16`) | "No outline; no channel" |
+| Health Canada | None (`NO_RULE_PACK`) | Flat | No | The adapter posts to an endpoint written from no agency source (`health-canada-gateway.ts:7-16`) | "No outline; no transmit channel" |
 | MHRA | `ind:mhra` exists but is mislabelled: the UK has no IND | EU placeholder | No | Generic adapter, no channel | Not offered |
-| NMPA, MFDS | None | EU placeholder | Yes (`cn`, `kr`) | No channel | "No outline; no channel" |
-| TGA | None | EU placeholder | No | No channel | "No outline; no channel" |
+| NMPA, MFDS | None | EU placeholder | Yes (`cn`, `kr`) | No channel | "No outline; no transmit channel" |
+| TGA | None | EU placeholder | No | No channel | "No outline; no transmit channel" |
 | Swissmedic, ANVISA, CDSCO, HSA, EU national authorities, notified bodies | Unmapped (`server/services/c2c/document-class.ts:67-70`) | EU placeholder | No | No channel | Refused at creation |
 
 Region profiles exist only for fda, eu, jp, cn and kr (`server/services/region-profiles/region-profile-service.ts:66-72`).
 
-The "no channel" labels for Health Canada and the generic adapters follow regulatory practice as the judges described it. Health Canada's CESG uses AS2, and the other agencies take portal uploads. I have not checked this against agency documents.
+The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15) for Health Canada and the generic adapters follow regulatory practice as the judges described it. Health Canada's CESG uses AS2, and the other agencies take portal uploads. I have not checked this against agency documents.
 
 ### How the UI says so
 
@@ -440,6 +440,10 @@ Two corrections to the readers:
 | Design review of F2, F16, F17, F19, F20 and F21 (seven lenses) | The commit that adds `.design/filing-spine/DESIGN_REVIEW.md` | Landed 2026-10-08 | Yes | 26 findings fixed, each red first. Among them, five untrue claims on these screens: a 510(k) told it gets an eCTD build; "Refused at creation"; "carries its approval signature" before filing; IND preselected as Biotech; the Vault header naming IND on an NDA project. Open items, with reasons, are in the review; two go to the founder (the coauthor copy write takes no reason or role; the Validation tab's model "Blocking."). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/filing-spine-design-review/` |
 | Review follow-ups: the Validation explain narrates, and the filing-copy write takes a role and a reason | The commit that adds `docs/evidence/D2-ONE-ANA/2026-10-08/filing-spine-review-followups/` | Landed 2026-10-08 | Yes | The review's two founder items. The Validation tab no longer prints a model's "Blocking."; its explanation is bound to the validator's findings under a model label. Taking or re-taking a filing copy requires `regulatory-author` and a stated reason, as the leaf write does. |
 | F14: compile carries the sequence | `305fd6bf` (merged with trunk as `9430b617`) | Landed 2026-10-08 | Yes | Compile, status, validate and the eValidator import take a `sequenceId` the project owns (404 otherwise; 409 for an empty named sequence); the Dispatch tab opens compile on its own sequence. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-08/f14-compile-carries-sequence/` |
+| F24: write the decision down | This commit | Landed 2026-10-15 | n/a (a record) | `SURFACE_DECISIONS_2026-10-08.md` "What the filing spine changed": compile, transmit and readiness are reached from the sequence (F12, F14, P-33); Cross-region scrapped; five tabs. `ONE_ANA_ONE_CANVAS.md`'s stage strip is marked superseded. The CLAUDE.md pointer to `ANA_DOCUMENT_CANVAS.md` is left: the working agreement names that file for its gate, which still pins the canvas path. |
+| F15: Respond answers the agency | This commit | Landed 2026-10-15 | Yes | Add the letter, draft from it with AnA (pinned), start the response sequence (`followUp: 'response'`). F0's red-hop list is empty. Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f15-respond/` |
+| F22 (part a): add a market | This commit | Landed 2026-10-15 | Yes | `POST /api/c2c/projects/:id/markets`: the market's Module 1 and 3.2.R (`filing_scope = 'market'`), its anchored submission, the reason; refusals by name. The outline and the binding take the home filing. Not yet: the market's Module 1 in the editor's outline and the gap rows (F22b). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22-add-a-market/` |
+| F22 (part b): each market's Module 1 in the editor | `77ac97d85`, `bf366c650` (server) and this commit (editor) | Landed 2026-10-15 | Yes | The editor's outline is the filing the open document is the editing copy of: an added market's Module 1 and 3.2.R, with its gaps named and never inserted. The pane lists the project's filings, and a market's editing copy is created there, bound by the server. Commits, section creates and binds are refused outside the market's part (`shared/regulatory/filing-scope.ts`). Evidence: `docs/evidence/D2-ONE-ANA/2026-10-15/f22b-market-outline/` |
 
 ### 7.2 New slices
 
@@ -659,9 +663,9 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
 
   | Input | Expected |
   |---|---|
-  | `('maa','EMA')` | Flat Module 1, no channel |
-  | `('nda','FDA')` | Structured Module 1 |
-  | `('nds','Health_Canada')` | No outline, no channel |
+  | `('maa','EMA')` | Module 1 without the agency's headings, no transmit channel |
+  | `('nda','FDA')` | Module 1 to the agency's headings |
+  | `('nds','Health_Canada')` | No outline, no transmit channel |
   | `('nda','ANVISA')` | Unmapped |
 
   The resolver must no longer report EMA or PMDA as buildable. Red: the module is absent, and the resolver reads `:237`.

@@ -12,7 +12,7 @@ under expected production load.
 ## Pre-conditions
 
 - [ ] IQ has been executed and signed.
-- [ ] BETA tenant is seeded with the demo project (`npm run db:seed:mdx-beta`).
+- [ ] The labelled demonstration program exists (`npm run demo:seed -- --pack mdx`); its id is in `docs/evidence/DEMO/mdx/manifest.json`. Below, `<demo>` is that program.
 - [ ] Test user accounts exist for each role (RA Lead, RA Specialist, V&V Engineer).
 - [ ] No production traffic is mixed into this run.
 
@@ -27,8 +27,8 @@ pass/fail.
 
 | Step | Action                                                       | Expected                                       | Observed | P/F |
 |------|--------------------------------------------------------------|------------------------------------------------|----------|-----|
-| 1    | Log in as RA Lead, navigate to `/concept2cure/project/<OR-801>/k510` | Surface loads with KPIs, predicates, SE matrix |          |     |
-| 2    | Verify predicate panel shows the expected 4 candidates (OR-801) | predicate count = 4                            |          |     |
+| 1    | Log in as RA Lead, navigate to `/concept2cure/project/<demo>/k510` | Surface loads with KPIs, predicates, SE matrix |          |     |
+| 2    | Verify the predicate panel lists only predicates recorded for `<demo>` | No sample candidates; none recorded reads as none |   |     |
 | 3    | Verify SE matrix is non-empty                                | rows ≥ 1                                       |          |     |
 | 4    | Verify Evidence Sufficiency score is shown                   | numeric 0-100                                  |          |     |
 | 5    | Verify Audit-trail strip shows correct last-edited-by        | matches user                                   |          |     |
@@ -37,7 +37,7 @@ pass/fail.
 
 | Step | Action                                                       | Expected                                       | Observed | P/F |
 |------|--------------------------------------------------------------|------------------------------------------------|----------|-----|
-| 1    | Open eSTAR §6 (Substantial Equivalence) for OR-801           | Section content loads                          |          |     |
+| 1    | Open eSTAR §6 (Substantial Equivalence) for `<demo>`         | Section content loads                          |          |     |
 | 2    | Edit the section body, save                                  | 200; updated content persisted                 |          |     |
 | 3    | Trigger validation                                           | findings list rendered                         |          |     |
 | 4    | Apply e-signature to approve the section                     | signature captured; chain integrity green      |          |     |
@@ -47,13 +47,16 @@ pass/fail.
 
 | Step | Action                                                       | Expected                                       | Observed | P/F |
 |------|--------------------------------------------------------------|------------------------------------------------|----------|-----|
-| 1    | Open the Pre-Sub Manager                                      | List loads with 7 seeded Q-Subs                |          |     |
-| 2    | Open Q251142 (BX-204 flagship)                                | Detail loads, 5 questions visible              |          |     |
-| 3    | Open Q250987 (OR-801 fatigue waiver — `await`)                | Detail loads, 3 unanswered questions           |          |     |
-| 4    | Mark commitment `cm-1142-3` (hypo-MARD blocker) as rolled-in  | 200; UI shows "rolled in" pill                 |          |     |
-| 5    | Verify `audit_logs` has `action=q_sub.commitment.rolled_in`   | row exists                                     |          |     |
-| 6    | Create a new Pre-Sub via POST `/api/q-sub`                    | 201; new row appears in list                   |          |     |
-| 7    | Attempt cross-tenant: log in as Org-B user, hit `/api/q-sub/<orig-org-A-id>` | 404                            |          |     |
+| 1    | Create a Pre-Sub for `<demo>` via POST `/api/q-sub`           | 201; new row appears in the Pre-Sub Manager    |          |     |
+| 2    | Open it                                                       | Detail loads with its sections                 |          |     |
+| 3    | Edit a section via PUT `/api/q-sub/<id>/sections/<key>`, save | 200; updated content persisted                 |          |     |
+| 4    | Attempt cross-tenant: log in as Org-B user, hit `/api/q-sub/<id>` | 404                                        |          |     |
+
+Marking a commitment rolled in (PATCH `/api/q-sub/commitments/<id>/rolled-in`)
+is not exercised: commitments cannot be recorded in the product yet (ledger
+L166 — the capture half of the Pre-Sub cycle is unbuilt), and the only rows
+it ever ran against were seven seeded Q-Subs whose FDA feedback was invented
+(the seed was removed 2026-10-15).
 
 ### W4 — AI letter response (UI gated; backend smoke)
 
@@ -72,7 +75,7 @@ UI is gated on Claude Design brief #8. Backend smoke:
 
 | Step | Action                                                       | Expected                                       | Observed | P/F |
 |------|--------------------------------------------------------------|------------------------------------------------|----------|-----|
-| 1    | GET pre-flight status for OR-801                              | All gates resolved or explicit blockers listed |          |     |
+| 1    | GET pre-flight status for `<demo>`                            | All gates resolved or explicit blockers listed |          |     |
 | 2    | Attempt transmit while a blocker is open                       | 409 / 422 (gate refuses)                       |          |     |
 | 3    | Resolve blocker, retry transmit                                | 200; ESG receipt captured                      |          |     |
 

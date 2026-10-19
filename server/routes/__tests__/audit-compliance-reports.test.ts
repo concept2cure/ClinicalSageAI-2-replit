@@ -28,7 +28,7 @@ vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantCo
 import { createComplianceReportRoutes } from '../audit-compliance-reports';
 import { createAuditTrailRoutes } from '../audit-trail-routes';
 import { REPORT_RUN_RATE } from '../../services/audit/compliance-reports/run-limits';
-import { verifySignedAuditExport } from '../../services/audit/signedAuditExport';
+import { sealManifestV2, sha256Hex, verifySignedAuditExport } from '../../services/audit/signedAuditExport';
 
 const ORG = 7;
 const MEMBERS = [
@@ -44,6 +44,7 @@ const pool = { query: vi.fn(), connect: vi.fn(async () => client) };
 let user: Record<string, unknown> | undefined;
 function app() {
   const a = express();
+  a.use(express.json({ limit: '5mb' }));
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (user) (req as unknown as { user: unknown }).user = user;
     next();
@@ -76,6 +77,91 @@ const nothingRead = () => {
   expect(walk).not.toHaveBeenCalled();
   expect(record).not.toHaveBeenCalled();
 };
+
+describe('POST /api/audit/reports/convert — a saved sealed snapshot', () => {
+  function auditSnapshot(rowOrg = ORG) {
+    const data = JSON.stringify([{ source: 'audit_events', id: 1, organization_id: rowOrg, user_name: 'Retained auditor', comments: 'Retained comment', created_at: '2026-09-30T12:00:00.000Z' }]);
+    return { data, ...sealManifestV2({
+      exportId: 'AUDIT-EXPORT-source', exportedAt: '2026-09-30T12:00:00.000Z', exportedBy: 'Original auditor', exportedByRole: 'manager',
+      exportSource: 'Concept2Cure / Concept2Cure Platform', queryFilters: { organizationId: ORG }, format: 'json', rowCount: 1, truncated: false,
+      dataHash: sha256Hex(data), hashAlgorithm: 'SHA-256', chainIntegrity: { status: 'unverified', totalEntries: 1, brokenLinks: 0, verifiedAt: '2026-09-30T12:00:00.000Z', reason: 'No chained entries.' },
+      exportRecord: { auditEventId: 39 }, compliance: { standard: '21 CFR Part 11', section: '§11.10(e)', description: 'Audit export' },
+    }) };
+  }
+
+  it('uses the canonical audit formatter for the full trail snapshot, retains original chain evidence and verifies the new CSV seal', async () => {
+    const source = auditSnapshot();
+    const converted = await request(app()).post('/api/audit/reports/convert').send({ export: source, format: 'csv' });
+    expect(converted.status).toBe(200);
+    const csv = converted.body.export;
+    expect(csv.data).toContain('Retained auditor');
+    expect(csv.data).toContain('Retained comment');
+    expect(csv.manifest).toMatchObject({ format: 'csv', rowCount: 1, chainIntegrity: source.manifest.chainIntegrity,
+      sourceExport: { exportId: source.manifest.exportId, dataHash: source.manifest.dataHash, exportedAt: source.manifest.exportedAt, exportRecord: { auditEventId: 39 } },
+    });
+    expect(csv.manifest.exportRecord).toBeUndefined();
+    expect(verifySignedAuditExport(csv.data, csv.manifest, csv.signature).valid).toBe(true);
+    expect(clientQuery.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'COMMIT']);
+    expect(pool.query).not.toHaveBeenCalled();
+    expect(walk).not.toHaveBeenCalled();
+    expect(record.mock.calls[0][1]).toMatchObject({ action: 'compliance.report_export', resourceId: 'audit-trail' });
+  });
+
+  it('refuses a sealed audit snapshot containing another organisation\'s row before export', async () => {
+    const res = await request(app()).post('/api/audit/reports/convert').send({ export: auditSnapshot(99), format: 'csv' });
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: { code: 'REPORT_SNAPSHOT_INVALID' } });
+    nothingRead();
+  });
+
+  it('exports the displayed snapshot as CSV without reading the report again, with source identity and a separate audit event', async () => {
+    const a = app();
+    const run = await request(a).get('/api/audit/reports/access-review?to=2026-09-30');
+    const source = run.body.export;
+    vi.clearAllMocks();
+    clientQuery.mockResolvedValue({ rows: [] });
+    const converted = await request(a).post('/api/audit/reports/convert').send({ export: source, format: 'csv' });
+    expect(converted.status).toBe(200);
+    const csv = converted.body.export;
+    expect(csv.data).toContain('Ada Owner');
+    expect(csv.manifest).toMatchObject({
+      format: 'csv', generatedAt: source.manifest.generatedAt, generatedBy: 'Quality Lead',
+      sourceExport: { exportId: source.manifest.exportId, dataHash: source.manifest.dataHash, format: 'json' },
+    });
+    expect(csv.manifest.exportId).not.toBe(source.manifest.exportId);
+    expect(verifySignedAuditExport(csv.data, csv.manifest, csv.signature).valid).toBe(true);
+    expect(clientQuery.mock.calls.map(([sql]) => sql)).toEqual(['BEGIN', 'COMMIT']);
+    expect(walk).not.toHaveBeenCalled();
+    expect(setTenantContextTx).not.toHaveBeenCalled();
+    expect(record).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls[0][1]).toMatchObject({ action: 'compliance.report_export', details: { sourceExportId: source.manifest.exportId } });
+  });
+
+  it.each(['tampered-data', 'tampered-manifest', 'other-tenant', 'member', 'csv-source'])('refuses %s before reading or writing', async (scenario) => {
+    const a = app();
+    const run = await request(a).get(`/api/audit/reports/access-review${scenario === 'csv-source' ? '?format=csv' : ''}`);
+    const source = run.body.export;
+    if (scenario === 'tampered-data') source.data = source.data.replace('Ada Owner', 'New Owner');
+    if (scenario === 'tampered-manifest') source.manifest.sections[0].rowCount = 0;
+    if (scenario === 'other-tenant') user = { ...user, organizationId: 99 };
+    if (scenario === 'member') user = { ...user, role: 'member' };
+    vi.clearAllMocks();
+    const converted = await request(a).post('/api/audit/reports/convert').send({ export: source, format: 'csv' });
+    expect(converted.status).toBe(scenario === 'other-tenant' || scenario === 'member' ? 403 : 400);
+    expect(converted.body.export).toBeUndefined();
+    nothingRead();
+  });
+
+  it('refuses release when the conversion cannot be recorded', async () => {
+    const a = app();
+    const run = await request(a).get('/api/audit/reports/access-review');
+    record.mockRejectedValueOnce(new Error('audit write unavailable'));
+    const converted = await request(a).post('/api/audit/reports/convert').send({ export: run.body.export, format: 'csv' });
+    expect(converted.status).toBe(503);
+    expect(converted.body).toMatchObject({ error: { code: 'REPORT_NOT_RECORDED' } });
+    expect(JSON.stringify(converted.body)).not.toContain('Ada Owner');
+  });
+});
 
 describe('GET /api/audit/reports — the catalog', () => {
   it('a member sees the catalog and that they cannot run it', async () => {

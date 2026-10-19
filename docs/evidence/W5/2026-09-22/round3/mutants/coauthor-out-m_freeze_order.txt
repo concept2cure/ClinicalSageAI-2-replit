@@ -87,4 +87,3 @@ AssertionError: expected [ '1.2', '1.1' ] to deeply equal [ '1.1', '1.2' ]
       Tests  1 failed | 4 passed (5)
    Start at  09:11:46
    Duration  9.87s (transform 2.66s, setup 120ms, import 2.84s, tests 6.45s, environment 0ms)
-

@@ -52,7 +52,7 @@
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > an opted-in tenant gets web search and web fetch on first-party Anthropic 3ms
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a zero-retention tenant is not offered hosted tools, even with the opt-in 1ms
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a tenant that turned public-source egress off is not offered them 1ms
- ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a policy that could not be read withholds them, even where the request itself may 
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a policy that could not be read withholds them, even where the request itself may
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > code execution never runs a tenant payload on Anthropic’s sandbox 1ms
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is refused on Bedrock before any call, not sent with the Files-API header
  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is sent to first-party Anthropic 1ms

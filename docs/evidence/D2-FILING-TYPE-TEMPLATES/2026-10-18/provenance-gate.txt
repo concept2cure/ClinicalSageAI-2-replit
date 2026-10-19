@@ -1,0 +1,31 @@
+# ci:check-rule-pack-provenance, 2026-10-18
+
+## Red: the gate as pushed in 76e81236, on the tree that commit produced
+```
+check-rule-pack-provenance: 36 rule pack(s) seeded across migrations; 17 carry an explicit provenance attestation.
+treat them as unverified. But an undeclared pack tells a filer nothing about
+❌ 19 undeclared pack(s), above the ceiling of 5.
+```
+
+## Green: the fixed gate on the same tree
+```
+check-rule-pack-provenance: 36 rule pack(s) seeded across migrations; 35 carry an explicit provenance attestation.
+   cer:ema        eu-mdr-2017-745
+treat them as unverified. But an undeclared pack tells a filer nothing about
+✅ undeclared packs: 1/1 (ceiling is downward-only).
+✅ no pack is marked reviewed without a named reviewer, a date and a tree digest.
+```
+
+## Red: the fixed gate on a pack seeded with no attestation (probe migration rems:ema probe-v1)
+```
+check-rule-pack-provenance: 37 rule pack(s) seeded across migrations; 35 carry an explicit provenance attestation.
+   rems:ema       probe-v1
+❌ 2 undeclared pack(s), above the ceiling of 1.
+```
+
+## Red: the fixed gate on an unattested new version of an attested pair (probe pas:fda v9.9 superseding v1.0)
+```
+check-rule-pack-provenance: 36 rule pack(s) seeded across migrations; 34 carry an explicit provenance attestation.
+   pas:fda        fda-pas-lifecycle-v9.9
+❌ 2 undeclared pack(s), above the ceiling of 1.
+```
