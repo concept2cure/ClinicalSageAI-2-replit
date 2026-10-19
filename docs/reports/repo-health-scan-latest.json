@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T23:25:31.158Z",
+  "generatedAt": "2026-10-19T02:24:20.275Z",
   "git": {
-    "sha": "05534aace9a667b34793f51c5ac4fff397b3a335",
+    "sha": "cc7d8c4e5d1d1d9beb1f22599f912deb9e214640",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2875,7 +2875,7 @@
       },
       {
         "file": "server/routes/mdx-qms.ts",
-        "lines": 1560
+        "lines": 1562
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
