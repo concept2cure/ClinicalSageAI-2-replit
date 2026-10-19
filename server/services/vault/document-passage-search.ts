@@ -42,6 +42,7 @@ import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.j
 import { supersededSql } from './vault-version-family.js';
 import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
 import { assertRetrievalScope, pinRetrievalReadScope, verifyRetrievalSources, withRetrievalReadScope, type RetrievalQueryable } from './retrieval-source-access.js';
+import type { PassageContext } from './passage-context-span.js';
 
 export class PassageSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -61,8 +62,18 @@ export interface PassageHit {
   pageNumber: number | null;
   sectionTitle: string | null;
   chunkIndex: number | null;
+  /** The hit chunk's own text. */
   text: string;
   similarity: number;
+  /** The document version the passage was read from. */
+  contentHash: string | null;
+  /** The hit chunk's [start, end) in the document's extracted text, when verified. */
+  hitSpan: { start: number; end: number } | null;
+  /**
+   * The surrounding text as one exact span of the source, with an identity
+   * that can be re-verified, or why there is none (passage-context-span.ts).
+   */
+  context: PassageContext;
 }
 
 /**
@@ -375,6 +386,9 @@ export async function searchDocumentPassages(
     chunkIndex: typeof d.chunkIndex === 'number' ? d.chunkIndex : null,
     text: d.content ?? '',
     similarity: Number(d.finalScore ?? d.initialScore ?? 0),
+    contentHash: d.contentHash ?? null,
+    hitSpan: d.hitSpan ?? null,
+    context: d.passageContext ?? { status: 'unavailable', reason: 'not_expanded' },
   }));
 
   return { hits, coverage, ranking: rankingOf(documents) };

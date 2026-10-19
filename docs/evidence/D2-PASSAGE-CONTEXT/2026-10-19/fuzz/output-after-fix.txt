@@ -1,0 +1,29 @@
+{ docs: 1200, hits: 195960, fails: 0 }
+{}
+
+db:{"maxChars":11500,"overlapChars":400}:available: 96
+db:{"maxChars":11500,"overlapChars":400}:available-clipped: 2575
+db:{"maxChars":11500,"overlapChars":400}:basis_mismatch: 1114
+db:{"maxChars":11500,"overlapChars":400}:encoding: 25
+db:{"maxChars":13000,"overlapChars":1000}:available: 96
+db:{"maxChars":13000,"overlapChars":1000}:available-clipped: 1450
+db:{"maxChars":13000,"overlapChars":1000}:basis_mismatch: 754
+db:{"maxChars":13000,"overlapChars":1000}:budget: 764
+db:{"maxChars":13000,"overlapChars":1000}:encoding: 120
+db:{"maxChars":500,"overlapChars":100}:available: 62718
+db:{"maxChars":500,"overlapChars":100}:basis_mismatch: 17724
+db:{}:available: 24
+db:{}:available-clipped: 4176
+db:{}:basis_mismatch: 6344
+periodic-hit-occ>1: 22566
+raw:{"maxChars":11500,"overlapChars":400}:available: 96
+raw:{"maxChars":11500,"overlapChars":400}:available-clipped: 3504
+raw:{"maxChars":11500,"overlapChars":400}:encoding: 210
+raw:{"maxChars":13000,"overlapChars":1000}:available: 96
+raw:{"maxChars":13000,"overlapChars":1000}:available-clipped: 1742
+raw:{"maxChars":13000,"overlapChars":1000}:budget: 1202
+raw:{"maxChars":13000,"overlapChars":1000}:encoding: 144
+raw:{"maxChars":500,"overlapChars":100}:available: 64672
+raw:{"maxChars":500,"overlapChars":100}:encoding: 15770
+raw:{}:available: 24
+raw:{}:available-clipped: 10520
