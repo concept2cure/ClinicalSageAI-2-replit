@@ -1,0 +1,20 @@
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no CMC route acts on a programme it has not checked > every route taking a client-supplied programme establishes it 8ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no CMC route acts on a programme it has not checked > the refusal is a 404 that assesses nothing, not a 403 7ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no register create files under a programme it has not checked > createContainerClosure verifies the programme before it writes 1ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no register create files under a programme it has not checked > createMaterialSpec verifies the programme before it writes 1ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no register create files under a programme it has not checked > createFormulationRecord verifies the programme before it writes 1ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no register create files under a programme it has not checked > createManufacturingProcess verifies the programme before it writes 1ms
+ × server/api/cmc/__tests__/programme-membership.contract.test.ts > no register create files under a programme it has not checked > createCharacterizationStudy verifies the programme before it writes 1ms
+AssertionError: a route that takes a programme from the client and never checks it either files a record under a dossier this organisation does not hold, or answers a verdict over a register it never read: expected [ 'POST /comparability-studies', …(3) ] to deeply equal []
++ Received
++ [
++   "POST /comparability-studies",
++   "GET /quality/qbd/:projectId",
++   "POST /ich-compliance",
++   "POST /control-strategy",
++ ]
+AssertionError: expected 'import express from \'express\';\nimp…' to contain 'async function answeredUnknownProgram'
++ Received
++ import express from 'express';
++ import { z } from 'zod';
++ import { db } from '../../db';
