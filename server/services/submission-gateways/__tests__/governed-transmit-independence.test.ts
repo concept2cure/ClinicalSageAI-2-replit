@@ -68,6 +68,18 @@ describe('assertTransmitterIndependent', () => {
     expect(h.calls, 'an authorship signature was looked up as if it could pass').toHaveLength(0);
   });
 
+  // 2026-10-19 (D5): only authorship was refused, so a package could be
+  // transmitted to an agency on a signature that said "I reviewed".
+  it('refuses "review" and a missing meaning, before any lookup — a transmission is a release', async () => {
+    h.creator = CREATOR;
+    for (const meaning of ['review', '', 'I approve']) {
+      const err = await refusalOf(assertTransmitterIndependent(PKG, ORG, COLLEAGUE, meaning));
+      expect(err?.code, `transmitted on a signature declaring '${meaning}'`).toBe('MEANING_NOT_A_RELEASE');
+      expect(err.httpStatus).toBe(422);
+    }
+    expect(h.calls).toHaveLength(0);
+  });
+
   it('refuses a package with no recorded creator — never guessed, never waved through', async () => {
     // AnA's create-package path did not record the creator; such a package
     // cannot be shown independent of anyone, so nobody can transmit it.
