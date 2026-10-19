@@ -25,6 +25,7 @@ import {
   cmcReferenceStandards,
   cmcImpurityProfiles,
   cmcCharacterizationStudies,
+  stabilityStudies,
 } from '../../../../shared/schema';
 import { manufacturingProcesses } from '../../../../shared/cmc-schema';
 import { cmcComparabilityAssessments } from '../../../../shared/schema/regulatory-atoms';
@@ -39,6 +40,7 @@ const TABLES: Record<string, Table> = {
   analyticalMethods,
   processValidation,
   comparabilityAssessments: cmcComparabilityAssessments as unknown as Table,
+  stabilityStudies,
 };
 
 /** The table's columns by their database name, which is what the SQL uses. */
@@ -91,8 +93,11 @@ describe('SIGNED_REGISTERS describes the tables it claims to', () => {
       });
 
       it('signs with a word the ceremony can turn into an act', () => {
-        expect(['qualify', 'validate', 'approve']).toContain(register.signPath);
-        expect(register.signedValue).toMatch(/^(qualified|validated|approved)$/);
+        expect(['qualify', 'validate', 'approve', 'close-out']).toContain(register.signPath);
+        /* Each register's own casing: the stability vocabulary is upper-case,
+           and every comparison against the word lowercases both sides
+           (signed-record.ts `isSigned`, register-writes.ts `vocabFor`). */
+        expect(register.signedValue).toMatch(/^(qualified|validated|approved|COMPLETED)$/);
         /* The verb is what a refusal says is governed, so it must read as a
            noun phrase, not a bare status word. */
         expect(register.verb.length).toBeGreaterThan(5);

@@ -83,8 +83,8 @@ describe('an incomplete scan is not rendered as an absence of contradictions', (
       overlayActiveCount: 0,
       scanIncomplete: true,
       crossArtifactCoverage: {
-        sectionsRead: 1, sectionsSkippedShort: 0, issuesFound: 0,
-        findingsRecorded: 0, truncated: false, comparedNothing: true,
+        read: 1, skipped: 0, found: 0,
+        recorded: 0, recordTruncated: false, comparedNothing: true,
       },
     });
 
@@ -102,8 +102,8 @@ describe('an incomplete scan is not rendered as an absence of contradictions', (
       overlayActiveCount: 0,
       scanIncomplete: true,
       crossArtifactCoverage: {
-        sectionsRead: 12, sectionsSkippedShort: 0, issuesFound: 25,
-        findingsRecorded: 10, truncated: true, comparedNothing: false,
+        read: 12, skipped: 0, found: 25,
+        recorded: 10, recordTruncated: true, comparedNothing: false,
       },
     });
 

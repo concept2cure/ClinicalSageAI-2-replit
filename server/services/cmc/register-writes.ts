@@ -251,7 +251,11 @@ export function ungovernedQualificationRefusal(
   storedStatus?: unknown,
 ): string | null {
   const vocab = vocabFor(registerPath);
-  const signed = vocab.signedValue;
+  /* Lower-cased, because a register keeps its own casing for its own
+     vocabulary: the stability register's words are upper-case (COMPLETED) and
+     every other register's are lower-case, and a comparison that respected
+     either one would silently stop guarding the other. */
+  const signed = vocab.signedValue.toLowerCase();
   const incoming = String(status ?? '').trim().toLowerCase();
   const stored = String(storedStatus ?? '').trim().toLowerCase();
   if (incoming === signed && stored !== signed) {

@@ -1,0 +1,125 @@
+record as of 2026-10-04 — 329 sources, 390 requirements, 27 pathways
+
+— the names a client types —
+  Japan                        PMDA, MHLW
+  China                        NMPA
+  UK                           MHRA
+  Australia                    TGA
+  Canada                       Health Canada
+  Brazil                       ANVISA
+  Singapore                    HSA
+  Korea                        MFDS
+  India                        CDSCO
+  EU                           EC, EMA
+  Atlantis Medicines Agency    (not an authority in the record — refused by name)
+
+— every authority × every topic —
+  authority      topic              reqs docs  first requirement
+  FDA            stability            27   17  fda-req-049 Design registration stability studies per ICH Q1A(R2). Test 
+  FDA            specification        19    8  fda-req-038 Choose specification tests and justify acceptance criteria p
+  FDA            process validation   25   16  fda-req-045 Validate commercial processes on a lifecycle basis: process 
+  FDA            impurities           26   17  fda-req-032 Assess the risk of nitrosamine impurities, including NDSRIs,
+  FDA            GMP                   3    6  fda-req-018 Most Phase 1 investigational drugs, including biological dru
+  FDA            batch release        14    6  fda-req-026 Under CBER's May 2026 CMC flexibilities guidance, cell and g
+  FDA            container closure     9    1  fda-req-051 Treat ICH Q3E (extractables and leachables; FDA draft Decemb
+  EMA            stability            21   11  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  EMA            specification        13    4  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  EMA            process validation   19   10  eu-req-032 For standard manufacturing processes, an EU MAA may include 
+  EMA            impurities           23   10  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  EMA            GMP                  14   15  eu-req-006 If the IMP is not authorised in the EU, has no marketing aut
+  EMA            batch release        19    8  eu-req-040 A QP of an EU/EEA MIA holder must certify each commercial ba
+  EMA            container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  MHRA           stability            21   11  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  MHRA           specification        15    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  MHRA           process validation   16    5  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  MHRA           impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  MHRA           GMP                   5    4  uk-ct-10 IMP labels must carry the particulars required by the UK cli
+  MHRA           batch release        15    4  uk-gmp-02 A Qualified Person named on the MIA(IMP) must certify each I
+  MHRA           container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  PMDA           stability            21   12  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  PMDA           specification        17    5  jp-ma-07 The 規格及び試験方法 field must state the specifications and analyti
+  PMDA           process validation   16    8  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  PMDA           impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  PMDA           GMP                   8    5  jp-ct-08 The sponsor must supply sites only with IMP manufactured at 
+  PMDA           batch release        10    3  ich-req-q13-cm For continuous manufacturing, describe the control strategy,
+  PMDA           container closure     9    1  jp-ma-08 A manufacturer of a drug substance, intermediate, excipient 
+  NMPA           stability            25   15  cn-stability-china-conditions Design stability studies to ChP general chapter 9001 (stabil
+  NMPA           specification        16    8  cn-ectd-scope NMPA accepts eCTD submissions built to its eCTD technical sp
+  NMPA           process validation   20   13  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  NMPA           impurities           23    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  NMPA           GMP                   6    7  cn-gcp-ip-obligations Under the 2020 GCP, the sponsor supplies investigational pro
+  NMPA           batch release        16    8  cn-vaccine-lot-release Every vaccine lot must pass lot release (批签发) before sale or
+  NMPA           container closure     8    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  Health Canada  stability            22   14  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  Health Canada  specification        11    5  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  Health Canada  process validation   21   10  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  Health Canada  impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  Health Canada  GMP                   3    5  CA-CT-16 The sponsor must ensure the trial drug is manufactured, hand
+  Health Canada  batch release        19    7  CA-CT-08 Full long-term stability data need not be available at filin
+  Health Canada  container closure     8    0  CA-CT-07 In the QOS-CE (CTA), the drug substance summary should cover
+  TGA            stability            22   14  AU-MA-05 Run stability studies under defined, controlled conditions; 
+  TGA            specification        12    4  AU-MA-02 Submit prescription medicine applications, including master 
+  TGA            process validation   22    9  AU-CT-02 Under the CTN scheme, the TGA does not evaluate any data: qu
+  TGA            impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  TGA            GMP                   6    6  AU-CT-08 Outside the first-in-human exemption, Australian manufacture
+  TGA            batch release        12    4  AU-CT-04b Submit the CTA data package as an electronic dossier of sear
+  TGA            container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  ANVISA         stability            21   11  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  ANVISA         specification        10    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  ANVISA         process validation   15    5  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  ANVISA         impurities           21    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  ANVISA         GMP                   3    4  br-gmp-02 Investigational medicines made for Brazilian trials must mee
+  ANVISA         batch release        11    3  br-ct-09 Reported in secondary sources only: Anvisa reviews primary D
+  ANVISA         container closure     8    0  br-ct-04 Drug-product part of the DPI/IMPD, as summarised from RDC 94
+  Swissmedic     stability            19   11  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  Swissmedic     specification        11    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  Swissmedic     process validation   13    5  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  Swissmedic     impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  Swissmedic     GMP                   6    6  ch-gmp-03 GMP inspections and manufacturer batch certification are mut
+  Swissmedic     batch release        12    4  ch-gmp-03 GMP inspections and manufacturer batch certification are mut
+  Swissmedic     container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  HSA            stability            20   12  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  HSA            specification        10    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  HSA            process validation   14    6  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  HSA            impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  HSA            GMP                   3    4  sg-ct-02 Submit a GMP certificate for the finished-product manufactur
+  HSA            batch release        11    4  sg-ct-04 Submit certificates of analysis for the study batches of inv
+  HSA            container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  MFDS           stability            20   11  ich-req-q1a-registration-batches For registration, submit long-term stability data covering a
+  MFDS           specification        11    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  MFDS           process validation   15    6  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  MFDS           impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  MFDS           GMP                   5    5  kr-ct-03 The IND must include documents showing the investigational p
+  MFDS           batch release        11    3  kr-ct-03 The IND must include documents showing the investigational p
+  MFDS           container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  CDSCO          stability            20   12  in-ct-04 Stability data, both accelerated and real-time, are required
+  CDSCO          specification        11    3  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  CDSCO          process validation   14    6  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  CDSCO          impurities           21    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  CDSCO          GMP                   1    3  ich-req-q7-scope Q7 API GMP applies from the introduction of the API starting
+  CDSCO          batch release        10    3  ich-req-q13-cm For continuous manufacturing, describe the control strategy,
+  CDSCO          container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+  WHO            stability            20   12  who-stab-01 Stability data for APIs and FPPs should follow TRS 1010 Anne
+  WHO            specification        11    4  ich-req-q6a-specifications Specifications include the universal tests (description, ide
+  WHO            process validation   13    5  ich-req-q2r2-validation Validate analytical procedures used for release and stabilit
+  WHO            impurities           20    9  ich-req-m7-hazard-assessment Assess actual and potential impurities and degradants for mu
+  WHO            GMP                   3    4  who-gmp-01 Under WHO's standard, investigational products must be manuf
+  WHO            batch release        10    3  ich-req-q13-cm For continuous manufacturing, describe the control strategy,
+  WHO            container closure     7    0  ich-req-m4q-3-2-p Module 3 drug product sections are: 3.2.P.1 Description and 
+
+91 questions; 0 with no requirement at all
+
+— how each authority receives the quality dossier —
+  FDA             IND - Investigational New Drug Application (CMC section per 21 CFR 312.23(a)(7)); covers drugs a
+  EMA             CTA under EU CTR (Regulation (EU) No 536/2014) via CTIS - IMPD quality part (full IMPD-Q or simp
+  MHRA            UK Clinical Trial Authorisation (CTA) via combined MHRA/REC review (IRAS) | UK national Marketin
+  PMDA            Clinical Trial Notification (治験計画届, CTN) | Marketing approval application (製造販売承認申請, J-NDA) and 
+  NMPA            Drug Clinical Trial Application (药物临床试验申请; called 'IND' in CDE usage) | Drug Marketing Authoriza
+  Health Canada   CTA - Clinical Trial Application (with CTA-A amendments and CTA-N notifications) | NDS / ANDS (N
+  TGA             CTN - Clinical Trial Notification scheme | CTA - Clinical Trial Approval scheme (formerly CTX) |
+  ANVISA          DDCM (Dossiê de Desenvolvimento Clínico de Medicamento) + DEEC (Dossiê Específico de Ensaio Clín
+  Swissmedic      Swissmedic clinical trial authorisation (Category B/C), with cantonal ethics committee approval 
+  HSA             Clinical Trial Authorisation (CTA) / Clinical Trial Notification (CTN) / Clinical Trial Certific
+  MFDS            Clinical Trial Plan Approval (임상시험계획 승인, Korean IND) | Product approval (품목허가) — new drug market
+  CDSCO           Clinical trial permission – Form CT-04 (application) / Form CT-06 (permission); manufacture for 
+  WHO             WHO Prequalification of medicines – product dossier (FPP)

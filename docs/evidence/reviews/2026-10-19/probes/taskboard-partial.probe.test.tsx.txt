@@ -1,0 +1,31 @@
+// @vitest-environment jsdom
+// THROWAWAY PROBE (honest-state review 2026-10-19). Lives in the scratchpad, not the repo.
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, waitFor } from '@testing-library/react';
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: 'u-1', name: 'Tester', email: 't@example.com' } }) }));
+import { TaskBoard } from '@/concept2cure/v2/surfaces/TaskBoard';
+const text = () => document.body.textContent ?? '';
+beforeEach(() => {
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (_m: string, rawPath: unknown) => {
+    const path = String(rawPath ?? '');
+    const body = path === '/api/task-management/board'
+      ? { success: true, data: [], total: 0, meta: { partial: true, unreadSources: ['unified_tasks'] } }
+      : { data: [] };
+    return { ok: true, status: 200, json: async () => body } as Response;
+  });
+});
+afterEach(() => cleanup());
+describe('PROBE: TaskBoard when the board answers zero cards but one store was unreadable', () => {
+  it('partial=true, data=[]', async () => {
+    render(<TaskBoard {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof TaskBoard>)} />);
+    await waitFor(() => expect(text()).toMatch(/No tasks on the board yet|Not every task store/));
+    await new Promise((r) => setTimeout(r, 150));
+    const r = { saysNone: /No tasks on the board yet/.test(text()), mentionsUnreadStore: /Not every task store could be read|could not be read/i.test(text()) };
+    console.log('PROBE-RESULT-TASKBOARD ' + JSON.stringify(r));
+    expect(r.mentionsUnreadStore, 'a partial board read must not render as a plain empty board').toBe(true);
+  });
+});

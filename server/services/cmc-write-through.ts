@@ -439,6 +439,17 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
       asArr(record.batchNumber ?? record.batch_number),
     packagingConfiguration: record.packagingConfiguration || record.packaging_configuration || null,
     shelfLifeClaim,
+    /* Whether a signed close-out ACCEPTED that claim, and when
+       (URS-CMC-028; migrations/20261019_stability_shelf_life_signature.sql).
+       §3.2.S.7.1 / §3.2.P.8.1 print the shelf life as the proposed storage
+       period, and until this travelled with it the composed section could not
+       tell a claim the organisation signed for from one typed onto a study
+       that is still running. The signer's id is deliberately NOT carried: the
+       section states the provenance of the claim, not who made it — that is
+       the audit trail's and the §11.50 row's to answer, both of which name a
+       person for a reader who asks. */
+    shelfLifeSignedAt: record.shelfLifeSignedAt ?? record.shelf_life_signed_at ?? null,
+    shelfLifeAccepted: Boolean(record.shelfLifeSignedBy ?? record.shelf_life_signed_by),
   };
 }
 

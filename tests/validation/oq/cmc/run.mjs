@@ -29,8 +29,9 @@ import { APPROVAL_STEPS } from './steps-approval.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
 import { SURFACE_STEPS } from './steps-surface.mjs';
 import { REGISTER_STEPS } from './steps-registers.mjs';
+import { ATTRIBUTION_STEPS } from './steps-attribution.mjs';
 
-console.info(`OQ-008 step modules: ${[ACCESS_STEPS, COMPILE_STEPS, APPROVAL_STEPS, FILING_STEPS, SURFACE_STEPS, REGISTER_STEPS].join(', ')}`);
+console.info(`OQ-008 step modules: ${[ACCESS_STEPS, COMPILE_STEPS, APPROVAL_STEPS, FILING_STEPS, SURFACE_STEPS, REGISTER_STEPS, ATTRIBUTION_STEPS].join(', ')}`);
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);
