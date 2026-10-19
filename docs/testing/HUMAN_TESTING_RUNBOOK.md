@@ -36,6 +36,25 @@ reports "no response" even though the server is fine — use TCP.
 | `ANTHROPIC_API_KEY` | **empty** | **AI features are unavailable.** The interview engine is deterministic — the questions, positions, cautions and the Annex VIII verdicts all work without it — but anything that asks the model to narrate will not. Set it if you want AnA's conversational side |
 | `REDIS_URL` | unset | scheduled jobs disabled; the digest heartbeat fallback runs instead |
 
+### Why CI did not catch the two deploy defects (corrected 2026-10-19)
+
+I first suggested the repo needed a CI lane that applies the whole set to a
+blank database. **It already has one**, and it is required: `ci.yml`'s
+`blank-db-provisioning`, `production-boot-smoke` and `production-image-boot`
+are all in the gate job's `needs:`. That suggestion was redundant.
+
+The actual gap is narrower and worth knowing. In every lane `deploy-migrate`
+runs as `postgresql://postgres@localhost` — **the superuser**. The
+"non-superuser role" in `production-boot-smoke`'s name is the *runtime* role
+(`app_service`), which that job correctly asserts is NOSUPERUSER and
+NOBYPASSRLS. So CI proves the set applies **as a superuser applier**, while
+`deploy-migrate` also supports a plain non-superuser owner
+(`DATABASE_OWNER_URL` split-role mode) — and applier-privilege defects are
+invisible in that configuration. All three problems hit on this container were
+of exactly that kind: `CREATEROLE`, `GRANT SET ON PARAMETER`, and the
+`shared_preload_libraries` read. An RDS master is in `rds_superuser` and has
+those privileges, so RDS is unaffected; a plain owner is not.
+
 ### A fresh container needs three things this one did not have
 
 Found by applying the migration set here. Without them the deploy stops:
@@ -115,6 +134,15 @@ name comes back as the same question with *"Product Name is required"*, and
    whole signature, naming the section and how to recover. That is correct — a
    signature must not attest to text the submission does not contain — and the
    recovery it names (re-save that section, sign again) is now pinned by a test.
+4. **"No MDR class on the program record" on the PMS/PMCF tab.** That tab now
+   reports against the EU class the programme record holds — `eu_mdr_class` for
+   a device, `eu_ivdr_class` for a diagnostic — and against nothing else. Until
+   you answer the MDR or IVDR classification question in project setup, the
+   record holds no EU class and the tab says so, with every class-dependent
+   obligation undetermined. It is the honest answer, not a failure: until
+   2026-10-19 the tab sent the US 21 CFR 860 class instead, and a European
+   programme was told `"class II" is not an MDR device class`. Answer the
+   classification question, commit, and the obligations resolve.
 
 **Genuinely open, and in the task list:**
 
@@ -122,16 +150,13 @@ name comes back as the same question with *"Product Name is required"*, and
    silent: the biomarker strategy, orphan natural-history data, ethnic bridging
    (ICH E5/E17), human-factors validation (IEC 62366-1), the planned interim
    analysis, and the long-term stability months the ICH Q1E check needs.
-2. **The two EU classification columns are written and not yet read.** The
-   post-market and CER surfaces still take a class from their own stores, so a
-   European class you enter is recorded but does not yet drive those surfaces.
-3. **The predicate of record needs a trade name** the question does not ask, so
+2. **The predicate of record needs a trade name** the question does not ask, so
    a predicate identifier alone is reported rather than filed.
-4. **No per-programme mutation authority on the profile write** — any editor can
+3. **No per-programme mutation authority on the profile write** — any editor can
    configure any programme in the tenant; every other programme mutation admits
    the programme lead or a manager. Tightening it changes who can use the device
    panel today, so it is a founder's call.
-5. **The commit confirmation does not show the patch it will write** — you
+4. **The commit confirmation does not show the patch it will write** — you
    confirm a session id, not the columns.
 
 ## What I could not verify

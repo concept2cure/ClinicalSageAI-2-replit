@@ -21,9 +21,13 @@ import {
   type GsprProgramMapping,
   type InsertGsprProgramMapping,
 } from '../../../shared/schema/gspr-postmarket';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
 import { deviceFlagsFromMetadata } from '../pathway-engines/estar/program-device-flags';
+import {
+  euDeviceClassFrom,
+  loadProgrammeEuDeviceRow,
+  type ProgrammeEuDeviceRow,
+} from './programme-eu-device-record';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile + filter
@@ -156,7 +160,7 @@ function requirementScope(req: GsprRequirement, profile: GsprProgramProfile): Sc
  * Patient contact is asked nowhere, so it is never stated.
  */
 function gsprProfileFromProgram(
-  program: { productType: string | null; euMdrClass: string | null; euIvdrClass: string | null; metadata: unknown },
+  program: ProgrammeEuDeviceRow,
   regulation: 'MDR' | 'IVDR'
 ): GsprProgramProfile {
   const flags = deviceFlagsFromMetadata(program.metadata);
@@ -164,7 +168,7 @@ function gsprProfileFromProgram(
   return {
     regulation,
     productType,
-    deviceClass: (regulation === 'IVDR' ? program.euIvdrClass : program.euMdrClass) ?? null,
+    deviceClass: euDeviceClassFrom(program, regulation),
     isIvd: isIvdFamily(productType),
     isSoftware: productType === 'samd' ? true : flags?.softwareAiMl,
     // One intake question covers software and AI/ML: no software means no
@@ -182,16 +186,7 @@ export async function loadGsprProgramProfile(
   programId: string,
   regulation: 'MDR' | 'IVDR'
 ): Promise<GsprProgramProfile | null> {
-  const [program] = await db
-    .select({
-      productType: regulatoryPrograms.productType,
-      euMdrClass: regulatoryPrograms.euMdrClass,
-      euIvdrClass: regulatoryPrograms.euIvdrClass,
-      metadata: regulatoryPrograms.metadata,
-    })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
-    .limit(1);
+  const program = await loadProgrammeEuDeviceRow(organizationId, programId);
   return program ? gsprProfileFromProgram(program, regulation) : null;
 }
 
