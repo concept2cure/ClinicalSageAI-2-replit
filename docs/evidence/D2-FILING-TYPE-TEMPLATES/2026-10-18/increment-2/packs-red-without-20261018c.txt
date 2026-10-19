@@ -1,0 +1,8 @@
+ × tests/schema-contract/zz-red-tmp.contract.test.ts > every filing document class has its own governed outline > each live pack is the outline its class derives, node for node, with its provenance 4764ms
+   → pas:fda: expected 'fda-pas-lifecycle-v1.0' to be 'fda-pas-lifecycle-v1.1' // Object.is equality
+ × tests/schema-contract/zz-red-tmp.contract.test.ts > every filing document class has its own governed outline > every superseded prior version is superseded by exactly the version that replaced it 3496ms
+   → pas:fda fda-pas-lifecycle-v1.0: expected null to be 'fda-pas-lifecycle-v1.1' // Object.is equality
+ × tests/schema-contract/zz-red-tmp.contract.test.ts > every filing document class has its own governed outline > scaffolding a class writes its own outline; an application still gets its dossier 2904ms
+   → expected { Object (doc_type, agency, ...) } to match object { Object (doc_type, agency, ...) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 9 skipped (12)

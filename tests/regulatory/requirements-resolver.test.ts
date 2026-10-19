@@ -196,6 +196,10 @@ describe('resolveRequirements — the one dispatch', () => {
 // 2026-10-10: seven exact pharmacology leaves add 21 variants; only the
 // existing 2.6/m2.6 parent lists change. The other 661 fingerprints are preserved.
 // Delta: docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/requirements-snapshot-delta.json
+// 2026-10-18: the D2 review corrections to five lifecycle records (nda_pas,
+// cbe_0, ind_annual_report, ind_safety_report, nda_bla_annual_report) move
+// their ten fingerprints (each id and its upper-case form) and nothing else.
+// Delta: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/increment-2/requirements-snapshot-delta.json
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -341,13 +345,13 @@ cb74a88c8b3007da {"document":"pre_nda_meeting"}  cb74a88c8b3007da {"document":"P
 40c16c69383b3b0a {"document":"PRE_BLA_MEETING"}  db6ec28d12a9029a {"document":"ind_initial"}  db6ec28d12a9029a {"document":"IND_INITIAL"}
 9b6e41b27a68cacc {"document":"ind_protocol_amendment"}  9b6e41b27a68cacc {"document":"IND_PROTOCOL_AMENDMENT"}  d493f5903aa46c0c {"document":"ind_information_amendment"}
 d493f5903aa46c0c {"document":"IND_INFORMATION_AMENDMENT"}  fd97f5fd4c09b3a5 {"document":"ind_cmc_amendment"}  fd97f5fd4c09b3a5 {"document":"IND_CMC_AMENDMENT"}
-101d3437c313c5b5 {"document":"ind_response_to_clinical_hold"}  101d3437c313c5b5 {"document":"IND_RESPONSE_TO_CLINICAL_HOLD"}  56e1c4d14b99d796 {"document":"ind_safety_report"}
-56e1c4d14b99d796 {"document":"IND_SAFETY_REPORT"}  751b699919cf785d {"document":"ind_annual_report"}  751b699919cf785d {"document":"IND_ANNUAL_REPORT"}
-0dbb6e1f372a036b {"document":"dsur"}  0dbb6e1f372a036b {"document":"DSUR"}  487d27b0833ecaad {"document":"nda_bla_annual_report"}
-487d27b0833ecaad {"document":"NDA_BLA_ANNUAL_REPORT"}  3fe9f88c24392cbd {"document":"nda"}  3fe9f88c24392cbd {"document":"NDA"}
-1fd87f7eb1e661f5 {"document":"bla"}  1fd87f7eb1e661f5 {"document":"BLA"}  a2aaa72efc1fbbb4 {"document":"nda_pas"}
-a2aaa72efc1fbbb4 {"document":"NDA_PAS"}  96990427db91e661 {"document":"cbe_30"}  96990427db91e661 {"document":"CBE_30"}
-640aa5b89cfa4fe5 {"document":"cbe_0"}  640aa5b89cfa4fe5 {"document":"CBE_0"}  79e3541f0604db3e {"document":"iss"}
+101d3437c313c5b5 {"document":"ind_response_to_clinical_hold"}  101d3437c313c5b5 {"document":"IND_RESPONSE_TO_CLINICAL_HOLD"}  07172e9641ba6689 {"document":"ind_safety_report"}
+07172e9641ba6689 {"document":"IND_SAFETY_REPORT"}  f496ca901840406a {"document":"ind_annual_report"}  f496ca901840406a {"document":"IND_ANNUAL_REPORT"}
+0dbb6e1f372a036b {"document":"dsur"}  0dbb6e1f372a036b {"document":"DSUR"}  cabbb8c22a3647ff {"document":"nda_bla_annual_report"}
+cabbb8c22a3647ff {"document":"NDA_BLA_ANNUAL_REPORT"}  3fe9f88c24392cbd {"document":"nda"}  3fe9f88c24392cbd {"document":"NDA"}
+1fd87f7eb1e661f5 {"document":"bla"}  1fd87f7eb1e661f5 {"document":"BLA"}  1c7b829850f02cef {"document":"nda_pas"}
+1c7b829850f02cef {"document":"NDA_PAS"}  96990427db91e661 {"document":"cbe_30"}  96990427db91e661 {"document":"CBE_30"}
+e3db07f73d9464cf {"document":"cbe_0"}  e3db07f73d9464cf {"document":"CBE_0"}  79e3541f0604db3e {"document":"iss"}
 79e3541f0604db3e {"document":"ISS"}  d689c72b125305be {"document":"ise"}  d689c72b125305be {"document":"ISE"}
 176c058cf3810b76 {"document":"csr"}  7437010924e1da0a {"document":"csr","section":"12.2"}  a21d12ad27f75da4 {"document":"csr","section":"99.9"}
 176c058cf3810b76 {"document":"CSR"}  7437010924e1da0a {"document":"CSR","section":"12.2"}  a21d12ad27f75da4 {"document":"CSR","section":"99.9"}

@@ -44,6 +44,7 @@ function postApprovalAnnualOutline(): DocumentTemplateStructure {
       'Advisory post-approval annual-report outline. Confirm the application-specific NDA or BLA obligations and current regional instructions.',
       'Retain the original Form FDA 2252, approved labeling, distribution and manufacturing records, and postmarketing study records; this outline does not replace them.',
       'This annual report is distinct from an IND annual report and from expedited or periodic adverse-experience reporting.',
+      'Its parts follow the NDA annual report (21 CFR 314.81(b)(2)). Part 314 does not govern a licensed biologic: a BLA reports minor changes annually under 601.12(d), postmarketing study status under 601.70, pediatric information under 601.28 and distribution under 600.81, and this outline does not model those reports part by part.',
     ],
     sections: source.components.map(component => ({
       number: component.code, heading: component.title, purpose: component.authoringGuidance, required: component.required,
@@ -120,7 +121,8 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
       })),
     });
   }
-  const title = variants ? (entry?.displayName ?? registryId) : records[0].label;
+  // The registry's own name, so the PAS and the sBLA read apart in the template picker (review nit, 2026-10-18).
+  const title = entry?.displayName ?? (variants ? registryId : records[0].label);
   return withBasis({
     id: registryId, title, families: ['ectd'],
     basis: {
@@ -131,7 +133,7 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
     outlineLimitations: [
       'Advisory outline from the platform\'s lifecycle record. Confirm the application-specific obligations and current FDA instructions before filing.',
       ...(registryId === 'US_BLA_SUPP'
-        ? ['A BLA supplement is governed by 21 CFR 601.12; this outline is the NDA Prior Approval Supplement record (21 CFR 314.70(b)), whose parts the biologics prior-approval supplement shares.']
+        ? ['A BLA supplement is governed by 21 CFR 601.12 (601.12(b) for a manufacturing change, 601.12(f)(1) for a labeling change); this outline is the NDA Prior Approval Supplement record (21 CFR 314.70(b)), whose parts the biologics prior-approval supplement shares.']
         : []),
       ...(variants ? ['Which variant applies is the filer\'s classification of the change; its own parts are named with it and are not marked required.'] : []),
     ],
@@ -178,4 +180,44 @@ export function lifecycleRecordOutlineFor(registryId: string): DocumentTemplateS
   if (records) return lifecycleRecordOutline(registryId, records);
   if (MEETING_REGISTRY_IDS.has(registryId)) return meetingPackageOutline(registryId);
   return undefined;
+}
+
+/** One part of a lifecycle-record outline, with the brief its record gives it. */
+export interface LifecycleOutlinePart {
+  /** The record the part is read from: 'LIFECYCLE_DOCUMENT_TYPES:cbe_30', 'FDA_MEETING_PACKAGE_CORE'. */
+  record: string;
+  /** The record's short name ("CBE-30", "CBE-0"), so a part two records share is told apart by variant. */
+  variant: string;
+  code: string;
+  title: string;
+  guidance: string;
+  keyContentElements: readonly string[];
+}
+
+/**
+ * The record parts a filing's lifecycle-record outline is built from, for a
+ * reader that needs a part's full brief, not only its heading: AnA drafting
+ * answers a section of these outlines from the same record the outline is read
+ * from (review finding, 2026-10-18: it read the retired blueprint, so no
+ * section of the PAS, CBE, IND annual report or meeting outlines resolved).
+ * Empty for a filing with no lifecycle-record outline.
+ */
+export function lifecycleOutlineParts(registryId: string): LifecycleOutlinePart[] {
+  const fromRecord = (id: string): LifecycleOutlinePart[] => {
+    const record = LIFECYCLE_DOCUMENT_TYPES.find((r) => r.id === id);
+    if (!record) throw new Error(`The lifecycle record "${id}" for ${registryId} is unavailable.`);
+    return record.components.map((c) => ({
+      record: `LIFECYCLE_DOCUMENT_TYPES:${id}`, variant: recordShortName(record.label), code: c.code, title: c.title,
+      guidance: c.authoringGuidance, keyContentElements: c.keyContentElements,
+    }));
+  };
+  if (registryId === 'US_NDA_ANNUAL') return fromRecord('nda_bla_annual_report');
+  const records = LIFECYCLE_RECORD_OUTLINES[registryId];
+  if (records) return records.flatMap(fromRecord);
+  if (MEETING_REGISTRY_IDS.has(registryId)) {
+    return FDA_MEETING_PACKAGE_CORE.map((c) => ({
+      record: 'FDA_MEETING_PACKAGE_CORE', variant: 'FDA formal meeting', code: c.code, title: c.title, guidance: c.guidance, keyContentElements: [],
+    }));
+  }
+  return [];
 }

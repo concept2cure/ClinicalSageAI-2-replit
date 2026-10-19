@@ -44,9 +44,11 @@ import { getResolvedSectionBlueprint, getExactSectionBlueprint, getSectionBluepr
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
+import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
 import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type TemplateSection } from '../market-specs/document-template-library.js';
+import { lifecycleOutlineParts, lifecycleRecordOutlineFor } from '../market-specs/lifecycle-record-outlines.js';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
@@ -361,12 +363,44 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   const template = componentId ? getDocumentTemplate(componentId) : undefined;
   if (!template) return null;
   const target = normTitle(sectionType);
-  const section = template.sections.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+  // Front matter and subsections too: a PBRER's executive summary and 16.2, an
+  // IB's title page, are nodes of the governed pack a class project scaffolds
+  // (review critic, 2026-10-18: only top-level sections were read).
+  const flat: TemplateSection[] = [];
+  const walk = (list: TemplateSection[]) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk([...(template.frontMatter ?? []), ...template.sections]);
+  const section = flat.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
   if (entry.id === 'ICH_PROTOCOL') return protocolRequirements(section, sectionType);
-  if (!section) return { requirements: null, requirementsSource: 'none' };
+  // The CSR template shows E3's sixteen headings; its pack is E3 to full depth
+  // (119 nodes), so a section is answered from the E3 tree itself.
+  if (entry.id === 'ICH_CSR') return csrRequirements(sectionType);
+  if (!section) {
+    return {
+      requirements: `SECTION REQUIREMENTS: "${sectionType.trim()}" is not a section of the ${template.title} record. Confirm which section is meant; do not supply its requirements from memory.`,
+      requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:not-indexed`,
+    };
+  }
   return {
     requirements: `SECTION AUTHORING GUIDANCE (existing ${template.title} record):\n- Section: ${section.number} — ${section.heading}\n- ${section.purpose}\n- Recorded basis: ${template.regulatoryBasis}\n- Confirm applicability and the current agency/client template; platform required flags are not a completeness or approval verdict.`,
     requirementsSource: `outline:${template.outlineSource?.kind ?? 'canonical-record'}:${entry.id}:${section.number}`,
+  };
+}
+
+/** A CSR section by its E3 number (alone or with its title) or its E3 title: the E3 brief, or a named miss. */
+function csrRequirements(requested: string): DraftingRequirements {
+  const lead = /^(\d+(?:\.\d+)*)\b/.exec(requested.trim())?.[1];
+  const byTitle = ICH_E3_GUIDANCE.find((s) => normTitle(s.title) === normTitle(requested));
+  const number = lead ?? byTitle?.number;
+  const answer = number ? resolveRequirements({ document: 'csr', section: number }) : null;
+  if (!answer || answer.kind !== 'answer') {
+    return {
+      requirements: `SECTION REQUIREMENTS: "${requested.trim()}" is not an ICH E3 heading the platform holds; do not supply its requirements from memory.`,
+      requirementsSource: 'record:outline:csr-e3:not-indexed',
+    };
+  }
+  return {
+    requirements: `SECTION REQUIREMENTS (from the platform's ICH E3 record — draft to these; do not add requirements from memory):\n${answer.requirements}`,
+    requirementsSource: `record:outline:csr-e3:${number}:${answer.match}`,
   };
 }
 
@@ -530,6 +564,8 @@ export function resolveDraftingRequirements(
     norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target;
 
   if (entry.id === 'US_IND_SR') return indSafetyRequirements(sectionType, blueprint, matchRow);
+  const lifecycle = lifecycleOutlineRequirements(entry, sectionType);
+  if (lifecycle) return lifecycle;
 
   if (!isCtdFramework(entry, blueprint)) {
     const component = componentRequirements(entry, sectionType);
@@ -551,6 +587,78 @@ export function resolveDraftingRequirements(
   const scoped = scopedCtdRequirements(ctx, lead, matchRow);
   if (scoped) return scoped;
   return lead ? codeRequirements(ctx, lead) : titleRequirements(ctx, matchRow) ?? none;
+}
+
+/**
+ * A filing whose outline is a lifecycle record (lifecycle-record-outlines.ts:
+ * the PAS and sBLA, the CBE, the NDA and IND annual reports, the Type A/B/C
+ * meeting packages) is answered from that record, so a drafted section and the
+ * outline it sits in are one source. Before this, these filings read the
+ * retired project blueprint, and no section of the served outline resolved:
+ * the supplement's own "Summary and Description of the Change" was drafted
+ * with no requirements and no "do not supply from memory" line (review
+ * finding, 2026-10-18). A CTD section the change updates is answered by the
+ * CTD record; a section the outline does not hold is named, never left to
+ * memory. Null for any other filing.
+ */
+function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requested: string): DraftingRequirements | null {
+  const outline = lifecycleRecordOutlineFor(entry.id);
+  if (!outline) return null;
+  const target = normTitle(requested);
+  const flat: TemplateSection[] = [];
+  const walk = (list: TemplateSection[]) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
+  walk([...(outline.frontMatter ?? []), ...outline.sections]);
+  const matches = (s: TemplateSection) => [s.number, s.heading, `${s.number} ${s.heading}`].some((v) => normTitle(v) === target);
+  const section = flat.find(matches);
+  const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
+  if (!section) {
+    // A CTD section below one the outline holds (3.2.P.5.1 under a
+    // supplement's 3.2.P, 5.3.5.1 under its 5.3) is the content the change
+    // actually updates: the CTD record answers it (review critic, 2026-10-18).
+    const lead = leadingSectionCode(requested);
+    const code = lead ? normalizeCtdCode(lead.code) : null;
+    const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
+    if (code && ctd.some((c) => code.startsWith(`${c}.`))) return recordRequirements(entry, code, true);
+    return {
+      requirements:
+        `SECTION REQUIREMENTS: "${requested.trim()}" is not a section of the ${outline.title} outline (${record}). ` +
+        'Confirm which section is meant; do not supply its requirements from memory.',
+      requirementsSource: 'record:lifecycle:not-in-outline',
+    };
+  }
+  if (normalizeCtdCode(section.number)) return recordRequirements(entry, section.number, true);
+  if (section.subsections?.length) {
+    return {
+      requirements:
+        `SECTION REQUIREMENTS: ${section.number} — ${section.heading} holds sections, not text of its own: ` +
+        `${section.subsections.map((s) => `${s.number} ${s.heading}`).join('; ')}. ${section.purpose} Draft each section it holds.`,
+      requirementsSource: `record:lifecycle:${record}:${section.number}:container`,
+    };
+  }
+  // A part two records share (the CBE-30 and CBE-0 change description) is one
+  // node of the outline, keyed by the first record's code; each record's own
+  // brief is given, named by its variant, never the first one's alone (review
+  // critic, 2026-10-18: a CBE-0 safety labeling change was told to justify a
+  // moderate CMC change against SUPAC).
+  const all = lifecycleOutlineParts(entry.id);
+  const first = all.find((p) => p.code === section.number);
+  const parts = first ? all.filter((p) => p === first || p.title === first.title) : [];
+  const briefs = parts.length > 1
+    ? parts.flatMap((p) => [`- For a ${p.variant}: ${p.guidance}`, ...p.keyContentElements.map((k) => `  - Key content (${p.variant}): ${k}`)])
+    : [`- ${first?.guidance ?? section.purpose}`, ...(first?.keyContentElements ?? []).map((k) => `- Key content: ${k}`)];
+  const lines = [
+    `SECTION AUTHORING GUIDANCE (the platform's ${outline.title} record — draft to it; do not add requirements from memory):`,
+    `- Section: ${section.number} — ${section.heading}`,
+    `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,
+    ...(parts.length > 1 ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
+    ...briefs,
+    `- Recorded basis: ${outline.regulatoryBasis}`,
+    ...(outline.outlineLimitations ?? []).map((l) => `- Scope limitation: ${l}`),
+  ];
+  return {
+    requirements: lines.join('\n'),
+    requirementsSource: `record:lifecycle:${parts.length > 1 ? record : first?.record ?? record}:${section.number}`,
+  };
 }
 
 /** Safety report subtype and sponsor status decide delivery; a narrative is

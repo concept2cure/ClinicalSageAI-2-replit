@@ -1779,6 +1779,21 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending.`
       },
       {
+        "code": "safety.similar_reports",
+        "title": "Previously Submitted Similar Reports and Significance Analysis",
+        "required": true,
+        "contentType": "mixed",
+        "guidance": "21 CFR 312.32(c)(1) (in each IND safety report, identify all IND safety reports previously submitted concerning a similar suspected adverse reaction, and analyze the significance of the suspected adverse reaction in light of them or of any other relevant information). Split out 2026-10-18 (review finding): it sat inside the conditional aggregate analysis, so a report built to the required parts could omit it.",
+        "authoringGuidance": "Every IND safety report, of any subtype, identifies the IND safety reports already submitted on a similar suspected adverse reaction and analyzes what this report means in light of them. List each prior report by its identifier and date, state how the reactions are similar, and give the significance analysis the sponsor's reviewers reached: whether the new case changes the frequency, severity or understanding of the risk. Where no similar report was previously submitted, say so explicitly. This is distinct from the aggregate or increased-rate analysis, which applies only to the (c)(1)(i)(C) and (c)(1)(iv) subtypes. Do not invent prior report identifiers or counts.",
+        "keyContentElements": [
+          "Each previously submitted IND safety report on a similar suspected adverse reaction, with identifier and date",
+          "How the previous reactions are similar to this one",
+          "Analysis of the significance of this reaction in light of the previous reports or other relevant information",
+          "Explicit statement where no similar report was previously submitted"
+        ],
+        "generationPrompt": "Draft the 21 CFR 312.32(c)(1) previous-similar-reports section of an IND safety report for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}): list the IND safety reports previously submitted on a similar suspected adverse reaction and analyze the significance of this one in light of them. Use bracketed placeholders for report identifiers and dates; do not fabricate prior reports."
+      },
+      {
         "code": "safety.aggregate",
         "title": "Aggregate / Similar-Events and Increased-Rate Analysis",
         "required": false,
@@ -1890,6 +1905,22 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Reconciliation with individual study disposition counts"
         ],
         "generationPrompt": "Draft the safety summary (21 CFR 312.33(b)(1)-(4)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Include a body-system narrative of frequent and serious adverse experiences, a summary of all IND safety reports filed during the year, a subject-level death list with causes, a dropout-for-AE list, and any information suggesting significant risk plus resulting protocol/IB changes. Provide table templates with bracketed placeholders; do not fabricate adverse-event data."
+      },
+      {
+        "code": "annual.drug_actions",
+        "title": "Information Pertinent to an Understanding of the Drug's Actions",
+        "required": true,
+        "contentType": "narrative",
+        "guidance": "21 CFR 312.33(b)(5) (a brief description of what, if anything, was obtained that is pertinent to an understanding of the drug's actions, including, for example, information about dose response, information from controlled trials, and information about bioavailability). Added 2026-10-18 (review finding): the record mapped no part to (b)(5).",
+        "authoringGuidance": "312.33(b)(5) asks for a brief description of what the year's work showed about how the drug acts: dose-response information, results from controlled trials, bioavailability and pharmacokinetic findings, and pharmacodynamic or mechanism findings. It is distinct from the safety summary ((b)(1)-(4)) and from the list of nonclinical studies ((b)(6)): it states what was learned, not what was done. Where nothing pertinent was obtained in the period, say so; an absent statement reads as an omission. Reviewers use it to judge whether the development program is answering its pharmacology questions and whether the general investigational plan follows from them.",
+        "keyContentElements": [
+          "Dose-response information obtained in the period",
+          "Information from controlled trials bearing on the drug's actions",
+          "Bioavailability and pharmacokinetic findings",
+          "Pharmacodynamic or mechanism-of-action findings",
+          "Explicit statement where nothing pertinent was obtained in the period"
+        ],
+        "generationPrompt": "Draft the 21 CFR 312.33(b)(5) section of {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}): a brief description of what was learned in the period about the drug's actions (dose response, controlled-trial information, bioavailability). Use only the material provided; where it shows nothing pertinent, say so. Do not fabricate results."
       },
       {
         "code": "annual.ind_changes",
@@ -2098,12 +2129,12 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "category": "periodic",
     "family": "NDA",
     "agency": "FDA",
-    "description": "The post-approval annual report submitted to the reviewing division for an approved NDA (and, correspondingly, for a licensed BLA), summarizing significant new information about the product from the past year that may affect its safety, effectiveness, or labeling, together with actions the applicant has taken or intends to take as a result. It also reports distribution data, current labeling and labeling changes, CMC changes, nonclinical and clinical data summaries, and the status of postmarketing study commitments and requirements. It is an administrative periodic report transmitted with Form FDA 2252 and is distinct from expedited/periodic adverse-event safety reporting under 21 CFR 314.80.",
+    "description": "The post-approval annual report submitted to the reviewing division for an approved NDA, summarizing significant new information about the product from the past year that may affect its safety, effectiveness, or labeling, together with actions the applicant has taken or intends to take as a result. It also reports distribution data, current labeling and labeling changes, CMC changes, nonclinical and clinical data summaries, and the status of postmarketing study commitments and requirements. It is an administrative periodic report transmitted with Form FDA 2252 and is distinct from expedited/periodic adverse-event safety reporting under 21 CFR 314.80. A licensed biologic reports under Part 601 instead (601.12(d), 601.70, 601.28; distribution under 600.81); those reports are cited here, not modelled part by part.",
     "regulatoryBasis": [
       "21 CFR 314.81(b)(2) (annual report for approved NDAs)",
       "21 CFR 314.81(b)(2)(i)-(x) (specified content: summary, distribution, labeling, CMC, nonclinical, clinical, status of postmarketing studies, etc.)",
       "21 CFR 314.81(b)(2)(vii) & 314.81(b)(2)(viii) (status of postmarketing study commitments and requirements; FDAAA 505(o))",
-      "21 CFR 601.12(a) and 601.28 (annual/periodic reporting for licensed biologics / BLAs)",
+      "21 CFR 601.12(d) (BLA annual report of minor changes), 601.70 (annual status reports of postmarketing studies), 601.28 (pediatric annual reports) and 600.81 (distribution reports): a licensed biologic's periodic obligations. Part 314 does not govern a BLA; this record's parts follow 314.81(b)(2). Corrected 2026-10-18 (review finding): the record cited 601.12(a), the general provisions, as the BLA annual report",
       "Form FDA 2252 (Transmittal of Periodic Reports for Drugs and Biologics)",
       "21 CFR 314.80 (postmarketing adverse experience reporting — cross-referenced, separate obligation)",
       "FDA Guidance: Providing Postmarketing Periodic Safety Reports in the ICH E2C(R2) Format (PBRER/PADER context)"
@@ -2691,17 +2722,20 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "category": "supplement",
     "family": "SUPPLEMENT",
     "agency": "FDA",
-    "description": "A supplement to an approved NDA/BLA proposing a change that requires FDA review and approval BEFORE the change is implemented in a distributed product, submitted under 21 CFR 314.70(b). Used for major changes with substantial potential to adversely affect identity, strength, quality, purity, or potency as they relate to safety or effectiveness (e.g., new or reworked manufacturing site, new drug substance supplier for a narrow-therapeutic-index or complex product, changes to the qualitative/quantitative formulation, container-closure changes for sterile products, extension of expiry beyond supported real-time data, and most labeling changes that broaden the indication or claims).",
+    "description": "A supplement to an approved NDA/BLA proposing a change that requires FDA review and approval BEFORE the change is implemented in a distributed product, submitted under 21 CFR 314.70(b). Used for major changes with substantial potential to adversely affect identity, strength, quality, purity, or potency as they relate to safety or effectiveness (e.g., new or reworked manufacturing site, new drug substance supplier for a narrow-therapeutic-index or complex product, changes to the qualitative/quantitative formulation, container-closure changes for sterile products, extension of expiry beyond supported real-time data, and most labeling changes that broaden the indication or claims). An efficacy supplement (a new indication, population, dosing regimen or claim) carries the clinical data its change rests on. A licensed biologic's prior-approval supplement is submitted under 21 CFR 601.12(b) (manufacturing changes) or 601.12(f)(1) (labeling changes), and shares this record's parts. Corrected 2026-10-18 (review finding): the record had no place for an efficacy supplement's clinical data, cited no BLA rule, and required a supplement fee that PDUFA VI removed.",
     "regulatoryBasis": [
       "21 CFR 314.70(a)",
       "21 CFR 314.70(b)",
       "21 CFR 314.71",
       "21 CFR 314.72",
+      "21 CFR 314.50 (application content, applied to the sections a supplement changes; 314.50(d)(5) clinical data for an efficacy supplement)",
+      "21 CFR 601.12(b) (biologics: changes requiring supplement submission and approval prior to distribution)",
+      "21 CFR 601.12(f)(1) (biologics: labeling changes requiring supplement submission and FDA approval)",
       "FDA Guidance: Changes to an Approved NDA or ANDA (Apr 2004)",
       "FDA Guidance: CMC Postapproval Manufacturing Changes To Be Documented in Annual Reports (Mar 2014)",
       "ICH Q12: Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management",
       "ICH Q8(R2)/Q9(R1)/Q10/Q11",
-      "PDUFA program fee provisions (FD&C Act sec. 736)"
+      "FD&C Act sec. 736 (PDUFA fees; no supplement fee since PDUFA VI, FY2018)"
     ],
     "components": [
       {
@@ -2766,7 +2800,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Labeling (Annotated and Clean)",
         "required": false,
         "contentType": "mixed",
-        "guidance": "Proposed Prescribing Information and other labeling in clean and annotated (redline) form when the change affects labeling; includes SPL-formatted content and side-by-side comparison to currently approved labeling.",
+        "guidance": "Proposed Prescribing Information and other labeling in clean and annotated (redline) form when the change affects labeling; includes SPL-formatted content and side-by-side comparison to currently approved labeling. Required for an efficacy supplement and for any change that alters labeling (21 CFR 314.70(b)(2)(v); for a BLA, 601.12(f)(1)).",
         "authoringGuidance": "Include this component only when the PAS changes labeling (e.g., a manufacturing change that alters a storage statement, or an efficacy/indication change). Provide both a clean version and an annotated version that redlines every change against the currently approved PI, with each change traceable to its supporting data source. Reviewers in OND and the labeling review team compare the annotated copy line-by-line and expect the source (clinical study, CMC data, safety analysis) for every edit to be identified. Submit in the required electronic SPL format; unhighlighted changes, edits not supported by data in the supplement, or failure to carry the change through all labeling pieces (PI, patient labeling, carton/container) generate labeling deficiencies.",
         "keyContentElements": [
           "Clean proposed Prescribing Information in current PLR/PLLR format",
@@ -2778,6 +2812,24 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Statement confirming consistency across all labeling components"
         ],
         "generationPrompt": "Produce annotated and clean Prescribing Information for a labeling-affecting Prior Approval Supplement to {{SPONSOR}}'s {{PRODUCT_NAME}} for {{INDICATION}}. Redline each change against the approved PI and cite its data source. Do not invent clinical or safety statements; insert bracketed placeholders for values and study references, and note where SPL files must be attached."
+      },
+      {
+        "code": "PAS-CLINICAL",
+        "title": "Clinical and Nonclinical Data (Efficacy Supplement)",
+        "required": false,
+        "contentType": "mixed",
+        "guidance": "For an efficacy supplement (a new indication, population, dosing regimen or claim): the clinical data the change rests on (21 CFR 314.50(d)(5), applied to the supplement) in Modules 2.5, 2.7 and 5.3, and the nonclinical data in 2.4, 2.6 and 4.2 where the change needs them. Not part of a CMC-only supplement.",
+        "authoringGuidance": "Include this component only when the supplement changes what the product is approved to do: a new indication, a new population, a new dosing regimen, or a new or broadened claim. The clinical and statistical reviewers assess the supplement on the adequate and well-controlled evidence it supplies, exactly as for the original application's corresponding sections, so the clinical overview (2.5), the clinical summary (2.7) and the study reports (5.3) are updated as replacements of the approved sections. State which studies support each proposed labeling change, the populations studied, and how the benefit-risk conclusion for the new use was reached. Nonclinical data are needed only where the change raises a question the approved nonclinical package does not answer (for example, a new population or a longer duration). Deficiencies that drive information requests: a proposed labeling claim with no study cited for it, study reports missing from 5.3, and a clinical overview that restates the original application instead of addressing the new use.",
+        "keyContentElements": [
+          "Statement of the efficacy change: new indication, population, dosing regimen or claim",
+          "Updated Clinical Overview (2.5) addressing the new use and its benefit-risk",
+          "Updated Clinical Summary (2.7) for efficacy and safety in the new use",
+          "Clinical study reports for the supporting studies (5.3)",
+          "Nonclinical overview, summaries and study reports (2.4, 2.6, 4.2) where the change needs them",
+          "Mapping of each proposed labeling change to the study that supports it",
+          "Financial certification or disclosure (Form FDA 3454/3455) for the clinical studies relied on"
+        ],
+        "generationPrompt": "Outline the clinical and nonclinical data section of an efficacy Prior Approval Supplement for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}. Name the efficacy change, the Module 2.5, 2.7 and 5.3 sections it updates, and map each proposed labeling change to the study that supports it. Do not fabricate study results; use bracketed placeholders for study identifiers, populations and outcomes."
       },
       {
         "code": "PAS-ENV",
@@ -2797,19 +2849,17 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       },
       {
         "code": "PAS-FEE",
-        "title": "Program/User Fee Cover Sheet and Field Copy Certification",
-        "required": true,
+        "title": "User Fee Determination and Field Copy Certification",
+        "required": false,
         "contentType": "form",
-        "guidance": "PDUFA fee determination documentation (Form FDA 3397 where a supplement fee applies) and, for supplements requiring on-site inspection support, the Field Copy Certification.",
-        "authoringGuidance": "Confirm the PDUFA fee status: many efficacy supplements incur a supplement application fee while CMC-only supplements typically do not, but the applicant must document the determination and include the cover sheet where a fee is due to avoid a fee-related refusal. When the change affects manufacturing subject to pre-approval or surveillance inspection, include the Field Copy Certification affirming that a true copy of the CMC technical sections was provided to the applicable district/field office. A reviewer and the user-fee staff verify fee payment before the review clock starts; an unpaid required fee places the supplement on financial hold.",
+        "guidance": "A supplement carries no PDUFA application fee: PDUFA VI (FY2018 onward) removed supplement fees, and PDUFA VII kept that. A field copy certification applies only where the submission's format calls for one. Corrected 2026-10-18: the record had required a Form FDA 3397 cover sheet for a supplement fee that no longer exists.",
+        "authoringGuidance": "No PDUFA fee applies to a supplement, and no Form FDA 3397 user-fee cover sheet is filed for one; record that determination where the applicant's procedures call for it, rather than drafting a fee payment. A field copy certification (a true copy of the CMC technical sections sent to the field office) applies only where the submission's format calls for it. Confirm current FDA practice for an electronic (eCTD) submission before including one. Do not assert a fee, a waiver or a field-copy requirement the material provided does not establish.",
         "keyContentElements": [
-          "Fee determination: whether a supplement fee applies and the basis",
-          "Form FDA 3397 user fee cover sheet with payment identifier (when a fee is due)",
-          "Field Copy Certification statement and signature (when inspection-relevant)",
-          "Cross-reference to establishment(s) subject to inspection",
-          "Statement of any small-business or fee-waiver status claimed"
+          "Statement that no PDUFA supplement fee applies (PDUFA VI onward)",
+          "Field copy certification, only where the submission's format calls for one",
+          "Cross-reference to the establishment(s) the change affects, where a field copy is provided"
         ],
-        "generationPrompt": "Prepare the user-fee and field-copy documentation for a Prior Approval Supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. State the PDUFA fee determination and, if applicable, the Form FDA 3397 fields and Field Copy Certification language. Use placeholders for payment identifiers and facility names; do not assert a fee status you cannot determine."
+        "generationPrompt": "State the user-fee position for a Prior Approval Supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}: no PDUFA supplement fee applies. Include field copy certification language only if the material provided says the submission needs one. Use placeholders for facility names; do not assert a fee or certification the material does not establish."
       }
     ],
     "registryId": "US_NDA_SUPP",
@@ -2818,10 +2868,17 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "1.2",
       "1.3",
       "1.14.1",
+      "2.3",
+      "2.4",
+      "2.5",
+      "2.6",
+      "2.7",
       "3.2.S",
       "3.2.P",
       "3.2.A",
-      "3.2.R"
+      "3.2.R",
+      "4.2",
+      "5.3"
     ]
   },
   {
@@ -2954,6 +3011,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 314.70(c)",
       "21 CFR 314.70(c)(6)",
       "21 CFR 314.70(c)(6)(iii)",
+      "21 CFR 314.70(c)(3)-(4) (basis, date and content of every CBE supplement)",
+      "21 CFR 25.15(a), 25.31 (environmental assessment or categorical exclusion for a supplement)",
       "FDA Guidance: Changes to an Approved NDA or ANDA (Apr 2004)",
       "FDA Guidance: Safety Labeling Changes - Implementation of Section 505(o)(4) (Jul 2013)",
       "FD&C Act sec. 505(o)(4)",
@@ -2995,6 +3054,38 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Authorized signature, printed name, title, and date"
         ],
         "generationPrompt": "Prepare Form FDA 356h for a CBE-0 supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. Mark Supplement, reconcile the checklist to a labeling change plus supporting safety analysis, and bracket all fields requiring real identifiers or signatures."
+      },
+      {
+        "code": "CBE0-CHANGE",
+        "title": "Description and Justification of the Change",
+        "required": true,
+        "contentType": "mixed",
+        "guidance": "A full explanation of the basis for the change and the date it is made (21 CFR 314.70(c)(3)), with the content 314.70(c)(4) requires through (b)(3): a detailed description of the change, the products and sites involved, and the studies and data that support it. Required for every CBE supplement, immediate (CBE-0) or 30-day. Added 2026-10-18 (review finding): the record had no change description, so a CBE-0 outline read as complete without one.",
+        "authoringGuidance": "Every changes-being-effected supplement, including one implemented on FDA's receipt, must explain the basis for the change and state the date it is made. Present the approved and the changed condition side by side, the reason for the change, and the data that support it. For a safety labeling change, the basis is the safety information the Supporting Safety Assessment presents; state the change in one paragraph here and cross-reference that assessment rather than repeating it. For an immediate CMC change permitted under 314.70(c)(6), justify why the change qualifies for immediate implementation. Reviewers check that the classification is supported and that the implementation date is stated; a missing date or an unsupported classification draws an information request or reclassification.",
+        "keyContentElements": [
+          "Approved vs. changed condition in parallel form",
+          "Full explanation of the basis for the change (21 CFR 314.70(c)(3))",
+          "Date on which the change is made",
+          "Justification that the change qualifies for immediate implementation (314.70(c)(6))",
+          "Products, sites and studies involved, with the supporting data (314.70(c)(4), (b)(3))",
+          "Cross-reference to the Supporting Safety Assessment for a safety labeling change"
+        ],
+        "generationPrompt": "Write the Description and Justification of the Change for a CBE-0 supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. State the approved and changed condition, the basis for the change, the date it is made, and why it qualifies for implementation on receipt under 21 CFR 314.70(c)(6). Do not fabricate data or dates; use bracketed placeholders."
+      },
+      {
+        "code": "CBE0-ENV",
+        "title": "Categorical Exclusion Claim or Environmental Assessment",
+        "required": true,
+        "contentType": "narrative",
+        "guidance": "Claim of categorical exclusion under 21 CFR 25.31 with a no-extraordinary-circumstances statement (25.21), or a full Environmental Assessment under 25.40 where an exclusion does not apply. 21 CFR 25.15(a) asks it of every supplement, a CBE-0 included. Added 2026-10-18 (review finding).",
+        "authoringGuidance": "The NEPA requirement applies to a CBE-0 supplement as to any supplement; a safety labeling change or a minor immediate change normally qualifies for a categorical exclusion under 21 CFR 25.31 and needs only a short claim plus the affirmation of no extraordinary circumstances under 25.21. Cite the precise exclusion. A full EA is required only when the exclusion does not apply. An omitted or mis-cited exclusion is an avoidable deficiency.",
+        "keyContentElements": [
+          "Specific categorical exclusion citation (21 CFR 25.31) OR full EA under 25.40",
+          "Affirmation of no extraordinary circumstances (21 CFR 25.21)",
+          "Basis for exclusion tied to the change",
+          "Attestation/signature as applicable"
+        ],
+        "generationPrompt": "Draft the environmental section for a CBE-0 supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. Claim the categorical exclusion under 21 CFR 25.31 and affirm no extraordinary circumstances under 25.21, or outline an EA under 25.40 if unavailable. State facts only where known; use placeholders otherwise."
       },
       {
         "code": "CBE0-LABELING",

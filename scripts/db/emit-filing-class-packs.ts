@@ -1,114 +1,146 @@
 /**
- * Write migrations/20261018_filing_class_rule_packs.sql from
- * server/services/c2c/filing-class-packs.ts — once.
+ * Write the migration that seeds the filing document class packs no migration
+ * seeds yet, from server/services/c2c/filing-class-packs.ts.
  *
- *   npx tsx scripts/db/emit-filing-class-packs.ts
+ *   npx tsx scripts/db/emit-filing-class-packs.ts                 # what is unseeded; exit 1 if any
+ *   npx tsx scripts/db/emit-filing-class-packs.ts migrations/<YYYYMMDD[x]>_<name>.sql
  *
- * The migration is the only way the packs reach a database (CLAUDE.md Rule 1),
- * and it must hold literal rows, so it was generated rather than hand-copied.
- * Now that the file is on the applier it is frozen. Run again, this script
- * confirms the file is what the module still produces, and exits 0; if a
- * canonical outline has changed, it refuses to write and exits 1.
+ * The migration is the only way a pack reaches a database (CLAUDE.md Rule 1),
+ * and it must hold literal rows, so it is generated rather than hand-copied.
  *
- * Why it refuses (review finding, 2026-10-18): rewriting 20261018 to seed a v1.1
- * in place of its v1.0 passes on a fresh database and breaks every deployed one.
- * There, v1.0 is still live, v1.1 is inserted live beside it, and the file's
- * own "exactly one live pack" assertion stops the deploy. A changed outline is a
- * NEW migration file that inserts the new version and supersedes exactly the
- * version 20261018 seeded (the 20261005b pma pattern). FILING_CLASS_PACKS then
- * names the new version, and the contract test adds the new file to its boot
- * list. tests/schema-contract/c2c-filing-class-packs.contract.test.ts proves
- * this file replays after such a supersede.
+ * FILING_CLASS_PACKS names each class's CURRENT version. A version is "seeded"
+ * when some file in migrations/ inserts its (doc_type, agency, version) row;
+ * this script emits only the versions none does, each superseding exactly the
+ * version its spec names. migrations/20261018_filing_class_rule_packs.sql seeded
+ * the first versions and is frozen: on a deployed database a rewrite of it would
+ * insert a second live version beside the first, and its own "exactly one live
+ * pack" assertion would stop the deploy (review finding, 2026-10-18).
+ *
+ * The output file is written once. Run again with the same file, the script
+ * confirms it is what the module still produces (exit 0); if the module has
+ * changed since, it refuses to rewrite it (exit 1) — a file on the applier is
+ * never rewritten — and the change is a new version in another new file.
+ * tests/schema-contract/c2c-filing-class-packs.contract.test.ts applies every
+ * pack file and holds each live pack to the module node for node.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FILING_DOCUMENT_CLASSES } from '../../shared/regulatory/filing-document-classes';
 import {
   FILING_CLASS_PACKS,
   filingClassPackGoverningRule,
   filingClassPackSections,
   filingClassPackUncertainties,
+  type FilingClassPackSpec,
 } from '../../server/services/c2c/filing-class-packs';
 
-const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../migrations/20261018_filing_class_rule_packs.sql');
-
-/** The doc_type values the CHECK admitted before this file (migrations/20260810b). */
-const PRIOR_DOC_TYPES = [
-  'ind', 'cta', 'nda', 'anda', 'bla', 'maa', 'jnda', 'k510', 'denovo', 'pma',
-  'ide', 'cer', 'mdr', 'ivdr', 'psur', 'ib', 'protocol', 'csr', 'briefing', 'mod3', 'mod2', 'haq',
-];
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const MIGRATIONS = path.join(ROOT, 'migrations');
 
 const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
+const tuple = (spec: FilingClassPackSpec) => `(${lit(spec.docType)}, ${lit(spec.agency)}, ${lit(spec.version)},`;
 
-async function main() {
-  const added = FILING_DOCUMENT_CLASSES.map((c) => c.docType).filter((t) => !PRIOR_DOC_TYPES.includes(t));
-  const docTypes = [...PRIOR_DOC_TYPES, ...added];
-  const packs = await Promise.all(FILING_CLASS_PACKS.map(async (spec) => ({
+/** Every migration's text but `except`'s, by file name. */
+function migrationTexts(except: string | null): Map<string, string> {
+  const texts = new Map<string, string>();
+  for (const f of readdirSync(MIGRATIONS).filter((n) => n.endsWith('.sql')).sort()) {
+    if (except && path.join(MIGRATIONS, f) === except) continue;
+    texts.set(f, readFileSync(path.join(MIGRATIONS, f), 'utf8'));
+  }
+  return texts;
+}
+
+/** The doc_type values some file's c2c_documents CHECK already admits. */
+function admittedDocTypes(texts: Map<string, string>): Set<string> {
+  const admitted = new Set<string>();
+  for (const sql of texts.values()) {
+    for (const m of sql.matchAll(/CHECK \(doc_type IN \(([^)]*)\)\)/g)) {
+      for (const v of m[1].matchAll(/'([a-z0-9_]+)'/g)) admitted.add(v[1]);
+    }
+  }
+  return admitted;
+}
+
+/** Wrap a header paragraph at 78 columns under "--   ". */
+function wrap(text: string, indent = '--   '): string {
+  const out: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    if ((indent + line + ' ' + word).length > 80 && line) { out.push(indent + line); line = word; } else line = line ? `${line} ${word}` : word;
+  }
+  if (line) out.push(indent + line);
+  return out.join('\n');
+}
+
+async function render(file: string, specs: FilingClassPackSpec[], admitted: Set<string>): Promise<string> {
+  const m = /^(\d{4})(\d{2})(\d{2})[a-z]?_/.exec(path.basename(file));
+  if (!m) throw new Error(`${path.basename(file)}: a migration file name starts with its date, YYYYMMDD.`);
+  const date = `${m[1]}-${m[2]}-${m[3]}`;
+  const packs = await Promise.all(specs.map(async (spec) => ({
     spec,
     sections: await filingClassPackSections(spec.docType),
     governingRule: await filingClassPackGoverningRule(spec.docType),
     uncertainties: await filingClassPackUncertainties(spec),
   })));
-
-  const expected = JSON.stringify(packs.map(({ spec, sections }) => ({
-    doc_type: spec.docType, agency: spec.agency, version: spec.version, nodes: sections.length,
-  })));
   for (const { sections } of packs) {
     if (JSON.stringify(sections).includes('$pack$')) throw new Error('An outline contains the $pack$ quote tag.');
   }
+  const missing = [...new Set(specs.map((s) => s.docType))].filter((t) => !admitted.has(t));
+  const docTypes = [...admitted].sort().concat(missing);
+  const expected = JSON.stringify(packs.map(({ spec, sections }) => ({
+    doc_type: spec.docType, agency: spec.agency, version: spec.version, nodes: sections.length,
+  })));
 
+  const changes = packs.map(({ spec, sections }) =>
+    `${wrap(`${spec.docType}:${spec.agency} ${spec.version} (${sections.length} nodes)` +
+      `${spec.supersedes ? `, superseding ${spec.supersedes}` : ', its first pack'}: ` +
+      `${spec.changeNote ?? 'first version.'}`)}`).join('\n');
   const header = `-- ═══════════════════════════════════════════════════════════════════════════════
--- 2026-10-18 · D2 · Filing document classes: the filing picked is the outline built
+-- ${date} · D2 · Filing document class packs (${packs.length})
 --
 -- GENERATED by scripts/db/emit-filing-class-packs.ts from
 -- server/services/c2c/filing-class-packs.ts. Do not edit by hand: a change to a
--- pack is a new version in FILING_CLASS_PACKS, never a rewrite of this file's
--- rows. tests/schema-contract/c2c-filing-class-packs.contract.test.ts applies
--- this file and holds every pack to the module.
+-- pack is a new version in a new file, never a rewrite of this file's rows.
+-- tests/schema-contract/c2c-filing-class-packs.contract.test.ts applies this
+-- file and holds every live pack to the module node for node.
 --
--- WHAT WAS WRONG
---   The New project wizard knew application types only. Every other filing fell
---   to one of them: a Prior Approval Supplement, a CBE-30/CBE-0, the NDA/BLA
---   annual report, an IND amendment, an IND safety report, an IND annual
---   report, a Type A/B/C meeting package, an orphan, breakthrough, fast-track or
---   RMAT request, a pediatric study plan, a REMS and a PADER were scaffolded as
---   the NDA dossier (nda:fda, 73 nodes). A clinical study report was scaffolded
---   as an IND; it, the protocol, the IB, the SAP, the ICF and the DSUR (ICH) were
---   not offered at all, and the EU PSUR was refused as "no EMA NDA outline".
---   csr:ich, ib:ich, protocol:ich, briefing:fda and psur:ema existed and no
---   filing reached them; csr:ich held 8 of E3's 16 headings.
---
--- WHAT IS NOW TRUE
---   Each such filing is its own class (shared/regulatory/filing-document-
---   classes.ts): program type = doc_type = its pack's doc_type, no submission
---   spine, offered as "Author documents" only. Its pack is the outline the
---   platform already served for it (getRegistryDocumentTemplate; the CSR the
---   full ICH E3 tree, ${packs.find((p) => p.spec.docType === 'csr')?.sections.length} nodes). Five classes had a pack and get a new
---   version (csr, ib, protocol, briefing, psur); fourteen get their first.
---   Provenance is stated per pack and none is marked reviewed.
+-- WHAT EACH PACK IS
+${changes}
 --
 -- THE LIMIT
 --   A document already bound to a superseded version keeps that outline: the
 --   composite FK to (doc_type, agency, version) is what makes the record true.
 --   New projects get these versions (the scaffolder reads superseded_by IS NULL).
+--   No pack here is reviewed by a regulatory professional; each states its basis.
 --
 -- RULE 1 (every file in C2C_MIGRATION_FILES re-runs on every deploy)
---   No DROP of anything another file creates except the doc_type CHECK, which
---   is replaced only while its definition does not yet admit every class (the
---   20260806b / 20260810b pattern), with a strict superset of what it admitted,
---   so no row can fail it. ON CONFLICT DO NOTHING; provenance is assigned after
---   20260810c re-runs; supersede is guarded on the exact prior version and
---   superseded_by IS NULL; the assertions at the end refuse a missing,
---   truncated or edited row, and a (doc_type, agency) without exactly one live
---   pack, while tolerating a later version superseding one of these.
+--   ON CONFLICT DO NOTHING; provenance is assigned after 20260810c re-runs;
+--   supersede is guarded on the exact prior version and superseded_by IS NULL;
+--   ${missing.length ? 'the doc_type CHECK is replaced only while it does not yet admit every class,\n--   with a strict superset of what it admitted;' : 'no constraint is touched: every doc_type here is already admitted;'}
+--   the assertions at the end refuse a missing, truncated or edited row, and a
+--   (doc_type, agency) without exactly one live pack, while tolerating a later
+--   version superseding one of these.
 -- ═══════════════════════════════════════════════════════════════════════════════
 `;
+  const check = missing.length === 0 ? '' : `  -- 1 ── The doc_type CHECK admits every class. Replaced only while it does not
+  --      yet (never narrows what a later file widened), DROP IF EXISTS because a
+  --      drizzle-push database has the table and no named constraint.
+  IF to_regclass('public.c2c_documents') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.c2c_documents'::regclass
+         AND conname = 'c2c_documents_doc_type_check'
+${docTypes.map((t) => `         AND pg_get_constraintdef(oid) LIKE '%''${t}''%'`).join('\n')}
+    ) THEN
+      ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
+      ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
+        CHECK (doc_type IN (${docTypes.map((t) => `'${t}'`).join(',')}));
+    END IF;
+  END IF;
 
-  const like = docTypes.map((t) => `         AND pg_get_constraintdef(oid) LIKE '%''${t}''%'`).join('\n');
-  const checkList = docTypes.map((t) => `'${t}'`).join(',');
+`;
   const values = packs.map(({ spec, sections }) =>
-    `    (${lit(spec.docType)}, ${lit(spec.agency)}, ${lit(spec.version)}, ${lit(spec.label)},\n     $pack$${JSON.stringify(sections)}$pack$::jsonb,\n     NULL,\n     DATE '2026-10-18')`,
+    `    (${lit(spec.docType)}, ${lit(spec.agency)}, ${lit(spec.version)}, ${lit(spec.label)},\n     $pack$${JSON.stringify(sections)}$pack$::jsonb,\n     NULL,\n     DATE '${date}')`,
   ).join(',\n');
   const provenance = packs.map(({ spec, governingRule, uncertainties }) =>
     `    UPDATE c2c_rule_packs SET
@@ -127,7 +159,7 @@ async function main() {
     `    WHEN ${lit(`${spec.docType}:${spec.agency}:${spec.version}`)} THEN $pack$${JSON.stringify(sections)}$pack$::jsonb`,
   ).join('\n');
 
-  const sql = `${header}
+  return `${header}
 DO $mig$
 DECLARE
   expected CONSTANT jsonb := ${lit(expected)}::jsonb;
@@ -138,23 +170,7 @@ DECLARE
   sup   text;
   live  integer;
 BEGIN
-  -- 1 ── The doc_type CHECK admits every class. Replaced only while it does not
-  --      yet (never narrows what a later file widened), DROP IF EXISTS because a
-  --      drizzle-push database has the table and no named constraint.
-  IF to_regclass('public.c2c_documents') IS NOT NULL THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM pg_constraint
-       WHERE conrelid = 'public.c2c_documents'::regclass
-         AND conname = 'c2c_documents_doc_type_check'
-${like}
-    ) THEN
-      ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
-      ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
-        CHECK (doc_type IN (${checkList}));
-    END IF;
-  END IF;
-
-  IF to_regclass('public.c2c_rule_packs') IS NULL THEN
+${check}  IF to_regclass('public.c2c_rule_packs') IS NULL THEN
     RAISE NOTICE 'c2c_rule_packs not present - skipping the filing document class packs';
     RETURN;
   END IF;
@@ -173,10 +189,11 @@ ${values}
 ${provenance}
   END IF;
 
-  -- 4 ── Supersede the five prior versions, exactly.
-${supersede}
+  -- 4 ── Supersede exactly the version each pack replaces.
+${supersede || '  -- (none: every pack here is its class\'s first)'}
 
-  -- 5 ── Assertions (CLAUDE.md Rule 1, seed corollary).
+  -- 5 ── Assertions (CLAUDE.md Rule 1, seed corollary). A tree the CASE does not
+  --      name is refused, never read as a match.
   FOR e IN SELECT * FROM jsonb_array_elements(expected) LOOP
     tree := CASE (e->>'doc_type') || ':' || (e->>'agency') || ':' || (e->>'version')
 ${trees}
@@ -185,7 +202,7 @@ ${trees}
       INTO n, same, sup
       FROM c2c_rule_packs
      WHERE doc_type = e->>'doc_type' AND agency = e->>'agency' AND version = e->>'version';
-    IF NOT FOUND OR n IS DISTINCT FROM (e->>'nodes')::integer OR NOT same THEN
+    IF NOT FOUND OR n IS DISTINCT FROM (e->>'nodes')::integer OR same IS NOT TRUE THEN
       RAISE EXCEPTION '%:% % must hold this file''s % nodes; found % (tree matches: %)',
         e->>'doc_type', e->>'agency', e->>'version', e->>'nodes',
         coalesce(n::text, 'no row'), coalesce(same::text, 'n/a');
@@ -205,21 +222,47 @@ ${trees}
 END
 $mig$;
 `;
-  const rel = path.relative(process.cwd(), OUT);
-  if (existsSync(OUT)) {
-    if (readFileSync(OUT, 'utf8') === sql) {
+}
+
+async function main() {
+  const arg = process.argv[2];
+  const out = arg ? path.resolve(ROOT, arg) : null;
+  if (out && path.dirname(out) !== MIGRATIONS) throw new Error(`${arg}: the file goes in migrations/.`);
+  const texts = migrationTexts(out);
+  const seededIn = (spec: FilingClassPackSpec) => [...texts].find(([, sql]) => sql.includes(tuple(spec)))?.[0];
+  const unseeded = FILING_CLASS_PACKS.filter((spec) => !seededIn(spec));
+
+  if (!out) {
+    for (const spec of FILING_CLASS_PACKS) {
+      const at = seededIn(spec);
+      console.log(`${at ? 'seeded  ' : 'UNSEEDED'} ${spec.docType}:${spec.agency} ${spec.version}${at ? `  (${at})` : ''}`);
+    }
+    if (unseeded.length) {
+      console.error(`\n${unseeded.length} version(s) no migration seeds. Write them with:\n  npx tsx scripts/db/emit-filing-class-packs.ts migrations/<YYYYMMDD[x]>_<name>.sql`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  const rel = path.relative(process.cwd(), out);
+  if (unseeded.length === 0) {
+    console.log(`Every FILING_CLASS_PACKS version is seeded by another migration; ${rel} is not needed.`);
+    return;
+  }
+  const sql = await render(out, unseeded, admittedDocTypes(texts));
+  if (existsSync(out)) {
+    if (readFileSync(out, 'utf8') === sql) {
       console.log(`${rel} is unchanged: it is still what FILING_CLASS_PACKS produces.`);
       return;
     }
     console.error(
-      `REFUSED: ${rel} is on the applier and is not rewritten. The outlines it was ` +
-      'generated from have changed. Mint the changed pack as a new version in a NEW migration ' +
-      'that supersedes exactly the version this file seeded (see this script\'s header).',
+      `REFUSED: ${rel} exists and is not what FILING_CLASS_PACKS now produces. A pack file on the applier ` +
+      'is never rewritten: mint the changed pack as a new version, and write it to a NEW migration file.',
     );
     process.exit(1);
   }
-  writeFileSync(OUT, sql);
-  console.log(`wrote ${rel}: ${packs.length} packs, ${packs.reduce((n, p) => n + p.sections.length, 0)} nodes; doc_type CHECK +${added.length}`);
+  writeFileSync(out, sql);
+  console.log(`wrote ${rel}: ${unseeded.length} pack(s): ${unseeded.map((s) => `${s.docType}:${s.agency} ${s.version}`).join(', ')}`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

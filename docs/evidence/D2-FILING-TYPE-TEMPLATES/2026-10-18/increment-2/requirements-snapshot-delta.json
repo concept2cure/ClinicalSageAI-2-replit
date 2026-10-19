@@ -1,0 +1,45 @@
+{
+  "reason": "2026-10-18 D2 review corrections to the lifecycle records nda_pas, cbe_0, ind_annual_report, ind_safety_report, nda_bla_annual_report",
+  "changed": {
+    "{\"document\":\"CBE_0\"}": {
+      "before": "640aa5b89cfa4fe5",
+      "after": "e3db07f73d9464cf"
+    },
+    "{\"document\":\"IND_ANNUAL_REPORT\"}": {
+      "before": "751b699919cf785d",
+      "after": "f496ca901840406a"
+    },
+    "{\"document\":\"IND_SAFETY_REPORT\"}": {
+      "before": "56e1c4d14b99d796",
+      "after": "07172e9641ba6689"
+    },
+    "{\"document\":\"NDA_BLA_ANNUAL_REPORT\"}": {
+      "before": "487d27b0833ecaad",
+      "after": "cabbb8c22a3647ff"
+    },
+    "{\"document\":\"NDA_PAS\"}": {
+      "before": "a2aaa72efc1fbbb4",
+      "after": "1c7b829850f02cef"
+    },
+    "{\"document\":\"cbe_0\"}": {
+      "before": "640aa5b89cfa4fe5",
+      "after": "e3db07f73d9464cf"
+    },
+    "{\"document\":\"ind_annual_report\"}": {
+      "before": "751b699919cf785d",
+      "after": "f496ca901840406a"
+    },
+    "{\"document\":\"ind_safety_report\"}": {
+      "before": "56e1c4d14b99d796",
+      "after": "07172e9641ba6689"
+    },
+    "{\"document\":\"nda_bla_annual_report\"}": {
+      "before": "487d27b0833ecaad",
+      "after": "cabbb8c22a3647ff"
+    },
+    "{\"document\":\"nda_pas\"}": {
+      "before": "a2aaa72efc1fbbb4",
+      "after": "1c7b829850f02cef"
+    }
+  }
+}

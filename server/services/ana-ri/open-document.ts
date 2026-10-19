@@ -29,6 +29,7 @@ import {
   type DocumentTemplateStructure,
 } from '../market-specs/document-template-library.js';
 import { sanitizeLine } from './surface-context-block.js';
+import { builtinTemplateSnapshot, getBuiltinAuthoringTemplate } from '../authoring/builtin-authoring-templates.js';
 
 /** The most the open-document brief may weigh, in characters (it rides the cached system prefix). */
 export const OPEN_DOCUMENT_BRIEF_CHARS = 3200;
@@ -42,6 +43,13 @@ export interface OpenDocument {
   source: OpenDocumentSource;
   /** The registry outline, when the platform holds one for this type. */
   outline: DocumentTemplateStructure | null;
+  /**
+   * A saved document whose recorded template snapshot is not the template's
+   * current one: the outline shown is today's, not the one it was built from
+   * (review finding, 2026-10-18, when the PAS, CBE, IND annual report and
+   * meeting outlines changed under the same template id). Absent otherwise.
+   */
+  builtFromEarlierOutline?: true;
 }
 
 export const OPEN_DOCUMENT_UNREAD: OpenDocumentResult = {
@@ -121,7 +129,10 @@ async function fromSavedRecord(
   }
   if (!source) return { document: null, problem: 'the saved document has no recorded template' };
   const registryId = registryIdForTemplateEntry(source.entryId, source.filingContext?.registryId);
-  return registryId ? { document: await describe(registryId, 'saved-template') } : noRegistryType;
+  if (!registryId) return noRegistryType;
+  const document = await describe(registryId, 'saved-template');
+  const current = await getBuiltinAuthoringTemplate(source.id);
+  return { document: current && builtinTemplateSnapshot(current) !== source.sha256 ? { ...document, builtFromEarlierOutline: true } : document };
 }
 
 async function describe(registryId: string, source: OpenDocumentSource): Promise<OpenDocument> {
@@ -179,6 +190,9 @@ export function renderOpenDocumentBlock(result: OpenDocumentResult): string {
   if (!o) {
     lines.push('The platform holds no outline for this type. Use the agency or client template; do not supply a structure from memory as if it were the requirement.');
     return lines.join('\n');
+  }
+  if (document.builtFromEarlierOutline) {
+    lines.push("This document was built from an earlier version of its template. The outline below is the platform's current one, so the document's own sections may differ from it: read them before relying on this outline.");
   }
   lines.push(`What it contains (${sanitizeLine(o.regulatoryBasis, 240)}):`);
   for (const lim of o.outlineLimitations ?? []) lines.push(`Limitation: ${sanitizeLine(lim, 240)}`);
