@@ -1,0 +1,5 @@
+ FAIL  server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts [ server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts ]
+Error: productionBuilds() has no entry for scripts/ops/verify-audit-chain.mjs
+     84|   if (!BUILD) throw new Error('productionBuilds() has no entry for scr…
+ Test Files  1 failed (1)
+      Tests  4 skipped (4)
