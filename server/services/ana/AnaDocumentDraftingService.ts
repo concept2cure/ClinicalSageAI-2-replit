@@ -47,7 +47,7 @@ import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
 import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation } from '../market-specs/document-preparation.js';
-import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type TemplateSection } from '../market-specs/document-template-library.js';
+import { componentTemplateIdForRegistry, getDocumentTemplate, registryOutlineRequiresReview, type DocumentTemplateStructure, type TemplateSection } from '../market-specs/document-template-library.js';
 import { lifecycleOutlineParts, lifecycleRecordOutlineFor } from '../market-specs/lifecycle-record-outlines.js';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
@@ -366,10 +366,8 @@ function componentRequirements(entry: RegulatoryApplicationType, sectionType: st
   // Front matter and subsections too: a PBRER's executive summary and 16.2, an
   // IB's title page, are nodes of the governed pack a class project scaffolds
   // (review critic, 2026-10-18: only top-level sections were read).
-  const flat: TemplateSection[] = [];
-  const walk = (list: TemplateSection[]) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
-  walk([...(template.frontMatter ?? []), ...template.sections]);
-  const section = flat.find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
+  const section = flattenSections([...(template.frontMatter ?? []), ...template.sections])
+    .find(s => [s.number, s.heading, `${s.number} ${s.heading}`].some(v => normTitle(v) === target));
   if (entry.id === 'ICH_PROTOCOL') return protocolRequirements(section, sectionType);
   // The CSR template shows E3's sixteen headings; its pack is E3 to full depth
   // (119 nodes), so a section is answered from the E3 tree itself.
@@ -605,27 +603,10 @@ function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requeste
   const outline = lifecycleRecordOutlineFor(entry.id);
   if (!outline) return null;
   const target = normTitle(requested);
-  const flat: TemplateSection[] = [];
-  const walk = (list: TemplateSection[]) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
-  walk([...(outline.frontMatter ?? []), ...outline.sections]);
-  const matches = (s: TemplateSection) => [s.number, s.heading, `${s.number} ${s.heading}`].some((v) => normTitle(v) === target);
-  const section = flat.find(matches);
+  const flat = flattenSections([...(outline.frontMatter ?? []), ...outline.sections]);
+  const section = flat.find((s) => [s.number, s.heading, `${s.number} ${s.heading}`].some((v) => normTitle(v) === target));
   const record = outline.outlineSource && 'record' in outline.outlineSource ? outline.outlineSource.record : outline.id;
-  if (!section) {
-    // A CTD section below one the outline holds (3.2.P.5.1 under a
-    // supplement's 3.2.P, 5.3.5.1 under its 5.3) is the content the change
-    // actually updates: the CTD record answers it (review critic, 2026-10-18).
-    const lead = leadingSectionCode(requested);
-    const code = lead ? normalizeCtdCode(lead.code) : null;
-    const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
-    if (code && ctd.some((c) => code.startsWith(`${c}.`))) return recordRequirements(entry, code, true);
-    return {
-      requirements:
-        `SECTION REQUIREMENTS: "${requested.trim()}" is not a section of the ${outline.title} outline (${record}). ` +
-        'Confirm which section is meant; do not supply its requirements from memory.',
-      requirementsSource: 'record:lifecycle:not-in-outline',
-    };
-  }
+  if (!section) return lifecycleOutlineMiss(entry, outline, flat, requested, record);
   if (normalizeCtdCode(section.number)) return recordRequirements(entry, section.number, true);
   if (section.subsections?.length) {
     return {
@@ -635,29 +616,65 @@ function lifecycleOutlineRequirements(entry: RegulatoryApplicationType, requeste
       requirementsSource: `record:lifecycle:${record}:${section.number}:container`,
     };
   }
-  // A part two records share (the CBE-30 and CBE-0 change description) is one
-  // node of the outline, keyed by the first record's code; each record's own
-  // brief is given, named by its variant, never the first one's alone (review
-  // critic, 2026-10-18: a CBE-0 safety labeling change was told to justify a
-  // moderate CMC change against SUPAC).
+  return lifecyclePartBrief(entry, outline, section, record);
+}
+
+/** Every section of an outline, depth first: front matter, sections and their subsections. */
+function flattenSections(list: TemplateSection[], out: TemplateSection[] = []): TemplateSection[] {
+  for (const s of list) { out.push(s); if (s.subsections?.length) flattenSections(s.subsections, out); }
+  return out;
+}
+
+/**
+ * A request the lifecycle outline does not name. A CTD section below one the
+ * outline holds (3.2.P.5.1 under a supplement's 3.2.P, 5.3.5.1 under its 5.3)
+ * is the content the change actually updates: the CTD record answers it
+ * (review critic, 2026-10-18). Anything else is named, never left to memory.
+ */
+function lifecycleOutlineMiss(
+  entry: RegulatoryApplicationType, outline: DocumentTemplateStructure, flat: TemplateSection[], requested: string, record: string,
+): DraftingRequirements {
+  const lead = leadingSectionCode(requested);
+  const code = lead ? normalizeCtdCode(lead.code) : null;
+  const ctd = flat.map((s) => normalizeCtdCode(s.number)).filter((c): c is string => !!c);
+  if (code && ctd.some((c) => code.startsWith(`${c}.`))) return recordRequirements(entry, code, true);
+  return {
+    requirements:
+      `SECTION REQUIREMENTS: "${requested.trim()}" is not a section of the ${outline.title} outline (${record}). ` +
+      'Confirm which section is meant; do not supply its requirements from memory.',
+    requirementsSource: 'record:lifecycle:not-in-outline',
+  };
+}
+
+/**
+ * One part's brief. A part two records share (the CBE-30 and CBE-0 change
+ * description) is one node of the outline, keyed by the first record's code;
+ * each record's own brief is given, named by its variant, never the first
+ * one's alone (review critic, 2026-10-18: a CBE-0 safety labeling change was
+ * told to justify a moderate CMC change against SUPAC).
+ */
+function lifecyclePartBrief(
+  entry: RegulatoryApplicationType, outline: DocumentTemplateStructure, section: TemplateSection, record: string,
+): DraftingRequirements {
   const all = lifecycleOutlineParts(entry.id);
   const first = all.find((p) => p.code === section.number);
   const parts = first ? all.filter((p) => p === first || p.title === first.title) : [];
-  const briefs = parts.length > 1
+  const shared = parts.length > 1;
+  const briefs = shared
     ? parts.flatMap((p) => [`- For a ${p.variant}: ${p.guidance}`, ...p.keyContentElements.map((k) => `  - Key content (${p.variant}): ${k}`)])
     : [`- ${first?.guidance ?? section.purpose}`, ...(first?.keyContentElements ?? []).map((k) => `- Key content: ${k}`)];
   const lines = [
     `SECTION AUTHORING GUIDANCE (the platform's ${outline.title} record — draft to it; do not add requirements from memory):`,
     `- Section: ${section.number} — ${section.heading}`,
     `- ${section.required ? 'Required in this outline' : 'Conditional in this outline: applicability is unresolved, not waived'}`,
-    ...(parts.length > 1 ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
+    ...(shared ? [`- Which variant applies is the filer's classification of the change (${parts.map((p) => p.variant).join(' or ')}); draft to that variant's brief.`] : []),
     ...briefs,
     `- Recorded basis: ${outline.regulatoryBasis}`,
     ...(outline.outlineLimitations ?? []).map((l) => `- Scope limitation: ${l}`),
   ];
   return {
     requirements: lines.join('\n'),
-    requirementsSource: `record:lifecycle:${parts.length > 1 ? record : first?.record ?? record}:${section.number}`,
+    requirementsSource: `record:lifecycle:${shared ? record : first?.record ?? record}:${section.number}`,
   };
 }
 

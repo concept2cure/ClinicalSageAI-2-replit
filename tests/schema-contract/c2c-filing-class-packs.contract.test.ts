@@ -163,6 +163,12 @@ describe('every filing document class has its own governed outline', () => {
     expect(rows[0]?.superseded_by).toBe('ich-e3-v1.0');
   });
 
+});
+
+/* The content of individual packs, held to what the corrected records say. */
+describe('the packs carry what their filings need', () => {
+  beforeEach(() => boot());
+
   it('a supplement carries its own parts, not the NDA dossier', async () => {
     const pas = await filingClassPackSections('pas');
     const labels = pas.map((s) => s.label);
@@ -190,6 +196,12 @@ describe('every filing document class has its own governed outline', () => {
     expect(part('Categorical Exclusion Claim or Environmental Assessment')?.mandatory).toBe(true);
     expect(cbe.some((s) => /\(CBE-30\)$/.test(s.label) && /Change|Environmental/.test(s.label))).toBe(false);
   });
+
+});
+
+/* Supersession, scaffolding and replay over the set. */
+describe('the class packs supersede, scaffold and replay', () => {
+  beforeEach(() => boot());
 
   it('every superseded prior version is superseded by exactly the version that replaced it', async () => {
     for (const spec of FILING_CLASS_PACKS.filter((p) => p.supersedes)) {
