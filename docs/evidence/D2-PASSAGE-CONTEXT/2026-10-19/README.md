@@ -101,3 +101,12 @@ pins the corrected bytes.
 - **Unchanged paths:** `rag_chunks` expansion and model-compressed content
   (`compressedContent`).
 - This is not deployment, retrieval qualification or validation.
+
+## Publication
+
+Published to `concept2cure-v2` as `afaa0d08a..3e559cc37` (`push-history.txt`).
+After the typecheck fix, all three attempts passed every pre-push gate,
+including whole-project TypeScript. The first two were rejected only because
+the remote advanced during the gate run. Each time the incoming commits (20,
+then 3, then 2) shared no file with this change and were merged with no
+unmerged files. No force push and no hook bypass.
